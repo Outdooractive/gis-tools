@@ -1,0 +1,44 @@
+#if !os(Linux)
+import CoreLocation
+#endif
+import Foundation
+
+// Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-boolean-point-on-line
+// and from https://github.com/Turfjs/turf/blob/master/packages/turf-point-on-feature
+
+extension LineSegment {
+
+    /// Tests if the coordinate is on the segment.
+    public func checkIsOnSegment(_ coordinate: Coordinate3D) -> Bool {
+        let ab = sqrt((second.longitude - first.longitude) * (second.longitude - first.longitude)
+            + (second.latitude - first.latitude) * (second.latitude - first.latitude))
+        let ap = sqrt((coordinate.longitude - first.longitude) * (coordinate.longitude - first.longitude)
+            + (coordinate.latitude - first.latitude) * (coordinate.latitude - first.latitude))
+        let pb = sqrt((second.longitude - coordinate.longitude) * (second.longitude - coordinate.longitude)
+            + (second.latitude - coordinate.latitude) * (second.latitude - coordinate.latitude))
+
+        return abs(ab - (ap + pb)) < GISTool.equalityDelta
+    }
+
+    /// Tests if the *Point* is on the segment.
+    public func checkIsOnSegment(_ point: Point) -> Bool {
+        return checkIsOnSegment(point.coordinate)
+    }
+
+}
+
+extension LineStringGeometry {
+
+    /// Tests if the coordinate is on the line.
+    public func checkIsOnLine(_ coordinate: Coordinate3D) -> Bool {
+        return lineSegments().contains { (segment) in
+            return segment.checkIsOnSegment(coordinate)
+        }
+    }
+
+    /// Tests if the *Point* is on the line.
+    public func checkIsOnLine(_ point: Point) -> Bool {
+        return checkIsOnLine(point.coordinate)
+    }
+
+}

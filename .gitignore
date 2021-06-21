@@ -1,0 +1,11 @@
+.DS_Store
+/.build
+/.build-ubuntu
+/.previous-build
+xcuserdata
+/Packages
+/.swiftpm
+*~
+\#*
+.\#*
+

@@ -1,0 +1,45 @@
+import XCTest
+
+#if !canImport(ObjectiveC)
+public func allTests() -> [XCTestCaseEntry] {
+    return [
+        testCase(AlongTests.allTests),
+        testCase(ArrayExtensionsTests.allTests),
+        testCase(BearingTests.allTests),
+        testCase(BooleanClockwiseTests.allTests),
+        testCase(BooleanParallelTests.allTests),
+        testCase(BoundingBoxClipTests.allTests),
+        testCase(CircleTests.allTests),
+        testCase(Coordinate3DTests.allTests),
+        testCase(DestinationTests.allTests),
+        testCase(DistanceTests.allTests),
+        testCase(DoubleExtensionsTests.allTests),
+        testCase(FeatureCollectionTests.allTests),
+        testCase(FeatureTests.allTests),
+        testCase(FlattenTests.allTests),
+        testCase(GeometryCollectionTests.allTests),
+        testCase(LineArcTests.allTests),
+        testCase(LineChunkTests.allTests),
+        testCase(LineIntersectionTests.allTests),
+        testCase(LineOverlapTests.allTests),
+        testCase(LineSliceTests.allTests),
+        testCase(LineSliceAlongTests.allTests),
+        testCase(LineStringTests.allTests),
+        testCase(MidPointTests.allTests),
+        testCase(MultiLineStringTests.allTests),
+        testCase(MultiPointTests.allTests),
+        testCase(MultiPolygonTests.allTests),
+        testCase(NearestCoordinateOnLineTests.allTests),
+        testCase(PointTests.allTests),
+        testCase(PointToLineDistanceTests.allTests),
+        testCase(PolygonTests.allTests),
+        testCase(ProjectionTests.allTests),
+        testCase(ReverseTests.allTests),
+        testCase(RhumbBearingTests.allTests),
+        testCase(RhumbDestinationTests.allTests),
+        testCase(RhumbDistanceTests.allTests),
+        testCase(SimplifyTests.allTests),
+        testCase(TruncateTests.allTests),
+    ]
+}
+#endif
