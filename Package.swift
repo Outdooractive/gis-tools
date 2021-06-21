@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "GISTools",
+    name: "gis-tools",
     products: [
         .library(
             name: "GISTools",
