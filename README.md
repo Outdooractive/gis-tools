@@ -6,20 +6,17 @@ GIS tools for Swift, including a GeoJSON implementation and many algorithms port
 
 This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal. See `GISTool.equalityDelta`.
 
-## Installation
-
-### Swift Package Manager
-
-```swift
-.package(url: "https://github.com/Outdooractive/gis-tools", from: "0.2.1"),
-```
-
-and
+## Installation with Swift Package Manager
 
 ```swift
 dependencies: [
-    .product(name: "GISTools", package: "gis-tools"),
-]),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "0.2.2"),
+],
+targets: [
+    .target(name: "MyTarget", dependencies: [
+        .product(name: "GISTools", package: "gis-tools"),
+    ]),
+]
 ```
 
 ## Features
