@@ -1,7 +1,7 @@
 import Foundation
 
 /// For coordinates in mercator projections
-public struct CoordinateXY {
+public struct CoordinateXY: CustomStringConvertible {
 
     public var x: Double
     public var y: Double
@@ -9,6 +9,20 @@ public struct CoordinateXY {
 
     /// Linear referencing or whatever you want it to use for.
     public var m: Double?
+
+    public var description: String {
+        var compontents: [String] = [
+            "x: \(x)",
+            "y: \(y)",
+        ]
+        if let altitude = z {
+            compontents.append("z: \(altitude)")
+        }
+        if let m = m {
+            compontents.append("m: \(m)")
+        }
+        return "CoordinateXY(\(compontents.joined(separator: ", ")))"
+    }
 
 }
 

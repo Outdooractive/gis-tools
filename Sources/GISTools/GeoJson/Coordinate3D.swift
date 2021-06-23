@@ -8,7 +8,7 @@ public typealias CLLocationDegrees = Double
 import CoreLocation
 #endif
 
-public struct Coordinate3D {
+public struct Coordinate3D: CustomStringConvertible {
 
     public var latitude: CLLocationDegrees
     public var longitude: CLLocationDegrees
@@ -26,7 +26,11 @@ public struct Coordinate3D {
         self.longitude = longitude
     }
 
-    public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees, altitude: CLLocationDistance?, m: Double? = nil) {
+    public init(latitude: CLLocationDegrees,
+                longitude: CLLocationDegrees,
+                altitude: CLLocationDistance? = nil,
+                m: Double? = nil)
+    {
         self.latitude = latitude
         self.longitude = longitude
         self.altitude = altitude
@@ -43,6 +47,20 @@ public struct Coordinate3D {
         return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
     #endif
+
+    public var description: String {
+        var compontents: [String] = [
+            "longitude: \(longitude)",
+            "latitude: \(latitude)",
+        ]
+        if let altitude = altitude {
+            compontents.append("altitude: \(altitude)")
+        }
+        if let m = m {
+            compontents.append("m: \(m)")
+        }
+        return "Coordinate3D(\(compontents.joined(separator: ", ")))"
+    }
 
 }
 
