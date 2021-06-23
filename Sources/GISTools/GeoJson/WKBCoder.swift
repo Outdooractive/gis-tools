@@ -103,7 +103,7 @@ extension WKBCoder {
 
         if let srid = srid {
             projection = Projection(srid: srid)
-            guard projection != nil else { throw WKBCoderError.unknownSRID }
+            guard projection != nil, projection != .noSRID else { throw WKBCoderError.unknownSRID }
         }
 
         let bytes = [UInt8](wkb)
@@ -156,7 +156,7 @@ extension WKBCoder {
             let srid = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
             projection = Projection(srid: Int(srid))
         }
-        guard projection != nil else { throw WKBCoderError.unknownSRID }
+        guard projection != nil, projection != .noSRID else { throw WKBCoderError.unknownSRID }
 
         switch typeCode {
         case .point:
@@ -204,6 +204,8 @@ extension WKBCoder {
             return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m)
         case .epsg3857:
             return CoordinateXY(x: x, y: y, z: z, m: m).projectToEpsg4326()
+        case .noSRID:
+            throw WKBCoderError.unknownSRID
         }
     }
 

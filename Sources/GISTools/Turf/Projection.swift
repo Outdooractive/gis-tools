@@ -5,6 +5,8 @@ import Foundation
 
 public enum Projection: CustomStringConvertible {
 
+    /// No SRID
+    case noSRID
     /// EPSG:3857 - web mercator
     case epsg3857
     /// EPSG:4326 - geodetic
@@ -12,6 +14,8 @@ public enum Projection: CustomStringConvertible {
 
     public init?(srid: Int) {
         switch srid {
+        // A placeholder for 'No SRID'
+        case 0: self = .noSRID
         // See https://epsg.io/3857
         case 3857, 900913, 3587, 54004, 41001, 102113, 102100, 3785: self = .epsg3857
         // See https://epsg.io/4326
@@ -22,6 +26,7 @@ public enum Projection: CustomStringConvertible {
 
     public var srid: Int {
         switch self {
+        case .noSRID: return 0
         case .epsg3857: return 3857
         case .epsg4326: return 4326
         }
@@ -29,6 +34,7 @@ public enum Projection: CustomStringConvertible {
 
     public var description: String {
         switch self {
+        case .noSRID: return "No SRID"
         case .epsg3857: return "EPSG:3857"
         case .epsg4326: return "EPSG:4326"
         }

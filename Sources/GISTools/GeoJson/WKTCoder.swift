@@ -96,7 +96,7 @@ extension WKTCoder {
 
         if let srid = srid {
             projection = Projection(srid: srid)
-            guard projection != nil else { throw WKTCoderError.unknownSRID }
+            guard projection != nil, projection != .noSRID else { throw WKTCoderError.unknownSRID }
         }
 
         return try decode(wkt: wkt, projection: projection)
@@ -117,7 +117,7 @@ extension WKTCoder {
         {
             projection = Projection(srid: srid)
         }
-        guard let projection = projection else { throw WKTCoderError.unknownSRID }
+        guard let projection = projection, projection != .noSRID else { throw WKTCoderError.unknownSRID }
 
         return try scanGeometry(scanner: scanner, projection: projection)
     }
@@ -356,6 +356,8 @@ extension WKTCoder {
                 coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m))
             case .epsg3857:
                 coordinates.append(CoordinateXY(x: x, y: y, z: z, m: m).projectToEpsg4326())
+            case .noSRID:
+                throw WKTCoderError.unknownSRID
             }
         }
 
