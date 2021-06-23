@@ -6,12 +6,15 @@ import Foundation
 public struct GISTool {
 
     /// WGS84 equatorial radius as specified by the International Union of Geodesy and Geophysics.
-    static let equatorialRadius: CLLocationDistance = 6_378_137
+    public static let equatorialRadius: CLLocationDistance = 6_378_137
 
     /// The radius of the earth, in meters.
-    static let earthRadius: CLLocationDistance = 6_371_008.8
+    public static let earthRadius: CLLocationDistance = 6_371_008.8
+
+    /// Length of the equator, in meters.
+    public static let earthCircumference: CLLocationDistance = 40075016.6855785
 
     /// The accuracy for testing what is equal
-    static let equalityDelta: Double = 1e-10
+    public static let equalityDelta: Double = 1e-10
 
 }
