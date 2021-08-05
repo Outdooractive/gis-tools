@@ -149,16 +149,16 @@ extension WKTCoder {
             // Two options:
             // - Array of points
             // - Array of coordinates
-            let location = scanner.scanLocation
-            if scanner.scanString("((", into: nil) {
-                scanner.scanLocation = location + 1
+            let location = scanner.currentIndex
+            if scanner.scanString("((") != nil {
+                scanner.currentIndex = scanner.string.index(after: location)
 
-                while !scanner.scanString(")", into: nil) {
+                while scanner.scanString(")") == nil {
                     guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
                         throw WKTCoderError.dataCorrupted
                     }
                     points.append(contentsOf: coordinates.map({ Point($0) }))
-                    scanner.scanString(",", into: nil)
+                    _ = scanner.scanString(",")
                 }
             }
             else {
@@ -176,13 +176,13 @@ extension WKTCoder {
         case .multiLineString:
             var lineStrings: [LineString] = []
 
-            guard scanner.scanString("(", into: nil) else {
+            guard scanner.scanString("(") != nil else {
                 throw WKTCoderError.dataCorrupted
             }
 
-            while !scanner.scanString(")", into: nil) {
+            while scanner.scanString(")") == nil {
                 lineStrings.append(try decodeLineString(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM))
-                scanner.scanString(",", into: nil)
+                _ = scanner.scanString(",")
             }
 
             return MultiLineString(lineStrings)
@@ -193,13 +193,13 @@ extension WKTCoder {
         case .multiPolygon:
             var polygons: [Polygon] = []
 
-            guard scanner.scanString("(", into: nil) else {
+            guard scanner.scanString("(") != nil else {
                 throw WKTCoderError.dataCorrupted
             }
 
-            while !scanner.scanString(")", into: nil) {
+            while scanner.scanString(")") == nil {
                 polygons.append(try decodePolygon(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM))
-                scanner.scanString(",", into: nil)
+                _ = scanner.scanString(",")
             }
 
             return MultiPolygon(polygons)
@@ -207,13 +207,13 @@ extension WKTCoder {
         case .geometryCollection:
             var geometries: [GeoJsonGeometry] = []
 
-            guard scanner.scanString("(", into: nil) else {
+            guard scanner.scanString("(") != nil else {
                 throw WKTCoderError.dataCorrupted
             }
 
-            while !scanner.scanString(")", into: nil) {
+            while scanner.scanString(")") == nil {
                 geometries.append(try scanGeometry(scanner: scanner, projection: projection))
-                scanner.scanString(",", into: nil)
+                _ = scanner.scanString(",")
             }
 
             return GeometryCollection(geometries)
@@ -242,16 +242,16 @@ extension WKTCoder {
     {
         var rings: [Ring] = []
 
-        guard scanner.scanString("(", into: nil) else {
+        guard scanner.scanString("(") != nil else {
             throw WKTCoderError.dataCorrupted
         }
 
-        while !scanner.scanString(")", into: nil) {
+        while scanner.scanString(")") == nil {
             guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
                 throw WKTCoderError.dataCorrupted
             }
             rings.append(Ring(coordinates))
-            scanner.scanString(",", into: nil)
+            _ = scanner.scanString(",")
         }
 
         guard let polygon = Polygon(rings) else {
@@ -264,16 +264,15 @@ extension WKTCoder {
     // MARK: -
 
     private static func scanSRID(scanner: Scanner) throws -> Int? {
-        if !scanner.scanString("SRID=", into: nil) {
+        if scanner.scanString("SRID=") == nil {
             return nil
         }
 
-        var srid: Int32 = 0
-        if !scanner.scanInt32(&srid) {
+        guard let srid = scanner.scanInt32() else {
             throw WKTCoderError.dataCorrupted
         }
 
-        if !scanner.scanString(";", into: nil) {
+        if scanner.scanString(";") == nil {
             throw WKTCoderError.dataCorrupted
         }
 
@@ -286,11 +285,10 @@ extension WKTCoder {
         decodeM: inout Bool)
         -> WKTTypeCode?
     {
-        var rawType: NSString? = ""
         let boundarySet = CharacterSet(charactersIn: "(")
-        scanner.scanUpToCharacters(from: boundarySet, into: &rawType)
+        guard let rawType = scanner.scanUpToCharacters(from: boundarySet) else { return nil }
 
-        var rawTypeLowercased = String(rawType!.lowercased).trimmed()
+        var rawTypeLowercased = rawType.lowercased().trimmed()
 
         if rawTypeLowercased.hasSuffix("m") {
             decodeM = true
@@ -315,19 +313,18 @@ extension WKTCoder {
         decodeM: Bool)
         throws -> [Coordinate3D]?
     {
-        guard scanner.scanString("(", into: nil) else {
+        guard scanner.scanString("(") != nil else {
             throw WKTCoderError.dataCorrupted
         }
 
         var coordinates: [Coordinate3D] = []
 
-        while !scanner.scanString(")", into: nil) {
+        while scanner.scanString(")") == nil {
             var vector: [Double] = []
-            var number: Double = 0.0
 
-            while !scanner.scanString(",", into: nil)
-                    && scanner.scanDouble(&number)
-            {
+            while scanner.scanString(",") == nil {
+                guard let number = scanner.scanDouble() else { break }
+
                 vector.append(number)
             }
 
