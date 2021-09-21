@@ -5,16 +5,19 @@ import Foundation
 
 // This is a port from https://github.com/mourner/flatbush
 
+/// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
 
-    let objects: [T]
-    let numberOfItems: Int
-    let nodeSize: Int
+    public let objects: [T]
+    /// The number of elements in the RTree.
+    public let count: Int
+    /// Size of a tree node (16 by default)
+    public let nodeSize: Int
 
     private var position: Int = 0
-    private var boundingBoxEdges: [Double]
-    private var indices: [Int]
-    private var levelBounds: [Int]
+    private var boundingBoxes: [BoundingBox] = []
+    private var indices: [Int] = []
+    private var levelBounds: [Int] = []
 
     private var minX = Double.infinity
     private var minY = Double.infinity
@@ -33,22 +36,22 @@ public struct RTree<T: BoundingBoxRepresentable> {
             object.updateBoundingBox(onlyIfNecessary: true)
             return (object.boundingBox != nil ? object : nil)
         })
-        self.numberOfItems = objects.count
+        self.count = objects.count
         self.nodeSize = Int(min(max(nodeSize, 2), 65535))
 
-        // calculate the total number of nodes in the R-tree to allocate space for
-        // and the index of each tree level (used in search later)
-        var n = numberOfItems
+        guard count > 0 else { return }
+
+        var n = count
         var numberOfNodes = n
-        levelBounds = [n * 4]
+        levelBounds = [n]
 
         repeat {
             n = Int(ceil(Double(n) / Double(self.nodeSize)))
             numberOfNodes += n
-            levelBounds.append(numberOfNodes * 4)
+            levelBounds.append(numberOfNodes)
         } while n != 1
 
-        boundingBoxEdges = Array(repeating: 0.0, count: numberOfNodes * 4)
+        boundingBoxes.reserveCapacity(numberOfNodes)
         indices = Array(repeating: 0, count: numberOfNodes)
 
         for object in self.objects {
@@ -60,58 +63,61 @@ public struct RTree<T: BoundingBoxRepresentable> {
     }
 
     private mutating func add(boundingBox: BoundingBox) {
-        let index = self.position >> 2
+        indices[position] = position
+        boundingBoxes.append(boundingBox)
+        position = boundingBoxes.count
 
-        let minX = boundingBox.southWest.longitude
-        let minY = boundingBox.southWest.latitude
-        let maxX = boundingBox.northEast.longitude
-        let maxY = boundingBox.northEast.latitude
-
-        indices[index] = index
-        boundingBoxEdges[position] = minX; position += 1
-        boundingBoxEdges[position] = minY; position += 1
-        boundingBoxEdges[position] = maxX; position += 1
-        boundingBoxEdges[position] = maxY; position += 1
-
-        if minX < self.minX { self.minX = minX }
-        if minY < self.minY { self.minY = minY }
-        if maxX > self.maxX { self.maxX = maxX }
-        if maxY > self.maxY { self.maxY = maxY }
+        if boundingBox.southWest.longitude < minX {
+            minX = boundingBox.southWest.longitude
+        }
+        if boundingBox.southWest.latitude < minY {
+            minY = boundingBox.southWest.latitude
+        }
+        if boundingBox.northEast.longitude > maxX {
+            maxX = boundingBox.northEast.longitude
+        }
+        if boundingBox.northEast.latitude > maxY {
+            maxY = boundingBox.northEast.latitude
+        }
     }
 
     private mutating func finish() {
-        if numberOfItems <= nodeSize {
+        if count <= nodeSize {
             // only one node, skip sorting and just fill the root box
-            boundingBoxEdges[position] = minX; position += 1
-            boundingBoxEdges[position] = minY; position += 1
-            boundingBoxEdges[position] = maxX; position += 1
-            boundingBoxEdges[position] = maxY; position += 1
+            boundingBoxes.append(
+                BoundingBox(
+                    southWest: Coordinate3D(latitude: minY, longitude: minX),
+                    northEast: Coordinate3D(latitude: maxY, longitude: maxX)))
+            position = boundingBoxes.count
             return
         }
 
-        let width = max(maxX - minX, 1)
-        let height = max(maxY - minY, 1)
-        var hilbertValues: [UInt32] = Array(repeating: 0, count: numberOfItems)
+        var width = maxX - minX
+        var height = maxY - minY
+        if width == 0.0 { width = 1.0 }
+        if height == 0.0 { height = 1.0 }
+
+        var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
         let hilbertMax = Double((1 << 16) - 1)
 
         // map item centers into Hilbert coordinate space and calculate Hilbert values
-        for i in 0 ..< numberOfItems {
-            var localPosition = 4 * i
-            let minX = boundingBoxEdges[localPosition]; localPosition += 1
-            let minY = boundingBoxEdges[localPosition]; localPosition += 1
-            let maxX = boundingBoxEdges[localPosition]; localPosition += 1
-            let maxY = boundingBoxEdges[localPosition]; localPosition += 1
-            let x = UInt32(floor(hilbertMax * ((minX + maxX) / 2 - self.minX) / width))
-            let y = UInt32(floor(hilbertMax * ((minY + maxY) / 2 - self.minY) / height))
+        for i in 0 ..< count {
+            let boundingBox = boundingBoxes[i]
+            let minX = boundingBox.southWest.longitude
+            let minY = boundingBox.southWest.latitude
+            let maxX = boundingBox.northEast.longitude
+            let maxY = boundingBox.northEast.latitude
+            let x = UInt32(floor(hilbertMax * ((minX + maxX) / 2.0 - self.minX) / width))
+            let y = UInt32(floor(hilbertMax * ((minY + maxY) / 2.0 - self.minY) / height))
             hilbertValues[i] = RTree.hilbert(x: x, y: y);
         }
 
         RTree.sort(
-            values: &hilbertValues,
-            boundingBoxEdges: &boundingBoxEdges,
+            hilbertValues: &hilbertValues,
+            boundingBoxes: &boundingBoxes,
             indices: &indices,
-            leftValue: 0,
-            rightValue: numberOfItems - 1,
+            low: 0,
+            high: count - 1,
             nodeSize: nodeSize)
 
         // generate nodes at each tree level, bottom-up
@@ -131,31 +137,35 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
                 for _ in 0 ..< nodeSize {
                     guard localPosition < end else { break }
-                    nodeMinX = min(nodeMinX, boundingBoxEdges[localPosition]); localPosition += 1
-                    nodeMinY = min(nodeMinY, boundingBoxEdges[localPosition]); localPosition += 1
-                    nodeMaxX = max(nodeMaxX, boundingBoxEdges[localPosition]); localPosition += 1
-                    nodeMaxY = max(nodeMaxY, boundingBoxEdges[localPosition]); localPosition += 1
+
+                    let boundingBox = boundingBoxes[localPosition]
+                    localPosition += 1
+
+                    nodeMinX = min(nodeMinX, boundingBox.southWest.longitude)
+                    nodeMinY = min(nodeMinY, boundingBox.southWest.latitude)
+                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.longitude)
+                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.latitude)
                 }
 
                 // add the new node to the tree data
-                indices[self.position >> 2] = nodeIndex
-                boundingBoxEdges[self.position] = nodeMinX; self.position += 1
-                boundingBoxEdges[self.position] = nodeMinY; self.position += 1
-                boundingBoxEdges[self.position] = nodeMaxX; self.position += 1
-                boundingBoxEdges[self.position] = nodeMaxY; self.position += 1
+                indices[position] = nodeIndex
+                boundingBoxes.append(
+                    BoundingBox(
+                        southWest: Coordinate3D(latitude: nodeMinY, longitude: nodeMinX),
+                        northEast: Coordinate3D(latitude: nodeMaxY, longitude: nodeMaxX)))
+                position = boundingBoxes.count
             }
         }
-
     }
 
     public func search(inBoundingBox boundingBox: BoundingBox) -> [T] {
-        assert(position == boundingBoxEdges.count, "Data not yet indexed")
+        assert(position == boundingBoxes.count, "Data not yet indexed")
 
         var result: [T] = []
 
         guard objects.count > 0 else { return result }
 
-        var nodeIndex: Int? = boundingBoxEdges.count - 4
+        var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
 
         let minX = boundingBox.southWest.longitude
@@ -165,24 +175,25 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         while let localNodeIndex = nodeIndex {
             // find the end index of the node
-            let end = min(localNodeIndex + nodeSize * 4,
+            let end = min(localNodeIndex + nodeSize,
                           RTree.upperBound(of: localNodeIndex, in: levelBounds))
 
             // search through child nodes
-            for localPosition in stride(from: localNodeIndex, to: end, by: 4) {
-                let index = indices[localPosition >> 2]
+            for localPosition in localNodeIndex ..< end {
+                let index = indices[localPosition]
 
                 // check if node bbox intersects with query bbox
-                if maxX < boundingBoxEdges[localPosition] { continue } // maxX < nodeMinX
-                if maxY < boundingBoxEdges[localPosition + 1] { continue } // maxY < nodeMinY
-                if minX > boundingBoxEdges[localPosition + 2] { continue } // minX > nodeMaxX
-                if minY > boundingBoxEdges[localPosition + 3] { continue } // minY > nodeMaxY
+                let nodeBoundingBox = boundingBoxes[localPosition]
+                if maxX < nodeBoundingBox.southWest.longitude { continue } // maxX < nodeMinX
+                if maxY < nodeBoundingBox.southWest.latitude { continue } // maxY < nodeMinY
+                if minX > nodeBoundingBox.northEast.longitude { continue } // minX > nodeMaxX
+                if minY > nodeBoundingBox.northEast.latitude { continue } // minY > nodeMaxY
 
-                if localNodeIndex < numberOfItems * 4 {
-                    result.append(objects[index]) // leaf item
+                if localNodeIndex < count {
+                    result.append(objects[index])
                 }
                 else {
-                    queue.append(index) // node; add it to the search queue
+                    queue.append(index) // node, add it to the search queue
                 }
             }
 
@@ -210,97 +221,54 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
 extension RTree {
 
-    // custom quicksort that partially sorts bbox data alongside the hilbert values
+    // Custom quicksort that partially sorts bbox data alongside the hilbert values
     private static func sort(
-        values: inout [UInt32],
-        boundingBoxEdges: inout [Double],
+        hilbertValues: inout [UInt32],
+        boundingBoxes: inout [BoundingBox],
         indices: inout [Int],
-        leftValue: Int,
-        rightValue: Int,
+        low: Int,
+        high: Int,
         nodeSize: Int)
     {
-        if floor(Double(leftValue / nodeSize)) >= floor(Double(rightValue / nodeSize)) {
-            return
-        }
+//        guard leftValue < rightValue else { return }
+        guard floor(Double(low) / Double(nodeSize)) < floor(Double(high) / Double(nodeSize)) else { return }
 
-        let pivot = values[(leftValue + rightValue) >> 1]
-        var i = leftValue - 1
-        var j = rightValue + 1
+        let pivot = hilbertValues[(low + high) >> 1]
+        var i = low - 1
+        var j = high + 1
 
         while true {
-            repeat {
-                i += 1
-            } while values[i] < pivot
-
-            repeat {
-                j -= 1
-            } while values[j] > pivot
+            repeat { i += 1 } while hilbertValues[i] < pivot
+            repeat { j -= 1 } while hilbertValues[j] > pivot
 
             if i >= j { break }
 
-            swap(values: &values,
-                 boundingBoxEdges: &boundingBoxEdges,
-                 indices: &indices,
-                 i: i,
-                 j: j)
+            hilbertValues.swapAt(i, j)
+            boundingBoxes.swapAt(i, j)
+            indices.swapAt(i, j)
         }
 
-        sort(values: &values,
-             boundingBoxEdges: &boundingBoxEdges,
+        sort(hilbertValues: &hilbertValues,
+             boundingBoxes: &boundingBoxes,
              indices: &indices,
-             leftValue: leftValue,
-             rightValue: j,
+             low: low,
+             high: j,
              nodeSize: nodeSize)
-        sort(values: &values,
-             boundingBoxEdges: &boundingBoxEdges,
+        sort(hilbertValues: &hilbertValues,
+             boundingBoxes: &boundingBoxes,
              indices: &indices,
-             leftValue: j + 1,
-             rightValue: rightValue,
+             low: j + 1,
+             high: high,
              nodeSize: nodeSize)
     }
 
-    // swap two values and two corresponding boxes
-    private static func swap(
-        values: inout [UInt32],
-        boundingBoxEdges: inout [Double],
-        indices: inout [Int],
-        i: Int,
-        j: Int)
-    {
-        let temp = values[i]
-        values[i] = values[j]
-        values[j] = temp
-
-        let k = 4 * i
-        let m = 4 * j
-
-        let a = boundingBoxEdges[k]
-        let b = boundingBoxEdges[k + 1]
-        let c = boundingBoxEdges[k + 2]
-        let d = boundingBoxEdges[k + 3]
-
-        boundingBoxEdges[k] = boundingBoxEdges[m]
-        boundingBoxEdges[k + 1] = boundingBoxEdges[m + 1]
-        boundingBoxEdges[k + 2] = boundingBoxEdges[m + 2]
-        boundingBoxEdges[k + 3] = boundingBoxEdges[m + 3]
-        boundingBoxEdges[m] = a
-        boundingBoxEdges[m + 1] = b
-        boundingBoxEdges[m + 2] = c
-        boundingBoxEdges[m + 3] = d
-
-        let e = indices[i]
-        indices[i] = indices[j]
-        indices[j] = e
-    }
-
-    // binary search for the first value in the array bigger than the given
+    // Binary search for the first value in the array bigger than the given
     private static func upperBound(
         of value: Int,
         in array: [Int])
         -> Int
     {
-        var i = 0
-        var j = array.count - 1
+        var (i,j) = (0, array.count - 1)
 
         while i < j {
             let m = (i + j) >> 1
