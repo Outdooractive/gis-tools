@@ -31,14 +31,34 @@ public struct RTree<T: BoundingBoxRepresentable> {
     }
 
     public init(_ objects: [T], nodeSize: Int = 16) {
-        self.objects = objects.compactMap({ object in
-            var object = object
+        var objectsWithBoundingBox: [T] = []
+        objectsWithBoundingBox.reserveCapacity(objects.count)
+
+        for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
-            return (object.boundingBox != nil ? object : nil)
-        })
+
+            guard let boundingBox = object.boundingBox else { continue }
+
+            objectsWithBoundingBox.append(object)
+
+            if boundingBox.southWest.longitude < minX {
+                minX = boundingBox.southWest.longitude
+            }
+            if boundingBox.southWest.latitude < minY {
+                minY = boundingBox.southWest.latitude
+            }
+            if boundingBox.northEast.longitude > maxX {
+                maxX = boundingBox.northEast.longitude
+            }
+            if boundingBox.northEast.latitude > maxY {
+                maxY = boundingBox.northEast.latitude
+            }
+        }
+        self.objects = objectsWithBoundingBox
         self.count = objects.count
         self.nodeSize = Int(min(max(nodeSize, 2), 65535))
 
+        // Don't build a tree because serial search will be faster
         guard count > nodeSize else { return }
 
         var n = count
@@ -56,41 +76,17 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         for object in self.objects {
             guard let boundingBox = object.boundingBox else { return }
-            add(boundingBox: boundingBox)
+
+            indices[position] = position
+            boundingBoxes.append(boundingBox)
+            position = boundingBoxes.count
         }
 
         finish()
     }
 
-    private mutating func add(boundingBox: BoundingBox) {
-        indices[position] = position
-        boundingBoxes.append(boundingBox)
-        position = boundingBoxes.count
-
-        if boundingBox.southWest.longitude < minX {
-            minX = boundingBox.southWest.longitude
-        }
-        if boundingBox.southWest.latitude < minY {
-            minY = boundingBox.southWest.latitude
-        }
-        if boundingBox.northEast.longitude > maxX {
-            maxX = boundingBox.northEast.longitude
-        }
-        if boundingBox.northEast.latitude > maxY {
-            maxY = boundingBox.northEast.latitude
-        }
-    }
-
     private mutating func finish() {
-        if count <= nodeSize {
-            // only one node, skip sorting and just fill the root box
-            boundingBoxes.append(
-                BoundingBox(
-                    southWest: Coordinate3D(latitude: minY, longitude: minX),
-                    northEast: Coordinate3D(latitude: maxY, longitude: maxX)))
-            position = boundingBoxes.count
-            return
-        }
+        assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
 
         var width = maxX - minX
         var height = maxY - minY
@@ -159,9 +155,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
     }
 
     public func search(inBoundingBox boundingBox: BoundingBox) -> [T] {
-        assert(position == boundingBoxes.count, "Data not yet indexed")
-
-        guard count > nodeSize else { return searchSerial(inBoundingBox: boundingBox) }
+        guard count > nodeSize,
+              position == boundingBoxes.count
+        else { return searchSerial(inBoundingBox: boundingBox) }
 
         var result: [T] = []
 
@@ -208,7 +204,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
     public func searchSerial(inBoundingBox boundingBox: BoundingBox) -> [T] {
         var result: [T] = []
 
-        guard objects.count > 0 else { return result }
+        guard objects.count > 0,
+              boundingBox.intersects(self.boundingBox)
+        else { return result }
 
         for object in objects {
             if object.intersects(boundingBox) {
