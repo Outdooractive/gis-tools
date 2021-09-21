@@ -39,7 +39,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
         self.count = objects.count
         self.nodeSize = Int(min(max(nodeSize, 2), 65535))
 
-        guard count > 0 else { return }
+        guard count > nodeSize else { return }
 
         var n = count
         var numberOfNodes = n
@@ -160,6 +160,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
     public func search(inBoundingBox boundingBox: BoundingBox) -> [T] {
         assert(position == boundingBoxes.count, "Data not yet indexed")
+
+        guard count > nodeSize else { return searchSerial(inBoundingBox: boundingBox) }
 
         var result: [T] = []
 
