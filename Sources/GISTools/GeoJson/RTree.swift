@@ -11,7 +11,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
     public let objects: [T]
     /// The number of elements in the RTree.
     public let count: Int
-    /// Size of a tree node (16 by default)
+    /// Size of a tree node.
     public let nodeSize: Int
 
     private var position: Int = 0
@@ -56,9 +56,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
         }
         self.objects = objectsWithBoundingBox
         self.count = objects.count
-        self.nodeSize = Int(min(max(nodeSize, 2), 65535))
+        self.nodeSize = Int(min(max(nodeSize, 4), 65535))
 
-        // Don't build a tree because serial search will be faster
+        // Don't build a tree if serial search would be faster
         guard count > nodeSize else { return }
 
         var n = count
@@ -230,8 +230,8 @@ extension RTree {
         high: Int,
         nodeSize: Int)
     {
-//        guard leftValue < rightValue else { return }
-        guard floor(Double(low) / Double(nodeSize)) < floor(Double(high) / Double(nodeSize)) else { return }
+        guard low < high else { return }
+//        guard floor(Double(low) / Double(nodeSize)) < floor(Double(high) / Double(nodeSize)) else { return }
 
         let pivot = hilbertValues[(low + high) >> 1]
         var i = low - 1

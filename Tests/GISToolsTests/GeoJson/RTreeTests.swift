@@ -125,4 +125,39 @@ final class RTreeTests: XCTestCase {
         }
     }
 
+    func _testNodeSizes() throws {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: 5.0))
+
+        for nodeSize in 4 ... 512 {
+            for objectCount in stride(from: nodeSize * 2, to: 10000, by: 10) {
+                var nodes: [Point] = []
+                try objectCount.times {
+                    nodes.append(Point(Coordinate3D(
+                        latitude: Double.random(in: -30.0 ... 30.0),
+                        longitude: Double.random(in: -30.0 ... 30.0))))
+                }
+                let rTree = RTree(nodes, nodeSize: nodeSize)
+
+                let startTime1 = CFAbsoluteTimeGetCurrent()
+                let objects1 = rTree.search(inBoundingBox: boundingBox)
+                let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
+
+                let startTime2 = CFAbsoluteTimeGetCurrent()
+                let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
+                let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
+
+                XCTAssertEqual(
+                    objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
+                    objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+
+                if timeElapsed1 < timeElapsed2 {
+                    print("\(nodeSize): \(objectCount)")
+                    break
+                }
+            }
+        }
+    }
+
 }
