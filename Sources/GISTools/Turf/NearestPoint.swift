@@ -5,6 +5,24 @@ import Foundation
 
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-nearest-point
 
+extension BoundingBox {
+
+    public func nearestCoordinate(
+        from other: Coordinate3D)
+        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
+    {
+        return self.boundingBoxPolygon.nearestCoordinate(from: other)
+    }
+
+    public func nearestPoint(
+        from other: Point)
+        -> (point: Point, distance: CLLocationDistance)?
+    {
+        return self.boundingBoxPolygon.nearestPoint(from: other)
+    }
+
+}
+
 extension GeoJson {
 
     /// Takes a reference coordinate and returns the coordinate from the reveiver closest to the reference.

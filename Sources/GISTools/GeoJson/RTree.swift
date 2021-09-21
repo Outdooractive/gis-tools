@@ -217,6 +217,88 @@ public struct RTree<T: BoundingBoxRepresentable> {
         return result
     }
 
+    public typealias AroundSearchResult = (
+        object: T,
+        distance: CLLocationDistance)
+
+    public func around(
+        at coordinate: Coordinate3D,
+        maximumDistance: CLLocationDistance = Double.greatestFiniteMagnitude,
+        sorted: Bool = true)
+        -> [AroundSearchResult] where T: GeoJson
+    {
+        guard count > nodeSize,
+              position == boundingBoxes.count
+        else { return aroundSerial(at: coordinate, maximumDistance: maximumDistance, sorted: sorted) }
+
+        var result: [AroundSearchResult] = []
+
+        guard objects.count > 0 else { return result }
+
+        var nodeIndex: Int? = boundingBoxes.count - 1
+        var queue: [Int] = []
+
+        while let localNodeIndex = nodeIndex {
+            // find the end index of the node
+            let end = min(localNodeIndex + nodeSize,
+                          RTree.upperBound(of: localNodeIndex, in: levelBounds))
+
+            // search through child nodes
+            for localPosition in localNodeIndex ..< end {
+                let index = indices[localPosition]
+
+                if localNodeIndex < count {
+                    let object = objects[index]
+                    guard let nearest = object.nearestCoordinateOnFeature(from: coordinate) else { continue }
+                    if nearest.distance <= maximumDistance {
+                        result.append((object, nearest.distance))
+                    }
+                }
+                else {
+                    let nodeBoundingBox = boundingBoxes[localPosition]
+                    guard let nearest = nodeBoundingBox.nearestCoordinateOnFeature(from: coordinate) else { continue }
+                    if nearest.distance <= maximumDistance {
+                        queue.append(index) // node, add it to the search queue
+                    }
+                }
+            }
+
+            nodeIndex = (queue.isEmpty ? nil : queue.removeLast())
+        }
+
+        if sorted {
+            result.sort(by: { $0.distance < $1.distance })
+        }
+
+        return result
+    }
+
+    public func aroundSerial(
+        at coordinate: Coordinate3D,
+        maximumDistance: CLLocationDistance = Double.greatestFiniteMagnitude,
+        sorted: Bool = true)
+        -> [AroundSearchResult] where T: GeoJson
+    {
+        var result: [AroundSearchResult] = []
+
+        guard objects.count > 0,
+              boundingBox.intersects(self.boundingBox)
+        else { return result }
+
+        for object in objects {
+            guard let distance = object.coordinateOnFeature()?.distance(from: coordinate) else { continue }
+            if distance <= maximumDistance {
+                result.append((object, distance))
+            }
+        }
+
+        if sorted {
+            result.sort(by: { $0.distance < $1.distance })
+        }
+
+        return result
+    }
+
 }
 
 extension RTree {

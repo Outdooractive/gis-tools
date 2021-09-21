@@ -94,10 +94,10 @@ final class RTreeTests: XCTestCase {
             }
             let rTree = RTree(nodes, nodeSize: Int.random(in: 16 ... 64))
 
-            var minX = Double.random(in: 0.0 ... 10.0)
-            var maxX = Double.random(in: 0.0 ... 10.0)
-            var minY = Double.random(in: 0.0 ... 10.0)
-            var maxY = Double.random(in: 0.0 ... 10.0)
+            var minX = Double.random(in: -10.0 ... 10.0)
+            var maxX = Double.random(in: -10.0 ... 10.0)
+            var minY = Double.random(in: -10.0 ... 10.0)
+            var maxY = Double.random(in: -10.0 ... 10.0)
 
             if minX > maxX {
                 (minX, maxX) = (maxX, minX)
@@ -122,6 +122,34 @@ final class RTreeTests: XCTestCase {
                 objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
                 objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
             XCTAssert(timeElapsed1 < timeElapsed2, "\(rTree.count) objects, nodesize: \(rTree.nodeSize)")
+        }
+    }
+
+    func testAroundSearch() throws {
+        var nodes: [Point] = []
+        try Int.random(in: 1000 ... 10000).times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+        let rTree = RTree(nodes)
+
+        try 50.times {
+            let center = Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))
+
+            let startTime1 = CFAbsoluteTimeGetCurrent()
+            let objects1 = rTree.around(at: center).map(\.object)
+            let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
+
+            let startTime2 = CFAbsoluteTimeGetCurrent()
+            let objects2 = rTree.aroundSerial(at: center).map(\.object)
+            let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
+
+            XCTAssertEqual(objects1.count, nodes.count)
+            XCTAssertEqual(objects2.count, nodes.count)
+            XCTAssertEqual(objects1, objects2)
         }
     }
 
