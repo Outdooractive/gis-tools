@@ -5,6 +5,11 @@ import Foundation
 
 public struct BoundingBox: GeoJsonConvertible {
 
+    public static var world: BoundingBox {
+        BoundingBox(southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
+                    northEast: Coordinate3D(latitude: 90.0, longitude: 180.0))
+    }
+
     public var southWest: Coordinate3D
     public var northEast: Coordinate3D
 

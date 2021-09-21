@@ -10,7 +10,7 @@ This package makes some assumptions about what is equal, i.e. coordinates that a
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "0.2.2"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "0.2.7"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
