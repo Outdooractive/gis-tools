@@ -15,6 +15,10 @@ extension GeoJson {
         return nil
     }
 
+    public func coordinateOnFeature() -> Coordinate3D? {
+        return coordinateOnFeature(failOnMiss: false)
+    }
+
     private func coordinateOnFeature(failOnMiss: Bool = false) -> Coordinate3D? {
         guard let centroidCoordinate = centroid()?.coordinate else { return nil }
 
