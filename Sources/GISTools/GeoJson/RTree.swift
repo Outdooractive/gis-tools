@@ -156,24 +156,19 @@ public struct RTree<T: BoundingBoxRepresentable> {
         }
     }
 
-    public func search(inBoundingBox boundingBox: BoundingBox) -> [T] {
+    public func search(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         guard count > nodeSize,
               position == boundingBoxes.count
-        else { return searchSerial(inBoundingBox: boundingBox) }
+        else { return searchSerial(inBoundingBox: searchBoundingBox) }
 
         var result: [T] = []
 
         guard objects.count > 0,
-              boundingBox.intersects(self.boundingBox)
+              searchBoundingBox.intersects(boundingBox)
         else { return result }
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
-
-        let minX = boundingBox.southWest.longitude
-        let minY = boundingBox.southWest.latitude
-        let maxX = boundingBox.northEast.longitude
-        let maxY = boundingBox.northEast.latitude
 
         while let lowerBound = nodeIndex {
             // Find the end index of the node
@@ -181,21 +176,22 @@ public struct RTree<T: BoundingBoxRepresentable> {
                                  RTree.upperBound(of: lowerBound, in: levelBounds))
 
             // Search through child nodes
-            for localPosition in lowerBound ..< upperBound {
-                let index = indices[localPosition]
-
-                // Check if node bbox intersects with query bbox
-                let nodeBoundingBox = boundingBoxes[localPosition]
-                if maxX < nodeBoundingBox.southWest.longitude { continue } // maxX < nodeMinX
-                if maxY < nodeBoundingBox.southWest.latitude { continue } // maxY < nodeMinY
-                if minX > nodeBoundingBox.northEast.longitude { continue } // minX > nodeMaxX
-                if minY > nodeBoundingBox.northEast.latitude { continue } // minY > nodeMaxY
+            for currentPosition in lowerBound ..< upperBound {
+                let index = indices[currentPosition]
 
                 if lowerBound < count {
-                    result.append(objects[index])
+                    // Check if the object intersects with the query bbox
+                    let object = objects[index]
+                    if object.intersects(searchBoundingBox) {
+                        result.append(object)
+                    }
                 }
                 else {
-                    queue.append(index)
+                    // Check if node bbox intersects with query bbox
+                    let nodeBoundingBox = boundingBoxes[currentPosition]
+                    if nodeBoundingBox.intersects(searchBoundingBox) {
+                        queue.append(index)
+                    }
                 }
             }
 
@@ -205,15 +201,15 @@ public struct RTree<T: BoundingBoxRepresentable> {
         return result
     }
 
-    public func searchSerial(inBoundingBox boundingBox: BoundingBox) -> [T] {
+    public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         var result: [T] = []
 
         guard objects.count > 0,
-              boundingBox.intersects(self.boundingBox)
+              searchBoundingBox.intersects(boundingBox)
         else { return result }
 
         for object in objects
-            where object.intersects(boundingBox)
+            where object.intersects(searchBoundingBox)
         {
             result.append(object)
         }
@@ -250,8 +246,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
                                  RTree.upperBound(of: lowerBound, in: levelBounds))
 
             // Search through child nodes
-            for localPosition in lowerBound ..< upperBound {
-                let index = indices[localPosition]
+            for currentPosition in lowerBound ..< upperBound {
+                let index = indices[currentPosition]
 
                 if lowerBound < count {
                     let object = objects[index]
@@ -262,7 +258,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
                     }
                 }
                 else {
-                    let nodeBoundingBox = boundingBoxes[localPosition]
+                    let nodeBoundingBox = boundingBoxes[currentPosition]
                     if let nearest = nodeBoundingBox.nearestCoordinateOnFeature(from: coordinate),
                        nearest.distance <= maximumDistance
                     {
