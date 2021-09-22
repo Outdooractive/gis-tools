@@ -9,6 +9,9 @@ extension BoundingBox {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
     {
+        if self.contains(other) {
+            return (coordinate: other, distance: 0.0)
+        }
         return self.boundingBoxPolygon.nearestCoordinateOnFeature(from: other)
     }
 
@@ -16,6 +19,9 @@ extension BoundingBox {
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?
     {
+        if self.contains(other.coordinate) {
+            return (point: other, distance: 0.0)
+        }
         return self.boundingBoxPolygon.nearestPointOnFeature(from: other)
     }
 
@@ -52,9 +58,15 @@ extension GeoJson {
             return nearest(onSegments: multiLineString.lineSegments(), from: other)
 
         case let polygon as Polygon:
+            if polygon.contains(other) {
+                return (coordinate: other, distance: 0.0)
+            }
             return nearest(onSegments: polygon.lineSegments(), from: other)
 
         case let multiPolygon as MultiPolygon:
+            if multiPolygon.contains(other) {
+                return (coordinate: other, distance: 0.0)
+            }
             return nearest(onSegments: multiPolygon.lineSegments(), from: other)
 
         case let geometryCollection as GeometryCollection:

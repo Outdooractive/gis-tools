@@ -34,6 +34,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
         var objectsWithBoundingBox: [T] = []
         objectsWithBoundingBox.reserveCapacity(objects.count)
 
+        // Set bounding boxes on all objects
+        // Calculate the RTree bounding box
         for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
@@ -61,6 +63,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
         // Don't build a tree if serial search would be faster
         guard count > nodeSize else { return }
 
+        // Calculate the number of tree nodes
         var n = count
         var numberOfNodes = n
         levelBounds = [n]
@@ -74,6 +77,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
         boundingBoxes.reserveCapacity(numberOfNodes)
         indices = Array(repeating: 0, count: numberOfNodes)
 
+        // Add objects to the tree
         for object in self.objects {
             guard let boundingBox = object.boundingBox else { return }
 
@@ -82,10 +86,11 @@ public struct RTree<T: BoundingBoxRepresentable> {
             position = boundingBoxes.count
         }
 
-        finish()
+        // Add the remaining tree nodes for faster search
+        buildTree()
     }
 
-    private mutating func finish() {
+    private mutating func buildTree() {
         assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
 
         var width = maxX - minX
@@ -96,18 +101,15 @@ public struct RTree<T: BoundingBoxRepresentable> {
         var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
         let hilbertMax = Double((1 << 16) - 1)
 
-        // map item centers into Hilbert coordinate space and calculate Hilbert values
+        // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
         for i in 0 ..< count {
             let boundingBox = boundingBoxes[i]
-            let minX = boundingBox.southWest.longitude
-            let minY = boundingBox.southWest.latitude
-            let maxX = boundingBox.northEast.longitude
-            let maxY = boundingBox.northEast.latitude
-            let x = UInt32(floor(hilbertMax * ((minX + maxX) / 2.0 - self.minX) / width))
-            let y = UInt32(floor(hilbertMax * ((minY + maxY) / 2.0 - self.minY) / height))
+            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.longitude + boundingBox.northEast.longitude) / 2.0 - minX) / width))
+            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.latitude + boundingBox.northEast.latitude) / 2.0 - minY) / height))
             hilbertValues[i] = RTree.hilbert(x: x, y: y);
         }
 
+        // Sort items by their Hilbert value (for packing later)
         RTree.sort(
             hilbertValues: &hilbertValues,
             boundingBoxes: &boundingBoxes,
@@ -116,14 +118,14 @@ public struct RTree<T: BoundingBoxRepresentable> {
             high: count - 1,
             nodeSize: nodeSize)
 
-        // generate nodes at each tree level, bottom-up
-        var localPosition = 0
+        // Generate nodes at each tree level, bottom-up
+        var lowerBound = 0
         for i in 0 ..< levelBounds.count - 1 {
-            let end = levelBounds[i]
+            let upperBound = levelBounds[i]
 
-            // generate a parent node for each block of consecutive <nodeSize> nodes
-            while localPosition < end {
-                let nodeIndex = localPosition
+            // Generate a parent node for each block of consecutive <nodeSize> nodes
+            while lowerBound < upperBound {
+                let nodeIndex = lowerBound
 
                 // calculate bbox for the new node
                 var nodeMinX = Double.infinity
@@ -132,10 +134,10 @@ public struct RTree<T: BoundingBoxRepresentable> {
                 var nodeMaxY = -Double.infinity
 
                 for _ in 0 ..< nodeSize {
-                    guard localPosition < end else { break }
+                    guard lowerBound < upperBound else { break }
 
-                    let boundingBox = boundingBoxes[localPosition]
-                    localPosition += 1
+                    let boundingBox = boundingBoxes[lowerBound]
+                    lowerBound += 1
 
                     nodeMinX = min(nodeMinX, boundingBox.southWest.longitude)
                     nodeMinY = min(nodeMinY, boundingBox.southWest.latitude)
@@ -143,7 +145,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
                     nodeMaxY = max(nodeMaxY, boundingBox.northEast.latitude)
                 }
 
-                // add the new node to the tree data
+                // Add the new node to the tree data
                 indices[position] = nodeIndex
                 boundingBoxes.append(
                     BoundingBox(
@@ -161,7 +163,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [T] = []
 
-        guard objects.count > 0 else { return result }
+        guard objects.count > 0,
+              boundingBox.intersects(self.boundingBox)
+        else { return result }
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
@@ -171,27 +175,27 @@ public struct RTree<T: BoundingBoxRepresentable> {
         let maxX = boundingBox.northEast.longitude
         let maxY = boundingBox.northEast.latitude
 
-        while let localNodeIndex = nodeIndex {
-            // find the end index of the node
-            let end = min(localNodeIndex + nodeSize,
-                          RTree.upperBound(of: localNodeIndex, in: levelBounds))
+        while let lowerBound = nodeIndex {
+            // Find the end index of the node
+            let upperBound = min(lowerBound + nodeSize,
+                                 RTree.upperBound(of: lowerBound, in: levelBounds))
 
-            // search through child nodes
-            for localPosition in localNodeIndex ..< end {
+            // Search through child nodes
+            for localPosition in lowerBound ..< upperBound {
                 let index = indices[localPosition]
 
-                // check if node bbox intersects with query bbox
+                // Check if node bbox intersects with query bbox
                 let nodeBoundingBox = boundingBoxes[localPosition]
                 if maxX < nodeBoundingBox.southWest.longitude { continue } // maxX < nodeMinX
                 if maxY < nodeBoundingBox.southWest.latitude { continue } // maxY < nodeMinY
                 if minX > nodeBoundingBox.northEast.longitude { continue } // minX > nodeMaxX
                 if minY > nodeBoundingBox.northEast.latitude { continue } // minY > nodeMaxY
 
-                if localNodeIndex < count {
+                if lowerBound < count {
                     result.append(objects[index])
                 }
                 else {
-                    queue.append(index) // node, add it to the search queue
+                    queue.append(index)
                 }
             }
 
@@ -208,10 +212,10 @@ public struct RTree<T: BoundingBoxRepresentable> {
               boundingBox.intersects(self.boundingBox)
         else { return result }
 
-        for object in objects {
-            if object.intersects(boundingBox) {
-                result.append(object)
-            }
+        for object in objects
+            where object.intersects(boundingBox)
+        {
+            result.append(object)
         }
 
         return result
@@ -221,44 +225,48 @@ public struct RTree<T: BoundingBoxRepresentable> {
         object: T,
         distance: CLLocationDistance)
 
-    public func around(
-        at coordinate: Coordinate3D,
-        maximumDistance: CLLocationDistance = Double.greatestFiniteMagnitude,
+    public func search(
+        aroundCoordinate coordinate: Coordinate3D,
+        maximumDistance: CLLocationDistance,
         sorted: Bool = true)
         -> [AroundSearchResult] where T: GeoJson
     {
         guard count > nodeSize,
               position == boundingBoxes.count
-        else { return aroundSerial(at: coordinate, maximumDistance: maximumDistance, sorted: sorted) }
+        else { return searchSerial(aroundCoordinate: coordinate, maximumDistance: maximumDistance, sorted: sorted) }
 
         var result: [AroundSearchResult] = []
 
-        guard objects.count > 0 else { return result }
+        guard objects.count > 0,
+              boundingBox.intersects(self.boundingBox)
+        else { return result }
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
 
-        while let localNodeIndex = nodeIndex {
-            // find the end index of the node
-            let end = min(localNodeIndex + nodeSize,
-                          RTree.upperBound(of: localNodeIndex, in: levelBounds))
+        while let lowerBound = nodeIndex {
+            // Find the end index of the node
+            let upperBound = min(lowerBound + nodeSize,
+                                 RTree.upperBound(of: lowerBound, in: levelBounds))
 
-            // search through child nodes
-            for localPosition in localNodeIndex ..< end {
+            // Search through child nodes
+            for localPosition in lowerBound ..< upperBound {
                 let index = indices[localPosition]
 
-                if localNodeIndex < count {
+                if lowerBound < count {
                     let object = objects[index]
-                    guard let nearest = object.nearestCoordinateOnFeature(from: coordinate) else { continue }
-                    if nearest.distance <= maximumDistance {
+                    if let nearest = object.nearestCoordinateOnFeature(from: coordinate),
+                       nearest.distance <= maximumDistance
+                    {
                         result.append((object, nearest.distance))
                     }
                 }
                 else {
                     let nodeBoundingBox = boundingBoxes[localPosition]
-                    guard let nearest = nodeBoundingBox.nearestCoordinateOnFeature(from: coordinate) else { continue }
-                    if nearest.distance <= maximumDistance {
-                        queue.append(index) // node, add it to the search queue
+                    if let nearest = nodeBoundingBox.nearestCoordinateOnFeature(from: coordinate),
+                       nearest.distance <= maximumDistance
+                    {
+                        queue.append(index)
                     }
                 }
             }
@@ -273,9 +281,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
         return result
     }
 
-    public func aroundSerial(
-        at coordinate: Coordinate3D,
-        maximumDistance: CLLocationDistance = Double.greatestFiniteMagnitude,
+    public func searchSerial(
+        aroundCoordinate coordinate: Coordinate3D,
+        maximumDistance: CLLocationDistance,
         sorted: Bool = true)
         -> [AroundSearchResult] where T: GeoJson
     {
@@ -286,9 +294,10 @@ public struct RTree<T: BoundingBoxRepresentable> {
         else { return result }
 
         for object in objects {
-            guard let distance = object.coordinateOnFeature()?.distance(from: coordinate) else { continue }
-            if distance <= maximumDistance {
-                result.append((object, distance))
+            if let nearest = object.nearestCoordinateOnFeature(from: coordinate),
+               nearest.distance <= maximumDistance
+            {
+                result.append((object, nearest.distance))
             }
         }
 

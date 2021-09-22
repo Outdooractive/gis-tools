@@ -84,72 +84,40 @@ final class RTreeTests: XCTestCase {
         }
     }
 
-    func testPerformance() throws {
-        try 50.times {
+    func testAroundSearch() throws {
+        try 100.times {
             var nodes: [Point] = []
             try Int.random(in: 1000 ... 10000).times {
                 nodes.append(Point(Coordinate3D(
                     latitude: Double.random(in: -10.0 ... 10.0),
                     longitude: Double.random(in: -10.0 ... 10.0))))
             }
-            let rTree = RTree(nodes, nodeSize: Int.random(in: 16 ... 64))
+            let rTree = RTree(nodes)
 
-            var minX = Double.random(in: -10.0 ... 10.0)
-            var maxX = Double.random(in: -10.0 ... 10.0)
-            var minY = Double.random(in: -10.0 ... 10.0)
-            var maxY = Double.random(in: -10.0 ... 10.0)
-
-            if minX > maxX {
-                (minX, maxX) = (maxX, minX)
-            }
-            if minY > maxY {
-                (minY, maxY) = (maxY, minY)
-            }
-
-            let boundingBox = BoundingBox(
-                southWest: Coordinate3D(latitude: minY, longitude: minX),
-                northEast: Coordinate3D(latitude: maxY, longitude: maxX))
-
-            let startTime1 = CFAbsoluteTimeGetCurrent()
-            let objects1 = rTree.search(inBoundingBox: boundingBox)
-            let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
-
-            let startTime2 = CFAbsoluteTimeGetCurrent()
-            let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
-            let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
-
-            XCTAssertEqual(
-                objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
-                objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
-            XCTAssert(timeElapsed1 < timeElapsed2, "\(rTree.count) objects, nodesize: \(rTree.nodeSize)")
-        }
-    }
-
-    func testAroundSearch() throws {
-        var nodes: [Point] = []
-        try Int.random(in: 1000 ... 10000).times {
-            nodes.append(Point(Coordinate3D(
-                latitude: Double.random(in: -10.0 ... 10.0),
-                longitude: Double.random(in: -10.0 ... 10.0))))
-        }
-        let rTree = RTree(nodes)
-
-        try 50.times {
             let center = Coordinate3D(
                 latitude: Double.random(in: -10.0 ... 10.0),
                 longitude: Double.random(in: -10.0 ... 10.0))
+            let maximumDistance = Double.random(in: 10000.0 ... 100000.0)
 
-            let startTime1 = CFAbsoluteTimeGetCurrent()
-            let objects1 = rTree.around(at: center).map(\.object)
-            let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
+            let objects1 = rTree.search(aroundCoordinate: center, maximumDistance: maximumDistance)
+            let objects2 = rTree.searchSerial(aroundCoordinate: center, maximumDistance: maximumDistance)
 
-            let startTime2 = CFAbsoluteTimeGetCurrent()
-            let objects2 = rTree.aroundSerial(at: center).map(\.object)
-            let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
+            assertCorrectDistance(result: objects1, from: center, maximumDistance: maximumDistance)
+            assertCorrectDistance(result: objects2, from: center, maximumDistance: maximumDistance)
 
-            XCTAssertEqual(objects1.count, nodes.count)
-            XCTAssertEqual(objects2.count, nodes.count)
-            XCTAssertEqual(objects1, objects2)
+            XCTAssertEqual(objects1.map(\.object), objects2.map(\.object))
+        }
+    }
+
+    private func assertCorrectDistance(
+        result: [RTree<Point>.AroundSearchResult],
+        from coordinate: Coordinate3D,
+        maximumDistance: CLLocationDistance)
+    {
+        for (object, distance) in result {
+            let objectDistance = object.coordinate.distance(from: coordinate)
+            XCTAssertEqual(objectDistance, distance)
+            XCTAssertLessThan(objectDistance, maximumDistance)
         }
     }
 
