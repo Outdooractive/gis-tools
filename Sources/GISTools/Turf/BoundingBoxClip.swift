@@ -197,7 +197,7 @@ extension BoundingBox {
 
     // TODO: This is ugly Swift code
 
-    // Cohen-Sutherland line clippign algorithm, adapted to efficiently
+    // Cohen-Sutherland line clipping algorithm, adapted to efficiently
     // handle polylines rather than just segments.
     fileprivate func clipLine(coordinates: [Coordinate3D]) -> [[Coordinate3D]] {
         guard coordinates.count > 1 else { return [] }
