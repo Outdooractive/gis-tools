@@ -1,5 +1,29 @@
 import Foundation
 
+// MARK: Public
+
+extension Array where Element == Coordinate3D {
+
+    public func toMultiPoint() -> MultiPoint {
+        MultiPoint(self)
+    }
+
+    public func toLineString() -> LineString {
+        LineString(self)
+    }
+
+    public func toPolygon() -> Polygon? {
+        Polygon([self])
+    }
+
+    public func toRing() -> Ring {
+        Ring(self)
+    }
+
+}
+
+// MARK: - Internal
+
 extension Array {
 
     /// Returns the array's elements pairwise, with every element only once in the result.
