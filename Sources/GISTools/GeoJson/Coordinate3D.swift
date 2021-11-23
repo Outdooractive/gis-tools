@@ -8,6 +8,8 @@ public typealias CLLocationDegrees = Double
 import CoreLocation
 #endif
 
+// MARK: Coordinate3D
+
 public struct Coordinate3D: CustomStringConvertible {
 
     public var latitude: CLLocationDegrees
@@ -26,10 +28,11 @@ public struct Coordinate3D: CustomStringConvertible {
         self.longitude = longitude
     }
 
-    public init(latitude: CLLocationDegrees,
-                longitude: CLLocationDegrees,
-                altitude: CLLocationDistance? = nil,
-                m: Double? = nil)
+    public init(
+        latitude: CLLocationDegrees,
+        longitude: CLLocationDegrees,
+        altitude: CLLocationDistance? = nil,
+        m: Double? = nil)
     {
         self.latitude = latitude
         self.longitude = longitude
@@ -43,8 +46,26 @@ public struct Coordinate3D: CustomStringConvertible {
         self.longitude = coordinate.longitude
     }
 
-    var coordinate: CLLocationCoordinate2D {
-        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    public var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    public init(_ location: CLLocation) {
+        self.latitude = location.coordinate.latitude
+        self.longitude = location.coordinate.longitude
+
+        if location.verticalAccuracy > 0 {
+            self.altitude = location.altitude
+        }
+    }
+
+    public var location: CLLocation {
+        CLLocation(
+            coordinate: coordinate,
+            altitude: altitude ?? -1.0,
+            horizontalAccuracy: 1.0, // always valid
+            verticalAccuracy: (altitude == nil ? -1.0 : 1.0), // valid if altitude != nil
+            timestamp: Date())
     }
     #endif
 
@@ -64,14 +85,31 @@ public struct Coordinate3D: CustomStringConvertible {
 
 }
 
+extension Coordinate3D {
+
+    public func normalized() -> Coordinate3D {
+        var longitude = self.longitude
+
+        guard longitude < -180.0 || longitude > 180.0 else { return self }
+
+        while longitude < -180.0 { longitude += 360.0 }
+        while longitude > 180.0 { longitude -= 360.0 }
+
+        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude)
+    }
+
+}
+
+// MARK: - GeoJsonConvertible
+
 // Note: The GeoJSON spec uses CRS:84 that specifies coordinates
 // in longitude/latitude order.
 extension Coordinate3D: GeoJsonConvertible {
 
     public init?(json: Any?) {
         guard let pointArray = json as? [Double],
-            pointArray.count >= 2
-            else { return nil }
+              pointArray.count >= 2
+        else { return nil }
 
         if pointArray.count == 2 {
             self.init(latitude: pointArray[1], longitude: pointArray[0])
@@ -99,20 +137,7 @@ extension Coordinate3D: GeoJsonConvertible {
 
 }
 
-extension Coordinate3D {
-
-    public func normalized() -> Coordinate3D {
-        var longitude = self.longitude
-
-        guard longitude < -180.0 || longitude > 180.0 else { return self }
-
-        while longitude < -180.0 { longitude += 360.0 }
-        while longitude > 180.0 { longitude -= 360.0 }
-
-        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude)
-    }
-
-}
+// MARK: - Equatable
 
 extension Coordinate3D: Equatable {
 
@@ -121,16 +146,18 @@ extension Coordinate3D: Equatable {
         rhs: Coordinate3D)
         -> Bool
     {
-        return abs(lhs.latitude - rhs.latitude) < GISTool.equalityDelta
+        abs(lhs.latitude - rhs.latitude) < GISTool.equalityDelta
             && abs(lhs.longitude - rhs.longitude) < GISTool.equalityDelta
             && lhs.altitude == rhs.altitude
     }
 
 }
 
+// MARK: - Hashable
+
 extension Coordinate3D: Hashable {}
 
-// MARK - CLLocationCoordinate2D compatiblity
+// MARK: - Coordinate2D
 
 public protocol Coordinate2D {
 
