@@ -150,12 +150,12 @@ public protocol PolygonGeometry: GeoJsonGeometry {
 
 }
 
-// MARK: - Object creators (internal use)
+// MARK: - Object creators
 
 extension GeoJson {
 
     /// Try to create an object from a JSON object
-    static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> V? {
+    public static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> V? {
         if let json = json {
             return V(json: json)
         }
@@ -163,7 +163,7 @@ extension GeoJson {
     }
 
     /// Try to create an array of objects from a JSON object
-    static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> [V]? {
+    public static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> [V]? {
         if let array = json as? [Any] {
             return array.compactMap { V(json: $0) }
         }
@@ -187,7 +187,7 @@ extension GeoJson {
     }
 
     /// Try to create a GeoJSON object from a JSON object
-    static func tryCreate(json: Any?) -> GeoJson? {
+    public static func tryCreate(json: Any?) -> GeoJson? {
         if let geoJson = json as? [String: Any],
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
@@ -210,7 +210,7 @@ extension GeoJson {
     }
 
     /// Try to create a GeoJSON geometry from a JSON object
-    static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
+    public static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
         if let geoJson = json as? [String: Any],
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
@@ -231,11 +231,19 @@ extension GeoJson {
     }
 
     /// Try to create an array of GeoJSON geometries from a JSON object
-    static func tryCreate(json: Any?) -> [GeoJsonGeometry]? {
+    public static func tryCreate(json: Any?) -> [GeoJsonGeometry]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreateGeometry(json: $0) }
         }
         return nil
+    }
+
+    /// Try to create a feature from a JSON object
+    public static func tryCreateFeature(json: Any?) -> Feature? {
+        if let geometry = tryCreateGeometry(json: json) {
+            return Feature(geometry)
+        }
+        return Feature(json: json)
     }
 
 }
