@@ -14,15 +14,20 @@ final class MultiPointTests: XCTestCase {
             "coordinates": [
                 [100.0, 0.0],
                 [101.0, 1.0]
-            ]
+            ],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let multiPoint = MultiPoint(jsonString: multiPointJson)
+    func testLoadJson() throws {
+        guard let multiPoint = MultiPoint(jsonString: multiPointJson) else {
+            throw "multiPoint is nil"
+        }
         XCTAssertNotNil(multiPoint)
-        XCTAssertEqual(multiPoint?.type, GeoJsonType.multiPoint)
-        XCTAssertEqual(multiPoint?.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        XCTAssertEqual(multiPoint.type, GeoJsonType.multiPoint)
+        XCTAssertEqual(multiPoint.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        XCTAssertEqual(multiPoint.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(multiPoint[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {

@@ -11,15 +11,19 @@ final class PointTests: XCTestCase {
     private let pointJson = """
         {
             "type": "Point",
-            "coordinates": [100.0, 0.0]
+            "coordinates": [100.0, 0.0],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let point = Point(jsonString: pointJson)
-        XCTAssertNotNil(point)
-        XCTAssertEqual(point?.type, GeoJsonType.point)
-        XCTAssertEqual(point?.coordinate, Coordinate3D(latitude: 0.0, longitude: 100.0))
+    func testLoadJson() throws {
+        guard let point = Point(jsonString: pointJson) else {
+            throw "point is nil"
+        }
+        XCTAssertEqual(point.type, GeoJsonType.point)
+        XCTAssertEqual(point.coordinate, Coordinate3D(latitude: 0.0, longitude: 100.0))
+        XCTAssertEqual(point.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(point[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {

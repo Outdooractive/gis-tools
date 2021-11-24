@@ -101,7 +101,7 @@ extension Feature {
         return previous
     }
 
-    public subscript(key: String) -> Any? {
+    public subscript<T>(key: String) -> T? {
         get {
             return property(for: key)
         }

@@ -42,7 +42,8 @@ public struct FeatureCollection: GeoJson {
         switch geoJson {
         case let featureCollection as FeatureCollection:
             self.features = featureCollection.features
-            self.boundingBox = geoJson.boundingBox
+            self.boundingBox = featureCollection.boundingBox
+            self.foreignMembers = featureCollection.foreignMembers
 
         case let feature as Feature:
             self.features = [feature]

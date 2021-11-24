@@ -14,15 +14,20 @@ final class LineStringTests: XCTestCase {
             "coordinates": [
                 [100.0, 0.0],
                 [101.0, 1.0]
-            ]
+            ],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let lineString = LineString(jsonString: lineStringJson)
+    func testLoadJson() throws {
+        guard let lineString = LineString(jsonString: lineStringJson) else {
+            throw "lineString is nil"
+        }
         XCTAssertNotNil(lineString)
-        XCTAssertEqual(lineString?.type, GeoJsonType.lineString)
-        XCTAssertEqual(lineString?.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        XCTAssertEqual(lineString.type, GeoJsonType.lineString)
+        XCTAssertEqual(lineString.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        XCTAssertEqual(lineString.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(lineString[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {

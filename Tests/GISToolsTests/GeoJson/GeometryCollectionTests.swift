@@ -20,15 +20,20 @@ final class GeometryCollectionTests: XCTestCase {
                     [101.0, 0.0],
                     [102.0, 1.0]
                 ]
-            }]
+            }],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson)
+    func testLoadJson() throws {
+        guard let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson) else {
+            throw "geometryCollection is nil"
+        }
         XCTAssertNotNil(geometryCollection)
-        XCTAssertEqual(geometryCollection?.type, GeoJsonType.geometryCollection)
-        XCTAssertEqual(geometryCollection?.geometries.count, 2)
+        XCTAssertEqual(geometryCollection.type, GeoJsonType.geometryCollection)
+        XCTAssertEqual(geometryCollection.geometries.count, 2)
+        XCTAssertEqual(geometryCollection.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(geometryCollection[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {

@@ -58,14 +58,31 @@ extension GeoJson {
 
 extension GeoJson {
 
-    public func foreignMember(for key: String) -> Any? {
-        return foreignMembers[key]
+    public func foreignMember<T>(for key: String) -> T? {
+        return foreignMembers[key] as? T
     }
 
     public mutating func setForeignMember(_ value: Any?, for key: String) {
         var updatedProperties = foreignMembers
         updatedProperties[key] = value
         foreignMembers = updatedProperties
+    }
+
+    @discardableResult
+    public mutating func removeForeignMember(for key: String) -> Any? {
+        var updatedProperties = foreignMembers
+        let previous = updatedProperties.removeValue(forKey: key)
+        foreignMembers = updatedProperties
+        return previous
+    }
+
+    public subscript<T>(foreignMember key: String) -> T? {
+        get {
+            return foreignMember(for: key)
+        }
+        set {
+            setForeignMember(newValue, for: key)
+        }
     }
 
 }

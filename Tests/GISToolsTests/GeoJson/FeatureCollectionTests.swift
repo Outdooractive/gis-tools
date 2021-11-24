@@ -55,59 +55,69 @@ final class FeatureCollectionTests: XCTestCase {
                         "this": "that"
                     }
                 }
-            }]
+            }],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let featureCollection = FeatureCollection(jsonString: featureCollectionJson)
-        XCTAssertNotNil(featureCollection)
-        XCTAssertEqual(featureCollection?.type, GeoJsonType.featureCollection)
-        XCTAssertEqual(featureCollection?.features.count, 3)
-        XCTAssertEqual(featureCollection?.features.allSatisfy({ $0.type == .feature }), true)
+    func testLoadJson() throws {
+        guard let featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
+            throw "featureCollection is nil"
+        }
+        XCTAssertEqual(featureCollection.type, GeoJsonType.featureCollection)
+        XCTAssertEqual(featureCollection.features.count, 3)
+        XCTAssertEqual(featureCollection.features.allSatisfy({ $0.type == .feature }), true)
+        XCTAssertEqual(featureCollection.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(featureCollection[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {
         // TODO
     }
 
-    func testMap() {
-        var featureCollection = FeatureCollection(jsonString: featureCollectionJson)
-        let prop0: String? = featureCollection?.features.first?.property(for: "prop0")
+    func testMap() throws {
+        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
+            throw "featureCollection is nil"
+        }
+        let prop0: String? = featureCollection.features.first?.property(for: "prop0")
 
         XCTAssertEqual(prop0, "value0")
 
-        featureCollection?.mapFeatures({ (feature) -> Feature in
+        featureCollection.mapFeatures({ (feature) -> Feature in
             var feature = feature
             feature.setProperty("value1", for: "prop0")
             return feature
         })
 
-        let prop0Updated: String? = featureCollection?.features.first?.property(for: "prop0")
+        let prop0Updated: String? = featureCollection.features.first?.property(for: "prop0")
         XCTAssertEqual(prop0Updated, "value1")
     }
 
-    func testCompactMap() {
-        var featureCollection = FeatureCollection(jsonString: featureCollectionJson)
-        XCTAssertEqual(featureCollection?.features.count, 3)
+    func testCompactMap() throws {
+        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
+            throw "featureCollection is nil"
+        }
+        XCTAssertEqual(featureCollection.features.count, 3)
 
-        featureCollection?.compactMapFeatures({ (feature) -> Feature? in
+        featureCollection.compactMapFeatures({ (feature) -> Feature? in
             guard feature.properties["prop1"] != nil else { return nil }
             return feature
         })
 
-        XCTAssertEqual(featureCollection?.features.count, 2)
+        XCTAssertEqual(featureCollection.features.count, 2)
     }
 
-    func testFilter() {
-        var featureCollection = FeatureCollection(jsonString: featureCollectionJson)
-        XCTAssertEqual(featureCollection?.features.count, 3)
+    func testFilter() throws {
+        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
+            throw "featureCollection is nil"
+        }
+        XCTAssertEqual(featureCollection.features.count, 3)
 
-        featureCollection?.filterFeatures({ (feature) -> Bool in
+        featureCollection.filterFeatures({ (feature) -> Bool in
             return feature.properties["prop1"] == nil
         })
 
-        XCTAssertEqual(featureCollection?.features.count, 1)
+        XCTAssertEqual(featureCollection.features.count, 1)
     }
 
     static var allTests = [

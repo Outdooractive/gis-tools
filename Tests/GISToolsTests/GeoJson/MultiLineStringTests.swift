@@ -20,15 +20,20 @@ final class MultiLineStringTests: XCTestCase {
                     [102.0, 2.0],
                     [103.0, 3.0]
                 ]
-            ]
+            ],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let multiLineString = MultiLineString(jsonString: multiLineStringJson)
+    func testLoadJson() throws {
+        guard let multiLineString = MultiLineString(jsonString: multiLineStringJson) else {
+            throw "multiLineString is nil"
+        }
         XCTAssertNotNil(multiLineString)
-        XCTAssertEqual(multiLineString?.type, GeoJsonType.multiLineString)
-        XCTAssertEqual(multiLineString?.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
+        XCTAssertEqual(multiLineString.type, GeoJsonType.multiLineString)
+        XCTAssertEqual(multiLineString.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
+        XCTAssertEqual(multiLineString.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(multiLineString[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {

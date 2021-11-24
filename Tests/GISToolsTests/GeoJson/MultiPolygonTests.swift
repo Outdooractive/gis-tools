@@ -37,15 +37,19 @@ final class MultiPolygonTests: XCTestCase {
                         [100.2, 0.2]
                     ]
                 ]
-            ]
+            ],
+            "other": "something else"
         }
         """
 
-    func testLoadJson() {
-        let multiPolygon = MultiPolygon(jsonString: multiPolygonJson)
-        XCTAssertNotNil(multiPolygon)
-        XCTAssertEqual(multiPolygon?.type, GeoJsonType.multiPolygon)
-        XCTAssertEqual(multiPolygon?.coordinates, [[[Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 102.0)]], [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.2, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.2)]]])
+    func testLoadJson() throws {
+        guard let multiPolygon = MultiPolygon(jsonString: multiPolygonJson) else {
+            throw "multiPolygon is nil"
+        }
+        XCTAssertEqual(multiPolygon.type, GeoJsonType.multiPolygon)
+        XCTAssertEqual(multiPolygon.coordinates, [[[Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 102.0)]], [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.2, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.2)]]])
+        XCTAssertEqual(multiPolygon.foreignMember(for: "other"), "something else")
+        XCTAssertEqual(multiPolygon[foreignMember: "other"], "something else")
     }
 
     func testCreateJson() {
