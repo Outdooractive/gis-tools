@@ -78,7 +78,7 @@ public struct Polygon: PolygonGeometry {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.polygon.rawValue,
             "coordinates": coordinates.map { $0.map { $0.asJson() } }

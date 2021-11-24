@@ -61,7 +61,7 @@ public struct Feature: GeoJson {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,

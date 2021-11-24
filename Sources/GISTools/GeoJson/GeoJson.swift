@@ -172,7 +172,7 @@ public protocol PolygonGeometry: GeoJsonGeometry {
 extension GeoJson {
 
     /// Try to create an object from a JSON object
-    public static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> V? {
+    public static func tryCreate<V: GeoJsonReadable>(json: Any?) -> V? {
         if let json = json {
             return V(json: json)
         }
@@ -180,7 +180,7 @@ extension GeoJson {
     }
 
     /// Try to create an array of objects from a JSON object
-    public static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> [V]? {
+    public static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [V]? {
         if let array = json as? [Any] {
             return array.compactMap { V(json: $0) }
         }
@@ -188,7 +188,7 @@ extension GeoJson {
     }
 
     /// Try to create an array of arrays of objects from a JSON object
-    static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> [[V]]? {
+    static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[V]]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreate(json: $0) }
         }
@@ -196,7 +196,7 @@ extension GeoJson {
     }
 
     /// Try to create an array of arrays of arrays of objects from a JSON object
-    static func tryCreate<V: GeoJsonConvertible>(json: Any?) -> [[[V]]]? {
+    static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[[V]]]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreate(json: $0) }
         }

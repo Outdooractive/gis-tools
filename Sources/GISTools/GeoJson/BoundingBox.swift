@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: BoundingBox
 
-public struct BoundingBox: GeoJsonConvertible, CustomStringConvertible {
+public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 
     public static var world: BoundingBox {
         BoundingBox(southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
@@ -91,7 +91,7 @@ public struct BoundingBox: GeoJsonConvertible, CustomStringConvertible {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [Double] {
         if southWest.altitude != nil || northEast.altitude != nil {
             return [
                 southWest.longitude,

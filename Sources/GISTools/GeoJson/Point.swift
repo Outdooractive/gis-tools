@@ -53,7 +53,7 @@ public struct Point: PointGeometry {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.point.rawValue,
             "coordinates": coordinate.asJson()

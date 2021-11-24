@@ -61,7 +61,7 @@ public struct MultiPoint: PointGeometry {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.multiPoint.rawValue,
             "coordinates": coordinates.map { $0.asJson() }

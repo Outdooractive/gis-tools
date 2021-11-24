@@ -104,7 +104,7 @@ extension Coordinate3D {
 
 // Note: The GeoJSON spec uses CRS:84 that specifies coordinates
 // in longitude/latitude order.
-extension Coordinate3D: GeoJsonConvertible {
+extension Coordinate3D: GeoJsonReadable {
 
     public init?(json: Any?) {
         guard let pointArray = json as? [Double],
@@ -122,7 +122,7 @@ extension Coordinate3D: GeoJsonConvertible {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [Double] {
         var result: [Double] = [longitude, latitude]
 
         if let altitude = altitude {

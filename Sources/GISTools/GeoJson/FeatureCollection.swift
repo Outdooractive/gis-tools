@@ -100,7 +100,7 @@ public struct FeatureCollection: GeoJson {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.featureCollection.rawValue,
             "features": features.map { $0.asJson() }

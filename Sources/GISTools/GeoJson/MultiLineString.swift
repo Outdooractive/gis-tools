@@ -69,7 +69,7 @@ public struct MultiLineString: LineStringGeometry {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.multiLineString.rawValue,
             "coordinates": coordinates.map { $0.map { $0.asJson() } }

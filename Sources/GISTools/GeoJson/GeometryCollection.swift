@@ -53,7 +53,7 @@ public struct GeometryCollection: GeoJsonGeometry {
         }
     }
 
-    public func asJson() -> Any {
+    public func asJson() -> [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.geometryCollection.rawValue,
             "geometries": geometries.map { $0.asJson() }

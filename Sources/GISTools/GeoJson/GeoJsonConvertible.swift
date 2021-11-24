@@ -1,16 +1,15 @@
 import Foundation
 
-public protocol GeoJsonConvertible {
+// MARK: GeoJsonReadable
+
+public protocol GeoJsonReadable {
 
     // Any GeoJSON object
     init?(json: Any?)
 
-    // Return the GeoJson object as JSON
-    func asJson() -> Any
-
 }
 
-extension GeoJsonConvertible {
+extension GeoJsonReadable {
 
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
@@ -28,6 +27,19 @@ extension GeoJsonConvertible {
         else { return nil }
         self.init(json: json)
     }
+
+}
+
+// MARK: - GeoJsonWritable
+
+public protocol GeoJsonWritable {
+
+    // Return the GeoJson object as JSON
+    func asJson() -> [String: Any]
+
+}
+
+extension GeoJsonWritable {
 
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
@@ -52,6 +64,10 @@ extension GeoJsonConvertible {
     }
 
 }
+
+// MARK: - GeoJsonConvertible
+
+public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
 public extension Sequence where Self.Iterator.Element: GeoJsonConvertible {
