@@ -27,14 +27,14 @@ extension Double {
     ///
     /// - Returns: The angle in radians.
     public func degreesToRadians() -> Double {
-        return self.remainder(dividingBy: 360.0) * .pi / 180.0
+        self.remainder(dividingBy: 360.0) * .pi / 180.0
     }
 
     /// Converts an angle in radians to degrees.
     ///
     /// - Returns: The radians in degrees, between 0 and 360 degrees.
     public func radiansToDegrees() -> Double {
-        return self.remainder(dividingBy: 2.0 * .pi) * 180.0 / .pi
+        self.remainder(dividingBy: 2.0 * .pi) * 180.0 / .pi
     }
 
     /// Convert a distance measurement (assuming a spherical Earth) from a real-world unit into radians.
@@ -67,7 +67,7 @@ extension Double {
     ///
     /// - Returns: The distance in degrees.
     public func lengthToDegrees(unit: GISTool.Unit = .meters) -> Double? {
-        return lengthToRadians(unit: unit)?.radiansToDegrees()
+        lengthToRadians(unit: unit)?.radiansToDegrees()
     }
 
 }
@@ -97,7 +97,7 @@ extension GISTool {
     public static func factor(for unit: Unit) -> Double? {
         switch unit {
         case .centimeters, .centimetres: return earthRadius * 100.0
-        case .degrees: return earthRadius / 111325.0
+        case .degrees: return earthRadius / 111_325.0
         case .feet: return earthRadius * 3.28084
         case .inches: return earthRadius * 39.370
         case .kilometers, .kilometres: return earthRadius / 1000.0
@@ -115,7 +115,7 @@ extension GISTool {
     public static func unitsFactor(for unit: Unit) -> Double? {
         switch unit {
         case .centimeters, .centimetres: return 100.0
-        case .degrees: return 1.0 / 111325.0
+        case .degrees: return 1.0 / 111_325.0
         case .feet: return 3.28084
         case .inches: return 39.370
         case .kilometers, .kilometres: return 1.0 / 1000.0
@@ -129,7 +129,7 @@ extension GISTool {
         }
     }
 
-     /// Area of measurement factors based on 1 square meter.
+    /// Area of measurement factors based on 1 square meter.
     public static func areaFactor(for unit: Unit) -> Double? {
         switch unit {
         case .acres: return 0.000247105
@@ -139,7 +139,7 @@ extension GISTool {
         case .kilometers, .kilometres: return 0.000001
         case .meters, .metres: return 1.0
         case .miles: return 3.86e-7
-        case .millimeters, .millimetres: return 1000000
+        case .millimeters, .millimetres: return 1_000_000
         case .yards: return 1.195990046
         default: return nil
         }
@@ -156,9 +156,9 @@ extension GISTool {
     /// Valid units: kilometers, kilometres, meters, metres, centimetres, millimeters, acres, miles, yards, feet, inches
     public static func convert(area: Double, from originalUnit: Unit, to finalUnit: Unit) -> Double? {
         guard area >= 0,
-            let startFactor = areaFactor(for: originalUnit),
-            let finalFactor = areaFactor(for: finalUnit)
-            else { return nil }
+              let startFactor = areaFactor(for: originalUnit),
+              let finalFactor = areaFactor(for: finalUnit)
+        else { return nil }
 
         return (area / startFactor) * finalFactor
     }

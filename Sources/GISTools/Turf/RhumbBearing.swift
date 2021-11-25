@@ -69,7 +69,7 @@ extension Point {
         final: Bool = false)
         -> CLLocationDegrees
     {
-        return self.coordinate.rhumbBearing(to: other.coordinate, final: final)
+        self.coordinate.rhumbBearing(to: other.coordinate, final: final)
     }
 
 }

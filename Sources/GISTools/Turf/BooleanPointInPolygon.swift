@@ -66,7 +66,7 @@ extension Ring {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        return contains(point.coordinate, ignoreBoundary: ignoreBoundary)
+        contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
 }
@@ -118,7 +118,7 @@ extension Polygon {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        return contains(point.coordinate, ignoreBoundary: ignoreBoundary)
+        contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
 }
@@ -160,7 +160,7 @@ extension MultiPolygon {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        return contains(point.coordinate, ignoreBoundary: ignoreBoundary)
+        contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
 }
@@ -172,10 +172,9 @@ extension GeometryCollection {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        return geometries.contains { (geometry) -> Bool in
-            guard let polygonGeometry = geometry as? PolygonGeometry else {
-                return false
-            }
+        geometries.contains { (geometry) -> Bool in
+            guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
+
             return polygonGeometry.contains(coordinate, ignoreBoundary: ignoreBoundary)
         }
     }
@@ -189,14 +188,12 @@ extension Feature {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        guard let polygonGeometry = geometry as? PolygonGeometry else {
-            return false
-        }
+        guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
+
         return polygonGeometry.contains(coordinate, ignoreBoundary: ignoreBoundary)
     }
 
 }
-
 
 extension FeatureCollection {
 
@@ -205,7 +202,7 @@ extension FeatureCollection {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        return features.contains(where: { $0.contains(coordinate, ignoreBoundary: ignoreBoundary) })
+        features.contains(where: { $0.contains(coordinate, ignoreBoundary: ignoreBoundary) })
     }
 
 }

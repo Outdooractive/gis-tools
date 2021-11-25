@@ -68,7 +68,7 @@ extension Point {
     ///
     /// - Parameter other: The other point
     public func rhumbDistance(from other: Point) -> CLLocationDistance {
-        return coordinate.rhumbDistance(from: other.coordinate)
+        coordinate.rhumbDistance(from: other.coordinate)
     }
 
 }

@@ -22,7 +22,7 @@ extension LineSegment {
 
     /// Tests if the *Point* is on the segment.
     public func checkIsOnSegment(_ point: Point) -> Bool {
-        return checkIsOnSegment(point.coordinate)
+        checkIsOnSegment(point.coordinate)
     }
 
 }
@@ -31,14 +31,14 @@ extension LineStringGeometry {
 
     /// Tests if the coordinate is on the line.
     public func checkIsOnLine(_ coordinate: Coordinate3D) -> Bool {
-        return lineSegments().contains { (segment) in
-            return segment.checkIsOnSegment(coordinate)
+        lineSegments().contains { (segment) in
+            segment.checkIsOnSegment(coordinate)
         }
     }
 
     /// Tests if the *Point* is on the line.
     public func checkIsOnLine(_ point: Point) -> Bool {
-        return checkIsOnLine(point.coordinate)
+        checkIsOnLine(point.coordinate)
     }
 
 }

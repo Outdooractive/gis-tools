@@ -58,7 +58,7 @@ extension Coordinate3D {
         last: Coordinate3D)
         -> CLLocationDegrees
     {
-        return angleBetween(
+        angleBetween(
             firstAzimuth: first.bearing(to: middle).bearingToAzimuth(),
             secondAzimuth: middle.bearing(to: last).bearingToAzimuth())
     }
@@ -102,7 +102,7 @@ extension Point {
         final: Bool = false)
         -> CLLocationDegrees
     {
-        return self.coordinate.bearing(to: other.coordinate, final: final)
+        self.coordinate.bearing(to: other.coordinate, final: final)
     }
 
     /// Takes three *Point*s and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
@@ -119,7 +119,7 @@ extension Point {
         last: Point)
         -> CLLocationDegrees
     {
-        return Coordinate3D.angleBetween(
+        Coordinate3D.angleBetween(
             first: first.coordinate,
             middle: middle.coordinate,
             last: last.coordinate)
@@ -130,11 +130,11 @@ extension Point {
 extension LineSegment {
 
     public var bearing: CLLocationDegrees {
-        return first.bearing(to: second)
+        first.bearing(to: second)
     }
 
     public var azimuth: CLLocationDegrees {
-        return bearing.bearingToAzimuth()
+        bearing.bearingToAzimuth()
     }
 
 }

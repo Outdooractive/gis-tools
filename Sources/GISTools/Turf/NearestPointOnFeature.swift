@@ -34,7 +34,7 @@ extension GeoJson {
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?
     {
-        if let nearest = nearestCoordinateOnFeature(from: other.coordinate)  {
+        if let nearest = nearestCoordinateOnFeature(from: other.coordinate) {
             return (point: Point(nearest.coordinate), distance: nearest.distance)
         }
         return nil

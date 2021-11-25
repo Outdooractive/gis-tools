@@ -16,7 +16,7 @@ extension GeoJson {
     }
 
     public func coordinateOnFeature() -> Coordinate3D? {
-        return coordinateOnFeature(failOnMiss: false)
+        coordinateOnFeature(failOnMiss: false)
     }
 
     private func coordinateOnFeature(failOnMiss: Bool = false) -> Coordinate3D? {

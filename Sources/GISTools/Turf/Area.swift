@@ -14,9 +14,7 @@ extension Polygon {
         var area: Double = abs(outerRing.area)
 
         if let innerRings = innerRings {
-            area += innerRings.reduce(0.0, { (result, ring) -> Double in
-                return result + abs(ring.area)
-            })
+            area += innerRings.reduce(0.0, { $0 + abs($1.area) })
         }
 
         return area
@@ -30,9 +28,7 @@ extension MultiPolygon {
     ///
     /// - Returns: The sum of all *Polygon*s areas, in square meters.
     public var area: Double {
-        return polygons.reduce(0.0) { (area, polygon) -> Double in
-            return area + polygon.area
-        }
+        polygons.reduce(0.0, { $0 + $1.area })
     }
 
 }

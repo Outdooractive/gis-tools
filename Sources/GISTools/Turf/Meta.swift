@@ -66,7 +66,7 @@ extension GeoJson {
 
         case let multiLineString as MultiLineString:
             let coordinates = multiLineString.coordinates.map({ (inner) in
-                return inner.map(transform)
+                inner.map(transform)
             })
             var newMultiLineString = MultiLineString(coordinates, calculateBoundingBox: (multiLineString.boundingBox != nil))
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
@@ -74,7 +74,7 @@ extension GeoJson {
 
         case let polygon as Polygon:
             let coordinates = polygon.coordinates.map({ (inner) in
-                return inner.map(transform)
+                inner.map(transform)
             })
             var newPolygon = Polygon(coordinates, calculateBoundingBox: (polygon.boundingBox != nil)) ?? polygon
             newPolygon.foreignMembers = polygon.foreignMembers
@@ -83,7 +83,7 @@ extension GeoJson {
         case let multiPolygon as MultiPolygon:
             let coordinates = multiPolygon.coordinates.map({ (outer) in
                 outer.map({ (inner) in
-                    return inner.map(transform)
+                    inner.map(transform)
                 })
             })
             var newMultiPolygon = MultiPolygon(coordinates, calculateBoundingBox: (multiPolygon.boundingBox != nil)) ?? multiPolygon

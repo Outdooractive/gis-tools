@@ -32,21 +32,21 @@ extension LineSegment {
             return .equal
         }
         else if tolerance == 0.0 {
-            if other.checkIsOnSegment(first) && other.checkIsOnSegment(second) {
+            if other.checkIsOnSegment(first), other.checkIsOnSegment(second) {
                 return .thisOnOther
             }
-            else if checkIsOnSegment(other.first) && checkIsOnSegment(other.second) {
+            else if checkIsOnSegment(other.first), checkIsOnSegment(other.second) {
                 return .otherOnThis
             }
         }
         else if tolerance > 0.0 {
-            if other.nearestCoordinateOnSegment(from: first).distance <= tolerance
-                && other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+            if other.nearestCoordinateOnSegment(from: first).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
             {
                 return .thisOnOther
             }
-            else if nearestCoordinateOnSegment(from: other.first).distance <= tolerance
-                && nearestCoordinateOnSegment(from: other.second).distance <= tolerance
+            else if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance
             {
                 return .otherOnThis
             }

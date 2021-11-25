@@ -44,7 +44,7 @@ extension LineString {
     ///
     /// - Returns: A *Point* *distance* meters along the line.
     public func pointAlong(distance: CLLocationDistance) -> Point {
-        return Point(coordinateAlong(distance: distance))
+        Point(coordinateAlong(distance: distance))
     }
 
 }

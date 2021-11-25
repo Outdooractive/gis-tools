@@ -44,7 +44,7 @@ extension GeoJson {
         pivot: Point? = nil)
         -> Self
     {
-        return transformedRotate(angle: angle, pivot: pivot?.coordinate)
+        transformedRotate(angle: angle, pivot: pivot?.coordinate)
     }
 
     /// Rotates the receiver with a specified angle, around its centroid or a given pivot point.

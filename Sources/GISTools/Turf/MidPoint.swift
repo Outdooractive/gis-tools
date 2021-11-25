@@ -27,7 +27,7 @@ extension Point {
     ///
     /// - Parameter other: The other point
     public func midpoint(to other: Point) -> Point {
-        return Point(self.coordinate.midpoint(to: other.coordinate))
+        Point(self.coordinate.midpoint(to: other.coordinate))
     }
 
 }

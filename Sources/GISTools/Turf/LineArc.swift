@@ -30,8 +30,8 @@ extension Point {
 
         if angle1 == angle2 {
             guard let polygon = circle(radius: radius, steps: steps),
-                let coordinates = polygon.coordinates.first
-                else { return nil }
+                  let coordinates = polygon.coordinates.first
+            else { return nil }
             return LineString(coordinates)
         }
 

@@ -9,27 +9,31 @@ extension GeoJson {
 
     // Sanity checks
 
-    // TODO
+    // TODO:
     public static func checkIsValid(
         geoJson: [String: Any],
         ofType expectedType: GeoJsonType? = nil)
         -> Bool
     {
         guard !geoJson.isEmpty,
-            let geometryType = geoJson["type"] as? String,
-            let type = GeoJsonType(rawValue: geometryType)
-            else { return false }
+              let geometryType = geoJson["type"] as? String,
+              let type = GeoJsonType(rawValue: geometryType)
+        else { return false }
 
-        if let expectedType = expectedType, expectedType != type { return false }
+        if let expectedType = expectedType,
+           expectedType != type
+        {
+            return false
+        }
 
         switch type {
         case .point:
-            guard let coordinates = geoJson["coordinates"] as? [Any], !coordinates.isEmpty else {
-                return false
-            }
+            guard let coordinates = geoJson["coordinates"] as? [Any],
+                  !coordinates.isEmpty
+            else { return false }
             return true
 
-        case .multiPoint, .lineString, .multiLineString, .polygon, .multiPolygon:
+        case .lineString, .multiLineString, .multiPoint, .multiPolygon, .polygon:
             return geoJson["coordinates"] != nil
 
         case .geometryCollection:

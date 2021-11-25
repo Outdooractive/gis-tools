@@ -24,7 +24,7 @@ extension GeoJson {
     {
         switch self {
         case let lineString as LineString:
-            var newLineString =  LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality))
+            var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality))
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
@@ -101,9 +101,9 @@ extension GeoJson {
 
 }
 
-fileprivate extension Ring {
+extension Ring {
 
-    func simplified(
+    fileprivate func simplified(
         tolerance: CLLocationDistance = 1.0,
         highQuality: Bool = false)
         -> Ring
@@ -120,8 +120,8 @@ fileprivate extension Ring {
         }
 
         if let first = simplifiedCoordinates.first,
-            let last = simplifiedCoordinates.last,
-            first != last
+           let last = simplifiedCoordinates.last,
+           first != last
         {
             simplifiedCoordinates.append(first)
         }
@@ -129,11 +129,11 @@ fileprivate extension Ring {
         return Ring(simplifiedCoordinates)
     }
 
-    static func validCoordinates(_ coordinates: [Coordinate3D]) -> Bool {
+    fileprivate static func validCoordinates(_ coordinates: [Coordinate3D]) -> Bool {
         guard coordinates.count >= 3 else { return false }
 
         if coordinates.count == 3,
-            coordinates[0] == coordinates[2]
+           coordinates[0] == coordinates[2]
         {
             return false
         }
@@ -143,7 +143,9 @@ fileprivate extension Ring {
 
 }
 
-public struct Simplify {
+// MARK: - Simplify
+
+public enum Simplify {
 
     /// Returns an array of simplified coordinates.
     ///
@@ -182,8 +184,8 @@ public struct Simplify {
         -> [Coordinate3D]
     {
         guard coordinates.count > 2,
-            let firstCoordinate = coordinates.first
-            else { return coordinates }
+              let firstCoordinate = coordinates.first
+        else { return coordinates }
 
         let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
         let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters

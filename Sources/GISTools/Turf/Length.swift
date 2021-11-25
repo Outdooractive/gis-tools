@@ -9,7 +9,7 @@ extension LineSegment {
 
     /// Returns the length of the *LineSegment*, in meters.
     public var length: CLLocationDistance {
-        return first.distance(from: second)
+        first.distance(from: second)
     }
 
 }
@@ -26,9 +26,7 @@ extension GeoJson {
     ///
     /// Everything else: returns the length of the contained geometries
     public var length: CLLocationDistance {
-        return lineSegments().reduce(0.0) { (result, segment) in
-            return result + segment.length
-        }
+        lineSegments().reduce(0.0) { $0 + $1.length }
     }
 
 }

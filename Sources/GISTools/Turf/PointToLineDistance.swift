@@ -15,7 +15,7 @@ extension LineSegment {
 
     /// Returns the minimum distance between the *Point* and the segment.
     public func distanceFrom(point: Point) -> CLLocationDistance {
-        return distanceFrom(coordinate: point.coordinate)
+        distanceFrom(coordinate: point.coordinate)
     }
 
 }
@@ -28,7 +28,7 @@ extension LineString {
         point: Point)
         -> CLLocationDistance
     {
-        return distanceFrom(coordinate: point.coordinate)
+        distanceFrom(coordinate: point.coordinate)
     }
 
     /// Returns the minimum distance between a coordinate and the receiver, being the distance

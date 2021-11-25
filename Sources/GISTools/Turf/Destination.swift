@@ -47,7 +47,7 @@ extension Point {
         bearing: CLLocationDegrees)
         -> Point
     {
-        return Point(coordinate.destination(distance: distance, bearing: bearing))
+        Point(coordinate.destination(distance: distance, bearing: bearing))
     }
 
 }

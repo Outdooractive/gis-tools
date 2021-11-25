@@ -3,6 +3,8 @@ import CoreLocation
 #endif
 import Foundation
 
+// MARK: - Projection
+
 public enum Projection: CustomStringConvertible {
 
     /// No SRID
@@ -17,7 +19,7 @@ public enum Projection: CustomStringConvertible {
         // A placeholder for 'No SRID'
         case 0: self = .noSRID
         // See https://epsg.io/3857
-        case 3857, 900913, 3587, 54004, 41001, 102113, 102100, 3785: self = .epsg3857
+        case 102_100, 102_113, 900_913, 3587, 3785, 3857, 41001, 54004: self = .epsg3857
         // See https://epsg.io/4326
         case 4326: self = .epsg4326
         default: return nil
@@ -46,7 +48,7 @@ extension Coordinate3D {
 
     /// Project EPSG:4326 to EPSG:3857
     public func projectToEpsg3857() -> CoordinateXY {
-        let originShift: Double = 20037508.342789244
+        let originShift: Double = 20_037_508.342789244
 
         let coordinate = self.normalized()
         let x: Double = coordinate.longitude * originShift / 180.0
@@ -62,7 +64,7 @@ extension CoordinateXY {
 
     /// Project EPSG:3857 to EPSG:4326
     public func projectToEpsg4326() -> Coordinate3D {
-        let originShift: Double = 20037508.342789244
+        let originShift: Double = 20_037_508.342789244
 
         let longitude: Double = (x / originShift) * 180.0
         var latitude: Double = (y / originShift) * 180.0

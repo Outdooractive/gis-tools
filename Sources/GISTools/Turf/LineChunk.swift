@@ -23,7 +23,7 @@ extension LineString {
             return MultiLineString([self])
         }
 
-        let numberOfSegments: Int = Int(ceil(lineLength / segmentLength))
+        let numberOfSegments = Int(ceil(lineLength / segmentLength))
         for index in 0 ..< numberOfSegments {
             guard let chunk = sliceAlong(startDistance: segmentLength * Double(index), stopDistance: segmentLength * Double(index + 1)) else { break }
             lineStrings.append(chunk)
@@ -41,7 +41,7 @@ extension MultiLineString {
     ///
     /// - Parameter segmentLength: How long to make each segment, in meters
     public func chunked(segmentLength: CLLocationDistance) -> MultiLineString {
-        return MultiLineString(lineStrings.flatMap({ $0.chunked(segmentLength: segmentLength).lineStrings }))
+        MultiLineString(lineStrings.flatMap({ $0.chunked(segmentLength: segmentLength).lineStrings }))
     }
 
 }

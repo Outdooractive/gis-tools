@@ -41,7 +41,7 @@ extension LineString {
             endVertex = secondVertex
         }
         else if let end = lastCoordinate {
-            endVertex = (coordinate: end, index: coordinates.count-1, distance: 0)
+            endVertex = (coordinate: end, index: coordinates.count - 1, distance: 0)
         }
         else {
             return nil
@@ -82,8 +82,8 @@ extension Feature {
         -> Feature?
     {
         guard let lineString = geometry as? LineString,
-            let lineSlice = lineString.slice(start: start, end: end)
-            else { return nil }
+              let lineSlice = lineString.slice(start: start, end: end)
+        else { return nil }
 
         var newFeature = Feature(lineSlice, properties: properties, calculateBoundingBox: (self.boundingBox != nil))
         newFeature.foreignMembers = foreignMembers

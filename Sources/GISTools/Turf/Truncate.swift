@@ -17,7 +17,7 @@ extension Coordinate3D {
         removeAltitude: Bool = false)
         -> Coordinate3D
     {
-        return Coordinate3D(
+        Coordinate3D(
             latitude: latitude.rounded(precision: precision),
             longitude: longitude.rounded(precision: precision),
             altitude: (removeAltitude ? nil : altitude?.rounded(precision: precision)))

@@ -42,12 +42,12 @@ extension LineSegment {
         r: Coordinate3D)
         -> Bool
     {
-        if q.longitude <= max(p.longitude, r.longitude)
-            && q.longitude >= min(p.longitude, r.longitude)
-            && q.latitude <= max(p.latitude, r.latitude)
-            && q.latitude >= min(p.latitude, r.latitude)
+        if q.longitude <= max(p.longitude, r.longitude),
+           q.longitude >= min(p.longitude, r.longitude),
+           q.latitude <= max(p.latitude, r.latitude),
+           q.latitude >= min(p.latitude, r.latitude)
         {
-           return true
+            return true
         }
 
         return false
@@ -91,7 +91,7 @@ extension LineSegment {
             return true
         }
 
-         // Doesn't fall in any of the above cases
+        // Doesn't fall in any of the above cases
         return false
     }
 
@@ -115,10 +115,10 @@ extension LineSegment {
         let uA: Double = numeratorA / denominator
         let uB: Double = numeratorB / denominator
 
-        if uA >= 0.0
-            && uA <= 1.0
-            && uB >= 0.0
-            && uB <= 1.0
+        if uA >= 0.0,
+           uA <= 1.0,
+           uB >= 0.0,
+           uB <= 1.0
         {
             let longitude = self.first.longitude + (uA * (self.second.longitude - self.first.longitude))
             let latitude = self.first.latitude + (uA * (self.second.latitude - self.first.latitude))
@@ -142,7 +142,7 @@ extension GeoJson {
         }
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
-            !intersects(otherBoundingBox)
+           !intersects(otherBoundingBox)
         {
             return []
         }

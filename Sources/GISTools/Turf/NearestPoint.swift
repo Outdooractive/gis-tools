@@ -11,14 +11,14 @@ extension BoundingBox {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
     {
-        return self.boundingBoxPolygon.nearestCoordinate(from: other)
+        self.boundingBoxPolygon.nearestCoordinate(from: other)
     }
 
     public func nearestPoint(
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?
     {
-        return self.boundingBoxPolygon.nearestPoint(from: other)
+        self.boundingBoxPolygon.nearestPoint(from: other)
     }
 
 }
@@ -58,7 +58,7 @@ extension GeoJson {
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?
     {
-        if let nearest = nearestCoordinate(from: other.coordinate)  {
+        if let nearest = nearestCoordinate(from: other.coordinate) {
             return (point: Point(nearest.coordinate), distance: nearest.distance)
         }
 

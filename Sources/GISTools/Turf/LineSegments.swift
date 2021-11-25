@@ -7,11 +7,11 @@ extension BoundingBox {
 
     /// Returns the receiver as *LineSegment*s.
     public func lineSegments() -> [LineSegment] {
-        return [
+        [
             LineSegment(first: northWest, second: northEast),
             LineSegment(first: northEast, second: southEast),
             LineSegment(first: southEast, second: southWest),
-            LineSegment(first: southWest, second: northWest)
+            LineSegment(first: southWest, second: northWest),
         ]
     }
 
@@ -30,12 +30,12 @@ extension GeoJson {
     /// Everything else: returns the contained geometries' coordinate pairs.
     public func lineSegments() -> [LineSegment] {
         switch self {
-        case is Point, is MultiPoint:
+        case is MultiPoint, is Point:
             return []
 
         case let lineString as LineString:
             return lineString.coordinates.overlappingPairs().map { (first, second) in
-                return LineSegment(first: first, second: second)
+                LineSegment(first: first, second: second)
             }
 
         case let multiLineString as MultiLineString:
@@ -44,7 +44,7 @@ extension GeoJson {
         case let polygon as Polygon:
             return polygon.rings.flatMap({ (ring) in
                 ring.coordinates.overlappingPairs().map { (first, second) in
-                    return LineSegment(first: first, second: second)
+                    LineSegment(first: first, second: second)
                 }
             })
 

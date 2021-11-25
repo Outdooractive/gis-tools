@@ -32,7 +32,7 @@ extension Point {
     ///
     /// - Parameter other: The other point
     public func distance(from other: Point) -> CLLocationDistance {
-        return coordinate.distance(from: other.coordinate)
+        coordinate.distance(from: other.coordinate)
     }
 
 }

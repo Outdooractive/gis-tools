@@ -52,7 +52,7 @@ extension GeoJson {
 extension Ring {
 
     public func reversed() -> Ring {
-        return Ring(coordinates.reversed())
+        Ring(coordinates.reversed())
     }
 
     public mutating func reverse() {

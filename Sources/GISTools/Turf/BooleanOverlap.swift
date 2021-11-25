@@ -130,17 +130,17 @@ extension Feature {
         -> Bool
     {
         if let first = self.geometry as? PointGeometry,
-            let second = other.geometry as? PointGeometry
+           let second = other.geometry as? PointGeometry
         {
             return first.isOverlapping(with: second, tolerance: tolerance)
         }
         else if let first = self.geometry as? LineStringGeometry,
-            let second = other.geometry as? LineStringGeometry
+                let second = other.geometry as? LineStringGeometry
         {
             return first.isOverlapping(with: second, tolerance: tolerance)
         }
         else if let first = self.geometry as? PolygonGeometry,
-            let second = other.geometry as? PolygonGeometry
+                let second = other.geometry as? PolygonGeometry
         {
             return first.isOverlapping(with: second, tolerance: tolerance)
         }

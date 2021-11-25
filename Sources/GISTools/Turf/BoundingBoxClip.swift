@@ -42,7 +42,7 @@ extension LineString {
     ///
     /// - Returns: The line clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        return MultiLineString(boundingBox.clipLine(coordinates: coordinates), calculateBoundingBox: (self.boundingBox != nil))
+        MultiLineString(boundingBox.clipLine(coordinates: coordinates), calculateBoundingBox: (self.boundingBox != nil))
     }
 
 }
@@ -55,7 +55,7 @@ extension MultiLineString {
     ///
     /// - Returns: The lines clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        return MultiLineString(coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }), calculateBoundingBox: (self.boundingBox != nil))
+        MultiLineString(coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }), calculateBoundingBox: (self.boundingBox != nil))
     }
 
 }

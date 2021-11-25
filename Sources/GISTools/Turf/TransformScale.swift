@@ -3,6 +3,8 @@ import CoreLocation
 #endif
 import Foundation
 
+// MARK: - ScaleAnchor
+
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-transform-scale
 
 public enum ScaleAnchor {
@@ -107,10 +109,10 @@ extension GeoJson {
         case .centroid:
             return centroid()?.coordinate
 
-        case .customCoordinate(let coordinate):
+        case let .customCoordinate(coordinate):
             return coordinate
 
-        case .customPoint(let point):
+        case let .customPoint(point):
             return point.coordinate
         }
     }

@@ -18,7 +18,7 @@ extension Coordinate3D {
         bearing: CLLocationDegrees)
         -> Coordinate3D
     {
-        let destination: Coordinate3D = Coordinate3D.calculateRhumbDestination(from: self, distance: distance, bearing: bearing)
+        let destination = Coordinate3D.calculateRhumbDestination(from: self, distance: distance, bearing: bearing)
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)
         // solution from https://github.com/mapbox/mapbox-gl-js/issues/3250#issuecomment-294887678
@@ -95,7 +95,7 @@ extension Point {
         bearing: CLLocationDegrees)
         -> Point
     {
-        return Point(coordinate.rhumbDestination(distance: distance, bearing: bearing))
+        Point(coordinate.rhumbDestination(distance: distance, bearing: bearing))
     }
 
 }

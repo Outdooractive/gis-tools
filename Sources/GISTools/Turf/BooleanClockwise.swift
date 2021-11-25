@@ -31,7 +31,7 @@ extension Ring {
     ///
     /// - Returns: *true* if the ring is counter-clockwise, *false* otherwise.
     public var isCounterClockwise: Bool {
-        return !isClockwise
+        !isClockwise
     }
 
 }
