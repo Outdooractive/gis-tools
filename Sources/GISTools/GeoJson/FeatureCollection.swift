@@ -114,6 +114,53 @@ public struct FeatureCollection: GeoJson {
         return result
     }
 
+}
+
+extension FeatureCollection {
+
+    public func calculateBoundingBox() -> BoundingBox? {
+        let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
+        guard !featureBoundingBoxes.isEmpty else { return nil}
+
+        return featureBoundingBoxes.reduce(featureBoundingBoxes[0]) { (result, boundingBox) -> BoundingBox in
+            return result + boundingBox
+        }
+    }
+
+    public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        if let boundingBox = boundingBox, !boundingBox.intersects(otherBoundingBox) {
+            return false
+        }
+
+        return features.contains { $0.geometry.intersects(otherBoundingBox) }
+    }
+
+}
+
+extension FeatureCollection {
+
+    public static func isValid(geoJson: [String: Any]) -> Bool {
+        return checkIsValid(geoJson: geoJson, ofType: .featureCollection)
+    }
+
+}
+
+extension FeatureCollection: Equatable {
+
+    public static func ==(
+        lhs: FeatureCollection,
+        rhs: FeatureCollection)
+        -> Bool
+    {
+        return lhs.features == rhs.features
+    }
+
+}
+
+// MARK: - Features
+
+extension FeatureCollection {
+
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
         if index < features.count {
             features.insert(feature, at: index)
@@ -155,47 +202,6 @@ public struct FeatureCollection: GeoJson {
 
     public mutating func filterFeatures(_ isIncluded: (Feature) -> Bool) {
         features = features.filter(isIncluded)
-    }
-
-}
-
-extension FeatureCollection {
-
-    public func calculateBoundingBox() -> BoundingBox? {
-        let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
-        guard !featureBoundingBoxes.isEmpty else { return nil}
-
-        return featureBoundingBoxes.reduce(featureBoundingBoxes[0]) { (result, boundingBox) -> BoundingBox in
-            return result + boundingBox
-        }
-    }
-
-    public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        if let boundingBox = boundingBox, !boundingBox.intersects(otherBoundingBox) {
-            return false
-        }
-
-        return features.contains { $0.geometry.intersects(otherBoundingBox) }
-    }
-
-}
-
-extension FeatureCollection {
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .featureCollection)
-    }
-
-}
-
-extension FeatureCollection: Equatable {
-
-    public static func ==(
-        lhs: FeatureCollection,
-        rhs: FeatureCollection)
-        -> Bool
-    {
-        return lhs.features == rhs.features
     }
 
 }

@@ -83,37 +83,6 @@ public struct Feature: GeoJson {
 
 extension Feature {
 
-    public func property<T>(for key: String) -> T? {
-        return properties[key] as? T
-    }
-
-    public mutating func setProperty(_ value: Any?, for key: String) {
-        var updatedProperties = properties
-        updatedProperties[key] = value
-        properties = updatedProperties
-    }
-
-    @discardableResult
-    public mutating func removeProperty(for key: String) -> Any? {
-        var updatedProperties = properties
-        let previous = updatedProperties.removeValue(forKey: key)
-        properties = updatedProperties
-        return previous
-    }
-
-    public subscript<T>(key: String) -> T? {
-        get {
-            return property(for: key)
-        }
-        set {
-            setProperty(newValue, for: key)
-        }
-    }
-
-}
-
-extension Feature {
-
     public func calculateBoundingBox() -> BoundingBox? {
         return geometry.boundingBox ?? geometry.calculateBoundingBox()
     }
@@ -148,6 +117,39 @@ extension Feature: Equatable {
             && lhs.properties.keys == rhs.properties.keys
         // TODO
 //            && lhs.properties == rhs.properties
+    }
+
+}
+
+// MARK: - Properties
+
+extension Feature {
+
+    public func property<T>(for key: String) -> T? {
+        return properties[key] as? T
+    }
+
+    public mutating func setProperty(_ value: Any?, for key: String) {
+        var updatedProperties = properties
+        updatedProperties[key] = value
+        properties = updatedProperties
+    }
+
+    @discardableResult
+    public mutating func removeProperty(for key: String) -> Any? {
+        var updatedProperties = properties
+        let previous = updatedProperties.removeValue(forKey: key)
+        properties = updatedProperties
+        return previous
+    }
+
+    public subscript<T>(key: String) -> T? {
+        get {
+            return property(for: key)
+        }
+        set {
+            setProperty(newValue, for: key)
+        }
     }
 
 }

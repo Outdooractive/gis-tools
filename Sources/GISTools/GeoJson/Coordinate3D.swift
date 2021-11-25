@@ -41,9 +41,10 @@ public struct Coordinate3D: CustomStringConvertible {
     }
 
     #if !os(Linux)
-    public init(_ coordinate: CLLocationCoordinate2D) {
+    public init(_ coordinate: CLLocationCoordinate2D, altitude: CLLocationDistance? = nil) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
+        self.altitude = altitude
     }
 
     public var coordinate: CLLocationCoordinate2D {
