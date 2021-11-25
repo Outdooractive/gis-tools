@@ -63,6 +63,10 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
         self.northEast = northEast
     }
 
+    public init(boundingBoxes: [BoundingBox]) {
+        self.init(coordinates: boundingBoxes.flatMap({ [$0.southWest, $0.northEast] }))
+    }
+
     public init?(json: Any?) {
         if let geoJsonCoordinates = json as? [Double] {
             if geoJsonCoordinates.count == 4 {
