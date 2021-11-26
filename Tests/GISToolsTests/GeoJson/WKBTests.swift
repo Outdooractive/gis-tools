@@ -173,23 +173,23 @@ final class WKBTests: XCTestCase {
     func testPolygonDecoding() throws {
         let polygon = try WKBCoder.decode(wkb: polygonData, projection: .epsg4326) as! Polygon
         XCTAssertEqual(polygon.rings.count, 1)
-        XCTAssertEqual(polygon.outerRing.coordinates.count, 5)
+        XCTAssertEqual(polygon.outerRing!.coordinates.count, 5)
 
         let polygonZ = try WKBCoder.decode(wkb: polygonZData, projection: .epsg4326) as! Polygon
         XCTAssertEqual(polygonZ.rings.count, 1)
-        XCTAssertEqual(polygonZ.outerRing.coordinates.count, 5)
+        XCTAssertEqual(polygonZ.outerRing!.coordinates.count, 5)
 
         let polygonM = try WKBCoder.decode(wkb: polygonMData, projection: .epsg4326) as! Polygon
         XCTAssertEqual(polygonM.rings.count, 1)
-        XCTAssertEqual(polygonM.outerRing.coordinates.count, 5)
+        XCTAssertEqual(polygonM.outerRing!.coordinates.count, 5)
 
         let polygonZM = try WKBCoder.decode(wkb: polygonZMData, projection: .epsg4326) as! Polygon
         XCTAssertEqual(polygonZM.rings.count, 1)
-        XCTAssertEqual(polygonZM.outerRing.coordinates.count, 5)
+        XCTAssertEqual(polygonZM.outerRing!.coordinates.count, 5)
 
         let polygonWithHole = try WKBCoder.decode(wkb: polygonWithHoleData, projection: .epsg4326) as! Polygon
         XCTAssertEqual(polygonWithHole.rings.count, 2)
-        XCTAssertEqual(polygonWithHole.outerRing.coordinates.count, 5)
+        XCTAssertEqual(polygonWithHole.outerRing!.coordinates.count, 5)
         XCTAssertEqual(polygonWithHole.innerRings![0].coordinates.count, 5)
     }
 

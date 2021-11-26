@@ -117,6 +117,15 @@ extension BoundingBoxRepresentable {
 
 }
 
+// MARK: - EmptyCreatable
+
+public protocol EmptyCreatable {
+
+    /// Create an empty and very probably invalid object
+    init()
+
+}
+
 // MARK: - GeoJsonGeometry
 
 // GeoJSON geometry objects: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon

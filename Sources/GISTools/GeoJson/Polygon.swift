@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct Polygon: PolygonGeometry {
+public struct Polygon: PolygonGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .polygon
@@ -19,21 +19,28 @@ public struct Polygon: PolygonGeometry {
         return [self]
     }
 
-    public var outerRing: Ring {
-        return Ring(coordinates[0] )
+    public var outerRing: Ring? {
+        guard !coordinates.isEmpty else { return nil }
+        return Ring(coordinates[0])
     }
 
     public var innerRings: [Ring]? {
         guard coordinates.count > 1 else { return nil }
-        return Array(coordinates.suffix(from: 1)).map { Ring($0) }
+        return Array(coordinates.suffix(from: 1)).compactMap { Ring($0) }
     }
 
     public var rings: [Ring] {
-        return coordinates.map { Ring($0) }
+        return coordinates.compactMap { Ring($0) }
+    }
+
+    public init() {
+        self.coordinates = []
     }
 
     public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
-        guard !coordinates.isEmpty else { return nil }
+        guard !coordinates.isEmpty,
+              coordinates[0].count >= 3
+        else { return nil }
 
         self.coordinates = coordinates
 
@@ -115,7 +122,8 @@ extension Polygon {
 extension Polygon {
 
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: outerRing.coordinates)
+        guard let coordinates = outerRing?.coordinates else { return nil }
+        return BoundingBox(coordinates: coordinates)
     }
 
     // TODO: This is not (entirely) correct, needs improvement
@@ -129,11 +137,11 @@ extension Polygon {
 
         let outerRing = self.outerRing
 
-        return outerRing.contains(otherBoundingBox.center)
-            || outerRing.contains(otherBoundingBox.northWest)
-            || outerRing.contains(otherBoundingBox.northEast)
-            || outerRing.contains(otherBoundingBox.southEast)
-            || outerRing.contains(otherBoundingBox.southWest)
+        return outerRing?.contains(otherBoundingBox.center) ?? false
+            || outerRing?.contains(otherBoundingBox.northWest) ?? false
+            || outerRing?.contains(otherBoundingBox.northEast) ?? false
+            || outerRing?.contains(otherBoundingBox.southEast) ?? false
+            || outerRing?.contains(otherBoundingBox.southWest) ?? false
     }
 
 }

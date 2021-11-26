@@ -11,6 +11,8 @@ extension Polygon {
     ///
     /// - Returns: The area of the outer ring minus the areas of the inner rings, in square meters.
     public var area: Double {
+        guard let outerRing = outerRing else { return 0.0 }
+
         var area: Double = abs(outerRing.area)
 
         if let innerRings = innerRings {

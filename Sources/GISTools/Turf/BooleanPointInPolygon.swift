@@ -90,7 +90,7 @@ extension Polygon {
             return false
         }
 
-        guard outerRing.contains(coordinate, ignoreBoundary: ignoreBoundary) else {
+        guard let outerRing = outerRing, outerRing.contains(coordinate, ignoreBoundary: ignoreBoundary) else {
             return false
         }
 

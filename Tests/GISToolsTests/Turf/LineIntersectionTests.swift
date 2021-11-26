@@ -13,12 +13,12 @@ final class LineIntersectionTests: XCTestCase {
             LineString([
                 Coordinate3D(latitude: -12.768946, longitude: 124.584961),
                 Coordinate3D(latitude: -17.224758, longitude: 126.738281)
-            ]))
+            ])!)
         let feature2 = Feature(
             LineString([
                 Coordinate3D(latitude: -15.961329, longitude: 123.354492),
                 Coordinate3D(latitude: -14.008696, longitude: 127.22168)
-            ]))
+            ])!)
 
         let intersections: [Point] = feature1.intersections(other: feature2)
         let results: [Point] = [Point(Coordinate3D(latitude: -14.835723, longitude: 125.583754))]

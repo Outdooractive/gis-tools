@@ -230,11 +230,11 @@ extension WKBCoder {
         decodeM: Bool)
         throws -> MultiPoint
     {
-        var points: [Point] = []
-
         guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiPoint(points)
+            return MultiPoint()
         }
+
+        var points: [Point] = []
 
         try count.times {
             guard let point = try decodeGeometry(bytes: bytes, offset: &offset, projection: projection) as? Point else {
@@ -243,7 +243,7 @@ extension WKBCoder {
             points.append(point)
         }
 
-        return MultiPoint(points)
+        return MultiPoint(points) ?? MultiPoint()
     }
 
     private static func decodeLineString(
@@ -255,17 +255,17 @@ extension WKBCoder {
         decodeM: Bool)
         throws -> LineString
     {
-        var coordinates: [Coordinate3D] = []
-
         guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return LineString(coordinates)
+            return LineString()
         }
+
+        var coordinates: [Coordinate3D] = []
 
         try count.times {
             coordinates.append(try decodeCoordinate(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM))
         }
 
-        return LineString(coordinates)
+        return LineString(coordinates) ?? LineString()
     }
 
     private static func decodeMultiLineString(
@@ -277,11 +277,11 @@ extension WKBCoder {
         decodeM: Bool)
         throws -> MultiLineString
     {
-        var lineStrings: [LineString] = []
-
         guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiLineString(lineStrings)
+            return MultiLineString()
         }
+
+        var lineStrings: [LineString] = []
 
         try count.times {
             guard let lineString = try decodeGeometry(bytes: bytes, offset: &offset, projection: projection) as? LineString else {
@@ -290,7 +290,7 @@ extension WKBCoder {
             lineStrings.append(lineString)
         }
 
-        return MultiLineString(lineStrings)
+        return MultiLineString(lineStrings) ?? MultiLineString()
     }
 
     private static func decodePolygon(
@@ -304,19 +304,17 @@ extension WKBCoder {
     {
         let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
         guard count > 0 else {
-            throw WKBCoderError.emptyGeometry
+            return Polygon()
         }
 
         var rings: [Ring] = []
         try count.times {
-            rings.append(Ring(try decodeLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM).coordinates))
+            if let ring = Ring(try decodeLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM).coordinates) {
+                rings.append(ring)
+            }
         }
 
-        guard let polygon = Polygon(rings) else {
-            throw WKBCoderError.invalidGeometry
-        }
-
-        return polygon
+        return Polygon(rings) ?? Polygon()
     }
 
     private static func decodeMultiPolygon(
@@ -328,11 +326,11 @@ extension WKBCoder {
         decodeM: Bool)
         throws -> MultiPolygon
     {
-        var polygons: [Polygon] = []
-
         guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiPolygon(polygons)
+            return MultiPolygon()
         }
+
+        var polygons: [Polygon] = []
 
         try count.times {
             guard let polygon = try decodeGeometry(bytes: bytes, offset: &offset, projection: projection) as? Polygon else {
@@ -341,7 +339,7 @@ extension WKBCoder {
             polygons.append(polygon)
         }
 
-        return MultiPolygon(polygons)
+        return MultiPolygon(polygons) ?? MultiPolygon()
     }
 
     private static func decodeGeometryCollection(
@@ -536,7 +534,7 @@ extension WKBCoder {
         appendByteOrder(byteOrder: byteOrder, to: &data)
         appendTypeCode(WKBTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, srid: srid, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.rings.count), byteOrder: byteOrder, to: &data)
-        value.rings.forEach({ appendLineString(LineString($0.coordinates), byteOrder: byteOrder, to: &data) })
+        value.rings.forEach({ appendLineString(LineString($0.coordinates) ?? LineString(), byteOrder: byteOrder, to: &data) })
     }
 
     private static func encode(

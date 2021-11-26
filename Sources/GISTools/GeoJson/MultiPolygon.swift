@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct MultiPolygon: PolygonGeometry {
+public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .multiPolygon
@@ -19,8 +19,15 @@ public struct MultiPolygon: PolygonGeometry {
         return coordinates.compactMap { Polygon($0) }
     }
 
+    public init() {
+        self.coordinates = []
+    }
+
     public init?(_ coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
-        guard !coordinates.isEmpty else { return nil }
+        guard !coordinates.isEmpty,
+              !coordinates[0].isEmpty,
+              coordinates[0][0].count >= 3
+        else { return nil }
 
         self.coordinates = coordinates
 
@@ -29,7 +36,9 @@ public struct MultiPolygon: PolygonGeometry {
         }
     }
 
-    public init(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
+    public init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
+        guard !polygons.isEmpty else { return nil }
+
         self.coordinates = polygons.map { $0.coordinates }
 
         if calculateBoundingBox {

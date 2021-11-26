@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct MultiLineString: LineStringGeometry {
+public struct MultiLineString: LineStringGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .multiLineString
@@ -16,10 +16,18 @@ public struct MultiLineString: LineStringGeometry {
     public var foreignMembers: [String: Any] = [:]
 
     public var lineStrings: [LineString] {
-        return coordinates.map { LineString($0) }
+        return coordinates.compactMap { LineString($0) }
     }
 
-    public init(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
+    public init() {
+        self.coordinates = []
+    }
+
+    public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
+        guard !coordinates.isEmpty,
+              coordinates[0].count >= 2
+        else { return nil }
+
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -27,7 +35,9 @@ public struct MultiLineString: LineStringGeometry {
         }
     }
 
-    public init(_ lineStrings: [LineString], calculateBoundingBox: Bool = false) {
+    public init?(_ lineStrings: [LineString], calculateBoundingBox: Bool = false) {
+        guard !lineStrings.isEmpty else { return nil }
+
         self.coordinates = lineStrings.map { $0.coordinates }
 
         if calculateBoundingBox {
@@ -35,7 +45,9 @@ public struct MultiLineString: LineStringGeometry {
         }
     }
 
-    public init(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
+    public init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
+        guard !lineSegments.isEmpty else { return nil }
+
         self.coordinates = lineSegments.map({ $0.coordinates })
 
         if calculateBoundingBox {
@@ -102,11 +114,11 @@ extension MultiLineString {
 #if !os(Linux)
 extension MultiLineString {
 
-    public init(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
-    public init(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 

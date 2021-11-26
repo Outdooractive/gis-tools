@@ -158,21 +158,19 @@ extension WKTCoder {
                 scanner.currentIndex = scanner.string.index(after: location)
 
                 while scanner.scanString(")") == nil {
-                    guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
-                        throw WKTCoderError.dataCorrupted
+                    if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
+                        points.append(contentsOf: coordinates.map({ Point($0) }))
                     }
-                    points.append(contentsOf: coordinates.map({ Point($0) }))
                     _ = scanner.scanString(",")
                 }
             }
             else {
-                guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
-                    throw WKTCoderError.dataCorrupted
+                if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
+                    points.append(contentsOf: coordinates.map({ Point($0) }))
                 }
-                points.append(contentsOf: coordinates.map({ Point($0) }))
             }
 
-            return MultiPoint(points)
+            return MultiPoint(points) ?? MultiPoint()
 
         case .lineString:
             return try decodeLineString(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
@@ -189,7 +187,7 @@ extension WKTCoder {
                 _ = scanner.scanString(",")
             }
 
-            return MultiLineString(lineStrings)
+            return MultiLineString(lineStrings) ?? MultiLineString()
 
         case .polygon:
             return try decodePolygon(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
@@ -206,7 +204,7 @@ extension WKTCoder {
                 _ = scanner.scanString(",")
             }
 
-            return MultiPolygon(polygons)
+            return MultiPolygon(polygons) ?? MultiPolygon()
 
         case .geometryCollection:
             var geometries: [GeoJsonGeometry] = []
@@ -231,10 +229,13 @@ extension WKTCoder {
         decodeM: Bool)
         throws -> LineString
     {
-        guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
-            throw WKTCoderError.dataCorrupted
+        if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
+            guard let lineString = LineString(coordinates) else {
+                throw WKTCoderError.dataCorrupted
+            }
+            return lineString
         }
-        return LineString(coordinates)
+        return LineString()
     }
 
     private static func decodePolygon(
@@ -251,17 +252,22 @@ extension WKTCoder {
         }
 
         while scanner.scanString(")") == nil {
-            guard let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) else {
-                throw WKTCoderError.dataCorrupted
+            if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
+                guard let ring = Ring(coordinates) else {
+                    throw WKTCoderError.dataCorrupted
+                }
+                rings.append(ring)
             }
-            rings.append(Ring(coordinates))
             _ = scanner.scanString(",")
+        }
+
+        if rings.isEmpty {
+            return Polygon()
         }
 
         guard let polygon = Polygon(rings) else {
             throw WKTCoderError.dataCorrupted
         }
-
         return polygon
     }
 

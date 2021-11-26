@@ -24,7 +24,7 @@ extension GeoJson {
     {
         switch self {
         case let lineString as LineString:
-            var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality))
+            var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
@@ -32,7 +32,7 @@ extension GeoJson {
         case let multiLineString as MultiLineString:
             var newMultiLineString = MultiLineString(multiLineString.lineStrings.map({
                 $0.simplified(tolerance: tolerance, highQuality: highQuality)
-            }))
+            })) ?? multiLineString
             newMultiLineString.boundingBox = multiLineString.boundingBox
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self
@@ -48,7 +48,7 @@ extension GeoJson {
         case let multiPolygon as MultiPolygon:
             var newMultiPolygon = MultiPolygon(multiPolygon.polygons.map({
                 $0.simplified(tolerance: tolerance, highQuality: highQuality)
-            }))
+            })) ?? multiPolygon
             newMultiPolygon.boundingBox = multiPolygon.boundingBox
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
             return newMultiPolygon as! Self
@@ -126,7 +126,7 @@ extension Ring {
             simplifiedCoordinates.append(first)
         }
 
-        return Ring(simplifiedCoordinates)
+        return Ring(simplifiedCoordinates) ?? self
     }
 
     fileprivate static func validCoordinates(_ coordinates: [Coordinate3D]) -> Bool {

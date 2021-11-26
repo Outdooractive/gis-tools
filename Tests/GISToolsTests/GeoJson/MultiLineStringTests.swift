@@ -37,7 +37,7 @@ final class MultiLineStringTests: XCTestCase {
     }
 
     func testCreateJson() {
-        let multiLineString = MultiLineString([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
+        let multiLineString = MultiLineString([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])!
 
         let string = multiLineString.asJsonString()!
         XCTAssert(string.contains("\"type\":\"MultiLineString\""))

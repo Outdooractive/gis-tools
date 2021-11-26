@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct MultiPoint: PointGeometry {
+public struct MultiPoint: PointGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .multiPoint
@@ -19,7 +19,13 @@ public struct MultiPoint: PointGeometry {
         return coordinates.map { Point($0) }
     }
 
-    public init(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
+    public init() {
+        self.coordinates = []
+    }
+
+    public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
+        guard !coordinates.isEmpty else { return nil }
+
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -27,7 +33,9 @@ public struct MultiPoint: PointGeometry {
         }
     }
 
-    public init(_ points: [Point], calculateBoundingBox: Bool = false) {
+    public init?(_ points: [Point], calculateBoundingBox: Bool = false) {
+        guard !points.isEmpty else { return nil }
+
         self.coordinates = points.map { $0.coordinate }
 
         if calculateBoundingBox {
@@ -82,11 +90,11 @@ public struct MultiPoint: PointGeometry {
 #if !os(Linux)
 extension MultiPoint {
 
-    public init(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 
-    public init(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 

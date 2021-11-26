@@ -49,27 +49,27 @@ extension GeoJson {
             return newPoint as! Self
 
         case let multiPoint as MultiPoint:
-            var newMultiPoint = MultiPoint(multiPoint.coordinates.map({
+            guard var newMultiPoint = MultiPoint(multiPoint.coordinates.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude)
-            }))
+            })) else { return self }
             newMultiPoint.boundingBox = multiPoint.boundingBox
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
             return newMultiPoint as! Self
 
         case let lineString as LineString:
-            var newLineString = LineString(lineString.coordinates.map({
+            guard var newLineString = LineString(lineString.coordinates.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude)
-            }))
+            }))  else { return self }
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
 
         case let multiLineString as MultiLineString:
-            var newMultiLineString = MultiLineString(multiLineString.coordinates.map({
+            guard var newMultiLineString = MultiLineString(multiLineString.coordinates.map({
                 $0.map({
                     $0.truncated(precision: precision, removeAltitude: removeAltitude)
                 })
-            }))
+            }))  else { return self }
             newMultiLineString.boundingBox = multiLineString.boundingBox
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self

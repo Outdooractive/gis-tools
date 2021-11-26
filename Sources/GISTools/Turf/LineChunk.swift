@@ -12,15 +12,15 @@ extension LineString {
     ///
     /// - Parameter segmentLength: How long to make each segment, in meters
     public func chunked(segmentLength: CLLocationDistance) -> MultiLineString {
-        var lineStrings: [LineString] = []
-
-        guard segmentLength > 0.0 else {
-            return MultiLineString(lineStrings)
+        guard self.hasValidCoordinates, segmentLength > 0.0 else {
+            return MultiLineString()
         }
+
+        var lineStrings: [LineString] = []
 
         let lineLength = self.length
         if lineLength < segmentLength {
-            return MultiLineString([self])
+            return MultiLineString([self]) ?? MultiLineString()
         }
 
         let numberOfSegments = Int(ceil(lineLength / segmentLength))
@@ -29,7 +29,7 @@ extension LineString {
             lineStrings.append(chunk)
         }
 
-        return MultiLineString(lineStrings)
+        return MultiLineString(lineStrings) ?? MultiLineString()
     }
 
 }
@@ -41,7 +41,7 @@ extension MultiLineString {
     ///
     /// - Parameter segmentLength: How long to make each segment, in meters
     public func chunked(segmentLength: CLLocationDistance) -> MultiLineString {
-        MultiLineString(lineStrings.flatMap({ $0.chunked(segmentLength: segmentLength).lineStrings }))
+        MultiLineString(lineStrings.flatMap({ $0.chunked(segmentLength: segmentLength).lineStrings })) ?? self
     }
 
 }

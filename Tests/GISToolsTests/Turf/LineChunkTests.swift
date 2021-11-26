@@ -13,7 +13,7 @@ final class LineChunkTests: XCTestCase {
         Coordinate3D(latitude: 40.17887331434696, longitude: -85.98587036132812),
         Coordinate3D(latitude: 40.08857859823707, longitude: -85.97213745117188),
         Coordinate3D(latitude: 40.15578608609647, longitude: -85.77987670898438),
-    ])
+    ])!
 
     func testLineChunkShort() {
         let segmentLength: CLLocationDistance = GISTool.convert(length: 5.0, from: .miles, to: .meters)!

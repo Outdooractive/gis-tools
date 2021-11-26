@@ -8,13 +8,13 @@ extension GeoJson {
     public func reversed() -> Self {
         switch self {
         case let lineString as LineString:
-            var newLineString = LineString(lineString.coordinates.reversed())
+            var newLineString = LineString(lineString.coordinates.reversed()) ?? lineString
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
 
         case let multiLineString as MultiLineString:
-            var newMultiLineString = MultiLineString(multiLineString.coordinates.map({ $0.reversed() }))
+            var newMultiLineString = MultiLineString(multiLineString.coordinates.map({ $0.reversed() })) ?? multiLineString
             newMultiLineString.boundingBox = multiLineString.boundingBox
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self
@@ -52,7 +52,7 @@ extension GeoJson {
 extension Ring {
 
     public func reversed() -> Ring {
-        Ring(coordinates.reversed())
+        Ring(coordinates.reversed()) ?? self
     }
 
     public mutating func reverse() {

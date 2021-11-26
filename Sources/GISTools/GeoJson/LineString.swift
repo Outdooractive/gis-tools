@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct LineString: LineStringGeometry {
+public struct LineString: LineStringGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .lineString
@@ -19,7 +19,13 @@ public struct LineString: LineStringGeometry {
         return [self]
     }
 
-    public init(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
+    public init() {
+        self.coordinates = []
+    }
+
+    public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
+        guard coordinates.count >= 2 else { return nil }
+
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -94,11 +100,11 @@ extension LineString {
 #if !os(Linux)
 extension LineString {
 
-    public init(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 
-    public init(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
+    public init?(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 

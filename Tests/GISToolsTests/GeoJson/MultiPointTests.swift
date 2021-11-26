@@ -31,7 +31,7 @@ final class MultiPointTests: XCTestCase {
     }
 
     func testCreateJson() {
-        let multiPoint = MultiPoint([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        let multiPoint = MultiPoint([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])!
 
         let string = multiPoint.asJsonString()!
         XCTAssert(string.contains("\"type\":\"MultiPoint\""))

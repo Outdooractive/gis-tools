@@ -31,7 +31,7 @@ final class LineStringTests: XCTestCase {
     }
 
     func testCreateJson() {
-        let lineString = LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
+        let lineString = LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])!
 
         let string = lineString.asJsonString()!
         XCTAssert(string.contains("\"type\":\"LineString\""))

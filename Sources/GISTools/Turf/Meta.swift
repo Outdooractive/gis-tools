@@ -55,12 +55,12 @@ extension GeoJson {
             return newPoint as! Self
 
         case let multiPoint as MultiPoint:
-            var newMultiPoint = MultiPoint(multiPoint.coordinates.map(transform), calculateBoundingBox: (multiPoint.boundingBox != nil))
+            var newMultiPoint = MultiPoint(multiPoint.coordinates.map(transform), calculateBoundingBox: (multiPoint.boundingBox != nil)) ?? multiPoint
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
             return newMultiPoint as! Self
 
         case let lineString as LineString:
-            var newLineString = LineString(lineString.coordinates.map(transform), calculateBoundingBox: (lineString.boundingBox != nil))
+            var newLineString = LineString(lineString.coordinates.map(transform), calculateBoundingBox: (lineString.boundingBox != nil)) ?? lineString
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
 
@@ -68,7 +68,7 @@ extension GeoJson {
             let coordinates = multiLineString.coordinates.map({ (inner) in
                 inner.map(transform)
             })
-            var newMultiLineString = MultiLineString(coordinates, calculateBoundingBox: (multiLineString.boundingBox != nil))
+            var newMultiLineString = MultiLineString(coordinates, calculateBoundingBox: (multiLineString.boundingBox != nil)) ?? multiLineString
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self
 

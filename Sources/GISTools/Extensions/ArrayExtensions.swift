@@ -4,11 +4,11 @@ import Foundation
 
 extension Array where Element == Coordinate3D {
 
-    public func toMultiPoint() -> MultiPoint {
+    public func toMultiPoint() -> MultiPoint? {
         MultiPoint(self)
     }
 
-    public func toLineString() -> LineString {
+    public func toLineString() -> LineString? {
         LineString(self)
     }
 
@@ -16,7 +16,7 @@ extension Array where Element == Coordinate3D {
         Polygon([self])
     }
 
-    public func toRing() -> Ring {
+    public func toRing() -> Ring? {
         Ring(self)
     }
 

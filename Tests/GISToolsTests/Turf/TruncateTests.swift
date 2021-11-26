@@ -26,7 +26,7 @@ final class TruncateTests: XCTestCase {
                 Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
                 Coordinate3D(latitude: 9.1234567, longitude: 9.1234567)
             ],
-            calculateBoundingBox: true)
+            calculateBoundingBox: true)!
 
         let truncated = multiPoint.truncated(precision: 2, removeAltitude: true)
         XCTAssertEqual(truncated.coordinates[0].latitude, 123.46)
@@ -44,7 +44,7 @@ final class TruncateTests: XCTestCase {
                 Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
                 Coordinate3D(latitude: 9.1234567, longitude: 9.1234567)
             ],
-            calculateBoundingBox: true)
+            calculateBoundingBox: true)!
 
         let truncated = lineString.truncated(precision: 2, removeAltitude: true)
         XCTAssertEqual(truncated.coordinates[0].latitude, 123.46)
@@ -68,7 +68,7 @@ final class TruncateTests: XCTestCase {
                     Coordinate3D(latitude: 3.0, longitude: 103.0)
                 ]
             ],
-            calculateBoundingBox: true)
+            calculateBoundingBox: true)!
 
         let truncated = multiLineString.truncated(precision: 2, removeAltitude: true)
         XCTAssertEqual(truncated.coordinates[0][0].latitude, 123.46)

@@ -13,8 +13,8 @@ final class CircleTests: XCTestCase {
         let circle = point.circle(radius: 5000.0)
         let expected = TestData.polygon(package: "Circle", name: "CircleResult")
 
-        let circleCoordinates = circle!.outerRing.coordinates
-        let expectedCoordinates = expected.outerRing.coordinates
+        let circleCoordinates = circle!.outerRing!.coordinates
+        let expectedCoordinates = expected.outerRing!.coordinates
 
         XCTAssertEqual(circleCoordinates.count, expectedCoordinates.count)
 
