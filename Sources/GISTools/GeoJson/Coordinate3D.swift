@@ -144,6 +144,33 @@ extension Coordinate3D: GeoJsonReadable {
 
 }
 
+// Custom implementation, because the protocol has different prerequisites
+extension Coordinate3D {
+
+    public func asJsonData(prettyPrinted: Bool = false) -> Data? {
+        var options: JSONSerialization.WritingOptions = []
+        if prettyPrinted {
+            options.insert(.prettyPrinted)
+            if #available(OSX 10.13, iOS 11.0, *) {
+                options.insert(.sortedKeys)
+            }
+        }
+
+        return try? JSONSerialization.data(withJSONObject: asJson(), options: options)
+    }
+
+    public func asJsonString(prettyPrinted: Bool = false) -> String? {
+        guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
+
+        return String(data: data, encoding: .utf8)!
+    }
+
+    public func write(to url: URL, prettyPrinted: Bool = false) throws {
+        try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
+    }
+
+}
+
 // MARK: - Equatable
 
 extension Coordinate3D: Equatable {
