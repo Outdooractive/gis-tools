@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: Private
+
 extension Data {
 
     /// Parses data from a hex string

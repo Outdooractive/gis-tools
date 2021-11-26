@@ -28,6 +28,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
     }
 
     public init(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
+        assert(coordinates.count > 0, "coordinates must not be an empty array.")
+
         var southWest = Coordinate3D(latitude: .infinity, longitude: .infinity)
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
 
@@ -68,6 +70,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
     }
 
     public init?(json: Any?) {
+        // GeoJSON
         if let geoJsonCoordinates = json as? [Double] {
             if geoJsonCoordinates.count == 4 {
                 self.southWest = Coordinate3D(latitude: geoJsonCoordinates[1], longitude: geoJsonCoordinates[0])
@@ -80,7 +83,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
             }
             return nil
         }
-        // Not GeoJSON stanard
+        // Not GeoJSON
         else if let geoJsonCoordinates = json as? [[Double]],
                 !geoJsonCoordinates.isEmpty
         {
@@ -122,11 +125,53 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
             paddingKilometers: paddingKilometers)
     }
 
+    public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
+        BoundingBox(
+            southWest: Coordinate3D(latitude: southWest.latitude - degrees, longitude: southWest.longitude - degrees),
+            northEast: Coordinate3D(latitude: northEast.latitude + degrees, longitude: northEast.longitude + degrees))
+    }
+
+    public func expand(distance: CLLocationDistance) -> BoundingBox {
+        BoundingBox(
+            southWest: southWest.destination(distance: distance, bearing: 225.0),
+            northEast: northEast.destination(distance: distance, bearing: 45.0))
+    }
+
+    public func expand(including coordinate: Coordinate3D) -> BoundingBox {
+        return BoundingBox(coordinates: [southWest, northEast, coordinate])
+    }
+
+    public func expand(including boundingBox: BoundingBox) -> BoundingBox {
+        return BoundingBox(coordinates: [southWest, northEast, boundingBox.southWest, boundingBox.northEast])
+    }
+
     public var description: String {
         "[[\(southWest.longitude),\(southWest.latitude)],[\(northEast.longitude),\(northEast.latitude)]]"
     }
 
 }
+
+#if !os(Linux)
+extension BoundingBox {
+
+    public init(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double = 0.0) {
+        self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
+    }
+
+    public init(southWest: CLLocationCoordinate2D, northEast: CLLocationCoordinate2D) {
+        self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
+    }
+
+    public init(coordinates: [CLLocation], paddingKilometers: Double = 0.0) {
+        self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
+    }
+
+    public init(southWest: CLLocation, northEast: CLLocation) {
+        self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
+    }
+
+}
+#endif
 
 extension BoundingBox {
 
@@ -141,18 +186,7 @@ extension BoundingBox {
     /// The center of the coordinate bounds
     public var center: Coordinate3D {
         let boundingBox = self.normalized()
-
-        let southWestLongitude = boundingBox.southWest.longitude
-        var northEastLongitude = boundingBox.northEast.longitude
-
-        while northEastLongitude < southWestLongitude {
-            northEastLongitude += 360.0
-        }
-
-        let latitude = boundingBox.southWest.latitude + (boundingBox.northEast.latitude - boundingBox.southWest.latitude) / 2.0
-        let longitude = southWestLongitude + (northEastLongitude - southWestLongitude) / 2.0
-
-        return Coordinate3D(latitude: latitude, longitude: longitude).normalized()
+        return boundingBox.southWest.midpoint(to: boundingBox.northEast)
     }
 
     public func contains(_ coordinate: Coordinate3D) -> Bool {

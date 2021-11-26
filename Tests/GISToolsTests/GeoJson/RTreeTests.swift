@@ -17,7 +17,7 @@ final class RTreeTests: XCTestCase {
 
     func testSimplePoints() throws {
         var nodes: [Point] = []
-        try 5.times {
+        5.times {
             nodes.append(Point(Coordinate3D(
                 latitude: Double.random(in: -10.0 ... 10.0),
                 longitude: Double.random(in: -10.0 ... 10.0))))
@@ -49,9 +49,9 @@ final class RTreeTests: XCTestCase {
     }
 
     func testRTree() throws {
-        try 100.times {
+        100.times {
             var nodes: [Point] = []
-            try Int.random(in: 10 ... 1000).times {
+            Int.random(in: 10 ... 1000).times {
                 nodes.append(Point(Coordinate3D(
                     latitude: Double.random(in: -10.0 ... 10.0),
                     longitude: Double.random(in: -10.0 ... 10.0))))
@@ -85,9 +85,9 @@ final class RTreeTests: XCTestCase {
     }
 
     func testAroundSearch() throws {
-        try 100.times {
+        100.times {
             var nodes: [Point] = []
-            try Int.random(in: 1000 ... 10000).times {
+            Int.random(in: 1000 ... 10000).times {
                 nodes.append(Point(Coordinate3D(
                     latitude: Double.random(in: -10.0 ... 10.0),
                     longitude: Double.random(in: -10.0 ... 10.0))))
@@ -129,7 +129,7 @@ final class RTreeTests: XCTestCase {
         for nodeSize in 4 ... 512 {
             for objectCount in stride(from: nodeSize * 2, to: 10000, by: 10) {
                 var nodes: [Point] = []
-                try objectCount.times {
+                objectCount.times {
                     nodes.append(Point(Coordinate3D(
                         latitude: Double.random(in: -30.0 ... 30.0),
                         longitude: Double.random(in: -30.0 ... 30.0))))

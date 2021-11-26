@@ -416,7 +416,7 @@ final class BoundingBoxTests: XCTestCase {
             northEast: Coordinate3D(
                 latitude: 20.0,
                 longitude: 20.0))
-        let center = Coordinate3D(latitude: 10.0, longitude: 10.0)
+        let center = Coordinate3D(latitude: 10.150932342575627, longitude: 9.685895184381804)
 
         let point = boundingBox.center
         XCTAssertTrue(point == center, "\(point) != \(center)")
@@ -430,7 +430,7 @@ final class BoundingBoxTests: XCTestCase {
             northEast: Coordinate3D(
                 latitude: 30.0,
                 longitude: 190.0))
-        let center = Coordinate3D(latitude: 15.0, longitude: 175.0)
+        let center = Coordinate3D(latitude: 15.501359566937001, longitude: 173.897886248014)
 
         let point = boundingBox.center
         XCTAssertTrue(point == center, "\(point) != \(center)")
@@ -444,7 +444,7 @@ final class BoundingBoxTests: XCTestCase {
             northEast: Coordinate3D(
                 latitude: 30.0,
                 longitude: -170.0))
-        let center = Coordinate3D(latitude: 15.0, longitude: 175.0)
+        let center = Coordinate3D(latitude: 15.501359566937001, longitude: 173.897886248014)
 
         let point = boundingBox.center
         XCTAssertTrue(point == center, "\(point) != \(center)")

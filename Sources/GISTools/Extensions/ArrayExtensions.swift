@@ -22,7 +22,7 @@ extension Array where Element == Coordinate3D {
 
 }
 
-// MARK: - Internal
+// MARK: - Private
 
 extension Array {
 

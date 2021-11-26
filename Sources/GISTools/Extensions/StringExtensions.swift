@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: Private
+
 extension String {
 
     /// Tries to convert a String to an Int
