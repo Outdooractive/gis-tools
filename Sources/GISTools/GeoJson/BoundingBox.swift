@@ -151,6 +151,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 
 }
 
+// MARK: - CoreLocation compatibility
+
 #if !os(Linux)
 extension BoundingBox {
 
@@ -173,6 +175,8 @@ extension BoundingBox {
 }
 #endif
 
+// MARK: - Convenience
+
 extension BoundingBox {
 
     public var boundingBoxPolygon: Polygon {
@@ -187,6 +191,14 @@ extension BoundingBox {
     public var center: Coordinate3D {
         let boundingBox = self.normalized()
         return boundingBox.southWest.midpoint(to: boundingBox.northEast)
+    }
+
+    /// The area in square meters (approximation)
+    public var area: Double {
+        let leftSideLength = southWest.location.distance(from: CLLocation(latitude: northEast.latitude, longitude: southWest.longitude))
+        let bottomSideLength = southWest.location.distance(from: CLLocation(latitude: southWest.latitude, longitude: northEast.longitude))
+
+        return leftSideLength * bottomSideLength
     }
 
     public func contains(_ coordinate: Coordinate3D) -> Bool {
@@ -339,14 +351,6 @@ extension BoundingBox {
         return BoundingBox(
             southWest: southWest.normalized(),
             northEast: northEast.normalized())
-    }
-
-    /// The area in square meters (approximation)
-    public var area: Double {
-        let leftSideLength = southWest.location.distance(from: CLLocation(latitude: northEast.latitude, longitude: southWest.longitude))
-        let bottomSideLength = southWest.location.distance(from: CLLocation(latitude: southWest.latitude, longitude: northEast.longitude))
-
-        return leftSideLength * bottomSideLength
     }
 
 }

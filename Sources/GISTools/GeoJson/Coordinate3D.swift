@@ -40,7 +40,27 @@ public struct Coordinate3D: CustomStringConvertible {
         self.m = m
     }
 
-    #if !os(Linux)
+    public var description: String {
+        var compontents: [String] = [
+            "longitude: \(longitude)",
+            "latitude: \(latitude)",
+        ]
+        if let altitude = altitude {
+            compontents.append("altitude: \(altitude)")
+        }
+        if let m = m {
+            compontents.append("m: \(m)")
+        }
+        return "Coordinate3D(\(compontents.joined(separator: ", ")))"
+    }
+
+}
+
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension Coordinate3D {
+
     public init(_ coordinate: CLLocationCoordinate2D, altitude: CLLocationDistance? = nil) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
@@ -68,23 +88,9 @@ public struct Coordinate3D: CustomStringConvertible {
             verticalAccuracy: (altitude == nil ? -1.0 : 1.0), // valid if altitude != nil
             timestamp: Date())
     }
-    #endif
-
-    public var description: String {
-        var compontents: [String] = [
-            "longitude: \(longitude)",
-            "latitude: \(latitude)",
-        ]
-        if let altitude = altitude {
-            compontents.append("altitude: \(altitude)")
-        }
-        if let m = m {
-            compontents.append("m: \(m)")
-        }
-        return "Coordinate3D(\(compontents.joined(separator: ", ")))"
-    }
 
 }
+#endif
 
 extension Coordinate3D {
 

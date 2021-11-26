@@ -77,6 +77,24 @@ public struct MultiPoint: PointGeometry {
 
 }
 
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension MultiPoint {
+
+    public init(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+}
+#endif
+
+// MARK: - BoundingBox
+
 extension MultiPoint {
 
     public func calculateBoundingBox() -> BoundingBox? {

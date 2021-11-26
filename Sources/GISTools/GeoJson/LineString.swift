@@ -89,6 +89,24 @@ extension LineString {
 
 }
 
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension LineString {
+
+    public init(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+}
+#endif
+
+// MARK: - BoundingBox
+
 extension LineString {
 
     public func calculateBoundingBox() -> BoundingBox? {
@@ -151,6 +169,8 @@ extension LineString {
     }
 
 }
+
+// MARK: - Equatable
 
 extension LineString: Equatable {
 

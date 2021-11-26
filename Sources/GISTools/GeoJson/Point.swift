@@ -69,6 +69,24 @@ public struct Point: PointGeometry {
 
 }
 
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension Point {
+
+    public init(_ coordinate: CLLocationCoordinate2D, calculateBoundingBox: Bool = false) {
+        self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(_ coordinate: CLLocation, calculateBoundingBox: Bool = false) {
+        self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
+    }
+
+}
+#endif
+
+// MARK: - BoundingBox
+
 extension Point {
 
     public func calculateBoundingBox() -> BoundingBox? {

@@ -33,6 +33,32 @@ extension LineSegment {
 
 }
 
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension LineSegment {
+
+    public init(
+        first: CLLocationCoordinate2D,
+        second: CLLocationCoordinate2D,
+        calculateBoundingBox: Bool = false)
+    {
+        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(
+        first: CLLocation,
+        second: CLLocation,
+        calculateBoundingBox: Bool = false)
+    {
+        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+    }
+
+}
+#endif
+
+// MARK: - BoundingBoxRepresentable
+
 extension LineSegment: BoundingBoxRepresentable {
 
     public func calculateBoundingBox() -> BoundingBox? {
@@ -73,6 +99,8 @@ extension LineSegment: BoundingBoxRepresentable {
 
 }
 
+// MARK: - Equatable
+
 extension LineSegment: Equatable {
 
     public static func ==(
@@ -85,5 +113,7 @@ extension LineSegment: Equatable {
     }
 
 }
+
+// MARK: - Hashable
 
 extension LineSegment: Hashable {}

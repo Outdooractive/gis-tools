@@ -13,3 +13,19 @@ public struct Ring {
     }
 
 }
+
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension Ring {
+
+    public init(_ coordinates: [CLLocationCoordinate2D]) {
+        self.init(coordinates.map({ Coordinate3D($0) }))
+    }
+
+    public init(_ coordinates: [CLLocation]) {
+        self.init(coordinates.map({ Coordinate3D($0) }))
+    }
+
+}
+#endif

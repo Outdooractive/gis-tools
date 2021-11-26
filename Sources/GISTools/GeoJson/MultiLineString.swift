@@ -97,6 +97,24 @@ extension MultiLineString {
 
 }
 
+// MARK: - CoreLocation compatibility
+
+#if !os(Linux)
+extension MultiLineString {
+
+    public init(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
+        self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
+    }
+
+}
+#endif
+
+// MARK: - BoundingBox
+
 extension MultiLineString {
 
     public func calculateBoundingBox() -> BoundingBox? {
