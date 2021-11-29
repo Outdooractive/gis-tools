@@ -77,7 +77,7 @@ extension Polygon {
             if clipped.first != clipped.last {
                 clipped.append(clipped[0])
             }
-            if clipped.count >= 4, let ring = Ring(clipped) {
+            if let ring = Ring(clipped) {
                 result.append(ring)
             }
         }

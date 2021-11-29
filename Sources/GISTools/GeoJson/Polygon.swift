@@ -135,13 +135,13 @@ extension Polygon {
             return false
         }
 
-        let outerRing = self.outerRing
+        guard let outerRing = self.outerRing else { return false }
 
-        return outerRing?.contains(otherBoundingBox.center) ?? false
-            || outerRing?.contains(otherBoundingBox.northWest) ?? false
-            || outerRing?.contains(otherBoundingBox.northEast) ?? false
-            || outerRing?.contains(otherBoundingBox.southEast) ?? false
-            || outerRing?.contains(otherBoundingBox.southWest) ?? false
+        return outerRing.contains(otherBoundingBox.center)
+            || outerRing.contains(otherBoundingBox.northWest)
+            || outerRing.contains(otherBoundingBox.northEast)
+            || outerRing.contains(otherBoundingBox.southEast)
+            || outerRing.contains(otherBoundingBox.southWest)
     }
 
 }
