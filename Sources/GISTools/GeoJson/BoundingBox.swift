@@ -195,8 +195,8 @@ extension BoundingBox {
 
     /// The area in square meters (approximation)
     public var area: Double {
-        let leftSideLength = southWest.location.distance(from: CLLocation(latitude: northEast.latitude, longitude: southWest.longitude))
-        let bottomSideLength = southWest.location.distance(from: CLLocation(latitude: southWest.latitude, longitude: northEast.longitude))
+        let leftSideLength = southWest.distance(from: Coordinate3D(latitude: northEast.latitude, longitude: southWest.longitude))
+        let bottomSideLength = southWest.distance(from: Coordinate3D(latitude: southWest.latitude, longitude: northEast.longitude))
 
         return leftSideLength * bottomSideLength
     }
