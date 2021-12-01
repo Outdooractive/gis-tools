@@ -362,7 +362,7 @@ extension WKTCoder {
             case .epsg4326:
                 coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m))
             case .epsg3857:
-                coordinates.append(CoordinateXY(x: x, y: y, z: z, m: m).projectToEpsg4326())
+                coordinates.append(CoordinateXY(x: x, y: y, z: z, m: m).projectedToEpsg4326)
             case .noSRID:
                 throw WKTCoderError.unknownSRID
             }

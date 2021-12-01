@@ -8,7 +8,7 @@ import Foundation
 extension GeoJson {
 
     /// Returns the absolute center point of the receiver.
-    public func center() -> Point? {
+    public var center: Point? {
         guard let boundingBox = self.boundingBox ?? calculateBoundingBox() else { return nil }
         return Point(boundingBox.center)
     }
@@ -21,8 +21,8 @@ extension GeoJson {
 
     /// Calculates the centroid using the mean of all vertices. This lessens the effect
     /// of small islands and artifacts when calculating the centroid of a set of polygons.
-    public func centroid() -> Point? {
-        let allCoordinates = self.allCoordinates()
+    public var centroid: Point? {
+        let allCoordinates = self.allCoordinates
 
         guard !allCoordinates.isEmpty else { return nil }
 
@@ -62,7 +62,7 @@ extension FeatureCollection {
 
             guard weight > 0.0 else { continue }
 
-            for coordinate in feature.allCoordinates() {
+            for coordinate in feature.allCoordinates {
                 sumLongitude += coordinate.longitude * weight
                 sumLatitude += coordinate.latitude * weight
                 sumWeights += weight

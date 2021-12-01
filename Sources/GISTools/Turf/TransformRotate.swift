@@ -20,7 +20,7 @@ extension GeoJson {
     {
         guard angle != 0.0 else { return self }
 
-        guard let pivot = pivot ?? centroid()?.coordinate else { return self }
+        guard let pivot = pivot ?? centroid?.coordinate else { return self }
 
         return transformedCoordinates({ (coordinate) in
             let initialAngle = pivot.rhumbBearing(to: coordinate)

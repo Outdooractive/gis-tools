@@ -104,10 +104,10 @@ extension GeoJson {
             return boundingBox.northEast
 
         case .center:
-            return center()?.coordinate
+            return center?.coordinate
 
         case .centroid:
-            return centroid()?.coordinate
+            return centroid?.coordinate
 
         case let .customCoordinate(coordinate):
             return coordinate

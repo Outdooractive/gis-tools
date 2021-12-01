@@ -63,9 +63,9 @@ extension LineStringGeometry {
     {
         guard !isEqualTo(other) else { return false }
 
-        let tree: RTree<LineSegment> = RTree(lineSegments())
+        let tree: RTree<LineSegment> = RTree(lineSegments)
 
-        for segment in other.lineSegments() {
+        for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {
@@ -97,9 +97,9 @@ extension PolygonGeometry {
     {
         guard !isEqualTo(other) else { return false }
 
-        let tree: RTree<LineSegment> = RTree(lineSegments())
+        let tree: RTree<LineSegment> = RTree(lineSegments)
 
-        for segment in other.lineSegments() {
+        for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {

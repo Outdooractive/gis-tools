@@ -8,19 +8,19 @@ import Foundation
 extension GeoJson {
 
     /// Returns a *Point* guaranteed to be on the surface of the feature.
-    public func pointOnFeature() -> Point? {
+    public var pointOnFeature: Point? {
         if let coordinate = coordinateOnFeature() {
             return Point(coordinate)
         }
         return nil
     }
 
-    public func coordinateOnFeature() -> Coordinate3D? {
+    public var coordinateOnFeature: Coordinate3D? {
         coordinateOnFeature(failOnMiss: false)
     }
 
     private func coordinateOnFeature(failOnMiss: Bool = false) -> Coordinate3D? {
-        guard let centroidCoordinate = centroid()?.coordinate else { return nil }
+        guard let centroidCoordinate = centroid?.coordinate else { return nil }
 
         switch self {
         case let point as Point:
@@ -34,14 +34,14 @@ extension GeoJson {
             }
 
         case let lineString as LineString:
-            for segment in lineString.lineSegments() {
+            for segment in lineString.lineSegments {
                 if segment.checkIsOnSegment(centroidCoordinate) {
                     return centroidCoordinate
                 }
             }
 
         case let multiLineString as MultiLineString:
-            for segment in multiLineString.lineSegments() {
+            for segment in multiLineString.lineSegments {
                 if segment.checkIsOnSegment(centroidCoordinate) {
                     return centroidCoordinate
                 }

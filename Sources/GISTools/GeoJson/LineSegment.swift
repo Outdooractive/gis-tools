@@ -88,7 +88,7 @@ extension LineSegment: BoundingBoxRepresentable {
             return false
         }
 
-        for boundingBoxSegment in otherBoundingBox.lineSegments() {
+        for boundingBoxSegment in otherBoundingBox.lineSegments {
             if boundingBoxSegment.intersects(self) {
                 return true
             }

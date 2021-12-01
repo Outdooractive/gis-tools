@@ -47,7 +47,7 @@ public enum Projection: CustomStringConvertible {
 extension Coordinate3D {
 
     /// Project EPSG:4326 to EPSG:3857
-    public func projectToEpsg3857() -> CoordinateXY {
+    public var projectedToEpsg3857: CoordinateXY {
         let originShift: Double = 20_037_508.342789244
 
         let coordinate = self.normalized()
@@ -63,7 +63,7 @@ extension Coordinate3D {
 extension CoordinateXY {
 
     /// Project EPSG:3857 to EPSG:4326
-    public func projectToEpsg4326() -> Coordinate3D {
+    public var projectedToEpsg4326: Coordinate3D {
         let originShift: Double = 20_037_508.342789244
 
         let longitude: Double = (x / originShift) * 180.0

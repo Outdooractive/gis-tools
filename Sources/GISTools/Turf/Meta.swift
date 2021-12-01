@@ -6,7 +6,7 @@ import Foundation
 extension GeoJson {
 
     /// Return all coordinates in this object
-    public func allCoordinates() -> [Coordinate3D] {
+    public var allCoordinates: [Coordinate3D] {
         switch self {
         case let point as Point:
             return [point.coordinate]
@@ -27,13 +27,13 @@ extension GeoJson {
             return multiPolygon.coordinates.flatMap({ $0 }).flatMap({ $0 })
 
         case let geometryCollection as GeometryCollection:
-            return geometryCollection.geometries.flatMap({ $0.allCoordinates() })
+            return geometryCollection.geometries.flatMap({ $0.allCoordinates })
 
         case let feature as Feature:
-            return feature.geometry.allCoordinates()
+            return feature.geometry.allCoordinates
 
         case let featureCollection as FeatureCollection:
-            return featureCollection.features.flatMap({ $0.allCoordinates() })
+            return featureCollection.features.flatMap({ $0.allCoordinates })
 
         default:
             return []

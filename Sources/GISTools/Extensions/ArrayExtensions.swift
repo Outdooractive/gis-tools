@@ -1,23 +1,50 @@
+#if !os(Linux)
+import CoreLocation
+#endif
 import Foundation
 
 // MARK: Public
 
 extension Array where Element == Coordinate3D {
 
-    public func toMultiPoint() -> MultiPoint? {
+    public var coordinates: [CLLocationCoordinate2D] {
+        return map { $0.coordinate }
+    }
+
+    public var locations: [CLLocation] {
+        return map { $0.location }
+    }
+
+    public var multiPoint: MultiPoint? {
         MultiPoint(self)
     }
 
-    public func toLineString() -> LineString? {
+    public var uncheckedMultiPoint: MultiPoint {
+        MultiPoint(unchecked: self)
+    }
+
+    public var lineString: LineString? {
         LineString(self)
     }
 
-    public func toPolygon() -> Polygon? {
+    public var uncheckedLineString: LineString {
+        LineString(unchecked: self)
+    }
+
+    public var polygon: Polygon? {
         Polygon([self])
     }
 
-    public func toRing() -> Ring? {
+    public var uncheckedPolygon: Polygon {
+        Polygon(unchecked: [self])
+    }
+
+    public var ring: Ring? {
         Ring(self)
+    }
+
+    public var uncheckedRing: Ring {
+        Ring(unchecked: self)
     }
 
 }

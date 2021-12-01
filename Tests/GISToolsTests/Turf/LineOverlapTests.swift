@@ -56,8 +56,8 @@ final class LineOverlapTests: XCTestCase {
 
         XCTAssertEqual(overlappingSegments.count, 6)
 
-        let firstSegments = result.lineStrings[0].lineSegments()
-        let secondSegments = result.lineStrings[1].lineSegments()
+        let firstSegments = result.lineStrings[0].lineSegments
+        let secondSegments = result.lineStrings[1].lineSegments
 
         XCTAssertEqual(Array(overlappingSegments[0 ..< 3]), firstSegments)
         XCTAssertEqual(Array(overlappingSegments[3...]), secondSegments)
@@ -81,8 +81,8 @@ final class LineOverlapTests: XCTestCase {
 
         XCTAssertEqual(overlappingSegments.count, 4)
 
-        let firstSegments = result.lineStrings[0].lineSegments()
-        let secondSegments = result.lineStrings[1].lineSegments()
+        let firstSegments = result.lineStrings[0].lineSegments
+        let secondSegments = result.lineStrings[1].lineSegments
 
         XCTAssertEqual(Array(overlappingSegments[0 ... 1]), firstSegments)
         XCTAssertEqual(Array(overlappingSegments[2...]), secondSegments)
@@ -96,7 +96,7 @@ final class LineOverlapTests: XCTestCase {
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2, tolerance: 5000.0)
 
         XCTAssertEqual(overlappingSegments.count, 1)
-        XCTAssertEqual(overlappingSegments, result.lineSegments())
+        XCTAssertEqual(overlappingSegments, result.lineSegments)
     }
 
     func testPartlyOverlapping3() {
@@ -119,8 +119,8 @@ final class LineOverlapTests: XCTestCase {
         XCTAssertEqual(overlappingSegments1.count, 1)
         XCTAssertEqual(overlappingSegments2.count, 1)
 
-        XCTAssertEqual(overlappingSegments1, result.lineSegments())
-        XCTAssertEqual(overlappingSegments2, result.lineSegments())
+        XCTAssertEqual(overlappingSegments1, result.lineSegments)
+        XCTAssertEqual(overlappingSegments2, result.lineSegments)
     }
 
     static var allTests = [

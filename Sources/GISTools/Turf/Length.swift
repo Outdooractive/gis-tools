@@ -26,7 +26,7 @@ extension GeoJson {
     ///
     /// Everything else: returns the length of the contained geometries
     public var length: CLLocationDistance {
-        lineSegments().reduce(0.0) { $0 + $1.length }
+        lineSegments.reduce(0.0) { $0 + $1.length }
     }
 
 }

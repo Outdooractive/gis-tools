@@ -53,8 +53,8 @@ extension LineString {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
-        let segments1 = lineSegments()
-        let segments2 = other.lineSegments()
+        let segments1 = lineSegments
+        let segments2 = other.lineSegments
         let count = min(segments1.count, segments2.count)
 
         for index in 0 ..< count {

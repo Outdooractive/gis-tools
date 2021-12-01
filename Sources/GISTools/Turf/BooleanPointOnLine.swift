@@ -31,7 +31,7 @@ extension LineStringGeometry {
 
     /// Tests if the coordinate is on the line.
     public func checkIsOnLine(_ coordinate: Coordinate3D) -> Bool {
-        lineSegments().contains { (segment) in
+        lineSegments.contains { (segment) in
             segment.checkIsOnSegment(coordinate)
         }
     }

@@ -33,13 +33,13 @@ extension GeoJson {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
     {
-        let coordinates = allCoordinates()
-        guard !coordinates.isEmpty else { return nil }
+        let allCordinates = self.allCoordinates
+        guard !allCordinates.isEmpty else { return nil }
 
-        var bestCoordinate: Coordinate3D = coordinates[0]
+        var bestCoordinate: Coordinate3D = allCordinates[0]
         var bestDistance: CLLocationDistance = bestCoordinate.distance(from: other)
 
-        for coordinate in coordinates {
+        for coordinate in allCordinates {
             let distance = coordinate.distance(from: other)
             if distance < bestDistance {
                 bestDistance = distance

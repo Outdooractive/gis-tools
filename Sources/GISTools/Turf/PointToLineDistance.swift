@@ -39,7 +39,7 @@ extension LineString {
     {
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
 
-        for segment in lineSegments() {
+        for segment in lineSegments {
             let distance = segment.distanceFrom(coordinate: coordinate)
 
             if distance < bestDistance {

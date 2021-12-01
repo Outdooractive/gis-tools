@@ -52,22 +52,22 @@ extension GeoJson {
             return multiPoint.nearestCoordinate(from: other)
 
         case let lineString as LineString:
-            return nearest(onSegments: lineString.lineSegments(), from: other)
+            return nearest(onSegments: lineString.lineSegments, from: other)
 
         case let multiLineString as MultiLineString:
-            return nearest(onSegments: multiLineString.lineSegments(), from: other)
+            return nearest(onSegments: multiLineString.lineSegments, from: other)
 
         case let polygon as Polygon:
             if polygon.contains(other) {
                 return (coordinate: other, distance: 0.0)
             }
-            return nearest(onSegments: polygon.lineSegments(), from: other)
+            return nearest(onSegments: polygon.lineSegments, from: other)
 
         case let multiPolygon as MultiPolygon:
             if multiPolygon.contains(other) {
                 return (coordinate: other, distance: 0.0)
             }
-            return nearest(onSegments: multiPolygon.lineSegments(), from: other)
+            return nearest(onSegments: multiPolygon.lineSegments, from: other)
 
         case let geometryCollection as GeometryCollection:
             return nearest(onGeometries: geometryCollection.geometries, from: other)

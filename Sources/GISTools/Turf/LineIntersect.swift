@@ -149,8 +149,8 @@ extension GeoJson {
 
         var result: Set<Coordinate3D> = []
 
-        for lineSegment in lineSegments() {
-            for otherLineSegment in other.lineSegments() {
+        for lineSegment in lineSegments {
+            for otherLineSegment in other.lineSegments {
                 if let intersection = lineSegment.intersection(otherLineSegment) {
                     result.insert(intersection)
                 }

@@ -130,7 +130,7 @@ extension LineString {
             return false
         }
 
-        let boundingBoxSegments: [LineSegment] = otherBoundingBox.lineSegments()
+        let boundingBoxSegments: [LineSegment] = otherBoundingBox.lineSegments
 
         let minLongitude = otherBoundingBox.southWest.longitude
         let minLatitude = otherBoundingBox.southWest.latitude

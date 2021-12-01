@@ -6,7 +6,7 @@ import Foundation
 extension BoundingBox {
 
     /// Returns the receiver as *LineSegment*s.
-    public func lineSegments() -> [LineSegment] {
+    public var lineSegments: [LineSegment] {
         [
             LineSegment(first: northWest, second: northEast),
             LineSegment(first: northEast, second: southEast),
@@ -28,7 +28,7 @@ extension GeoJson {
     /// For Polygon, MultiPolygon: returns overlapping pairs for all rings.
     ///
     /// Everything else: returns the contained geometries' coordinate pairs.
-    public func lineSegments() -> [LineSegment] {
+    public var lineSegments: [LineSegment] {
         switch self {
         case is MultiPoint, is Point:
             return []
@@ -39,7 +39,7 @@ extension GeoJson {
             }
 
         case let multiLineString as MultiLineString:
-            return multiLineString.lineStrings.flatMap { $0.lineSegments() }
+            return multiLineString.lineStrings.flatMap { $0.lineSegments }
 
         case let polygon as Polygon:
             return polygon.rings.flatMap({ (ring) in
@@ -49,16 +49,16 @@ extension GeoJson {
             })
 
         case let multiPolygon as MultiPolygon:
-            return multiPolygon.polygons.flatMap { $0.lineSegments() }
+            return multiPolygon.polygons.flatMap { $0.lineSegments }
 
         case let geometryCollection as GeometryCollection:
-            return geometryCollection.geometries.flatMap { $0.lineSegments() }
+            return geometryCollection.geometries.flatMap { $0.lineSegments }
 
         case let feature as Feature:
-            return feature.geometry.lineSegments()
+            return feature.geometry.lineSegments
 
         case let featureCollection as FeatureCollection:
-            return featureCollection.features.flatMap { $0.lineSegments() }
+            return featureCollection.features.flatMap { $0.lineSegments }
 
         default:
             return []

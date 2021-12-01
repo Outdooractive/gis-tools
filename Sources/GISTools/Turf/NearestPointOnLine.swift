@@ -80,7 +80,7 @@ extension LineString {
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
         var bestIndex: Int = -1
 
-        for (index, segment) in lineSegments().enumerated() {
+        for (index, segment) in lineSegments.enumerated() {
             guard let foot: Coordinate3D = segment.perpendicularFoot(coordinate: other, clampToEnds: true) else {
                 continue
             }

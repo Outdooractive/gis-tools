@@ -6,7 +6,7 @@ import Foundation
 extension GeoJson {
 
     /// Flattens any *GeoJSON* to a *FeatureCollection*
-    public func flattened() -> FeatureCollection? {
+    public var flattened: FeatureCollection? {
         switch self {
         case let point as Point:
             var featureCollection = FeatureCollection([point])
