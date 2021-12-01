@@ -26,6 +26,10 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
     public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty else { return nil }
 
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -36,6 +40,10 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
     public init?(_ points: [Point], calculateBoundingBox: Bool = false) {
         guard !points.isEmpty else { return nil }
 
+        self.init(unchecked: points, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked points: [Point], calculateBoundingBox: Bool = false) {
         self.coordinates = points.map { $0.coordinate }
 
         if calculateBoundingBox {

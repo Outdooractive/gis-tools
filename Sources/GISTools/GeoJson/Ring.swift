@@ -11,6 +11,10 @@ public struct Ring {
         // TODO: Close the ring, if necessary
         guard coordinates.count >= 4 else { return nil }
 
+        self.init(unchecked: coordinates)
+    }
+
+    public init(unchecked coordinates: [Coordinate3D]) {
         self.coordinates = coordinates
     }
 

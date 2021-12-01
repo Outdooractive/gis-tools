@@ -29,6 +29,10 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
               coordinates[0][0].count >= 3
         else { return nil }
 
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -39,6 +43,10 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
     public init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
         guard !polygons.isEmpty else { return nil }
 
+        self.init(unchecked: polygons, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked polygons: [Polygon], calculateBoundingBox: Bool = false) {
         self.coordinates = polygons.map { $0.coordinates }
 
         if calculateBoundingBox {

@@ -42,6 +42,10 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
               coordinates[0].count >= 3
         else { return nil }
 
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -52,6 +56,10 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
     public init?(_ rings: [Ring], calculateBoundingBox: Bool = false) {
         guard !rings.isEmpty else { return nil }
 
+        self.init(unchecked: rings, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked rings: [Ring], calculateBoundingBox: Bool = false) {
         self.coordinates = rings.map { $0.coordinates }
 
         if calculateBoundingBox {

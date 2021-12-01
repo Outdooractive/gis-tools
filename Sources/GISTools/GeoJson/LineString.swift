@@ -26,6 +26,10 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
     public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         guard coordinates.count >= 2 else { return nil }
 
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
         if calculateBoundingBox {

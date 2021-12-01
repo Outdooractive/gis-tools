@@ -28,6 +28,10 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
               coordinates[0].count >= 2
         else { return nil }
 
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
         if calculateBoundingBox {
@@ -38,6 +42,10 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
     public init?(_ lineStrings: [LineString], calculateBoundingBox: Bool = false) {
         guard !lineStrings.isEmpty else { return nil }
 
+        self.init(unchecked: lineStrings, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked lineStrings: [LineString], calculateBoundingBox: Bool = false) {
         self.coordinates = lineStrings.map { $0.coordinates }
 
         if calculateBoundingBox {
@@ -48,6 +56,10 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
     public init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         guard !lineSegments.isEmpty else { return nil }
 
+        self.init(unchecked: lineSegments, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init(unchecked lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         self.coordinates = lineSegments.map({ $0.coordinates })
 
         if calculateBoundingBox {
