@@ -35,7 +35,7 @@ extension GeoJsonReadable {
 public protocol GeoJsonWritable {
 
     // Return the GeoJson object as JSON
-    func asJson() -> [String: Any]
+    var asJson: [String: Any] { get }
 
 }
 
@@ -50,7 +50,7 @@ extension GeoJsonWritable {
             }
         }
 
-        return try? JSONSerialization.data(withJSONObject: asJson(), options: options)
+        return try? JSONSerialization.data(withJSONObject: asJson, options: options)
     }
 
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
@@ -70,10 +70,10 @@ extension GeoJsonWritable {
 public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
-public extension Sequence where Self.Iterator.Element: GeoJsonConvertible {
+extension Sequence where Self.Iterator.Element: GeoJsonConvertible {
 
-    func asJson() -> [Any] {
-        return self.compactMap({ $0.asJson() })
+    public var asJson: [Any] {
+        return self.compactMap({ $0.asJson })
     }
 
 }

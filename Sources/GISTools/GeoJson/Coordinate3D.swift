@@ -129,7 +129,7 @@ extension Coordinate3D: GeoJsonReadable {
         }
     }
 
-    public func asJson() -> [Double] {
+    public var asJson: [Double] {
         var result: [Double] = [longitude, latitude]
 
         if let altitude = altitude {
@@ -156,7 +156,7 @@ extension Coordinate3D {
             }
         }
 
-        return try? JSONSerialization.data(withJSONObject: asJson(), options: options)
+        return try? JSONSerialization.data(withJSONObject: asJson, options: options)
     }
 
     public func asJsonString(prettyPrinted: Bool = false) -> String? {

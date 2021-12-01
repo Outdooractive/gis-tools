@@ -43,7 +43,7 @@ extension GeoJson where Self: Equatable {
 extension GeoJson {
 
     public var debugDescription: String {
-        let json = self.asJson()
+        let json = self.asJson
 
         if let data = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted),
             let string = String(data: data, encoding: String.Encoding.utf8)

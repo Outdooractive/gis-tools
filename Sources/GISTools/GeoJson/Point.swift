@@ -53,13 +53,13 @@ public struct Point: PointGeometry {
         }
     }
 
-    public func asJson() -> [String: Any] {
+    public var asJson: [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.point.rawValue,
-            "coordinates": coordinate.asJson()
+            "coordinates": coordinate.asJson
         ]
         if let boundingBox = boundingBox {
-            result["bbox"] = boundingBox.asJson()
+            result["bbox"] = boundingBox.asJson
         }
         result.merge(foreignMembers) { (current, new) in
             return current

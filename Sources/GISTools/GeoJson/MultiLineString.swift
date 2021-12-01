@@ -93,13 +93,13 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
-    public func asJson() -> [String: Any] {
+    public var asJson: [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.multiLineString.rawValue,
-            "coordinates": coordinates.map { $0.map { $0.asJson() } }
+            "coordinates": coordinates.map { $0.map { $0.asJson } }
         ]
         if let boundingBox = boundingBox {
-            result["bbox"] = boundingBox.asJson()
+            result["bbox"] = boundingBox.asJson
         }
         result.merge(foreignMembers) { (current, new) in
             return current

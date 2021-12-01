@@ -100,13 +100,13 @@ public struct FeatureCollection: GeoJson {
         }
     }
 
-    public func asJson() -> [String: Any] {
+    public var asJson: [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.featureCollection.rawValue,
-            "features": features.map { $0.asJson() }
+            "features": features.map { $0.asJson }
         ]
         if let boundingBox = boundingBox {
-            result["bbox"] = boundingBox.asJson()
+            result["bbox"] = boundingBox.asJson
         }
         result.merge(foreignMembers) { (current, new) in
             return current

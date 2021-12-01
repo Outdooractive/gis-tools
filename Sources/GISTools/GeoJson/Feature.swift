@@ -61,17 +61,17 @@ public struct Feature: GeoJson {
         }
     }
 
-    public func asJson() -> [String: Any] {
+    public var asJson: [String: Any] {
         var result: [String: Any] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,
-            "geometry": geometry.asJson()
+            "geometry": geometry.asJson
         ]
         if let id = id {
             result["id"] = id
         }
         if let boundingBox = boundingBox {
-            result["bbox"] = boundingBox.asJson()
+            result["bbox"] = boundingBox.asJson
         }
         result.merge(foreignMembers) { (current, new) in
             return current

@@ -98,7 +98,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
         }
     }
 
-    public func asJson() -> [Double] {
+    public var asJson: [Double] {
         if southWest.altitude != nil || northEast.altitude != nil {
             return [
                 southWest.longitude,
