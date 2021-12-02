@@ -5,6 +5,7 @@ import Foundation
 
 // (Partly) ported from https://github.com/Turfjs/turf/blob/master/packages/turf-boolean-valid
 
+/// Objects that can be validated, i.e. check that they are non-empty.
 public protocol ValidatableGeoJson {
 
     /// Check if the geometry is valid, i.e. it has enough coordinates to make sense.

@@ -1,20 +1,32 @@
 import Foundation
 
+/// All permitted GeoJSON types.
 public enum GeoJsonType: String {
+    /// Marks an invalid object
     case invalid
+    /// A GeoJSON Point object
     case point              = "Point"
+    /// A GeoJSON MultiPoint object
     case multiPoint         = "MultiPoint"
+    /// A GeoJSON LineString object
     case lineString         = "LineString"
+    /// A GeoJSON MultiLineString object
     case multiLineString    = "MultiLineString"
+    /// A GeoJSON Polygon
     case polygon            = "Polygon"
+    /// A GeoJSON MultiPolygon
     case multiPolygon       = "MultiPolygon"
+    /// A GeoJSON GeometryCollection
     case geometryCollection = "GeometryCollection"
+    /// A GeoJSON Feature
     case feature            = "Feature"
+    /// A GeoJSON FeatureCollection
     case featureCollection  = "FeatureCollection"
 }
 
 // MARK: - GeoJSON objects
 
+/// The base protocol that all GeoJSON objects conform to.
 public protocol GeoJson:
     GeoJsonConvertible,
     BoundingBoxRepresentable,
@@ -25,10 +37,11 @@ public protocol GeoJson:
     /// GeoJSON object type
     var type: GeoJsonType { get }
 
-    /// Any foreign members
+    /// Any foreign members, i.e. keys in the JSON that are
+    /// not part of the GeoJSON standard
     var foreignMembers: [String: Any] { get set }
 
-    /// Initialize a GeoJSON object from any object that looks like valid JSON
+    /// Try to initialize a GeoJSON object from any JSON
     init?(json: Any?, calculateBoundingBox: Bool)
 
     /// Type erased equality check
@@ -38,6 +51,7 @@ public protocol GeoJson:
 
 extension GeoJson where Self: Equatable {
 
+    /// Type erased equality check
     public func isEqualTo(_ other: GeoJson) -> Bool {
         guard let other = other as? Self else { return false }
         return self == other
@@ -94,6 +108,7 @@ extension GeoJson {
 
 // MARK: - BoundingBoxRepresentable
 
+/// GeoJSON Objects that may have a bounding box.
 public protocol BoundingBoxRepresentable {
 
     /// The object's bounding box
@@ -106,13 +121,14 @@ public protocol BoundingBoxRepresentable {
     @discardableResult
     mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool) -> BoundingBox?
 
-    /// Check if the object is inside or crosses the given bounding box
+    /// Check if the object is inside or crosses the other bounding box
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool
 
 }
 
 extension BoundingBoxRepresentable {
 
+    /// Calculates the object's bounding box and updates the property
     @discardableResult
     public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
         if boundingBox != nil && ifNecessary { return nil }
@@ -124,49 +140,63 @@ extension BoundingBoxRepresentable {
 
 // MARK: - EmptyCreatable
 
+/// GeoJSON objects that can be created empty, which might lead to
+/// invalid objects.
 public protocol EmptyCreatable {
 
-    /// Create an empty and very probably invalid object
+    /// Create an empty and possibly invalid object
     init()
 
 }
 
 // MARK: - GeoJsonGeometry
 
-// GeoJSON geometry objects: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
+/// GeoJSON geometry objects:
+///     `Point`, `MultiPoint`, `LineString`,
+///     `MultiLineString`, `Polygon`, `MultiPolygon`.
 public protocol GeoJsonGeometry: GeoJson {}
 
 // MARK: - Point, MultiPoint
 
+/// Point geometry objects: `Point` and `MultiPoint`.
 public protocol PointGeometry: GeoJsonGeometry {
 
+    /// The object's coordinates converted to `Point`s
     var points: [Point] { get }
 
 }
 
 // MARK: - LineString, MultiLineString
 
+/// Linestring geometry objects: `LineString` and `MultiLineString`.
 public protocol LineStringGeometry: GeoJsonGeometry {
 
+    /// The object's coordinates converted to `LineString`s
     var lineStrings: [LineString] { get }
 
+    /// The first coordinate of the `LineString(s)`
     var firstCoordinate: Coordinate3D? { get }
 
+    /// The last coordinate of the `LineString(s)`
     var lastCoordinate: Coordinate3D? { get }
 
 }
 
 // MARK: - Polygon, MultiPolygon
 
+/// Polygon geometry objects: `Polygon` and `MultiPolygon`.
 public protocol PolygonGeometry: GeoJsonGeometry {
 
+    /// The object's coordinates converted to `Polygon`s
     var polygons: [Polygon] { get }
 
+    /// Check if this `(Multi)Polygon` contains `coordinate`
     func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool)
         -> Bool
 
+    /// Check if this `(Multi)Polygon` contains `point`
     func contains(
         _ point: Point,
         ignoreBoundary: Bool)

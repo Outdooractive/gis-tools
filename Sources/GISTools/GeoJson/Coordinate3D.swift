@@ -10,10 +10,15 @@ import CoreLocation
 
 // MARK: Coordinate3D
 
+/// A three dimensional coordinate (`latitude`, `longitude`, `altitude`)
+/// plus a generic value `m`.
 public struct Coordinate3D: CustomStringConvertible {
 
+    /// The coordinates `latitude`
     public var latitude: CLLocationDegrees
+    /// The coordinates `longitude`
     public var longitude: CLLocationDegrees
+    /// The coordinates `altitude`
     public var altitude: CLLocationDistance?
 
     /// Linear referencing or whatever you want it to use for.
@@ -23,11 +28,13 @@ public struct Coordinate3D: CustomStringConvertible {
     /// [chapter 3.1.1 in the spec](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1).
     public var m: Double?
 
+    /// Create a coordinate with `latitude` and `longitude`
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
         self.latitude = latitude
         self.longitude = longitude
     }
 
+    /// Create a coordinate with `latitude`, `longitude`, `altitude` and `m`
     public init(
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
@@ -115,10 +122,12 @@ extension Coordinate3D {
 
 // MARK: - GeoJsonConvertible
 
-// Note: The GeoJSON spec uses CRS:84 that specifies coordinates
-// in longitude/latitude order.
 extension Coordinate3D: GeoJsonReadable {
 
+    /// Create a coordinate from a JSON object
+    ///
+    /// Note: The GeoJSON spec uses CRS:84 that specifies coordinates
+    /// in longitude/latitude order.
     public init?(json: Any?) {
         guard let pointArray = json as? [Double],
               pointArray.count >= 2
@@ -135,6 +144,7 @@ extension Coordinate3D: GeoJsonReadable {
         }
     }
 
+    /// Dump the coordinate as a JSON object
     public var asJson: [Double] {
         var result: [Double] = [longitude, latitude]
 
@@ -208,6 +218,7 @@ extension Coordinate3D: Hashable {}
 
 // MARK: - Coordinate2D
 
+/// Two dimensional coordinates (`latitute`, `longitude`).
 public protocol Coordinate2D {
 
     var latitude: CLLocationDegrees { get set }

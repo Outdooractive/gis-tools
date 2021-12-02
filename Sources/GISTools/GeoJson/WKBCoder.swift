@@ -63,6 +63,8 @@ extension Feature {
 // http://portal.opengeospatial.org/files/?artifact_id=25355
 //
 // This code borrows a lot from https://github.com/plarson/WKCodable
+
+/// A tool for encoding and decoding GeoJSON objects from WKB.
 public struct WKBCoder {
 
     enum WKBTypeCode: Int {

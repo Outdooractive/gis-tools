@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A GeoJSON `Polygon` object.
 public struct Polygon: PolygonGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {

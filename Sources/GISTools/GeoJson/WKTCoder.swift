@@ -63,6 +63,8 @@ extension Feature {
 // MARK: - WKTCoder
 
 // This code borrows a lot from https://github.com/plarson/WKCodable
+
+/// A tool for encoding and decoding GeoJSON objects from WKT.
 @available(iOS 13.0, *)
 public struct WKTCoder {
 

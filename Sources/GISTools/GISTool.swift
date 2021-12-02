@@ -3,8 +3,9 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: - GISTool
+// MARK: GISTool
 
+/// Some constants used in this library.
 public enum GISTool {
 
     /// WGS84 equatorial radius as specified by the International Union of Geodesy and Geophysics.

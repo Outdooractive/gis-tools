@@ -2,10 +2,12 @@ import Foundation
 
 // MARK: - GeoJsonConvertible
 
+/// A protocol for GeoJSON objects that can be read from and written to JSON.
 public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
 // MARK: GeoJsonReadable
 
+/// A protocol for GeoJSON objects that can be read from JSON.
 public protocol GeoJsonReadable {
 
     // Any GeoJSON object
@@ -36,6 +38,7 @@ extension GeoJsonReadable {
 
 // MARK: - GeoJsonWritable
 
+/// A protocol for GeoJSON objects that can write to JSON.
 public protocol GeoJsonWritable {
 
     // Return the GeoJson object as JSON
@@ -74,6 +77,7 @@ extension GeoJsonWritable {
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
 extension Sequence where Self.Iterator.Element: GeoJsonWritable {
 
+    /// Returns all elements as an array of JSON objects
     public var asJson: [[String: Any]] {
         return self.map({ $0.asJson })
     }

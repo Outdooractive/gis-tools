@@ -5,9 +5,10 @@ import Foundation
 
 // MARK: - Projection
 
+/// Projections that this library can handle (EPSG:3857 and EPSG:4326).
 public enum Projection: CustomStringConvertible {
 
-    /// No SRID
+    /// No SRID (invalid projection)
     case noSRID
     /// EPSG:3857 - web mercator
     case epsg3857

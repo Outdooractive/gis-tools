@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A GeoJSON `GeometryCollection`.
 public struct GeometryCollection: GeoJsonGeometry {
 
     public var type: GeoJsonType {

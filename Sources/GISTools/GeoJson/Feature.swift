@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A GeoJSON `Feature`.
 public struct Feature: GeoJson {
 
     public var type: GeoJsonType {
@@ -11,9 +12,10 @@ public struct Feature: GeoJson {
 
     public var id: String?
 
+    /// The `Feature`s geometry object
     public let geometry: GeoJsonGeometry
 
-    // Only 'Feature' objects may have properties
+    /// Only 'Feature' objects may have properties
     public var properties: [String: Any]
 
     public var boundingBox: BoundingBox?

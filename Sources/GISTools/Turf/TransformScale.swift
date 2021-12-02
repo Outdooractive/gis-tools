@@ -7,6 +7,7 @@ import Foundation
 
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-transform-scale
 
+/// The anchor from where a scale operation takes place.
 public enum ScaleAnchor {
     case southWest
     case southEast

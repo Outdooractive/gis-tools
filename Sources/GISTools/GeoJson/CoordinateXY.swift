@@ -1,10 +1,13 @@
 import Foundation
 
-/// For coordinates in mercator projections
+/// A coordinate in mercator projection.
 public struct CoordinateXY: CustomStringConvertible {
 
+    /// The coordinates easting
     public var x: Double
+    /// The coordinates northing
     public var y: Double
+    /// The coordinates altitude
     public var z: Double?
 
     /// Linear referencing or whatever you want it to use for.

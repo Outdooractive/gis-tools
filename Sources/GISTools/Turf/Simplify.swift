@@ -145,6 +145,7 @@ extension Ring {
 
 // MARK: - Simplify
 
+/// Static methods for simplifiying geometries.
 public enum Simplify {
 
     /// Returns an array of simplified coordinates.

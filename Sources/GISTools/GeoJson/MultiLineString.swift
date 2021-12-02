@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A GeoJSON `MultiLineString` object.
 public struct MultiLineString: LineStringGeometry, EmptyCreatable {
 
     public var type: GeoJsonType {

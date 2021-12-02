@@ -5,28 +5,36 @@ import Foundation
 
 // MARK: BoundingBox
 
+/// A GeoJSON bounding box.
 public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 
+    /// A bounding box spanning across the whole world
     public static var world: BoundingBox {
         BoundingBox(southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
                     northEast: Coordinate3D(latitude: 90.0, longitude: 180.0))
     }
 
+    /// An empty bounding box around (0,0)
     public static var zero: BoundingBox {
         BoundingBox(coordinates: [Coordinate3D(latitude: 0.0, longitude: 0.0)])
     }
 
+    /// The bounding boxes south-west (bottom-left) coordinate
     public var southWest: Coordinate3D
+    /// The bounding boxes north-east (upper-right) coordinate
     public var northEast: Coordinate3D
 
+    /// The bounding boxes north-west (upper-left) coordinate
     public var northWest: Coordinate3D {
         Coordinate3D(latitude: northEast.latitude, longitude: southWest.longitude)
     }
 
+    /// The bounding boxes south-east (bottom-right) coordinate
     public var southEast: Coordinate3D {
         Coordinate3D(latitude: southWest.latitude, longitude: northEast.longitude)
     }
 
+    /// Create a bounding box from `coordinates` and an optional padding
     public init(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
         assert(coordinates.count > 0, "coordinates must not be an empty array.")
 
@@ -60,15 +68,18 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
         self.northEast = northEast
     }
 
+    /// Create a bounding box with a `southWest` and `northEast` coordinate
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
         self.southWest = southWest
         self.northEast = northEast
     }
 
+    /// Create a bounding box from other bounding box
     public init(boundingBoxes: [BoundingBox]) {
         self.init(coordinates: boundingBoxes.flatMap({ [$0.southWest, $0.northEast] }))
     }
 
+    /// Try to create a bounding box from some JSON
     public init?(json: Any?) {
         // GeoJSON
         if let geoJsonCoordinates = json as? [Double] {
@@ -98,6 +109,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
         }
     }
 
+    /// Dump the bounding box as JSON
     public var asJson: [Double] {
         if southWest.altitude != nil || northEast.altitude != nil {
             return [
@@ -119,28 +131,33 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
         }
     }
 
+    /// Returns a new bounding box with some padding
     public func with(padding paddingKilometers: Double) -> BoundingBox {
         BoundingBox(
             coordinates: [southWest, northEast],
             paddingKilometers: paddingKilometers)
     }
 
+    /// Returns a new bounding box expanded by `degrees`
     public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
         BoundingBox(
             southWest: Coordinate3D(latitude: southWest.latitude - degrees, longitude: southWest.longitude - degrees),
             northEast: Coordinate3D(latitude: northEast.latitude + degrees, longitude: northEast.longitude + degrees))
     }
 
+    /// Returns a new bounding box expanded by `distance` diagonally
     public func expand(distance: CLLocationDistance) -> BoundingBox {
         BoundingBox(
             southWest: southWest.destination(distance: distance, bearing: 225.0),
             northEast: northEast.destination(distance: distance, bearing: 45.0))
     }
 
+    /// Returns a new bounding box that also includes `coordinate`
     public func expand(including coordinate: Coordinate3D) -> BoundingBox {
         return BoundingBox(coordinates: [southWest, northEast, coordinate])
     }
 
+    /// Returns a new bounding box that also includes the other `boundingBox`
     public func expand(including boundingBox: BoundingBox) -> BoundingBox {
         return BoundingBox(coordinates: [southWest, northEast, boundingBox.southWest, boundingBox.northEast])
     }
@@ -179,6 +196,7 @@ extension BoundingBox {
 
 extension BoundingBox {
 
+    /// Converts the bounding box to a `Polygon` object
     public var boundingBoxPolygon: Polygon {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!
     }
@@ -187,7 +205,7 @@ extension BoundingBox {
 
 extension BoundingBox {
 
-    /// The center of the coordinate bounds
+    /// The center of the bounding box
     public var center: Coordinate3D {
         let boundingBox = self.normalized()
         return boundingBox.southWest.midpoint(to: boundingBox.northEast)
@@ -201,6 +219,7 @@ extension BoundingBox {
         return leftSideLength * bottomSideLength
     }
 
+    /// Check if the bounding box contains `coordinate`
     public func contains(_ coordinate: Coordinate3D) -> Bool {
         let boundingBox = self.normalized()
         let coordinate = coordinate.normalized()
@@ -224,11 +243,13 @@ extension BoundingBox {
             && coordinate.longitude <= boundingBox.northEast.longitude
     }
 
+    /// Check if this bounding box contains the other bounding box
     public func contains(_ other: BoundingBox) -> Bool {
         self.contains(other.southWest)
             && self.contains(other.northEast)
     }
 
+    /// Check if this bounding box intersects with the other bounding box
     public func intersects(_ other: BoundingBox) -> Bool {
         let boundingBox = self.normalized()
         let other = other.normalized()
@@ -265,6 +286,7 @@ extension BoundingBox {
         }
     }
 
+    /// Returns the intersection between this and the other bounding box
     public func intersection(_ other: BoundingBox) -> BoundingBox? {
         let boundingBox = self.normalized()
         let other = other.normalized()
@@ -363,6 +385,7 @@ extension BoundingBox {
 extension BoundingBox {
 
     // TODO: Date line
+    /// Combine two bounding boxes
     public static func + (
         left: BoundingBox,
         right: BoundingBox)
@@ -378,6 +401,7 @@ extension BoundingBox {
     }
 
     // TODO: Date line
+    /// Combine two bounding boxes
     public mutating func formUnion(_ other: BoundingBox) {
         let boundingBox = self.normalized()
         let other = other.normalized()
