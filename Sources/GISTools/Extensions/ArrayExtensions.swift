@@ -17,6 +17,10 @@ extension Array where Element == Coordinate3D {
     }
 #endif
 
+    public var points: [Point] {
+        map({ Point($0) })
+    }
+
     public var multiPoint: MultiPoint? {
         MultiPoint(self)
     }

@@ -22,7 +22,7 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    public func asWKB() -> Data? {
+    public var asWKB: Data? {
         return WKBCoder.encode(geometry: self)
     }
 
@@ -52,7 +52,7 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
-    public func asWKB() -> Data? {
+    public var asWKB: Data? {
         return WKBCoder.encode(geometry: self.geometry)
     }
 

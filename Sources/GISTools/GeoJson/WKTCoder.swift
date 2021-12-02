@@ -23,7 +23,7 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    public func asWKT() -> String? {
+    public var asWKT: String? {
         return WKTCoder.encode(geometry: self)
     }
 
@@ -54,7 +54,7 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
-    public func asWKT() -> String? {
+    public var asWKT: String? {
         return WKTCoder.encode(geometry: self.geometry)
     }
 
@@ -159,14 +159,14 @@ extension WKTCoder {
 
                 while scanner.scanString(")") == nil {
                     if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
-                        points.append(contentsOf: coordinates.map({ Point($0) }))
+                        points.append(contentsOf: coordinates.points)
                     }
                     _ = scanner.scanString(",")
                 }
             }
             else {
                 if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
-                    points.append(contentsOf: coordinates.map({ Point($0) }))
+                    points.append(contentsOf: coordinates.points)
                 }
             }
 
