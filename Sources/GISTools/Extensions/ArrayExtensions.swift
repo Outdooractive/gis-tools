@@ -7,6 +7,7 @@ import Foundation
 
 extension Array where Element == Coordinate3D {
 
+#if !os(Linux)
     public var coordinates: [CLLocationCoordinate2D] {
         return map { $0.coordinate }
     }
@@ -14,6 +15,7 @@ extension Array where Element == Coordinate3D {
     public var locations: [CLLocation] {
         return map { $0.location }
     }
+#endif
 
     public var multiPoint: MultiPoint? {
         MultiPoint(self)
