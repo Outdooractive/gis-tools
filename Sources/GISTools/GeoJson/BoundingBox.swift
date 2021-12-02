@@ -340,7 +340,12 @@ extension BoundingBox {
         return nil
     }
 
-    // Clamped to [-180.0, 180.0]
+    /// Clamped to [-180.0, 180.0]
+    public mutating func normalize() {
+        self = self.normalized()
+    }
+
+    /// Clamped to [-180.0, 180.0]
     public func normalized() -> BoundingBox {
         guard northEast.longitude - southWest.longitude < 360.0 else {
             return BoundingBox(

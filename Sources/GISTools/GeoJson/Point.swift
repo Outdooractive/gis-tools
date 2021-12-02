@@ -99,18 +99,6 @@ extension Point {
 
 }
 
-extension Point {
-
-    public var hasValidCoordinates: Bool {
-        return true
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .point)
-    }
-
-}
-
 extension Point: Equatable {
 
     public static func ==(

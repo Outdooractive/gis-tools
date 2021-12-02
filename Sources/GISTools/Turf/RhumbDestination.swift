@@ -48,8 +48,8 @@ extension Coordinate3D {
 
         let delta: CLLocationDistance = distance / radius
         let lambda1: CLLocationDegrees = from.longitude * .pi / 180.0
-        let phi1: Double = from.latitude.degreesToRadians()
-        let theta: Double = bearing.degreesToRadians()
+        let phi1: Double = from.latitude.degreesToRadians
+        let theta: Double = bearing.degreesToRadians
 
         let deltaPhi: Double = delta * cos(theta)
         var phi2: Double = phi1 + deltaPhi

@@ -70,12 +70,8 @@ public struct FeatureCollection: GeoJson {
     /// because it will accept any valid GeoJSON object and normalize
     /// it into a FeatureCollection.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        if let geoJson: GeoJson = FeatureCollection.tryCreate(json: json) {
-            self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
-        }
-        else {
-            return nil
-        }
+        guard let geoJson: GeoJson = FeatureCollection.tryCreate(json: json) else { return nil }
+        self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
     }
 
     // To prevent an infinite recursion
@@ -133,14 +129,6 @@ extension FeatureCollection {
         }
 
         return features.contains { $0.geometry.intersects(otherBoundingBox) }
-    }
-
-}
-
-extension FeatureCollection {
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .featureCollection)
     }
 
 }

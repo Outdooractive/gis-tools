@@ -72,7 +72,7 @@ extension Ring {
                         coordinates[index + 2])
                 }
 
-                area += (controlPoints.2.longitude.degreesToRadians() - controlPoints.0.longitude.degreesToRadians()) * sin(controlPoints.1.latitude.degreesToRadians())
+                area += (controlPoints.2.longitude.degreesToRadians - controlPoints.0.longitude.degreesToRadians) * sin(controlPoints.1.latitude.degreesToRadians)
             }
 
             area *= GISTool.equatorialRadius * GISTool.equatorialRadius / 2.0

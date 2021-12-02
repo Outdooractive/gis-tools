@@ -20,16 +20,16 @@ extension Coordinate3D {
     {
         guard let distanceRadians = distance.lengthToRadians(unit: .meters) else { return self }
 
-        let longitude1 = longitude.degreesToRadians()
-        let latitude1 = latitude.degreesToRadians()
-        let bearingRadians = bearing.degreesToRadians()
+        let longitude1 = longitude.degreesToRadians
+        let latitude1 = latitude.degreesToRadians
+        let bearingRadians = bearing.degreesToRadians
 
         let latitude2 = asin(sin(latitude1) * cos(distanceRadians) + cos(latitude1) * sin(distanceRadians) * cos(bearingRadians))
         let longitude2 = longitude1 + atan2(sin(bearingRadians) * sin(distanceRadians) * cos(latitude1), cos(distanceRadians) - sin(latitude1) * sin(latitude2))
 
         return Coordinate3D(
-            latitude: latitude2.radiansToDegrees(),
-            longitude: longitude2.radiansToDegrees())
+            latitude: latitude2.radiansToDegrees,
+            longitude: longitude2.radiansToDegrees)
     }
 
 }

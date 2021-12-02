@@ -23,16 +23,16 @@ extension Coordinate3D {
             return Coordinate3D.calculateFinalBearing(from: self, to: other)
         }
 
-        let longitude1 = longitude.degreesToRadians()
-        let longitude2 = other.longitude.degreesToRadians()
+        let longitude1 = longitude.degreesToRadians
+        let longitude2 = other.longitude.degreesToRadians
 
-        let latitude1 = latitude.degreesToRadians()
-        let latitude2 = other.latitude.degreesToRadians()
+        let latitude1 = latitude.degreesToRadians
+        let latitude2 = other.latitude.degreesToRadians
 
         let a = sin(longitude2 - longitude1) * cos(latitude2)
         let b = cos(latitude1) * sin(latitude2) - sin(latitude1) * cos(latitude2) * cos(longitude2 - longitude1)
 
-        return atan2(a, b).radiansToDegrees()
+        return atan2(a, b).radiansToDegrees
     }
 
     private static func calculateFinalBearing(
@@ -59,8 +59,8 @@ extension Coordinate3D {
         -> CLLocationDegrees
     {
         angleBetween(
-            firstAzimuth: first.bearing(to: middle).bearingToAzimuth(),
-            secondAzimuth: middle.bearing(to: last).bearingToAzimuth())
+            firstAzimuth: first.bearing(to: middle).bearingToAzimuth,
+            secondAzimuth: middle.bearing(to: last).bearingToAzimuth)
     }
 
     /// Takes two azimuth values in decimal degrees and returns the angle between them.
@@ -134,7 +134,7 @@ extension LineSegment {
     }
 
     public var azimuth: CLLocationDegrees {
-        bearing.bearingToAzimuth()
+        bearing.bearingToAzimuth
     }
 
 }

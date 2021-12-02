@@ -131,18 +131,6 @@ extension MultiPolygon {
 
 }
 
-extension MultiPolygon {
-
-    public var hasValidCoordinates: Bool {
-        return polygons.allSatisfy({ $0.hasValidCoordinates })
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .multiPolygon)
-    }
-
-}
-
 extension MultiPolygon: Equatable {
 
     public static func ==(

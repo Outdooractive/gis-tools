@@ -368,7 +368,7 @@ extension WKTCoder {
             }
         }
 
-        return coordinates.nilIfEmpty()
+        return coordinates.nilIfEmpty
     }
 
 }
@@ -390,7 +390,7 @@ extension WKTCoder {
 
         encode(geometry: geometry, srid: projection?.srid, to: &result)
 
-        return result.nilIfEmpty()
+        return result.nilIfEmpty
     }
 
     // MARK: -

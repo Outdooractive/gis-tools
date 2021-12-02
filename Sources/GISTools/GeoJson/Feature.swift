@@ -97,14 +97,6 @@ extension Feature {
 
 }
 
-extension Feature {
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .feature)
-    }
-
-}
-
 extension Feature: Equatable {
 
     public static func ==(

@@ -128,18 +128,6 @@ extension MultiPoint {
 
 }
 
-extension MultiPoint {
-
-    public var hasValidCoordinates: Bool {
-        return !coordinates.isEmpty
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .multiPoint)
-    }
-
-}
-
 extension MultiPoint: Equatable {
 
     public static func ==(

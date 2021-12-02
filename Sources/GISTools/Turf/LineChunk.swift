@@ -12,7 +12,7 @@ extension LineString {
     ///
     /// - Parameter segmentLength: How long to make each segment, in meters
     public func chunked(segmentLength: CLLocationDistance) -> MultiLineString {
-        guard self.hasValidCoordinates, segmentLength > 0.0 else {
+        guard self.isValid, segmentLength > 0.0 else {
             return MultiLineString()
         }
 

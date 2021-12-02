@@ -7,14 +7,14 @@ extension Double {
     /// Converts an angle in degrees to radians.
     ///
     /// - Returns: The angle in radians.
-    public func degreesToRadians() -> Self {
+    public var degreesToRadians: Self {
         self.remainder(dividingBy: 360.0) * .pi / 180.0
     }
 
     /// Converts an angle in radians to degrees.
     ///
     /// - Returns: The radians in degrees, between 0 and 360 degrees.
-    public func radiansToDegrees() -> Self {
+    public var radiansToDegrees: Self {
         self.remainder(dividingBy: 2.0 * .pi) * 180.0 / .pi
     }
 
@@ -52,7 +52,7 @@ extension Double {
     ///
     /// - Returns: The distance in degrees.
     public func lengthToDegrees(unit: GISTool.Unit = .meters) -> Double? {
-        lengthToRadians(unit: unit)?.radiansToDegrees()
+        lengthToRadians(unit: unit)?.radiansToDegrees
     }
 
 }

@@ -157,18 +157,6 @@ extension MultiLineString {
 
 }
 
-extension MultiLineString {
-
-    public var hasValidCoordinates: Bool {
-        return lineStrings.allSatisfy({ $0.hasValidCoordinates })
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .multiLineString)
-    }
-
-}
-
 extension MultiLineString: Equatable {
 
     public static func ==(

@@ -448,7 +448,7 @@ extension WKBCoder {
 
         encode(geometry: geometry, byteOrder: byteOrder, srid: projection?.srid, to: &data)
 
-        return data.nilIfEmpty()
+        return data.nilIfEmpty
     }
 
     // MARK: -

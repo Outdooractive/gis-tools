@@ -20,11 +20,11 @@ final class BearingTests: XCTestCase {
     }
 
     func testBearingToAzimuth() {
-        XCTAssertEqual(40.0.bearingToAzimuth(), 40.0)
-        XCTAssertEqual((-105.0).bearingToAzimuth(), 255.0)
-        XCTAssertEqual(410.0.bearingToAzimuth(), 50.0)
-        XCTAssertEqual((-200.0).bearingToAzimuth(), 160.0)
-        XCTAssertEqual((-395.0).bearingToAzimuth(), 325.0)
+        XCTAssertEqual(40.0.bearingToAzimuth, 40.0)
+        XCTAssertEqual((-105.0).bearingToAzimuth, 255.0)
+        XCTAssertEqual(410.0.bearingToAzimuth, 50.0)
+        XCTAssertEqual((-200.0).bearingToAzimuth, 160.0)
+        XCTAssertEqual((-395.0).bearingToAzimuth, 325.0)
     }
 
     static var allTests = [

@@ -7,14 +7,14 @@ extension String {
     /// Tries to convert a String to an Int
     ///
     /// Allowes code like `optionalString?.toInt()`
-    func toInt() -> Int? {
+    var toInt: Int? {
         return Int(self)
     }
 
     /// Tries to convert a String to a Double
     ///
     /// Allowes code like `optionalString?.toDouble()`
-    func toDouble() -> Double? {
+    var toDouble: Double? {
         return Double(self)
     }
 
@@ -29,7 +29,7 @@ extension String {
     }
 
     /// The string, or nil if it is empty
-    func nilIfEmpty() -> String? {
+    var nilIfEmpty: String? {
         guard !isEmpty else { return nil }
         return self
     }

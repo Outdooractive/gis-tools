@@ -98,7 +98,7 @@ extension Array {
     }
 
     /// The array, or nil if it is empty
-    func nilIfEmpty() -> [Element]? {
+    var nilIfEmpty: [Element]? {
         guard !isEmpty else { return nil }
         return self
     }

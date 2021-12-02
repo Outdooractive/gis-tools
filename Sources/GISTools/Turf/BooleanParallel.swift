@@ -20,8 +20,8 @@ extension LineSegment {
         undirectedEdge: Bool = false)
         -> Bool
     {
-        var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth()
-        let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth()
+        var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
+        let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth
 
         if abs(azimuth1 - azimuth2) <= tolerance {
             return true

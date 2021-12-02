@@ -91,18 +91,6 @@ extension GeometryCollection {
 
 }
 
-extension GeometryCollection {
-
-    public var hasValidCoordinates: Bool {
-        return geometries.allSatisfy({ $0.hasValidCoordinates })
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .geometryCollection)
-    }
-
-}
-
 extension GeometryCollection: Equatable {
 
     public static func ==(

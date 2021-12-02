@@ -154,19 +154,6 @@ extension Polygon {
 
 }
 
-extension Polygon {
-
-    public var hasValidCoordinates: Bool {
-        return !coordinates.isEmpty
-            && coordinates[0].count >= 3
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .polygon)
-    }
-
-}
-
 extension Polygon: Equatable {
 
     public static func ==(

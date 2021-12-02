@@ -18,7 +18,7 @@ extension Data {
     }
 
     /// The data, or nil if it is empty
-    func nilIfEmpty() -> Data? {
+    var nilIfEmpty: Data? {
         guard !isEmpty else { return nil }
         return self
     }

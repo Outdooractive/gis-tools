@@ -15,7 +15,12 @@ public enum GeoJsonType: String {
 
 // MARK: - GeoJSON objects
 
-public protocol GeoJson: GeoJsonConvertible, BoundingBoxRepresentable, CustomDebugStringConvertible {
+public protocol GeoJson:
+    GeoJsonConvertible,
+    BoundingBoxRepresentable,
+    ValidatableGeoJson,
+    CustomDebugStringConvertible
+{
 
     /// GeoJSON object type
     var type: GeoJsonType { get }
@@ -129,14 +134,7 @@ public protocol EmptyCreatable {
 // MARK: - GeoJsonGeometry
 
 // GeoJSON geometry objects: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
-public protocol GeoJsonGeometry: GeoJson {
-
-    /// Check if the geometry is valid, i.e. it has enough coordinates to make sense.
-    ///
-    /// TODO: Would this be a null geometry?
-    var hasValidCoordinates: Bool { get }
-
-}
+public protocol GeoJsonGeometry: GeoJson {}
 
 // MARK: - Point, MultiPoint
 

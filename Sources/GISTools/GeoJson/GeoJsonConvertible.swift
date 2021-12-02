@@ -1,5 +1,9 @@
 import Foundation
 
+// MARK: - GeoJsonConvertible
+
+public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
+
 // MARK: GeoJsonReadable
 
 public protocol GeoJsonReadable {
@@ -65,15 +69,13 @@ extension GeoJsonWritable {
 
 }
 
-// MARK: - GeoJsonConvertible
-
-public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
+// MARK: - Convenience
 
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
-extension Sequence where Self.Iterator.Element: GeoJsonConvertible {
+extension Sequence where Self.Iterator.Element: GeoJsonWritable {
 
-    public var asJson: [Any] {
-        return self.compactMap({ $0.asJson })
+    public var asJson: [[String: Any]] {
+        return self.map({ $0.asJson })
     }
 
 }

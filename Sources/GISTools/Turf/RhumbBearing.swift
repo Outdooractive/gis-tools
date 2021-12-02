@@ -36,9 +36,9 @@ extension Coordinate3D {
         to: Coordinate3D)
         -> CLLocationDegrees
     {
-        let phi1 = from.latitude.degreesToRadians()
-        let phi2 = to.latitude.degreesToRadians()
-        var deltaLambda = (to.longitude - from.longitude).degreesToRadians()
+        let phi1 = from.latitude.degreesToRadians
+        let phi2 = to.latitude.degreesToRadians
+        var deltaLambda = (to.longitude - from.longitude).degreesToRadians
 
         // If deltaLambda is over 180° take shorter rhumb line across the anti-meridian
         if deltaLambda > .pi {
@@ -51,7 +51,7 @@ extension Coordinate3D {
         let deltaPsi = log(tan(phi2 / 2.0 + .pi / 4.0) / tan(phi1 / 2.0 + .pi / 4.0))
         let theta = atan2(deltaLambda, deltaPsi)
 
-        return (theta.radiansToDegrees() + 360.0).truncatingRemainder(dividingBy: 360.0)
+        return (theta.radiansToDegrees + 360.0).truncatingRemainder(dividingBy: 360.0)
     }
 
 }

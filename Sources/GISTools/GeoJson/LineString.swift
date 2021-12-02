@@ -168,18 +168,6 @@ extension LineString {
 
 }
 
-extension LineString {
-
-    public var hasValidCoordinates: Bool {
-        return coordinates.count >= 2
-    }
-
-    public static func isValid(geoJson: [String: Any]) -> Bool {
-        return checkIsValid(geoJson: geoJson, ofType: .lineString)
-    }
-
-}
-
 // MARK: - Equatable
 
 extension LineString: Equatable {

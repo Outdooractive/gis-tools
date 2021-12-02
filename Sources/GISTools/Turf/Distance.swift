@@ -12,11 +12,11 @@ extension Coordinate3D {
     ///
     /// - Parameter other: The other coordinate
     public func distance(from other: Coordinate3D) -> CLLocationDistance {
-        let dLatitude = (other.latitude - latitude).degreesToRadians()
-        let dLongitude = (other.longitude - longitude).degreesToRadians()
+        let dLatitude = (other.latitude - latitude).degreesToRadians
+        let dLongitude = (other.longitude - longitude).degreesToRadians
 
-        let latitude1 = latitude.degreesToRadians()
-        let latitude2 = other.latitude.degreesToRadians()
+        let latitude1 = latitude.degreesToRadians
+        let latitude2 = other.latitude.degreesToRadians
 
         let a = pow(sin(dLatitude / 2.0), 2.0) + pow(sin(dLongitude / 2.0), 2.0) * cos(latitude1) * cos(latitude2)
 

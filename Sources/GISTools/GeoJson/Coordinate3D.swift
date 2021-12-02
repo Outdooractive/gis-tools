@@ -94,6 +94,12 @@ extension Coordinate3D {
 
 extension Coordinate3D {
 
+    /// Clamped to [-180.0, 180.0]
+    public mutating func normalize() {
+        self = self.normalized()
+    }
+
+    /// Clamped to [-180.0, 180.0]
     public func normalized() -> Coordinate3D {
         var longitude = self.longitude
 
@@ -167,6 +173,15 @@ extension Coordinate3D {
 
     public func write(to url: URL, prettyPrinted: Bool = false) throws {
         try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
+    }
+
+}
+
+// Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
+extension Sequence where Element == Coordinate3D {
+
+    public var asJson: [[Double]] {
+        self.map({ $0.asJson })
     }
 
 }
