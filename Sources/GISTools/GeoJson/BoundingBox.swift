@@ -213,10 +213,18 @@ extension BoundingBox {
 
     /// The area in square meters (approximation)
     public var area: Double {
-        let leftSideLength = southWest.distance(from: Coordinate3D(latitude: northEast.latitude, longitude: southWest.longitude))
-        let bottomSideLength = southWest.distance(from: Coordinate3D(latitude: southWest.latitude, longitude: northEast.longitude))
+        let size = self.size
+        return size.width * size.height
+    }
 
-        return leftSideLength * bottomSideLength
+    /// The size of the bounding box (width, height) in meters (approximation)
+    public var size: (width: Double, height: Double) {
+        let boundingBox = self.normalized()
+        let bearingAngle = boundingBox.southWest.bearing(to: boundingBox.northEast)
+        let diagonalLength = boundingBox.southWest.distance(from: boundingBox.northEast)
+
+        return (width: diagonalLength * sin(bearingAngle.degreesToRadians),
+                height: diagonalLength * cos(bearingAngle.degreesToRadians))
     }
 
     /// Check if the bounding box contains `coordinate`
