@@ -251,6 +251,18 @@ extension BoundingBox {
             && coordinate.longitude <= boundingBox.northEast.longitude
     }
 
+#if !os(Linux)
+    /// Check if the bounding box contains `coordinate`
+    public func contains(_ coordinate: CLLocationCoordinate2D) -> Bool {
+        return contains(Coordinate3D(coordinate))
+    }
+
+    /// Check if the bounding box contains `coordinate`
+    public func contains(_ location: CLLocation) -> Bool {
+        return contains(Coordinate3D(location))
+    }
+#endif
+
     /// Check if this bounding box contains the other bounding box
     public func contains(_ other: BoundingBox) -> Bool {
         self.contains(other.southWest)
