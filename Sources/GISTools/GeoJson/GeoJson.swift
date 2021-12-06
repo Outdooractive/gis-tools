@@ -75,6 +75,7 @@ extension GeoJson {
 
 }
 
+// https://datatracker.ietf.org/doc/html/rfc7946
 extension GeoJson {
 
     public func foreignMember<T>(for key: String) -> T? {

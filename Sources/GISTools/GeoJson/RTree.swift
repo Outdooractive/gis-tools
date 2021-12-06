@@ -3,18 +3,21 @@ import CoreLocation
 #endif
 import Foundation
 
+// MARK: RTree
+
 // This is a port from https://github.com/mourner/flatbush
 
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
 
+    /// The indexed objects
     public let objects: [T]
     /// The number of elements in the RTree.
     public let count: Int
     /// Size of a tree node.
     public let nodeSize: Int
 
-    private var position: Int = 0
+    private var position = 0
     private var boundingBoxes: [BoundingBox] = []
     private var indices: [Int] = []
     private var levelBounds: [Int] = []
@@ -24,19 +27,44 @@ public struct RTree<T: BoundingBoxRepresentable> {
     private var maxX = -Double.infinity
     private var maxY = -Double.infinity
 
+    /// Options how to build the tree
+    public enum SortOption {
+        /// Sort input objects by their hilbert value.
+        /// - Note: **Performance**: Slow tree build times, very fast search
+        case hilbert
+        /// Add input objects in random order to the tree.
+        /// - Note: **Performance**: Fast tree build time, search as fast as `unsorted` but much slower than `hilbert`
+        case random
+        /// Don't sort input objects.
+        /// - Note: **Performance**: Very fast tree build time, search as fast as `random` (depending on input object distribution) but much slower than `hilbert`
+        case unsorted
+    }
+
+    /// The R-Tree's bounding box
     public var boundingBox: BoundingBox {
         BoundingBox(
             southWest: Coordinate3D(latitude: minY, longitude: minX),
             northEast: Coordinate3D(latitude: maxY, longitude: maxX))
     }
 
-    public init(_ objects: [T], nodeSize: Int = 16) {
+    /// Create a new R-Tree from `objects`
+    public init(
+        _ objects: [T],
+        nodeSize: Int = 16,
+        sortOption: SortOption = .hilbert)
+    {
+        // Shuffle the input objects immediatelly if random order was requested
+        var inputObjects = objects
+        if sortOption == .random {
+            inputObjects.shuffle()
+        }
+
         var objectsWithBoundingBox: [T] = []
-        objectsWithBoundingBox.reserveCapacity(objects.count)
+        objectsWithBoundingBox.reserveCapacity(inputObjects.count)
 
         // Set bounding boxes on all objects
         // Calculate the RTree bounding box
-        for var object in objects {
+        for var object in inputObjects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
             guard let boundingBox = object.boundingBox else { continue }
@@ -72,7 +100,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
             n = Int(ceil(Double(n) / Double(self.nodeSize)))
             numberOfNodes += n
             levelBounds.append(numberOfNodes)
-        } while n != 1
+        }
+        while n != 1
 
         boundingBoxes.reserveCapacity(numberOfNodes)
         indices = Array(repeating: 0, count: numberOfNodes)
@@ -86,11 +115,15 @@ public struct RTree<T: BoundingBoxRepresentable> {
             position = boundingBoxes.count
         }
 
+        if sortOption == .hilbert {
+            sortByHilbertValue()
+        }
+
         // Add the remaining tree nodes for faster search
         buildTree()
     }
 
-    private mutating func buildTree() {
+    private mutating func sortByHilbertValue() {
         assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
 
         var width = maxX - minX
@@ -106,7 +139,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
             let boundingBox = boundingBoxes[i]
             let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.longitude + boundingBox.northEast.longitude) / 2.0 - minX) / width))
             let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.latitude + boundingBox.northEast.latitude) / 2.0 - minY) / height))
-            hilbertValues[i] = RTree.hilbert(x: x, y: y);
+            hilbertValues[i] = RTree.hilbert(x: x, y: y)
         }
 
         // Sort items by their Hilbert value (for packing later)
@@ -117,8 +150,10 @@ public struct RTree<T: BoundingBoxRepresentable> {
             low: 0,
             high: count - 1,
             nodeSize: nodeSize)
+    }
 
-        // Generate nodes at each tree level, bottom-up
+    // Generate nodes at each tree level, bottom-up
+    private mutating func buildTree() {
         var lowerBound = 0
         for i in 0 ..< levelBounds.count - 1 {
             let upperBound = levelBounds[i]
@@ -163,7 +198,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [T] = []
 
-        guard objects.count > 0,
+        guard !objects.isEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -204,7 +239,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         var result: [T] = []
 
-        guard objects.count > 0,
+        guard !objects.isEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -233,7 +268,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [AroundSearchResult] = []
 
-        guard objects.count > 0,
+        guard !objects.isEmpty,
               boundingBox.intersects(self.boundingBox)
         else { return result }
 
@@ -285,7 +320,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
     {
         var result: [AroundSearchResult] = []
 
-        guard objects.count > 0,
+        guard !objects.isEmpty,
               boundingBox.intersects(self.boundingBox)
         else { return result }
 
@@ -355,7 +390,7 @@ extension RTree {
         in array: [Int])
         -> Int
     {
-        var (i,j) = (0, array.count - 1)
+        var (i, j) = (0, array.count - 1)
 
         while i < j {
             let m = (i + j) >> 1
@@ -417,15 +452,15 @@ extension RTree {
         var i0 = x ^ y
         var i1 = b | (0xFFFF ^ (i0 | a))
 
-        i0 = (i0 | (i0 << 8)) & 0x00FF00FF
-        i0 = (i0 | (i0 << 4)) & 0x0F0F0F0F
-        i0 = (i0 | (i0 << 2)) & 0x33333333
-        i0 = (i0 | (i0 << 1)) & 0x55555555
+        i0 = (i0 | (i0 << 8)) & 0x00FF_00FF
+        i0 = (i0 | (i0 << 4)) & 0x0F0F_0F0F
+        i0 = (i0 | (i0 << 2)) & 0x3333_3333
+        i0 = (i0 | (i0 << 1)) & 0x5555_5555
 
-        i1 = (i1 | (i1 << 8)) & 0x00FF00FF
-        i1 = (i1 | (i1 << 4)) & 0x0F0F0F0F
-        i1 = (i1 | (i1 << 2)) & 0x33333333
-        i1 = (i1 | (i1 << 1)) & 0x55555555
+        i1 = (i1 | (i1 << 8)) & 0x00FF_00FF
+        i1 = (i1 | (i1 << 4)) & 0x0F0F_0F0F
+        i1 = (i1 | (i1 << 2)) & 0x3333_3333
+        i1 = (i1 | (i1 << 1)) & 0x5555_5555
 
         return ((i1 << 1) | i0) >> 0
     }
