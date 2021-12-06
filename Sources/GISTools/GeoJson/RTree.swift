@@ -7,17 +7,27 @@ import Foundation
 
 // MARK: RTreeSortOption
 
-/// Options for how to build the tree with different performace characteristics/tradeoffs.
+/// Options for how to build the tree with different performance characteristics/tradeoffs.
 public enum RTreeSortOption {
 
     /// Sort input objects by their hilbert value.
-    /// - Note: **Performance**: Slow tree build times, very fast search
+    /// - Note: **Performance**: Slow tree build time, very fast search
     case hilbert
-    /// Add input objects in random order to the tree.
-    /// - Note: **Performance**: Fast tree build time, search as fast as `unsorted` but much slower than `hilbert`
-    case random
+
+    /// Add input objects sorted by their latitude.
+    /// - Note: **Performance**: Tree build time is slightly faster than for `hilbert`
+    ///         but search will be ~3x slower
+    case byLatitude
+
+    /// Add input objects sorted by their longitude.
+    /// - Note: **Performance**: Tree build time is slightly faster than for `hilbert`
+    ///         but search will be ~3x slower
+    case byLongitude
+
     /// Don't sort input objects.
-    /// - Note: **Performance**: Very fast tree build time, search as fast as `random` (depending on input object distribution) but much slower than `hilbert`
+    /// - Note: **Performance**: Very fast tree build time, but search will be
+    ///         very slow (even slower than serial search) if the input is not
+    ///         spatially correlated
     case unsorted
 
 }
@@ -57,18 +67,12 @@ public struct RTree<T: BoundingBoxRepresentable> {
         nodeSize: Int = 16,
         sortOption: RTreeSortOption = .hilbert)
     {
-        // Shuffle the input objects immediatelly if random order was requested
-        var inputObjects = objects
-        if sortOption == .random {
-            inputObjects.shuffle()
-        }
-
         var objectsWithBoundingBox: [T] = []
-        objectsWithBoundingBox.reserveCapacity(inputObjects.count)
+        objectsWithBoundingBox.reserveCapacity(objects.count)
 
         // Set bounding boxes on all objects
         // Calculate the RTree bounding box
-        for var object in inputObjects {
+        for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
             guard let boundingBox = object.boundingBox else { continue }
@@ -88,8 +92,27 @@ public struct RTree<T: BoundingBoxRepresentable> {
                 maxY = boundingBox.northEast.latitude
             }
         }
+
+        // Sort input by latitude or longitude
+        if sortOption == .byLatitude {
+            objectsWithBoundingBox.sort(by: { a, b in
+                guard let aLat = a.boundingBox?.southWest.latitude,
+                      let bLat = b.boundingBox?.southWest.latitude
+                else { return false }
+                return aLat < bLat
+            })
+        }
+        else if sortOption == .byLongitude {
+            objectsWithBoundingBox.sort(by: { a, b in
+                guard let aLong = a.boundingBox?.southWest.longitude,
+                      let bLong = b.boundingBox?.southWest.longitude
+                else { return false }
+                return aLong < bLong
+            })
+        }
+
         self.objects = objectsWithBoundingBox
-        self.count = objects.count
+        self.count = objectsWithBoundingBox.count
         self.nodeSize = Int(min(max(nodeSize, 4), 65535))
 
         // Don't build a tree if serial search would be faster

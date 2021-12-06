@@ -28,7 +28,7 @@ final class RTreeTests: XCTestCase {
         let rTreeHilbert = RTree(nodes, nodeSize: 4)
         _testSimplePoints(rTreeHilbert)
 
-        let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .random)
+        let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .byLatitude)
         _testSimplePoints(rTreeRandom)
 
         let rTreeAsInput = RTree(nodes, nodeSize: 4, sortOption: .unsorted)
@@ -76,7 +76,7 @@ final class RTreeTests: XCTestCase {
             let rTreeHilbert = RTree(nodes, nodeSize: Int.random(in: -4 ... 16))
             _testRTree(rTreeHilbert)
 
-            let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .random)
+            let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .byLatitude)
             _testRTree(rTreeRandom)
 
             let rTreeAsInput = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .unsorted)
@@ -154,7 +154,7 @@ final class RTreeTests: XCTestCase {
     // MARK: -
 
     let performanceInput: [Point] = {
-        let count = 100_000
+        let count = 100000
         var nodes: [Point] = []
         nodes.reserveCapacity(count)
         count.times {
@@ -195,19 +195,25 @@ final class RTreeTests: XCTestCase {
         return options
     }()
 
-    func testHilbertPerformanceBuildTree() throws {
+    func testPerformanceBuildTreeHilbert() throws {
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         })
     }
 
-    func testRandomPerformanceBuildTree() throws {
+    func testPerformanceBuildTreeLatitude() throws {
         measure(options: performanceOptions, block: {
-            _ = RTree(performanceInput, nodeSize: 16, sortOption: .random)
+            _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         })
     }
 
-    func testUnsortedPerformanceBuildTree() throws {
+    func testPerformanceBuildTreeLongitude() throws {
+        measure(options: performanceOptions, block: {
+            _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLongitude)
+        })
+    }
+
+    func testPerformanceBuildTreeUnsorted() throws {
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         })
@@ -215,21 +221,28 @@ final class RTreeTests: XCTestCase {
 
     //
 
-    func testHilbertPerformanceQuery() throws {
+    func testPerformanceQuerySerial() throws {
+        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
+        measure(options: performanceOptions, block: {
+            _ = rTree.searchSerial(inBoundingBox: performanceSearchBoundingBox)
+        })
+    }
+
+    func testPerformanceQueryHilbert() throws {
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
         })
     }
 
-    func testRandomPerformanceQuery() throws {
-        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .random)
+    func testPerformanceQueryLatitude() throws {
+        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
         })
     }
 
-    func testUnsortedPerformanceQuery() throws {
+    func testPerformanceQueryUnsorted() throws {
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
@@ -238,7 +251,15 @@ final class RTreeTests: XCTestCase {
 
     //
 
-    func testHilbertPerformanceAroundSearch() throws {
+    func testPerformanceAroundSearchSerial() throws {
+        let maximumDistance = 100_000.0
+        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
+        measure(options: performanceOptions, block: {
+            _ = rTree.searchSerial(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
+        })
+    }
+
+    func testPerformanceAroundSearchHilbert() throws {
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         measure(options: performanceOptions, block: {
@@ -246,15 +267,15 @@ final class RTreeTests: XCTestCase {
         })
     }
 
-    func testRandomPerformanceAroundSearch() throws {
+    func testPerformanceAroundSearchLatitude() throws {
         let maximumDistance = 100_000.0
-        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .random)
+        let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         measure(options: performanceOptions, block: {
             _ = rTree.search(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
         })
     }
 
-    func testUnsortedPerformanceAroundSearch() throws {
+    func testPerformanceAroundSearchUnsorted() throws {
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
