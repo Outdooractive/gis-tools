@@ -3,9 +3,26 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: RTree
-
 // This is a port from https://github.com/mourner/flatbush
+
+// MARK: RTreeSortOption
+
+/// Options for how to build the tree with different performace characteristics/tradeoffs.
+public enum RTreeSortOption {
+
+    /// Sort input objects by their hilbert value.
+    /// - Note: **Performance**: Slow tree build times, very fast search
+    case hilbert
+    /// Add input objects in random order to the tree.
+    /// - Note: **Performance**: Fast tree build time, search as fast as `unsorted` but much slower than `hilbert`
+    case random
+    /// Don't sort input objects.
+    /// - Note: **Performance**: Very fast tree build time, search as fast as `random` (depending on input object distribution) but much slower than `hilbert`
+    case unsorted
+
+}
+
+// MARK: - RTree
 
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
@@ -27,19 +44,6 @@ public struct RTree<T: BoundingBoxRepresentable> {
     private var maxX = -Double.infinity
     private var maxY = -Double.infinity
 
-    /// Options how to build the tree
-    public enum SortOption {
-        /// Sort input objects by their hilbert value.
-        /// - Note: **Performance**: Slow tree build times, very fast search
-        case hilbert
-        /// Add input objects in random order to the tree.
-        /// - Note: **Performance**: Fast tree build time, search as fast as `unsorted` but much slower than `hilbert`
-        case random
-        /// Don't sort input objects.
-        /// - Note: **Performance**: Very fast tree build time, search as fast as `random` (depending on input object distribution) but much slower than `hilbert`
-        case unsorted
-    }
-
     /// The R-Tree's bounding box
     public var boundingBox: BoundingBox {
         BoundingBox(
@@ -51,7 +55,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
     public init(
         _ objects: [T],
         nodeSize: Int = 16,
-        sortOption: SortOption = .hilbert)
+        sortOption: RTreeSortOption = .hilbert)
     {
         // Shuffle the input objects immediatelly if random order was requested
         var inputObjects = objects
