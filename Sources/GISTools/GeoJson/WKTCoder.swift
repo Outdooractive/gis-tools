@@ -60,6 +60,34 @@ extension Feature {
 
 }
 
+// MARK: - FeatureCollection extension
+
+extension FeatureCollection {
+
+    public init?(
+        wkt: String,
+        srid: Int?,
+        calculateBoundingBox: Bool = false)
+    {
+        guard let geometry = try? WKTCoder.decode(wkt: wkt, srid: srid) else { return nil }
+        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init?(
+        wkt: String,
+        projection: Projection,
+        calculateBoundingBox: Bool = false)
+    {
+        guard let geometry = try? WKTCoder.decode(wkt: wkt, projection: projection) else { return nil }
+        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public var asWKT: String? {
+        return WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
+    }
+
+}
+
 // MARK: - WKTCoder
 
 // This code borrows a lot from https://github.com/plarson/WKCodable

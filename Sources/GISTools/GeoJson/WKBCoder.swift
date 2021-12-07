@@ -58,6 +58,34 @@ extension Feature {
 
 }
 
+// MARK: - FeatureCollection extension
+
+extension FeatureCollection {
+
+    public init?(
+        wkb: Data,
+        srid: Int?,
+        calculateBoundingBox: Bool = false)
+    {
+        guard let geometry = try? WKBCoder.decode(wkb: wkb, srid: srid) else { return nil }
+        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public init?(
+        wkb: Data,
+        projection: Projection,
+        calculateBoundingBox: Bool = false)
+    {
+        guard let geometry = try? WKBCoder.decode(wkb: wkb, projection: projection) else { return nil }
+        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+    }
+
+    public var asWKB: Data? {
+        return WKBCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
+    }
+
+}
+
 // MARK: - WKBCoder
 
 // http://portal.opengeospatial.org/files/?artifact_id=25355
