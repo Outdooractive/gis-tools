@@ -17,40 +17,100 @@ extension Array where Element == Coordinate3D {
     }
 #endif
 
-    public var points: [Point] {
+    public var asPoints: [Point] {
         map({ Point($0) })
     }
 
-    public var multiPoint: MultiPoint? {
+    public var asMultiPoint: MultiPoint? {
         MultiPoint(self)
     }
 
-    public var uncheckedMultiPoint: MultiPoint {
+    public var asUncheckedMultiPoint: MultiPoint {
         MultiPoint(unchecked: self)
     }
 
-    public var lineString: LineString? {
+    public var asLineString: LineString? {
         LineString(self)
     }
 
-    public var uncheckedLineString: LineString {
+    public var asUncheckedLineString: LineString {
         LineString(unchecked: self)
     }
 
-    public var polygon: Polygon? {
+    public var asPolygon: Polygon? {
         Polygon([self])
     }
 
-    public var uncheckedPolygon: Polygon {
+    public var asUncheckedPolygon: Polygon {
         Polygon(unchecked: [self])
     }
 
-    public var ring: Ring? {
+    public var asRing: Ring? {
         Ring(self)
     }
 
-    public var uncheckedRing: Ring {
+    public var asUncheckedRing: Ring {
         Ring(unchecked: self)
+    }
+
+}
+
+extension Array where Element == GeoJsonGeometry {
+
+    public var asGeometryCollection: GeometryCollection {
+        GeometryCollection(self)
+    }
+
+    public var asFeatureCollection: FeatureCollection {
+        FeatureCollection(self)
+    }
+
+    public var asWKB: Data? {
+        asGeometryCollection.asWKB
+    }
+
+    public var asWKT: String? {
+        asGeometryCollection.asWKT
+    }
+
+}
+
+extension Array where Element == Feature {
+
+    public var asGeometryCollection: GeometryCollection {
+        GeometryCollection(self.map(\.geometry))
+    }
+
+    public var asFeatureCollection: FeatureCollection {
+        FeatureCollection(self)
+    }
+
+    public var asWKB: Data? {
+        asGeometryCollection.asWKB
+    }
+
+    public var asWKT: String? {
+        asGeometryCollection.asWKT
+    }
+
+}
+
+extension Array where Element == FeatureCollection {
+
+    public var asGeometryCollection: GeometryCollection {
+        GeometryCollection(self.flatMap({ $0.features.map(\.geometry) }))
+    }
+
+    public var asFeatureCollection: FeatureCollection {
+        FeatureCollection(self.flatMap(\.features))
+    }
+
+    public var asWKB: Data? {
+        asGeometryCollection.asWKB
+    }
+
+    public var asWKT: String? {
+        asGeometryCollection.asWKT
     }
 
 }

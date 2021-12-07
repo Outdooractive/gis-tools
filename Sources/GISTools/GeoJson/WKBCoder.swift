@@ -22,6 +22,22 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
+    public static func parse(
+        wkb: Data,
+        srid: Int?)
+        -> GeoJsonGeometry?
+    {
+        try? WKBCoder.decode(wkb: wkb, srid: srid)
+    }
+
+    public static func parse(
+        wkb: Data,
+        projection: Projection)
+        -> GeoJsonGeometry?
+    {
+        try? WKBCoder.decode(wkb: wkb, projection: projection)
+    }
+
     public var asWKB: Data? {
         return WKBCoder.encode(geometry: self)
     }

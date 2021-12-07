@@ -27,7 +27,7 @@ public enum RTreeSortOption {
     /// Don't sort input objects.
     /// - Note: **Performance**: Very fast tree build time, but search will be
     ///         very slow (even slower than serial search) if the input is not
-    ///         spatially correlated
+    ///         already spatially correlated
     case unsorted
 
 }

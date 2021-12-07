@@ -23,6 +23,22 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
+    public static func parse(
+        wkt: String,
+        srid: Int?)
+        -> GeoJsonGeometry?
+    {
+        try? WKTCoder.decode(wkt: wkt, srid: srid)
+    }
+
+    public static func parse(
+        wkt: String,
+        projection: Projection)
+        -> GeoJsonGeometry?
+    {
+        try? WKTCoder.decode(wkt: wkt, projection: projection)
+    }
+
     public var asWKT: String? {
         return WKTCoder.encode(geometry: self)
     }
@@ -70,7 +86,12 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, srid: srid) else { return nil }
-        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+        if let geometryCollection = geometry as? GeometryCollection {
+            self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
+        }
+        else {
+            self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+        }
     }
 
     public init?(
@@ -79,7 +100,12 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, projection: projection) else { return nil }
-        self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+        if let geometryCollection = geometry as? GeometryCollection {
+            self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
+        }
+        else {
+            self.init([geometry], calculateBoundingBox: calculateBoundingBox)
+        }
     }
 
     public var asWKT: String? {
@@ -190,14 +216,14 @@ extension WKTCoder {
 
                 while scanner.scanString(")") == nil {
                     if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
-                        points.append(contentsOf: coordinates.points)
+                        points.append(contentsOf: coordinates.asPoints)
                     }
                     _ = scanner.scanString(",")
                 }
             }
             else {
                 if let coordinates = try scanCoordinates(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM) {
-                    points.append(contentsOf: coordinates.points)
+                    points.append(contentsOf: coordinates.asPoints)
                 }
             }
 
