@@ -230,4 +230,29 @@ final class WKTTests: XCTestCase {
         XCTAssertEqual(encodedGeometryCollection, "GEOMETRYCOLLECTION(POINT(2.0 0.0),POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)))")
     }
 
+    // MARK: - Triangle
+
+    private let triangleData = "TRIANGLE((0 0, 0 1, 1 1, 0 0))"
+    private let triangleZData = "TRIANGLE Z ((0 0 0, 0 1 0, 1 1 0, 0 0 0))"
+    private let triangleMData = "TRIANGLE M ((0 0 2, 0 1 2, 1 1 2, 0 0 2))"
+    private let triangleZMData = "TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))"
+
+    func testTriangleDecoding() throws {
+        let triangle = try WKTCoder.decode(wkt: triangleData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangle.rings.count, 1)
+        XCTAssertEqual(triangle.outerRing!.coordinates.count, 4)
+
+        let triangleZ = try WKTCoder.decode(wkt: triangleZData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleZ.rings.count, 1)
+        XCTAssertEqual(triangleZ.outerRing!.coordinates.count, 4)
+
+        let triangleM = try WKTCoder.decode(wkt: triangleMData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleM.rings.count, 1)
+        XCTAssertEqual(triangleM.outerRing!.coordinates.count, 4)
+
+        let triangleZM = try WKTCoder.decode(wkt: triangleZMData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleZM.rings.count, 1)
+        XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
+    }
+
 }

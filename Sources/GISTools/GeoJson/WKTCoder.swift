@@ -104,6 +104,7 @@ public struct WKTCoder {
         case multiLineString = "multilinestring"
         case multiPolygon = "multipolygon"
         case geometryCollection = "geometrycollection"
+        case triangle = "triangle"
     }
 
     public enum WKTCoderError: Error {
@@ -219,7 +220,7 @@ extension WKTCoder {
 
             return MultiLineString(lineStrings) ?? MultiLineString()
 
-        case .polygon:
+        case .polygon, .triangle:
             return try decodePolygon(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
 
         case .multiPolygon:

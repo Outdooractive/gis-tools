@@ -249,4 +249,33 @@ final class WKBTests: XCTestCase {
         XCTAssertEqual(encodedGeometryCollection, geometryCollectionData)
     }
 
+    // MARK: - Triangle
+
+    // SELECT 'TRIANGLE((0 0, 0 1, 1 1, 0 0))'::geometry;
+    private let triangleData = Data(hex: "01110000000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F00000000000000000000000000000000")!
+    // SELECT 'TRIANGLE Z ((0 0 0, 0 1 0, 1 1 0, 0 0 0))'::geometry;
+    private let triangleZData = Data(hex: "011100008001000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000000000000000000000000000000000000000")!
+    // SELECT 'TRIANGLE M ((0 0 2, 0 1 2, 1 1 2, 0 0 2))'::geometry;
+    private let triangleMData = Data(hex: "011100004001000000040000000000000000000000000000000000000000000000000000400000000000000000000000000000F03F0000000000000040000000000000F03F000000000000F03F0000000000000040000000000000000000000000000000000000000000000040")!
+    // SELECT 'TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))'::geometry;
+    private let triangleZMData = Data(hex: "01110000C0010000000400000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000F03F00000000000000000000000000000040000000000000F03F000000000000F03F000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040")!
+
+    func testTriangleDecoding() throws {
+        let triangle = try WKBCoder.decode(wkb: triangleData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangle.rings.count, 1)
+        XCTAssertEqual(triangle.outerRing!.coordinates.count, 4)
+
+        let triangleZ = try WKBCoder.decode(wkb: triangleZData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleZ.rings.count, 1)
+        XCTAssertEqual(triangleZ.outerRing!.coordinates.count, 4)
+
+        let triangleM = try WKBCoder.decode(wkb: triangleMData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleM.rings.count, 1)
+        XCTAssertEqual(triangleM.outerRing!.coordinates.count, 4)
+
+        let triangleZM = try WKBCoder.decode(wkb: triangleZMData, projection: .epsg4326) as! Polygon
+        XCTAssertEqual(triangleZM.rings.count, 1)
+        XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
+    }
+
 }

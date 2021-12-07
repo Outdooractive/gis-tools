@@ -103,6 +103,7 @@ public struct WKBCoder {
         case multiLineString = 5
         case multiPolygon = 6
         case geometryCollection = 7
+        case triangle = 17
     }
 
     public enum ByteOrder: UInt8 {
@@ -197,7 +198,7 @@ extension WKBCoder {
             return try decodeLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
         case .multiLineString:
             return try decodeMultiLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
-        case .polygon:
+        case .polygon, .triangle:
             return try decodePolygon(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
         case .multiPolygon:
             return try decodeMultiPolygon(bytes: bytes, offset: &offset, byteOrder: byteOrder, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
