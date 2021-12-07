@@ -2,7 +2,6 @@ import Foundation
 
 // MARK: GeoJsonGeometry extension
 
-@available(iOS 13.0, *)
 extension GeoJsonGeometry {
 
     public init?(
@@ -47,7 +46,6 @@ extension GeoJsonGeometry {
 
 // MARK: - Feature extension
 
-@available(iOS 13.0, *)
 extension Feature {
 
     public init?(
@@ -119,7 +117,6 @@ extension FeatureCollection {
 // This code borrows a lot from https://github.com/plarson/WKCodable
 
 /// A tool for encoding and decoding GeoJSON objects from WKT.
-@available(iOS 13.0, *)
 public struct WKTCoder {
 
     enum WKTTypeCode: String {
@@ -145,7 +142,6 @@ public struct WKTCoder {
 
 // MARK: - WKT decoding
 
-@available(iOS 13.0, *)
 extension WKTCoder {
 
     public static func decode(
@@ -432,7 +428,6 @@ extension WKTCoder {
 
 // MARK: - WKT encoding
 
-@available(iOS 13.0, *)
 extension WKTCoder {
 
     public static func encode(
