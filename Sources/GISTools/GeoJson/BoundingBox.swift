@@ -92,7 +92,9 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
                 self.southWest = Coordinate3D(latitude: geoJsonCoordinates[1], longitude: geoJsonCoordinates[0], altitude: geoJsonCoordinates[2])
                 self.northEast = Coordinate3D(latitude: geoJsonCoordinates[4], longitude: geoJsonCoordinates[3], altitude: geoJsonCoordinates[5])
             }
-            return nil
+            else {
+                return nil
+            }
         }
         // Not GeoJSON
         else if let geoJsonCoordinates = json as? [[Double]],
