@@ -8,8 +8,8 @@ import Foundation
 extension Array where Element == Coordinate3D {
 
 #if !os(Linux)
-    public var coordinates: [CLLocationCoordinate2D] {
-        return map { $0.coordinate }
+    public var coordinates2D: [CLLocationCoordinate2D] {
+        return map { $0.coordinate2D }
     }
 
     public var locations: [CLLocation] {

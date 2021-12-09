@@ -74,7 +74,7 @@ extension Coordinate3D {
         self.altitude = altitude
     }
 
-    public var coordinate: CLLocationCoordinate2D {
+    public var coordinate2D: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
@@ -89,7 +89,7 @@ extension Coordinate3D {
 
     public var location: CLLocation {
         CLLocation(
-            coordinate: coordinate,
+            coordinate: coordinate2D,
             altitude: altitude ?? -1.0,
             horizontalAccuracy: 1.0, // always valid
             verticalAccuracy: (altitude == nil ? -1.0 : 1.0), // valid if altitude != nil
@@ -231,5 +231,23 @@ public protocol Coordinate2D {
 extension Coordinate3D: Coordinate2D {}
 
 #if !os(Linux)
-extension CLLocationCoordinate2D: Coordinate2D {}
+extension CLLocationCoordinate2D: Coordinate2D {
+
+    public var coordinate: Coordinate3D {
+        Coordinate3D(self)
+    }
+
+}
+#endif
+
+// MARK: - CLLocation
+
+#if !os(Linux)
+extension CLLocation {
+
+    public var coordinate: Coordinate3D {
+        Coordinate3D(self)
+    }
+
+}
 #endif
