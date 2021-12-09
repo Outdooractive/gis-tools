@@ -37,6 +37,9 @@ public protocol GeoJson:
     /// GeoJSON object type
     var type: GeoJsonType { get }
 
+    /// All coordinates in the object
+    var allCoordinates: [Coordinate3D] { get }
+
     /// Any foreign members, i.e. keys in the JSON that are
     /// not part of the GeoJSON standard
     var foreignMembers: [String: Any] { get set }

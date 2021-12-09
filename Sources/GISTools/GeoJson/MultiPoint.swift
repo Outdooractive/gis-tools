@@ -12,6 +12,10 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
 
     public let coordinates: [Coordinate3D]
 
+    public var allCoordinates: [Coordinate3D] {
+        coordinates
+    }
+
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]

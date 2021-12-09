@@ -12,6 +12,10 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
 
     public let coordinates: [[Coordinate3D]]
 
+    public var allCoordinates: [Coordinate3D] {
+        coordinates.flatMap({ $0 })
+    }
+
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]

@@ -12,6 +12,10 @@ public struct Point: PointGeometry {
 
     public let coordinate: Coordinate3D
 
+    public var allCoordinates: [Coordinate3D] {
+        [coordinate]
+    }
+
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]

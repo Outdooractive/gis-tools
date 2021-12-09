@@ -15,6 +15,10 @@ public struct Feature: GeoJson {
     /// The `Feature`s geometry object
     public let geometry: GeoJsonGeometry
 
+    public var allCoordinates: [Coordinate3D] {
+        geometry.allCoordinates
+    }
+
     /// Only 'Feature' objects may have properties
     public var properties: [String: Any]
 

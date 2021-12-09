@@ -12,6 +12,10 @@ public struct GeometryCollection: GeoJsonGeometry {
 
     public let geometries: [GeoJsonGeometry]
 
+    public var allCoordinates: [Coordinate3D] {
+        geometries.flatMap(\.allCoordinates)
+    }
+
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]

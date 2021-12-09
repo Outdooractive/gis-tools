@@ -5,45 +5,6 @@ import Foundation
 
 extension GeoJson {
 
-    /// Return all coordinates in this object
-    public var allCoordinates: [Coordinate3D] {
-        switch self {
-        case let point as Point:
-            return [point.coordinate]
-
-        case let multiPoint as MultiPoint:
-            return multiPoint.coordinates
-
-        case let lineString as LineString:
-            return lineString.coordinates
-
-        case let multiLineString as MultiLineString:
-            return multiLineString.coordinates.flatMap({ $0 })
-
-        case let polygon as Polygon:
-            return polygon.coordinates.flatMap({ $0 })
-
-        case let multiPolygon as MultiPolygon:
-            return multiPolygon.coordinates.flatMap({ $0 }).flatMap({ $0 })
-
-        case let geometryCollection as GeometryCollection:
-            return geometryCollection.geometries.flatMap({ $0.allCoordinates })
-
-        case let feature as Feature:
-            return feature.geometry.allCoordinates
-
-        case let featureCollection as FeatureCollection:
-            return featureCollection.features.flatMap({ $0.allCoordinates })
-
-        default:
-            return []
-        }
-    }
-
-}
-
-extension GeoJson {
-
     /// Returns a new geometry with all coordinates transformed by the given function.
     ///
     /// - Parameter transform: The transformation function

@@ -12,6 +12,10 @@ public struct FeatureCollection: GeoJson {
 
     public private(set) var features: [Feature]
 
+    public var allCoordinates: [Coordinate3D] {
+        features.flatMap(\.allCoordinates)
+    }
+
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]
