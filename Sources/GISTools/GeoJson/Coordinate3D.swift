@@ -14,6 +14,10 @@ import CoreLocation
 /// plus a generic value `m`.
 public struct Coordinate3D: CustomStringConvertible {
 
+    public static var zero: Coordinate3D {
+        return Coordinate3D(latitude: 0.0, longitude: 0.0)
+    }
+
     /// The coordinates `latitude`
     public var latitude: CLLocationDegrees
     /// The coordinates `longitude`
@@ -45,6 +49,10 @@ public struct Coordinate3D: CustomStringConvertible {
         self.longitude = longitude
         self.altitude = altitude
         self.m = m
+    }
+
+    public var isZero: Bool {
+        latitude == 0.0 && longitude == 0.0
     }
 
     public var description: String {
