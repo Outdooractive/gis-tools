@@ -238,7 +238,7 @@ public protocol Coordinate2D {
 
 extension Coordinate2D {
 
-    public var coordinate: Coordinate3D {
+    public var coordinate3D: Coordinate3D {
         Coordinate3D(latitude: latitude, longitude: longitude)
     }
 
@@ -248,4 +248,13 @@ extension Coordinate3D: Coordinate2D {}
 
 #if !os(Linux)
 extension CLLocationCoordinate2D: Coordinate2D {}
+
+extension CLLocation {
+
+    public var coordinate3D: Coordinate3D {
+        Coordinate3D(self)
+    }
+
+}
+
 #endif
