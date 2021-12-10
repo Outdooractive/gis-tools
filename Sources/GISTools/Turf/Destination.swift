@@ -39,7 +39,7 @@ extension Coordinate3D {
     /// - Parameters:
     ///    - target: The other coordinate
     ///    - distance: The distance from the receiver, in meters
-    func coordinate(
+    public func coordinate(
         inDirectionOf target: Coordinate3D,
         distance: CLLocationDistance)
         -> Coordinate3D
@@ -72,7 +72,7 @@ extension Point {
     /// - Parameters:
     ///    - target: The other point
     ///    - distance: The distance from the receiver, in meters
-    func point(
+    public func point(
         inDirectionOf target: Point,
         distance: CLLocationDistance)
         -> Point
