@@ -10,35 +10,37 @@ import CoreLocation
 
 // MARK: Coordinate3D
 
-/// A three dimensional coordinate (`latitude`, `longitude`, `altitude`)
-/// plus a generic value `m`.
+/// A three dimensional coordinate (``latitude``, ``longitude``, ``altitude``)
+/// plus a generic value ``m``.
 public struct Coordinate3D: CustomStringConvertible {
 
+    // A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {
         return Coordinate3D(latitude: 0.0, longitude: 0.0)
     }
 
-    /// The coordinates `latitude`
+    /// The coordinate's `latitude`.
     public var latitude: CLLocationDegrees
-    /// The coordinates `longitude`
+    /// The coordinate's `longitude`.
     public var longitude: CLLocationDegrees
-    /// The coordinates `altitude`
+    /// The coordinate's `altitude`.
     public var altitude: CLLocationDistance?
 
-    /// Linear referencing or whatever you want it to use for.
+    /// Linear referencing, timestamp or whatever you want it to use for.
     ///
     /// The GeoJSON specification doesn't specifiy the meaning of this value,
     /// and it doesn't guarantee that parsers won't ignore or discard it. See
     /// [chapter 3.1.1 in the spec](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1).
+    /// - Important: ``asJson`` will output `m` only if the coordinate also has an ``altitude``.
     public var m: Double?
 
-    /// Create a coordinate with `latitude` and `longitude`
+    /// Create a coordinate with ``latitude`` and ``longitude``.
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
         self.latitude = latitude
         self.longitude = longitude
     }
 
-    /// Create a coordinate with `latitude`, `longitude`, `altitude` and `m`
+    /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
     public init(
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
@@ -51,6 +53,7 @@ public struct Coordinate3D: CustomStringConvertible {
         self.m = m
     }
 
+    /// A boolean value indicating if this coordinate is (0.0, 0.0) aka Null Island.
     public var isZero: Bool {
         latitude == 0.0 && longitude == 0.0
     }
@@ -76,16 +79,21 @@ public struct Coordinate3D: CustomStringConvertible {
 #if !os(Linux)
 extension Coordinate3D {
 
+    /// Create a `Coordinate3D` from a `CLLocationCoordinate2D`.
     public init(_ coordinate: CLLocationCoordinate2D, altitude: CLLocationDistance? = nil) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
         self.altitude = altitude
     }
 
+    /// This coordinate as `CLLocationCoordinate2D`.
     public var coordinate2D: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
+    /// Create a `Coordinate3D` from a `CLLocation`.
+    ///
+    /// This will set ``m`` to the location's timestamp using `timeIntervalSinceReferenceDate`.
     public init(_ location: CLLocation) {
         self.latitude = location.coordinate.latitude
         self.longitude = location.coordinate.longitude
@@ -93,15 +101,26 @@ extension Coordinate3D {
         if location.verticalAccuracy > 0.0 {
             self.altitude = location.altitude
         }
+
+        self.m = location.timestamp.timeIntervalSinceReferenceDate
     }
 
+    /// THis coordinate as `CLLocation`.
+    ///
+    /// - Important: This will set the location's timestamp using ``m``
+    ///              if it exists, using `Date(timeIntervalSinceReferenceDate:)`.
+    ///              See also ``init(_:)`` and ``asJson``.
     public var location: CLLocation {
-        CLLocation(
+        let timestamp = (m != nil
+                         ? Date(timeIntervalSinceReferenceDate: m!)
+                         : Date())
+
+        return CLLocation(
             coordinate: coordinate2D,
             altitude: altitude ?? -1.0,
             horizontalAccuracy: 1.0, // always valid
             verticalAccuracy: (altitude == nil ? -1.0 : 1.0), // valid if altitude != nil
-            timestamp: Date())
+            timestamp: timestamp)
     }
 
 }
@@ -109,12 +128,12 @@ extension Coordinate3D {
 
 extension Coordinate3D {
 
-    /// Clamped to [-180.0, 180.0]
+    /// Clamped to [-180.0, 180.0].
     public mutating func normalize() {
         self = self.normalized()
     }
 
-    /// Clamped to [-180.0, 180.0]
+    /// Clamped to [-180.0, 180.0].
     public func normalized() -> Coordinate3D {
         var longitude = self.longitude
 
@@ -132,10 +151,12 @@ extension Coordinate3D {
 
 extension Coordinate3D: GeoJsonReadable {
 
-    /// Create a coordinate from a JSON object
+    /// Create a coordinate from a JSON object.
     ///
-    /// Note: The GeoJSON spec uses CRS:84 that specifies coordinates
-    /// in longitude/latitude order.
+    /// - Note: The [GeoJSON spec](https://datatracker.ietf.org/doc/html/rfc7946)
+    ///         uses CRS:84 that specifies coordinates in longitude/latitude order.
+    /// - Important: The third value will always be ``altitude``, the fourth value
+    ///              will be ``m`` if it exists.
     public init?(json: Any?) {
         guard let pointArray = json as? [Double],
               pointArray.count >= 2
@@ -152,15 +173,20 @@ extension Coordinate3D: GeoJsonReadable {
         }
     }
 
-    /// Dump the coordinate as a JSON object
+    /// Dump the coordinate as a JSON object.
+    ///
+    /// - Important: The output array will contain ``m`` only if this coordinate
+    ///              also contains ``altitude`` to prevent any disambiguity.
     public var asJson: [Double] {
         var result: [Double] = [longitude, latitude]
 
         if let altitude = altitude {
             result.append(altitude)
-        }
-        if let m = m {
-            result.append(m)
+
+            // We can't add `m` if we don't have an altitude
+            if let m = m {
+                result.append(m)
+            }
         }
 
         return result
