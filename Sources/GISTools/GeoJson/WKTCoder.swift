@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: GeoJsonGeometry extension
 
+@available(watchOS 6.0, *)
 extension GeoJsonGeometry {
 
     public init?(
@@ -46,6 +47,7 @@ extension GeoJsonGeometry {
 
 // MARK: - Feature extension
 
+@available(watchOS 6.0, *)
 extension Feature {
 
     public init?(
@@ -76,6 +78,7 @@ extension Feature {
 
 // MARK: - FeatureCollection extension
 
+@available(watchOS 6.0, *)
 extension FeatureCollection {
 
     public init?(
@@ -142,6 +145,7 @@ public struct WKTCoder {
 
 // MARK: - WKT decoding
 
+@available(watchOS 6.0, *)
 extension WKTCoder {
 
     public static func decode(

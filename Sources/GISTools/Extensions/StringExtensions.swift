@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: Public
 
+@available(watchOS 6.0, *)
 extension String {
 
     public func asGeoJsonGeometry(srid: Int?) -> GeoJsonGeometry? {

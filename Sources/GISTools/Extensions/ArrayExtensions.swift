@@ -65,6 +65,11 @@ extension Array where Element == GeoJsonGeometry {
         FeatureCollection(self)
     }
 
+}
+
+@available(watchOS 6.0, *)
+extension Array where Element == GeoJsonGeometry {
+
     public var asWKB: Data? {
         asGeometryCollection.asWKB
     }
@@ -85,6 +90,11 @@ extension Array where Element == Feature {
         FeatureCollection(self)
     }
 
+}
+
+@available(watchOS 6.0, *)
+extension Array where Element == Feature {
+
     public var asWKB: Data? {
         asGeometryCollection.asWKB
     }
@@ -104,6 +114,11 @@ extension Array where Element == FeatureCollection {
     public var asFeatureCollection: FeatureCollection {
         FeatureCollection(self.flatMap(\.features))
     }
+
+}
+
+@available(watchOS 6.0, *)
+extension Array where Element == FeatureCollection {
 
     public var asWKB: Data? {
         asGeometryCollection.asWKB

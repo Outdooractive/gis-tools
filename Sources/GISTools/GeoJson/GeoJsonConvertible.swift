@@ -52,7 +52,7 @@ extension GeoJsonWritable {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
             options.insert(.prettyPrinted)
-            if #available(OSX 10.13, iOS 11.0, *) {
+            if #available(OSX 10.13, iOS 11.0, watchOS 4.0, *) {
                 options.insert(.sortedKeys)
             }
         }
