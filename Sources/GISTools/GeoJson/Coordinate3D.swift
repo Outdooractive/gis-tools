@@ -175,9 +175,7 @@ extension Coordinate3D {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
             options.insert(.prettyPrinted)
-            if #available(OSX 10.13, iOS 11.0, watchOS 4.0, *) {
-                options.insert(.sortedKeys)
-            }
+            options.insert(.sortedKeys)
         }
 
         return try? JSONSerialization.data(withJSONObject: asJson, options: options)
