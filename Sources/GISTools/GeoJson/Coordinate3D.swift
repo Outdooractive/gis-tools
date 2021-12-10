@@ -90,7 +90,7 @@ extension Coordinate3D {
         self.latitude = location.coordinate.latitude
         self.longitude = location.coordinate.longitude
 
-        if location.verticalAccuracy > 0 {
+        if location.verticalAccuracy > 0.0 {
             self.altitude = location.altitude
         }
     }

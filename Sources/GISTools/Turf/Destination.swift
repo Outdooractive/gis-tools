@@ -7,7 +7,8 @@ import Foundation
 
 extension Coordinate3D {
 
-    /// Calculates the location of a destination point given a distance in meters and a bearing in degrees.
+    /// Calculates the location of a destination coordinate given a
+    /// distance in meters and a bearing in degrees.
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameters:
@@ -32,11 +33,26 @@ extension Coordinate3D {
             longitude: longitude2.radiansToDegrees)
     }
 
+    /// Calculates the location of a coordinate on a straight line between
+    /// this and another coordinate given a distance in meters.
+    ///
+    /// - Parameters:
+    ///    - target: The other coordinate
+    ///    - distance: The distance from the receiver, in meters
+    func coordinate(
+        inDirectionOf target: Coordinate3D,
+        distance: CLLocationDistance)
+        -> Coordinate3D
+    {
+        destination(distance: distance, bearing: bearing(to: target))
+    }
+
 }
 
 extension Point {
 
-    /// Calculates the location of a destination point given a distance in meters and a bearing in degrees.
+    /// Calculates the location of a destination point given a distance
+    /// in meters and a bearing in degrees.
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameters:
@@ -48,6 +64,20 @@ extension Point {
         -> Point
     {
         Point(coordinate.destination(distance: distance, bearing: bearing))
+    }
+
+    /// Calculates the location of a point on a straight line between
+    /// this and another point given a distance in meters.
+    ///
+    /// - Parameters:
+    ///    - target: The other point
+    ///    - distance: The distance from the receiver, in meters
+    func point(
+        inDirectionOf target: Point,
+        distance: CLLocationDistance)
+        -> Point
+    {
+        destination(distance: distance, bearing: bearing(to: target))
     }
 
 }
