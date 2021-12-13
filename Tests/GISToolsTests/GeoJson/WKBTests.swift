@@ -1,11 +1,6 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
 @testable import struct GISTools.Polygon
+import XCTest
 
 final class WKBTests: XCTestCase {
 
@@ -277,5 +272,24 @@ final class WKBTests: XCTestCase {
         XCTAssertEqual(triangleZM.rings.count, 1)
         XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
     }
+
+    static var allTests = [
+        ("testPointDecoding", testPointDecoding),
+        ("testPointEncoding", testPointEncoding),
+        ("testMultiPointEncoding", testMultiPointEncoding),
+        ("testMultiPointSRIDDecoding", testMultiPointSRIDDecoding),
+        ("testMultiPointSRIDEncoding", testMultiPointSRIDEncoding),
+        ("testLineStringDecoding", testLineStringDecoding),
+        ("testLineStringEncoding", testLineStringEncoding),
+        ("testMultiLineStringDecoding", testMultiLineStringDecoding),
+        ("testMultiLineStringEncoding", testMultiLineStringEncoding),
+        ("testPolygonDecoding", testPolygonDecoding),
+        ("testPolygonEncoding", testPolygonEncoding),
+        ("testMultiPolygonDecoding", testMultiPolygonDecoding),
+        ("testMultiPolygonEncoding", testMultiPolygonEncoding),
+        ("testGeometryCollectionDecoding", testGeometryCollectionDecoding),
+        ("testGeometryCollectionEncoding", testGeometryCollectionEncoding),
+        ("testTriangleDecoding", testTriangleDecoding),
+    ]
 
 }

@@ -1,4 +1,3 @@
-import Foundation
 
 /// A coordinate in mercator projection.
 public struct CoordinateXY: CustomStringConvertible {

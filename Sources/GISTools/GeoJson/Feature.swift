@@ -1,7 +1,3 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
 
 /// A GeoJSON `Feature`.
 public struct Feature: GeoJson {

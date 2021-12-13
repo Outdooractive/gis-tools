@@ -1,10 +1,10 @@
 #if !os(Linux)
 import CoreLocation
 #endif
-import Foundation
+@testable import GISTools
 import XCTest
 
-@testable import GISTools
+// MARK: - RTreeTests
 
 final class RTreeTests: XCTestCase {
 
@@ -128,7 +128,7 @@ final class RTreeTests: XCTestCase {
         let center = Coordinate3D(
             latitude: Double.random(in: -10.0 ... 10.0),
             longitude: Double.random(in: -10.0 ... 10.0))
-        let maximumDistance = Double.random(in: 10000.0 ... 100000.0)
+        let maximumDistance = Double.random(in: 10000.0 ... 100_000.0)
 
         let objects1 = rTree.search(aroundCoordinate: center, maximumDistance: maximumDistance)
         let objects2 = rTree.searchSerial(aroundCoordinate: center, maximumDistance: maximumDistance)
@@ -154,7 +154,7 @@ final class RTreeTests: XCTestCase {
     // MARK: -
 
     let performanceInput: [Point] = {
-        let count = 100000
+        let count = 100_000
         var nodes: [Point] = []
         nodes.reserveCapacity(count)
         count.times {
@@ -184,7 +184,7 @@ final class RTreeTests: XCTestCase {
     }
 
     var performanceAroundSearchCenter: Coordinate3D {
-        return Coordinate3D(
+        Coordinate3D(
             latitude: Double.random(in: -10.0 ... 10.0),
             longitude: Double.random(in: -10.0 ... 10.0))
     }
@@ -319,5 +319,24 @@ final class RTreeTests: XCTestCase {
             }
         }
     }
+
+    static var allTests = [
+        ("testEmpty", testEmpty),
+        ("testSimplePoints", testSimplePoints),
+        ("testRTree", testRTree),
+        ("testAroundSearch", testAroundSearch),
+        ("testPerformanceBuildTreeHilbert", testPerformanceBuildTreeHilbert),
+        ("testPerformanceBuildTreeLatitude", testPerformanceBuildTreeLatitude),
+        ("testPerformanceBuildTreeLongitude", testPerformanceBuildTreeLongitude),
+        ("testPerformanceBuildTreeUnsorted", testPerformanceBuildTreeUnsorted),
+        ("testPerformanceQuerySerial", testPerformanceQuerySerial),
+        ("testPerformanceQueryHilbert", testPerformanceQueryHilbert),
+        ("testPerformanceQueryLatitude", testPerformanceQueryLatitude),
+        ("testPerformanceQueryUnsorted", testPerformanceQueryUnsorted),
+        ("testPerformanceAroundSearchSerial", testPerformanceAroundSearchSerial),
+        ("testPerformanceAroundSearchHilbert", testPerformanceAroundSearchHilbert),
+        ("testPerformanceAroundSearchLatitude", testPerformanceAroundSearchLatitude),
+        ("testPerformanceAroundSearchUnsorted", testPerformanceAroundSearchUnsorted),
+    ]
 
 }

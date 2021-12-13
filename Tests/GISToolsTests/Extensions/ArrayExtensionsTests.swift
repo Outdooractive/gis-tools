@@ -1,7 +1,5 @@
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class ArrayExtensionsTests: XCTestCase {
 
@@ -30,7 +28,7 @@ final class ArrayExtensionsTests: XCTestCase {
 
     func testSmallDistinctPairs() {
         let empty: [Int] = []
-        let small: [Int] = [1]
+        let small = [1]
 
         let emptyPairs = empty.distinctPairs()
         let smallPairs = small.distinctPairs()
@@ -72,7 +70,7 @@ final class ArrayExtensionsTests: XCTestCase {
 
     func testSmallOverlappingPairs() {
         let empty: [Int] = []
-        let small: [Int] = [1]
+        let small = [1]
 
         let emptyPairs = empty.overlappingPairs()
         let smallPairs = small.overlappingPairs()

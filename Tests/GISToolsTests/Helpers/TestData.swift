@@ -1,4 +1,3 @@
-import Foundation
 import GISTools
 import struct GISTools.Polygon
 import XCTest

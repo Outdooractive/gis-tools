@@ -1,10 +1,5 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class BooleanOverlapTests: XCTestCase {
 

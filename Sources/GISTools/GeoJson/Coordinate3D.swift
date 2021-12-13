@@ -1,5 +1,3 @@
-import Foundation
-
 #if os(Linux)
 public typealias CLLocationDirection = Double
 public typealias CLLocationDistance = Double

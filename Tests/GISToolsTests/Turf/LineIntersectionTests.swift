@@ -1,10 +1,5 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class LineIntersectionTests: XCTestCase {
 
@@ -12,12 +7,12 @@ final class LineIntersectionTests: XCTestCase {
         let feature1 = Feature(
             LineString([
                 Coordinate3D(latitude: -12.768946, longitude: 124.584961),
-                Coordinate3D(latitude: -17.224758, longitude: 126.738281)
+                Coordinate3D(latitude: -17.224758, longitude: 126.738281),
             ])!)
         let feature2 = Feature(
             LineString([
                 Coordinate3D(latitude: -15.961329, longitude: 123.354492),
-                Coordinate3D(latitude: -14.008696, longitude: 127.22168)
+                Coordinate3D(latitude: -14.008696, longitude: 127.22168),
             ])!)
 
         let intersections: [Point] = feature1.intersections(other: feature2)
@@ -42,8 +37,8 @@ final class LineIntersectionTests: XCTestCase {
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
-                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001
-                    && abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
+                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001,
+                   abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
                 {
                     continue outerloop
                 }
@@ -82,8 +77,8 @@ final class LineIntersectionTests: XCTestCase {
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
-                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001
-                    && abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
+                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001,
+                   abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
                 {
                     continue outerloop
                 }
@@ -114,8 +109,8 @@ final class LineIntersectionTests: XCTestCase {
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
-                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001
-                    && abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
+                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001,
+                   abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
                 {
                     continue outerloop
                 }
@@ -138,8 +133,8 @@ final class LineIntersectionTests: XCTestCase {
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
-                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001
-                    && abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
+                if abs(intersections[intersectionIndex].coordinate.latitude - results[resultIndex].coordinate.latitude) < 0.00001,
+                   abs(intersections[intersectionIndex].coordinate.longitude - results[resultIndex].coordinate.longitude) < 0.00001
                 {
                     continue outerloop
                 }

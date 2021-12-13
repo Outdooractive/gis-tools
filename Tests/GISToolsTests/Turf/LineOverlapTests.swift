@@ -1,10 +1,5 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class LineOverlapTests: XCTestCase {
 
@@ -102,15 +97,15 @@ final class LineOverlapTests: XCTestCase {
     func testPartlyOverlapping3() {
         let lineString1 = LineString([
             Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0)
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
         ])!
         let lineString2 = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0)
+            Coordinate3D(latitude: 6.0, longitude: 6.0),
         ])!
         let result = LineString([
             Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0)
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
         ])!
 
         let overlappingSegments1 = lineString1.overlappingSegments(with: lineString2)

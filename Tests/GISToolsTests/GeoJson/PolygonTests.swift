@@ -1,51 +1,46 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class PolygonTests: XCTestCase {
 
     private let polygonJsonNoHole = """
-        {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [100.0, 0.0],
-                    [101.0, 0.0],
-                    [101.0, 1.0],
-                    [100.0, 1.0],
-                    [100.0, 0.0]
-                ]
-            ],
-            "other": "something else"
-        }
-        """
+    {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [100.0, 0.0],
+                [101.0, 0.0],
+                [101.0, 1.0],
+                [100.0, 1.0],
+                [100.0, 0.0]
+            ]
+        ],
+        "other": "something else"
+    }
+    """
 
-        let polygonJsonWithHoles = """
-        {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [100.0, 0.0],
-                    [101.0, 0.0],
-                    [101.0, 1.0],
-                    [100.0, 1.0],
-                    [100.0, 0.0]
-                ],
-                [
-                    [100.8, 0.8],
-                    [100.8, 0.2],
-                    [100.2, 0.2],
-                    [100.2, 0.8],
-                    [100.8, 0.8]
-                ]
+    let polygonJsonWithHoles = """
+    {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [100.0, 0.0],
+                [101.0, 0.0],
+                [101.0, 1.0],
+                [100.0, 1.0],
+                [100.0, 0.0]
             ],
-            "other": "something else"
-        }
-        """
+            [
+                [100.8, 0.8],
+                [100.8, 0.2],
+                [100.2, 0.2],
+                [100.2, 0.8],
+                [100.8, 0.8]
+            ]
+        ],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let polygonNoHole = Polygon(jsonString: polygonJsonNoHole) else {
@@ -69,7 +64,8 @@ final class PolygonTests: XCTestCase {
         let polygonNoHole = Polygon([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)]])!
         let polygonWithHoles = Polygon([
             [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)],
-            [Coordinate3D(latitude: 1.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.8)]])!
+            [Coordinate3D(latitude: 1.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.8)],
+        ])!
 
         let stringNoHole = polygonNoHole.asJsonString()!
         XCTAssert(stringNoHole.contains("\"type\":\"Polygon\""))

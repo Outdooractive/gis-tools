@@ -1,20 +1,15 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class PointTests: XCTestCase {
 
     private let pointJson = """
-        {
-            "type": "Point",
-            "coordinates": [100.0, 0.0],
-            "other": "something else"
-        }
-        """
+    {
+        "type": "Point",
+        "coordinates": [100.0, 0.0],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let point = Point(jsonString: pointJson) else {

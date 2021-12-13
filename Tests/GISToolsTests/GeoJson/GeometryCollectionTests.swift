@@ -1,29 +1,24 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class GeometryCollectionTests: XCTestCase {
 
     private let geometryCollectionJson = """
-        {
-            "type": "GeometryCollection",
-            "geometries": [{
-                "type": "Point",
-                "coordinates": [100.0, 0.0]
-            }, {
-                "type": "LineString",
-                "coordinates": [
-                    [101.0, 0.0],
-                    [102.0, 1.0]
-                ]
-            }],
-            "other": "something else"
-        }
-        """
+    {
+        "type": "GeometryCollection",
+        "geometries": [{
+            "type": "Point",
+            "coordinates": [100.0, 0.0]
+        }, {
+            "type": "LineString",
+            "coordinates": [
+                [101.0, 0.0],
+                [102.0, 1.0]
+            ]
+        }],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson) else {
@@ -37,7 +32,7 @@ final class GeometryCollectionTests: XCTestCase {
     }
 
     func testCreateJson() {
-        // TODO
+        // TODO:
     }
 
     static var allTests = [

@@ -1,11 +1,6 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
 @testable import struct GISTools.Polygon
+import XCTest
 
 final class WKTTests: XCTestCase {
 
@@ -130,6 +125,7 @@ final class WKTTests: XCTestCase {
         let encodedLineStringZM = WKTCoder.encode(geometry: lineStringZM, projection: nil)
         XCTAssertEqual(encodedLineStringZM, "LINESTRINGZM(1.0 1.0 5.0 0.0,1.0 2.0 5.0 0.0,1.0 3.0 5.0 1.0,2.0 2.0 5.0 0.0)")
     }
+
     // MARK: - MultiLineString
 
     private let multiLineStringData = "MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))"
@@ -254,5 +250,25 @@ final class WKTTests: XCTestCase {
         XCTAssertEqual(triangleZM.rings.count, 1)
         XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
     }
+
+    static var allTests = [
+        ("testPointDecoding", testPointDecoding),
+        ("testPointEncoding", testPointEncoding),
+        ("testMultiPointDecoding", testMultiPointDecoding),
+        ("testMultiPointEncoding", testMultiPointEncoding),
+        ("testMultiPointSRIDDecoding", testMultiPointSRIDDecoding),
+        ("testMultiPointSRIDEncoding", testMultiPointSRIDEncoding),
+        ("testLineStringDecoding", testLineStringDecoding),
+        ("testLineStringEncoding", testLineStringEncoding),
+        ("testMultiLineStringDecoding", testMultiLineStringDecoding),
+        ("testMultiLineStringEncoding", testMultiLineStringEncoding),
+        ("testPolygonDecoding", testPolygonDecoding),
+        ("testPolygonEncoding", testPolygonEncoding),
+        ("testMultiPolygonDecoding", testMultiPolygonDecoding),
+        ("testMultiPolygonEncoding", testMultiPolygonEncoding),
+        ("testGeometryCollectionDecoding", testGeometryCollectionDecoding),
+        ("testGeometryCollectionEncoding", testGeometryCollectionEncoding),
+        ("testTriangleDecoding", testTriangleDecoding),
+    ]
 
 }

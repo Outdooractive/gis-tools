@@ -1,23 +1,18 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class MultiPointTests: XCTestCase {
 
     private let multiPointJson = """
-        {
-            "type": "MultiPoint",
-            "coordinates": [
-                [100.0, 0.0],
-                [101.0, 1.0]
-            ],
-            "other": "something else"
-        }
-        """
+    {
+        "type": "MultiPoint",
+        "coordinates": [
+            [100.0, 0.0],
+            [101.0, 1.0]
+        ],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let multiPoint = MultiPoint(jsonString: multiPointJson) else {

@@ -1,7 +1,6 @@
 #if !os(Linux)
 import CoreLocation
 #endif
-import Foundation
 
 /// A GeoJSON `MultiPoint` object.
 public struct MultiPoint: PointGeometry, EmptyCreatable {

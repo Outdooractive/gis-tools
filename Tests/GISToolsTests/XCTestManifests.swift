@@ -8,9 +8,10 @@ public func allTests() -> [XCTestCaseEntry] {
         testCase(BearingTests.allTests),
         testCase(BooleanClockwiseTests.allTests),
         testCase(BooleanParallelTests.allTests),
+        testCase(BoundingBoxTests.allTests),
         testCase(BoundingBoxClipTests.allTests),
         testCase(CircleTests.allTests),
-        testCase(Coordinate3DTests.allTests),
+        testCase(CoordinateTests.allTests),
         testCase(DestinationTests.allTests),
         testCase(DistanceTests.allTests),
         testCase(DoubleExtensionsTests.allTests),
@@ -22,8 +23,8 @@ public func allTests() -> [XCTestCaseEntry] {
         testCase(LineChunkTests.allTests),
         testCase(LineIntersectionTests.allTests),
         testCase(LineOverlapTests.allTests),
-        testCase(LineSliceTests.allTests),
         testCase(LineSliceAlongTests.allTests),
+        testCase(LineSliceTests.allTests),
         testCase(LineStringTests.allTests),
         testCase(MidPointTests.allTests),
         testCase(MultiLineStringTests.allTests),
@@ -38,8 +39,11 @@ public func allTests() -> [XCTestCaseEntry] {
         testCase(RhumbBearingTests.allTests),
         testCase(RhumbDestinationTests.allTests),
         testCase(RhumbDistanceTests.allTests),
+        testCase(RTreeTests.allTests),
         testCase(SimplifyTests.allTests),
         testCase(TruncateTests.allTests),
+        testCase(WKBTests.allTests),
+        testCase(WKTTests.allTests),
     ]
 }
 #endif

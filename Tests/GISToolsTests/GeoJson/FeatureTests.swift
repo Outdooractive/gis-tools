@@ -1,37 +1,32 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class FeatureTests: XCTestCase {
 
     private let featureJson = """
-        {
-           "type": "Feature",
-           "geometry": {
-               "type": "Polygon",
-               "coordinates": [
-                   [
-                       [100.0, 0.0],
-                       [101.0, 0.0],
-                       [101.0, 1.0],
-                       [100.0, 1.0],
-                       [100.0, 0.0]
-                   ]
+    {
+       "type": "Feature",
+       "geometry": {
+           "type": "Polygon",
+           "coordinates": [
+               [
+                   [100.0, 0.0],
+                   [101.0, 0.0],
+                   [101.0, 1.0],
+                   [100.0, 1.0],
+                   [100.0, 0.0]
                ]
-           },
-           "properties": {
-               "prop0": "value0",
-               "prop1": {
-                   "this": "that"
-               }
-           },
-           "other": "something else"
-        }
-        """
+           ]
+       },
+       "properties": {
+           "prop0": "value0",
+           "prop1": {
+               "this": "that"
+           }
+       },
+       "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let feature = Feature(jsonString: featureJson) else {
@@ -48,7 +43,7 @@ final class FeatureTests: XCTestCase {
     }
 
     func testCreateJson() {
-        // TODO
+        // TODO:
     }
 
     static var allTests = [

@@ -1,46 +1,41 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class MultiPolygonTests: XCTestCase {
 
     private let multiPolygonJson = """
-        {
-            "type": "MultiPolygon",
-            "coordinates": [
+    {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
                 [
-                    [
-                        [102.0, 2.0],
-                        [103.0, 2.0],
-                        [103.0, 3.0],
-                        [102.0, 3.0],
-                        [102.0, 2.0]
-                    ]
-                ],
-                [
-                    [
-                        [100.0, 0.0],
-                        [101.0, 0.0],
-                        [101.0, 1.0],
-                        [100.0, 1.0],
-                        [100.0, 0.0]
-                    ],
-                    [
-                        [100.2, 0.2],
-                        [100.2, 0.8],
-                        [100.8, 0.8],
-                        [100.8, 0.2],
-                        [100.2, 0.2]
-                    ]
+                    [102.0, 2.0],
+                    [103.0, 2.0],
+                    [103.0, 3.0],
+                    [102.0, 3.0],
+                    [102.0, 2.0]
                 ]
             ],
-            "other": "something else"
-        }
-        """
+            [
+                [
+                    [100.0, 0.0],
+                    [101.0, 0.0],
+                    [101.0, 1.0],
+                    [100.0, 1.0],
+                    [100.0, 0.0]
+                ],
+                [
+                    [100.2, 0.2],
+                    [100.2, 0.8],
+                    [100.8, 0.8],
+                    [100.8, 0.2],
+                    [100.2, 0.2]
+                ]
+            ]
+        ],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let multiPolygon = MultiPolygon(jsonString: multiPolygonJson) else {

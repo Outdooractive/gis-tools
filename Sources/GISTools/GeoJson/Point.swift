@@ -1,7 +1,6 @@
 #if !os(Linux)
 import CoreLocation
 #endif
-import Foundation
 
 /// A GeoJSON `Point` object.
 public struct Point: PointGeometry {

@@ -1,29 +1,24 @@
-#if !os(Linux)
-import CoreLocation
-#endif
-import Foundation
-import XCTest
-
 @testable import GISTools
+import XCTest
 
 final class MultiLineStringTests: XCTestCase {
 
     private let multiLineStringJson = """
-        {
-            "type": "MultiLineString",
-            "coordinates": [
-                [
-                    [100.0, 0.0],
-                    [101.0, 1.0]
-                ],
-                [
-                    [102.0, 2.0],
-                    [103.0, 3.0]
-                ]
+    {
+        "type": "MultiLineString",
+        "coordinates": [
+            [
+                [100.0, 0.0],
+                [101.0, 1.0]
             ],
-            "other": "something else"
-        }
-        """
+            [
+                [102.0, 2.0],
+                [103.0, 3.0]
+            ]
+        ],
+        "other": "something else"
+    }
+    """
 
     func testLoadJson() throws {
         guard let multiLineString = MultiLineString(jsonString: multiLineStringJson) else {

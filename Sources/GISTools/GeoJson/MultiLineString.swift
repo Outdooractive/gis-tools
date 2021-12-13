@@ -1,7 +1,6 @@
 #if !os(Linux)
 import CoreLocation
 #endif
-import Foundation
 
 /// A GeoJSON `MultiLineString` object.
 public struct MultiLineString: LineStringGeometry, EmptyCreatable {

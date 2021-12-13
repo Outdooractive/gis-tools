@@ -1,10 +1,10 @@
 #if !os(Linux)
 import CoreLocation
 #endif
-import Foundation
+@testable import GISTools
 import XCTest
 
-@testable import GISTools
+// MARK: - BearingTests
 
 final class BearingTests: XCTestCase {
 
