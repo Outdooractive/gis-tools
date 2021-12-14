@@ -15,7 +15,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 
     /// An empty bounding box around (0,0)
     public static var zero: BoundingBox {
-        BoundingBox(coordinates: [Coordinate3D(latitude: 0.0, longitude: 0.0)])
+        BoundingBox(southWest: Coordinate3D(latitude: 0.0, longitude: 0.0), northEast: Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
     /// The bounding boxes south-west (bottom-left) coordinate
@@ -34,8 +34,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
     }
 
     /// Create a bounding box from `coordinates` and an optional padding
-    public init(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
-        assert(coordinates.count > 0, "coordinates must not be an empty array.")
+    public init?(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
+        guard !coordinates.isEmpty else { return nil }
 
         var southWest = Coordinate3D(latitude: .infinity, longitude: .infinity)
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
@@ -74,7 +74,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
     }
 
     /// Create a bounding box from other bounding box
-    public init(boundingBoxes: [BoundingBox]) {
+    public init?(boundingBoxes: [BoundingBox]) {
         self.init(coordinates: boundingBoxes.flatMap({ [$0.southWest, $0.northEast] }))
     }
 
@@ -136,7 +136,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
     public func with(padding paddingKilometers: Double) -> BoundingBox {
         BoundingBox(
             coordinates: [southWest, northEast],
-            paddingKilometers: paddingKilometers)
+            paddingKilometers: paddingKilometers)!
     }
 
     /// Returns a new bounding box expanded by `degrees`
@@ -155,12 +155,12 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 
     /// Returns a new bounding box that also includes `coordinate`
     public func expand(including coordinate: Coordinate3D) -> BoundingBox {
-        return BoundingBox(coordinates: [southWest, northEast, coordinate])
+        return BoundingBox(coordinates: [southWest, northEast, coordinate])!
     }
 
     /// Returns a new bounding box that also includes the other `boundingBox`
     public func expand(including boundingBox: BoundingBox) -> BoundingBox {
-        return BoundingBox(coordinates: [southWest, northEast, boundingBox.southWest, boundingBox.northEast])
+        return BoundingBox(coordinates: [southWest, northEast, boundingBox.southWest, boundingBox.northEast])!
     }
 
     public var description: String {
@@ -174,7 +174,7 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
 #if !os(Linux)
 extension BoundingBox {
 
-    public init(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double = 0.0) {
+    public init?(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double = 0.0) {
         self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
     }
 
@@ -182,7 +182,7 @@ extension BoundingBox {
         self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
     }
 
-    public init(coordinates: [CLLocation], paddingKilometers: Double = 0.0) {
+    public init?(coordinates: [CLLocation], paddingKilometers: Double = 0.0) {
         self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
     }
 
