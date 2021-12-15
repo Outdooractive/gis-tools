@@ -112,6 +112,44 @@ extension FeatureCollection {
 
 }
 
+// MARK: - String extensions
+
+extension String {
+
+    public func asGeoJsonGeometry(srid: Int?) -> GeoJsonGeometry? {
+        GeometryCollection.parse(wkt: self, srid: srid)
+    }
+
+    public func asGeoJsonGeometry(projection: Projection) -> GeoJsonGeometry? {
+        GeometryCollection.parse(wkt: self, projection: projection)
+    }
+
+    public func asFeature(
+        srid: Int?,
+        properties: [String: Any] = [:])
+        -> Feature?
+    {
+        Feature(wkt: self, srid: srid, properties: properties)
+    }
+
+    public func asFeature(
+        projection: Projection,
+        properties: [String: Any] = [:])
+        -> Feature?
+    {
+        Feature(wkt: self, projection: projection, properties: properties)
+    }
+
+    public func asFeatureCollection(srid: Int?) -> FeatureCollection? {
+        FeatureCollection(wkt: self, srid: srid)
+    }
+
+    public func asFeatureCollection(projection: Projection) -> FeatureCollection? {
+        FeatureCollection(wkt: self, projection: projection)
+    }
+
+}
+
 // MARK: - WKTCoder
 
 // This code borrows a lot from https://github.com/plarson/WKCodable

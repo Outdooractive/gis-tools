@@ -1,43 +1,5 @@
 import Foundation
 
-// MARK: Public
-
-extension Data {
-
-    public func asGeoJsonGeometry(srid: Int?) -> GeoJsonGeometry? {
-        GeometryCollection.parse(wkb: self, srid: srid)
-    }
-
-    public func asGeoJsonGeometry(projection: Projection) -> GeoJsonGeometry? {
-        GeometryCollection.parse(wkb: self, projection: projection)
-    }
-
-    public func asFeature(
-        srid: Int?,
-        properties: [String: Any] = [:])
-        -> Feature?
-    {
-        Feature(wkb: self, srid: srid, properties: properties)
-    }
-
-    public func asFeature(
-        projection: Projection,
-        properties: [String: Any] = [:])
-        -> Feature?
-    {
-        Feature(wkb: self, projection: projection, properties: properties)
-    }
-
-    public func asFeatureCollection(srid: Int?) -> FeatureCollection? {
-        FeatureCollection(wkb: self, srid: srid)
-    }
-
-    public func asFeatureCollection(projection: Projection) -> FeatureCollection? {
-        FeatureCollection(wkb: self, projection: projection)
-    }
-
-}
-
 // MARK: Private
 
 extension Data {

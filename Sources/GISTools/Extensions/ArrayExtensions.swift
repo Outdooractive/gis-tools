@@ -7,11 +7,11 @@ import CoreLocation
 extension Array where Element == Coordinate3D {
 
 #if !os(Linux)
-    public var coordinates2D: [CLLocationCoordinate2D] {
+    public var asCoordinates2D: [CLLocationCoordinate2D] {
         return map { $0.coordinate2D }
     }
 
-    public var locations: [CLLocation] {
+    public var asLocations: [CLLocation] {
         return map { $0.location }
     }
 #endif
