@@ -103,7 +103,7 @@ extension Coordinate3D {
         self.m = location.timestamp.timeIntervalSinceReferenceDate
     }
 
-    /// THis coordinate as `CLLocation`.
+    /// This coordinate as `CLLocation`.
     ///
     /// - Important: This will set the location's timestamp using ``m``
     ///              if it exists, using `Date(timeIntervalSinceReferenceDate:)`.

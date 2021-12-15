@@ -182,8 +182,8 @@ extension BoundingBox {
         self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
     }
 
-    public init?(coordinates: [CLLocation], paddingKilometers: Double = 0.0) {
-        self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
+    public init?(locations: [CLLocation], paddingKilometers: Double = 0.0) {
+        self.init(coordinates: locations.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
     }
 
     public init(southWest: CLLocation, northEast: CLLocation) {
