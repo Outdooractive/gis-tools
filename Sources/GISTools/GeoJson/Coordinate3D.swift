@@ -11,7 +11,7 @@ import Foundation
 
 /// A three dimensional coordinate (``latitude``, ``longitude``, ``altitude``)
 /// plus a generic value ``m``.
-public struct Coordinate3D: CustomStringConvertible {
+public struct Coordinate3D: CustomStringConvertible, Sendable {
 
     // A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {

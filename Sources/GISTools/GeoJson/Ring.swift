@@ -14,7 +14,7 @@ import Foundation
 /// - A linear ring MUST follow the right-hand rule with respect to the
 ///   area it bounds, i.e., exterior rings are counterclockwise, and
 ///   holes are clockwise.
-public struct Ring {
+public struct Ring: Sendable {
 
     public let coordinates: [Coordinate3D]
 

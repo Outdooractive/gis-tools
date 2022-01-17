@@ -1,7 +1,7 @@
 import Foundation
 
 /// A coordinate in mercator projection.
-public struct CoordinateXY: CustomStringConvertible {
+public struct CoordinateXY: CustomStringConvertible, Sendable {
 
     /// The coordinates easting
     public var x: Double

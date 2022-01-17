@@ -6,7 +6,7 @@ import Foundation
 // MARK: BoundingBox
 
 /// A GeoJSON bounding box.
-public struct BoundingBox: GeoJsonReadable, CustomStringConvertible {
+public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// A bounding box spanning across the whole world
     public static var world: BoundingBox {
