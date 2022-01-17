@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // This is a port from https://github.com/mourner/flatbush
 

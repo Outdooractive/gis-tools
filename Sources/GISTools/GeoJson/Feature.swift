@@ -1,3 +1,4 @@
+import Foundation
 
 /// A GeoJSON `Feature`.
 public struct Feature: GeoJson {

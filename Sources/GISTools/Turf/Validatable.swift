@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // (Partly) ported from https://github.com/Turfjs/turf/blob/master/packages/turf-boolean-valid
 

@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // Uses a different algorithm than https://github.com/Turfjs/turf/tree/master/packages/turf-nearest-point-on-line
 

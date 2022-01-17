@@ -5,6 +5,7 @@ public typealias CLLocationDegrees = Double
 #else
 import CoreLocation
 #endif
+import Foundation
 
 // MARK: Coordinate3D
 

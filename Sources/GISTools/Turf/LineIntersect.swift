@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // (Partly) ported from https://github.com/Turfjs/turf/blob/master/packages/turf-line-intersect
 // and from https://www.geeksforgeeks.org/orientation-3-ordered-points

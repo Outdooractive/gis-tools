@@ -1,3 +1,4 @@
+#if !os(Linux)
 import Foundation
 
 func benchmark(title: String, block: () -> Void) {
@@ -7,3 +8,4 @@ func benchmark(title: String, block: () -> Void) {
 
     print("\(title): \(time)s")
 }
+#endif

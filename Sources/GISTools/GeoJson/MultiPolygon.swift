@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 /// A GeoJSON `MultiPolygon` object.
 public struct MultiPolygon: PolygonGeometry, EmptyCreatable {

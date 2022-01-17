@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-boolean-point-on-line
 // and from https://github.com/Turfjs/turf/blob/master/packages/turf-point-on-feature

@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-simplify
 // and https://github.com/Turfjs/turf/blob/master/packages/turf-simplify/lib/simplify.js

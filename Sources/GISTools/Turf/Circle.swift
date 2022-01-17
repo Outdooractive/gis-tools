@@ -1,6 +1,7 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-circle
 
