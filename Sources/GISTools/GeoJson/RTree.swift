@@ -8,7 +8,7 @@ import Foundation
 // MARK: RTreeSortOption
 
 /// Options for how to build the tree with different performance characteristics/tradeoffs.
-public enum RTreeSortOption {
+public enum RTreeSortOption: Sendable {
 
     /// Sort input objects by their hilbert value.
     /// - Note: **Performance**: Slow tree build time, very fast search
