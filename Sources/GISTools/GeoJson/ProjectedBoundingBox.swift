@@ -46,3 +46,16 @@ public struct ProjectedBoundingBox {
     }
 
 }
+
+// MARK: - Convenience
+
+extension ProjectedBoundingBox {
+
+    /// Converts the bounding box to a `Polygon` object
+    public var boundingBox: BoundingBox {
+        BoundingBox(
+            southWest: southWest.coordinate3D,
+            northEast: northEast.coordinate3D)
+    }
+
+}
