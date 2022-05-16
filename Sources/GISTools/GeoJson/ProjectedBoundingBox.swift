@@ -63,6 +63,11 @@ extension ProjectedBoundingBox {
         boundingBox.contains(coordinate.coordinate3D)
     }
 
+    /// Check if the bounding box contains `coordinate`
+    public func contains(_ coordinate: Coordinate3D) -> Bool {
+        boundingBox.contains(coordinate)
+    }
+
     /// Check if this bounding box contains the other bounding box
     public func contains(_ other: ProjectedBoundingBox) -> Bool {
         self.contains(other.southWest)
