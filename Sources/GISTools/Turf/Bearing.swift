@@ -88,6 +88,42 @@ extension Coordinate3D {
 
 }
 
+extension ProjectedCoordinate {
+
+    /// Finds the geographic bearing between the receiver and another coordinate, i.e. the angle measured in degrees from the north line (0 degrees).
+    ///
+    /// - Parameters:
+    ///    - other: The end point
+    ///    - final: Calculates the final bearing (optional, default *false*)
+    ///
+    /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
+    public func bearing(
+        to other: ProjectedCoordinate,
+        final: Bool = false)
+        -> CLLocationDegrees
+    {
+        coordinate3D.bearing(to: other.coordinate3D, final: final)
+    }
+
+    /// Takes three coordinates and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
+    ///
+    /// - Parameters:
+    ///    - first: The first point in the triangle
+    ///    - middle: The middle point in the triangle
+    ///    - last: The last point in the trianle
+    ///
+    /// - Returns: The angle between the points, between -180 and 180.
+    public static func angleBetween(
+        first: Coordinate3D,
+        middle: Coordinate3D,
+        last: Coordinate3D)
+         -> CLLocationDegrees
+    {
+        Coordinate3D.angleBetween(first: first.coordinate3D, middle: middle.coordinate3D, last: last.coordinate3D)
+    }
+
+}
+
 extension Point {
 
     /// Finds the geographic bearing between the receiver and another Point, i.e. the angle measured in degrees from the north line (0 degrees).

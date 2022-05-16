@@ -4,6 +4,9 @@ import Foundation
 
 extension GeoJsonGeometry {
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         srid: Int?,
@@ -13,6 +16,9 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         projection: Projection,
@@ -22,6 +28,9 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         wkb: Data,
         srid: Int?)
@@ -30,6 +39,9 @@ extension GeoJsonGeometry {
         try? WKBCoder.decode(wkb: wkb, srid: srid)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         wkb: Data,
         projection: Projection)
@@ -48,6 +60,9 @@ extension GeoJsonGeometry {
 
 extension Feature {
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         srid: Int?,
@@ -58,6 +73,9 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         projection: Projection,
@@ -78,6 +96,9 @@ extension Feature {
 
 extension FeatureCollection {
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         srid: Int?,
@@ -87,6 +108,9 @@ extension FeatureCollection {
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
         projection: Projection,
@@ -106,14 +130,23 @@ extension FeatureCollection {
 
 extension Data {
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(srid: Int?) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkb: self, srid: srid)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(projection: Projection) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkb: self, projection: projection)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
         srid: Int?,
         properties: [String: Any] = [:])
@@ -122,6 +155,9 @@ extension Data {
         Feature(wkb: self, srid: srid, properties: properties)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
         projection: Projection,
         properties: [String: Any] = [:])
@@ -130,10 +166,16 @@ extension Data {
         Feature(wkb: self, projection: projection, properties: properties)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(srid: Int?) -> FeatureCollection? {
         FeatureCollection(wkb: self, srid: srid)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(projection: Projection) -> FeatureCollection? {
         FeatureCollection(wkb: self, projection: projection)
     }
@@ -179,6 +221,9 @@ public struct WKBCoder {
 
 extension WKBCoder {
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         wkb: Data,
         srid: Int?)
@@ -197,6 +242,9 @@ extension WKBCoder {
         return try decodeGeometry(bytes: bytes, offset: &offset, projection: projection)
     }
 
+    /// Decode WKB.
+    ///
+    /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         wkb: Data,
         projection: Projection)

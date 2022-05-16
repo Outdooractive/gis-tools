@@ -25,6 +25,18 @@ extension Coordinate3D {
 
 }
 
+extension ProjectedCoordinate {
+
+    /// Calculates the distance between two coordinates, in meters.
+    /// This uses the Haversine formula to account for global curvature.
+    ///
+    /// - Parameter other: The other coordinate
+    public func distance(from other: ProjectedCoordinate) -> CLLocationDistance {
+        coordinate3D.distance(from: other.coordinate3D)
+    }
+
+}
+
 extension Point {
 
     /// Calculates the distance between two points, in meters.

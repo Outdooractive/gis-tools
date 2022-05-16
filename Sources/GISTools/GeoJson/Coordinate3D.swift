@@ -281,3 +281,13 @@ extension CLLocation {
 }
 
 #endif
+
+// MARK: - ProjectedCoordinate
+
+extension Coordinate3D {
+
+    public var projectedCoordinate: ProjectedCoordinate {
+        ProjectedCoordinate(latitude: latitude, longitude: longitude, altitude: altitude, projection: .epsg4326)
+    }
+
+}

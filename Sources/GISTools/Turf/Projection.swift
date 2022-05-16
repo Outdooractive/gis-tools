@@ -15,6 +15,8 @@ public enum Projection: CustomStringConvertible, Sendable {
     /// EPSG:4326 - geodetic
     case epsg4326
 
+    public static let originShift = 2.0 * Double.pi * 6_378_137.0 / 2.0 // 20037508.342789244
+
     public init?(srid: Int) {
         switch srid {
         // A placeholder for 'No SRID'
@@ -45,18 +47,44 @@ public enum Projection: CustomStringConvertible, Sendable {
 
 }
 
+extension ProjectedCoordinate {
+
+    /// Project to EPSG:3857
+    public var projectedToEpsg3857: ProjectedCoordinate {
+        if projection == .epsg3857 { return self }
+
+        let coordinate3D = Coordinate3D(latitude: latitude, longitude: longitude).normalized()
+
+        let x: Double = coordinate3D.longitude * Projection.originShift / 180.0
+        var y: Double = log(tan((90.0 + coordinate3D.latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
+        y *= Projection.originShift / 180.0
+
+        return ProjectedCoordinate(latitude: y, longitude: x, projection: .epsg3857)
+    }
+
+    /// Project to EPSG:4326
+    public var projectedToEpsg4326: ProjectedCoordinate {
+        if projection == .epsg4326 { return self }
+
+        let longitude: Double = (longitude / Projection.originShift) * 180.0
+        var latitude: Double = (latitude / Projection.originShift) * 180.0
+        latitude = 180.0 / Double.pi * (2.0 * atan(exp(latitude * Double.pi / 180.0)) - Double.pi / 2.0)
+
+        return ProjectedCoordinate(latitude: latitude, longitude: longitude, projection: .epsg4326)
+    }
+
+}
+
 extension Coordinate3D {
 
-    /// Project EPSG:4326 to EPSG:3857
-    public var projectedToEpsg3857: CoordinateXY {
-        let originShift: Double = 20_037_508.342789244
+    /// Project to EPSG:4326
+    public var projectedToEpsg4326: ProjectedCoordinate {
+        projectedCoordinate
+    }
 
-        let coordinate = self.normalized()
-        let x: Double = coordinate.longitude * originShift / 180.0
-        var y: Double = log(tan((90.0 + coordinate.latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
-        y *= originShift / 180.0
-
-        return CoordinateXY(x: x, y: y, z: altitude, m: m)
+    /// Project to EPSG:3857
+    public var projectedToEpsg3857: ProjectedCoordinate {
+        projectedCoordinate.projectedToEpsg3857
     }
 
 }

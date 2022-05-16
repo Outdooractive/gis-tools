@@ -49,6 +49,46 @@ extension Coordinate3D {
 
 }
 
+extension ProjectedCoordinate {
+
+    /// Calculates the location of a destination coordinate given a
+    /// distance in meters and a bearing in degrees.
+    /// This uses the Haversine formula to account for global curvature.
+    ///
+    /// - Parameters:
+    ///    - distance: The distance from the receiver, in meters
+    ///    - bearing: The direction, ranging from -180 to 180
+    public func destination(
+        distance: CLLocationDistance,
+        bearing: CLLocationDegrees)
+        -> ProjectedCoordinate
+    {
+        if projection == .epsg4326 {
+            return coordinate3D.destination(distance: distance, bearing: bearing).projectedToEpsg4326
+        }
+        else if projection == .epsg3857 {
+            return coordinate3D.destination(distance: distance, bearing: bearing).projectedToEpsg3857
+        }
+
+        return self
+    }
+
+    /// Calculates the location of a coordinate on a straight line between
+    /// this and another coordinate given a distance in meters.
+    ///
+    /// - Parameters:
+    ///    - target: The other coordinate
+    ///    - distance: The distance from the receiver, in meters
+    public func coordinate(
+        inDirectionOf target: ProjectedCoordinate,
+        distance: CLLocationDistance)
+        -> ProjectedCoordinate
+    {
+        destination(distance: distance, bearing: bearing(to: target))
+    }
+
+}
+
 extension Point {
 
     /// Calculates the location of a destination point given a distance
