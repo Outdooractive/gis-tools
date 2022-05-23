@@ -17,8 +17,23 @@ final class SimplifyTests: XCTestCase {
 //        XCTAssertNil(polygon2?.simplified())
     }
 
+    func testRingValidationBackoff() {
+        let polygon = Polygon([[
+            Coordinate3D(latitude: 47.602460344511684, longitude: 4.564821280446012),
+            Coordinate3D(latitude: 47.639486027997926, longitude: 4.564821280446012),
+            Coordinate3D(latitude: 47.639486027997926, longitude: 4.564821280446012),
+            Coordinate3D(latitude: 47.602460344511684, longitude: 4.564821280446012),
+        ]])
+
+        // Check if we ran into an endless loop
+        let startDate = Date()
+        _ = polygon?.simplified(tolerance: 5.0, highQuality: false)
+        XCTAssertTrue(fabs(startDate.timeIntervalSinceNow) < 0.5)
+    }
+
     static var allTests = [
         ("testInvalidPolygons", testInvalidPolygons),
+        ("testRingValidationBackoff", testRingValidationBackoff),
     ]
 
 }
