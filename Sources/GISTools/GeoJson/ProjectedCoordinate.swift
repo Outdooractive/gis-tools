@@ -3,6 +3,8 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A three dimensional coordinate (``latitude``, ``longitude``, ``altitude``)
+/// plus a projection.
 public struct ProjectedCoordinate {
 
     /// The coordinate's `latitude`.

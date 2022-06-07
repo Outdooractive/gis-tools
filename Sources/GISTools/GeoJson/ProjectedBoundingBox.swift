@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A bounding box with projection.
 public struct ProjectedBoundingBox {
 
     /// The bounding boxes south-west (bottom-left) coordinate
