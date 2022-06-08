@@ -15,6 +15,7 @@ extension GeoJson {
         return nil
     }
 
+    /// Returns a *Coordinate3D* guaranteed to be on the surface of the feature.
     public var coordinateOnFeature: Coordinate3D? {
         coordinateOnFeature(failOnMiss: false)
     }

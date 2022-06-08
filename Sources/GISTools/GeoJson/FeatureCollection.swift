@@ -1,12 +1,13 @@
 import Foundation
 
-/// A GeoJSON `FeatureCollection`
+/// A GeoJSON `FeatureCollection`.
 public struct FeatureCollection: GeoJson {
 
     public var type: GeoJsonType {
         return .featureCollection
     }
 
+    /// The FeatureCollection's Feature objects.
     public private(set) var features: [Feature]
 
     public var allCoordinates: [Coordinate3D] {
@@ -17,10 +18,12 @@ public struct FeatureCollection: GeoJson {
 
     public var foreignMembers: [String: Any] = [:]
 
+    /// Initialize a FeatureCollection with one Feature.
     public init(_ feature: Feature, calculateBoundingBox: Bool = false) {
         self.init([feature], calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Initialize a FeatureCollection with some Features.
     public init(_ features: [Feature], calculateBoundingBox: Bool = false) {
         self.features = features
 
@@ -29,6 +32,7 @@ public struct FeatureCollection: GeoJson {
         }
     }
 
+    /// Initialize a FeatureCollection with some geometry objects.
     public init(_ geometries: [GeoJsonGeometry], calculateBoundingBox: Bool = false) {
         self.features = geometries.compactMap { Feature($0) }
 
@@ -37,7 +41,7 @@ public struct FeatureCollection: GeoJson {
         }
     }
 
-    /// Normalize any GeoJSON object into a FeatureCollection
+    /// Normalize any GeoJSON object into a FeatureCollection.
     public init?(_ geoJson: GeoJson?, calculateBoundingBox: Bool = false) {
         guard let geoJson = geoJson else { return nil }
 
@@ -76,7 +80,7 @@ public struct FeatureCollection: GeoJson {
         self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    // To prevent an infinite recursion
+    // To prevent an infinite recursion.
     init?(geoJson: [String: Any], calculateBoundingBox: Bool = false) {
         guard FeatureCollection.isValid(geoJson: geoJson),
               let features: [Feature] = FeatureCollection.tryCreate(json: geoJson["features"])
@@ -151,6 +155,7 @@ extension FeatureCollection: Equatable {
 
 extension FeatureCollection {
 
+    /// Insert a Feature into the receiver.
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
         if index < features.count {
             features.insert(feature, at: index)
@@ -164,6 +169,7 @@ extension FeatureCollection {
         }
     }
 
+    /// Append a Feature to the receiver.
     public mutating func appendFeature(_ feature: Feature) {
         features.append(feature)
 
@@ -172,6 +178,7 @@ extension FeatureCollection {
         }
     }
 
+    /// Remove a Feature from the receiver.
     public mutating func removeFeature(at index: Int) -> Feature {
         let removedFeature = features.remove(at: index)
 
@@ -182,14 +189,17 @@ extension FeatureCollection {
         return removedFeature
     }
 
+    /// Map Features in-place.
     public mutating func mapFeatures(_ transform: (Feature) -> Feature) {
         features = features.map(transform)
     }
 
+    /// Map Features in-place, removing *nil* values.
     public mutating func compactMapFeatures(_ transform: (Feature) -> Feature?) {
         features = features.compactMap(transform)
     }
 
+    /// Filter Features in-place.
     public mutating func filterFeatures(_ isIncluded: (Feature) -> Bool) {
         features = features.filter(isIncluded)
     }

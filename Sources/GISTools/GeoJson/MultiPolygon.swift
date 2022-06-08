@@ -10,6 +10,7 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
         return .multiPolygon
     }
 
+    /// The receiver's coordinates.
     public let coordinates: [[[Coordinate3D]]]
 
     public var allCoordinates: [Coordinate3D] {
@@ -28,6 +29,7 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
         self.coordinates = []
     }
 
+    /// Try to initialize a MultiPolygon with some coordinates.
     public init?(_ coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty,
               !coordinates[0].isEmpty,
@@ -37,6 +39,7 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
         self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPolygon with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -45,12 +48,14 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a MultiPolygon with some Polygons.
     public init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
         guard !polygons.isEmpty else { return nil }
 
         self.init(unchecked: polygons, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPolygon with some Polygons, don't check the coordinates for validity.
     public init(unchecked polygons: [Polygon], calculateBoundingBox: Bool = false) {
         self.coordinates = polygons.map { $0.coordinates }
 
@@ -106,10 +111,12 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
 #if !os(Linux)
 extension MultiPolygon {
 
+    /// Try to initialize a MultiPolygon with some coordinates.
     public init?(_ coordinates: [[[CLLocationCoordinate2D]]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ $0.map({ Coordinate3D($0) }) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPolygon with some locations.
     public init?(_ coordinates: [[[CLLocation]]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ $0.map({ Coordinate3D($0) }) }) }), calculateBoundingBox: calculateBoundingBox)
     }

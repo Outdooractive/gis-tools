@@ -23,6 +23,11 @@ extension Coordinate3D {
             altitude: (removeAltitude ? nil : altitude?.rounded(precision: precision)))
     }
 
+    /// Truncates the precision of the coordinate.
+    ///
+    /// - Parameters:
+    ///    - precision: The coordinate decimal precision (default *6*)
+    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
     public mutating func truncate(precision: Int, removeAltitude: Bool = false) {
         self = truncated(precision: precision, removeAltitude: removeAltitude)
     }

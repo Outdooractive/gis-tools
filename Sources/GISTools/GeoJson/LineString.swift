@@ -10,6 +10,7 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
         return .lineString
     }
 
+    /// The LineString's coordinates.
     public let coordinates: [Coordinate3D]
 
     public var allCoordinates: [Coordinate3D] {
@@ -28,12 +29,14 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
         self.coordinates = []
     }
 
+    /// Try to initialize a LineString with some coordinates.
     public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         guard coordinates.count >= 2 else { return nil }
 
         self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Initialize a LineString with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -42,6 +45,7 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
+    /// Initialize a LineString with a LineSegment.
     public init(_ lineSegment: LineSegment, calculateBoundingBox: Bool = false) {
         self.coordinates = lineSegment.coordinates
 
@@ -94,10 +98,12 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
 
 extension LineString {
 
+    /// The receiver's first coordinate.
     public var firstCoordinate: Coordinate3D? {
         return coordinates.first
     }
 
+    /// The receiver's last coordinate.
     public var lastCoordinate: Coordinate3D? {
         return coordinates.last
     }
@@ -109,10 +115,12 @@ extension LineString {
 #if !os(Linux)
 extension LineString {
 
+    /// Try to initialize a LineString with some coordinates.
     public init?(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a LineString with some locations.
     public init?(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }

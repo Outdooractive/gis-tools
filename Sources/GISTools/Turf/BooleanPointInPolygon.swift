@@ -167,6 +167,13 @@ extension MultiPolygon {
 
 extension GeometryCollection {
 
+    /// Determines if the coordinate resides inside the *GeometryCollection*.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to check
+    ///    - ignoreBoundary: *true* if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default *false*).
+    ///
+    /// - Returns: *true* if the coordinate is inside of one of the geometries, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool = false)
@@ -183,6 +190,13 @@ extension GeometryCollection {
 
 extension Feature {
 
+    /// Determines if the coordinate resides inside the *Feature*.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to check
+    ///    - ignoreBoundary: *true* if the boundaries should be ignored when determining if the coordinate is inside of the Feature's geometry (default *false*).
+    ///
+    /// - Returns: *true* if the coordinate is inside of one of the Feature's geometry, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool = false)
@@ -197,6 +211,13 @@ extension Feature {
 
 extension FeatureCollection {
 
+    /// Determines if the coordinate resides inside the *FeatureCollection*.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to check
+    ///    - ignoreBoundary: *true* if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default *false*).
+    ///
+    /// - Returns: *true* if the coordinate is inside of one of the geometries, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool = false)

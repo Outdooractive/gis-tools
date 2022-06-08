@@ -10,6 +10,7 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         return .polygon
     }
 
+    /// The receiver's coordinates.
     public let coordinates: [[Coordinate3D]]
 
     public var allCoordinates: [Coordinate3D] {
@@ -24,16 +25,19 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         return [self]
     }
 
+    /// The receiver's outer ring.
     public var outerRing: Ring? {
         guard !coordinates.isEmpty else { return nil }
         return Ring(coordinates[0])
     }
 
+    /// All of the receiver's inner rings.
     public var innerRings: [Ring]? {
         guard coordinates.count > 1 else { return nil }
         return Array(coordinates.suffix(from: 1)).compactMap { Ring($0) }
     }
 
+    /// All of the receiver's rings (outer + inner).
     public var rings: [Ring] {
         return coordinates.compactMap { Ring($0) }
     }
@@ -42,6 +46,7 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         self.coordinates = []
     }
 
+    /// Try to initialize a Polygon with some coordinates.
     public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty,
               coordinates[0].count >= 3
@@ -50,6 +55,7 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a Polygon with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -58,12 +64,14 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a Polygon with some Rings.
     public init?(_ rings: [Ring], calculateBoundingBox: Bool = false) {
         guard !rings.isEmpty else { return nil }
 
         self.init(unchecked: rings, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a Polygon with some Rings, don't check the coordinates for validity.
     public init(unchecked rings: [Ring], calculateBoundingBox: Bool = false) {
         self.coordinates = rings.map { $0.coordinates }
 
@@ -119,10 +127,12 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
 #if !os(Linux)
 extension Polygon {
 
+    /// Try to initialize a Polygon with some coordinates.
     public init?(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a Polygon with some locations.
     public init?(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }

@@ -10,6 +10,7 @@ public struct Point: PointGeometry {
         return .point
     }
 
+    /// The receiver's coordinate.
     public let coordinate: Coordinate3D
 
     public var allCoordinates: [Coordinate3D] {
@@ -24,6 +25,7 @@ public struct Point: PointGeometry {
         return [self]
     }
 
+    /// Initialize a Point with a coordinate.
     public init(_ coordinate: Coordinate3D, calculateBoundingBox: Bool = false) {
         self.coordinate = coordinate
 
@@ -79,10 +81,12 @@ public struct Point: PointGeometry {
 #if !os(Linux)
 extension Point {
 
+    /// Initialize a Point with a coordinate.
     public init(_ coordinate: CLLocationCoordinate2D, calculateBoundingBox: Bool = false) {
         self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Initialize a Point with a location.
     public init(_ coordinate: CLLocation, calculateBoundingBox: Bool = false) {
         self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
     }

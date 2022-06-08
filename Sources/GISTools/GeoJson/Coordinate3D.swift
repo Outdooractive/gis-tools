@@ -13,7 +13,7 @@ import Foundation
 /// plus a generic value ``m``.
 public struct Coordinate3D: CustomStringConvertible, Sendable {
 
-    // A coordinate at (0.0, 0.0) aka Null Island.
+    /// A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {
         return Coordinate3D(latitude: 0.0, longitude: 0.0)
     }
@@ -57,6 +57,7 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
         latitude == 0.0 && longitude == 0.0
     }
 
+    /// A textual representation of the receiver.
     public var description: String {
         var compontents: [String] = [
             "longitude: \(longitude)",
@@ -196,6 +197,7 @@ extension Coordinate3D: GeoJsonReadable {
 // Custom implementation, because the protocol has different prerequisites
 extension Coordinate3D {
 
+    /// Dump the coordinate as JSON data.
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
@@ -206,21 +208,24 @@ extension Coordinate3D {
         return try? JSONSerialization.data(withJSONObject: asJson, options: options)
     }
 
+    /// Dump the coordinate as JSON.
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 
         return String(data: data, encoding: .utf8)!
     }
 
+    /// Write the coordinate in it's JSON represenation to a file.
     public func write(to url: URL, prettyPrinted: Bool = false) throws {
         try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
     }
 
 }
 
-// Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
+// Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects.
 extension Sequence where Element == Coordinate3D {
 
+    // Return the coordinate as JSON.
     public var asJson: [[Double]] {
         self.map({ $0.asJson })
     }
@@ -252,15 +257,19 @@ extension Coordinate3D: Hashable {}
 /// Two dimensional coordinates (`latitute`, `longitude`).
 public protocol Coordinate2D {
 
+    /// The latitude in degrees.
     var latitude: CLLocationDegrees { get set }
+    /// The longitude in degrees.
     var longitude: CLLocationDegrees { get set }
 
+    /// Creates a coordinate object with the specified latitude and longitude values.
     init(latitude: CLLocationDegrees, longitude: CLLocationDegrees)
 
 }
 
 extension Coordinate2D {
 
+    /// The receiver as a ``Coordinate3D``.
     public var coordinate3D: Coordinate3D {
         Coordinate3D(latitude: latitude, longitude: longitude)
     }
@@ -274,6 +283,7 @@ extension CLLocationCoordinate2D: Coordinate2D {}
 
 extension CLLocation {
 
+    /// The receiver as a ``Coordinate3D``.
     public var coordinate3D: Coordinate3D {
         Coordinate3D(self)
     }
@@ -286,6 +296,7 @@ extension CLLocation {
 
 extension Coordinate3D {
 
+    /// The receiver as a ``projectedCoordinate``.
     public var projectedCoordinate: ProjectedCoordinate {
         ProjectedCoordinate(latitude: latitude, longitude: longitude, altitude: altitude, projection: .epsg4326)
     }

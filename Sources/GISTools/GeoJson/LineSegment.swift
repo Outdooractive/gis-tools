@@ -8,9 +8,12 @@ public struct LineSegment: Sendable {
 
     public var boundingBox: BoundingBox?
 
+    /// The segment's first coordinate.
     public let first: Coordinate3D
+    /// The segment's second coordinate.
     public let second: Coordinate3D
 
+    /// Initialize a LineSegment with two coordinates.
     public init(
         first: Coordinate3D,
         second: Coordinate3D,
@@ -28,6 +31,7 @@ public struct LineSegment: Sendable {
 
 extension LineSegment {
 
+    /// The receiver's two coordinates.
     public var coordinates: [Coordinate3D] {
         return [first, second]
     }
@@ -39,6 +43,7 @@ extension LineSegment {
 #if !os(Linux)
 extension LineSegment {
 
+    /// Initialize a LineSegment with two coordinates.
     public init(
         first: CLLocationCoordinate2D,
         second: CLLocationCoordinate2D,
@@ -47,6 +52,7 @@ extension LineSegment {
         self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Initialize a LineSegment with two locations.
     public init(
         first: CLLocation,
         second: CLLocation,

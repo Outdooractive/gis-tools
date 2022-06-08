@@ -29,6 +29,7 @@ public struct ProjectedCoordinate {
         self.projection = projection
     }
 
+    /// A textual representation of the receiver.
     public var description: String {
         var compontents: [String] = [
             projection.description,
@@ -47,6 +48,7 @@ public struct ProjectedCoordinate {
 
 extension ProjectedCoordinate {
 
+    /// Returns the receiver as a ``Coordinate3D``.
     public var coordinate3D: Coordinate3D {
         let projected = projectedToEpsg4326
         return Coordinate3D(latitude: projected.latitude, longitude: projected.longitude)

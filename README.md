@@ -24,7 +24,7 @@ targets: [
 
 ## Features
 
-TODO
+- Supports the full GeoJSON standard, with some exceptions (see `TODO.md`)
 
 ## Usage
 
@@ -42,4 +42,4 @@ MIT
 
 ## Author
 
-Thomas Rasch, outdooractive
+Thomas Rasch, Outdooractive

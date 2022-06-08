@@ -5,6 +5,7 @@ import Foundation
 
 extension BoundingBox {
 
+    /// Returns a *Coordinate* guaranteed to be on the surface of the bounding box.
     public func nearestCoordinateOnFeature(
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
@@ -15,6 +16,7 @@ extension BoundingBox {
         return self.boundingBoxPolygon.nearestCoordinateOnFeature(from: other)
     }
 
+    /// Returns a *Point* guaranteed to be on the surface of the bounding box.
     public func nearestPointOnFeature(
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?
@@ -40,6 +42,7 @@ extension GeoJson {
         return nil
     }
 
+    /// Returns a *Coordinate* guaranteed to be on the surface of the feature.
     public func nearestCoordinateOnFeature(
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?

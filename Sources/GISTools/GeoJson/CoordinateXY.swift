@@ -3,16 +3,17 @@ import Foundation
 /// A coordinate in mercator projection.
 public struct CoordinateXY: CustomStringConvertible, Sendable {
 
-    /// The coordinates easting
+    /// The coordinates easting.
     public var x: Double
-    /// The coordinates northing
+    /// The coordinates northing.
     public var y: Double
-    /// The coordinates altitude
+    /// The coordinates altitude.
     public var z: Double?
 
     /// Linear referencing or whatever you want it to use for.
     public var m: Double?
 
+    /// A textual representation of the receiver.
     public var description: String {
         var compontents: [String] = [
             "x: \(x)",

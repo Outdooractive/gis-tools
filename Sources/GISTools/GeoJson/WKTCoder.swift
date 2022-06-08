@@ -4,7 +4,7 @@ import Foundation
 
 extension GeoJsonGeometry {
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -16,7 +16,7 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -28,7 +28,7 @@ extension GeoJsonGeometry {
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
@@ -39,7 +39,7 @@ extension GeoJsonGeometry {
         try? WKTCoder.decode(wkt: wkt, srid: srid)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
@@ -50,6 +50,7 @@ extension GeoJsonGeometry {
         try? WKTCoder.decode(wkt: wkt, projection: projection)
     }
 
+    /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
         return WKTCoder.encode(geometry: self)
     }
@@ -60,7 +61,7 @@ extension GeoJsonGeometry {
 
 extension Feature {
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -73,7 +74,7 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -86,6 +87,7 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
         return WKTCoder.encode(geometry: self.geometry)
     }
@@ -96,7 +98,7 @@ extension Feature {
 
 extension FeatureCollection {
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -113,7 +115,7 @@ extension FeatureCollection {
         }
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -130,6 +132,7 @@ extension FeatureCollection {
         }
     }
 
+    /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
         return WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
     }
@@ -140,21 +143,21 @@ extension FeatureCollection {
 
 extension String {
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(srid: Int?) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkt: self, srid: srid)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(projection: Projection) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkt: self, projection: projection)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
@@ -165,7 +168,7 @@ extension String {
         Feature(wkt: self, srid: srid, properties: properties)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
@@ -176,14 +179,14 @@ extension String {
         Feature(wkt: self, projection: projection, properties: properties)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(srid: Int?) -> FeatureCollection? {
         FeatureCollection(wkt: self, srid: srid)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(projection: Projection) -> FeatureCollection? {
@@ -224,7 +227,7 @@ public struct WKTCoder {
 
 extension WKTCoder {
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
@@ -242,7 +245,7 @@ extension WKTCoder {
         return try decode(wkt: wkt, projection: projection)
     }
 
-    /// Decode WKT.
+    /// Decode a GeoJSON object from WKT.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
@@ -516,6 +519,7 @@ extension WKTCoder {
 
 extension WKTCoder {
 
+    /// Returns a geometry as a WKT encoded string.
     public static func encode(
         geometry: GeoJsonGeometry,
         projection: Projection? = .epsg4326)

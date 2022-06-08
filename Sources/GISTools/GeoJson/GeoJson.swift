@@ -34,27 +34,27 @@ public protocol GeoJson:
     CustomDebugStringConvertible
 {
 
-    /// GeoJSON object type
+    /// GeoJSON object type.
     var type: GeoJsonType { get }
 
-    /// All coordinates in the object
+    /// All of the receiver's coordinates.
     var allCoordinates: [Coordinate3D] { get }
 
     /// Any foreign members, i.e. keys in the JSON that are
-    /// not part of the GeoJSON standard
+    /// not part of the GeoJSON standard.
     var foreignMembers: [String: Any] { get set }
 
-    /// Try to initialize a GeoJSON object from any JSON
+    /// Try to initialize a GeoJSON object from any JSON and calculate a bounding box if necessary.
     init?(json: Any?, calculateBoundingBox: Bool)
 
-    /// Type erased equality check
+    /// Type erased equality check.
     func isEqualTo(_ other: GeoJson) -> Bool
 
 }
 
 extension GeoJson where Self: Equatable {
 
-    /// Type erased equality check
+    /// Type erased equality check.
     public func isEqualTo(_ other: GeoJson) -> Bool {
         guard let other = other as? Self else { return false }
         return self == other
@@ -64,6 +64,7 @@ extension GeoJson where Self: Equatable {
 
 extension GeoJson {
 
+    /// The receiver as a pretty printed JSON string representation.
     public var debugDescription: String {
         let json = self.asJson
 
@@ -81,16 +82,19 @@ extension GeoJson {
 // https://datatracker.ietf.org/doc/html/rfc7946
 extension GeoJson {
 
+    /// Any foreign member by key.
     public func foreignMember<T>(for key: String) -> T? {
         return foreignMembers[key] as? T
     }
 
+    /// Set a foreign member key/value pair.
     public mutating func setForeignMember(_ value: Any?, for key: String) {
         var updatedProperties = foreignMembers
         updatedProperties[key] = value
         foreignMembers = updatedProperties
     }
 
+    /// Remove a foreign member from the receiver.
     @discardableResult
     public mutating func removeForeignMember(for key: String) -> Any? {
         var updatedProperties = foreignMembers
@@ -99,6 +103,7 @@ extension GeoJson {
         return previous
     }
 
+    /// Any foreign member ny subscript.
     public subscript<T>(foreignMember key: String) -> T? {
         get {
             return foreignMember(for: key)
@@ -112,27 +117,30 @@ extension GeoJson {
 
 // MARK: - BoundingBoxRepresentable
 
-/// GeoJSON Objects that may have a bounding box.
+/// GeoJSON objects that may have a bounding box.
 public protocol BoundingBoxRepresentable {
 
-    /// The object's bounding box
+    /// The receiver's bounding box.
     var boundingBox: BoundingBox? { get set }
 
-    /// Calculates and returns the object's bounding box
+    /// Calculates and returns the receiver's bounding box.
     func calculateBoundingBox() -> BoundingBox?
 
-    /// Calculates the object's bounding box and updates the property
+    /// Calculates the receiver's bounding box and updates the ``boundingBox`` property.
+    ///
+    /// - parameter ifNecessary: Only update the bounding box if the receiver doesn't already have one.
     @discardableResult
     mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool) -> BoundingBox?
 
-    /// Check if the object is inside or crosses the other bounding box
+    /// Check if the receiver is inside or crosses  the other bounding box.
+    ///
+    /// - parameter otherBoundingBox: The bounding box to check.
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool
 
 }
 
 extension BoundingBoxRepresentable {
 
-    /// Calculates the object's bounding box and updates the property
     @discardableResult
     public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
         if boundingBox != nil && ifNecessary { return nil }
@@ -148,16 +156,15 @@ extension BoundingBoxRepresentable {
 /// invalid objects.
 public protocol EmptyCreatable {
 
-    /// Create an empty and possibly invalid object
+    /// Create an empty and possibly invalid object.
     init()
 
 }
 
 // MARK: - GeoJsonGeometry
 
-/// GeoJSON geometry objects:
-///     `Point`, `MultiPoint`, `LineString`,
-///     `MultiLineString`, `Polygon`, `MultiPolygon`.
+/// GeoJSON geometry objects: `Point`, `MultiPoint`, `LineString`, `MultiLineString`,
+/// `Polygon`, `MultiPolygon`.
 public protocol GeoJsonGeometry: GeoJson {}
 
 // MARK: - Point, MultiPoint
@@ -165,7 +172,7 @@ public protocol GeoJsonGeometry: GeoJson {}
 /// Point geometry objects: `Point` and `MultiPoint`.
 public protocol PointGeometry: GeoJsonGeometry {
 
-    /// The object's coordinates converted to `Point`s
+    /// The receiver's coordinates converted to `Point`s.
     var points: [Point] { get }
 
 }
@@ -175,13 +182,13 @@ public protocol PointGeometry: GeoJsonGeometry {
 /// Linestring geometry objects: `LineString` and `MultiLineString`.
 public protocol LineStringGeometry: GeoJsonGeometry {
 
-    /// The object's coordinates converted to `LineString`s
+    /// The receiver's coordinates converted to `LineString`s.
     var lineStrings: [LineString] { get }
 
-    /// The first coordinate of the `LineString(s)`
+    /// The first coordinate of the `LineString(s)`.
     var firstCoordinate: Coordinate3D? { get }
 
-    /// The last coordinate of the `LineString(s)`
+    /// The last coordinate of the `LineString(s)`.
     var lastCoordinate: Coordinate3D? { get }
 
 }
@@ -191,16 +198,16 @@ public protocol LineStringGeometry: GeoJsonGeometry {
 /// Polygon geometry objects: `Polygon` and `MultiPolygon`.
 public protocol PolygonGeometry: GeoJsonGeometry {
 
-    /// The object's coordinates converted to `Polygon`s
+    /// The receiver's coordinates converted to `Polygon`s.
     var polygons: [Polygon] { get }
 
-    /// Check if this `(Multi)Polygon` contains `coordinate`
+    /// Check if this `(Multi)Polygon` contains `coordinate`.
     func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool)
         -> Bool
 
-    /// Check if this `(Multi)Polygon` contains `point`
+    /// Check if this `(Multi)Polygon` contains `point`.
     func contains(
         _ point: Point,
         ignoreBoundary: Bool)
@@ -212,7 +219,7 @@ public protocol PolygonGeometry: GeoJsonGeometry {
 
 extension GeoJson {
 
-    /// Try to create an object from a JSON object
+    /// Try to create an object from any JSON object.
     public static func tryCreate<V: GeoJsonReadable>(json: Any?) -> V? {
         if let json = json {
             return V(json: json)
@@ -220,7 +227,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create an array of objects from a JSON object
+    /// Try to create an array of objects from any JSON object.
     public static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [V]? {
         if let array = json as? [Any] {
             return array.compactMap { V(json: $0) }
@@ -228,7 +235,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create an array of arrays of objects from a JSON object
+    /// Try to create an array of arrays of objects from any JSON object.
     static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[V]]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreate(json: $0) }
@@ -236,7 +243,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create an array of arrays of arrays of objects from a JSON object
+    /// Try to create an array of arrays of arrays of objects from any JSON object.
     static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[[V]]]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreate(json: $0) }
@@ -244,7 +251,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create a GeoJSON object from a JSON object
+    /// Try to create a GeoJSON object from any JSON object.
     public static func tryCreate(json: Any?) -> GeoJson? {
         if let geoJson = json as? [String: Any],
            let typeString = geoJson["type"] as? String,
@@ -267,7 +274,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create a GeoJSON geometry from a JSON object
+    /// Try to create a GeoJSON geometry from any JSON object.
     public static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
         if let geoJson = json as? [String: Any],
            let typeString = geoJson["type"] as? String,
@@ -288,7 +295,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create an array of GeoJSON geometries from a JSON object
+    /// Try to create an array of GeoJSON geometries from any JSON object.
     public static func tryCreate(json: Any?) -> [GeoJsonGeometry]? {
         if let array = json as? [Any] {
             return array.compactMap { tryCreateGeometry(json: $0) }
@@ -296,7 +303,7 @@ extension GeoJson {
         return nil
     }
 
-    /// Try to create a feature from a JSON object
+    /// Try to create a feature from any JSON object.
     public static func tryCreateFeature(json: Any?) -> Feature? {
         if let geometry = tryCreateGeometry(json: json) {
             return Feature(geometry)

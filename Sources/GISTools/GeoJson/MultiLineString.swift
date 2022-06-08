@@ -10,6 +10,7 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         return .multiLineString
     }
 
+    /// The MultiLineString's coordinates.
     public let coordinates: [[Coordinate3D]]
 
     public var allCoordinates: [Coordinate3D] {
@@ -28,6 +29,7 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         self.coordinates = []
     }
 
+    /// Try to initialize a MultiLineString with some coordinates.
     public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty,
               coordinates[0].count >= 2
@@ -36,6 +38,7 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiLineString with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -44,12 +47,14 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a MultiLineString with some LineStrings.
     public init?(_ lineStrings: [LineString], calculateBoundingBox: Bool = false) {
         guard !lineStrings.isEmpty else { return nil }
 
         self.init(unchecked: lineStrings, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiLineString with some LineStrings, don't check the coordinates for validity.
     public init(unchecked lineStrings: [LineString], calculateBoundingBox: Bool = false) {
         self.coordinates = lineStrings.map { $0.coordinates }
 
@@ -58,12 +63,14 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a MultiLineString with some LineSegments.
     public init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         guard !lineSegments.isEmpty else { return nil }
 
         self.init(unchecked: lineSegments, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiLineString with some LineSegments, don't check the coordinates for validity.
     public init(unchecked lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         self.coordinates = lineSegments.map({ $0.coordinates })
 
@@ -116,10 +123,12 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
 
 extension MultiLineString {
 
+    /// The receiver's first coordinate.
     public var firstCoordinate: Coordinate3D? {
         return coordinates.first?.first
     }
 
+    /// The receiver's last coordinate.
     public var lastCoordinate: Coordinate3D? {
         return coordinates.last?.last
     }
@@ -131,10 +140,12 @@ extension MultiLineString {
 #if !os(Linux)
 extension MultiLineString {
 
+    /// Try to initialize a MultiLineString with some coordinates.
     public init?(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiLineString with some locations.
     public init?(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }

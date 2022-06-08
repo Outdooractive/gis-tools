@@ -7,22 +7,24 @@ public struct Feature: GeoJson {
         return .feature
     }
 
+    /// An arbitrary identifier.
     public var id: String?
 
-    /// The `Feature`s geometry object
+    /// The `Feature`s geometry object.
     public let geometry: GeoJsonGeometry
 
     public var allCoordinates: [Coordinate3D] {
         geometry.allCoordinates
     }
 
-    /// Only 'Feature' objects may have properties
+    /// Only 'Feature' objects may have properties.
     public var properties: [String: Any]
 
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]
 
+    /// Create a ``Feature`` from any ``GeoJsonGeometry`` object.
     public init(
         _ geometry: GeoJsonGeometry,
         properties: [String: Any] = [:],
@@ -120,16 +122,19 @@ extension Feature: Equatable {
 
 extension Feature {
 
+    /// Returns a property by key.
     public func property<T>(for key: String) -> T? {
         return properties[key] as? T
     }
 
+    /// Set a property key/value pair.
     public mutating func setProperty(_ value: Any?, for key: String) {
         var updatedProperties = properties
         updatedProperties[key] = value
         properties = updatedProperties
     }
 
+    /// Remove a property from the Feature.
     @discardableResult
     public mutating func removeProperty(for key: String) -> Any? {
         var updatedProperties = properties
@@ -138,6 +143,7 @@ extension Feature {
         return previous
     }
 
+    /// Returns a property by key.
     public subscript<T>(key: String) -> T? {
         get {
             return property(for: key)

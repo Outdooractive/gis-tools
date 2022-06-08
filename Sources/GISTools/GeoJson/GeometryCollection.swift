@@ -7,6 +7,7 @@ public struct GeometryCollection: GeoJsonGeometry {
         return .geometryCollection
     }
 
+    /// The GeometryCollection's geometry objects.
     public let geometries: [GeoJsonGeometry]
 
     public var allCoordinates: [Coordinate3D] {
@@ -17,10 +18,12 @@ public struct GeometryCollection: GeoJsonGeometry {
 
     public var foreignMembers: [String: Any] = [:]
 
+    /// Initialize a GeometryCollection with a geometry object.
     public init(_ geometry: GeoJsonGeometry, calculateBoundingBox: Bool = false) {
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Initialize a GeometryCollection with some geometry objects.
     public init(_ geometries: [GeoJsonGeometry], calculateBoundingBox: Bool = false) {
         self.geometries = geometries
 

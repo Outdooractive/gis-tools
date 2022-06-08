@@ -5,6 +5,7 @@ import Foundation
 
 extension GeoJson {
 
+    /// Returns the receiver with all coordinates reversed.
     public var reversed: Self {
         switch self {
         case let lineString as LineString:
@@ -43,6 +44,7 @@ extension GeoJson {
         }
     }
 
+    /// Reverses all of the receiver's coordinates.
     public mutating func reverse() {
         self = reversed
     }
@@ -51,10 +53,12 @@ extension GeoJson {
 
 extension Ring {
 
+    /// Returns the receiver with all coordinates reversed.
     public var reversed: Ring {
         Ring(coordinates.reversed()) ?? self
     }
 
+    /// Reverses all of the receiver's coordinates.
     public mutating func reverse() {
         self = reversed
     }
@@ -63,12 +67,14 @@ extension Ring {
 
 extension LineSegment {
 
+    /// Returns the receiver with all coordinates reversed.
     public var reversed: LineSegment {
         var result = LineSegment(first: second, second: first)
         result.boundingBox = boundingBox
         return result
     }
 
+    /// Reverses all of the receiver's coordinates.
     public mutating func reverse() {
         self = reversed
     }

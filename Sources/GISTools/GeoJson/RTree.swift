@@ -37,7 +37,7 @@ public enum RTreeSortOption: Sendable {
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
 
-    /// The indexed objects
+    /// The indexed objects.
     public let objects: [T]
     /// The number of elements in the RTree.
     public let count: Int
@@ -54,14 +54,14 @@ public struct RTree<T: BoundingBoxRepresentable> {
     private var maxX = -Double.infinity
     private var maxY = -Double.infinity
 
-    /// The R-Tree's bounding box
+    /// The R-Tree's bounding box.
     public var boundingBox: BoundingBox {
         BoundingBox(
             southWest: Coordinate3D(latitude: minY, longitude: minX),
             northEast: Coordinate3D(latitude: maxY, longitude: maxX))
     }
 
-    /// Create a new R-Tree from `objects`
+    /// Create a new R-Tree from `objects`.
     public init(
         _ objects: [T],
         nodeSize: Int = 16,
@@ -218,6 +218,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
         }
     }
 
+    /// Search for objects inside a bounding box.
     public func search(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         guard count > nodeSize,
               position == boundingBoxes.count
@@ -283,6 +284,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
         object: T,
         distance: CLLocationDistance)
 
+    /// Search for objects around a coordinate.
     public func search(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,

@@ -16,8 +16,10 @@ import Foundation
 ///   holes are clockwise.
 public struct Ring: Sendable {
 
+    /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 
+    /// Try to initialize a Ring with some coordinates.
     public init?(_ coordinates: [Coordinate3D]) {
         // TODO: Close the ring, if necessary
         guard coordinates.count >= 4 else { return nil }
@@ -25,6 +27,7 @@ public struct Ring: Sendable {
         self.init(unchecked: coordinates)
     }
 
+    /// Try to initialize a Ring with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [Coordinate3D]) {
         self.coordinates = coordinates
     }
@@ -36,10 +39,12 @@ public struct Ring: Sendable {
 #if !os(Linux)
 extension Ring {
 
+    /// Try to initialize a Ring with some coordinates.
     public init?(_ coordinates: [CLLocationCoordinate2D]) {
         self.init(coordinates.map({ Coordinate3D($0) }))
     }
 
+    /// Try to initialize a Ring with some locations.
     public init?(_ coordinates: [CLLocation]) {
         self.init(coordinates.map({ Coordinate3D($0) }))
     }

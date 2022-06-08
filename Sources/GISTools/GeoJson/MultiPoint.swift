@@ -10,6 +10,7 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
         return .multiPoint
     }
 
+    /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 
     public var allCoordinates: [Coordinate3D] {
@@ -28,12 +29,14 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
         self.coordinates = []
     }
 
+    /// Try to initialize a MultiPoint with some coordinates.
     public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty else { return nil }
 
         self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPoint with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -42,12 +45,14 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a MultiPoint with some Points.
     public init?(_ points: [Point], calculateBoundingBox: Bool = false) {
         guard !points.isEmpty else { return nil }
 
         self.init(unchecked: points, calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPoint with some Points, don't check the coordinates for validity.
     public init(unchecked points: [Point], calculateBoundingBox: Bool = false) {
         self.coordinates = points.map { $0.coordinate }
 
@@ -103,10 +108,12 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
 #if !os(Linux)
 extension MultiPoint {
 
+    /// Try to initialize a MultiPoint with some coordinates.
     public init?(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 
+    /// Try to initialize a MultiPoint with some locations.
     public init?(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
