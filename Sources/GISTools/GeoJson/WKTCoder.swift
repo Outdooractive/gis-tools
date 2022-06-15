@@ -205,6 +205,7 @@ public struct WKTCoder {
     enum WKTTypeCode: String {
         case point = "point"
         case lineString = "linestring"
+        case linearRing = "linearring"
         case polygon = "polygon"
         case multiPoint = "multipoint"
         case multiLineString = "multilinestring"
@@ -315,7 +316,7 @@ extension WKTCoder {
 
             return MultiPoint(points) ?? MultiPoint()
 
-        case .lineString:
+        case .lineString, .linearRing:
             return try decodeLineString(scanner: scanner, projection: projection, decodeZ: decodeZ, decodeM: decodeM)
 
         case .multiLineString:

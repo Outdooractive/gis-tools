@@ -93,6 +93,7 @@ final class WKTTests: XCTestCase {
     private let lineStringZData = "LINESTRING Z (1 1 5, 1 2 5, 1 3 5, 2 2 5)"
     private let lineStringMData = "LINESTRING M (1 1 0, 1 2 0, 1 3 1, 2 2 0)"
     private let lineStringZMData = "LINESTRING ZM (1 1 5 0, 1 2 5 0, 1 3 5 1, 2 2 5 0)"
+    private let linearRingZData = "LINEARRING (0 0 0, 4 0 0, 4 4 0, 0 4 0, 0 0 0)"
 
     func testLineStringDecoding() throws {
         let lineString = try WKTCoder.decode(wkt: lineStringData, projection: .epsg4326) as! LineString
@@ -106,6 +107,9 @@ final class WKTTests: XCTestCase {
 
         let lineStringZM = try WKTCoder.decode(wkt: lineStringZMData, projection: .epsg4326) as! LineString
         XCTAssertEqual(lineStringZM.coordinates.count, 4)
+
+        let linearRingZ = try WKTCoder.decode(wkt: linearRingZData, projection: .epsg4326) as! LineString
+        XCTAssertEqual(linearRingZ.coordinates.count, 5)
     }
 
     func testLineStringEncoding() throws {
