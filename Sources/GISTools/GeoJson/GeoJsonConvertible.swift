@@ -7,7 +7,7 @@ public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
 // MARK: GeoJsonReadable
 
-/// A protocol for GeoJSON objects that can be read from JSON.
+/// A protocol for GeoJSON objects that can be read/parsed from JSON.
 public protocol GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from any JSON.
@@ -17,19 +17,19 @@ public protocol GeoJsonReadable {
 
 extension GeoJsonReadable {
 
-    /// Try to initialize an object from a file.
+    /// Try to initialize a GeoJSON object from a file.
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
         self.init(jsonData: data)
     }
 
-    /// Try to initialize an object from a data object.
+    /// Try to initialize a GeoJSON object from a data object.
     public init?(jsonData: Data) {
         guard let json = try? JSONSerialization.jsonObject(with: jsonData) else { return nil }
         self.init(json: json)
     }
 
-    /// Try to initialize an object from a string.
+    /// Try to initialize a GeoJSON object from a string.
     public init?(jsonString: String) {
         guard let data = jsonString.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data)
@@ -44,14 +44,14 @@ extension GeoJsonReadable {
 /// A protocol for GeoJSON objects that can write to JSON.
 public protocol GeoJsonWritable {
 
-    /// Return the GeoJson object as JSON.
+    /// Return the GeoJson object as Key/Value pairs.
     var asJson: [String: Any] { get }
 
 }
 
 extension GeoJsonWritable {
 
-    /// Dump the object as JSON.
+    /// Dump the object as JSON data.
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
@@ -62,7 +62,7 @@ extension GeoJsonWritable {
         return try? JSONSerialization.data(withJSONObject: asJson, options: options)
     }
 
-    /// Dump the object as JSON.
+    /// Dump the object as a JSON string.
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 

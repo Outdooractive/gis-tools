@@ -8,7 +8,7 @@ import Foundation
 
 extension LineSegment {
 
-    /// Tests if the coordinate is on the segment.
+    /// Tests if *Coordinate3D* is on the segment.
     public func checkIsOnSegment(_ coordinate: Coordinate3D) -> Bool {
         let ab = sqrt((second.longitude - first.longitude) * (second.longitude - first.longitude)
             + (second.latitude - first.latitude) * (second.latitude - first.latitude))
@@ -20,7 +20,7 @@ extension LineSegment {
         return abs(ab - (ap + pb)) < GISTool.equalityDelta
     }
 
-    /// Tests if the *Point* is on the segment.
+    /// Tests if *Point* is on the segment.
     public func checkIsOnSegment(_ point: Point) -> Bool {
         checkIsOnSegment(point.coordinate)
     }
@@ -29,14 +29,14 @@ extension LineSegment {
 
 extension LineStringGeometry {
 
-    /// Tests if the coordinate is on the line.
+    /// Tests if *Coordinate3D* is on the segment.
     public func checkIsOnLine(_ coordinate: Coordinate3D) -> Bool {
         lineSegments.contains { (segment) in
             segment.checkIsOnSegment(coordinate)
         }
     }
 
-    /// Tests if the *Point* is on the line.
+    /// Tests if *Point* is on the segment.
     public func checkIsOnLine(_ point: Point) -> Bool {
         checkIsOnLine(point.coordinate)
     }

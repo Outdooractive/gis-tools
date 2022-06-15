@@ -7,6 +7,10 @@ import Foundation
 
 extension BoundingBox {
 
+    /// Takes a reference coordinate and returns the coordinate from the reveiver closest to the reference.
+    /// This calculation is geodesic.
+    ///
+    /// - Parameter other: The other coordinate
     public func nearestCoordinate(
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
@@ -14,6 +18,10 @@ extension BoundingBox {
         self.boundingBoxPolygon.nearestCoordinate(from: other)
     }
 
+    /// Takes a reference point and returns the point from the reveiver closest to the reference.
+    /// This calculation is geodesic.
+    ///
+    /// - Parameter other: The other point
     public func nearestPoint(
         from other: Point)
         -> (point: Point, distance: CLLocationDistance)?

@@ -7,7 +7,7 @@ import Foundation
 
 extension Ring {
 
-    /// Determines if the coordinate resides inside the *Ring*. The ring can be convex or concave.
+    /// Determines if *Coordinate3D* resides inside the *Ring*. The ring can be convex or concave.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to check
@@ -54,7 +54,7 @@ extension Ring {
         return isInside
     }
 
-    /// Determines if the *Point* resides inside the *Ring*. The ring can be convex or concave.
+    /// Determines if *Point* resides inside the *Ring*. The ring can be convex or concave.
     ///
     /// - Parameters:
     ///    - coordinate: The point to check
@@ -73,7 +73,7 @@ extension Ring {
 
 extension Polygon {
 
-    /// Determines if the coordinate resides inside the *Polygon*. The polygon can be convex or concave.
+    /// Determines if *Coordinate3D* resides inside the *Polygon*. The polygon can be convex or concave.
     /// The function accounts for holes.
     ///
     /// - Parameters:
@@ -105,7 +105,7 @@ extension Polygon {
         return true
     }
 
-    /// Determines if the *Point* resides inside the *Polygon*. The polygon can be convex or concave.
+    /// Determines if *Point* resides inside the *Polygon*. The polygon can be convex or concave.
     /// The function accounts for holes.
     ///
     /// - Parameters:
@@ -125,7 +125,7 @@ extension Polygon {
 
 extension MultiPolygon {
 
-    /// Determines if the coordinate resides inside the *MultiPolygon*. The polygons can be convex or concave.
+    /// Determines if *Coordinate3D* resides inside the *MultiPolygon*. The polygons can be convex or concave.
     /// The function accounts for holes.
     ///
     /// - Parameters:
@@ -147,7 +147,7 @@ extension MultiPolygon {
         return false
     }
 
-    /// Determines if the *Point* resides inside the *MultiPolygon*. The polygons can be convex or concave.
+    /// Determines if *Point* resides inside the *MultiPolygon*. The polygons can be convex or concave.
     /// The function accounts for holes.
     ///
     /// - Parameters:
@@ -167,7 +167,7 @@ extension MultiPolygon {
 
 extension GeometryCollection {
 
-    /// Determines if the coordinate resides inside the *GeometryCollection*.
+    /// Determines if *Coordinate3D* resides inside the *GeometryCollection*.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to check
@@ -190,7 +190,7 @@ extension GeometryCollection {
 
 extension Feature {
 
-    /// Determines if the coordinate resides inside the *Feature*.
+    /// Determines if *Coordinate3D* resides inside the *Feature*.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to check
@@ -211,7 +211,7 @@ extension Feature {
 
 extension FeatureCollection {
 
-    /// Determines if the coordinate resides inside the *FeatureCollection*.
+    /// Determines if *Coordinate3D* resides inside the *FeatureCollection*.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to check

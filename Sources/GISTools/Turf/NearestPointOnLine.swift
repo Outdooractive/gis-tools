@@ -124,6 +124,7 @@ extension LineString {
 
 extension Feature {
 
+    /// Calculates the closest coordinate on the line.
     public func nearestCoordinateOnLine(
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)?
@@ -132,6 +133,7 @@ extension Feature {
         return lineString.nearestCoordinateOnLine(from: other)
     }
 
+    /// Calculates the closest *Point* on the line.
     public func nearestPointOnLine(
         from other: Point)
         -> (point: Point, index: Int, distance: CLLocationDistance)?

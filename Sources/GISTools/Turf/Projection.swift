@@ -17,6 +17,7 @@ public enum Projection: CustomStringConvertible, Sendable {
 
     public static let originShift = 2.0 * Double.pi * 6_378_137.0 / 2.0 // 20037508.342789244
 
+    /// Initialize a Projection with a SRID number.
     public init?(srid: Int) {
         switch srid {
         // A placeholder for 'No SRID'
@@ -29,6 +30,7 @@ public enum Projection: CustomStringConvertible, Sendable {
         }
     }
 
+    /// The receiver's SRID number.
     public var srid: Int {
         switch self {
         case .noSRID: return 0
@@ -37,6 +39,7 @@ public enum Projection: CustomStringConvertible, Sendable {
         }
     }
 
+    /// A human readable description of the receiver.
     public var description: String {
         switch self {
         case .noSRID: return "No SRID"

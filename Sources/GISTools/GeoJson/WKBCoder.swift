@@ -61,7 +61,7 @@ extension GeoJsonGeometry {
 
 extension Feature {
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON Feature from WKB.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -74,7 +74,7 @@ extension Feature {
         self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON Feature from WKB.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -98,7 +98,7 @@ extension Feature {
 
 extension FeatureCollection {
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON FeatureCollection from WKB.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -110,7 +110,7 @@ extension FeatureCollection {
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON FeatureCollection from WKB.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
@@ -205,11 +205,13 @@ public struct WKBCoder {
         case triangle = 17
     }
 
+    /// The WKB byte order (little or big endian).
     public enum ByteOrder: UInt8 {
         case bigEndian = 0
         case littleEndian = 1
     }
 
+    /// WKB errors.
     public enum WKBCoderError: Error {
         case dataCorrupted
         case emptyGeometry

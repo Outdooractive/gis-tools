@@ -7,6 +7,7 @@ import Foundation
 
 extension GISTool {
 
+    /// Unit of measurement.
     public enum Unit {
         case acres
         case centimeters

@@ -30,7 +30,20 @@ targets: [
 
 ```swift
 import GISTools
+
+var feature = Feature(Point(Coordinate3D(latitude: 3.870163, longitude: 11.518585)))
+feature.properties = [
+    "test": 1,
+    "test2": 5.567,
+    "test3": [1, 2, 3],
+    "test4": [
+        "sub1": 1,
+        "sub2": 2
+    ]
+]
 ```
+
+See the tests for more examples.
 
 ## Contributing
 

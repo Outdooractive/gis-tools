@@ -7,6 +7,7 @@ import Foundation
 
 extension LineSegment {
 
+    /// Indicates how one segment compares to another segment.
     public enum LineSegmentComparisonResult {
         case equal
         case notEqual

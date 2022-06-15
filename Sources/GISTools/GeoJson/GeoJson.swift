@@ -103,7 +103,7 @@ extension GeoJson {
         return previous
     }
 
-    /// Any foreign member ny subscript.
+    /// Any foreign member by subscript.
     public subscript<T>(foreignMember key: String) -> T? {
         get {
             return foreignMember(for: key)
@@ -201,13 +201,13 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     /// The receiver's coordinates converted to `Polygon`s.
     var polygons: [Polygon] { get }
 
-    /// Check if this `(Multi)Polygon` contains `coordinate`.
+    /// Check if this `(Multi)Polygon` contains *Coordinate3D*.
     func contains(
         _ coordinate: Coordinate3D,
         ignoreBoundary: Bool)
         -> Bool
 
-    /// Check if this `(Multi)Polygon` contains `point`.
+    /// Check if this `(Multi)Polygon` contains *Point*.
     func contains(
         _ point: Point,
         ignoreBoundary: Bool)

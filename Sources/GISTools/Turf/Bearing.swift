@@ -165,10 +165,13 @@ extension Point {
 
 extension LineSegment {
 
+    /// The geographic bearing between the first and second coordinate.
     public var bearing: CLLocationDegrees {
         first.bearing(to: second)
     }
 
+    /// Converts the bearing angle from the north line direction (positive clockwise)
+    /// and returns an angle between 0-360 degrees (positive clockwise), 0 being the north line.
     public var azimuth: CLLocationDegrees {
         bearing.bearingToAzimuth
     }
