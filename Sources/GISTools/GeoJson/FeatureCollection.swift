@@ -179,6 +179,7 @@ extension FeatureCollection {
     }
 
     /// Remove a Feature from the receiver.
+    @discardableResult
     public mutating func removeFeature(at index: Int) -> Feature {
         let removedFeature = features.remove(at: index)
 
