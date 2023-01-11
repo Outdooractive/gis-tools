@@ -115,12 +115,51 @@ final class FeatureCollectionTests: XCTestCase {
         XCTAssertEqual(featureCollection.features.count, 1)
     }
 
+    func testEncodable() throws {
+        guard let featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
+            throw "featureCollection is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        let data = try encoder.encode(featureCollection)
+        let json = String(data: data, encoding: .utf8)
+        NSLog(json!)
+
+        XCTAssertEqual(try encoder.encode(featureCollection), featureCollection.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let featureCollectionData = FeatureCollection(jsonString: featureCollectionJson)?.asJsonData(prettyPrinted: true) else {
+            throw "featureCollection is nil"
+        }
+
+        let featureCollection = try JSONDecoder().decode(FeatureCollection.self, from: featureCollectionData)
+        XCTAssertEqual(featureCollectionData, featureCollection.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodePoint() throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
+        let pointData = try XCTUnwrap(point.asJsonData(prettyPrinted: true))
+        let featureCollectionData = try XCTUnwrap(FeatureCollection([point]).asJsonData(prettyPrinted: true))
+
+        let featureCollection1 = try XCTUnwrap(FeatureCollection(jsonData: pointData))
+        let featureCollection2 = try JSONDecoder().decode(FeatureCollection.self, from: pointData)
+
+        XCTAssertEqual(featureCollectionData, featureCollection1.asJsonData(prettyPrinted: true))
+        XCTAssertEqual(featureCollectionData, featureCollection2.asJsonData(prettyPrinted: true))
+    }
+
     static var allTests = [
         ("testLoadJson", testLoadJson),
         ("testCreateJson", testCreateJson),
         ("testMap", testMap),
         ("testCompactMap", testCompactMap),
         ("testFilter", testFilter),
+        ("testEncodable", testEncodable),
+        ("testDecodable", testDecodable),
+        ("testDecodePoint", testDecodePoint),
     ]
 
 }

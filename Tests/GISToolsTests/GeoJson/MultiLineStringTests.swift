@@ -39,9 +39,31 @@ final class MultiLineStringTests: XCTestCase {
         XCTAssert(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
     }
 
+    func testEncodable() throws {
+        guard let multiLineString = MultiLineString(jsonString: multiLineStringJson) else {
+            throw "multiLineString is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        XCTAssertEqual(try encoder.encode(multiLineString), multiLineString.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let multiLineStringData = MultiLineString(jsonString: multiLineStringJson)?.asJsonData(prettyPrinted: true) else {
+            throw "multiLineString is nil"
+        }
+
+        let multiLineString = try JSONDecoder().decode(MultiLineString.self, from: multiLineStringData)
+        XCTAssertEqual(multiLineStringData, multiLineString.asJsonData(prettyPrinted: true))
+    }
+
     static var allTests = [
         ("testLoadJson", testLoadJson),
         ("testCreateJson", testCreateJson),
+        ("testEncodable", testEncodable),
+        ("testDecodable", testDecodable),
     ]
 
 }

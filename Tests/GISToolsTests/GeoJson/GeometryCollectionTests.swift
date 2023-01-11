@@ -35,9 +35,31 @@ final class GeometryCollectionTests: XCTestCase {
         // TODO:
     }
 
+    func testEncodable() throws {
+        guard let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson) else {
+            throw "geometryCollection is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        XCTAssertEqual(try encoder.encode(geometryCollection), geometryCollection.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let geometryCollectionData = GeometryCollection(jsonString: geometryCollectionJson)?.asJsonData(prettyPrinted: true) else {
+            throw "geometryCollection is nil"
+        }
+
+        let geometryCollection = try JSONDecoder().decode(GeometryCollection.self, from: geometryCollectionData)
+        XCTAssertEqual(geometryCollectionData, geometryCollection.asJsonData(prettyPrinted: true))
+    }
+
     static var allTests = [
         ("testLoadJson", testLoadJson),
         ("testCreateJson", testCreateJson),
+        ("testEncodable", testEncodable),
+        ("testDecodable", testDecodable),
     ]
 
 }

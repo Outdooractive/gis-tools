@@ -29,9 +29,31 @@ final class PointTests: XCTestCase {
         XCTAssert(string.contains("\"coordinates\":[100,0]"))
     }
 
+    func testEncodable() throws {
+        guard let point = Point(jsonString: pointJson) else {
+            throw "point is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        XCTAssertEqual(try encoder.encode(point), point.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let pointData = Point(jsonString: pointJson)?.asJsonData(prettyPrinted: true) else {
+            throw "point is nil"
+        }
+
+        let point = try JSONDecoder().decode(Point.self, from: pointData)
+        XCTAssertEqual(pointData, point.asJsonData(prettyPrinted: true))
+    }
+
     static var allTests = [
         ("testLoadJson", testLoadJson),
         ("testCreateJson", testCreateJson),
+        ("testEncodable", testEncodable),
+        ("testDecodable", testDecodable),
     ]
 
 }

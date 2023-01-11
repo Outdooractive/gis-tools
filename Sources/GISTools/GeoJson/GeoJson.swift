@@ -29,6 +29,7 @@ public enum GeoJsonType: String {
 /// The base protocol that all GeoJSON objects conform to.
 public protocol GeoJson:
     GeoJsonConvertible,
+    Codable,
     BoundingBoxRepresentable,
     ValidatableGeoJson,
     CustomDebugStringConvertible
