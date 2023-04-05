@@ -8,7 +8,7 @@ public struct Feature: GeoJson {
         case int(Int)
         case double(Double)
 
-        init?(value: Any?) {
+        public init?(value: Any?) {
             guard let value else { return nil }
             if let int = value as? Int {
                 self = .int(int)
