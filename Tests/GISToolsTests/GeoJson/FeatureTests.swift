@@ -80,9 +80,10 @@ final class FeatureTests: XCTestCase {
 
 
     func testCreateJson() throws {
-        let feature = Feature(Point(.zero))
+        let feature = Feature(Point(.zero), id: .int(5))
         let json = feature.asJson
         XCTAssertEqual(json["type"] as? String, "Feature")
+        XCTAssertEqual(json["id"] as? Int, 5)
         let geometry = json["geometry"] as! [String: Any]
         XCTAssertEqual(geometry["type"] as? String, "Point")
         XCTAssertEqual(geometry["coordinates"] as? [Double], [0.0, 0.0])

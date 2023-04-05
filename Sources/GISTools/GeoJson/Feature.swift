@@ -3,6 +3,7 @@ import Foundation
 /// A GeoJSON `Feature`.
 public struct Feature: GeoJson {
 
+    /// A GeoJSON identifier that can either be a string or a JSON number (represented as an Int or Doulbe in Swift).
     public enum Identifier: Equatable {
         case string(String)
         case int(Int)
@@ -12,17 +13,19 @@ public struct Feature: GeoJson {
             guard let value else { return nil }
             if let int = value as? Int {
                 self = .int(int)
-            } else if let string = value as? String {
+            }
+            else if let string = value as? String {
                 self = .string(string)
-            } else if let double = value as? Double {
+            }
+            else if let double = value as? Double {
                 self = .double(double)
-            } else {
+            }
+            else {
                 return nil
             }
-
         }
 
-        var jsonValue: Any {
+        var asJson: Any {
             switch self {
             case .double(let double): return double
             case .int(let int): return int
@@ -56,10 +59,12 @@ public struct Feature: GeoJson {
     public init(
         _ geometry: GeoJsonGeometry,
         properties: [String: Any] = [:],
-        calculateBoundingBox: Bool = false)
+        calculateBoundingBox: Bool = false,
+        id: Identifier? = nil)
     {
         self.geometry = geometry
         self.properties = properties
+        self.id = id
 
         if calculateBoundingBox {
             self.boundingBox = self.calculateBoundingBox()
@@ -102,7 +107,7 @@ public struct Feature: GeoJson {
             "geometry": geometry.asJson
         ]
         if let id = id {
-            result["id"] = id
+            result["id"] = id.asJson
         }
         if let boundingBox = boundingBox {
             result["bbox"] = boundingBox.asJson
