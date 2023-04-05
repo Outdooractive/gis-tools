@@ -3,7 +3,7 @@ import Foundation
 /// A GeoJSON `Feature`.
 public struct Feature: GeoJson {
 
-    /// A GeoJSON identifier that can either be a string or a JSON number (represented as an Int or Doulbe in Swift).
+    /// A GeoJSON identifier that can either be a string or number.
     public enum Identifier: Equatable {
         case string(String)
         case int(Int)
