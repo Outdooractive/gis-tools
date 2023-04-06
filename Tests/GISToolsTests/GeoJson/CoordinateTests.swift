@@ -31,9 +31,4 @@ final class CoordinateTests: XCTestCase {
         XCTAssertEqual(coordinateZM.description, "CoordinateXY(x: 10.0, y: 15.0, z: 500.0, m: 1234.0)")
     }
 
-    static var allTests = [
-        ("testCoordinate3DDescription", testCoordinate3DDescription),
-        ("testCoordinateXYDescription", testCoordinateXYDescription),
-    ]
-
 }

@@ -27,9 +27,4 @@ final class BooleanClockwiseTests: XCTestCase {
         XCTAssertEqual(ring.isCounterClockwise, true)
     }
 
-    static var allTests = [
-        ("testBooleanClockwise", testBooleanClockwise),
-        ("testBooleanCounterClockwise", testBooleanCounterClockwise),
-    ]
-
 }

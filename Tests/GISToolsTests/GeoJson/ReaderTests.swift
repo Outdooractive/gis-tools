@@ -35,8 +35,4 @@ final class ReaderTests: XCTestCase {
         XCTAssertEqual(castedPoint.asJsonString(prettyPrinted: true), point.asJsonString(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-    ]
-
 }

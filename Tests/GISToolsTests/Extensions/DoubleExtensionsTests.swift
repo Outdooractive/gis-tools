@@ -28,9 +28,4 @@ final class DoubleExtensionsTests: XCTestCase {
         XCTAssertEqual(number.rounded(precision: -5), number)
     }
 
-    static var allTests = [
-        ("testRounding", testRounding),
-        ("testRoundingInvalidPrecision", testRoundingInvalidPrecision),
-    ]
-
 }

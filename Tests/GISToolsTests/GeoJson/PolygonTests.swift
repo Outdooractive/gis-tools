@@ -105,11 +105,4 @@ final class PolygonTests: XCTestCase {
         XCTAssertEqual(polygonWithHolesData, polygonWithHoles.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

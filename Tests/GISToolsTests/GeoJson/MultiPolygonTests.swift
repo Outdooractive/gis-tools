@@ -75,11 +75,4 @@ final class MultiPolygonTests: XCTestCase {
         XCTAssertEqual(multiPolygonData, multiPolygon.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

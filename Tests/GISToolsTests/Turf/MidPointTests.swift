@@ -35,11 +35,4 @@ final class MidPointTests: XCTestCase {
         XCTAssertEqual(coordinate1.distance(from: middle), coordinate2.distance(from: middle), accuracy: 0.000001)
     }
 
-    static var allTests = [
-        ("testHorizontalEquator", testHorizontalEquator),
-        ("testVerticalFromEquator", testVerticalFromEquator),
-        ("testVerticalToEquator", testVerticalToEquator),
-        ("testLongDistance", testLongDistance),
-    ]
-
 }

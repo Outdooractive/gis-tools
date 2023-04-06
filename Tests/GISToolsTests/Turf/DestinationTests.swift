@@ -48,11 +48,4 @@ final class DestinationTests: XCTestCase {
         XCTAssertEqual(destination.longitude, 1.123702522680564, accuracy: 0.000001)
     }
 
-    static var allTests = [
-        ("testDestination1", testDestination1),
-        ("testDestination2", testDestination2),
-        ("testDestination3", testDestination3),
-        ("testDestination4", testDestination4),
-    ]
-
 }

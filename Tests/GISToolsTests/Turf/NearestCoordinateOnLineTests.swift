@@ -145,14 +145,4 @@ final class NearestCoordinateOnLineTests: XCTestCase {
         XCTAssertEqual(nearestCoordinate, result)
     }
 
-    static var allTests = [
-        ("testFirstPoint", testFirstPoint),
-        ("testPointsBehindFirstPoint", testPointsBehindFirstPoint),
-        ("testPointsInFrontOfLastPoint", testPointsInFrontOfLastPoint),
-        ("testPointsOnJoints", testPointsOnJoints),
-        ("testPointAlongLine", testPointAlongLine),
-        ("testPointsOnSidesOfLines", testPointsOnSidesOfLines),
-        ("testLine", testLine),
-    ]
-
 }

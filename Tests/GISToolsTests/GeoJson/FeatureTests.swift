@@ -109,12 +109,4 @@ final class FeatureTests: XCTestCase {
         XCTAssertEqual(featureData, feature.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testLoadJsonWithIntId", testLoadJsonWithIntId),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

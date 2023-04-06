@@ -55,11 +55,4 @@ final class GeometryCollectionTests: XCTestCase {
         XCTAssertEqual(geometryCollectionData, geometryCollection.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

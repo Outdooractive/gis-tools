@@ -61,9 +61,4 @@ final class BooleanOverlapTests: XCTestCase {
 
     }
 
-    static var allTests = [
-        ("testFalse", testFalse),
-        ("testTrue", testTrue),
-    ]
-
 }

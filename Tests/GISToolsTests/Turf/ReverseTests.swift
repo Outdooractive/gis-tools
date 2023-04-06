@@ -81,9 +81,4 @@ final class ReverseTests: XCTestCase {
         XCTAssertEqual(reversed.features[0].allCoordinates, [Coordinate3D(latitude: 40.0, longitude: 40.0)])
     }
 
-    static var allTests = [
-        ("testLineString", testLineString),
-        ("testFeatureCollection", testFeatureCollection),
-    ]
-
 }

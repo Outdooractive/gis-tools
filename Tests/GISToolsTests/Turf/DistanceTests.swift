@@ -16,8 +16,4 @@ final class DistanceTests: XCTestCase {
         XCTAssertEqual(coordinate1.distance(from: coordinate2), expectedDistance, accuracy: 0.000001)
     }
 
-    static var allTests = [
-        ("testDistance", testDistance),
-    ]
-
 }

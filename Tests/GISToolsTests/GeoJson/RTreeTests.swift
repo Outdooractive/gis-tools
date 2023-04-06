@@ -320,23 +320,4 @@ final class RTreeTests: XCTestCase {
         }
     }
 
-    static var allTests = [
-        ("testEmpty", testEmpty),
-        ("testSimplePoints", testSimplePoints),
-        ("testRTree", testRTree),
-        ("testAroundSearch", testAroundSearch),
-        ("testPerformanceBuildTreeHilbert", testPerformanceBuildTreeHilbert),
-        ("testPerformanceBuildTreeLatitude", testPerformanceBuildTreeLatitude),
-        ("testPerformanceBuildTreeLongitude", testPerformanceBuildTreeLongitude),
-        ("testPerformanceBuildTreeUnsorted", testPerformanceBuildTreeUnsorted),
-        ("testPerformanceQuerySerial", testPerformanceQuerySerial),
-        ("testPerformanceQueryHilbert", testPerformanceQueryHilbert),
-        ("testPerformanceQueryLatitude", testPerformanceQueryLatitude),
-        ("testPerformanceQueryUnsorted", testPerformanceQueryUnsorted),
-        ("testPerformanceAroundSearchSerial", testPerformanceAroundSearchSerial),
-        ("testPerformanceAroundSearchHilbert", testPerformanceAroundSearchHilbert),
-        ("testPerformanceAroundSearchLatitude", testPerformanceAroundSearchLatitude),
-        ("testPerformanceAroundSearchUnsorted", testPerformanceAroundSearchUnsorted),
-    ]
-
 }

@@ -53,11 +53,4 @@ final class MultiPointTests: XCTestCase {
         XCTAssertEqual(multiPointData, multiPoint.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

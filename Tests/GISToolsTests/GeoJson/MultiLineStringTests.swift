@@ -59,11 +59,4 @@ final class MultiLineStringTests: XCTestCase {
         XCTAssertEqual(multiLineStringData, multiLineString.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-    ]
-
 }

@@ -19,8 +19,4 @@ final class CircleTests: XCTestCase {
         }
     }
 
-    static var allTests = [
-        ("testCircle", testCircle),
-    ]
-
 }

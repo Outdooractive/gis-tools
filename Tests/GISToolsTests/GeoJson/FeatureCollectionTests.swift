@@ -147,15 +147,4 @@ final class FeatureCollectionTests: XCTestCase {
         XCTAssertEqual(featureCollectionData, featureCollection2.asJsonData(prettyPrinted: true))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-        ("testMap", testMap),
-        ("testCompactMap", testCompactMap),
-        ("testFilter", testFilter),
-        ("testEncodable", testEncodable),
-        ("testDecodable", testDecodable),
-        ("testDecodePoint", testDecodePoint),
-    ]
-
 }

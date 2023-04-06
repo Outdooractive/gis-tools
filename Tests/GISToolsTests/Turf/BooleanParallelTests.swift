@@ -33,9 +33,4 @@ final class BooleanParallelTests: XCTestCase {
         XCTAssertFalse(lineString3.isParallel(to: lineString4))
     }
 
-    static var allTests = [
-        ("testFalse", testFalse),
-        ("testTrue", testTrue),
-    ]
-
 }

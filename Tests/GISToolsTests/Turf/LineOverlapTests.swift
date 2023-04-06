@@ -118,15 +118,4 @@ final class LineOverlapTests: XCTestCase {
         XCTAssertEqual(overlappingSegments2, result.lineSegments)
     }
 
-    static var allTests = [
-        ("testSimple1", testSimple1),
-        ("testSimple2", testSimple2),
-        ("testSimple3", testSimple3),
-        ("testPolygons", testPolygons),
-        ("testNoOverlap", testNoOverlap),
-        ("testPartlyOverlapping1", testPartlyOverlapping1),
-        ("testPartlyOverlapping2", testPartlyOverlapping2),
-        ("testPartlyOverlapping3", testPartlyOverlapping3),
-    ]
-
 }

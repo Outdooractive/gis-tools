@@ -41,9 +41,4 @@ final class LineChunkTests: XCTestCase {
         XCTAssertEqual(chunks[0], lineString)
     }
 
-    static var allTests = [
-        ("testLineChunkShort", testLineChunkShort),
-        ("testLineChunkLong", testLineChunkLong),
-    ]
-
 }
