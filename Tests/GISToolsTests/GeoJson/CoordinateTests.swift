@@ -31,4 +31,18 @@ final class CoordinateTests: XCTestCase {
         XCTAssertEqual(coordinateZM.description, "CoordinateXY(x: 10.0, y: 15.0, z: 500.0, m: 1234.0)")
     }
 
+    func testEncodable() throws {
+        let coordinate = Coordinate3D(latitude: 15.0, longitude: 10.0)
+        let coordinateData = try JSONEncoder().encode(coordinate)
+
+        XCTAssertEqual(String(data: coordinateData, encoding: .utf8), "[10,15]")
+    }
+
+    func testDecodable() throws {
+        let coordinateData =  try XCTUnwrap("[10,15]".data(using: .utf8))
+        let decodedCoordinate = try JSONDecoder().decode(Coordinate3D.self, from: coordinateData)
+
+        XCTAssertEqual(decodedCoordinate.asJson, [10.0, 15.0])
+    }
+
 }

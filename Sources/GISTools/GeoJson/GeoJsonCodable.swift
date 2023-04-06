@@ -25,7 +25,53 @@ extension GeoJson {
 
 }
 
-// MARK: - GeoJsonCodingKey
+extension BoundingBox: Codable {
+
+    public init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        let json = container.decodeGeoJsonArray()
+
+        guard let newObject = Self(json: json) else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid JSON object"))
+        }
+
+        self = newObject
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.unkeyedContainer()
+
+        for element in asJson {
+            try container.encode(element)
+        }
+    }
+
+}
+
+extension Coordinate3D: Codable {
+
+    public init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        let json = container.decodeGeoJsonArray()
+
+        guard let newObject = Self(json: json) else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid JSON object"))
+        }
+
+        self = newObject
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.unkeyedContainer()
+
+        for element in asJson {
+            try container.encode(element)
+        }
+    }
+
+}
+
+// MARK: - Private
 
 private struct GeoJsonCodingKey: CodingKey {
 
