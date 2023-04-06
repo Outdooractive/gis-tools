@@ -51,13 +51,4 @@ final class FlattenTests: XCTestCase {
         XCTAssertEqual(flattened, expected)
     }
 
-    static var allTests = [
-        ("testFeatureCollection", testFeatureCollection),
-        ("testGeometryCollection", testGeometryCollection),
-        ("testGeometryObject", testGeometryObject),
-        ("testMultiLineString", testMultiLineString),
-        ("testMultiPoint", testMultiPoint),
-        ("testPolygon", testPolygon),
-    ]
-
 }

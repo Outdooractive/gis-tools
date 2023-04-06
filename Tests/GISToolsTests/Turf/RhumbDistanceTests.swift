@@ -31,8 +31,4 @@ final class RhumbDistanceTests: XCTestCase {
         XCTAssertEqual(coordinate7.rhumbDistance(from: coordinate8), expectedDistance4, accuracy: 0.001)
     }
 
-    static var allTests = [
-        ("testDistance", testDistance),
-    ]
-
 }

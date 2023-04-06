@@ -55,9 +55,24 @@ final class MultiPolygonTests: XCTestCase {
         XCTAssert(string.contains("\"coordinates\":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0],[100.2,1],[100.8,1],[100.8,0],[100.2,0]]]]"))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-    ]
+    func testEncodable() throws {
+        guard let multiPolygon = MultiPolygon(jsonString: multiPolygonJson) else {
+            throw "multiPolygon is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        XCTAssertEqual(try encoder.encode(multiPolygon), multiPolygon.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let multiPolygonData = MultiPolygon(jsonString: multiPolygonJson)?.asJsonData(prettyPrinted: true) else {
+            throw "multiPolygon is nil"
+        }
+
+        let multiPolygon = try JSONDecoder().decode(MultiPolygon.self, from: multiPolygonData)
+        XCTAssertEqual(multiPolygonData, multiPolygon.asJsonData(prettyPrinted: true))
+    }
 
 }

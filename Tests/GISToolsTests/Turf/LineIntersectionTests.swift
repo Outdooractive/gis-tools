@@ -157,13 +157,4 @@ final class LineIntersectionTests: XCTestCase {
         XCTAssertFalse(segment5.intersects(segment6))
     }
 
-    static var allTests = [
-        ("testLineIntersection2Vertex", testLineIntersection2Vertex),
-        ("testLineIntersectionDouble", testLineIntersectionDouble),
-        ("testLineIntersectionPolygonsWithHoles", testLineIntersectionPolygonsWithHoles),
-        ("testLineIntersectionMultiLineStrings", testLineIntersectionMultiLineStrings),
-        ("testLineIntersectionSameCoordinates", testLineIntersectionSameCoordinates),
-        ("testBooleanIntersection", testBooleanIntersection),
-    ]
-
 }

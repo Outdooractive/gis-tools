@@ -10,8 +10,4 @@ final class PointToLineDistanceTests: XCTestCase {
         XCTAssertEqual(lineString.distanceFrom(coordinate: coordinate), 111_195.0802335329)
     }
 
-    static var allTests = [
-        ("testPointToLineDistance", testPointToLineDistance),
-    ]
-
 }

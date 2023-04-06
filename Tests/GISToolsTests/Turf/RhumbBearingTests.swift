@@ -19,8 +19,4 @@ final class RhumbBearingTests: XCTestCase {
         XCTAssertEqual(finalBearing, -104.719, accuracy: 0.01)
     }
 
-    static var allTests = [
-        ("testRhumbBearing", testRhumbBearing),
-    ]
-
 }

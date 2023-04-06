@@ -19,8 +19,4 @@ final class LineArcTests: XCTestCase {
         }
     }
 
-    static var allTests = [
-        ("testLineArc", testLineArc),
-    ]
-
 }

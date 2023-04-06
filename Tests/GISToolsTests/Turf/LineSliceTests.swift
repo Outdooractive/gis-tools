@@ -25,8 +25,4 @@ final class LineSliceTests: XCTestCase {
         XCTAssertEqual(slice, result)
     }
 
-    static var allTests = [
-        ("testSlice", testSlice),
-    ]
-
 }

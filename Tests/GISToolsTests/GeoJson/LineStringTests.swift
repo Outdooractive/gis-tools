@@ -33,9 +33,24 @@ final class LineStringTests: XCTestCase {
         XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
-    static var allTests = [
-        ("testLoadJson", testLoadJson),
-        ("testCreateJson", testCreateJson),
-    ]
+    func testEncodable() throws {
+        guard let lineString = LineString(jsonString: lineStringJson) else {
+            throw "lineString is nil"
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        XCTAssertEqual(try encoder.encode(lineString), lineString.asJsonData(prettyPrinted: true))
+    }
+
+    func testDecodable() throws {
+        guard let lineStringData = LineString(jsonString: lineStringJson)?.asJsonData(prettyPrinted: true) else {
+            throw "lineString is nil"
+        }
+
+        let lineString = try JSONDecoder().decode(LineString.self, from: lineStringData)
+        XCTAssertEqual(lineStringData, lineString.asJsonData(prettyPrinted: true))
+    }
 
 }

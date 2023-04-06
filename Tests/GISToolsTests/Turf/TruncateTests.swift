@@ -98,16 +98,4 @@ final class TruncateTests: XCTestCase {
         // TODO:
     }
 
-    static var allTests = [
-        ("testPoint", testPoint),
-        ("testMultiPoint", testMultiPoint),
-        ("testLineString", testLineString),
-        ("testMultiLineString", testMultiLineString),
-        ("testPolygon", testPolygon),
-        ("testMultiPolygon", testMultiPolygon),
-        ("testGeometryCollection", testGeometryCollection),
-        ("testFeature", testFeature),
-        ("testFeatureCollection", testFeatureCollection),
-    ]
-
 }

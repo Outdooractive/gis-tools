@@ -37,9 +37,4 @@ final class LineSliceAlongTests: XCTestCase {
         XCTAssertEqual(sliced!.coordinates[sliced!.coordinates.count - 1], endCoordinate)
     }
 
-    static var allTests = [
-        ("testSlice", testSlice),
-        ("testSliceOvershoot", testSliceOvershoot),
-    ]
-
 }

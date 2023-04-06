@@ -25,6 +25,10 @@ targets: [
 ## Features
 
 - Supports the full GeoJSON standard, with some exceptions (see `TODO.md`)
+- Supports WKT/WKB
+- GeoJSON encoder/decoder (also with Codable support)
+- Spatial search with a RTree
+- Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic)
 
 ## Usage
 
@@ -41,13 +45,40 @@ feature.properties = [
         "sub2": 2
     ]
 ]
+
+// either:
+let jsonString = feature.asJsonString(prettyPrinted: true)
+let feature = Feature(jsonString: jsonString)
+
+// or:
+let jsonData = feature.asJsonData(prettyPrinted: true)
+let feature = Feature(jsonData: jsonData)
+
+// or:
+let jsonData = try JSONEncoder().encode(feature)
+let feature = try JSONDecoder().decode(Feature.self, from: jsonData)
+
+// or:
+let someGeoJson = GeoJsonReader.geoJsonFrom(json: [
+    "type": "Point",
+    "coordinates": [100.0, 0.0],
+])
+let someGeoJson = GeoJsonReader.geoJsonFrom(contentsOf: URL(...))
+let someGeoJson = GeoJsonReader.geoJsonFrom(jsonData: Data(...))
+let someGeoJson = GeoJsonReader.geoJsonFrom(jsonString: "{\"type\":\"Point\",\"coordinates\":[100.0,0.0]}")
+
+// Wraps *any* GeoJSON into a FeatureCollection
+let featureCollection = FeatureCollection(jsonData: someData)
+let featureCollection = try JSONDecoder().decode(FeatureCollection.self, from: someData)
+
+...
 ```
 
 See the tests for more examples.
 
 ## Contributing
 
-Please create an issue or open a pull request with a fix
+Please create an issue or open a pull request with a fix or enhancement.
 
 ## License
 

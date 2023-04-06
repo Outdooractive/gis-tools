@@ -445,4 +445,24 @@ final class BoundingBoxTests: XCTestCase {
         XCTAssertTrue(point == center, "\(point) != \(center)")
     }
 
+    func testEncodable() throws {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(
+                latitude: 0.0,
+                longitude: 0.0),
+            northEast: Coordinate3D(
+                latitude: 20.0,
+                longitude: 20.0))
+        let boundingBoxData = try JSONEncoder().encode(boundingBox)
+
+        XCTAssertEqual(String(data: boundingBoxData, encoding: .utf8), "[0,0,20,20]")
+    }
+
+    func testDecodable() throws {
+        let boundingBoxData =  try XCTUnwrap("[0,0,20,20]".data(using: .utf8))
+        let decodedBoundingBox = try JSONDecoder().decode(BoundingBox.self, from: boundingBoxData)
+
+        XCTAssertEqual(decodedBoundingBox.asJson, [0, 0, 20, 20])
+    }
+
 }

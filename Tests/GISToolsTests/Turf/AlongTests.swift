@@ -17,8 +17,4 @@ final class AlongTests: XCTestCase {
         XCTAssertEqual(coordinate2, lineString.coordinates[lineString.coordinates.count - 1])
     }
 
-    static var allTests = [
-        ("testAlong", testAlong),
-    ]
-
 }

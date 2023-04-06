@@ -255,24 +255,4 @@ final class WKTTests: XCTestCase {
         XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
     }
 
-    static var allTests = [
-        ("testPointDecoding", testPointDecoding),
-        ("testPointEncoding", testPointEncoding),
-        ("testMultiPointDecoding", testMultiPointDecoding),
-        ("testMultiPointEncoding", testMultiPointEncoding),
-        ("testMultiPointSRIDDecoding", testMultiPointSRIDDecoding),
-        ("testMultiPointSRIDEncoding", testMultiPointSRIDEncoding),
-        ("testLineStringDecoding", testLineStringDecoding),
-        ("testLineStringEncoding", testLineStringEncoding),
-        ("testMultiLineStringDecoding", testMultiLineStringDecoding),
-        ("testMultiLineStringEncoding", testMultiLineStringEncoding),
-        ("testPolygonDecoding", testPolygonDecoding),
-        ("testPolygonEncoding", testPolygonEncoding),
-        ("testMultiPolygonDecoding", testMultiPolygonDecoding),
-        ("testMultiPolygonEncoding", testMultiPolygonEncoding),
-        ("testGeometryCollectionDecoding", testGeometryCollectionDecoding),
-        ("testGeometryCollectionEncoding", testGeometryCollectionEncoding),
-        ("testTriangleDecoding", testTriangleDecoding),
-    ]
-
 }

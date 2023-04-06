@@ -72,14 +72,4 @@ final class BoundingBoxClipTests: XCTestCase {
         XCTAssertNil(clipped) // invalid
     }
 
-    static var allTests = [
-        ("testLineStringSingleLine", testLineStringSingleLine),
-        ("testLineString", testLineString),
-        ("testMultiLineString", testMultiLineString),
-        ("testMultiPolygon", testMultiPolygon),
-        ("testPolygonCrossingHole", testPolygonCrossingHole),
-        ("testPolygonHoles", testPolygonHoles),
-        ("testPolygonPointIntersection", testPolygonPointIntersection),
-    ]
-
 }

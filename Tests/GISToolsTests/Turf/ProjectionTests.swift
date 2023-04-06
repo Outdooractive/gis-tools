@@ -48,9 +48,4 @@ final class ProjectionTests: XCTestCase {
         XCTAssertEqual(result3.longitude, -73.476562, accuracy: 0.000001)
     }
 
-    static var allTests = [
-        ("testConvertTo3857", testConvertTo3857),
-        ("testConvertTo4326", testConvertTo4326),
-    ]
-
 }

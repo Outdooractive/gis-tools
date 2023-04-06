@@ -60,11 +60,4 @@ final class RhumbDestinationTests: XCTestCase {
         XCTAssertEqual(other, result)
     }
 
-    static var allTests = [
-        ("testDistance", testDistance),
-        ("testMeridian", testMeridian),
-        ("testAllowsZeroDistance", testAllowsZeroDistance),
-        ("testAllowsNegativeDistance", testAllowsNegativeDistance),
-    ]
-
 }

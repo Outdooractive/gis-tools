@@ -31,9 +31,4 @@ final class SimplifyTests: XCTestCase {
         XCTAssertTrue(fabs(startDate.timeIntervalSinceNow) < 0.5)
     }
 
-    static var allTests = [
-        ("testInvalidPolygons", testInvalidPolygons),
-        ("testRingValidationBackoff", testRingValidationBackoff),
-    ]
-
 }

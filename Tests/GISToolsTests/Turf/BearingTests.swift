@@ -27,9 +27,4 @@ final class BearingTests: XCTestCase {
         XCTAssertEqual((-395.0).bearingToAzimuth, 325.0)
     }
 
-    static var allTests = [
-        ("testBearing", testBearing),
-        ("testBearingToAzimuth", testBearingToAzimuth),
-    ]
-
 }
