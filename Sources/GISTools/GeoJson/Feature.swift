@@ -4,7 +4,7 @@ import Foundation
 public struct Feature: GeoJson {
 
     /// A GeoJSON identifier that can either be a string or number.
-    public enum Identifier: Equatable, Hashable {
+    public enum Identifier: Equatable, Hashable, CustomStringConvertible {
         case string(String)
         case int(Int)
         case double(Double)
@@ -25,10 +25,18 @@ public struct Feature: GeoJson {
             }
         }
 
-        var asJson: Any {
+        public var asJson: Any {
             switch self {
             case .double(let double): return double
             case .int(let int): return int
+            case .string(let string): return string
+            }
+        }
+
+        public var description: String {
+            switch self {
+            case .double(let double): return String(double)
+            case .int(let int): return String(int)
             case .string(let string): return string
             }
         }
