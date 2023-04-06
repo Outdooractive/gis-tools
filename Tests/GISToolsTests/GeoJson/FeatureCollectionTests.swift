@@ -123,10 +123,6 @@ final class FeatureCollectionTests: XCTestCase {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        let data = try encoder.encode(featureCollection)
-        let json = String(data: data, encoding: .utf8)
-        NSLog(json!)
-
         XCTAssertEqual(try encoder.encode(featureCollection), featureCollection.asJsonData(prettyPrinted: true))
     }
 

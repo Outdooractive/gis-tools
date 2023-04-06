@@ -63,8 +63,8 @@ public struct Feature: GeoJson {
         calculateBoundingBox: Bool = false)
     {
         self.geometry = geometry
-        self.properties = properties
         self.id = id
+        self.properties = properties
 
         if calculateBoundingBox {
             self.boundingBox = self.calculateBoundingBox()
@@ -82,9 +82,9 @@ public struct Feature: GeoJson {
         else { return nil }
 
         self.geometry = geometry
+        self.id = Identifier(value: geoJson["id"])
         self.properties = (geoJson["properties"] as? [String: Any]) ?? [:]
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
-        self.id = Identifier(value: geoJson["id"])
 
         if calculateBoundingBox, self.boundingBox == nil {
             self.boundingBox = self.calculateBoundingBox()
