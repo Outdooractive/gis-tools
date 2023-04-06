@@ -3,12 +3,43 @@ import Foundation
 /// A GeoJSON `Feature`.
 public struct Feature: GeoJson {
 
+    /// A GeoJSON identifier that can either be a string or number.
+    public enum Identifier: Equatable {
+        case string(String)
+        case int(Int)
+        case double(Double)
+
+        public init?(value: Any?) {
+            guard let value else { return nil }
+            if let int = value as? Int {
+                self = .int(int)
+            }
+            else if let string = value as? String {
+                self = .string(string)
+            }
+            else if let double = value as? Double {
+                self = .double(double)
+            }
+            else {
+                return nil
+            }
+        }
+
+        var asJson: Any {
+            switch self {
+            case .double(let double): return double
+            case .int(let int): return int
+            case .string(let string): return string
+            }
+        }
+    }
+
     public var type: GeoJsonType {
         return .feature
     }
 
     /// An arbitrary identifier.
-    public var id: String?
+    public var id: Identifier?
 
     /// The `Feature`s geometry object.
     public let geometry: GeoJsonGeometry
@@ -28,10 +59,12 @@ public struct Feature: GeoJson {
     public init(
         _ geometry: GeoJsonGeometry,
         properties: [String: Any] = [:],
-        calculateBoundingBox: Bool = false)
+        calculateBoundingBox: Bool = false,
+        id: Identifier? = nil)
     {
         self.geometry = geometry
         self.properties = properties
+        self.id = id
 
         if calculateBoundingBox {
             self.boundingBox = self.calculateBoundingBox()
@@ -51,6 +84,7 @@ public struct Feature: GeoJson {
         self.geometry = geometry
         self.properties = (geoJson["properties"] as? [String: Any]) ?? [:]
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
+        self.id = Identifier(value: geoJson["id"])
 
         if calculateBoundingBox, self.boundingBox == nil {
             self.boundingBox = self.calculateBoundingBox()
@@ -73,7 +107,7 @@ public struct Feature: GeoJson {
             "geometry": geometry.asJson
         ]
         if let id = id {
-            result["id"] = id
+            result["id"] = id.asJson
         }
         if let boundingBox = boundingBox {
             result["bbox"] = boundingBox.asJson
