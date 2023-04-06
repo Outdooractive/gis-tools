@@ -4,7 +4,7 @@ import Foundation
 public struct Feature: GeoJson {
 
     /// A GeoJSON identifier that can either be a string or number.
-    public enum Identifier: Equatable {
+    public enum Identifier: Equatable, Hashable {
         case string(String)
         case int(Int)
         case double(Double)
