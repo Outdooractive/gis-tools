@@ -48,15 +48,24 @@ feature.properties = [
 
 // either:
 let jsonString = feature.asJsonString(prettyPrinted: true)
-let otherFeature = Feature(jsonString: jsonString)
+let feature = Feature(jsonString: jsonString)
 
 // or:
 let jsonData = feature.asJsonData(prettyPrinted: true)
-let otherFeature = Feature(jsonData: jsonData)
+let feature = Feature(jsonData: jsonData)
 
 // or:
 let jsonData = try JSONEncoder().encode(feature)
-let otherFeature = try JSONDecoder().decode(Feature.self, from: jsonData)
+let feature = try JSONDecoder().decode(Feature.self, from: jsonData)
+
+// or:
+let someGeoJson = GeoJsonReader.geoJsonFrom(json: [
+    "type": "Point",
+    "coordinates": [100.0, 0.0],
+])
+let someGeoJson = GeoJsonReader.geoJsonFrom(contentsOf: URL(...))
+let someGeoJson = GeoJsonReader.geoJsonFrom(jsonData: Data(...))
+let someGeoJson = GeoJsonReader.geoJsonFrom(jsonString: "{\"type\":\"Point\",\"coordinates\":[100.0,0.0]}")
 
 // Wraps *any* GeoJSON into a FeatureCollection
 let featureCollection = FeatureCollection(jsonData: someData)
