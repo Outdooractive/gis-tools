@@ -57,6 +57,25 @@ final class WKBTests: XCTestCase {
         XCTAssertEqual(encodedPointZM, pointZMData)
     }
 
+    func testPointConvenienceDecoding() throws {
+        let pointZ = Point(wkb: pointZData, projection: .epsg4326)!
+        XCTAssertEqual(pointZ.coordinate.longitude, 1)
+        XCTAssertEqual(pointZ.coordinate.latitude, 2)
+        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+    }
+
+    func testPointDataConvenienceDecoding() throws {
+        let pointZ = pointZData.asGeoJsonGeometry(projection: .epsg4326) as! Point
+        XCTAssertEqual(pointZ.coordinate.longitude, 1)
+        XCTAssertEqual(pointZ.coordinate.latitude, 2)
+        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+
+        let feature = pointZData.asFeature(projection: .epsg4326)
+        XCTAssertEqual(feature?.geometry.allCoordinates.first?.longitude, 1)
+        XCTAssertEqual(feature?.geometry.allCoordinates.first?.latitude, 2)
+        XCTAssertEqual(feature?.geometry.allCoordinates.first?.altitude, 3)
+    }
+
     // MARK: - MultiPoint
 
     // SELECT 'MULTIPOINT((0 0),(1 2))'::geometry;
