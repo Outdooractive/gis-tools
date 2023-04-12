@@ -217,55 +217,55 @@ let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maxi
 
 ## Algorithms
 
-| Name                                   | Examples                                                                                    | Source/Tests            |
-| -------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
-| along                                  | let lineString = LineString(…) let coordinate = lineString.coordinateAlong(distance: 100.0) | [Source][25][Tests][26] |
-| area                                   | Polygon(…).area                                                                             | [Source][27]            |
-| bearing                                | Coordinate3D(…).bearing(to: Coordinate3D(…))                                                | [Source][28][Tests][29] |
-| boolean-clockwise                      |                                                                                             | [Source][30][Tests][31] |
-| boolean-crosses                        | TODO                                                                                        | [Source][32]            |
-| boolean-intersects                     | TODO                                                                                        | [Source][33]            |
-| boolean-overlap                        |                                                                                             | [Source][34][Tests][35] |
-| boolean-parallel                       |                                                                                             | [Source][36][Tests][37] |
-| boolean-point-in-polygon               |                                                                                             | [Source][38]            |
-| boolean-point-on-line point-on-feature |                                                                                             | [Source][39]            |
-| boolean-valid                          |                                                                                             | [Source][40]            |
-| bbox-clip                              |                                                                                             | [Source][41][Tests][42] |
-| buffer                                 | TODO                                                                                        | [Source][43]            |
-| center                                 |                                                                                             | [Source][44]            |
-| circle                                 |                                                                                             | [Source][45][Tests][46] |
-| helpers                                |                                                                                             | [Source][47]            |
-| destination                            |                                                                                             | [Source][48][Tests][49] |
-| distance                               |                                                                                             | [Source][50][Tests][51] |
-| flatten                                |                                                                                             | [Source][52][Tests][53] |
-| length                                 |                                                                                             | [Source][54]            |
-| line-arc                               |                                                                                             | [Source][55][Tests][56] |
-| line-chunk                             |                                                                                             | [Source][57][Tests][58] |
-| line-intersect                         |                                                                                             | [Source][59][Tests][60] |
-| line-overlap                           |                                                                                             | [Source][61][Tests][62] |
-| line-segments                          |                                                                                             | [Source][63]            |
-| line-slice                             |                                                                                             | [Source][64][Tests][65] |
-| line-slice-along                       |                                                                                             | [Source][66][Tests][67] |
-| midpoint                               |                                                                                             | [Source][68][Tests][69] |
-| nearest-point                          |                                                                                             | [Source][70]            |
-| nearest-point-on-feature               |                                                                                             | [Source][71]            |
-| nearest-point-on-line                  |                                                                                             | [Source][72][Tests][73] |
-| nearest-point-to-line                  |                                                                                             | [Source][74]            |
-| point-on-feature                       |                                                                                             | [Source][75]            |
-| points-within-polygon                  |                                                                                             | [Source][76]            |
-| point-to-line-distance                 |                                                                                             | [Source][77][Tests][78] |
-| pole-of-inaccessibility                | TODO                                                                                        | [Source][79]            |
-| projection                             |                                                                                             | [Source][80][Tests][81] |
-| reverse                                |                                                                                             | [Source][82][Tests][83] |
-| rhumb-bearing                          |                                                                                             | [Source][84][Tests][85] |
-| rhumb-destination                      |                                                                                             | [Source][86][Tests][87] |
-| rhumb-distance                         |                                                                                             | [Source][88][Tests][89] |
-| simplify                               |                                                                                             | [Source][90][Tests][91] |
-| transform-coordinates                  |                                                                                             | [Source][92]            |
-| transform-rotate                       |                                                                                             | [Source][93]            |
-| transform-scale                        |                                                                                             | [Source][94]            |
-| transform-translate                    |                                                                                             | [Source][95]            |
-| truncate                               |                                                                                             | [Source][96][Tests][97] |
+| Name                        | Examples                                                                               | Source/Tests            |
+| --------------------------- | -------------------------------------------------------------------------------------- | ----------------------- |
+| along                       | let coordinate = lineString.coordinateAlong(distance: 100.0)                           | [Source][25][Tests][26] |
+| area                        | Polygon(…).area                                                                        | [Source][27]            |
+| bearing                     | Coordinate3D(…).bearing(to: Coordinate3D(…))                                           | [Source][28][Tests][29] |
+| boolean-clockwise           | Polygon(…).outerRing?.isClockwise                                                      | [Source][30][Tests][31] |
+| boolean-crosses             | TODO                                                                                   | [Source][32]            |
+| boolean-intersects          | TODO                                                                                   | [Source][33]            |
+| boolean-overlap             | lineString1.isOverlapping(with: lineString2)                                           | [Source][34][Tests][35] |
+| boolean-parallel            | lineString1.isParallel(to: lineString2)                                                | [Source][36][Tests][37] |
+| boolean-point-in-polygon    | polygon.contains(Coordinate3D(…))                                                      | [Source][38]            |
+| boolean-point-on-line       | lineString.checkIsOnLine(Coordinate3D(…))                                              | [Source][39]            |
+| boolean-valid               | anyGeometry.isValid                                                                    | [Source][40]            |
+| bbox-clip                   | let clipped = lineString.clipped(to: boundingBox)                                      | [Source][41][Tests][42] |
+| buffer                      | TODO                                                                                   | [Source][43]            |
+| center/centroid/center-mean | let center = polygon.center                                                            | [Source][44]            |
+| circle                      | let circle = point.circle(radius: 5000.0)                                              | [Source][45][Tests][46] |
+| conversions/helpers         | let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)                 | [Source][47]            |
+| destination                 | let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)             | [Source][48][Tests][49] |
+| distance                    | let distance = coordinate1.distance(from: coordinate2)                                 | [Source][50][Tests][51] |
+| flatten                     | let featureCollection = anyGeometry.flattened                                          | [Source][52][Tests][53] |
+| length                      | let length = lineString.length                                                         | [Source][54]            |
+| line-arc                    | let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)            | [Source][55][Tests][56] |
+| line-chunk                  | let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings                     | [Source][57][Tests][58] |
+| line-intersect              | let intersections = feature1.intersections(other: feature2)                            | [Source][59][Tests][60] |
+| line-overlap                | let overlappingSegments = lineString1.overlappingSegments(with: lineString2)           | [Source][61][Tests][62] |
+| line-segments               | let segments = anyGeometry.lineSegments                                                | [Source][63]            |
+| line-slice                  | let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))             | [Source][64][Tests][65] |
+| line-slice-along            | let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)          | [Source][66][Tests][67] |
+| midpoint                    | let middle = coordinate1.midpoint(to: coordinate2)                                     | [Source][68][Tests][69] |
+| nearest-point               | let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))                     | [Source][70]            |
+| nearest-point-on-feature    | let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))           | [Source][71]            |
+| nearest-point-on-line       | let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate    | [Source][72][Tests][73] |
+| nearest-point-to-line       | let nearest = lineString. nearestCoordinate(outOf: coordinates)                        | [Source][74]            |
+| point-on-feature            | let coordinate = anyGeometry.coordinateOnFeature                                       | [Source][75]            |
+| points-within-polygon       | let within = polygon.coordinatesWithin(coordinates)                                    | [Source][76]            |
+| point-to-line-distance      | let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))                    | [Source][77][Tests][78] |
+| pole-of-inaccessibility     | TODO                                                                                   | [Source][79]            |
+| projection                  | let coordinateXY = coordinate3D.projectedToEpsg3857                                    | [Source][80][Tests][81] |
+| reverse                     | let lineStringReversed = lineString.reversed                                           | [Source][82][Tests][83] |
+| rhumb-bearing               | let bearing = start.rhumbBearing(to: end)                                              | [Source][84][Tests][85] |
+| rhumb-destination           | let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)          | [Source][86][Tests][87] |
+| rhumb-distance              | let distance = coordinate1.rhumbDistance(from: coordinate2)                            | [Source][88][Tests][89] |
+| simplify                    | let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)            | [Source][90][Tests][91] |
+| transform-coordinates       | let transformed = anyGeometry.transformCoordinates({ $0 })                             | [Source][92]            |
+| transform-rotate            | let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))  | [Source][93]            |
+| transform-scale             | let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)          | [Source][94]            |
+| transform-translate         | let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0) | [Source][95]            |
+| truncate                    | let truncated = lineString.truncated(precision: 2, removeAltitude: true)               | [Source][96][Tests][97] |
 [Algorithms ported from Turf]
 
 ## Related packages
