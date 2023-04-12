@@ -2,6 +2,7 @@
 
 - Fix some TODOs in the code
 - Port more packages
+- Add more tests
 
 ## TODOs from the GeoJSON spec: https://tools.ietf.org/html/rfc7946
 
