@@ -6,6 +6,7 @@ import Foundation
 
 extension GeoJson {
 
+    /// Try to initialize a GeoJSON object from a Decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: GeoJsonCodingKey.self)
         let json = container.decodeGeoJsonDictionary()
@@ -17,6 +18,7 @@ extension GeoJson {
         self = newObject
     }
 
+    /// Write the GeoJSON object to an Encoder.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: GeoJsonCodingKey.self)
 
@@ -27,6 +29,7 @@ extension GeoJson {
 
 extension BoundingBox: Codable {
 
+    /// Try to initialize a BoundingBox from a Decoder.
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         let json = container.decodeGeoJsonArray()
@@ -38,6 +41,7 @@ extension BoundingBox: Codable {
         self = newObject
     }
 
+    /// Write the BoundingBox to an Encoder.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.unkeyedContainer()
 
@@ -50,6 +54,7 @@ extension BoundingBox: Codable {
 
 extension Coordinate3D: Codable {
 
+    /// Try to initialize a Coordinate3D from a Decoder.
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         let json = container.decodeGeoJsonArray()
@@ -61,6 +66,7 @@ extension Coordinate3D: Codable {
         self = newObject
     }
 
+    /// Write the Coordinate3D to an Encoder.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.unkeyedContainer()
 
