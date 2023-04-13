@@ -54,6 +54,32 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
+    /// Try to initialize a LineString with some LineSegments.
+    public init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
+        guard !lineSegments.isEmpty else { return nil }
+
+        var coordinates: [Coordinate3D] = []
+        for (previous, current) in lineSegments.overlappingPairs() {
+            if coordinates.isEmpty {
+                coordinates.append(previous.first)
+                if previous.first != previous.second {
+                    coordinates.append(previous.second)
+                }
+            }
+
+            if current.first != previous.second {
+                coordinates.append(current.first)
+            }
+            if current.second != current.first {
+                coordinates.append(current.second)
+            }
+        }
+
+        guard coordinates.count >= 2 else { return nil }
+
+        self.init(unchecked: coordinates, calculateBoundingBox: calculateBoundingBox)
+    }
+
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
