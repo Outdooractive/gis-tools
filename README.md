@@ -726,39 +726,39 @@ let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maxi
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`             | [Source][68] / [Tests][69]   |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                 | [Source][70] / [Tests][71]   |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                          | [Source][72] / [Tests][73]   |
-| length                      | `let length = lineString.length`                                                         | [Source][74]                 |
-| line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`            | [Source][75] / [Tests][76]   |
-| line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings`                     | [Source][77] / [Tests][78]   |
-| line-intersect              | `let intersections = feature1.intersections(other: feature2)`                            | [Source][79] / [Tests][80]   |
-| line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`           | [Source][81] / [Tests][82]   |
-| line-segments               | `let segments = anyGeometry.lineSegments`                                                | [Source][83]                 |
-| line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`             | [Source][84] / [Tests][85]   |
-| line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`          | [Source][86] / [Tests][87]   |
-| midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                     | [Source][88] / [Tests][89]   |
-| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                     | [Source][90]                 |
-| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`           | [Source][91]                 |
-| nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`    | [Source][92] / [Tests][93]   |
-| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                        | [Source][94]                 |
-| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                       | [Source][95]                 |
-| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                    | [Source][96]                 |
-| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                    | [Source][97] / [Tests][98]   |
-| pole-of-inaccessibility     | TODO                                                                                     | [Source][99]                 |
-| projection                  | `let coordinateXY = coordinate3D.projectedToEpsg3857`                                    | [Source][100] / [Tests][101] |
-| reverse                     | `let lineStringReversed = lineString.reversed`                                           | [Source][102] / [Tests][103] |
-| rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                              | [Source][104] / [Tests][105] |
-| rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`          | [Source][106] / [Tests][107] |
-| rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                            | [Source][108] / [Tests][109] |
-| simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`            | [Source][110] / [Tests][111] |
-| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                             | [Source][112]                |
-| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`  | [Source][113]                |
-| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          | [Source][114]                |
-| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` | [Source][115]                |
-| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               | [Source][116] / [Tests][117] |
-| union                       | TODO                                                                                     | [Source][118]                |
+| length                      | `let length = lineString.length`                                                         | [Source][74] / [Tests][75]   |
+| line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`            | [Source][76] / [Tests][77]   |
+| line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings`                     | [Source][78] / [Tests][79]   |
+| line-intersect              | `let intersections = feature1.intersections(other: feature2)`                            | [Source][80] / [Tests][81]   |
+| line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`           | [Source][82] / [Tests][83]   |
+| line-segments               | `let segments = anyGeometry.lineSegments`                                                | [Source][84] / [Tests][85]   |
+| line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`             | [Source][86] / [Tests][87]   |
+| line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`          | [Source][88] / [Tests][89]   |
+| midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                     | [Source][90] / [Tests][91]   |
+| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                     | [Source][92]                 |
+| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`           | [Source][93]                 |
+| nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`    | [Source][94] / [Tests][95]   |
+| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                        | [Source][96]                 |
+| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                       | [Source][97]                 |
+| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                    | [Source][98]                 |
+| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                    | [Source][99] / [Tests][100]  |
+| pole-of-inaccessibility     | TODO                                                                                     | [Source][101]                |
+| projection                  | `let coordinateXY = coordinate3D.projectedToEpsg3857`                                    | [Source][102] / [Tests][103] |
+| reverse                     | `let lineStringReversed = lineString.reversed`                                           | [Source][104] / [Tests][105] |
+| rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                              | [Source][106] / [Tests][107] |
+| rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`          | [Source][108] / [Tests][109] |
+| rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                            | [Source][110] / [Tests][111] |
+| simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`            | [Source][112] / [Tests][113] |
+| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                             | [Source][114]                |
+| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`  | [Source][115]                |
+| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          | [Source][116]                |
+| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` | [Source][117]                |
+| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               | [Source][118] / [Tests][119] |
+| union                       | TODO                                                                                     | [Source][120]                |
 
 # Related packages
 Currently only one:
-- [mvt-tools][119]: Vector tiles reader/writer for Swift
+- [mvt-tools][121]: Vector tiles reader/writer for Swift
 
 # Contributing
 Please create an issue or open a pull request with a fix or enhancement.
@@ -843,51 +843,53 @@ Thomas Rasch, Outdooractive
 [72]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Flatten.swift
 [73]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/FlattenTests.swift "FlattenTests.swift"
 [74]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Length.swift
-[75]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineArc.swift
-[76]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineArcTests.swift "LineArcTests.swift"
-[77]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineChunk.swift
-[78]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineChunkTests.swift "LineChunkTests.swift"
-[79]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineIntersect.swift
-[80]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineIntersectionTests.swift "LineIntersectionTests.swift"
-[81]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineOverlap.swift
-[82]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineOverlapTests.swift "LineOverlapTests.swift"
-[83]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSegments.swift
-[84]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSlice.swift
-[85]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineSliceTests.swift "LineSliceTests.swift"
-[86]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSliceAlong.swift
-[87]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineSliceAlongTests.swift "LineSliceAlongTests.swift"
-[88]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/MidPoint.swift
-[89]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/MidPointTests.swift "MidPointTests.swift"
-[90]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPoint.swift
-[91]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointOnFeature.swift
-[92]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointOnLine.swift
-[93]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/NearestCoordinateOnLineTests.swift "NearestCoordinateOnLineTests.swift"
-[94]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointToLine.swift "NearestPointToLine.swift"
-[95]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointOnFeature.swift "PointOnFeature.swift"
-[96]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointsWithinPolygon.swift "PointsWithinPolygon.swift"
-[97]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointToLineDistance.swift "PointToLineDistance.swift"
-[98]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/PointToLineDistanceTests.swift "PointToLineDistanceTests.swift"
-[99]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PoleOfInaccessibility.swift "PoleOfInaccessibility.swift"
-[100]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Projection.swift "Projection.swift"
-[101]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/ProjectionTests.swift "ProjectionTests.swift"
-[102]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Reverse.swift "Reverse.swift"
-[103]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/ReverseTests.swift "ReverseTests.swift"
-[104]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbBearing.swift "RhumbBearing.swift"
-[105]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbBearingTests.swift "RhumbBearingTests.swift"
-[106]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbDestination.swift "RhumbDestination.swift"
-[107]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbDestinationTests.swift "RhumbDestinationTests.swift"
-[108]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbDistance.swift "RhumbDistance.swift"
-[109]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbDistanceTests.swift "RhumbDistanceTests.swift"
-[110]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Simplify.swift "Simplify.swift"
-[111]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/SimplifyTests.swift "SimplifyTests.swift"
-[112]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformCoordinates.swift "TransformCoordinates.swift"
-[113]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformRotate.swift "TransformRotate.swift"
-[114]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformScale.swift "TransformScale.swift"
-[115]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformTranslate.swift "TransformTranslate.swift"
-[116]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Truncate.swift "Truncate.swift"
-[117]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests.swift"
-[118]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift
-[119]:	https://github.com/Outdooractive/mvt-tools
+[75]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LengthTests.swift "LengthTests.swift"
+[76]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineArc.swift
+[77]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineArcTests.swift "LineArcTests.swift"
+[78]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineChunk.swift
+[79]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineChunkTests.swift "LineChunkTests.swift"
+[80]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineIntersect.swift
+[81]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineIntersectionTests.swift "LineIntersectionTests.swift"
+[82]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineOverlap.swift
+[83]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineOverlapTests.swift "LineOverlapTests.swift"
+[84]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSegments.swift
+[85]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineSegmentsTests.swift "LineSegmentsTests.swift"
+[86]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSlice.swift
+[87]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineSliceTests.swift "LineSliceTests.swift"
+[88]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/LineSliceAlong.swift
+[89]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/LineSliceAlongTests.swift "LineSliceAlongTests.swift"
+[90]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/MidPoint.swift
+[91]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/MidPointTests.swift "MidPointTests.swift"
+[92]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPoint.swift
+[93]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointOnFeature.swift
+[94]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointOnLine.swift
+[95]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/NearestCoordinateOnLineTests.swift "NearestCoordinateOnLineTests.swift"
+[96]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/NearestPointToLine.swift "NearestPointToLine.swift"
+[97]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointOnFeature.swift "PointOnFeature.swift"
+[98]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointsWithinPolygon.swift "PointsWithinPolygon.swift"
+[99]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PointToLineDistance.swift "PointToLineDistance.swift"
+[100]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/PointToLineDistanceTests.swift "PointToLineDistanceTests.swift"
+[101]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PoleOfInaccessibility.swift "PoleOfInaccessibility.swift"
+[102]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Projection.swift "Projection.swift"
+[103]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/ProjectionTests.swift "ProjectionTests.swift"
+[104]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Reverse.swift "Reverse.swift"
+[105]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/ReverseTests.swift "ReverseTests.swift"
+[106]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbBearing.swift "RhumbBearing.swift"
+[107]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbBearingTests.swift "RhumbBearingTests.swift"
+[108]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbDestination.swift "RhumbDestination.swift"
+[109]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbDestinationTests.swift "RhumbDestinationTests.swift"
+[110]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/RhumbDistance.swift "RhumbDistance.swift"
+[111]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/RhumbDistanceTests.swift "RhumbDistanceTests.swift"
+[112]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Simplify.swift "Simplify.swift"
+[113]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/SimplifyTests.swift "SimplifyTests.swift"
+[114]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformCoordinates.swift "TransformCoordinates.swift"
+[115]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformRotate.swift "TransformRotate.swift"
+[116]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformScale.swift "TransformScale.swift"
+[117]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformTranslate.swift "TransformTranslate.swift"
+[118]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Truncate.swift "Truncate.swift"
+[119]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests.swift"
+[120]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift
+[121]:	https://github.com/Outdooractive/mvt-tools
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
