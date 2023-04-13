@@ -62,7 +62,7 @@ public struct LineString: LineStringGeometry, EmptyCreatable {
         for (previous, current) in lineSegments.overlappingPairs() {
             if coordinates.isEmpty {
                 coordinates.append(previous.first)
-                if previous.first != previous.second {
+                if previous.second != previous.first {
                     coordinates.append(previous.second)
                 }
             }
