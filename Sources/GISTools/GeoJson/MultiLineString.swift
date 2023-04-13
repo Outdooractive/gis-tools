@@ -63,14 +63,14 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         }
     }
 
-    /// Try to initialize a MultiLineString with some LineSegments.
+    /// Try to initialize a MultiLineString with some LineSegments. Each LineSegment will result in one LineString.
     public init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         guard !lineSegments.isEmpty else { return nil }
 
         self.init(unchecked: lineSegments, calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Try to initialize a MultiLineString with some LineSegments, don't check the coordinates for validity.
+    /// Try to initialize a MultiLineString with some LineSegments, don't check the coordinates for validity. Each LineSegment will result in one LineString.
     public init(unchecked lineSegments: [LineSegment], calculateBoundingBox: Bool = false) {
         self.coordinates = lineSegments.map({ $0.coordinates })
 

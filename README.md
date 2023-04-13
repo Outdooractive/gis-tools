@@ -441,7 +441,7 @@ init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false)
 /// Try to initialize a MultiLineString with some LineStrings.
 init?(_ lineStrings: [LineString], calculateBoundingBox: Bool = false)
 
-/// Try to initialize a MultiLineString with some LineSegments.
+/// Try to initialize a MultiLineString with some LineSegments. Each LineSegment will result in one LineString.
 init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false)
 ```
 
@@ -456,7 +456,7 @@ let multiLineString = MultiLineString([
 ## Polygon
 [Implementation][30] / [Polygon test cases][31]
 
-A `Polygon` is a shape consisting of one or more rings, where the first ring is the outer ring bounding the surface, and the inner rings bound holes within the surface. Please see [chapter 3.1.6][32] in the RFC for more information.
+A `Polygon` is a shape consisting of one or more rings, where the first ring is the outer ring bounding the surface, and the inner rings bound holes within the surface. Please see [section 3.1.6][32] in the RFC for more information.
 ```swift
 /// The receiver's coordinates.
 let coordinates: [[Coordinate3D]]
@@ -479,7 +479,7 @@ init?(_ rings: [Ring], calculateBoundingBox: Bool = false)
 
 Example:
 ```swift
-let polygonWithHoles = Polygon([
+let polygonWithHole = Polygon([
     [
         Coordinate3D(latitude: 0.0, longitude: 100.0),
         Coordinate3D(latitude: 0.0, longitude: 101.0),
@@ -495,7 +495,7 @@ let polygonWithHoles = Polygon([
         Coordinate3D(latitude: 1.0, longitude: 100.8)
     ],
 ])!
-print(polygonWithHoles.area)
+print(polygonWithHole.area)
 ```
 
 ## MultiPolygon
@@ -550,7 +550,7 @@ let multiPolygon = MultiPolygon([
 ## GeometryCollection
 [Implementation][35] / [GeometryCollection test cases][36]
 
-A `GeometryCollection` is an array of GeoJSON geometries, i.e. `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon` or even `GeometryCollection`, though the latter is not recommended. Please see [chapter 3.1.8][37] in the RFC for more information.
+A `GeometryCollection` is an array of GeoJSON geometries, i.e. `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon` or even `GeometryCollection`, though the latter is not recommended. Please see [section 3.1.8][37] in the RFC for more information.
 ```swift
 /// The GeometryCollection's geometry objects.
 let geometries: [GeoJsonGeometry]
@@ -616,7 +616,7 @@ The following geometry types are supported: `point`, `linestring`, `linearring`,
 Every GeoJSON object has convenience methods to encode and decode themselves to and from WKB/WKT, and there are extensions for `Data` and `String` to decode from WKB and WKT to GeoJSON. In the end, they all forward to `WKBCoder` and `WKTCoder` which do the heavy lifting.
 
 ## WKB
-Also have a look at  the tests: [WKB test cases][42]
+Also have a look at  the [WKB test cases][42].
 
 Decoding:
 ```swift
@@ -702,7 +702,7 @@ let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maxi
 
 # Algorithms
 
-| Name                        | Examples                                                                                 | Source/Tests                 |
+| Name                        | Example                                                                                  | Source/Tests                 |
 | --------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------- |
 | along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                           | [Source][45] / [Tests][46]   |
 | area                        | `Polygon(…).area`                                                                        | [Source][47]                 |
@@ -751,10 +751,11 @@ let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maxi
 | transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          | [Source][114]                |
 | transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` | [Source][115]                |
 | truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               | [Source][116] / [Tests][117] |
+| union                       | TODO                                                                                     | [Source][118]                |
 
 # Related packages
 Currently only one:
-- [mvt-tools][118]: Vector tiles reader/writer for Swift
+- [mvt-tools][119]: Vector tiles reader/writer for Swift
 
 # Contributing
 Please create an issue or open a pull request with a fix or enhancement.
@@ -882,7 +883,8 @@ Thomas Rasch, Outdooractive
 [115]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformTranslate.swift "TransformTranslate.swift"
 [116]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Truncate.swift "Truncate.swift"
 [117]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests.swift"
-[118]:	https://github.com/Outdooractive/mvt-tools
+[118]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift
+[119]:	https://github.com/Outdooractive/mvt-tools
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
