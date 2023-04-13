@@ -5,7 +5,6 @@ final class AlongTests: XCTestCase {
 
     func testAlong() {
         let lineString = TestData.lineString(package: "Along", name: "AlongLineString1")
-        XCTAssertNotNil(lineString)
 
         let distance1: Double = GISTool.convert(length: 1.0, from: .miles, to: .meters)!
         let distance2: Double = GISTool.convert(length: 100.0, from: .miles, to: .meters)!

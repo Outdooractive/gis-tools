@@ -24,9 +24,9 @@ final class LineStringTests: XCTestCase {
     }
 
     func testCreateJson() throws {
-        let lineString = LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])!
-
+        let lineString = try XCTUnwrap(LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)]))
         let string = try XCTUnwrap(lineString.asJsonString())
+
         XCTAssert(string.contains("\"type\":\"LineString\""))
         XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
@@ -59,11 +59,9 @@ final class LineStringTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let lineStringData = LineString(jsonString: lineStringJson)?.asJsonData(prettyPrinted: true) else {
-            throw "lineString is nil"
-        }
-
+        let lineStringData = try XCTUnwrap(LineString(jsonString: lineStringJson)?.asJsonData(prettyPrinted: true))
         let lineString = try JSONDecoder().decode(LineString.self, from: lineStringData)
+
         XCTAssertEqual(lineStringData, lineString.asJsonData(prettyPrinted: true))
     }
 

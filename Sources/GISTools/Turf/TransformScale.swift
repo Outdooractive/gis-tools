@@ -15,8 +15,8 @@ public enum ScaleAnchor {
     case northEast
     case center
     case centroid
-    case customCoordinate(Coordinate3D)
-    case customPoint(Point)
+    case coordinate(Coordinate3D)
+    case point(Point)
 }
 
 extension GeoJson {
@@ -36,7 +36,7 @@ extension GeoJson {
         guard factor != 1.0 else { return self }
 
         var originIsPoint = false
-        if case .customCoordinate = anchor {
+        if case .coordinate = anchor {
             originIsPoint = true
         }
 
@@ -110,10 +110,10 @@ extension GeoJson {
         case .centroid:
             return centroid?.coordinate
 
-        case let .customCoordinate(coordinate):
+        case let .coordinate(coordinate):
             return coordinate
 
-        case let .customPoint(point):
+        case let .point(point):
             return point.coordinate
         }
     }

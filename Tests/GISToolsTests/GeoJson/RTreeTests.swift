@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - RTreeTests
-
 final class RTreeTests: XCTestCase {
 
     func testEmpty() throws {

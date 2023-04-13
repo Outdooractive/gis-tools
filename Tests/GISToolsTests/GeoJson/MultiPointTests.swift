@@ -15,9 +15,8 @@ final class MultiPointTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let multiPoint = MultiPoint(jsonString: multiPointJson) else {
-            throw "multiPoint is nil"
-        }
+        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: multiPointJson))
+
         XCTAssertNotNil(multiPoint)
         XCTAssertEqual(multiPoint.type, GeoJsonType.multiPoint)
         XCTAssertEqual(multiPoint.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
@@ -25,18 +24,16 @@ final class MultiPointTests: XCTestCase {
         XCTAssertEqual(multiPoint[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
-        let multiPoint = MultiPoint([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])!
+    func testCreateJson() throws {
+        let multiPoint = try XCTUnwrap(MultiPoint([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)]))
+        let string = try XCTUnwrap(multiPoint.asJsonString())
 
-        let string = multiPoint.asJsonString()!
         XCTAssert(string.contains("\"type\":\"MultiPoint\""))
         XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
     func testEncodable() throws {
-        guard let multiPoint = MultiPoint(jsonString: multiPointJson) else {
-            throw "multiPoint is nil"
-        }
+        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: multiPointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -45,11 +42,9 @@ final class MultiPointTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let multiPointData = MultiPoint(jsonString: multiPointJson)?.asJsonData(prettyPrinted: true) else {
-            throw "multiPoint is nil"
-        }
-
+        let multiPointData = try XCTUnwrap(MultiPoint(jsonString: multiPointJson)?.asJsonData(prettyPrinted: true))
         let multiPoint = try JSONDecoder().decode(MultiPoint.self, from: multiPointData)
+
         XCTAssertEqual(multiPointData, multiPoint.asJsonData(prettyPrinted: true))
     }
 

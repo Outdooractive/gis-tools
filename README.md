@@ -749,16 +749,16 @@ let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maxi
 | rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`          | [Source][108] / [Tests][109] |
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                            | [Source][110] / [Tests][111] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`            | [Source][112] / [Tests][113] |
-| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                             | [Source][114]                |
-| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`  | [Source][115]                |
-| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          | [Source][116]                |
-| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` | [Source][117]                |
-| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               | [Source][118] / [Tests][119] |
-| union                       | TODO                                                                                     | [Source][120]                |
+| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                             | [Source][114] / [Tests][115] |
+| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`  | [Source][116] / [Tests][117] |
+| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          | [Source][118] / [Tests][119] |
+| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` | [Source][120] / [Tests][121] |
+| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               | [Source][122] / [Tests][123] |
+| union                       | TODO                                                                                     | [Source][124]                |
 
 # Related packages
 Currently only one:
-- [mvt-tools][121]: Vector tiles reader/writer for Swift
+- [mvt-tools][125]: Vector tiles reader/writer for Swift
 
 # Contributing
 Please create an issue or open a pull request with a fix or enhancement.
@@ -883,13 +883,17 @@ Thomas Rasch, Outdooractive
 [112]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Simplify.swift "Simplify.swift"
 [113]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/SimplifyTests.swift "SimplifyTests.swift"
 [114]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformCoordinates.swift "TransformCoordinates.swift"
-[115]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformRotate.swift "TransformRotate.swift"
-[116]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformScale.swift "TransformScale.swift"
-[117]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformTranslate.swift "TransformTranslate.swift"
-[118]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Truncate.swift "Truncate.swift"
-[119]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests.swift"
-[120]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift
-[121]:	https://github.com/Outdooractive/mvt-tools
+[115]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TransformCoordinatesTests.swift "TransformCoordinatesTests.swift"
+[116]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformRotate.swift "TransformRotate.swift"
+[117]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TransformRotateTests.swift "TransformRotateTests.swift"
+[118]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformScale.swift "TransformScale.swift"
+[119]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TransformScaleTests.swift "TransformScaleTests.swift"
+[120]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/TransformTranslate.swift "TransformTranslate.swift"
+[121]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TransformTranslateTests.swift "TransformTranslateTests.swift"
+[122]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Truncate.swift "Truncate.swift"
+[123]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests.swift"
+[124]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift
+[125]:	https://github.com/Outdooractive/mvt-tools
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms

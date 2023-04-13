@@ -21,9 +21,8 @@ final class GeometryCollectionTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson) else {
-            throw "geometryCollection is nil"
-        }
+        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson))
+
         XCTAssertNotNil(geometryCollection)
         XCTAssertEqual(geometryCollection.type, GeoJsonType.geometryCollection)
         XCTAssertEqual(geometryCollection.geometries.count, 2)
@@ -31,14 +30,19 @@ final class GeometryCollectionTests: XCTestCase {
         XCTAssertEqual(geometryCollection[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
-        // TODO:
+    func testCreateJson() throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
+        let lineString = try XCTUnwrap(LineString([Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 102.0)]))
+        let geometryCollection = GeometryCollection([point, lineString])
+        let string = try XCTUnwrap(geometryCollection.asJsonString())
+
+        XCTAssert(string.contains("\"type\":\"GeometryCollection\""))
+        XCTAssert(string.contains("\"coordinates\":[100,0]"))
+        XCTAssert(string.contains("\"coordinates\":[[101,0],[102,1]]"))
     }
 
     func testEncodable() throws {
-        guard let geometryCollection = GeometryCollection(jsonString: geometryCollectionJson) else {
-            throw "geometryCollection is nil"
-        }
+        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -47,11 +51,9 @@ final class GeometryCollectionTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let geometryCollectionData = GeometryCollection(jsonString: geometryCollectionJson)?.asJsonData(prettyPrinted: true) else {
-            throw "geometryCollection is nil"
-        }
-
+        let geometryCollectionData = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson)?.asJsonData(prettyPrinted: true))
         let geometryCollection = try JSONDecoder().decode(GeometryCollection.self, from: geometryCollectionData)
+
         XCTAssertEqual(geometryCollectionData, geometryCollection.asJsonData(prettyPrinted: true))
     }
 

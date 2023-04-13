@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - RhumbBearingTests
-
 final class RhumbBearingTests: XCTestCase {
 
     func testRhumbBearing() {

@@ -1,8 +1,6 @@
 @testable import GISTools
 import XCTest
 
-// MARK: LineSegmentsTests
-
 final class LineSegmentsTests: XCTestCase {
 
     func testLineSegments() throws {

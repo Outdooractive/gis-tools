@@ -30,9 +30,8 @@ final class FeatureTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let feature = Feature(jsonString: featureJson) else {
-            throw "feature is nil"
-        }
+        let feature = try XCTUnwrap(Feature(jsonString: featureJson))
+
         XCTAssertEqual(feature.type, GeoJsonType.feature)
         XCTAssertEqual(feature.geometry.type, GeoJsonType.polygon)
         XCTAssertEqual(feature.properties.count, 2)
@@ -71,13 +70,10 @@ final class FeatureTests: XCTestCase {
     """
 
     func testLoadJsonWithIntId() throws {
-        guard let feature = Feature(jsonString: featureJsonWithIntId) else {
-            throw "feature is nil"
-        }
+        let feature = try XCTUnwrap(Feature(jsonString: featureJsonWithIntId))
 
         XCTAssertEqual(feature.id, .int(1234))
     }
-
 
     func testCreateJson() throws {
         let feature = Feature(Point(.zero), id: .int(5))
@@ -90,9 +86,7 @@ final class FeatureTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        guard let feature = Feature(jsonString: featureJson) else {
-            throw "feature is nil"
-        }
+        let feature = try XCTUnwrap(Feature(jsonString: featureJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -101,11 +95,9 @@ final class FeatureTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let featureData = Feature(jsonString: featureJson)?.asJsonData(prettyPrinted: true) else {
-            throw "feature is nil"
-        }
-
+        let featureData = try XCTUnwrap(Feature(jsonString: featureJson)?.asJsonData(prettyPrinted: true))
         let feature = try JSONDecoder().decode(Feature.self, from: featureData)
+
         XCTAssertEqual(featureData, feature.asJsonData(prettyPrinted: true))
     }
 

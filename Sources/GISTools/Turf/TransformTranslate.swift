@@ -19,7 +19,7 @@ extension GeoJson {
         zTranslation: CLLocationDistance = 0.0)
         -> Self
     {
-        guard distance != 0.0, zTranslation != 0.0 else { return self }
+        guard distance != 0.0 || zTranslation != 0.0 else { return self }
 
         let distance = abs(distance)
         let direction = abs(direction)

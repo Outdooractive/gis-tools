@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - BearingTests
-
 final class BearingTests: XCTestCase {
 
     func testBearing() {
