@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: LengthTests
-
 final class LengthTests: XCTestCase {
 
     func testLength() {

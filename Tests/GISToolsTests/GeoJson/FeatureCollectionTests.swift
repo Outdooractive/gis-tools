@@ -56,9 +56,8 @@ final class FeatureCollectionTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
-            throw "featureCollection is nil"
-        }
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+
         XCTAssertEqual(featureCollection.type, GeoJsonType.featureCollection)
         XCTAssertEqual(featureCollection.features.count, 3)
         XCTAssertEqual(featureCollection.features.allSatisfy({ $0.type == .feature }), true)
@@ -71,11 +70,9 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testMap() throws {
-        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
-            throw "featureCollection is nil"
-        }
-        let prop0: String? = featureCollection.features.first?.property(for: "prop0")
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
 
+        let prop0: String? = featureCollection.features.first?.property(for: "prop0")
         XCTAssertEqual(prop0, "value0")
 
         featureCollection.mapFeatures({ feature -> Feature in
@@ -89,9 +86,8 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testCompactMap() throws {
-        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
-            throw "featureCollection is nil"
-        }
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+
         XCTAssertEqual(featureCollection.features.count, 3)
 
         featureCollection.compactMapFeatures({ feature -> Feature? in
@@ -103,9 +99,8 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testFilter() throws {
-        guard var featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
-            throw "featureCollection is nil"
-        }
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+
         XCTAssertEqual(featureCollection.features.count, 3)
 
         featureCollection.filterFeatures({ feature -> Bool in
@@ -116,9 +111,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        guard let featureCollection = FeatureCollection(jsonString: featureCollectionJson) else {
-            throw "featureCollection is nil"
-        }
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -127,11 +120,9 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let featureCollectionData = FeatureCollection(jsonString: featureCollectionJson)?.asJsonData(prettyPrinted: true) else {
-            throw "featureCollection is nil"
-        }
-
+        let featureCollectionData = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson)?.asJsonData(prettyPrinted: true))
         let featureCollection = try JSONDecoder().decode(FeatureCollection.self, from: featureCollectionData)
+
         XCTAssertEqual(featureCollectionData, featureCollection.asJsonData(prettyPrinted: true))
     }
 

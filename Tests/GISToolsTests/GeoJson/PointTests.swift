@@ -12,27 +12,24 @@ final class PointTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let point = Point(jsonString: pointJson) else {
-            throw "point is nil"
-        }
+        let point =  try XCTUnwrap(Point(jsonString: pointJson))
+
         XCTAssertEqual(point.type, GeoJsonType.point)
         XCTAssertEqual(point.coordinate, Coordinate3D(latitude: 0.0, longitude: 100.0))
         XCTAssertEqual(point.foreignMember(for: "other"), "something else")
         XCTAssertEqual(point[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
+    func testCreateJson() throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
+        let string = try XCTUnwrap(point.asJsonString())
 
-        let string = point.asJsonString()!
         XCTAssert(string.contains("\"type\":\"Point\""))
         XCTAssert(string.contains("\"coordinates\":[100,0]"))
     }
 
     func testEncodable() throws {
-        guard let point = Point(jsonString: pointJson) else {
-            throw "point is nil"
-        }
+        let point = try XCTUnwrap(Point(jsonString: pointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -41,11 +38,9 @@ final class PointTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let pointData = Point(jsonString: pointJson)?.asJsonData(prettyPrinted: true) else {
-            throw "point is nil"
-        }
-
+        let pointData = try XCTUnwrap(Point(jsonString: pointJson)?.asJsonData(prettyPrinted: true))
         let point = try JSONDecoder().decode(Point.self, from: pointData)
+
         XCTAssertEqual(pointData, point.asJsonData(prettyPrinted: true))
     }
 

@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - LineChunkTests
-
 final class LineChunkTests: XCTestCase {
 
     private let lineString = LineString([

@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - RhumbDistanceTests
-
 final class RhumbDistanceTests: XCTestCase {
 
     func testDistance() {

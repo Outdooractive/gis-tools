@@ -43,46 +43,40 @@ final class PolygonTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let polygonNoHole = Polygon(jsonString: polygonJsonNoHole) else {
-            throw "polygonNoHole is nil"
-        }
+        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole))
+
         XCTAssertEqual(polygonNoHole.type, GeoJsonType.polygon)
         XCTAssertEqual(polygonNoHole.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)]])
         XCTAssertEqual(polygonNoHole.foreignMember(for: "other"), "something else")
         XCTAssertEqual(polygonNoHole[foreignMember: "other"], "something else")
 
-        guard let polygonWithHoles = Polygon(jsonString: polygonJsonWithHoles) else {
-            throw "polygonWithHoles is nil"
-        }
+        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles))
+
         XCTAssertEqual(polygonWithHoles.type, GeoJsonType.polygon)
         XCTAssertEqual(polygonWithHoles.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.8, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.8)]])
         XCTAssertEqual(polygonWithHoles.foreignMember(for: "other"), "something else")
         XCTAssertEqual(polygonWithHoles[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
-        let polygonNoHole = Polygon([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)]])!
-        let polygonWithHoles = Polygon([
+    func testCreateJson() throws {
+        let polygonNoHole = try XCTUnwrap(Polygon([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)]]))
+        let polygonWithHoles = try XCTUnwrap(Polygon([
             [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)],
             [Coordinate3D(latitude: 1.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.8)],
-        ])!
+        ]))
 
-        let stringNoHole = polygonNoHole.asJsonString()!
+        let stringNoHole = try XCTUnwrap(polygonNoHole.asJsonString())
         XCTAssert(stringNoHole.contains("\"type\":\"Polygon\""))
         XCTAssert(stringNoHole.contains("\"coordinates\":[[[100,0],[101,0],[101,1],[100,1],[100,0]]]"))
 
-        let stringWithHoles = polygonWithHoles.asJsonString()!
+        let stringWithHoles = try XCTUnwrap(polygonWithHoles.asJsonString())
         XCTAssert(stringWithHoles.contains("\"type\":\"Polygon\""))
         XCTAssert(stringWithHoles.contains("\"coordinates\":[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.8,1],[100.8,0],[100.2,0],[100.2,1],[100.8,1]]]"))
     }
 
     func testEncodable() throws {
-        guard let polygonNoHole = Polygon(jsonString: polygonJsonNoHole) else {
-            throw "polygonNoHole is nil"
-        }
-        guard let polygonWithHoles = Polygon(jsonString: polygonJsonWithHoles) else {
-            throw "polygonWithHoles is nil"
-        }
+        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole))
+        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -92,15 +86,12 @@ final class PolygonTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let polygonNoHoleData = Polygon(jsonString: polygonJsonNoHole)?.asJsonData(prettyPrinted: true) else {
-            throw "polygonNoHole is nil"
-        }
-        guard let polygonWithHolesData = Polygon(jsonString: polygonJsonWithHoles)?.asJsonData(prettyPrinted: true) else {
-            throw "polygonWithHoles is nil"
-        }
-
+        let polygonNoHoleData = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole)?.asJsonData(prettyPrinted: true))
         let polygonNoHole = try JSONDecoder().decode(Polygon.self, from: polygonNoHoleData)
+
+        let polygonWithHolesData = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles)?.asJsonData(prettyPrinted: true))
         let polygonWithHoles = try JSONDecoder().decode(Polygon.self, from: polygonWithHolesData)
+
         XCTAssertEqual(polygonNoHoleData, polygonNoHole.asJsonData(prettyPrinted: true))
         XCTAssertEqual(polygonWithHolesData, polygonWithHoles.asJsonData(prettyPrinted: true))
     }

@@ -90,19 +90,18 @@ extension Coordinate3D {
         projectedCoordinate.projectedToEpsg3857
     }
 
+    /// Project to EPSG:3857
+    public var coordinateXY: CoordinateXY {
+        projectedCoordinate.coordinateXY
+    }
+
 }
 
 extension CoordinateXY {
 
     /// Project EPSG:3857 to EPSG:4326
-    public var projectedToEpsg4326: Coordinate3D {
-        let originShift: Double = 20_037_508.342789244
-
-        let longitude: Double = (x / originShift) * 180.0
-        var latitude: Double = (y / originShift) * 180.0
-        latitude = 180.0 / Double.pi * (2.0 * atan(exp(latitude * Double.pi / 180.0)) - Double.pi / 2.0)
-
-        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: z, m: m)
+    public var coordinate3D: Coordinate3D {
+        projectedCoordinate.coordinate3D
     }
 
 }

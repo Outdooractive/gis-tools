@@ -21,9 +21,8 @@ final class MultiLineStringTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let multiLineString = MultiLineString(jsonString: multiLineStringJson) else {
-            throw "multiLineString is nil"
-        }
+        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson))
+
         XCTAssertNotNil(multiLineString)
         XCTAssertEqual(multiLineString.type, GeoJsonType.multiLineString)
         XCTAssertEqual(multiLineString.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
@@ -31,18 +30,25 @@ final class MultiLineStringTests: XCTestCase {
         XCTAssertEqual(multiLineString[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
-        let multiLineString = MultiLineString([[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])!
+    func testCreateJson() throws {
+        let multiLineString = try XCTUnwrap(MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 100.0),
+                Coordinate3D(latitude: 1.0, longitude: 101.0)
+            ],
+            [
+                Coordinate3D(latitude: 2.0, longitude: 102.0),
+                Coordinate3D(latitude: 3.0, longitude: 103.0)
+            ]
+        ]))
+        let string = try XCTUnwrap(multiLineString.asJsonString())
 
-        let string = multiLineString.asJsonString()!
         XCTAssert(string.contains("\"type\":\"MultiLineString\""))
         XCTAssert(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
     }
 
     func testEncodable() throws {
-        guard let multiLineString = MultiLineString(jsonString: multiLineStringJson) else {
-            throw "multiLineString is nil"
-        }
+        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -51,11 +57,9 @@ final class MultiLineStringTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        guard let multiLineStringData = MultiLineString(jsonString: multiLineStringJson)?.asJsonData(prettyPrinted: true) else {
-            throw "multiLineString is nil"
-        }
-
+        let multiLineStringData = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson)?.asJsonData(prettyPrinted: true))
         let multiLineString = try JSONDecoder().decode(MultiLineString.self, from: multiLineStringData)
+
         XCTAssertEqual(multiLineStringData, multiLineString.asJsonData(prettyPrinted: true))
     }
 

@@ -54,6 +54,12 @@ extension ProjectedCoordinate {
         return Coordinate3D(latitude: projected.latitude, longitude: projected.longitude)
     }
 
+    /// Returns the receiver as a ``CoordinateXY``.
+    public var coordinateXY: CoordinateXY {
+        let projected = projectedToEpsg3857
+        return CoordinateXY(x: projected.longitude, y: projected.latitude)
+    }
+
 }
 
 // MARK: - Equatable

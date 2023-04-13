@@ -4,8 +4,6 @@ import CoreLocation
 @testable import GISTools
 import XCTest
 
-// MARK: - DistanceTests
-
 final class DistanceTests: XCTestCase {
 
     func testDistance() {

@@ -1,8 +1,6 @@
 @testable import GISTools
 import XCTest
 
-// MARK: - RTreeTests
-
 final class ReaderTests: XCTestCase {
 
     private let pointJson = """
