@@ -15,28 +15,42 @@ final class LineStringTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        guard let lineString = LineString(jsonString: lineStringJson) else {
-            throw "lineString is nil"
-        }
-        XCTAssertNotNil(lineString)
+        let lineString = try XCTUnwrap(LineString(jsonString: lineStringJson))
+
         XCTAssertEqual(lineString.type, GeoJsonType.lineString)
         XCTAssertEqual(lineString.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
         XCTAssertEqual(lineString.foreignMember(for: "other"), "something else")
         XCTAssertEqual(lineString[foreignMember: "other"], "something else")
     }
 
-    func testCreateJson() {
+    func testCreateJson() throws {
         let lineString = LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])!
 
-        let string = lineString.asJsonString()!
+        let string = try XCTUnwrap(lineString.asJsonString())
         XCTAssert(string.contains("\"type\":\"LineString\""))
         XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
+    func testCreateLineString() throws {
+        let lineSegments = [
+            LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 0.0), second: Coordinate3D(latitude: 10.0, longitude: 0.0)),
+            LineSegment(first: Coordinate3D(latitude: 10.0, longitude: 0.0), second: Coordinate3D(latitude: 10.0, longitude: 10.0)),
+            LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 10.0), second: Coordinate3D(latitude: 0.0, longitude: 0.0)),
+        ]
+        let lineString = try XCTUnwrap(LineString(lineSegments))
+
+        let expected = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        XCTAssertEqual(lineString.coordinates, expected)
+    }
+
     func testEncodable() throws {
-        guard let lineString = LineString(jsonString: lineStringJson) else {
-            throw "lineString is nil"
-        }
+        let lineString = try XCTUnwrap(LineString(jsonString: lineStringJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

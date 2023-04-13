@@ -409,6 +409,9 @@ init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false)
 
 /// Initialize a LineString with a LineSegment.
 init(_ lineSegment: LineSegment, calculateBoundingBox: Bool = false)
+
+/// Try to initialize a LineString with some LineSegments.
+init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false)
 ```
 
 Example:
