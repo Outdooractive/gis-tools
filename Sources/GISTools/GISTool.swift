@@ -19,4 +19,7 @@ public enum GISTool {
     /// The accuracy for testing what is equal.
     public static let equalityDelta: Double = 1e-10
 
+    /// The length in pixels of a map tile.
+    public static let tileSideLength: Double = 256.0
+
 }

@@ -15,7 +15,7 @@ public enum Projection: CustomStringConvertible, Sendable {
     /// EPSG:4326 - geodetic
     case epsg4326
 
-    public static let originShift = 2.0 * Double.pi * 6_378_137.0 / 2.0 // 20037508.342789244
+    public static let originShift = 2.0 * Double.pi * GISTool.equatorialRadius / 2.0 // 20037508.342789244
 
     /// Initialize a Projection with a SRID number.
     public init?(srid: Int) {

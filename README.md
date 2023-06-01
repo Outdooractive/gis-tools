@@ -34,6 +34,7 @@ targets: [
 - Spatial search with a R-tree
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
 - Includes many spatial algorithms, and more to come
+- Has a helper for working with x/y/z map tiles
 
 Please see also the [API documentation][8].
 
@@ -701,6 +702,20 @@ var nodes: [Point] = []
 let rTree = RTree(nodes)
 let objects = rTree.search(inBoundingBox: boundingBox)
 let objectsAround = rTree.search(aroundCoordinate: center, maximumDistance: maximumDistance)
+```
+
+# MapTile
+This is a helper for working with x/y/z map tiles.
+
+```swift
+let tile1 = MapTile(x: 138513, y: 91601, z: 18)
+let center = tile1.centerCoordinate
+let boundingBox = tile1.boundingBox
+
+let tile2 = MapTile(coordinate: Coordinate3D(latitude: 47.56, longitude: 10.22), atZoom: 14)
+let parent = tile2.parent
+let firstChild = tile2.child
+let allChildren = tile2.children
 ```
 
 # Algorithms
