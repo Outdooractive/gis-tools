@@ -716,6 +716,14 @@ let tile2 = MapTile(coordinate: Coordinate3D(latitude: 47.56, longitude: 10.22),
 let parent = tile2.parent
 let firstChild = tile2.child
 let allChildren = tile2.children
+
+let quadkey = tile1.quadkey
+let tile3 = MapTile(quadkey: "1202211303220032")
+```
+
+Also, not directly related to map tiles:
+```swift
+let mpp = MapTile.metersPerPixel(at: 15.0, latitude: 45.0)
 ```
 
 # Algorithms

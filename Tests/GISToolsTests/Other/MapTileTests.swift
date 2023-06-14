@@ -128,4 +128,71 @@ final class MapTileTests: XCTestCase {
         XCTAssertEqual(z32Bounds.northEast.latitude, 51.508094, accuracy: 0.00001)
     }
 
+    func testMetersPerPixelAtEquator() {
+        var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
+        mppAtZoomLevels[0] = 156_543.03392804096
+
+        for zoom in 1...20 {
+            mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
+
+            XCTAssertEqual(MapTile.metersPerPixel(at: zoom),
+                           mppAtZoomLevels[zoom],
+                           accuracy: 0.00001)
+        }
+    }
+
+    func testMetersPerPixelAt45() {
+        var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
+        mppAtZoomLevels[0] = 110_692.6408380335
+
+        for zoom in 1...20 {
+            mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
+
+            XCTAssertEqual(MapTile.metersPerPixel(at: zoom, latitude: 45.0),
+                           mppAtZoomLevels[zoom],
+                           accuracy: 0.00001)
+        }
+    }
+
+    func testQquadkey() {
+        let tiles = [
+            MapTile(x: 1, y: 2, z: 3),
+            MapTile(x: 67, y: 45, z: 7),
+            MapTile(x: 1082, y: 715, z: 11),
+            MapTile(x: 34626, y: 22899, z: 16),
+        ]
+        let quadkeys = [
+            "021",
+            "1202213",
+            "12022113032",
+            "1202211303220032",
+        ]
+
+        for i in 0..<tiles.count {
+            XCTAssertEqual(tiles[i].quadkey, quadkeys[i])
+        }
+    }
+
+    func testQuadkeyInit() {
+        let quadkeys = [
+            "021",
+            "1202213",
+            "12022113032",
+            "1202211303220032",
+        ]
+        let tiles = [
+            MapTile(x: 1, y: 2, z: 3),
+            MapTile(x: 67, y: 45, z: 7),
+            MapTile(x: 1082, y: 715, z: 11),
+            MapTile(x: 34626, y: 22899, z: 16),
+        ]
+
+        for i in 0..<quadkeys.count {
+            XCTAssertEqual(MapTile(quadkey: quadkeys[i])!, tiles[i])
+        }
+
+        // Invalid
+        XCTAssertNil(MapTile(quadkey: "021X"))
+    }
+
 }

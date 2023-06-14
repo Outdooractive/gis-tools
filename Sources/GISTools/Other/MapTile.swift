@@ -103,6 +103,60 @@ public struct MapTile: CustomStringConvertible {
         epsg4236TileBounds.boundingBox
     }
 
+    // MARK: - Quadkey
+
+    public var quadkey: String {
+        var quadkey = ""
+
+        for zoom in stride(from: z, to: 0, by: -1) {
+            var digit = 0
+            let mask = 1 << (zoom - 1)
+
+            if (x & mask) != 0 {
+                digit += 1
+            }
+            if (y & mask) != 0 {
+                digit += 2
+            }
+
+            quadkey.append(String(digit))
+        }
+
+        return quadkey
+    }
+
+    public init?(quadkey: String) {
+        guard !quadkey.isEmpty else {
+            self.x = 0
+            self.y = 0
+            self.z = 0
+            return
+        }
+
+        var x = 0
+        var y = 0
+
+        for (i, digit) in quadkey.reversed().enumerated() {
+            let mask = 1 << i
+
+            switch digit {
+            case "1":
+                x = x | mask
+            case "2":
+                y = y | mask
+            case "3":
+                x = x | mask
+                y = y | mask
+            default:
+                guard digit == "0" else { return nil }
+            }
+        }
+
+        self.x = x
+        self.y = y
+        self.z = quadkey.count
+    }
+
     // MARK: - Conversions
 
     /// Converts pixel coordinates in a given zoom level to EPSG:3857.
@@ -122,13 +176,14 @@ public struct MapTile: CustomStringConvertible {
             projection: .epsg3857)
     }
 
-    /// Resolution (meters/pixel) for a given zoom level (measured at the equator).
+    /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
     public static func metersPerPixel(
         at zoom: Int,
+        latitude: Double = 0.0, // equator
         tileSideLength: Double = GISTool.tileSideLength)
         -> Double
     {
-        (2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
+        (cos(latitude * Double.pi / 180.0) * 2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
     }
 
     // Private helpers
