@@ -45,14 +45,3 @@ extension CoordinateXY: Equatable {
 }
 
 extension CoordinateXY: Hashable {}
-
-// MARK: - ProjectedCoordinate
-
-extension CoordinateXY {
-
-    /// The receiver as a ``projectedCoordinate``.
-    public var projectedCoordinate: ProjectedCoordinate {
-        ProjectedCoordinate(latitude: y, longitude: x, altitude: z, projection: .epsg3857)
-    }
-
-}

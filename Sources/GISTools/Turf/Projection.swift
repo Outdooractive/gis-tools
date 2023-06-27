@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: - Projection
+// MARK: Projection
 
 /// Projections that this library can handle (EPSG:3857 and EPSG:4326).
 public enum Projection: CustomStringConvertible, Sendable {
@@ -50,6 +50,8 @@ public enum Projection: CustomStringConvertible, Sendable {
 
 }
 
+// MARK: - ProjectedCoordinate extensions
+
 extension ProjectedCoordinate {
 
     /// Project to EPSG:3857
@@ -78,7 +80,61 @@ extension ProjectedCoordinate {
 
 }
 
+// MARK: - ProjectedBoundingBox extensions
+
+extension ProjectedBoundingBox {
+
+    /// Project to EPSG:3857
+    public var projectedToEpsg3857: ProjectedBoundingBox {
+        if projection == .epsg3857 { return self }
+
+        return ProjectedBoundingBox(
+            southWest: southWest.projectedToEpsg3857,
+            northEast: northEast.projectedToEpsg3857)
+    }
+
+    /// Project to EPSG:4326
+    public var projectedToEpsg4326: ProjectedBoundingBox {
+        if projection == .epsg4326 { return self }
+
+        return ProjectedBoundingBox(
+            southWest: southWest.projectedToEpsg4326,
+            northEast: northEast.projectedToEpsg4326)
+    }
+
+}
+
+// MARK: - BoundingBox extensions
+
+extension BoundingBox {
+
+    /// The receiver as a ``ProjectedBoundingBox``.
+    public var projectedBoundingBox: ProjectedBoundingBox {
+        ProjectedBoundingBox(
+            southWest: southWest.projectedCoordinate,
+            northEast: northEast.projectedCoordinate)
+    }
+
+    /// Project to EPSG:4326
+    public var projectedToEpsg4326: ProjectedBoundingBox {
+        projectedBoundingBox
+    }
+
+    /// Project to EPSG:3857
+    public var projectedToEpsg3857: ProjectedBoundingBox {
+        projectedBoundingBox.projectedToEpsg3857
+    }
+
+}
+
+// MARK: - Coordinate3D extensions
+
 extension Coordinate3D {
+
+    /// The receiver as a ``ProjectedCoordinate``.
+    public var projectedCoordinate: ProjectedCoordinate {
+        ProjectedCoordinate(latitude: latitude, longitude: longitude, altitude: altitude, projection: .epsg4326)
+    }
 
     /// Project to EPSG:4326
     public var projectedToEpsg4326: ProjectedCoordinate {
@@ -97,9 +153,26 @@ extension Coordinate3D {
 
 }
 
+// MARK: - CoordinateXY extensions
+
 extension CoordinateXY {
 
-    /// Project EPSG:3857 to EPSG:4326
+    /// The receiver as a ``ProjectedCoordinate``.
+    public var projectedCoordinate: ProjectedCoordinate {
+        ProjectedCoordinate(latitude: y, longitude: x, altitude: z, projection: .epsg3857)
+    }
+
+    /// Project to EPSG:4326
+    public var projectedToEpsg4326: ProjectedCoordinate {
+        projectedCoordinate.projectedToEpsg4326
+    }
+
+    /// Project to EPSG:3857
+    public var projectedToEpsg3857: ProjectedCoordinate {
+        projectedCoordinate
+    }
+
+    /// Project to EPSG:4326
     public var coordinate3D: Coordinate3D {
         projectedCoordinate.coordinate3D
     }

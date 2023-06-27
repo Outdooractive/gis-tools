@@ -53,7 +53,7 @@ public struct ProjectedBoundingBox {
 
 extension ProjectedBoundingBox {
 
-    /// Converts the bounding box to a `Polygon` object.
+    /// Converts the projected bounding box to a `BoundingBox` object.
     public var boundingBox: BoundingBox {
         BoundingBox(
             southWest: southWest.coordinate3D,
