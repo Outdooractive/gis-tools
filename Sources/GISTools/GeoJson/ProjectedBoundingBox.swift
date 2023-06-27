@@ -53,12 +53,11 @@ public struct ProjectedBoundingBox {
 
 extension ProjectedBoundingBox {
 
-    /// Converts the bounding box to a `Polygon` object.
+    /// Converts the projected bounding box to a `BoundingBox` object.
     public var boundingBox: BoundingBox {
-        let projected = projectedToEpsg4326
-        return BoundingBox(
-            southWest: projected.southWest.coordinate3D,
-            northEast: projected.northEast.coordinate3D)
+        BoundingBox(
+            southWest: southWest.coordinate3D,
+            northEast: northEast.coordinate3D)
     }
 
     /// Check if the bounding box contains `coordinate`.
