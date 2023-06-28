@@ -488,6 +488,10 @@ extension WKTCoder {
                 throw WKTCoderError.dataCorrupted
             }
 
+            guard x.isFinite, y.isFinite else {
+                throw WKTCoderError.invalidGeometry
+            }
+
             var z: Double?
             var m: Double?
 
@@ -501,6 +505,9 @@ extension WKTCoder {
             else if decodeM {
                 m = vector.get(at: 2)
             }
+
+            if z?.isFinite == false { z = nil }
+            if m?.isFinite == false { m = nil }
 
             switch projection {
             case .epsg4326:
