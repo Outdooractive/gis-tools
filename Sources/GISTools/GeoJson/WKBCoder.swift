@@ -328,13 +328,19 @@ extension WKBCoder {
         let x = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
         let y = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
+        guard x.isFinite, y.isFinite else {
+            throw WKBCoderError.invalidGeometry
+        }
+
         var z: Double?
         var m: Double?
         if decodeZ {
             z = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+            if z?.isFinite == false { z = nil }
         }
         if decodeM {
             m = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+            if m?.isFinite == false { m = nil }
         }
 
         switch projection {
