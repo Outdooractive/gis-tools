@@ -76,6 +76,13 @@ final class WKBTests: XCTestCase {
         XCTAssertEqual(feature?.geometry.allCoordinates.first?.altitude, 3)
     }
 
+    // SELECT ST_ClipByBox2D(ToPoint('POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))'::geometry), ST_MakeEnvelope(0,0,0.2,0.2));
+    private let invalidPointData = Data(hex: "0101000000000000000000F87F000000000000F87F")!
+
+    func testInvalidPointDecoding() throws {
+        XCTAssertThrowsError(try WKBCoder.decode(wkb: invalidPointData, projection: .epsg4326) as? Point)
+    }
+
     // MARK: - MultiPoint
 
     // SELECT 'MULTIPOINT((0 0),(1 2))'::geometry;
