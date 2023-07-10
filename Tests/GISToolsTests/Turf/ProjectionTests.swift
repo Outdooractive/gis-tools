@@ -10,6 +10,13 @@ final class ProjectionTests: XCTestCase {
 
         XCTAssertEqual(result1.longitude, -7_903_683.846322424, accuracy: 0.000001)
         XCTAssertEqual(result1.latitude, 5_012_341.663847514, accuracy: 0.000001)
+
+        let coordinate1b = Coordinate3D(latitude: 35.522895, longitude: -97.552175)
+        let result1b = coordinate1b.projectedToEpsg3857
+
+        XCTAssertEqual(result1b.longitude, -10_859_458.446776, accuracy: 0.000001)
+        XCTAssertEqual(result1b.latitude, 4_235_169.496066, accuracy: 0.000001)
+
         // A coordinate that passed the 180th meridian
         let coordinate2 = Coordinate3D(latitude: -23.563987128451217, longitude: -246.796875)
         let result2 = coordinate2.projectedToEpsg3857
@@ -32,6 +39,12 @@ final class ProjectionTests: XCTestCase {
 
         XCTAssertEqual(result1.latitude, 41.0, accuracy: 0.000001)
         XCTAssertEqual(result1.longitude, -71.0, accuracy: 0.000001)
+
+        let coordinate1b = CoordinateXY(x: -10_859_458.446776, y: 4_235_169.496066)
+        let result1b = coordinate1b.coordinate3D
+
+        XCTAssertEqual(result1b.latitude, 35.522895, accuracy: 0.000001)
+        XCTAssertEqual(result1b.longitude, -97.552175, accuracy: 0.000001)
 
         // A coordinate that passed the 180th meridian
         let coordinate2 = CoordinateXY(x: 12_601_714.231207296, y: -2_700_367.3352587065)

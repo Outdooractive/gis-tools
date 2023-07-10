@@ -13,6 +13,18 @@ public struct CoordinateXY: CustomStringConvertible, Sendable {
     /// Linear referencing or whatever you want it to use for.
     public var m: Double?
 
+    public init(
+        x: Double,
+        y: Double,
+        z: Double? = nil,
+        m: Double? = nil)
+    {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.m = m
+    }
+
     /// A textual representation of the receiver.
     public var description: String {
         var compontents: [String] = [
