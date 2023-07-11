@@ -27,6 +27,14 @@ final class MapTileTests: XCTestCase {
         XCTAssertEqual(coordinate2.latitude, -33.86129311351551, accuracy: 0.00001)
         XCTAssertEqual(coordinate2.longitude, 151.20483398437503, accuracy: 0.00001)
 
+        let coordinate3 = MapTile(x: 0, y: 0, z: 0).centerCoordinate
+        XCTAssertEqual(coordinate3.latitude, 0.0, accuracy: 0.00001)
+        XCTAssertEqual(coordinate3.longitude, 0.0, accuracy: 0.00001)
+
+        // Tiles are not squares...
+        let coordinate4 = MapTile(x: 0, y: 0, z: 1).centerCoordinate
+        XCTAssertEqual(coordinate4.latitude, 66.51326044311185, accuracy: 0.00001)
+        XCTAssertEqual(coordinate4.longitude, -90.0, accuracy: 0.00001)
     }
 
     func testTileFromHQCoordinate() {
@@ -139,6 +147,10 @@ final class MapTileTests: XCTestCase {
                            mppAtZoomLevels[zoom],
                            accuracy: 0.00001)
         }
+
+        // Alternative
+        let worldTile = MapTile(x: 0, y: 0, z: 0)
+        XCTAssertEqual(worldTile.metersPerPixel, mppAtZoomLevels[0], accuracy: 0.00001)
     }
 
     func testMetersPerPixelAt45() {

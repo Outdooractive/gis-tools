@@ -157,7 +157,7 @@ public struct MapTile: CustomStringConvertible {
         self.z = quadkey.count
     }
 
-    // MARK: - Conversions
+    // MARK: - Conversion pixel to meters
 
     /// Converts pixel coordinates in a given zoom level to EPSG:3857.
     public static func projectPixelToEpsg3857(
@@ -176,6 +176,8 @@ public struct MapTile: CustomStringConvertible {
             projection: .epsg3857)
     }
 
+    // MARK: - Meters per pixel
+
     /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
     public static func metersPerPixel(
         at zoom: Int,
@@ -184,6 +186,11 @@ public struct MapTile: CustomStringConvertible {
         -> Double
     {
         (cos(latitude * Double.pi / 180.0) * 2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
+    }
+
+    /// Resolution (meters/pixel) for a given zoom level measured at the tile center.
+    public var metersPerPixel: Double {
+        MapTile.metersPerPixel(at: z, latitude: centerCoordinate.latitude)
     }
 
     // Private helpers
