@@ -43,8 +43,6 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
 
         for currentLocation in coordinates {
-            let currentLocation = currentLocation.normalized()
-
             southWest.latitude = min(southWest.latitude, currentLocation.latitude)
             southWest.longitude = min(southWest.longitude, currentLocation.longitude)
             northEast.latitude = max(northEast.latitude, currentLocation.latitude)
