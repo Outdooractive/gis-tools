@@ -58,13 +58,13 @@ extension ProjectedCoordinate {
     public var projectedToEpsg3857: ProjectedCoordinate {
         if projection == .epsg3857 { return self }
 
-        let coordinate3D = Coordinate3D(latitude: latitude, longitude: longitude).normalized()
+        let coordinate3D = Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude)
 
         let x: Double = coordinate3D.longitude * Projection.originShift / 180.0
         var y: Double = log(tan((90.0 + coordinate3D.latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
         y *= Projection.originShift / 180.0
 
-        return ProjectedCoordinate(latitude: y, longitude: x, projection: .epsg3857)
+        return ProjectedCoordinate(latitude: y, longitude: x, altitude: altitude, projection: .epsg3857)
     }
 
     /// Project to EPSG:4326
@@ -75,7 +75,7 @@ extension ProjectedCoordinate {
         var latitude: Double = (latitude / Projection.originShift) * 180.0
         latitude = 180.0 / Double.pi * (2.0 * atan(exp(latitude * Double.pi / 180.0)) - Double.pi / 2.0)
 
-        return ProjectedCoordinate(latitude: latitude, longitude: longitude, projection: .epsg4326)
+        return ProjectedCoordinate(latitude: latitude, longitude: longitude, altitude: altitude, projection: .epsg4326)
     }
 
 }

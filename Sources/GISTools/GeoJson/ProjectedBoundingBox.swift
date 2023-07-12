@@ -49,6 +49,22 @@ public struct ProjectedBoundingBox {
 
 }
 
+extension ProjectedBoundingBox {
+
+    /// Clamped to the projection's limits
+    public mutating func clamp() {
+        self = self.clamped()
+    }
+
+    /// Clamped to the projection's limits
+    public func clamped() -> ProjectedBoundingBox {
+        ProjectedBoundingBox(
+            southWest: southWest.clamped(),
+            northEast: northEast.clamped())
+    }
+
+}
+
 // MARK: - Convenience
 
 extension ProjectedBoundingBox {

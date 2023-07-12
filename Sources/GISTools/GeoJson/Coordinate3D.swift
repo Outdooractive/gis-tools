@@ -142,7 +142,29 @@ extension Coordinate3D {
         while longitude < -180.0 { longitude += 360.0 }
         while longitude > 180.0 { longitude -= 360.0 }
 
-        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude)
+        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude, m: m)
+    }
+
+}
+
+extension Coordinate3D {
+
+    /// Clamped to [[-180,-90], [180,90]]
+    public mutating func clamp() {
+        self = self.clamped()
+    }
+
+    /// Clamped to [[-180,-90], [180,90]]
+    public func clamped() -> Coordinate3D {
+        guard longitude < -180.0 || longitude > 180.0
+                || latitude < -90.0 || latitude > 90.0
+        else { return self }
+
+        return Coordinate3D(
+            latitude: min(90.0, max(-90.0, latitude)),
+            longitude: min(180.0, max(-180.0, longitude)),
+            altitude: altitude,
+            m: m)
     }
 
 }

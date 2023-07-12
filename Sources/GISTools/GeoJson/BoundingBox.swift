@@ -16,7 +16,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// An empty bounding box around (0,0).
     public static var zero: BoundingBox {
-        BoundingBox(southWest: Coordinate3D(latitude: 0.0, longitude: 0.0), northEast: Coordinate3D(latitude: 0.0, longitude: 0.0))
+        BoundingBox(southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+                    northEast: Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
     /// The bounding boxes south-west (bottom-left) coordinate.
@@ -405,6 +406,18 @@ extension BoundingBox {
         return BoundingBox(
             southWest: southWest.normalized(),
             northEast: northEast.normalized())
+    }
+
+    /// Clamped to [[-180,-90], [180,90]]
+    public mutating func clamp() {
+        self = self.clamped()
+    }
+
+    /// Clamped to [[-180,-90], [180,90]]
+    public func clamped() -> BoundingBox {
+        BoundingBox(
+            southWest: southWest.clamped(),
+            northEast: northEast.clamped())
     }
 
 }

@@ -42,6 +42,28 @@ public struct CoordinateXY: CustomStringConvertible, Sendable {
 
 }
 
+extension CoordinateXY {
+
+    /// Clamped to [[-20037508.342789244, -20037508.342789244], [20037508.342789244, 20037508.342789244]]
+    public mutating func clamp() {
+        self = self.clamped()
+    }
+
+    /// Clamped to [[-20037508.342789244, -20037508.342789244], [20037508.342789244, 20037508.342789244]]
+    public func clamped() -> CoordinateXY {
+        guard x < -Projection.originShift || x > Projection.originShift
+                || y < -Projection.originShift || y > Projection.originShift
+        else { return self }
+
+        return CoordinateXY(
+            x: min(Projection.originShift, max(-Projection.originShift, x)),
+            y: min(Projection.originShift, max(-Projection.originShift, y)),
+            z: z,
+            m: m)
+    }
+
+}
+
 extension CoordinateXY: Equatable {
 
     public static func == (

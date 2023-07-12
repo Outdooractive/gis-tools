@@ -465,4 +465,19 @@ final class BoundingBoxTests: XCTestCase {
         XCTAssertEqual(decodedBoundingBox.asJson, [0, 0, 20, 20])
     }
 
+    // MARK: - Clamp
+
+    func testClamped() throws {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(
+                latitude: -95.0,
+                longitude: -200.0),
+            northEast: Coordinate3D(
+                latitude: 120.0,
+                longitude: 220.0))
+        let clamped = boundingBox.clamped()
+
+        XCTAssertEqual(clamped, BoundingBox.world)
+    }
+
 }
