@@ -28,9 +28,27 @@ extension Coordinate3D {
         let latitude2 = asin(sin(latitude1) * cos(distanceRadians) + cos(latitude1) * sin(distanceRadians) * cos(bearingRadians))
         let longitude2 = longitude1 + atan2(sin(bearingRadians) * sin(distanceRadians) * cos(latitude1), cos(distanceRadians) - sin(latitude1) * sin(latitude2))
 
+        var normalizedLatitude = latitude2.radiansToDegrees
+        var normalizedLongitude = longitude2.radiansToDegrees
+
+        // We don't want coordinates to "wrap around"
+        if longitude2 < -.pi {
+            normalizedLongitude -= 360.0
+        }
+        else if longitude2 > .pi {
+            normalizedLongitude += 360.0
+        }
+
+        if latitude2 < -(.pi / 2.0) {
+            normalizedLatitude -= 90.0
+        }
+        else if latitude2 > (.pi / 2.0) {
+            normalizedLatitude += 90.0
+        }
+
         return Coordinate3D(
-            latitude: latitude2.radiansToDegrees,
-            longitude: longitude2.radiansToDegrees)
+            latitude: normalizedLatitude,
+            longitude: normalizedLongitude)
     }
 
     /// Calculates the location of a coordinate on a straight line between
