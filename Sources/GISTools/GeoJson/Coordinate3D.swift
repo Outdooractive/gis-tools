@@ -15,14 +15,17 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
 
     /// A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {
-        return Coordinate3D(latitude: 0.0, longitude: 0.0)
+        Coordinate3D(latitude: 0.0, longitude: 0.0)
     }
 
-    /// The coordinate's `latitude`.
+    /// The coordinates projection, either EPSG:4326 or EPSG:3857.
+    var projection: Projection
+
+    /// The coordinate's `latitude` or `northing`, depending on the projection.
     public var latitude: CLLocationDegrees
-    /// The coordinate's `longitude`.
+    /// The coordinate's `longitude` or `easting`, depending on the projection.
     public var longitude: CLLocationDegrees
-    /// The coordinate's `altitude`.
+    /// The coordinate's `altitude`, in meters.
     public var altitude: CLLocationDistance?
 
     /// Linear referencing, timestamp or whatever you want it to use for.
@@ -35,6 +38,7 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
 
     /// Create a coordinate with ``latitude`` and ``longitude``.
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
+        self.projection = .epsg4326
         self.latitude = latitude
         self.longitude = longitude
     }
@@ -46,9 +50,24 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
         altitude: CLLocationDistance? = nil,
         m: Double? = nil)
     {
+        self.projection = .epsg4326
         self.latitude = latitude
         self.longitude = longitude
         self.altitude = altitude
+        self.m = m
+    }
+
+    /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
+    public init(
+        x: Double,
+        y: Double,
+        z: Double? = nil,
+        m: Double? = nil)
+    {
+        self.projection = .epsg3857
+        self.longitude = x
+        self.latitude = y
+        self.altitude = z
         self.m = m
     }
 
@@ -63,13 +82,13 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
             "longitude: \(longitude)",
             "latitude: \(latitude)",
         ]
-        if let altitude = altitude {
+        if let altitude {
             compontents.append("altitude: \(altitude)")
         }
-        if let m = m {
+        if let m {
             compontents.append("m: \(m)")
         }
-        return "Coordinate3D(\(compontents.joined(separator: ", ")))"
+        return "Coordinate3D<\(projection.description)>(\(compontents.joined(separator: ", ")))"
     }
 
 }
@@ -81,6 +100,7 @@ extension Coordinate3D {
 
     /// Create a `Coordinate3D` from a `CLLocationCoordinate2D`.
     public init(_ coordinate: CLLocationCoordinate2D, altitude: CLLocationDistance? = nil) {
+        self.projection = .epsg4326
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
         self.altitude = altitude
@@ -88,13 +108,14 @@ extension Coordinate3D {
 
     /// This coordinate as `CLLocationCoordinate2D`.
     public var coordinate2D: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        CLLocationCoordinate2D(latitude: latitudeToEpsg4326, longitude: longitudeToEpsg4326)
     }
 
     /// Create a `Coordinate3D` from a `CLLocation`.
     ///
     /// This will set ``m`` to the location's timestamp using `timeIntervalSinceReferenceDate`.
     public init(_ location: CLLocation) {
+        self.projection = .epsg4326
         self.latitude = location.coordinate.latitude
         self.longitude = location.coordinate.longitude
 
@@ -112,14 +133,14 @@ extension Coordinate3D {
     ///              See also ``init(_:)`` and ``asJson``.
     public var location: CLLocation {
         let timestamp = (m != nil
-                         ? Date(timeIntervalSinceReferenceDate: m!)
-                         : Date())
+            ? Date(timeIntervalSinceReferenceDate: m!)
+            : Date())
 
         return CLLocation(
             coordinate: coordinate2D,
             altitude: altitude ?? -1.0,
             horizontalAccuracy: 1.0, // always valid
-            verticalAccuracy: (altitude == nil ? -1.0 : 1.0), // valid if altitude != nil
+            verticalAccuracy: altitude == nil ? -1.0 : 1.0, // valid if altitude != nil
             timestamp: timestamp)
     }
 
@@ -135,14 +156,28 @@ extension Coordinate3D {
 
     /// Clamped to [-180.0, 180.0].
     public func normalized() -> Coordinate3D {
-        var longitude = self.longitude
+        switch projection {
+        case .epsg3857:
+            guard longitude < -Projection.originShift || longitude > Projection.originShift else { return self }
 
-        guard longitude < -180.0 || longitude > 180.0 else { return self }
+            var longitude = self.longitude
+            while longitude < -Projection.originShift { longitude += (2.0 * Projection.originShift) }
+            while longitude > Projection.originShift { longitude -= (2.0 * Projection.originShift) }
 
-        while longitude < -180.0 { longitude += 360.0 }
-        while longitude > 180.0 { longitude -= 360.0 }
+            return Coordinate3D(x: longitude, y: latitude, z: altitude, m: m)
 
-        return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude, m: m)
+        case .epsg4326:
+            guard longitude < -180.0 || longitude > 180.0 else { return self }
+
+            var longitude = self.longitude
+            while longitude < -180.0 { longitude += 360.0 }
+            while longitude > 180.0 { longitude -= 360.0 }
+
+            return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude, m: m)
+
+        default:
+            return self
+        }
     }
 
 }
@@ -156,20 +191,81 @@ extension Coordinate3D {
 
     /// Clamped to [[-180,-90], [180,90]]
     public func clamped() -> Coordinate3D {
-        guard longitude < -180.0 || longitude > 180.0
-                || latitude < -90.0 || latitude > 90.0
-        else { return self }
+        switch projection {
+        case .epsg3857:
+            guard longitude < -Projection.originShift || longitude > Projection.originShift
+                || latitude < -Projection.originShift || latitude > Projection.originShift
+            else { return self }
 
-        return Coordinate3D(
-            latitude: min(90.0, max(-90.0, latitude)),
-            longitude: min(180.0, max(-180.0, longitude)),
-            altitude: altitude,
-            m: m)
+            return Coordinate3D(
+                x: min(Projection.originShift, max(-Projection.originShift, longitude)),
+                y: min(Projection.originShift, max(-Projection.originShift, latitude)),
+                z: altitude,
+                m: m)
+
+        case .epsg4326:
+            guard longitude < -180.0 || longitude > 180.0
+                || latitude < -90.0 || latitude > 90.0
+            else { return self }
+
+            return Coordinate3D(
+                latitude: min(90.0, max(-90.0, latitude)),
+                longitude: min(180.0, max(-180.0, longitude)),
+                altitude: altitude,
+                m: m)
+
+        default:
+            return self
+        }
     }
 
 }
 
-// MARK: - GeoJsonConvertible
+// MARK: - Projections
+
+extension Coordinate3D {
+
+    public var projectedToEpsg4326: Coordinate3D {
+        if projection == .epsg4326 { return self }
+
+        return Coordinate3D(latitude: latitudeToEpsg4326, longitude: longitudeToEpsg4326, altitude: altitude, m: m)
+    }
+
+    public var projectedToEpsg3857: Coordinate3D {
+        if projection == .epsg3857 { return self }
+
+        return Coordinate3D(x: longitudeToEpsg3857, y: latitudeToEpsg3857, z: altitude, m: m)
+    }
+
+    public var latitudeToEpsg4326: Double {
+        if projection == .epsg4326 { return latitude }
+
+        return 180.0 / Double.pi * (2.0 * atan(exp((latitude / Projection.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
+    }
+
+    public var longitudeToEpsg4326: Double {
+        if projection == .epsg4326 { return longitude }
+
+        return (longitude / Projection.originShift) * 180.0
+    }
+
+    public var latitudeToEpsg3857: Double {
+        if projection == .epsg3857 { return latitude }
+
+        var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
+        y *= Projection.originShift / 180.0
+        return y
+    }
+
+    public var longitudeToEpsg3857: Double {
+        if projection == .epsg3857 { return longitude }
+
+        return longitude * Projection.originShift / 180.0
+    }
+
+}
+
+// MARK: - GeoJsonReadable
 
 extension Coordinate3D: GeoJsonReadable {
 
@@ -200,13 +296,13 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Important: The output array will contain ``m`` only if this coordinate
     ///              also contains ``altitude`` to prevent any disambiguity.
     public var asJson: [Double] {
-        var result: [Double] = [longitude, latitude]
+        var result: [Double] = [longitudeToEpsg4326, latitudeToEpsg4326]
 
-        if let altitude = altitude {
+        if let altitude {
             result.append(altitude)
 
             // We can't add `m` if we don't have an altitude
-            if let m = m {
+            if let m {
                 result.append(m)
             }
         }
@@ -245,16 +341,16 @@ extension Coordinate3D {
 }
 
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects.
-extension Sequence where Element == Coordinate3D {
+extension Sequence<Coordinate3D> {
 
     // Return the coordinate as JSON.
     public var asJson: [[Double]] {
-        self.map({ $0.asJson })
+        self.map(\.asJson)
     }
 
 }
 
-// MARK: - Equatable
+// MARK: - Coordinate3D + Equatable
 
 extension Coordinate3D: Equatable {
 
@@ -263,14 +359,15 @@ extension Coordinate3D: Equatable {
         rhs: Coordinate3D)
         -> Bool
     {
-        abs(lhs.latitude - rhs.latitude) < GISTool.equalityDelta
+        lhs.projection == rhs.projection
+            && abs(lhs.latitude - rhs.latitude) < GISTool.equalityDelta
             && abs(lhs.longitude - rhs.longitude) < GISTool.equalityDelta
             && lhs.altitude == rhs.altitude
     }
 
 }
 
-// MARK: - Hashable
+// MARK: - Coordinate3D + Hashable
 
 extension Coordinate3D: Hashable {}
 
@@ -297,6 +394,8 @@ extension Coordinate2D {
     }
 
 }
+
+// MARK: - Coordinate3D + Coordinate2D
 
 extension Coordinate3D: Coordinate2D {}
 

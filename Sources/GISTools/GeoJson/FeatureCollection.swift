@@ -7,6 +7,10 @@ public struct FeatureCollection: GeoJson {
         return .featureCollection
     }
 
+    public var projection: Projection {
+        features.first?.projection ?? .noSRID
+    }
+
     /// The FeatureCollection's Feature objects.
     public private(set) var features: [Feature]
 
@@ -146,7 +150,8 @@ extension FeatureCollection: Equatable {
         rhs: FeatureCollection)
         -> Bool
     {
-        return lhs.features == rhs.features
+        return lhs.projection == rhs.projection
+            && lhs.features == rhs.features
     }
 
 }
@@ -157,6 +162,8 @@ extension FeatureCollection {
 
     /// Insert a Feature into the receiver.
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
+        guard projection == .noSRID || projection == feature.projection else { return }
+
         if index < features.count {
             features.insert(feature, at: index)
         }
@@ -171,6 +178,8 @@ extension FeatureCollection {
 
     /// Append a Feature to the receiver.
     public mutating func appendFeature(_ feature: Feature) {
+        guard projection == .noSRID || projection == feature.projection else { return }
+
         features.append(feature)
 
         if boundingBox != nil {

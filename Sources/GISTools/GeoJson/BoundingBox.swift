@@ -8,6 +8,8 @@ import Foundation
 /// A GeoJSON bounding box.
 public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
+    // TODO: Support projection
+
     /// A bounding box spanning across the whole world.
     public static var world: BoundingBox {
         BoundingBox(southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
@@ -43,10 +45,13 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
 
         for currentLocation in coordinates {
-            southWest.latitude = min(southWest.latitude, currentLocation.latitude)
-            southWest.longitude = min(southWest.longitude, currentLocation.longitude)
-            northEast.latitude = max(northEast.latitude, currentLocation.latitude)
-            northEast.longitude = max(northEast.longitude, currentLocation.longitude)
+            let currentLocationLatitude = currentLocation.latitudeToEpsg4326
+            let currentLocationLongitude = currentLocation.longitudeToEpsg4326
+
+            southWest.latitude = min(southWest.latitude, currentLocationLatitude)
+            southWest.longitude = min(southWest.longitude, currentLocationLongitude)
+            northEast.latitude = max(northEast.latitude, currentLocationLatitude)
+            northEast.longitude = max(northEast.longitude, currentLocationLongitude)
         }
 
         if paddingKilometers > 0.0 {
@@ -69,8 +74,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Create a bounding box with a `southWest` and `northEast` coordinate.
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
-        self.southWest = southWest
-        self.northEast = northEast
+        self.southWest = southWest.projectedToEpsg4326
+        self.northEast = northEast.projectedToEpsg4326
     }
 
     /// Create a bounding box from other bounding boxes.
@@ -236,7 +241,7 @@ extension BoundingBox {
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: Coordinate3D) -> Bool {
         let boundingBox = self.normalized()
-        let coordinate = coordinate.normalized()
+        let coordinate = coordinate.projectedToEpsg4326.normalized()
 
         // self crosses the date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {

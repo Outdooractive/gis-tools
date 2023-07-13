@@ -10,6 +10,10 @@ public struct MultiLineString: LineStringGeometry, EmptyCreatable {
         return .multiLineString
     }
 
+    public var projection: Projection {
+        coordinates.first?.first?.projection ?? .noSRID
+    }
+
     /// The MultiLineString's coordinates.
     public let coordinates: [[Coordinate3D]]
 
@@ -180,7 +184,8 @@ extension MultiLineString: Equatable {
         rhs: MultiLineString)
         -> Bool
     {
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }

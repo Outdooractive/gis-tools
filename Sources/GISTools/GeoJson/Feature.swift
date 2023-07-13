@@ -46,6 +46,10 @@ public struct Feature: GeoJson {
         return .feature
     }
 
+    public var projection: Projection {
+        geometry.projection
+    }
+
     /// An arbitrary identifier.
     public var id: Identifier?
 
@@ -151,7 +155,8 @@ extension Feature: Equatable {
         rhs: Feature)
         -> Bool
     {
-        return lhs.geometry.isEqualTo(rhs.geometry)
+        return lhs.projection == rhs.projection
+            && lhs.geometry.isEqualTo(rhs.geometry)
             && lhs.id == rhs.id
             && lhs.properties.keys == rhs.properties.keys
         // TODO

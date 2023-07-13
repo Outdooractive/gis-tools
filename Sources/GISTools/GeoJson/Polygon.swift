@@ -10,6 +10,10 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
         return .polygon
     }
 
+    public var projection: Projection {
+        coordinates.first?.first?.projection ?? .noSRID
+    }
+
     /// The receiver's coordinates.
     public let coordinates: [[Coordinate3D]]
 
@@ -177,7 +181,8 @@ extension Polygon: Equatable {
         -> Bool
     {
         // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }

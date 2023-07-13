@@ -10,6 +10,10 @@ public struct Point: PointGeometry {
         return .point
     }
 
+    public var projection: Projection {
+        coordinate.projection
+    }
+
     /// The receiver's coordinate.
     public let coordinate: Coordinate3D
 
@@ -115,7 +119,8 @@ extension Point: Equatable {
         rhs: Point)
         -> Bool
     {
-        return lhs.coordinate == rhs.coordinate
+        return lhs.projection == rhs.projection
+            && lhs.coordinate == rhs.coordinate
     }
 
 }

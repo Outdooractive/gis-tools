@@ -38,6 +38,9 @@ public protocol GeoJson:
     /// GeoJSON object type.
     var type: GeoJsonType { get }
 
+    /// The GeoJSON's projection, which should typically be EPSG:4326.
+    var projection: Projection { get }
+
     /// All of the receiver's coordinates.
     var allCoordinates: [Coordinate3D] { get }
 

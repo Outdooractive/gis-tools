@@ -7,6 +7,10 @@ public struct GeometryCollection: GeoJsonGeometry {
         return .geometryCollection
     }
 
+    public var projection: Projection {
+        geometries.first?.projection ?? .noSRID
+    }
+
     /// The GeometryCollection's geometry objects.
     public let geometries: [GeoJsonGeometry]
 
@@ -103,9 +107,10 @@ extension GeometryCollection: Equatable {
         rhs: GeometryCollection)
         -> Bool
     {
-        return lhs.geometries.elementsEqual(rhs.geometries, by: { (left, right) -> Bool in
-            return left.isEqualTo(right)
-        })
+        return lhs.projection == rhs.projection
+            && lhs.geometries.elementsEqual(rhs.geometries, by: { (left, right) -> Bool in
+                return left.isEqualTo(right)
+            })
     }
 
 }

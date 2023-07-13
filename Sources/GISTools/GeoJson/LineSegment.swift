@@ -19,6 +19,8 @@ public struct LineSegment: Sendable {
         second: Coordinate3D,
         calculateBoundingBox: Bool = false)
     {
+        assert(first.projection == second.projection, "Can't have different projections")
+
         self.first = first
         self.second = second
 

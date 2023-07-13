@@ -10,6 +10,10 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
         return .multiPoint
     }
 
+    public var projection: Projection {
+        coordinates.first?.projection ?? .noSRID
+    }
+
     /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 
@@ -147,7 +151,8 @@ extension MultiPoint: Equatable {
         rhs: MultiPoint)
         -> Bool
     {
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }
