@@ -108,7 +108,7 @@ extension Coordinate3D {
 
     /// This coordinate as `CLLocationCoordinate2D`.
     public var coordinate2D: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeToEpsg4326, longitude: longitudeToEpsg4326)
+        CLLocationCoordinate2D(latitude: latitudeProjected(to: .epsg4326), longitude: longitudeProjected(to: .epsg4326))
     }
 
     /// Create a `Coordinate3D` from a `CLLocation`.
@@ -224,43 +224,76 @@ extension Coordinate3D {
 // MARK: - Projections
 
 extension Coordinate3D {
+    
+    public func projected(to newProjection: Projection) -> Coordinate3D {
+        switch newProjection {
+        case .epsg3857:
+            if projection == .epsg3857 {
+                return self
+            }
+            else {
+                return Coordinate3D(x: longitudeProjected(to: newProjection), y: latitudeProjected(to: newProjection), z: altitude, m: m)
+            }
 
-    public var projectedToEpsg4326: Coordinate3D {
-        if projection == .epsg4326 { return self }
+        case .epsg4326:
+            if projection == .epsg4326 {
+                return self
+            }
+            else {
+                return Coordinate3D(latitude: latitudeProjected(to: newProjection), longitude: longitudeProjected(to: newProjection), altitude: altitude, m: m)
+            }
 
-        return Coordinate3D(latitude: latitudeToEpsg4326, longitude: longitudeToEpsg4326, altitude: altitude, m: m)
+        case .noSRID:
+            return self
+        }
+    }
+    
+    public func latitudeProjected(to newProjection: Projection) -> Double {
+        switch newProjection {
+        case .epsg3857:
+            if projection == .epsg3857 {
+                return latitude
+            }
+            else {
+                var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
+                y *= Projection.originShift / 180.0
+                return y
+            }
+
+        case .epsg4326:
+            if projection == .epsg4326 {
+                return latitude
+            }
+            else {
+                return 180.0 / Double.pi * (2.0 * atan(exp((latitude / Projection.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
+            }
+
+        case .noSRID:
+            return latitude
+        }
     }
 
-    public var projectedToEpsg3857: Coordinate3D {
-        if projection == .epsg3857 { return self }
+    public func longitudeProjected(to newProjection: Projection) -> Double {
+        switch newProjection {
+        case .epsg3857:
+            if projection == .epsg3857 {
+                return latitude
+            }
+            else {
+                return longitude * Projection.originShift / 180.0
+            }
 
-        return Coordinate3D(x: longitudeToEpsg3857, y: latitudeToEpsg3857, z: altitude, m: m)
-    }
+        case .epsg4326:
+            if projection == .epsg4326 {
+                return latitude
+            }
+            else {
+                return (longitude / Projection.originShift) * 180.0
+            }
 
-    public var latitudeToEpsg4326: Double {
-        if projection == .epsg4326 { return latitude }
-
-        return 180.0 / Double.pi * (2.0 * atan(exp((latitude / Projection.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
-    }
-
-    public var longitudeToEpsg4326: Double {
-        if projection == .epsg4326 { return longitude }
-
-        return (longitude / Projection.originShift) * 180.0
-    }
-
-    public var latitudeToEpsg3857: Double {
-        if projection == .epsg3857 { return latitude }
-
-        var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
-        y *= Projection.originShift / 180.0
-        return y
-    }
-
-    public var longitudeToEpsg3857: Double {
-        if projection == .epsg3857 { return longitude }
-
-        return longitude * Projection.originShift / 180.0
+        case .noSRID:
+            return latitude
+        }
     }
 
 }
@@ -296,7 +329,9 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Important: The output array will contain ``m`` only if this coordinate
     ///              also contains ``altitude`` to prevent any disambiguity.
     public var asJson: [Double] {
-        var result: [Double] = [longitudeToEpsg4326, latitudeToEpsg4326]
+        var result: [Double] = (projection == .epsg4326
+            ? [longitude, latitude]
+            : [longitudeProjected(to: .epsg4326), latitudeProjected(to: .epsg4326)])
 
         if let altitude {
             result.append(altitude)

@@ -45,8 +45,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
 
         for currentLocation in coordinates {
-            let currentLocationLatitude = currentLocation.latitudeToEpsg4326
-            let currentLocationLongitude = currentLocation.longitudeToEpsg4326
+            let currentLocationLatitude = currentLocation.latitudeProjected(to: .epsg4326)
+            let currentLocationLongitude = currentLocation.longitudeProjected(to: .epsg4326)
 
             southWest.latitude = min(southWest.latitude, currentLocationLatitude)
             southWest.longitude = min(southWest.longitude, currentLocationLongitude)
@@ -74,8 +74,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Create a bounding box with a `southWest` and `northEast` coordinate.
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
-        self.southWest = southWest.projectedToEpsg4326
-        self.northEast = northEast.projectedToEpsg4326
+        self.southWest = southWest.projected(to: .epsg4326)
+        self.northEast = northEast.projected(to: .epsg4326)
     }
 
     /// Create a bounding box from other bounding boxes.
@@ -241,7 +241,7 @@ extension BoundingBox {
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: Coordinate3D) -> Bool {
         let boundingBox = self.normalized()
-        let coordinate = coordinate.projectedToEpsg4326.normalized()
+        let coordinate = coordinate.projected(to: .epsg4326).normalized()
 
         // self crosses the date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
