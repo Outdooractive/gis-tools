@@ -277,7 +277,7 @@ extension Coordinate3D {
         switch newProjection {
         case .epsg3857:
             if projection == .epsg3857 {
-                return latitude
+                return longitude
             }
             else {
                 return longitude * Projection.originShift / 180.0
@@ -285,14 +285,14 @@ extension Coordinate3D {
 
         case .epsg4326:
             if projection == .epsg4326 {
-                return latitude
+                return longitude
             }
             else {
                 return (longitude / Projection.originShift) * 180.0
             }
 
         case .noSRID:
-            return latitude
+            return longitude
         }
     }
 
