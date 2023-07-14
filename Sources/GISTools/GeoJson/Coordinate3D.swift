@@ -44,6 +44,7 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     }
 
     /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
+    /// Projection will be EPSG:4326.
     public init(
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
@@ -58,13 +59,15 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     }
 
     /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
+    /// Default projection will we EPSG:3857 but can be overridden.
     public init(
         x: Double,
         y: Double,
         z: Double? = nil,
-        m: Double? = nil)
+        m: Double? = nil,
+        projection: Projection = .epsg3857)
     {
-        self.projection = .epsg3857
+        self.projection = projection
         self.longitude = x
         self.latitude = y
         self.altitude = z
@@ -108,7 +111,9 @@ extension Coordinate3D {
 
     /// This coordinate as `CLLocationCoordinate2D`.
     public var coordinate2D: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeProjected(to: .epsg4326), longitude: longitudeProjected(to: .epsg4326))
+        CLLocationCoordinate2D(
+            latitude: latitudeProjected(to: .epsg4326),
+            longitude: longitudeProjected(to: .epsg4326))
     }
 
     /// Create a `Coordinate3D` from a `CLLocation`.
@@ -228,43 +233,56 @@ extension Coordinate3D {
     public func projected(to newProjection: Projection) -> Coordinate3D {
         switch newProjection {
         case .epsg3857:
-            if projection == .epsg3857 {
+            switch projection {
+            case .epsg3857:
                 return self
-            }
-            else {
-                return Coordinate3D(x: longitudeProjected(to: newProjection), y: latitudeProjected(to: newProjection), z: altitude, m: m)
+            case .epsg4326, .noSRID:
+                return Coordinate3D(
+                    x: longitudeProjected(to: newProjection),
+                    y: latitudeProjected(to: newProjection),
+                    z: altitude,
+                    m: m)
             }
 
         case .epsg4326:
-            if projection == .epsg4326 {
+            switch projection {
+            case .epsg4326:
                 return self
-            }
-            else {
-                return Coordinate3D(latitude: latitudeProjected(to: newProjection), longitude: longitudeProjected(to: newProjection), altitude: altitude, m: m)
+            case .epsg3857, .noSRID:
+                return Coordinate3D(
+                    latitude: latitudeProjected(to: newProjection),
+                    longitude: longitudeProjected(to: newProjection),
+                    altitude: altitude,
+                    m: m)
             }
 
         case .noSRID:
-            return self
+            return Coordinate3D(
+                x: longitude,
+                y: latitude,
+                z: altitude,
+                m: m,
+                projection: .noSRID)
         }
     }
     
     public func latitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:
-            if projection == .epsg3857 {
+            switch projection {
+            case .epsg3857, .noSRID:
                 return latitude
-            }
-            else {
+            case .epsg4326:
                 var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
                 y *= Projection.originShift / 180.0
                 return y
             }
 
         case .epsg4326:
-            if projection == .epsg4326 {
+            switch projection {
+            case .epsg4326, .noSRID:
                 return latitude
-            }
-            else {
+            case .epsg3857:
                 return 180.0 / Double.pi * (2.0 * atan(exp((latitude / Projection.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
             }
 
@@ -276,18 +294,18 @@ extension Coordinate3D {
     public func longitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:
-            if projection == .epsg3857 {
+            switch projection {
+            case .epsg3857, .noSRID:
                 return longitude
-            }
-            else {
+            case .epsg4326:
                 return longitude * Projection.originShift / 180.0
             }
 
         case .epsg4326:
-            if projection == .epsg4326 {
+            switch projection {
+            case .epsg4326, .noSRID:
                 return longitude
-            }
-            else {
+            case .epsg3857:
                 return (longitude / Projection.originShift) * 180.0
             }
 
@@ -329,7 +347,7 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Important: The output array will contain ``m`` only if this coordinate
     ///              also contains ``altitude`` to prevent any disambiguity.
     public var asJson: [Double] {
-        var result: [Double] = (projection == .epsg4326
+        var result: [Double] = (projection == .epsg4326 || projection == .noSRID
             ? [longitude, latitude]
             : [longitudeProjected(to: .epsg4326), latitudeProjected(to: .epsg4326)])
 

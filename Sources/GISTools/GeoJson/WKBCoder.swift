@@ -376,20 +376,26 @@ extension WKBCoder {
         switch sourceProjection {
         case .epsg4326:
             switch targetProjection {
-            case .epsg3857: return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection)
-            case .epsg4326: return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m)
-            case .noSRID: throw WKBCoderError.unknownSRID
+            case .epsg3857:
+                return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection)
+            case .epsg4326:
+                return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m)
+            case .noSRID:
+                return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
             }
 
         case .epsg3857:
             switch targetProjection {
-            case .epsg3857: return Coordinate3D(x: x, y: y, z: z, m: m)
-            case .epsg4326: return Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection)
-            case .noSRID: throw WKBCoderError.unknownSRID
+            case .epsg3857:
+                return Coordinate3D(x: x, y: y, z: z, m: m)
+            case .epsg4326:
+                return Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection)
+            case .noSRID:
+                return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
             }
 
         case .noSRID:
-            throw WKBCoderError.unknownSRID
+            return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
         }
     }
 

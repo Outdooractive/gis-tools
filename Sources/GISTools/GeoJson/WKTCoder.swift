@@ -544,20 +544,26 @@ extension WKTCoder {
             switch sourceProjection {
             case .epsg4326:
                 switch targetProjection {
-                case .epsg3857: coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection))
-                case .epsg4326: coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m))
-                case .noSRID: throw WKTCoderError.unknownSRID
+                case .epsg3857:
+                    coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection))
+                case .epsg4326:
+                    coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m))
+                case .noSRID:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection))
                 }
 
             case .epsg3857:
                 switch targetProjection {
-                case .epsg3857: coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m))
-                case .epsg4326: coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection))
-                case .noSRID: throw WKTCoderError.unknownSRID
+                case .epsg3857:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m))
+                case .epsg4326:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection))
+                case .noSRID:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection))
                 }
 
             case .noSRID:
-                throw WKTCoderError.unknownSRID
+                coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection))
             }
         }
 
