@@ -384,7 +384,7 @@ extension WKBCoder {
         case .epsg3857:
             switch targetProjection {
             case .epsg3857: return Coordinate3D(x: x, y: y, z: z, m: m)
-            case .epsg4326: return Coordinate3D(x: x, y: y, z: z, m: m).projected(to: .epsg4326)
+            case .epsg4326: return Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection)
             case .noSRID: throw WKBCoderError.unknownSRID
             }
 

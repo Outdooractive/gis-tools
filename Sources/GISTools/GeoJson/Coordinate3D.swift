@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: Coordinate3D
 
-/// A three dimensional coordinate (``latitude``, ``longitude``, ``altitude``)
+/// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``)
 /// plus a generic value ``m``.
 public struct Coordinate3D: CustomStringConvertible, Sendable {
 
