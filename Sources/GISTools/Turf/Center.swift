@@ -36,8 +36,9 @@ extension GeoJson {
 
         return Point(
             Coordinate3D(
-                latitude: sumLatitude / Double(allCoordinates.count),
-                longitude: sumLongitude / Double(allCoordinates.count)))
+                x: sumLongitude / Double(allCoordinates.count),
+                y: sumLatitude / Double(allCoordinates.count),
+                projection: projection))
     }
 
 }
@@ -73,8 +74,9 @@ extension FeatureCollection {
 
         return Point(
             Coordinate3D(
-                latitude: sumLatitude / sumWeights,
-                longitude: sumLongitude / sumWeights))
+                x: sumLongitude / sumWeights,
+                y: sumLatitude / sumWeights,
+                projection: projection))
     }
 
 }

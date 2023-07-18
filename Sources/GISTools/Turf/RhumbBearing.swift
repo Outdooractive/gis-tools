@@ -18,6 +18,9 @@ extension Coordinate3D {
         final: Bool = false)
         -> CLLocationDegrees
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         var bearing: CLLocationDegrees
         if final {
             bearing = Coordinate3D.calculateFinalRhumbBearing(from: other, to: self)

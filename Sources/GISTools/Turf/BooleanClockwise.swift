@@ -13,6 +13,9 @@ extension Ring {
     public var isClockwise: Bool {
         guard coordinates.count > 0 else { return false }
 
+        // TODO
+        assert(coordinates.first?.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         var sum: Double = 0.0
         var previous: Coordinate3D?
         var current: Coordinate3D?

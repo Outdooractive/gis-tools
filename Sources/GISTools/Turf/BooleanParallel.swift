@@ -20,6 +20,11 @@ extension LineSegment {
         undirectedEdge: Bool = false)
         -> Bool
     {
+        // TODO
+        assert(first.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
+        guard first.projection == other.first.projection else { return false }
+
         var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
         let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth
 
@@ -53,6 +58,11 @@ extension LineString {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
+        guard projection == other.projection else { return false }
+
         let segments1 = lineSegments
         let segments2 = other.lineSegments
         let count = min(segments1.count, segments2.count)

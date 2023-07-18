@@ -18,6 +18,9 @@ extension Coordinate3D {
         bearing: CLLocationDegrees)
         -> Coordinate3D
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         let destination = Coordinate3D.calculateRhumbDestination(from: self, distance: distance, bearing: bearing)
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)

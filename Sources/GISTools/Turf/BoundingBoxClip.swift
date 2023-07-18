@@ -28,7 +28,8 @@ extension MultiPoint {
     /// - Returns: A *MultiPoint* with all points inside the bounding box, *nil* if no point was inside the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiPoint? {
         let clipped = coordinates.filter({ boundingBox.contains($0) })
-        guard !clipped.isEmpty else { return nil }
+        guard !clipped.isEmpty, projection == boundingBox.projection else { return nil }
+
         return MultiPoint(clipped, calculateBoundingBox: (self.boundingBox != nil))
     }
 
@@ -42,7 +43,9 @@ extension LineString {
     ///
     /// - Returns: The line clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        MultiLineString(boundingBox.clipLine(coordinates: coordinates), calculateBoundingBox: (self.boundingBox != nil))
+        guard projection == boundingBox.projection else { return nil }
+
+        return MultiLineString(boundingBox.clipLine(coordinates: coordinates), calculateBoundingBox: (self.boundingBox != nil))
     }
 
 }
@@ -55,7 +58,9 @@ extension MultiLineString {
     ///
     /// - Returns: The lines clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        MultiLineString(coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }), calculateBoundingBox: (self.boundingBox != nil))
+        guard projection == boundingBox.projection else { return nil }
+
+        return MultiLineString(coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }), calculateBoundingBox: (self.boundingBox != nil))
     }
 
 }
@@ -68,6 +73,11 @@ extension Polygon {
     ///
     /// - Returns: The polygon clipped to the bounding box, or *nil* if the polygon would be empty.
     public func clipped(to boundingBox: BoundingBox) -> Polygon? {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
+        guard projection == boundingBox.projection else { return nil }
+
         var result: [Ring] = []
 
         for ring in rings {
@@ -97,8 +107,12 @@ extension MultiPolygon {
     ///
     /// - Returns: The polygons clipped to the bounding box, or *nil* if the polygon would be empty.
     public func clipped(to boundingBox: BoundingBox) -> MultiPolygon? {
-        let clipped = polygons.compactMap({ $0.clipped(to: boundingBox) })
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
+        guard projection == boundingBox.projection else { return nil }
+
+        let clipped = polygons.compactMap({ $0.clipped(to: boundingBox) })
         guard !clipped.isEmpty else { return nil }
 
         return MultiPolygon(clipped, calculateBoundingBox: (self.boundingBox != nil))
@@ -114,8 +128,9 @@ extension GeometryCollection {
     ///
     /// - Returns: The *GeometryCollection* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> GeometryCollection? {
-        let clipped = geometries.compactMap({ $0.clipped(to: boundingBox) })
+        guard projection == boundingBox.projection else { return nil }
 
+        let clipped = geometries.compactMap({ $0.clipped(to: boundingBox) })
         guard !clipped.isEmpty else { return nil }
 
         return GeometryCollection(clipped, calculateBoundingBox: (self.boundingBox != nil))
@@ -170,6 +185,8 @@ extension Feature {
     ///
     /// - Returns: The *Feature* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> Feature? {
+        guard projection == boundingBox.projection else { return nil }
+
         guard let clipped = geometry.clipped(to: boundingBox) else { return nil }
         return Feature(clipped, properties: properties, calculateBoundingBox: (self.boundingBox != nil))
     }
@@ -184,8 +201,9 @@ extension FeatureCollection {
     ///
     /// - Returns: The *Feature*s of the *FeatureCollection* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> FeatureCollection? {
-        let clipped = features.compactMap({ $0.clipped(to: boundingBox) })
+        guard projection == boundingBox.projection else { return nil }
 
+        let clipped = features.compactMap({ $0.clipped(to: boundingBox) })
         guard !clipped.isEmpty else { return nil }
 
         return FeatureCollection(clipped, calculateBoundingBox: (self.boundingBox != nil))

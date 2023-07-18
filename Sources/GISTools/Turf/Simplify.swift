@@ -22,6 +22,9 @@ extension GeoJson {
         highQuality: Bool = false)
         -> Self
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         switch self {
         case let lineString as LineString:
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
@@ -168,6 +171,9 @@ public enum Simplify {
         -> [Coordinate3D]
     {
         guard coordinates.count > 2 else { return coordinates }
+
+        // TODO
+        assert(coordinates[0].projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
         let sqTolerance: Double = tolerance * tolerance
 

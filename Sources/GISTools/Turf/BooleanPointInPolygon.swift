@@ -19,6 +19,9 @@ extension Ring {
         ignoreBoundary: Bool = false)
         -> Bool
     {
+        // TODO
+        assert(coordinates.first?.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         var isInside = false
 
         var coordinatesCount = coordinates.count

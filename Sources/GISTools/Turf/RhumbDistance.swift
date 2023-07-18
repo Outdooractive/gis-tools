@@ -11,6 +11,9 @@ extension Coordinate3D {
     ///
     /// - Parameter other: The other coordinate
     public func rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         var otherLongitude = other.longitude
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)

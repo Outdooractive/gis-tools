@@ -19,6 +19,9 @@ extension GeoJson {
         zTranslation: CLLocationDistance = 0.0)
         -> Self
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         guard distance != 0.0 || zTranslation != 0.0 else { return self }
 
         let distance = abs(distance)

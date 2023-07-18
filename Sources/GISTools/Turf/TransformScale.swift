@@ -33,6 +33,9 @@ extension GeoJson {
         anchor: ScaleAnchor = .centroid)
         -> Self
     {
+        // TODO
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+
         guard factor != 1.0 else { return self }
 
         var originIsPoint = false
