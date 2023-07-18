@@ -8,8 +8,6 @@ import Foundation
 /// A GeoJSON bounding box.
 public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
-    // TODO: Support projection
-
     /// A bounding box spanning across the whole world.
     public static var world: BoundingBox {
         BoundingBox(southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
@@ -22,6 +20,9 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
                     northEast: Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
+    /// The bounding box's `projection`.
+    public let projection: Projection
+
     /// The bounding boxes south-west (bottom-left) coordinate.
     public var southWest: Coordinate3D
     /// The bounding boxes north-east (upper-right) coordinate.
@@ -29,24 +30,26 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// The bounding boxes north-west (upper-left) coordinate.
     public var northWest: Coordinate3D {
-        Coordinate3D(latitude: northEast.latitude, longitude: southWest.longitude)
+        Coordinate3D(x: southWest.longitude, y: northEast.latitude, projection: projection)
     }
 
     /// The bounding boxes south-east (bottom-right) coordinate.
     public var southEast: Coordinate3D {
-        Coordinate3D(latitude: southWest.latitude, longitude: northEast.longitude)
+        Coordinate3D(x: northEast.longitude, y: southWest.latitude, projection: projection)
     }
 
     /// Create a bounding box from `coordinates` and an optional padding in kilometers.
     public init?(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
         guard !coordinates.isEmpty else { return nil }
 
+        self.projection = coordinates.first?.projection ?? .epsg4326
+
         var southWest = Coordinate3D(latitude: .infinity, longitude: .infinity)
         var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
 
         for currentLocation in coordinates {
-            let currentLocationLatitude = currentLocation.latitudeProjected(to: .epsg4326)
-            let currentLocationLongitude = currentLocation.longitudeProjected(to: .epsg4326)
+            let currentLocationLatitude = currentLocation.latitude
+            let currentLocationLongitude = currentLocation.longitude
 
             southWest.latitude = min(southWest.latitude, currentLocationLatitude)
             southWest.longitude = min(southWest.longitude, currentLocationLongitude)
@@ -55,17 +58,29 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
         }
 
         if paddingKilometers > 0.0 {
-            // Length of one minute at this latitude
-            let oneDegreeLongitudeDistanceInKilometers: Double = cos(southWest.latitude * Double.pi / 180.0) * 111.0
-            let oneDegreeLatitudeDistanceInKilometers: Double = 111.0
+            switch projection {
+            case .epsg3857:
+                southWest.latitude -= paddingKilometers * 1000.0
+                northEast.latitude += paddingKilometers * 1000.0
+                southWest.longitude -= paddingKilometers * 1000.0
+                northEast.longitude += paddingKilometers * 1000.0
 
-            let longitudeDistance: Double = (paddingKilometers / oneDegreeLongitudeDistanceInKilometers)
-            let latitudeDistance: Double = (paddingKilometers / oneDegreeLatitudeDistanceInKilometers)
+            case .epsg4326:
+                // Length of one minute at this latitude
+                let oneDegreeLongitudeDistanceInKilometers: Double = cos(southWest.latitude * Double.pi / 180.0) * 111.0
+                let oneDegreeLatitudeDistanceInKilometers: Double = 111.0
 
-            southWest.latitude -= latitudeDistance
-            northEast.latitude += latitudeDistance
-            southWest.longitude -= longitudeDistance
-            northEast.longitude += longitudeDistance
+                let longitudeDistance: Double = (paddingKilometers / oneDegreeLongitudeDistanceInKilometers)
+                let latitudeDistance: Double = (paddingKilometers / oneDegreeLatitudeDistanceInKilometers)
+
+                southWest.latitude -= latitudeDistance
+                northEast.latitude += latitudeDistance
+                southWest.longitude -= longitudeDistance
+                northEast.longitude += longitudeDistance
+
+            case .noSRID:
+                break // Don't know what to do -> ignore
+            }
         }
 
         self.southWest = southWest
@@ -74,8 +89,11 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Create a bounding box with a `southWest` and `northEast` coordinate.
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
-        self.southWest = southWest.projected(to: .epsg4326)
-        self.northEast = northEast.projected(to: .epsg4326)
+        assert(southWest.projection == northEast.projection, "Projections must be the same")
+
+        self.projection = southWest.projection
+        self.southWest = southWest
+        self.northEast = northEast
     }
 
     /// Create a bounding box from other bounding boxes.
@@ -85,6 +103,8 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Try to create a bounding box from some JSON.
     public init?(json: Any?) {
+        self.projection = .epsg4326
+
         // GeoJSON
         if let geoJsonCoordinates = json as? [Double] {
             if geoJsonCoordinates.count == 4 {
@@ -119,20 +139,20 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
     public var asJson: [Double] {
         if southWest.altitude != nil || northEast.altitude != nil {
             return [
-                southWest.longitude,
-                southWest.latitude,
+                southWest.longitudeProjected(to: .epsg4326),
+                southWest.latitudeProjected(to: .epsg4326),
                 southWest.altitude ?? 0.0,
-                northEast.longitude,
-                northEast.latitude,
+                northEast.longitudeProjected(to: .epsg4326),
+                northEast.latitudeProjected(to: .epsg4326),
                 northEast.altitude ?? 0.0,
             ]
         }
         else {
             return [
-                southWest.longitude,
-                southWest.latitude,
-                northEast.longitude,
-                northEast.latitude,
+                southWest.longitudeProjected(to: .epsg4326),
+                southWest.latitudeProjected(to: .epsg4326),
+                northEast.longitudeProjected(to: .epsg4326),
+                northEast.latitudeProjected(to: .epsg4326),
             ]
         }
     }
@@ -146,9 +166,18 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Returns a copy of the receiver expanded by `degrees`.
     public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
-        BoundingBox(
-            southWest: Coordinate3D(latitude: southWest.latitude - degrees, longitude: southWest.longitude - degrees),
-            northEast: Coordinate3D(latitude: northEast.latitude + degrees, longitude: northEast.longitude + degrees))
+        switch projection {
+        case .epsg3857:
+            return projected(to: .epsg4326).expand(degrees).projected(to: .epsg3857)
+
+        case .epsg4326:
+            return BoundingBox(
+                southWest: Coordinate3D(latitude: southWest.latitude - degrees, longitude: southWest.longitude - degrees),
+                northEast: Coordinate3D(latitude: northEast.latitude + degrees, longitude: northEast.longitude + degrees))
+
+        case .noSRID:
+            return self // Don't know what to do -> ignore
+        }
     }
 
     /// Returns a copy of the receiver expanded by `distance` diagonally.
@@ -160,17 +189,34 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
     /// Returns a copy of the receiver that also includes `coordinate`.
     public func expand(including coordinate: Coordinate3D) -> BoundingBox {
-        return BoundingBox(coordinates: [southWest, northEast, coordinate])!
+        return BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
     public func expand(including boundingBox: BoundingBox) -> BoundingBox {
-        return BoundingBox(coordinates: [southWest, northEast, boundingBox.southWest, boundingBox.northEast])!
+        return BoundingBox(coordinates: [
+            southWest,
+            northEast,
+            boundingBox.southWest.projected(to: projection),
+            boundingBox.northEast.projected(to: projection)
+        ])!
     }
 
     /// A textual description of the bounding box.
     public var description: String {
-        "[[\(southWest.longitude),\(southWest.latitude)],[\(northEast.longitude),\(northEast.latitude)]]"
+        "BoundingBox<\(projection.description)>([[\(southWest.longitude),\(southWest.latitude)],[\(northEast.longitude),\(northEast.latitude)]])"
+    }
+
+}
+
+// MARK: - Projection
+
+extension BoundingBox {
+
+    public func projected(to newProjection: Projection) -> BoundingBox {
+        BoundingBox(
+            southWest: southWest.projected(to: newProjection),
+            northEast: northEast.projected(to: newProjection))
     }
 
 }
@@ -216,7 +262,7 @@ extension BoundingBox {
 
 extension BoundingBox {
 
-    /// The center of the bounding box.
+    /// The geodesic center of the bounding box.
     public var center: Coordinate3D {
         let boundingBox = self.normalized()
         return boundingBox.southWest.midpoint(to: boundingBox.northEast)
@@ -230,30 +276,51 @@ extension BoundingBox {
 
     /// The size of the bounding box (width, height) in meters (approximation).
     public var size: (width: Double, height: Double) {
-        let boundingBox = self.normalized()
-        let bearingAngle = boundingBox.southWest.bearing(to: boundingBox.northEast)
-        let diagonalLength = boundingBox.southWest.distance(from: boundingBox.northEast)
+        switch projection {
+        case .epsg3857, .noSRID:
+            return (width: northEast.longitude - southWest.longitude, height: northEast.latitude - southWest.latitude)
 
-        return (width: diagonalLength * sin(bearingAngle.degreesToRadians),
-                height: diagonalLength * cos(bearingAngle.degreesToRadians))
+        case .epsg4326:
+            let boundingBox = self.normalized()
+            let bearingAngle = boundingBox.southWest.bearing(to: boundingBox.northEast)
+            let diagonalLength = boundingBox.southWest.distance(from: boundingBox.northEast)
+
+            return (width: diagonalLength * sin(bearingAngle.degreesToRadians),
+                    height: diagonalLength * cos(bearingAngle.degreesToRadians))
+        }
     }
 
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: Coordinate3D) -> Bool {
         let boundingBox = self.normalized()
-        let coordinate = coordinate.projected(to: .epsg4326).normalized()
+        let coordinate = coordinate.projected(to: projection).normalized()
 
         // self crosses the date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
-            let left = BoundingBox(
-                southWest: boundingBox.southWest,
-                northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-            let right = BoundingBox(
-                southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                northEast: boundingBox.northEast)
+            switch projection {
+            case .noSRID:
+                return false
 
-            return left.contains(coordinate)
-                || right.contains(coordinate)
+            case .epsg3857:
+                let left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(x: Projection.originShift, y: boundingBox.northEast.latitude))
+                if left.contains(coordinate) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(x: -Projection.originShift, y: boundingBox.southWest.latitude),
+                    northEast: boundingBox.northEast)
+                return right.contains(coordinate)
+
+            case .epsg4326:
+                let left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
+                if left.contains(coordinate) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
+                    northEast: boundingBox.northEast)
+                return right.contains(coordinate)
+            }
         }
 
         return coordinate.latitude >= boundingBox.southWest.latitude
@@ -287,27 +354,57 @@ extension BoundingBox {
 
         // self crosses date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
-            let left = BoundingBox(
-                southWest: boundingBox.southWest,
-                northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-            let right = BoundingBox(
-                southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                northEast: boundingBox.northEast)
+            switch projection {
+            case .noSRID:
+                return false
 
-            return left.intersects(other)
-                || right.intersects(other)
+            case .epsg3857:
+                let left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(x: Projection.originShift, y: boundingBox.northEast.latitude))
+                if left.intersects(other) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(x: -Projection.originShift, y: boundingBox.southWest.latitude),
+                    northEast: boundingBox.northEast)
+                return right.intersects(other)
+
+            case .epsg4326:
+                let left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
+                if left.intersects(other) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
+                    northEast: boundingBox.northEast)
+                return right.intersects(other)
+            }
         }
         // other crosses date line
         else if other.southWest.longitude > other.northEast.longitude {
-            let left = BoundingBox(
-                southWest: other.southWest,
-                northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
-            let right = BoundingBox(
-                southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
-                northEast: other.northEast)
+            switch projection {
+            case .noSRID:
+                return false
 
-            return self.intersects(left)
-                || self.intersects(right)
+            case .epsg3857:
+                let left = BoundingBox(
+                    southWest: other.southWest,
+                    northEast: Coordinate3D(x: Projection.originShift, y: other.northEast.latitude))
+                if self.intersects(left) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(x: -Projection.originShift, y: other.southWest.latitude),
+                    northEast: other.northEast)
+                return self.intersects(right)
+
+            case .epsg4326:
+                let left = BoundingBox(
+                    southWest: other.southWest,
+                    northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
+                if self.intersects(left) { return true }
+                let right = BoundingBox(
+                    southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
+                    northEast: other.northEast)
+                return self.intersects(right)
+            }
         }
         else {
             return boundingBox.southWest.longitude <= other.northEast.longitude
@@ -319,6 +416,9 @@ extension BoundingBox {
 
     /// Returns the intersection between the receiver and the other bounding box.
     public func intersection(_ other: BoundingBox) -> BoundingBox? {
+        // TODO: projection
+        guard projection == .epsg4326 else { return nil }
+
         let boundingBox = self.normalized()
         let other = other.normalized()
 
@@ -400,15 +500,32 @@ extension BoundingBox {
 
     /// Clamped to [-180.0, 180.0].
     public func normalized() -> BoundingBox {
-        guard northEast.longitude - southWest.longitude < 360.0 else {
-            return BoundingBox(
-                southWest: Coordinate3D(latitude: southWest.latitude, longitude: -180.0),
-                northEast: Coordinate3D(latitude: northEast.latitude, longitude: 180.0))
-        }
+        switch projection {
+        case .noSRID:
+            return self
 
-        return BoundingBox(
-            southWest: southWest.normalized(),
-            northEast: northEast.normalized())
+        case .epsg3857:
+            guard northEast.longitude - southWest.longitude < (2 * Projection.originShift) else {
+                return BoundingBox(
+                    southWest: Coordinate3D(x: -Projection.originShift, y: southWest.latitude),
+                    northEast: Coordinate3D(x: Projection.originShift, y: northEast.latitude))
+            }
+
+            return BoundingBox(
+                southWest: southWest.normalized(),
+                northEast: northEast.normalized())
+
+        case .epsg4326:
+            guard northEast.longitude - southWest.longitude < 360.0 else {
+                return BoundingBox(
+                    southWest: Coordinate3D(latitude: southWest.latitude, longitude: -180.0),
+                    northEast: Coordinate3D(latitude: northEast.latitude, longitude: 180.0))
+            }
+
+            return BoundingBox(
+                southWest: southWest.normalized(),
+                northEast: northEast.normalized())
+        }
     }
 
     /// Clamped to [[-180,-90], [180,90]]
@@ -434,13 +551,17 @@ extension BoundingBox {
         right: BoundingBox)
         -> BoundingBox
     {
-        BoundingBox(
+        assert(left.projection == right.projection, "Projections must be the same")
+
+        return BoundingBox(
             southWest: Coordinate3D(
-                latitude: min(left.southWest.latitude, right.southWest.latitude),
-                longitude: min(left.southWest.longitude, right.southWest.longitude)),
+                x: min(left.southWest.longitude, right.southWest.longitude),
+                y: min(left.southWest.latitude, right.southWest.latitude),
+                projection: left.projection),
             northEast: Coordinate3D(
-                latitude: max(left.northEast.latitude, right.northEast.latitude),
-                longitude: max(left.northEast.longitude, right.northEast.longitude)))
+                x: max(left.northEast.longitude, right.northEast.longitude),
+                y: max(left.northEast.latitude, right.northEast.latitude),
+                projection: left.projection))
     }
 
     // TODO: Date line
@@ -463,7 +584,8 @@ extension BoundingBox: Equatable {
         rhs: BoundingBox)
         -> Bool
     {
-        lhs.northWest == rhs.northWest
+        lhs.projection == rhs.projection
+            && lhs.northWest == rhs.northWest
             && lhs.southEast == rhs.southEast
     }
 

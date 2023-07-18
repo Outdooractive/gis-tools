@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: Coordinate3D
 
-/// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``)
+/// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``/``z``)
 /// plus a generic value ``m``.
 public struct Coordinate3D: CustomStringConvertible, Sendable {
 
@@ -19,7 +19,7 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     }
 
     /// The coordinates projection, either EPSG:4326 or EPSG:3857.
-    var projection: Projection
+    let projection: Projection
 
     /// The coordinate's `latitude` or `northing`, depending on the projection.
     public var latitude: CLLocationDegrees
@@ -37,10 +37,13 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     public var m: Double?
 
     /// Create a coordinate with ``latitude`` and ``longitude``.
+    /// Projection will be EPSG:4326.
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
         self.projection = .epsg4326
         self.latitude = latitude
         self.longitude = longitude
+        self.altitude = nil
+        self.m = nil
     }
 
     /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
@@ -82,11 +85,11 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     /// A textual representation of the receiver.
     public var description: String {
         var compontents: [String] = [
-            "longitude: \(longitude)",
-            "latitude: \(latitude)",
+            "\(projection == .epsg4326 ? "longitude" : "x"): \(longitude)",
+            "\(projection == .epsg4326 ? "latitude" : "y"): \(latitude)",
         ]
         if let altitude {
-            compontents.append("altitude: \(altitude)")
+            compontents.append("\(projection == .epsg4326 ? "altitude" : "z"): \(altitude)")
         }
         if let m {
             compontents.append("m: \(m)")
@@ -107,6 +110,7 @@ extension Coordinate3D {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
         self.altitude = altitude
+        self.m = nil
     }
 
     /// This coordinate as `CLLocationCoordinate2D`.
@@ -123,11 +127,7 @@ extension Coordinate3D {
         self.projection = .epsg4326
         self.latitude = location.coordinate.latitude
         self.longitude = location.coordinate.longitude
-
-        if location.verticalAccuracy > 0.0 {
-            self.altitude = location.altitude
-        }
-
+        self.altitude = (location.verticalAccuracy > 0.0 ? location.altitude : nil)
         self.m = location.timestamp.timeIntervalSinceReferenceDate
     }
 
@@ -226,7 +226,7 @@ extension Coordinate3D {
 
 }
 
-// MARK: - Projections
+// MARK: - Projection
 
 extension Coordinate3D {
     
@@ -241,7 +241,8 @@ extension Coordinate3D {
                     x: longitudeProjected(to: newProjection),
                     y: latitudeProjected(to: newProjection),
                     z: altitude,
-                    m: m)
+                    m: m,
+                    projection: newProjection)
             }
 
         case .epsg4326:
@@ -250,10 +251,11 @@ extension Coordinate3D {
                 return self
             case .epsg3857, .noSRID:
                 return Coordinate3D(
-                    latitude: latitudeProjected(to: newProjection),
-                    longitude: longitudeProjected(to: newProjection),
-                    altitude: altitude,
-                    m: m)
+                    x: longitudeProjected(to: newProjection),
+                    y: latitudeProjected(to: newProjection),
+                    z: altitude,
+                    m: m,
+                    projection: newProjection)
             }
 
         case .noSRID:
@@ -424,37 +426,7 @@ extension Coordinate3D: Equatable {
 
 extension Coordinate3D: Hashable {}
 
-// MARK: - Coordinate2D
-
-/// Two dimensional coordinates (`latitute`, `longitude`).
-public protocol Coordinate2D {
-
-    /// The latitude in degrees.
-    var latitude: CLLocationDegrees { get set }
-    /// The longitude in degrees.
-    var longitude: CLLocationDegrees { get set }
-
-    /// Creates a coordinate object with the specified latitude and longitude values.
-    init(latitude: CLLocationDegrees, longitude: CLLocationDegrees)
-
-}
-
-extension Coordinate2D {
-
-    /// The receiver as a ``Coordinate3D``.
-    public var coordinate3D: Coordinate3D {
-        Coordinate3D(latitude: latitude, longitude: longitude)
-    }
-
-}
-
-// MARK: - Coordinate3D + Coordinate2D
-
-extension Coordinate3D: Coordinate2D {}
-
 #if !os(Linux)
-extension CLLocationCoordinate2D: Coordinate2D {}
-
 extension CLLocation {
 
     /// The receiver as a ``Coordinate3D``.

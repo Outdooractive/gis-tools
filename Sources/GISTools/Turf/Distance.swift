@@ -12,6 +12,18 @@ extension Coordinate3D {
     ///
     /// - Parameter other: The other coordinate
     public func distance(from other: Coordinate3D) -> CLLocationDistance {
+        switch projection {
+        case .epsg4326:
+            return _distance(from: other)
+        case .epsg3857:
+            return projected(to: .epsg4326)._distance(from: other.projected(to: .epsg3857))
+        case .noSRID:
+            // TODO
+            return Double.infinity
+        }
+    }
+
+    private func _distance(from other: Coordinate3D) -> CLLocationDistance {
         let dLatitude = (other.latitude - latitude).degreesToRadians
         let dLongitude = (other.longitude - longitude).degreesToRadians
 
@@ -21,18 +33,6 @@ extension Coordinate3D {
         let a = pow(sin(dLatitude / 2.0), 2.0) + pow(sin(dLongitude / 2.0), 2.0) * cos(latitude1) * cos(latitude2)
 
         return (2.0 * atan2(sqrt(a), sqrt(1 - a))) * GISTool.earthRadius
-    }
-
-}
-
-extension ProjectedCoordinate {
-
-    /// Calculates the distance between two coordinates, in meters.
-    /// This uses the Haversine formula to account for global curvature.
-    ///
-    /// - Parameter other: The other coordinate
-    public func distance(from other: ProjectedCoordinate) -> CLLocationDistance {
-        coordinate3D.distance(from: other.coordinate3D)
     }
 
 }

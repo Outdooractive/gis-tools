@@ -91,31 +91,31 @@ final class MapTileTests: XCTestCase {
     }
 
     func testEpsg3857TileBounds() {
-        let worldBounds = MapTile(x: 0, y: 0, z: 0).epsg3857TileBounds
+        let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg3857)
         XCTAssertEqual(worldBounds.southWest.longitude, -Projection.originShift, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.southWest.latitude, -Projection.originShift, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.northEast.longitude, Projection.originShift, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.northEast.latitude, Projection.originShift, accuracy: 0.00001)
 
-        let z1Bounds = MapTile(x: 1, y: 0, z: 1).epsg3857TileBounds
+        let z1Bounds = MapTile(x: 1, y: 0, z: 1).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z1Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.northEast.longitude, Projection.originShift, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.northEast.latitude, Projection.originShift, accuracy: 0.00001)
 
-        let z2Bounds = MapTile(x: 2, y: 1, z: 2).epsg3857TileBounds
+        let z2Bounds = MapTile(x: 2, y: 1, z: 2).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z2Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.northEast.longitude, Projection.originShift / 2.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.northEast.latitude, Projection.originShift / 2.0, accuracy: 0.00001)
 
-        let z3Bounds = MapTile(x: 3, y: 3, z: 3).epsg3857TileBounds
+        let z3Bounds = MapTile(x: 3, y: 3, z: 3).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z3Bounds.southWest.longitude, -Projection.originShift / 4.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.northEast.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.northEast.latitude, Projection.originShift / 4.0, accuracy: 0.00001)
 
-        let z32Bounds = MapTile(x: 2145960701, y: 1428172928, z: 32).epsg3857TileBounds
+        let z32Bounds = MapTile(x: 2145960701, y: 1428172928, z: 32).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z32Bounds.southWest.longitude, -14210.149281, accuracy: 0.00001)
         XCTAssertEqual(z32Bounds.southWest.latitude, 6711666.720463, accuracy: 0.00001)
         XCTAssertEqual(z32Bounds.northEast.longitude, -14210.139951, accuracy: 0.00001)
@@ -123,37 +123,37 @@ final class MapTileTests: XCTestCase {
     }
 
     func testEpsg4236TileBounds() {
-        let worldBounds = MapTile(x: 0, y: 0, z: 0).epsg4236TileBounds
+        let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox()
         XCTAssertEqual(worldBounds.southWest.longitude, -180.0, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.southWest.latitude, -85.051128, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.northEast.longitude, 180.0, accuracy: 0.00001)
         XCTAssertEqual(worldBounds.northEast.latitude, 85.051128, accuracy: 0.00001)
 
-        let z1Bounds = MapTile(x: 1, y: 0, z: 1).epsg4236TileBounds
+        let z1Bounds = MapTile(x: 1, y: 0, z: 1).boundingBox()
         XCTAssertEqual(z1Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.northEast.longitude, 180.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.northEast.latitude, 85.051128, accuracy: 0.00001)
 
-        let z2Bounds = MapTile(x: 2, y: 1, z: 2).epsg4236TileBounds
+        let z2Bounds = MapTile(x: 2, y: 1, z: 2).boundingBox()
         XCTAssertEqual(z2Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.northEast.longitude, 90.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.northEast.latitude, 66.51326044311185, accuracy: 0.00001)
 
-        let z3Bounds = MapTile(x: 3, y: 3, z: 3).epsg4236TileBounds
+        let z3Bounds = MapTile(x: 3, y: 3, z: 3).boundingBox()
         XCTAssertEqual(z3Bounds.southWest.longitude, -45.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.northEast.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.northEast.latitude, 40.979898069620155, accuracy: 0.00001)
 
-        let z10Bounds = MapTile(x: 5, y: 10, z: 10).epsg4236TileBounds
+        let z10Bounds = MapTile(x: 5, y: 10, z: 10).boundingBox()
         XCTAssertEqual(z10Bounds.southWest.longitude, -178.242187, accuracy: 0.00001)
         XCTAssertEqual(z10Bounds.southWest.latitude, 84.706048, accuracy: 0.00001)
         XCTAssertEqual(z10Bounds.northEast.longitude, -177.890625, accuracy: 0.00001)
         XCTAssertEqual(z10Bounds.northEast.latitude, 84.738387, accuracy: 0.00001)
 
-        let z32Bounds = MapTile(x: 2145960701, y: 1428172928, z: 32).epsg4236TileBounds
+        let z32Bounds = MapTile(x: 2145960701, y: 1428172928, z: 32).boundingBox()
         XCTAssertEqual(z32Bounds.southWest.longitude, -0.127651, accuracy: 0.00001)
         XCTAssertEqual(z32Bounds.southWest.latitude, 51.508094, accuracy: 0.00001)
         XCTAssertEqual(z32Bounds.northEast.longitude, -0.127651, accuracy: 0.00001)

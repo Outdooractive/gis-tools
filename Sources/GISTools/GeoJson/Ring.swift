@@ -24,8 +24,6 @@ public struct Ring: Sendable {
         // TODO: Close the ring, if necessary
         guard coordinates.count >= 4 else { return nil }
 
-        assert(Set(coordinates.map(\.projection)).count == 1, "Can't have different projections")
-
         self.init(unchecked: coordinates)
     }
 

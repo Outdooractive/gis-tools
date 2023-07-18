@@ -19,6 +19,21 @@ extension Coordinate3D {
         bearing: CLLocationDegrees)
         -> Coordinate3D
     {
+        switch projection {
+        case .epsg4326:
+            return _destination(distance: distance, bearing: bearing)
+        case .epsg3857:
+            return projected(to: .epsg4326)._destination(distance: distance, bearing: bearing).projected(to: .epsg3857)
+        case .noSRID:
+            return self // Ignore
+        }
+    }
+
+    private func _destination(
+        distance: CLLocationDistance,
+        bearing: CLLocationDegrees)
+        -> Coordinate3D
+    {
         guard let distanceRadians = distance.lengthToRadians(unit: .meters) else { return self }
 
         let longitude1 = longitude.degreesToRadians
@@ -61,46 +76,6 @@ extension Coordinate3D {
         inDirectionOf target: Coordinate3D,
         distance: CLLocationDistance)
         -> Coordinate3D
-    {
-        destination(distance: distance, bearing: bearing(to: target))
-    }
-
-}
-
-extension ProjectedCoordinate {
-
-    /// Calculates the location of a destination coordinate given a
-    /// distance in meters and a bearing in degrees.
-    /// This uses the Haversine formula to account for global curvature.
-    ///
-    /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
-    ///    - bearing: The direction, ranging from -180 to 180
-    public func destination(
-        distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> ProjectedCoordinate
-    {
-        if projection == .epsg4326 {
-            return coordinate3D.destination(distance: distance, bearing: bearing).projectedToEpsg4326
-        }
-        else if projection == .epsg3857 {
-            return coordinate3D.destination(distance: distance, bearing: bearing).projectedToEpsg3857
-        }
-
-        return self
-    }
-
-    /// Calculates the location of a coordinate on a straight line between
-    /// this and another coordinate given a distance in meters.
-    ///
-    /// - Parameters:
-    ///    - target: The other coordinate
-    ///    - distance: The distance from the receiver, in meters
-    public func coordinate(
-        inDirectionOf target: ProjectedCoordinate,
-        distance: CLLocationDistance)
-        -> ProjectedCoordinate
     {
         destination(distance: distance, bearing: bearing(to: target))
     }

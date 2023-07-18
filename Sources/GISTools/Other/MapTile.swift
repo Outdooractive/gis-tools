@@ -67,11 +67,17 @@ public struct MapTile: CustomStringConvertible {
             atZoom: z,
             tileSideLength: GISTool.tileSideLength)
 
-        return coordinateXY.coordinate3D
+        return coordinateXY.projected(to: .epsg4326)
     }
 
-    /// Tile bounds in EPSG:3857.
-    public var epsg3857TileBounds: ProjectedBoundingBox {
+    public func boundingBox(projection: Projection = .epsg4326) -> BoundingBox {
+        if projection == .noSRID {
+            return BoundingBox(
+                southWest: Coordinate3D(x: Double(x), y: Double(y), projection: projection),
+                northEast: Coordinate3D(x: Double(x), y: Double(y), projection: projection))
+        }
+
+        /// Tile bounds in EPSG:3857.
         // Flip y
         let y = (1 << z) - 1 - y
 
@@ -86,21 +92,13 @@ public struct MapTile: CustomStringConvertible {
             atZoom: z,
             tileSideLength: GISTool.tileSideLength)
 
-        return ProjectedBoundingBox(southWest: southWest, northEast: northEast)
-    }
+        let epsg3857TileBounds = BoundingBox(southWest: southWest, northEast: northEast)
 
-    /// Tile bounds in EPSG:4326
-    public var epsg4236TileBounds: ProjectedBoundingBox {
-        let bounds = epsg3857TileBounds
+        if projection == .epsg3857 {
+            return epsg3857TileBounds
+        }
 
-        let southWest = bounds.southWest.projectedToEpsg4326
-        let northEast = bounds.northEast.projectedToEpsg4326
-
-        return ProjectedBoundingBox(southWest: southWest, northEast: northEast)
-    }
-
-    public var boundingBox: BoundingBox {
-        epsg4236TileBounds.boundingBox
+        return epsg3857TileBounds.projected(to: .epsg4326)
     }
 
     // MARK: - Quadkey
@@ -165,15 +163,13 @@ public struct MapTile: CustomStringConvertible {
         pixelY: Double,
         atZoom zoom: Int,
         tileSideLength: Double = GISTool.tileSideLength)
-        -> ProjectedCoordinate
+        -> Coordinate3D
     {
         let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
-        let originShift: Double = 2 * Double.pi * GISTool.equatorialRadius / 2.0
 
-        return ProjectedCoordinate(
-            latitude: pixelY * resolution - originShift,
-            longitude: pixelX * resolution - originShift,
-            projection: .epsg3857)
+        return Coordinate3D(
+            x: pixelX * resolution - Projection.originShift,
+            y: pixelY * resolution - Projection.originShift)
     }
 
     // MARK: - Meters per pixel
