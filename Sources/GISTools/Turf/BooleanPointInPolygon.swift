@@ -20,7 +20,7 @@ extension Ring {
         -> Bool
     {
         // TODO
-        assert(coordinates.first?.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
         var isInside = false
 

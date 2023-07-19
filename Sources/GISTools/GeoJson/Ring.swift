@@ -16,6 +16,11 @@ import Foundation
 ///   holes are clockwise.
 public struct Ring: Sendable {
 
+    /// The receivers projection.
+    public var projection: Projection {
+        coordinates.first?.projection ?? .noSRID
+    }
+
     /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 

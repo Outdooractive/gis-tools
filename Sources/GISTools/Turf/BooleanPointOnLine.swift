@@ -13,7 +13,7 @@ extension LineSegment {
         // TODO
         assert(first.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
-        guard first.projection == coordinate.projection else { return false }
+        guard projection == coordinate.projection else { return false }
 
         let ab = sqrt((second.longitude - first.longitude) * (second.longitude - first.longitude)
             + (second.latitude - first.latitude) * (second.latitude - first.latitude))

@@ -21,9 +21,9 @@ extension LineSegment {
         -> Bool
     {
         // TODO
-        assert(first.projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
-        guard first.projection == other.first.projection else { return false }
+        guard projection == other.projection else { return false }
 
         var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
         let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth

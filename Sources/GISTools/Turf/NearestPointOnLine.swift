@@ -13,6 +13,8 @@ extension LineSegment {
         clampToEnds: Bool = false)
         -> Coordinate3D?
     {
+        guard projection == coordinate.projection else { return nil }
+
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
         // avoid inaccuracy for too short distances, as the square line distance is taken as divisor
@@ -46,7 +48,7 @@ extension LineSegment {
             x: longitude,
             y: latitude,
             z: altitude,
-            projection: first.projection)
+            projection: projection)
     }
 
 }
@@ -58,7 +60,7 @@ extension LineSegment {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)
     {
-        guard first.projection == other.projection else { return (coordinate: first, distance: 0.0) }
+        guard projection == other.projection else { return (coordinate: first, distance: 0.0) }
 
         guard let foot: Coordinate3D = perpendicularFoot(coordinate: other, clampToEnds: true) else {
             return (coordinate: first, distance: 0.0)

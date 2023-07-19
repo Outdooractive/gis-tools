@@ -25,7 +25,7 @@ extension LineSegment {
         tolerance: CLLocationDistance = 0.0)
         -> LineSegmentComparisonResult
     {
-        guard first.projection == other.first.projection else { return .notEqual }
+        guard projection == other.projection else { return .notEqual }
 
         let tolerance = abs(tolerance)
 
