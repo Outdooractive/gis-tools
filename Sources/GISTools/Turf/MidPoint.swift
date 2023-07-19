@@ -12,11 +12,9 @@ extension Coordinate3D {
     ///
     /// - Parameter other: The other coordinate
     public func midpoint(to other: Coordinate3D) -> Coordinate3D {
-        assert(projection == other.projection, "Can't have different projections")
-
         switch projection {
         case .epsg4326:
-            return _midpoint(to: other)
+            return _midpoint(to: other.projected(to: .epsg4326))
         case .epsg3857:
             return projected(to: .epsg4326)._midpoint(to: other.projected(to: .epsg4326)).projected(to: .epsg3857)
         case .noSRID:

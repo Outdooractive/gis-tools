@@ -14,9 +14,9 @@ extension Coordinate3D {
     public func distance(from other: Coordinate3D) -> CLLocationDistance {
         switch projection {
         case .epsg4326:
-            return _distance(from: other)
+            return _distance(from: other.projected(to: .epsg4326))
         case .epsg3857:
-            return projected(to: .epsg4326)._distance(from: other.projected(to: .epsg3857))
+            return projected(to: .epsg4326)._distance(from: other.projected(to: .epsg4326))
         case .noSRID:
             // TODO
             return Double.infinity
