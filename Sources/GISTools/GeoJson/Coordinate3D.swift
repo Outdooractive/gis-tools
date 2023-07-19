@@ -36,6 +36,12 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     /// - Important: ``asJson`` will output `m` only if the coordinate also has an ``altitude``.
     public var m: Double?
 
+    /// Alias for longitude
+    public var x: Double { longitude }
+
+    /// Alias for latitude
+    public var y: Double { latitude }
+
     /// Create a coordinate with ``latitude`` and ``longitude``.
     /// Projection will be EPSG:4326.
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {

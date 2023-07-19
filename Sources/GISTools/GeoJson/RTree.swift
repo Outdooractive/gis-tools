@@ -37,6 +37,9 @@ public enum RTreeSortOption: Sendable {
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
 
+    /// The R-Tree's `projection`.
+    public let projection: Projection
+
     /// The indexed objects.
     public let objects: [T]
     /// The number of elements in the RTree.
@@ -57,8 +60,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
     /// The R-Tree's bounding box.
     public var boundingBox: BoundingBox {
         BoundingBox(
-            southWest: Coordinate3D(latitude: minY, longitude: minX),
-            northEast: Coordinate3D(latitude: maxY, longitude: maxX))
+            southWest: Coordinate3D(x: minX, y: minY, projection: projection),
+            northEast: Coordinate3D(x: maxX, y: maxY, projection: projection))
     }
 
     /// Create a new R-Tree from `objects`.
@@ -70,12 +73,16 @@ public struct RTree<T: BoundingBoxRepresentable> {
         var objectsWithBoundingBox: [T] = []
         objectsWithBoundingBox.reserveCapacity(objects.count)
 
+        projection = objects.first?.projection ?? .epsg4326
+
         // Set bounding boxes on all objects
         // Calculate the RTree bounding box
         for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
-            guard let boundingBox = object.boundingBox else { continue }
+            guard let boundingBox = object.boundingBox,
+                  boundingBox.projection == projection
+            else { continue }
 
             objectsWithBoundingBox.append(object)
 
@@ -226,6 +233,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [T] = []
 
+        let searchBoundingBox = searchBoundingBox.projected(to: projection)
+
         guard !objects.isEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
@@ -267,6 +276,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         var result: [T] = []
 
+        let searchBoundingBox = searchBoundingBox.projected(to: projection)
+
         guard !objects.isEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
@@ -297,9 +308,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty,
-              boundingBox.intersects(self.boundingBox)
-        else { return result }
+        guard !objects.isEmpty else { return result }
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
@@ -349,9 +358,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
     {
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty,
-              boundingBox.intersects(self.boundingBox)
-        else { return result }
+        guard !objects.isEmpty else { return result }
 
         for object in objects {
             if let nearest = object.nearestCoordinateOnFeature(from: coordinate),

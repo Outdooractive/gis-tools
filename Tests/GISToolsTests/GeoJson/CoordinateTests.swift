@@ -38,6 +38,15 @@ final class CoordinateTests: XCTestCase {
         XCTAssertEqual(String(data: coordinateData, encoding: .utf8), "[10,15]")
     }
 
+    func testEncodable3857() throws {
+        let coordinate = Coordinate3D(latitude: 15.0, longitude: 10.0).projected(to: .epsg3857)
+        let coordinateData = try JSONEncoder().encode(coordinate)
+        let decodedCoordinate = try JSONDecoder().decode(Coordinate3D.self, from: coordinateData)
+
+        XCTAssertEqual(Double(decodedCoordinate.asJson[0]), 10.0, accuracy: 0.000001)
+        XCTAssertEqual(Double(decodedCoordinate.asJson[1]), 15.0, accuracy: 0.000001)
+    }
+
     func testDecodable() throws {
         let coordinateData =  try XCTUnwrap("[10,15]".data(using: .utf8))
         let decodedCoordinate = try JSONDecoder().decode(Coordinate3D.self, from: coordinateData)

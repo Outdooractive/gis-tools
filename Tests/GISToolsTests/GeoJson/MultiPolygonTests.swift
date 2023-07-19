@@ -41,6 +41,7 @@ final class MultiPolygonTests: XCTestCase {
         let multiPolygon = try XCTUnwrap(MultiPolygon(jsonString: multiPolygonJson))
 
         XCTAssertEqual(multiPolygon.type, GeoJsonType.multiPolygon)
+        XCTAssertEqual(multiPolygon.projection, .epsg4326)
         XCTAssertEqual(multiPolygon.coordinates, [[[Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 102.0)]], [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.2, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.2)]]])
         XCTAssertEqual(multiPolygon.foreignMember(for: "other"), "something else")
         XCTAssertEqual(multiPolygon[foreignMember: "other"], "something else")
@@ -50,6 +51,7 @@ final class MultiPolygonTests: XCTestCase {
         let multiPolygon = try XCTUnwrap(MultiPolygon([[[Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 103.0), Coordinate3D(latitude: 3.0, longitude: 102.0), Coordinate3D(latitude: 2.0, longitude: 102.0)]], [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.8), Coordinate3D(latitude: 0.0, longitude: 100.2)]]]))
         let string = multiPolygon.asJsonString()!
 
+        XCTAssertEqual(multiPolygon.projection, .epsg4326)
         XCTAssert(string.contains("\"type\":\"MultiPolygon\""))
         XCTAssert(string.contains("\"coordinates\":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0],[100.2,1],[100.8,1],[100.8,0],[100.2,0]]]]"))
     }
@@ -67,6 +69,7 @@ final class MultiPolygonTests: XCTestCase {
         let multiPolygonData = try XCTUnwrap(MultiPolygon(jsonString: multiPolygonJson)?.asJsonData(prettyPrinted: true))
         let multiPolygon = try JSONDecoder().decode(MultiPolygon.self, from: multiPolygonData)
 
+        XCTAssertEqual(multiPolygon.projection, .epsg4326)
         XCTAssertEqual(multiPolygonData, multiPolygon.asJsonData(prettyPrinted: true))
     }
 

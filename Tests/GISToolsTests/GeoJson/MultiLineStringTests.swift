@@ -25,6 +25,7 @@ final class MultiLineStringTests: XCTestCase {
 
         XCTAssertNotNil(multiLineString)
         XCTAssertEqual(multiLineString.type, GeoJsonType.multiLineString)
+        XCTAssertEqual(multiLineString.projection, .epsg4326)
         XCTAssertEqual(multiLineString.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
         XCTAssertEqual(multiLineString.foreignMember(for: "other"), "something else")
         XCTAssertEqual(multiLineString[foreignMember: "other"], "something else")
@@ -43,6 +44,7 @@ final class MultiLineStringTests: XCTestCase {
         ]))
         let string = try XCTUnwrap(multiLineString.asJsonString())
 
+        XCTAssertEqual(multiLineString.projection, .epsg4326)
         XCTAssert(string.contains("\"type\":\"MultiLineString\""))
         XCTAssert(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
     }
@@ -60,6 +62,7 @@ final class MultiLineStringTests: XCTestCase {
         let multiLineStringData = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson)?.asJsonData(prettyPrinted: true))
         let multiLineString = try JSONDecoder().decode(MultiLineString.self, from: multiLineStringData)
 
+        XCTAssertEqual(multiLineString.projection, .epsg4326)
         XCTAssertEqual(multiLineStringData, multiLineString.asJsonData(prettyPrinted: true))
     }
 

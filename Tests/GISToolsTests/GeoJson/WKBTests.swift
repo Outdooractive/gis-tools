@@ -39,6 +39,86 @@ final class WKBTests: XCTestCase {
         XCTAssertEqual(pointZM.coordinate.m, 4)
     }
 
+    func testPointDecoding4326To3857() throws {
+        let expected = Coordinate3D(latitude: 2, longitude: 1).projected(to: .epsg3857)
+
+        let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
+        XCTAssertEqual(point.coordinate.x, expected.x)
+        XCTAssertEqual(point.coordinate.y, expected.y)
+        XCTAssertNil(point.coordinate.altitude)
+
+        let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
+        XCTAssertEqual(pointZ.coordinate.x, expected.x)
+        XCTAssertEqual(pointZ.coordinate.y, expected.y)
+        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+
+        let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
+        XCTAssertEqual(pointM.coordinate.x, expected.x)
+        XCTAssertEqual(pointM.coordinate.y, expected.y)
+        XCTAssertEqual(pointM.coordinate.m, 4)
+        XCTAssertNil(pointM.coordinate.altitude)
+
+        let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
+        XCTAssertEqual(pointZM.coordinate.x, expected.x)
+        XCTAssertEqual(pointZM.coordinate.y, expected.y)
+        XCTAssertEqual(pointZM.coordinate.altitude, 3)
+        XCTAssertEqual(pointZM.coordinate.m, 4)
+    }
+
+    func testPointDecoding3857To4326() throws {
+        let expected = Coordinate3D(x: 1, y: 2).projected(to: .epsg4326)
+
+        let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
+        XCTAssertEqual(point.coordinate.longitude, expected.longitude)
+        XCTAssertEqual(point.coordinate.latitude, expected.latitude)
+        XCTAssertNil(point.coordinate.altitude)
+
+        let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
+        XCTAssertEqual(pointZ.coordinate.x, expected.x)
+        XCTAssertEqual(pointZ.coordinate.y, expected.y)
+        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+
+        let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
+        XCTAssertEqual(pointM.coordinate.x, expected.x)
+        XCTAssertEqual(pointM.coordinate.y, expected.y)
+        XCTAssertEqual(pointM.coordinate.m, 4)
+        XCTAssertNil(pointM.coordinate.altitude)
+
+        let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
+        XCTAssertEqual(pointZM.coordinate.x, expected.x)
+        XCTAssertEqual(pointZM.coordinate.y, expected.y)
+        XCTAssertEqual(pointZM.coordinate.altitude, 3)
+        XCTAssertEqual(pointZM.coordinate.m, 4)
+    }
+
+    func testPointDecodingNoSRID() throws {
+        let expected = Coordinate3D(x: 1, y: 2, projection: .noSRID)
+
+        XCTAssertThrowsError(try WKBCoder.decode(wkb: pointData, sourceProjection: .noSRID) as! Point)
+
+        let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        XCTAssertEqual(point.coordinate.x, expected.x)
+        XCTAssertEqual(point.coordinate.y, expected.y)
+        XCTAssertNil(point.coordinate.altitude)
+
+        let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        XCTAssertEqual(pointZ.coordinate.x, expected.x)
+        XCTAssertEqual(pointZ.coordinate.y, expected.y)
+        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+
+        let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        XCTAssertEqual(pointM.coordinate.x, expected.x)
+        XCTAssertEqual(pointM.coordinate.y, expected.y)
+        XCTAssertEqual(pointM.coordinate.m, 4)
+        XCTAssertNil(pointM.coordinate.altitude)
+
+        let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        XCTAssertEqual(pointZM.coordinate.x, expected.x)
+        XCTAssertEqual(pointZM.coordinate.y, expected.y)
+        XCTAssertEqual(pointZM.coordinate.altitude, 3)
+        XCTAssertEqual(pointZM.coordinate.m, 4)
+    }
+
     func testPointEncoding() throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
         let encodedPoint = WKBCoder.encode(geometry: point, targetProjection: nil)

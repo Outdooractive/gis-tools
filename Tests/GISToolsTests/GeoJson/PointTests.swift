@@ -15,6 +15,7 @@ final class PointTests: XCTestCase {
         let point =  try XCTUnwrap(Point(jsonString: pointJson))
 
         XCTAssertEqual(point.type, GeoJsonType.point)
+        XCTAssertEqual(point.projection, .epsg4326)
         XCTAssertEqual(point.coordinate, Coordinate3D(latitude: 0.0, longitude: 100.0))
         XCTAssertEqual(point.foreignMember(for: "other"), "something else")
         XCTAssertEqual(point[foreignMember: "other"], "something else")
@@ -24,6 +25,7 @@ final class PointTests: XCTestCase {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
         let string = try XCTUnwrap(point.asJsonString())
 
+        XCTAssertEqual(point.projection, .epsg4326)
         XCTAssert(string.contains("\"type\":\"Point\""))
         XCTAssert(string.contains("\"coordinates\":[100,0]"))
     }
@@ -41,6 +43,7 @@ final class PointTests: XCTestCase {
         let pointData = try XCTUnwrap(Point(jsonString: pointJson)?.asJsonData(prettyPrinted: true))
         let point = try JSONDecoder().decode(Point.self, from: pointData)
 
+        XCTAssertEqual(point.projection, .epsg4326)
         XCTAssertEqual(pointData, point.asJsonData(prettyPrinted: true))
     }
 

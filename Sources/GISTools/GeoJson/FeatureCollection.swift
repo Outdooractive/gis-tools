@@ -1,7 +1,7 @@
 import Foundation
 
 /// A GeoJSON `FeatureCollection`.
-public struct FeatureCollection: GeoJson {
+public struct FeatureCollection: GeoJson, EmptyCreatable {
 
     public var type: GeoJsonType {
         return .featureCollection
@@ -21,6 +21,10 @@ public struct FeatureCollection: GeoJson {
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]
+
+    public init() {
+        self.features = []
+    }
 
     /// Initialize a FeatureCollection with one Feature.
     public init(_ feature: Feature, calculateBoundingBox: Bool = false) {
@@ -162,7 +166,7 @@ extension FeatureCollection {
 
     /// Insert a Feature into the receiver.
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
-        guard projection == .noSRID || projection == feature.projection else { return }
+        guard features.count == 0 || projection == feature.projection else { return }
 
         if index < features.count {
             features.insert(feature, at: index)
@@ -178,7 +182,7 @@ extension FeatureCollection {
 
     /// Append a Feature to the receiver.
     public mutating func appendFeature(_ feature: Feature) {
-        guard projection == .noSRID || projection == feature.projection else { return }
+        guard features.count == 0 || projection == feature.projection else { return }
 
         features.append(feature)
 

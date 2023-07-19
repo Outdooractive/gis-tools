@@ -3,6 +3,24 @@ import XCTest
 
 final class BoundingBoxTests: XCTestCase {
 
+    // MARK: - Projection
+
+    func testProjection() {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(
+                latitude: 0.0,
+                longitude: 0.0),
+            northEast: Coordinate3D(
+                latitude: 30.0,
+                longitude: 30.0))
+        XCTAssertEqual(boundingBox.projection, .epsg4326)
+
+        let boundingBox3857 = boundingBox.projected(to: .epsg3857)
+        XCTAssertEqual(boundingBox3857.projection, .epsg3857)
+        XCTAssertEqual(boundingBox3857.southWest.projection, .epsg3857)
+        XCTAssertEqual(boundingBox3857.northEast.projection, .epsg3857)
+    }
+
     // MARK: - contains(_:)
 
     func testContains() {
@@ -414,7 +432,7 @@ final class BoundingBoxTests: XCTestCase {
         let center = Coordinate3D(latitude: 10.150932342575627, longitude: 9.685895184381804)
 
         let point = boundingBox.center
-        XCTAssertTrue(point == center, "\(point) != \(center)")
+        XCTAssertEqual(point, center)
     }
 
     func testCenterDateline1() {
@@ -428,7 +446,7 @@ final class BoundingBoxTests: XCTestCase {
         let center = Coordinate3D(latitude: 15.501359566937001, longitude: 173.897886248014)
 
         let point = boundingBox.center
-        XCTAssertTrue(point == center, "\(point) != \(center)")
+        XCTAssertEqual(point, center)
     }
 
     func testCenterDateline2() {
@@ -442,7 +460,7 @@ final class BoundingBoxTests: XCTestCase {
         let center = Coordinate3D(latitude: 15.501359566937001, longitude: 173.897886248014)
 
         let point = boundingBox.center
-        XCTAssertTrue(point == center, "\(point) != \(center)")
+        XCTAssertEqual(point, center)
     }
 
     func testEncodable() throws {

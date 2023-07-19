@@ -15,7 +15,7 @@ final class RTreeTests: XCTestCase {
 
     // MARK: -
 
-    func testSimplePoints() throws {
+    func testSimplePoints4326() throws {
         var nodes: [Point] = []
         5.times {
             nodes.append(Point(Coordinate3D(
@@ -24,12 +24,37 @@ final class RTreeTests: XCTestCase {
         }
 
         let rTreeHilbert = RTree(nodes, nodeSize: 4)
+        XCTAssertEqual(rTreeHilbert.projection, .epsg4326)
         _testSimplePoints(rTreeHilbert)
 
         let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .byLatitude)
+        XCTAssertEqual(rTreeRandom.projection, .epsg4326)
         _testSimplePoints(rTreeRandom)
 
         let rTreeAsInput = RTree(nodes, nodeSize: 4, sortOption: .unsorted)
+        XCTAssertEqual(rTreeAsInput.projection, .epsg4326)
+        _testSimplePoints(rTreeAsInput)
+    }
+
+    func testSimplePoints3857() throws {
+        var nodes: [Point] = []
+        5.times {
+            nodes.append(Point(Coordinate3D(
+                x: Double.random(in: -10.0 ... 10.0),
+                y: Double.random(in: -10.0 ... 10.0),
+                projection: .epsg3857)))
+        }
+
+        let rTreeHilbert = RTree(nodes, nodeSize: 4)
+        XCTAssertEqual(rTreeHilbert.projection, .epsg3857)
+        _testSimplePoints(rTreeHilbert)
+
+        let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .byLatitude)
+        XCTAssertEqual(rTreeRandom.projection, .epsg3857)
+        _testSimplePoints(rTreeRandom)
+
+        let rTreeAsInput = RTree(nodes, nodeSize: 4, sortOption: .unsorted)
+        XCTAssertEqual(rTreeAsInput.projection, .epsg3857)
         _testSimplePoints(rTreeAsInput)
     }
 
@@ -47,8 +72,8 @@ final class RTreeTests: XCTestCase {
         }
 
         let boundingBox = BoundingBox(
-            southWest: Coordinate3D(latitude: minY, longitude: minX),
-            northEast: Coordinate3D(latitude: maxY, longitude: maxX))
+            southWest: Coordinate3D(x: minX, y: minY, projection: rTree.projection),
+            northEast: Coordinate3D(x: maxX, y: maxY, projection: rTree.projection))
 
         let objects1 = rTree.search(inBoundingBox: boundingBox)
         let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
@@ -61,7 +86,7 @@ final class RTreeTests: XCTestCase {
 
     // MARK: -
 
-    func testRTree() throws {
+    func testRTree4326() throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 10 ... 1000).times {
@@ -72,12 +97,40 @@ final class RTreeTests: XCTestCase {
 
             // Also test some invalid node sizes
             let rTreeHilbert = RTree(nodes, nodeSize: Int.random(in: -4 ... 16))
+            XCTAssertEqual(rTreeHilbert.projection, .epsg4326)
             _testRTree(rTreeHilbert)
 
             let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .byLatitude)
+            XCTAssertEqual(rTreeRandom.projection, .epsg4326)
             _testRTree(rTreeRandom)
 
             let rTreeAsInput = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .unsorted)
+            XCTAssertEqual(rTreeAsInput.projection, .epsg4326)
+            _testRTree(rTreeAsInput)
+        }
+    }
+
+    func testRTree3857() throws {
+        100.times {
+            var nodes: [Point] = []
+            Int.random(in: 10 ... 1000).times {
+                nodes.append(Point(Coordinate3D(
+                    x: Double.random(in: -10.0 ... 10.0),
+                    y: Double.random(in: -10.0 ... 10.0),
+                    projection: .epsg3857)))
+            }
+
+            // Also test some invalid node sizes
+            let rTreeHilbert = RTree(nodes, nodeSize: Int.random(in: -4 ... 16))
+            XCTAssertEqual(rTreeHilbert.projection, .epsg3857)
+            _testRTree(rTreeHilbert)
+
+            let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .byLatitude)
+            XCTAssertEqual(rTreeRandom.projection, .epsg3857)
+            _testRTree(rTreeRandom)
+
+            let rTreeAsInput = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .unsorted)
+            XCTAssertEqual(rTreeAsInput.projection, .epsg3857)
             _testRTree(rTreeAsInput)
         }
     }
@@ -96,8 +149,8 @@ final class RTreeTests: XCTestCase {
         }
 
         let boundingBox = BoundingBox(
-            southWest: Coordinate3D(latitude: minY, longitude: minX),
-            northEast: Coordinate3D(latitude: maxY, longitude: maxX))
+            southWest: Coordinate3D(x: minX, y: minY, projection: rTree.projection),
+            northEast: Coordinate3D(x: maxX, y: maxY, projection: rTree.projection))
 
         let objects1 = rTree.search(inBoundingBox: boundingBox)
         let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
@@ -109,7 +162,7 @@ final class RTreeTests: XCTestCase {
 
     // MARK: -
 
-    func testAroundSearch() throws {
+    func testAroundSearch4326() throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 1000 ... 10000).times {
@@ -118,14 +171,35 @@ final class RTreeTests: XCTestCase {
                     longitude: Double.random(in: -10.0 ... 10.0))))
             }
             let rTree = RTree(nodes)
-            _testAroundSearch(rTree)
+            XCTAssertEqual(rTree.projection, .epsg4326)
+            _testAroundSearch(
+                rTree,
+                center: Coordinate3D(
+                    latitude: Double.random(in: -10.0 ... 10.0),
+                    longitude: Double.random(in: -10.0 ... 10.0)))
         }
     }
 
-    private func _testAroundSearch(_ rTree: RTree<Point>) {
-        let center = Coordinate3D(
-            latitude: Double.random(in: -10.0 ... 10.0),
-            longitude: Double.random(in: -10.0 ... 10.0))
+    func testAroundSearch3857() throws {
+        100.times {
+            var nodes: [Point] = []
+            Int.random(in: 1000 ... 10000).times {
+                nodes.append(Point(Coordinate3D(
+                    x: Double.random(in: -100_000.0 ... 100_000.0),
+                    y: Double.random(in: -100_000.0 ... 100_000.0),
+                    projection: .epsg3857)))
+            }
+            let rTree = RTree(nodes)
+            XCTAssertEqual(rTree.projection, .epsg3857)
+            _testAroundSearch(
+                rTree,
+                center: Coordinate3D(
+                    x: Double.random(in: -100_000.0 ... 100_000.0),
+                    y: Double.random(in: -100_000.0 ... 100_000.0)))
+        }
+    }
+
+    private func _testAroundSearch(_ rTree: RTree<Point>, center: Coordinate3D) {
         let maximumDistance = Double.random(in: 10000.0 ... 100_000.0)
 
         let objects1 = rTree.search(aroundCoordinate: center, maximumDistance: maximumDistance)

@@ -245,6 +245,7 @@ public struct WKTCoder {
         case dataCorrupted
         case emptyGeometry
         case invalidGeometry
+        case targetProjectionMustBeNoSRID
         case unknownSRID
         case unexpectedType
     }
@@ -268,7 +269,7 @@ extension WKTCoder {
 
         if let sourceSrid {
             sourceProjection = Projection(srid: sourceSrid)
-            guard sourceProjection != nil, sourceProjection != .noSRID else { throw WKTCoderError.unknownSRID }
+            guard sourceProjection != nil else { throw WKTCoderError.unknownSRID }
         }
 
         return try decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection)
@@ -293,7 +294,13 @@ extension WKTCoder {
         {
             sourceProjection = Projection(srid: srid)
         }
-        guard let sourceProjection, sourceProjection != .noSRID else { throw WKTCoderError.unknownSRID }
+        guard let sourceProjection else { throw WKTCoderError.unknownSRID }
+
+        if sourceProjection == .noSRID,
+           targetProjection != .noSRID
+        {
+            throw WKTCoderError.targetProjectionMustBeNoSRID
+        }
 
         return try scanGeometry(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }

@@ -8,6 +8,11 @@ public struct LineSegment: Sendable {
 
     public var boundingBox: BoundingBox?
 
+    /// The receivers projection.
+    public var projection: Projection {
+        first.projection
+    }
+
     /// The segment's first coordinate.
     public let first: Coordinate3D
     /// The segment's second coordinate.

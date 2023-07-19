@@ -33,6 +33,7 @@ final class FeatureTests: XCTestCase {
         let feature = try XCTUnwrap(Feature(jsonString: featureJson))
 
         XCTAssertEqual(feature.type, GeoJsonType.feature)
+        XCTAssertEqual(feature.projection, .epsg4326)
         XCTAssertEqual(feature.geometry.type, GeoJsonType.polygon)
         XCTAssertEqual(feature.properties.count, 2)
         XCTAssertEqual(feature.properties.keys.sorted(), ["prop0", "prop1"])
@@ -73,10 +74,12 @@ final class FeatureTests: XCTestCase {
         let feature = try XCTUnwrap(Feature(jsonString: featureJsonWithIntId))
 
         XCTAssertEqual(feature.id, .int(1234))
+        XCTAssertEqual(feature.projection, .epsg4326)
     }
 
     func testCreateJson() throws {
         let feature = Feature(Point(.zero), id: .int(5))
+        XCTAssertEqual(feature.projection, .epsg4326)
         let json = feature.asJson
         XCTAssertEqual(json["type"] as? String, "Feature")
         XCTAssertEqual(json["id"] as? Int, 5)
@@ -98,6 +101,7 @@ final class FeatureTests: XCTestCase {
         let featureData = try XCTUnwrap(Feature(jsonString: featureJson)?.asJsonData(prettyPrinted: true))
         let feature = try JSONDecoder().decode(Feature.self, from: featureData)
 
+        XCTAssertEqual(feature.projection, .epsg4326)
         XCTAssertEqual(featureData, feature.asJsonData(prettyPrinted: true))
     }
 

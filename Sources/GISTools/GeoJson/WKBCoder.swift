@@ -242,6 +242,7 @@ public struct WKBCoder {
         case dataCorrupted
         case emptyGeometry
         case invalidGeometry
+        case targetProjectionMustBeNoSRID
         case unknownSRID
         case unexpectedType
     }
@@ -265,7 +266,7 @@ extension WKBCoder {
 
         if let sourceSrid {
             sourceProjection = Projection(srid: sourceSrid)
-            guard sourceProjection != nil, sourceProjection != .noSRID else { throw WKBCoderError.unknownSRID }
+            guard sourceProjection != nil else { throw WKBCoderError.unknownSRID }
         }
 
         let bytes = [UInt8](wkb)
@@ -323,7 +324,13 @@ extension WKBCoder {
             let srid = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
             sourceProjection = Projection(srid: Int(srid))
         }
-        guard sourceProjection != nil, sourceProjection != .noSRID else { throw WKBCoderError.unknownSRID }
+        guard let sourceProjection else { throw WKBCoderError.unknownSRID }
+
+        if sourceProjection == .noSRID,
+           targetProjection != .noSRID
+        {
+            throw WKBCoderError.targetProjectionMustBeNoSRID
+        }
 
         switch typeCode {
         case .point:
