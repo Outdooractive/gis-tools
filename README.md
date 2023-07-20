@@ -34,7 +34,7 @@ targets: [
 - Supports WKT/WKB, also with different projections
 - Spatial search with a R-tree
 - Includes many spatial algorithms, and more to come
-- Has a helper for working with x/y/z map tiles
+- Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 
 Please see also the [API documentation][8].
 
@@ -760,8 +760,8 @@ This is a helper for working with x/y/z map tiles.
 
 ```swift
 let tile1 = MapTile(x: 138513, y: 91601, z: 18)
-let center = tile1.centerCoordinate
-let boundingBox = tile1.boundingBox(projection: .epsg4326)
+let center = tile1.centerCoordinate(projection: .epsg4326) // default
+let boundingBox = tile1.boundingBox(projection: .epsg4326) // default
 
 let tile2 = MapTile(coordinate: Coordinate3D(latitude: 47.56, longitude: 10.22), atZoom: 14)
 let parent = tile2.parent

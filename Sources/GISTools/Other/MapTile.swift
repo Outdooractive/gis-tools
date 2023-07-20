@@ -47,27 +47,26 @@ public struct MapTile: CustomStringConvertible {
 
     public init(coordinate: Coordinate3D, atZoom zoom: Int) {
         let scale = Double(1 << zoom)
-        let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate)
+        let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate.projected(to: .epsg4326))
 
         self.x = Int(normalizedCoordinate.longitude * scale)
         self.y = Int(normalizedCoordinate.latitude * scale)
         self.z = zoom
     }
 
-    public var centerCoordinate: Coordinate3D {
+    public func centerCoordinate(projection: Projection = .epsg4326) -> Coordinate3D {
         // Flip y
         let y = (1 << z) - 1 - y
 
         let pixelX: Double = (Double(x) + 0.5) * GISTool.tileSideLength
         let pixelY: Double = (Double(y) + 0.5) * GISTool.tileSideLength
 
-        let coordinateXY = MapTile.projectPixelToEpsg3857(
+        return MapTile.pixelCoordinate(
             pixelX: pixelX,
             pixelY: pixelY,
             atZoom: z,
-            tileSideLength: GISTool.tileSideLength)
-
-        return coordinateXY.projected(to: .epsg4326)
+            tileSideLength: GISTool.tileSideLength,
+            projection: projection)
     }
 
     public func boundingBox(projection: Projection = .epsg4326) -> BoundingBox {
@@ -81,24 +80,20 @@ public struct MapTile: CustomStringConvertible {
         // Flip y
         let y = (1 << z) - 1 - y
 
-        let southWest = MapTile.projectPixelToEpsg3857(
+        let southWest = MapTile.pixelCoordinate(
             pixelX: Double(x) * GISTool.tileSideLength,
             pixelY: Double(y) * GISTool.tileSideLength,
             atZoom: z,
-            tileSideLength: GISTool.tileSideLength)
-        let northEast = MapTile.projectPixelToEpsg3857(
+            tileSideLength: GISTool.tileSideLength,
+            projection: projection)
+        let northEast = MapTile.pixelCoordinate(
             pixelX: Double(x + 1) * GISTool.tileSideLength,
             pixelY: Double(y + 1) * GISTool.tileSideLength,
             atZoom: z,
-            tileSideLength: GISTool.tileSideLength)
+            tileSideLength: GISTool.tileSideLength,
+            projection: projection)
 
-        let epsg3857TileBounds = BoundingBox(southWest: southWest, northEast: northEast)
-
-        if projection == .epsg3857 {
-            return epsg3857TileBounds
-        }
-
-        return epsg3857TileBounds.projected(to: .epsg4326)
+        return BoundingBox(southWest: southWest, northEast: northEast)
     }
 
     // MARK: - Quadkey
@@ -158,18 +153,25 @@ public struct MapTile: CustomStringConvertible {
     // MARK: - Conversion pixel to meters
 
     /// Converts pixel coordinates in a given zoom level to EPSG:3857.
-    public static func projectPixelToEpsg3857(
+    public static func pixelCoordinate(
         pixelX: Double,
         pixelY: Double,
         atZoom zoom: Int,
-        tileSideLength: Double = GISTool.tileSideLength)
+        tileSideLength: Double = GISTool.tileSideLength,
+        projection: Projection = .epsg4326)
         -> Coordinate3D
     {
         let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
 
-        return Coordinate3D(
+        let coordinateXY = Coordinate3D(
             x: pixelX * resolution - Projection.originShift,
             y: pixelY * resolution - Projection.originShift)
+
+        if projection == .epsg4326 {
+            return coordinateXY.projected(to: projection)
+        }
+
+        return coordinateXY
     }
 
     // MARK: - Meters per pixel
@@ -186,7 +188,7 @@ public struct MapTile: CustomStringConvertible {
 
     /// Resolution (meters/pixel) for a given zoom level measured at the tile center.
     public var metersPerPixel: Double {
-        MapTile.metersPerPixel(at: z, latitude: centerCoordinate.latitude)
+        MapTile.metersPerPixel(at: z, latitude: centerCoordinate().latitude)
     }
 
     // Private helpers

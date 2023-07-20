@@ -19,20 +19,20 @@ final class MapTileTests: XCTestCase {
     }
 
     func testCenter() {
-        let coordinate1 = MapTile(x: 138513, y: 91601, z: 18).centerCoordinate
+        let coordinate1 = MapTile(x: 138513, y: 91601, z: 18).centerCoordinate()
         XCTAssertEqual(coordinate1.latitude, 47.56031069944929, accuracy: 0.00001)
         XCTAssertEqual(coordinate1.longitude, 10.219345092773441, accuracy: 0.00001)
 
-        let coordinate2 = MapTile(x: 15073, y: 9831, z: 14).centerCoordinate
+        let coordinate2 = MapTile(x: 15073, y: 9831, z: 14).centerCoordinate()
         XCTAssertEqual(coordinate2.latitude, -33.86129311351551, accuracy: 0.00001)
         XCTAssertEqual(coordinate2.longitude, 151.20483398437503, accuracy: 0.00001)
 
-        let coordinate3 = MapTile(x: 0, y: 0, z: 0).centerCoordinate
+        let coordinate3 = MapTile(x: 0, y: 0, z: 0).centerCoordinate()
         XCTAssertEqual(coordinate3.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(coordinate3.longitude, 0.0, accuracy: 0.00001)
 
         // Tiles are not squares...
-        let coordinate4 = MapTile(x: 0, y: 0, z: 1).centerCoordinate
+        let coordinate4 = MapTile(x: 0, y: 0, z: 1).centerCoordinate()
         XCTAssertEqual(coordinate4.latitude, 66.51326044311185, accuracy: 0.00001)
         XCTAssertEqual(coordinate4.longitude, -90.0, accuracy: 0.00001)
     }
