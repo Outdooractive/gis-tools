@@ -37,9 +37,11 @@ public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
     public var m: Double?
 
     /// Alias for longitude
+    @inlinable
     public var x: Double { longitude }
 
     /// Alias for latitude
+    @inlinable
     public var y: Double { latitude }
 
     /// Create a coordinate with ``latitude`` and ``longitude``.
