@@ -56,7 +56,7 @@ extension GeoJsonGeometry {
 
     /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
-        return WKTCoder.encode(geometry: self)
+        WKTCoder.encode(geometry: self)
     }
 
 }
@@ -95,7 +95,7 @@ extension Feature {
 
     /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
-        return WKTCoder.encode(geometry: self.geometry)
+        WKTCoder.encode(geometry: self.geometry)
     }
 
 }
@@ -142,7 +142,7 @@ extension FeatureCollection {
 
     /// Returns the receiver as a WKT encoded string.
     public var asWKT: String? {
-        return WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
+        WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
     }
 
 }
@@ -226,18 +226,18 @@ extension String {
 // This code borrows a lot from https://github.com/plarson/WKCodable
 
 /// A tool for encoding and decoding GeoJSON objects from WKT.
-public struct WKTCoder {
+public enum WKTCoder {
 
     enum WKTTypeCode: String {
-        case point = "point"
+        case point
         case lineString = "linestring"
         case linearRing = "linearring"
-        case polygon = "polygon"
+        case polygon
         case multiPoint = "multipoint"
         case multiLineString = "multilinestring"
         case multiPolygon = "multipolygon"
         case geometryCollection = "geometrycollection"
-        case triangle = "triangle"
+        case triangle
     }
 
     /// WKT errors.
@@ -352,7 +352,7 @@ extension WKTCoder {
 
             return MultiPoint(points) ?? MultiPoint()
 
-        case .lineString, .linearRing:
+        case .linearRing, .lineString:
             return try decodeLineString(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
 
         case .multiLineString:
@@ -363,7 +363,7 @@ extension WKTCoder {
             }
 
             while scanner.scanString(")") == nil {
-                lineStrings.append(try decodeLineString(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
+                try lineStrings.append(decodeLineString(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
                 _ = scanner.scanString(",")
             }
 
@@ -380,7 +380,7 @@ extension WKTCoder {
             }
 
             while scanner.scanString(")") == nil {
-                polygons.append(try decodePolygon(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
+                try polygons.append(decodePolygon(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
                 _ = scanner.scanString(",")
             }
 
@@ -394,7 +394,7 @@ extension WKTCoder {
             }
 
             while scanner.scanString(")") == nil {
-                geometries.append(try scanGeometry(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection))
+                try geometries.append(scanGeometry(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection))
                 _ = scanner.scanString(",")
             }
 
@@ -534,7 +534,7 @@ extension WKTCoder {
             var z: Double?
             var m: Double?
 
-            if decodeZ && decodeM {
+            if decodeZ, decodeM {
                 z = vector.get(at: 2)
                 m = vector.get(at: 3)
             }
@@ -728,7 +728,7 @@ extension WKTCoder {
         targetProjection: Projection?)
         -> String
     {
-        return "(\(polygon.rings.map({ string(for: $0.coordinates, targetProjection: targetProjection) }).joined(separator: ",")))"
+        "(\(polygon.rings.map({ string(for: $0.coordinates, targetProjection: targetProjection) }).joined(separator: ",")))"
     }
 
     private static func appendTypeCode(
