@@ -1,4 +1,5 @@
 
+/// Objects supporting ``Projection``s..
 public protocol Projectable {
 
     /// The receiver's projection, which should typically be EPSG:4326.

@@ -1,6 +1,3 @@
-import Foundation
-
-// MARK: Projection
 
 /// Projections that this library can handle (EPSG:3857 and EPSG:4326).
 public enum Projection: CustomStringConvertible, Sendable {

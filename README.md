@@ -16,7 +16,7 @@ This package requires Swift 5.7 or higher (at least Xcode 13), and compiles on i
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "0.7.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.0.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -778,6 +778,7 @@ let mpp = MapTile.metersPerPixel(at: 15.0, latitude: 45.0)
 ```
 
 # Algorithms
+Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.
 
 | Name                        | Example                                                                                  |     | Source/Tests                 |
 | --------------------------- | ---------------------------------------------------------------------------------------- | --- | ---------------------------- |

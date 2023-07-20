@@ -281,7 +281,8 @@ extension BoundingBox {
     public var size: (width: Double, height: Double) {
         switch projection {
         case .epsg3857, .noSRID:
-            return (width: northEast.longitude - southWest.longitude, height: northEast.latitude - southWest.latitude)
+            return (width: northEast.longitude - southWest.longitude,
+                    height: northEast.latitude - southWest.latitude)
 
         case .epsg4326:
             let boundingBox = self.normalized()
@@ -307,10 +308,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.y))
                 if left.contains(coordinate) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.y),
                     northEast: boundingBox.northEast)
                 return right.contains(coordinate)
 
@@ -353,7 +354,7 @@ extension BoundingBox {
     /// Check if the receiver intersects with the other bounding box.
     public func intersects(_ other: BoundingBox) -> Bool {
         let boundingBox = self.normalized()
-        let other = other.normalized()
+        let other = other.projected(to: projection).normalized()
 
         // self crosses date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
@@ -364,10 +365,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.y))
                 if left.intersects(other) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.y),
                     northEast: boundingBox.northEast)
                 return right.intersects(other)
 
@@ -391,10 +392,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: other.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.y))
                 if self.intersects(left) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.y),
                     northEast: other.northEast)
                 return self.intersects(right)
 
@@ -419,26 +420,40 @@ extension BoundingBox {
 
     /// Returns the intersection between the receiver and the other bounding box.
     public func intersection(_ other: BoundingBox) -> BoundingBox? {
-        // TODO: projection
-        guard projection == .epsg4326 else { return nil }
-
         let boundingBox = self.normalized()
-        let other = other.normalized()
+        let other = other.projected(to: projection).normalized()
 
         // self crosses date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
-            let left = BoundingBox(
-                southWest: boundingBox.southWest,
-                northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-            let right = BoundingBox(
-                southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                northEast: boundingBox.northEast)
+            let left: BoundingBox
+            let right: BoundingBox
+
+            switch projection {
+            case .noSRID:
+                return nil
+
+            case .epsg3857:
+                left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
+                right = BoundingBox(
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
+                    northEast: boundingBox.northEast)
+
+            case .epsg4326:
+                left = BoundingBox(
+                    southWest: boundingBox.southWest,
+                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
+                right = BoundingBox(
+                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
+                    northEast: boundingBox.northEast)
+            }
 
             let leftIntersection = left.intersection(other)
             let rightIntersection = right.intersection(other)
 
-            if let leftIntersection = leftIntersection,
-               let rightIntersection = rightIntersection
+            if let leftIntersection,
+               let rightIntersection
             {
                 return BoundingBox(
                     southWest: leftIntersection.southWest,
@@ -453,18 +468,35 @@ extension BoundingBox {
         }
         // other crosses date line
         else if other.southWest.longitude > other.northEast.longitude {
-            let left = BoundingBox(
-                southWest: other.southWest,
-                northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
-            let right = BoundingBox(
-                southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
-                northEast: other.northEast)
+            let left: BoundingBox
+            let right: BoundingBox
+
+            switch projection {
+            case .noSRID:
+                return nil
+
+            case .epsg3857:
+                left = BoundingBox(
+                    southWest: other.southWest,
+                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.y))
+                right = BoundingBox(
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.y),
+                    northEast: other.northEast)
+
+            case .epsg4326:
+                left = BoundingBox(
+                    southWest: other.southWest,
+                    northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
+                right = BoundingBox(
+                    southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
+                    northEast: other.northEast)
+            }
 
             let leftIntersection = self.intersection(left)
             let rightIntersection = self.intersection(right)
 
-            if let leftIntersection = leftIntersection,
-               let rightIntersection = rightIntersection
+            if let leftIntersection,
+               let rightIntersection
             {
                 return BoundingBox(
                     southWest: leftIntersection.southWest,
@@ -478,18 +510,20 @@ extension BoundingBox {
             }
         }
         else {
-            if boundingBox.southWest.longitude <= other.northEast.longitude,
-               boundingBox.northEast.longitude >= other.southWest.longitude,
-               boundingBox.southWest.latitude <= other.northEast.latitude,
-               boundingBox.northEast.latitude >= other.southWest.latitude
+            if boundingBox.southWest.x <= other.northEast.x,
+               boundingBox.northEast.x >= other.southWest.x,
+               boundingBox.southWest.y <= other.northEast.y,
+               boundingBox.northEast.y >= other.southWest.y
             {
                 return BoundingBox(
                     southWest: Coordinate3D(
-                        latitude: max(boundingBox.southWest.latitude, other.southWest.latitude),
-                        longitude: max(boundingBox.southWest.longitude, other.southWest.longitude)),
+                        x: max(boundingBox.southWest.x, other.southWest.x),
+                        y: max(boundingBox.southWest.y, other.southWest.y),
+                        projection: projection),
                     northEast: Coordinate3D(
-                        latitude: min(boundingBox.northEast.latitude, other.northEast.latitude),
-                        longitude: min(boundingBox.northEast.longitude, other.northEast.longitude)))
+                        x: min(boundingBox.northEast.x, other.northEast.x),
+                        y: min(boundingBox.northEast.y, other.northEast.y),
+                        projection: projection))
             }
         }
 
@@ -550,28 +584,28 @@ extension BoundingBox {
     // TODO: Date line
     /// Combine two bounding boxes.
     public static func + (
-        left: BoundingBox,
-        right: BoundingBox)
+        lhs: BoundingBox,
+        rhs: BoundingBox)
         -> BoundingBox
     {
-        assert(left.projection == right.projection, "Projections must be the same")
+        let rhs = rhs.projected(to: lhs.projection)
 
         return BoundingBox(
             southWest: Coordinate3D(
-                x: min(left.southWest.longitude, right.southWest.longitude),
-                y: min(left.southWest.latitude, right.southWest.latitude),
-                projection: left.projection),
+                x: min(lhs.southWest.x, rhs.southWest.x),
+                y: min(lhs.southWest.y, rhs.southWest.y),
+                projection: lhs.projection),
             northEast: Coordinate3D(
-                x: max(left.northEast.longitude, right.northEast.longitude),
-                y: max(left.northEast.latitude, right.northEast.latitude),
-                projection: left.projection))
+                x: max(lhs.northEast.x, rhs.northEast.x),
+                y: max(lhs.northEast.y, rhs.northEast.y),
+                projection: lhs.projection))
     }
 
     // TODO: Date line
     /// Combine two bounding boxes.
     public mutating func formUnion(_ other: BoundingBox) {
         let boundingBox = self.normalized()
-        let other = other.normalized()
+        let other = other.projected(to: projection).normalized()
 
         self = boundingBox + other
     }
