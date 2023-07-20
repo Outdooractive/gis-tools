@@ -11,9 +11,19 @@ extension Coordinate3D {
     ///
     /// - Parameter other: The other coordinate
     public func rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
-        // TODO
-        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+        switch projection {
+        case .epsg4326:
+            return _rhumbDistance(from: other.projected(to: .epsg4326))
+        case .epsg3857:
+            // TODO: This can be improved
+            return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
+        case .noSRID:
+            // TODO
+            return Double.infinity
+        }
+    }
 
+    private func _rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
         var otherLongitude = other.longitude
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)

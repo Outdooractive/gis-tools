@@ -39,8 +39,6 @@ extension LineString {
     {
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
 
-        guard projection == coordinate.projection else { return bestDistance }
-
         for segment in lineSegments {
             let distance = segment.distanceFrom(coordinate: coordinate)
 

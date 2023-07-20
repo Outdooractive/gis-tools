@@ -47,7 +47,7 @@ extension GeoJson {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
     {
-        guard projection == other.projection else { return nil }
+        let other = other.projected(to: projection)
 
         switch self {
         case let point as Point:

@@ -22,9 +22,6 @@ extension GeoJson {
         highQuality: Bool = false)
         -> Self
     {
-        // TODO
-        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
-
         switch self {
         case let lineString as LineString:
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
@@ -166,14 +163,11 @@ public enum Simplify {
     /// - Returns: Returns an array of simplified coordinates
     public static func simplify(
         coordinates: [Coordinate3D],
-        tolerance: CLLocationDegrees = 1.0,
+        tolerance: CLLocationDegrees,
         highQuality: Bool = false)
         -> [Coordinate3D]
     {
         guard coordinates.count > 2 else { return coordinates }
-
-        // TODO
-        assert(coordinates[0].projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
 
         let sqTolerance: Double = tolerance * tolerance
 
@@ -199,13 +193,22 @@ public enum Simplify {
               let firstCoordinate = coordinates.first
         else { return coordinates }
 
-        let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
-        let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
+        switch firstCoordinate.projection {
+        case .epsg3857, .noSRID:
+            return simplify(
+                coordinates: coordinates,
+                tolerance: toleranceInMeters,
+                highQuality: highQuality)
 
-        return simplify(
-            coordinates: coordinates,
-            tolerance: toleranceInDegrees,
-            highQuality: highQuality)
+        case .epsg4326:
+            let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
+            let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
+
+            return simplify(
+                coordinates: coordinates,
+                tolerance: toleranceInDegrees,
+                highQuality: highQuality)
+        }
     }
 
     // simplification using Ramer-Douglas-Peucker algorithm

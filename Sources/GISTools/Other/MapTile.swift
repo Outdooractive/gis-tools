@@ -164,8 +164,8 @@ public struct MapTile: CustomStringConvertible {
         let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
 
         let coordinateXY = Coordinate3D(
-            x: pixelX * resolution - Projection.originShift,
-            y: pixelY * resolution - Projection.originShift)
+            x: pixelX * resolution - GISTool.originShift,
+            y: pixelY * resolution - GISTool.originShift)
 
         if projection == .epsg4326 {
             return coordinateXY.projected(to: projection)

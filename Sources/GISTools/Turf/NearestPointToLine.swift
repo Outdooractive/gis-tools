@@ -19,8 +19,6 @@ extension LineString {
         var bestCoordinate: Coordinate3D = coordinates[0]
 
         for coordinate in coordinates {
-            guard projection == coordinate.projection else { continue }
-
             let distance = distanceFrom(coordinate: coordinate)
 
             if distance < bestDistance {

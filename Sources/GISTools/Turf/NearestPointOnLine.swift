@@ -13,7 +13,7 @@ extension LineSegment {
         clampToEnds: Bool = false)
         -> Coordinate3D?
     {
-        guard projection == coordinate.projection else { return nil }
+        let coordinate = coordinate.projected(to: projection)
 
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
@@ -60,8 +60,6 @@ extension LineSegment {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)
     {
-        guard projection == other.projection else { return (coordinate: first, distance: 0.0) }
-
         guard let foot: Coordinate3D = perpendicularFoot(coordinate: other, clampToEnds: true) else {
             return (coordinate: first, distance: 0.0)
         }
@@ -79,9 +77,9 @@ extension LineString {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)?
     {
-        guard projection == other.projection else { return nil }
-
         guard coordinates.count >= 2 else { return nil }
+
+        let other = other.projected(to: projection)
 
         var bestCoordinate: Coordinate3D = coordinates[0]
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude

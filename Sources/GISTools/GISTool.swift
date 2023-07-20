@@ -16,6 +16,9 @@ public enum GISTool {
     /// Length of the equator, in meters.
     public static let earthCircumference: CLLocationDistance = 40_075_016.6855785
 
+    /// Mercator projection origin shift.
+    public static let originShift = 2.0 * Double.pi * GISTool.equatorialRadius / 2.0 // 20037508.342789244
+
     /// The accuracy for testing what is equal.
     public static let equalityDelta: Double = 1e-10
 

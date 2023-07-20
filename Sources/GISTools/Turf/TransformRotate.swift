@@ -18,12 +18,9 @@ extension GeoJson {
         pivot: Coordinate3D? = nil)
         -> Self
     {
-        // TODO
-        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
-
         guard angle != 0.0 else { return self }
 
-        guard let pivot = pivot ?? centroid?.coordinate else { return self }
+        guard let pivot = pivot?.projected(to: projection) ?? centroid?.coordinate else { return self }
 
         return transformedCoordinates({ (coordinate) in
             let initialAngle = pivot.rhumbBearing(to: coordinate)

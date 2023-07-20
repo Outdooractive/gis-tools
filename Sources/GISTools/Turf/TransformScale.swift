@@ -33,9 +33,6 @@ extension GeoJson {
         anchor: ScaleAnchor = .centroid)
         -> Self
     {
-        // TODO
-        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
-
         guard factor != 1.0 else { return self }
 
         var originIsPoint = false
@@ -44,8 +41,12 @@ extension GeoJson {
         }
 
         // Scale each Feature separately
-        if let featureCollection = self as? FeatureCollection, !originIsPoint {
-            var newFeatureCollection = FeatureCollection(featureCollection.features.map({ $0.scaled(factor: factor, anchor: anchor) }), calculateBoundingBox: (featureCollection.boundingBox != nil))
+        if let featureCollection = self as? FeatureCollection,
+            !originIsPoint
+        {
+            var newFeatureCollection = FeatureCollection(
+                featureCollection.features.map({ $0.scaled(factor: factor, anchor: anchor) }),
+                calculateBoundingBox: (featureCollection.boundingBox != nil))
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
             return newFeatureCollection as! Self
         }
@@ -114,10 +115,10 @@ extension GeoJson {
             return centroid?.coordinate
 
         case let .coordinate(coordinate):
-            return coordinate
+            return coordinate.projected(to: projection)
 
         case let .point(point):
-            return point.coordinate
+            return point.coordinate.projected(to: projection)
         }
     }
 

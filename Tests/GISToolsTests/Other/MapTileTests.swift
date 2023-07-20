@@ -92,28 +92,28 @@ final class MapTileTests: XCTestCase {
 
     func testEpsg3857TileBounds() {
         let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg3857)
-        XCTAssertEqual(worldBounds.southWest.longitude, -Projection.originShift, accuracy: 0.00001)
-        XCTAssertEqual(worldBounds.southWest.latitude, -Projection.originShift, accuracy: 0.00001)
-        XCTAssertEqual(worldBounds.northEast.longitude, Projection.originShift, accuracy: 0.00001)
-        XCTAssertEqual(worldBounds.northEast.latitude, Projection.originShift, accuracy: 0.00001)
+        XCTAssertEqual(worldBounds.southWest.longitude, -GISTool.originShift, accuracy: 0.00001)
+        XCTAssertEqual(worldBounds.southWest.latitude, -GISTool.originShift, accuracy: 0.00001)
+        XCTAssertEqual(worldBounds.northEast.longitude, GISTool.originShift, accuracy: 0.00001)
+        XCTAssertEqual(worldBounds.northEast.latitude, GISTool.originShift, accuracy: 0.00001)
 
         let z1Bounds = MapTile(x: 1, y: 0, z: 1).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z1Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z1Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
-        XCTAssertEqual(z1Bounds.northEast.longitude, Projection.originShift, accuracy: 0.00001)
-        XCTAssertEqual(z1Bounds.northEast.latitude, Projection.originShift, accuracy: 0.00001)
+        XCTAssertEqual(z1Bounds.northEast.longitude, GISTool.originShift, accuracy: 0.00001)
+        XCTAssertEqual(z1Bounds.northEast.latitude, GISTool.originShift, accuracy: 0.00001)
 
         let z2Bounds = MapTile(x: 2, y: 1, z: 2).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z2Bounds.southWest.longitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z2Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
-        XCTAssertEqual(z2Bounds.northEast.longitude, Projection.originShift / 2.0, accuracy: 0.00001)
-        XCTAssertEqual(z2Bounds.northEast.latitude, Projection.originShift / 2.0, accuracy: 0.00001)
+        XCTAssertEqual(z2Bounds.northEast.longitude, GISTool.originShift / 2.0, accuracy: 0.00001)
+        XCTAssertEqual(z2Bounds.northEast.latitude, GISTool.originShift / 2.0, accuracy: 0.00001)
 
         let z3Bounds = MapTile(x: 3, y: 3, z: 3).boundingBox(projection: .epsg3857)
-        XCTAssertEqual(z3Bounds.southWest.longitude, -Projection.originShift / 4.0, accuracy: 0.00001)
+        XCTAssertEqual(z3Bounds.southWest.longitude, -GISTool.originShift / 4.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.southWest.latitude, 0.0, accuracy: 0.00001)
         XCTAssertEqual(z3Bounds.northEast.longitude, 0.0, accuracy: 0.00001)
-        XCTAssertEqual(z3Bounds.northEast.latitude, Projection.originShift / 4.0, accuracy: 0.00001)
+        XCTAssertEqual(z3Bounds.northEast.latitude, GISTool.originShift / 4.0, accuracy: 0.00001)
 
         let z32Bounds = MapTile(x: 2145960701, y: 1428172928, z: 32).boundingBox(projection: .epsg3857)
         XCTAssertEqual(z32Bounds.southWest.longitude, -14210.149281, accuracy: 0.00001)

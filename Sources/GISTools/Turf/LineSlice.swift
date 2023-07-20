@@ -22,6 +22,9 @@ extension LineString {
     {
         guard coordinates.count >= 2 else { return nil }
 
+        let start = start?.projected(to: projection)
+        let end = end?.projected(to: projection)
+
         var startVertex: (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)
         var endVertex: (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)
 

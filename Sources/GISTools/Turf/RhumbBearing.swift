@@ -18,9 +18,22 @@ extension Coordinate3D {
         final: Bool = false)
         -> CLLocationDegrees
     {
-        // TODO
-        assert(projection == .epsg4326, "Not implemented yet for other projections than EPSG:4326")
+        switch projection {
+        case .epsg4326:
+            return _rhumbBearing(to: other.projected(to: .epsg4326), final: final)
+        case .epsg3857:
+            return projected(to: .epsg4326)._rhumbBearing(to: other.projected(to: .epsg4326), final: final)
+        case .noSRID:
+            // TODO
+            return Double.infinity
+        }
+    }
 
+    private func _rhumbBearing(
+        to other: Coordinate3D,
+        final: Bool = false)
+        -> CLLocationDegrees
+    {
         var bearing: CLLocationDegrees
         if final {
             bearing = Coordinate3D.calculateFinalRhumbBearing(from: other, to: self)

@@ -59,7 +59,7 @@ extension LineSegment {
     ///
     /// - Parameter other: The other *LineSegment*
     public func intersects(_ other: LineSegment) -> Bool {
-        guard projection == other.projection else { return false }
+        let other = other.projected(to: projection)
 
         // Find the four orientations needed for general and special cases
         let o1 = orientation(p: first, q: second, r: other.first)
@@ -101,7 +101,7 @@ extension LineSegment {
     ///
     /// - Parameter other: The other *LineSegment*
     public func intersection(_ other: LineSegment) -> Coordinate3D? {
-        guard projection == other.projection else { return nil }
+        let other = other.projected(to: projection)
 
         // TODO: BBox check
         // Test if a quick bbox test improves performance
@@ -141,7 +141,7 @@ extension GeoJson {
     ///
     /// - Parameter other: The other geometry
     public func intersections(other: GeoJson) -> [Point] {
-        guard projection == other.projection else { return [] }
+        let other = other.projected(to: projection)
 
         if self is Point || self is MultiPoint || other is Point || other is MultiPoint {
             return []

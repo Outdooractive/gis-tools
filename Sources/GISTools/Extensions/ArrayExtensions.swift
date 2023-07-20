@@ -169,4 +169,8 @@ extension Array {
         return self
     }
 
+    var isNotEmpty: Bool {
+        !isEmpty
+    }
+
 }

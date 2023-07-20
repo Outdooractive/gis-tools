@@ -171,11 +171,11 @@ extension Coordinate3D {
     public func normalized() -> Coordinate3D {
         switch projection {
         case .epsg3857:
-            guard longitude < -Projection.originShift || longitude > Projection.originShift else { return self }
+            guard longitude < -GISTool.originShift || longitude > GISTool.originShift else { return self }
 
             var longitude = self.longitude
-            while longitude < -Projection.originShift { longitude += (2.0 * Projection.originShift) }
-            while longitude > Projection.originShift { longitude -= (2.0 * Projection.originShift) }
+            while longitude < -GISTool.originShift { longitude += (2.0 * GISTool.originShift) }
+            while longitude > GISTool.originShift { longitude -= (2.0 * GISTool.originShift) }
 
             return Coordinate3D(x: longitude, y: latitude, z: altitude, m: m)
 
@@ -206,13 +206,13 @@ extension Coordinate3D {
     public func clamped() -> Coordinate3D {
         switch projection {
         case .epsg3857:
-            guard longitude < -Projection.originShift || longitude > Projection.originShift
-                || latitude < -Projection.originShift || latitude > Projection.originShift
+            guard longitude < -GISTool.originShift || longitude > GISTool.originShift
+                || latitude < -GISTool.originShift || latitude > GISTool.originShift
             else { return self }
 
             return Coordinate3D(
-                x: min(Projection.originShift, max(-Projection.originShift, longitude)),
-                y: min(Projection.originShift, max(-Projection.originShift, latitude)),
+                x: min(GISTool.originShift, max(-GISTool.originShift, longitude)),
+                y: min(GISTool.originShift, max(-GISTool.originShift, latitude)),
                 z: altitude,
                 m: m)
 
@@ -288,7 +288,7 @@ extension Coordinate3D {
                 return latitude
             case .epsg4326:
                 var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
-                y *= Projection.originShift / 180.0
+                y *= GISTool.originShift / 180.0
                 return y
             }
 
@@ -297,7 +297,7 @@ extension Coordinate3D {
             case .epsg4326, .noSRID:
                 return latitude
             case .epsg3857:
-                return 180.0 / Double.pi * (2.0 * atan(exp((latitude / Projection.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
+                return 180.0 / Double.pi * (2.0 * atan(exp((latitude / GISTool.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
             }
 
         case .noSRID:
@@ -313,7 +313,7 @@ extension Coordinate3D {
             case .epsg3857, .noSRID:
                 return longitude
             case .epsg4326:
-                return longitude * Projection.originShift / 180.0
+                return longitude * GISTool.originShift / 180.0
             }
 
         case .epsg4326:
@@ -321,7 +321,7 @@ extension Coordinate3D {
             case .epsg4326, .noSRID:
                 return longitude
             case .epsg3857:
-                return (longitude / Projection.originShift) * 180.0
+                return (longitude / GISTool.originShift) * 180.0
             }
 
         case .noSRID:

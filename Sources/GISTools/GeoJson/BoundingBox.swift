@@ -307,10 +307,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: Projection.originShift, y: boundingBox.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
                 if left.contains(coordinate) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -Projection.originShift, y: boundingBox.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
                     northEast: boundingBox.northEast)
                 return right.contains(coordinate)
 
@@ -364,10 +364,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: Projection.originShift, y: boundingBox.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
                 if left.intersects(other) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -Projection.originShift, y: boundingBox.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
                     northEast: boundingBox.northEast)
                 return right.intersects(other)
 
@@ -391,10 +391,10 @@ extension BoundingBox {
             case .epsg3857:
                 let left = BoundingBox(
                     southWest: other.southWest,
-                    northEast: Coordinate3D(x: Projection.originShift, y: other.northEast.latitude))
+                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.latitude))
                 if self.intersects(left) { return true }
                 let right = BoundingBox(
-                    southWest: Coordinate3D(x: -Projection.originShift, y: other.southWest.latitude),
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.latitude),
                     northEast: other.northEast)
                 return self.intersects(right)
 
@@ -508,10 +508,10 @@ extension BoundingBox {
             return self
 
         case .epsg3857:
-            guard northEast.longitude - southWest.longitude < (2 * Projection.originShift) else {
+            guard northEast.longitude - southWest.longitude < (2 * GISTool.originShift) else {
                 return BoundingBox(
-                    southWest: Coordinate3D(x: -Projection.originShift, y: southWest.latitude),
-                    northEast: Coordinate3D(x: Projection.originShift, y: northEast.latitude))
+                    southWest: Coordinate3D(x: -GISTool.originShift, y: southWest.latitude),
+                    northEast: Coordinate3D(x: GISTool.originShift, y: northEast.latitude))
             }
 
             return BoundingBox(
