@@ -6,7 +6,7 @@ import Foundation
 // MARK: BoundingBox
 
 /// A GeoJSON bounding box.
-public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
+public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible, Sendable {
 
     /// A bounding box spanning across the whole world.
     public static var world: BoundingBox {
@@ -213,8 +213,11 @@ public struct BoundingBox: GeoJsonReadable, CustomStringConvertible, Sendable {
 
 extension BoundingBox {
 
+    /// Reproject this bounding box.
     public func projected(to newProjection: Projection) -> BoundingBox {
-        BoundingBox(
+        guard newProjection != projection else { return self }
+
+        return BoundingBox(
             southWest: southWest.projected(to: newProjection),
             northEast: northEast.projected(to: newProjection))
     }

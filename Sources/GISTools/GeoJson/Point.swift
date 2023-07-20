@@ -80,6 +80,22 @@ public struct Point: PointGeometry {
 
 }
 
+// MARK: - Projection
+
+extension Point {
+
+    public func projected(to newProjection: Projection) -> Point {
+        guard newProjection != projection else { return self }
+
+        var point = Point(
+            coordinate.projected(to: newProjection),
+            calculateBoundingBox: (boundingBox != nil))
+        point.foreignMembers = foreignMembers
+        return point
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)

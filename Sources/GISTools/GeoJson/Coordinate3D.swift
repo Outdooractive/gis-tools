@@ -11,7 +11,7 @@ import Foundation
 
 /// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``/``z``)
 /// plus a generic value ``m``.
-public struct Coordinate3D: CustomStringConvertible, Sendable {
+public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
 
     /// A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {
@@ -19,7 +19,7 @@ public struct Coordinate3D: CustomStringConvertible, Sendable {
     }
 
     /// The coordinates projection, either EPSG:4326 or EPSG:3857.
-    let projection: Projection
+    public let projection: Projection
 
     /// The coordinate's `latitude` or `northing`, depending on the projection.
     public var latitude: CLLocationDegrees
@@ -235,8 +235,11 @@ extension Coordinate3D {
 // MARK: - Projection
 
 extension Coordinate3D {
-    
+
+    /// Reproject this coordinate.
     public func projected(to newProjection: Projection) -> Coordinate3D {
+        guard newProjection != projection else { return self }
+
         switch newProjection {
         case .epsg3857:
             switch projection {
@@ -273,7 +276,8 @@ extension Coordinate3D {
                 projection: .noSRID)
         }
     }
-    
+
+    /// Project this coordinate's latitude.
     public func latitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:
@@ -299,6 +303,7 @@ extension Coordinate3D {
         }
     }
 
+    /// Project this coordinate's longitude.
     public func longitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:

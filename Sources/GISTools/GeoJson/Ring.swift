@@ -14,7 +14,7 @@ import Foundation
 /// - A linear ring MUST follow the right-hand rule with respect to the
 ///   area it bounds, i.e., exterior rings are counterclockwise, and
 ///   holes are clockwise.
-public struct Ring: Sendable {
+public struct Ring: Projectable, Sendable {
 
     /// The receivers projection.
     public var projection: Projection {
@@ -35,6 +35,18 @@ public struct Ring: Sendable {
     /// Try to initialize a Ring with some coordinates, don't check the coordinates for validity.
     public init(unchecked coordinates: [Coordinate3D]) {
         self.coordinates = coordinates
+    }
+
+}
+
+// MARK: - Projection
+
+extension Ring {
+
+    public func projected(to newProjection: Projection) -> Ring {
+        guard newProjection != projection else { return self }
+
+        return Ring(unchecked: coordinates.map({ $0.projected(to: newProjection) }))
     }
 
 }

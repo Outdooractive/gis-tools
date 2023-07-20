@@ -114,3 +114,19 @@ extension GeometryCollection: Equatable {
     }
 
 }
+
+// MARK: - Projection
+
+extension GeometryCollection {
+
+    public func projected(to newProjection: Projection) -> GeometryCollection {
+        guard newProjection != projection else { return self }
+
+        var geometryCollection = GeometryCollection(
+            geometries.map({ $0.projected(to: newProjection) }),
+            calculateBoundingBox: (boundingBox != nil))
+        geometryCollection.foreignMembers = foreignMembers
+        return geometryCollection
+    }
+
+}

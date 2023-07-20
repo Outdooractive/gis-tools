@@ -165,6 +165,24 @@ extension Feature: Equatable {
 
 }
 
+// MARK: - Projection
+
+extension Feature {
+
+    public func projected(to newProjection: Projection) -> Feature {
+        guard newProjection != projection else { return self }
+
+        var feature = Feature(
+            geometry.projected(to: newProjection),
+            id: id,
+            properties: properties,
+            calculateBoundingBox: (boundingBox != nil))
+        feature.foreignMembers = foreignMembers
+        return feature
+    }
+
+}
+
 // MARK: - Properties
 
 extension Feature {

@@ -140,6 +140,22 @@ extension LineString {
 
 }
 
+// MARK: - Projection
+
+extension LineString {
+
+    public func projected(to newProjection: Projection) -> LineString {
+        guard newProjection != projection else { return self }
+
+        var lineString = LineString(
+            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
+            calculateBoundingBox: (boundingBox != nil))
+        lineString.foreignMembers = foreignMembers
+        return lineString
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)

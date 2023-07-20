@@ -126,6 +126,22 @@ public struct Polygon: PolygonGeometry, EmptyCreatable {
 
 }
 
+// MARK: - Projection
+
+extension Polygon {
+
+    public func projected(to newProjection: Projection) -> Polygon {
+        guard newProjection != projection else { return self }
+
+        var polygon = Polygon(
+            unchecked: coordinates.map({ $0.map({ $0.projected(to: newProjection) }) }),
+            calculateBoundingBox: (boundingBox != nil))
+        polygon.foreignMembers = foreignMembers
+        return polygon
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)

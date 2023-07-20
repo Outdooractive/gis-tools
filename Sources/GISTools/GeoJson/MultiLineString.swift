@@ -139,6 +139,22 @@ extension MultiLineString {
 
 }
 
+// MARK: - Projection
+
+extension MultiLineString {
+
+    public func projected(to newProjection: Projection) -> MultiLineString {
+        guard newProjection != projection else { return self }
+
+        var lineString = MultiLineString(
+            unchecked: coordinates.map({ $0.map({ $0.projected(to: newProjection) }) }),
+            calculateBoundingBox: (boundingBox != nil))
+        lineString.foreignMembers = foreignMembers
+        return lineString
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)

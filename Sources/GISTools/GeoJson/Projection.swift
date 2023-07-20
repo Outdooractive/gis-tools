@@ -1,6 +1,3 @@
-#if !os(Linux)
-import CoreLocation
-#endif
 import Foundation
 
 // MARK: Projection
@@ -8,7 +5,7 @@ import Foundation
 /// Projections that this library can handle (EPSG:3857 and EPSG:4326).
 public enum Projection: CustomStringConvertible, Sendable {
 
-    /// No SRID (invalid projection)
+    /// No SRID (invalid/unknown projection)
     case noSRID
     /// EPSG:3857 - web mercator
     case epsg3857

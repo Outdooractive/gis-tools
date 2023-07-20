@@ -160,6 +160,22 @@ extension FeatureCollection: Equatable {
 
 }
 
+// MARK: - Projection
+
+extension FeatureCollection {
+
+    public func projected(to newProjection: Projection) -> FeatureCollection {
+        guard newProjection != projection else { return self }
+
+        var featureCollection = FeatureCollection(
+            features.map({ $0.projected(to: newProjection) }),
+            calculateBoundingBox: (boundingBox != nil))
+        featureCollection.foreignMembers = foreignMembers
+        return featureCollection
+    }
+
+}
+
 // MARK: - Features
 
 extension FeatureCollection {
