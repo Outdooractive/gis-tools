@@ -73,30 +73,28 @@ public struct RTree<T: BoundingBoxRepresentable> {
         var objectsWithBoundingBox: [T] = []
         objectsWithBoundingBox.reserveCapacity(objects.count)
 
-        projection = objects.first?.projection ?? .epsg4326
+        projection = objects.first?.projection ?? .noSRID
 
         // Set bounding boxes on all objects
         // Calculate the RTree bounding box
         for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
-            guard let boundingBox = object.boundingBox,
-                  boundingBox.projection == projection
-            else { continue }
+            guard let boundingBox = object.boundingBox?.projected(to: projection) else { continue }
 
             objectsWithBoundingBox.append(object)
 
-            if boundingBox.southWest.longitude < minX {
-                minX = boundingBox.southWest.longitude
+            if boundingBox.southWest.x < minX {
+                minX = boundingBox.southWest.x
             }
-            if boundingBox.southWest.latitude < minY {
-                minY = boundingBox.southWest.latitude
+            if boundingBox.southWest.y < minY {
+                minY = boundingBox.southWest.y
             }
-            if boundingBox.northEast.longitude > maxX {
-                maxX = boundingBox.northEast.longitude
+            if boundingBox.northEast.x > maxX {
+                maxX = boundingBox.northEast.x
             }
-            if boundingBox.northEast.latitude > maxY {
-                maxY = boundingBox.northEast.latitude
+            if boundingBox.northEast.y > maxY {
+                maxY = boundingBox.northEast.y
             }
         }
 
@@ -142,7 +140,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         // Add objects to the tree
         for object in self.objects {
-            guard let boundingBox = object.boundingBox else { return }
+            guard let boundingBox = object.boundingBox?.projected(to: projection) else { return }
 
             indices[position] = position
             boundingBoxes.append(boundingBox)
@@ -171,8 +169,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
         // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
         for i in 0 ..< count {
             let boundingBox = boundingBoxes[i]
-            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.longitude + boundingBox.northEast.longitude) / 2.0 - minX) / width))
-            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.latitude + boundingBox.northEast.latitude) / 2.0 - minY) / height))
+            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.x + boundingBox.northEast.x) / 2.0 - minX) / width))
+            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.y + boundingBox.northEast.y) / 2.0 - minY) / height))
             hilbertValues[i] = RTree.hilbert(x: x, y: y)
         }
 
@@ -208,18 +206,18 @@ public struct RTree<T: BoundingBoxRepresentable> {
                     let boundingBox = boundingBoxes[lowerBound]
                     lowerBound += 1
 
-                    nodeMinX = min(nodeMinX, boundingBox.southWest.longitude)
-                    nodeMinY = min(nodeMinY, boundingBox.southWest.latitude)
-                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.longitude)
-                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.latitude)
+                    nodeMinX = min(nodeMinX, boundingBox.southWest.x)
+                    nodeMinY = min(nodeMinY, boundingBox.southWest.y)
+                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.x)
+                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.y)
                 }
 
                 // Add the new node to the tree data
                 indices[position] = nodeIndex
                 boundingBoxes.append(
                     BoundingBox(
-                        southWest: Coordinate3D(latitude: nodeMinY, longitude: nodeMinX),
-                        northEast: Coordinate3D(latitude: nodeMaxY, longitude: nodeMaxX)))
+                        southWest: Coordinate3D(x: nodeMinX, y: nodeMinY, projection: projection),
+                        northEast: Coordinate3D(x: nodeMaxX, y: nodeMaxY, projection: projection)))
                 position = boundingBoxes.count
             }
         }
@@ -231,11 +229,11 @@ public struct RTree<T: BoundingBoxRepresentable> {
               position == boundingBoxes.count
         else { return searchSerial(inBoundingBox: searchBoundingBox) }
 
-        var result: [T] = []
-
         let searchBoundingBox = searchBoundingBox.projected(to: projection)
 
-        guard !objects.isEmpty,
+        var result: [T] = []
+
+        guard objects.isNotEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -274,11 +272,11 @@ public struct RTree<T: BoundingBoxRepresentable> {
     }
 
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
-        var result: [T] = []
-
         let searchBoundingBox = searchBoundingBox.projected(to: projection)
 
-        guard !objects.isEmpty,
+        var result: [T] = []
+
+        guard objects.isNotEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -308,7 +306,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty else { return result }
+        guard objects.isNotEmpty else { return result }
+
+        let coordinate = coordinate.projected(to: projection)
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
@@ -358,7 +358,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
     {
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty else { return result }
+        guard objects.isNotEmpty else { return result }
+
+        let coordinate = coordinate.projected(to: projection)
 
         for object in objects {
             if let nearest = object.nearestCoordinateOnFeature(from: coordinate),
