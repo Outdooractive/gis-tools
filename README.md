@@ -204,7 +204,7 @@ func encode(to encoder: Encoder) throws
 ```
 
 Example:
-```
+```swift
 let point = Point(jsonString: "{\"type\":\"Point\",\"coordinates\":[100.0,0.0]}")!
 print(point.allCoordinates)
 print(point.asJsonString(prettyPrinted: true)!)
