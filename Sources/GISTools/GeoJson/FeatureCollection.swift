@@ -1,10 +1,17 @@
 import Foundation
 
 /// A GeoJSON `FeatureCollection`.
-public struct FeatureCollection: GeoJson {
+public struct FeatureCollection:
+    GeoJson,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .featureCollection
+    }
+
+    public var projection: Projection {
+        features.first?.projection ?? .noSRID
     }
 
     /// The FeatureCollection's Feature objects.
@@ -17,6 +24,10 @@ public struct FeatureCollection: GeoJson {
     public var boundingBox: BoundingBox?
 
     public var foreignMembers: [String: Any] = [:]
+
+    public init() {
+        self.features = []
+    }
 
     /// Initialize a FeatureCollection with one Feature.
     public init(_ feature: Feature, calculateBoundingBox: Bool = false) {
@@ -75,6 +86,8 @@ public struct FeatureCollection: GeoJson {
     /// This initializer is slightly different to the other initializers
     /// because it will accept any valid GeoJSON object and normalize
     /// it into a FeatureCollection.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson: GeoJson = FeatureCollection.tryCreate(json: json) else { return nil }
         self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
@@ -146,7 +159,24 @@ extension FeatureCollection: Equatable {
         rhs: FeatureCollection)
         -> Bool
     {
-        return lhs.features == rhs.features
+        return lhs.projection == rhs.projection
+            && lhs.features == rhs.features
+    }
+
+}
+
+// MARK: - Projection
+
+extension FeatureCollection {
+
+    public func projected(to newProjection: Projection) -> FeatureCollection {
+        guard newProjection != projection else { return self }
+
+        var featureCollection = FeatureCollection(
+            features.map({ $0.projected(to: newProjection) }),
+            calculateBoundingBox: (boundingBox != nil))
+        featureCollection.foreignMembers = foreignMembers
+        return featureCollection
     }
 
 }
@@ -156,7 +186,11 @@ extension FeatureCollection: Equatable {
 extension FeatureCollection {
 
     /// Insert a Feature into the receiver.
+    ///
+    /// - note: `feature` must be in the same projection as the receiver.
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
+        guard features.count == 0 || projection == feature.projection else { return }
+
         if index < features.count {
             features.insert(feature, at: index)
         }
@@ -170,7 +204,11 @@ extension FeatureCollection {
     }
 
     /// Append a Feature to the receiver.
+    ///
+    /// - note: `feature` must be in the same projection as the receiver.
     public mutating func appendFeature(_ feature: Feature) {
+        guard features.count == 0 || projection == feature.projection else { return }
+
         features.append(feature)
 
         if boundingBox != nil {

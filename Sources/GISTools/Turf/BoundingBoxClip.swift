@@ -28,8 +28,13 @@ extension MultiPoint {
     /// - Returns: A *MultiPoint* with all points inside the bounding box, *nil* if no point was inside the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiPoint? {
         let clipped = coordinates.filter({ boundingBox.contains($0) })
-        guard !clipped.isEmpty else { return nil }
-        return MultiPoint(clipped, calculateBoundingBox: (self.boundingBox != nil))
+        guard clipped.isNotEmpty else { return nil }
+
+        var multiPoint = MultiPoint(
+            clipped,
+            calculateBoundingBox: (self.boundingBox != nil))
+        multiPoint?.foreignMembers = foreignMembers
+        return multiPoint
     }
 
 }
@@ -42,7 +47,13 @@ extension LineString {
     ///
     /// - Returns: The line clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        MultiLineString(boundingBox.clipLine(coordinates: coordinates), calculateBoundingBox: (self.boundingBox != nil))
+        let boundingBox = boundingBox.projected(to: projection)
+
+        var lineString = MultiLineString(
+            boundingBox.clipLine(coordinates: coordinates),
+            calculateBoundingBox: (self.boundingBox != nil))
+        lineString?.foreignMembers = foreignMembers
+        return lineString
     }
 
 }
@@ -55,7 +66,13 @@ extension MultiLineString {
     ///
     /// - Returns: The lines clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
-        MultiLineString(coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }), calculateBoundingBox: (self.boundingBox != nil))
+        let boundingBox = boundingBox.projected(to: projection)
+
+        var lineString = MultiLineString(
+            coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }),
+            calculateBoundingBox: (self.boundingBox != nil))
+        lineString?.foreignMembers = foreignMembers
+        return lineString
     }
 
 }
@@ -68,6 +85,8 @@ extension Polygon {
     ///
     /// - Returns: The polygon clipped to the bounding box, or *nil* if the polygon would be empty.
     public func clipped(to boundingBox: BoundingBox) -> Polygon? {
+        let boundingBox = boundingBox.projected(to: projection)
+
         var result: [Ring] = []
 
         for ring in rings {
@@ -82,9 +101,13 @@ extension Polygon {
             }
         }
 
-        guard !result.isEmpty else { return nil }
+        guard result.isNotEmpty else { return nil }
 
-        return Polygon(result, calculateBoundingBox: (self.boundingBox != nil))
+        var polygon = Polygon(
+            result,
+            calculateBoundingBox: (self.boundingBox != nil))
+        polygon?.foreignMembers = foreignMembers
+        return polygon
     }
 
 }
@@ -97,11 +120,16 @@ extension MultiPolygon {
     ///
     /// - Returns: The polygons clipped to the bounding box, or *nil* if the polygon would be empty.
     public func clipped(to boundingBox: BoundingBox) -> MultiPolygon? {
+        let boundingBox = boundingBox.projected(to: projection)
+
         let clipped = polygons.compactMap({ $0.clipped(to: boundingBox) })
+        guard clipped.isNotEmpty else { return nil }
 
-        guard !clipped.isEmpty else { return nil }
-
-        return MultiPolygon(clipped, calculateBoundingBox: (self.boundingBox != nil))
+        var polygon = MultiPolygon(
+            clipped,
+            calculateBoundingBox: (self.boundingBox != nil))
+        polygon?.foreignMembers = foreignMembers
+        return polygon
     }
 
 }
@@ -114,11 +142,16 @@ extension GeometryCollection {
     ///
     /// - Returns: The *GeometryCollection* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> GeometryCollection? {
+        let boundingBox = boundingBox.projected(to: projection)
+
         let clipped = geometries.compactMap({ $0.clipped(to: boundingBox) })
+        guard clipped.isNotEmpty else { return nil }
 
-        guard !clipped.isEmpty else { return nil }
-
-        return GeometryCollection(clipped, calculateBoundingBox: (self.boundingBox != nil))
+        var geometryCollection = GeometryCollection(
+            clipped,
+            calculateBoundingBox: (self.boundingBox != nil))
+        geometryCollection.foreignMembers = foreignMembers
+        return geometryCollection
     }
 
 }
@@ -152,7 +185,7 @@ extension GeoJsonGeometry {
 
         case let geometryCollection as GeometryCollection:
             let clipped = geometryCollection.geometries.compactMap({ $0.clipped(to: boundingBox) })
-            guard !clipped.isEmpty else { return nil }
+            guard clipped.isNotEmpty else { return nil }
             return GeometryCollection(clipped)
 
         default:
@@ -170,8 +203,16 @@ extension Feature {
     ///
     /// - Returns: The *Feature* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> Feature? {
+        let boundingBox = boundingBox.projected(to: projection)
+
         guard let clipped = geometry.clipped(to: boundingBox) else { return nil }
-        return Feature(clipped, properties: properties, calculateBoundingBox: (self.boundingBox != nil))
+
+        var feature = Feature(
+            clipped,
+            properties: properties,
+            calculateBoundingBox: (self.boundingBox != nil))
+        feature.foreignMembers = foreignMembers
+        return feature
     }
 
 }
@@ -184,11 +225,16 @@ extension FeatureCollection {
     ///
     /// - Returns: The *Feature*s of the *FeatureCollection* clipped to the bounding box, or *nil* if it would be empty.
     public func clipped(to boundingBox: BoundingBox) -> FeatureCollection? {
+        let boundingBox = boundingBox.projected(to: projection)
+
         let clipped = features.compactMap({ $0.clipped(to: boundingBox) })
+        guard clipped.isNotEmpty else { return nil }
 
-        guard !clipped.isEmpty else { return nil }
-
-        return FeatureCollection(clipped, calculateBoundingBox: (self.boundingBox != nil))
+        var featureCollection = FeatureCollection(
+            clipped,
+            calculateBoundingBox: (self.boundingBox != nil))
+        featureCollection.foreignMembers = foreignMembers
+        return featureCollection
     }
 
 }
@@ -310,23 +356,27 @@ extension BoundingBox {
     {
         if edge & 8 != 0 { // top
             return Coordinate3D(
-                latitude: northEast.latitude,
-                longitude: a.longitude + (b.longitude - a.longitude) * (northEast.latitude - a.latitude) / (b.latitude - a.latitude))
+                x: a.x + (b.x - a.x) * (northEast.y - a.y) / (b.y - a.y),
+                y: northEast.y,
+                projection: a.projection)
         }
         else if edge & 4 != 0 { // bottom
             return Coordinate3D(
-                latitude: southWest.latitude,
-                longitude: a.longitude + (b.longitude - a.longitude) * (southWest.latitude - a.latitude) / (b.latitude - a.latitude))
+                x: a.x + (b.x - a.x) * (southWest.y - a.y) / (b.y - a.y),
+                y: southWest.y,
+                projection: a.projection)
         }
         else if edge & 2 != 0 { // right
             return Coordinate3D(
-                latitude: a.latitude + (b.latitude - a.latitude) * (northEast.longitude - a.longitude) / (b.longitude - a.longitude),
-                longitude: northEast.longitude)
+                x: northEast.x,
+                y: a.y + (b.y - a.y) * (northEast.x - a.x) / (b.x - a.x),
+                projection: a.projection)
         }
         else if edge & 1 != 0 { // left
             return Coordinate3D(
-                latitude: a.latitude + (b.latitude - a.latitude) * (southWest.longitude - a.longitude) / (b.longitude - a.longitude),
-                longitude: southWest.longitude)
+                x: southWest.x,
+                y: a.y + (b.y - a.y) * (southWest.x - a.x) / (b.x - a.x),
+                projection: a.projection)
         }
 
         return nil
@@ -341,17 +391,17 @@ extension BoundingBox {
     private func bitCode(for coordinate: Coordinate3D) -> UInt8 {
         var code: UInt8 = 0
 
-        if coordinate.longitude < self.southWest.longitude {
+        if coordinate.x < self.southWest.x {
             code |= 1 // left
         }
-        else if coordinate.longitude > self.northEast.longitude {
+        else if coordinate.x > self.northEast.x {
             code |= 2 // right
         }
 
-        if coordinate.latitude < self.southWest.latitude {
+        if coordinate.y < self.southWest.y {
             code |= 4 // bottom
         }
-        else if coordinate.latitude > self.northEast.latitude {
+        else if coordinate.y > self.northEast.y {
             code |= 8 // top
         }
 

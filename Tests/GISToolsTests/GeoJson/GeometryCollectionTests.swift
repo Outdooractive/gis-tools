@@ -25,6 +25,7 @@ final class GeometryCollectionTests: XCTestCase {
 
         XCTAssertNotNil(geometryCollection)
         XCTAssertEqual(geometryCollection.type, GeoJsonType.geometryCollection)
+        XCTAssertEqual(geometryCollection.projection, .epsg4326)
         XCTAssertEqual(geometryCollection.geometries.count, 2)
         XCTAssertEqual(geometryCollection.foreignMember(for: "other"), "something else")
         XCTAssertEqual(geometryCollection[foreignMember: "other"], "something else")
@@ -36,6 +37,7 @@ final class GeometryCollectionTests: XCTestCase {
         let geometryCollection = GeometryCollection([point, lineString])
         let string = try XCTUnwrap(geometryCollection.asJsonString())
 
+        XCTAssertEqual(geometryCollection.projection, .epsg4326)
         XCTAssert(string.contains("\"type\":\"GeometryCollection\""))
         XCTAssert(string.contains("\"coordinates\":[100,0]"))
         XCTAssert(string.contains("\"coordinates\":[[101,0],[102,1]]"))
@@ -54,6 +56,7 @@ final class GeometryCollectionTests: XCTestCase {
         let geometryCollectionData = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson)?.asJsonData(prettyPrinted: true))
         let geometryCollection = try JSONDecoder().decode(GeometryCollection.self, from: geometryCollectionData)
 
+        XCTAssertEqual(geometryCollection.projection, .epsg4326)
         XCTAssertEqual(geometryCollectionData, geometryCollection.asJsonData(prettyPrinted: true))
     }
 

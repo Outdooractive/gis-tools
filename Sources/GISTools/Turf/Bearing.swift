@@ -19,6 +19,22 @@ extension Coordinate3D {
         final: Bool = false)
         -> CLLocationDegrees
     {
+        switch projection {
+        case .epsg4326:
+            return _bearing(to: other.projected(to: .epsg4326), final: final)
+        case .epsg3857:
+            return projected(to: .epsg4326)._bearing(to: other.projected(to: .epsg4326), final: final)
+        case .noSRID:
+            // TODO
+            return Double.infinity
+        }
+    }
+
+    private func _bearing(
+        to other: Coordinate3D,
+        final: Bool = false)
+        -> CLLocationDegrees
+    {
         if final {
             return Coordinate3D.calculateFinalBearing(from: self, to: other)
         }
@@ -40,7 +56,7 @@ extension Coordinate3D {
         to: Coordinate3D)
         -> CLLocationDegrees
     {
-        let bearing = to.bearing(to: from)
+        let bearing = to._bearing(to: from)
         return (bearing + 180.0).truncatingRemainder(dividingBy: 360.0)
     }
 
@@ -84,42 +100,6 @@ extension Coordinate3D {
         }
 
         return angle
-    }
-
-}
-
-extension ProjectedCoordinate {
-
-    /// Finds the geographic bearing between the receiver and another coordinate, i.e. the angle measured in degrees from the north line (0 degrees).
-    ///
-    /// - Parameters:
-    ///    - other: The end point
-    ///    - final: Calculates the final bearing (optional, default *false*)
-    ///
-    /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
-    public func bearing(
-        to other: ProjectedCoordinate,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
-        coordinate3D.bearing(to: other.coordinate3D, final: final)
-    }
-
-    /// Takes three coordinates and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
-    ///
-    /// - Parameters:
-    ///    - first: The first point in the triangle
-    ///    - middle: The middle point in the triangle
-    ///    - last: The last point in the trianle
-    ///
-    /// - Returns: The angle between the points, between -180 and 180.
-    public static func angleBetween(
-        first: Coordinate3D,
-        middle: Coordinate3D,
-        last: Coordinate3D)
-         -> CLLocationDegrees
-    {
-        Coordinate3D.angleBetween(first: first.coordinate3D, middle: middle.coordinate3D, last: last.coordinate3D)
     }
 
 }

@@ -13,6 +13,8 @@ extension LineSegment {
         clampToEnds: Bool = false)
         -> Coordinate3D?
     {
+        let coordinate = coordinate.projected(to: projection)
+
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
         // avoid inaccuracy for too short distances, as the square line distance is taken as divisor
@@ -43,9 +45,10 @@ extension LineSegment {
         }
 
         return Coordinate3D(
-            latitude: latitude,
-            longitude: longitude,
-            altitude: altitude)
+            x: longitude,
+            y: latitude,
+            z: altitude,
+            projection: projection)
     }
 
 }
@@ -75,6 +78,8 @@ extension LineString {
         -> (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)?
     {
         guard coordinates.count >= 2 else { return nil }
+
+        let other = other.projected(to: projection)
 
         var bestCoordinate: Coordinate3D = coordinates[0]
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude

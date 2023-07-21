@@ -4,9 +4,13 @@ import CoreLocation
 import Foundation
 
 /// A `LineSegment` is a line with exactly two coordinates.
-public struct LineSegment: Sendable {
+public struct LineSegment: Projectable, Sendable {
 
     public var boundingBox: BoundingBox?
+
+    public var projection: Projection {
+        first.projection
+    }
 
     /// The segment's first coordinate.
     public let first: Coordinate3D
@@ -19,6 +23,8 @@ public struct LineSegment: Sendable {
         second: Coordinate3D,
         calculateBoundingBox: Bool = false)
     {
+        assert(first.projection == second.projection, "Can't have different projections")
+
         self.first = first
         self.second = second
 
@@ -34,6 +40,21 @@ extension LineSegment {
     /// The receiver's two coordinates.
     public var coordinates: [Coordinate3D] {
         return [first, second]
+    }
+
+}
+
+// MARK: - Projection
+
+extension LineSegment {
+
+    public func projected(to newProjection: Projection) -> LineSegment {
+        guard newProjection != projection else { return self }
+
+        return LineSegment(
+            first: first.projected(to: newProjection),
+            second: second.projected(to: newProjection),
+            calculateBoundingBox: (boundingBox != nil))
     }
 
 }

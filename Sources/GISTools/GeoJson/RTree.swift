@@ -5,8 +5,6 @@ import Foundation
 
 // This is a port from https://github.com/mourner/flatbush
 
-// MARK: RTreeSortOption
-
 /// Options for how to build the tree with different performance characteristics/tradeoffs.
 public enum RTreeSortOption: Sendable {
 
@@ -37,6 +35,9 @@ public enum RTreeSortOption: Sendable {
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
 public struct RTree<T: BoundingBoxRepresentable> {
 
+    /// The R-Tree's `projection`.
+    public let projection: Projection
+
     /// The indexed objects.
     public let objects: [T]
     /// The number of elements in the RTree.
@@ -57,8 +58,8 @@ public struct RTree<T: BoundingBoxRepresentable> {
     /// The R-Tree's bounding box.
     public var boundingBox: BoundingBox {
         BoundingBox(
-            southWest: Coordinate3D(latitude: minY, longitude: minX),
-            northEast: Coordinate3D(latitude: maxY, longitude: maxX))
+            southWest: Coordinate3D(x: minX, y: minY, projection: projection),
+            northEast: Coordinate3D(x: maxX, y: maxY, projection: projection))
     }
 
     /// Create a new R-Tree from `objects`.
@@ -70,26 +71,28 @@ public struct RTree<T: BoundingBoxRepresentable> {
         var objectsWithBoundingBox: [T] = []
         objectsWithBoundingBox.reserveCapacity(objects.count)
 
+        projection = objects.first?.projection ?? .noSRID
+
         // Set bounding boxes on all objects
         // Calculate the RTree bounding box
         for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
-            guard let boundingBox = object.boundingBox else { continue }
+            guard let boundingBox = object.boundingBox?.projected(to: projection) else { continue }
 
             objectsWithBoundingBox.append(object)
 
-            if boundingBox.southWest.longitude < minX {
-                minX = boundingBox.southWest.longitude
+            if boundingBox.southWest.x < minX {
+                minX = boundingBox.southWest.x
             }
-            if boundingBox.southWest.latitude < minY {
-                minY = boundingBox.southWest.latitude
+            if boundingBox.southWest.y < minY {
+                minY = boundingBox.southWest.y
             }
-            if boundingBox.northEast.longitude > maxX {
-                maxX = boundingBox.northEast.longitude
+            if boundingBox.northEast.x > maxX {
+                maxX = boundingBox.northEast.x
             }
-            if boundingBox.northEast.latitude > maxY {
-                maxY = boundingBox.northEast.latitude
+            if boundingBox.northEast.y > maxY {
+                maxY = boundingBox.northEast.y
             }
         }
 
@@ -135,7 +138,7 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         // Add objects to the tree
         for object in self.objects {
-            guard let boundingBox = object.boundingBox else { return }
+            guard let boundingBox = object.boundingBox?.projected(to: projection) else { return }
 
             indices[position] = position
             boundingBoxes.append(boundingBox)
@@ -150,73 +153,15 @@ public struct RTree<T: BoundingBoxRepresentable> {
         buildTree()
     }
 
-    private mutating func sortByHilbertValue() {
-        assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
+}
 
-        var width = maxX - minX
-        var height = maxY - minY
-        if width == 0.0 { width = 1.0 }
-        if height == 0.0 { height = 1.0 }
+// MARK: - Search
 
-        var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
-        let hilbertMax = Double((1 << 16) - 1)
+extension RTree {
 
-        // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
-        for i in 0 ..< count {
-            let boundingBox = boundingBoxes[i]
-            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.longitude + boundingBox.northEast.longitude) / 2.0 - minX) / width))
-            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.latitude + boundingBox.northEast.latitude) / 2.0 - minY) / height))
-            hilbertValues[i] = RTree.hilbert(x: x, y: y)
-        }
-
-        // Sort items by their Hilbert value (for packing later)
-        RTree.sort(
-            hilbertValues: &hilbertValues,
-            boundingBoxes: &boundingBoxes,
-            indices: &indices,
-            low: 0,
-            high: count - 1,
-            nodeSize: nodeSize)
-    }
-
-    // Generate nodes at each tree level, bottom-up
-    private mutating func buildTree() {
-        var lowerBound = 0
-        for i in 0 ..< levelBounds.count - 1 {
-            let upperBound = levelBounds[i]
-
-            // Generate a parent node for each block of consecutive <nodeSize> nodes
-            while lowerBound < upperBound {
-                let nodeIndex = lowerBound
-
-                // calculate bbox for the new node
-                var nodeMinX = Double.infinity
-                var nodeMinY = Double.infinity
-                var nodeMaxX = -Double.infinity
-                var nodeMaxY = -Double.infinity
-
-                for _ in 0 ..< nodeSize {
-                    guard lowerBound < upperBound else { break }
-
-                    let boundingBox = boundingBoxes[lowerBound]
-                    lowerBound += 1
-
-                    nodeMinX = min(nodeMinX, boundingBox.southWest.longitude)
-                    nodeMinY = min(nodeMinY, boundingBox.southWest.latitude)
-                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.longitude)
-                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.latitude)
-                }
-
-                // Add the new node to the tree data
-                indices[position] = nodeIndex
-                boundingBoxes.append(
-                    BoundingBox(
-                        southWest: Coordinate3D(latitude: nodeMinY, longitude: nodeMinX),
-                        northEast: Coordinate3D(latitude: nodeMaxY, longitude: nodeMaxX)))
-                position = boundingBoxes.count
-            }
-        }
-    }
+    public typealias AroundSearchResult = (
+        object: T,
+        distance: CLLocationDistance)
 
     /// Search for objects inside a bounding box.
     public func search(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
@@ -224,9 +169,11 @@ public struct RTree<T: BoundingBoxRepresentable> {
               position == boundingBoxes.count
         else { return searchSerial(inBoundingBox: searchBoundingBox) }
 
+        let searchBoundingBox = searchBoundingBox.projected(to: projection)
+
         var result: [T] = []
 
-        guard !objects.isEmpty,
+        guard objects.isNotEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -265,9 +212,11 @@ public struct RTree<T: BoundingBoxRepresentable> {
     }
 
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
+        let searchBoundingBox = searchBoundingBox.projected(to: projection)
+
         var result: [T] = []
 
-        guard !objects.isEmpty,
+        guard objects.isNotEmpty,
               searchBoundingBox.intersects(boundingBox)
         else { return result }
 
@@ -279,10 +228,6 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         return result
     }
-
-    public typealias AroundSearchResult = (
-        object: T,
-        distance: CLLocationDistance)
 
     /// Search for objects around a coordinate.
     public func search(
@@ -297,9 +242,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty,
-              boundingBox.intersects(self.boundingBox)
-        else { return result }
+        guard objects.isNotEmpty else { return result }
+
+        let coordinate = coordinate.projected(to: projection)
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
@@ -349,9 +294,9 @@ public struct RTree<T: BoundingBoxRepresentable> {
     {
         var result: [AroundSearchResult] = []
 
-        guard !objects.isEmpty,
-              boundingBox.intersects(self.boundingBox)
-        else { return result }
+        guard objects.isNotEmpty else { return result }
+
+        let coordinate = coordinate.projected(to: projection)
 
         for object in objects {
             if let nearest = object.nearestCoordinateOnFeature(from: coordinate),
@@ -370,7 +315,77 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
 }
 
+// MARK: - Private
+
 extension RTree {
+
+    // Generate nodes at each tree level, bottom-up
+    private mutating func buildTree() {
+        var lowerBound = 0
+        for i in 0 ..< levelBounds.count - 1 {
+            let upperBound = levelBounds[i]
+
+            // Generate a parent node for each block of consecutive <nodeSize> nodes
+            while lowerBound < upperBound {
+                let nodeIndex = lowerBound
+
+                // calculate bbox for the new node
+                var nodeMinX = Double.infinity
+                var nodeMinY = Double.infinity
+                var nodeMaxX = -Double.infinity
+                var nodeMaxY = -Double.infinity
+
+                for _ in 0 ..< nodeSize {
+                    guard lowerBound < upperBound else { break }
+
+                    let boundingBox = boundingBoxes[lowerBound]
+                    lowerBound += 1
+
+                    nodeMinX = min(nodeMinX, boundingBox.southWest.x)
+                    nodeMinY = min(nodeMinY, boundingBox.southWest.y)
+                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.x)
+                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.y)
+                }
+
+                // Add the new node to the tree data
+                indices[position] = nodeIndex
+                boundingBoxes.append(
+                    BoundingBox(
+                        southWest: Coordinate3D(x: nodeMinX, y: nodeMinY, projection: projection),
+                        northEast: Coordinate3D(x: nodeMaxX, y: nodeMaxY, projection: projection)))
+                position = boundingBoxes.count
+            }
+        }
+    }
+
+    private mutating func sortByHilbertValue() {
+        assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
+
+        var width = maxX - minX
+        var height = maxY - minY
+        if width == 0.0 { width = 1.0 }
+        if height == 0.0 { height = 1.0 }
+
+        var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
+        let hilbertMax = Double((1 << 16) - 1)
+
+        // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
+        for i in 0 ..< count {
+            let boundingBox = boundingBoxes[i]
+            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.x + boundingBox.northEast.x) / 2.0 - minX) / width))
+            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.y + boundingBox.northEast.y) / 2.0 - minY) / height))
+            hilbertValues[i] = RTree.hilbert(x: x, y: y)
+        }
+
+        // Sort items by their Hilbert value (for packing later)
+        RTree.sort(
+            hilbertValues: &hilbertValues,
+            boundingBoxes: &boundingBoxes,
+            indices: &indices,
+            low: 0,
+            high: count - 1,
+            nodeSize: nodeSize)
+    }
 
     // Custom quicksort that partially sorts bbox data alongside the hilbert values
     private static func sort(

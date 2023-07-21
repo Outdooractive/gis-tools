@@ -46,6 +46,10 @@ public struct Feature: GeoJson {
         return .feature
     }
 
+    public var projection: Projection {
+        geometry.projection
+    }
+
     /// An arbitrary identifier.
     public var id: Identifier?
 
@@ -151,11 +155,30 @@ extension Feature: Equatable {
         rhs: Feature)
         -> Bool
     {
-        return lhs.geometry.isEqualTo(rhs.geometry)
+        return lhs.projection == rhs.projection
+            && lhs.geometry.isEqualTo(rhs.geometry)
             && lhs.id == rhs.id
             && lhs.properties.keys == rhs.properties.keys
         // TODO
 //            && lhs.properties == rhs.properties
+    }
+
+}
+
+// MARK: - Projection
+
+extension Feature {
+
+    public func projected(to newProjection: Projection) -> Feature {
+        guard newProjection != projection else { return self }
+
+        var feature = Feature(
+            geometry.projected(to: newProjection),
+            id: id,
+            properties: properties,
+            calculateBoundingBox: (boundingBox != nil))
+        feature.foreignMembers = foreignMembers
+        return feature
     }
 
 }
@@ -170,6 +193,8 @@ extension Feature {
     }
 
     /// Set a property key/value pair.
+    ///
+    /// - important: `value` must be a valid JSON object or serialization will fail.
     public mutating func setProperty(_ value: Any?, for key: String) {
         var updatedProperties = properties
         updatedProperties[key] = value

@@ -20,6 +20,8 @@ extension PointGeometry {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
+        let other = other.projected(to: projection)
+
         guard !isEqualTo(other) else { return false }
 
         if let point = self as? Point {
@@ -61,6 +63,8 @@ extension LineStringGeometry {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
+        let other = other.projected(to: projection)
+
         guard !isEqualTo(other) else { return false }
 
         let tree: RTree<LineSegment> = RTree(lineSegments)
@@ -95,6 +99,8 @@ extension PolygonGeometry {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
+        let other = other.projected(to: projection)
+
         guard !isEqualTo(other) else { return false }
 
         let tree: RTree<LineSegment> = RTree(lineSegments)
@@ -129,6 +135,8 @@ extension Feature {
         tolerance: CLLocationDegrees = 0.0)
         -> Bool
     {
+        let other = other.projected(to: projection)
+
         if let first = self.geometry as? PointGeometry,
            let second = other.geometry as? PointGeometry
         {

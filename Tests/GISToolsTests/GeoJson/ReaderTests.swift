@@ -15,7 +15,8 @@ final class ReaderTests: XCTestCase {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
         let someGeoJson = try XCTUnwrap(GeoJsonReader.geoJsonFrom(json: point.asJson))
 
-        XCTAssertTrue(someGeoJson.type == .point)
+        XCTAssertEqual(someGeoJson.type, .point)
+        XCTAssertEqual(someGeoJson.projection, .epsg4326)
 
         let castedPoint = try XCTUnwrap(someGeoJson as? Point)
 
@@ -25,7 +26,8 @@ final class ReaderTests: XCTestCase {
     func testLoadString() throws {
         let someGeoJson = try XCTUnwrap(GeoJsonReader.geoJsonFrom(jsonString: pointJson))
 
-        XCTAssertTrue(someGeoJson.type == .point)
+        XCTAssertEqual(someGeoJson.type, .point)
+        XCTAssertEqual(someGeoJson.projection, .epsg4326)
 
         let point = try XCTUnwrap(Point(jsonString: pointJson))
         let castedPoint = try XCTUnwrap(someGeoJson as? Point)

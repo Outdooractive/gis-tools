@@ -10,6 +10,10 @@ public struct Point: PointGeometry {
         return .point
     }
 
+    public var projection: Projection {
+        coordinate.projection
+    }
+
     /// The receiver's coordinate.
     public let coordinate: Coordinate3D
 
@@ -76,6 +80,22 @@ public struct Point: PointGeometry {
 
 }
 
+// MARK: - Projection
+
+extension Point {
+
+    public func projected(to newProjection: Projection) -> Point {
+        guard newProjection != projection else { return self }
+
+        var point = Point(
+            coordinate.projected(to: newProjection),
+            calculateBoundingBox: (boundingBox != nil))
+        point.foreignMembers = foreignMembers
+        return point
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)
@@ -115,7 +135,8 @@ extension Point: Equatable {
         rhs: Point)
         -> Bool
     {
-        return lhs.coordinate == rhs.coordinate
+        return lhs.projection == rhs.projection
+            && lhs.coordinate == rhs.coordinate
     }
 
 }

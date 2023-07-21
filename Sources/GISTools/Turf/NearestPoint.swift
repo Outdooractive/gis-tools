@@ -41,6 +41,8 @@ extension GeoJson {
         from other: Coordinate3D)
         -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
     {
+        let other = other.projected(to: projection)
+
         let allCordinates = self.allCoordinates
         guard !allCordinates.isEmpty else { return nil }
 

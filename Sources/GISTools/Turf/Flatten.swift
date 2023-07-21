@@ -11,31 +11,37 @@ extension GeoJson {
         case let point as Point:
             var featureCollection = FeatureCollection([point])
             featureCollection.boundingBox = point.boundingBox
+            featureCollection.foreignMembers = point.foreignMembers
             return featureCollection
 
         case let multiPoint as MultiPoint:
             var featureCollection = FeatureCollection(multiPoint.points)
             featureCollection.boundingBox = multiPoint.boundingBox
+            featureCollection.foreignMembers = multiPoint.foreignMembers
             return featureCollection
 
         case let lineString as LineString:
             var featureCollection = FeatureCollection([lineString])
             featureCollection.boundingBox = lineString.boundingBox
+            featureCollection.foreignMembers = lineString.foreignMembers
             return featureCollection
 
         case let multiLineString as MultiLineString:
             var featureCollection = FeatureCollection(multiLineString.lineStrings)
             featureCollection.boundingBox = multiLineString.boundingBox
+            featureCollection.foreignMembers = multiLineString.foreignMembers
             return featureCollection
 
         case let polygon as Polygon:
             var featureCollection = FeatureCollection([polygon])
             featureCollection.boundingBox = polygon.boundingBox
+            featureCollection.foreignMembers = polygon.foreignMembers
             return featureCollection
 
         case let multiPolygon as MultiPolygon:
             var featureCollection = FeatureCollection(multiPolygon.polygons)
             featureCollection.boundingBox = multiPolygon.boundingBox
+            featureCollection.foreignMembers = multiPolygon.foreignMembers
             return featureCollection
 
         case let geometryCollection as GeometryCollection:
@@ -55,6 +61,7 @@ extension GeoJson {
             })
             var featureCollection = FeatureCollection(features)
             featureCollection.boundingBox = geometryCollection.boundingBox
+            featureCollection.foreignMembers = geometryCollection.foreignMembers
             return featureCollection
 
         case let feature as Feature:
@@ -72,6 +79,7 @@ extension GeoJson {
                 featureCollection = FeatureCollection(feature)
             }
             featureCollection.boundingBox = feature.boundingBox
+            featureCollection.foreignMembers = feature.foreignMembers
             return featureCollection
 
         case let featureCollection as FeatureCollection:
@@ -91,6 +99,7 @@ extension GeoJson {
             })
             var newFeatureCollection = FeatureCollection(features)
             newFeatureCollection.boundingBox = featureCollection.boundingBox
+            newFeatureCollection.foreignMembers = featureCollection.foreignMembers
             return newFeatureCollection
 
         default:

@@ -46,6 +46,10 @@ extension Ring {
     /// Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
     /// Laboratory, Pasadena, CA, June 2007 https://trs.jpl.nasa.gov/handle/2014/41271
     public var area: Double {
+        let coordinates = projection == .epsg4326
+            ? self.coordinates
+            : self.coordinates.map({ $0.projected(to: .epsg4326) })
+
         var area: Double = 0.0
         let coordinatesCount = coordinates.count
 

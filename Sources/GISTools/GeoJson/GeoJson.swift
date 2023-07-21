@@ -28,10 +28,11 @@ public enum GeoJsonType: String {
 
 /// The base protocol that all GeoJSON objects conform to.
 public protocol GeoJson:
-    GeoJsonConvertible,
-    Codable,
     BoundingBoxRepresentable,
+    GeoJsonConvertible,
+    Projectable,
     ValidatableGeoJson,
+    Codable,
     CustomDebugStringConvertible
 {
 
@@ -43,9 +44,12 @@ public protocol GeoJson:
 
     /// Any foreign members, i.e. keys in the JSON that are
     /// not part of the GeoJSON standard.
+    /// - important: `values` must be a valid JSON objects or serialization will fail.
     var foreignMembers: [String: Any] { get set }
 
     /// Try to initialize a GeoJSON object from any JSON and calculate a bounding box if necessary.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     init?(json: Any?, calculateBoundingBox: Bool)
 
     /// Type erased equality check.
@@ -66,6 +70,8 @@ extension GeoJson where Self: Equatable {
 extension GeoJson {
 
     /// The receiver as a pretty printed JSON string representation.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var debugDescription: String {
         let json = self.asJson
 
@@ -89,6 +95,8 @@ extension GeoJson {
     }
 
     /// Set a foreign member key/value pair.
+    ///
+    /// - important: `value` must be a valid JSON object or serialization will fail.
     public mutating func setForeignMember(_ value: Any?, for key: String) {
         var updatedProperties = foreignMembers
         updatedProperties[key] = value

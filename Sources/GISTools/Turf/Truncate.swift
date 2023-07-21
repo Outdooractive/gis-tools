@@ -14,13 +14,16 @@ extension Coordinate3D {
     ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
     public func truncated(
         precision: Int = 6,
-        removeAltitude: Bool = false)
+        removeAltitude: Bool = false,
+        removeM: Bool = false)
         -> Coordinate3D
     {
         Coordinate3D(
-            latitude: latitude.rounded(precision: precision),
-            longitude: longitude.rounded(precision: precision),
-            altitude: (removeAltitude ? nil : altitude?.rounded(precision: precision)))
+            x: longitude.rounded(precision: precision),
+            y: latitude.rounded(precision: precision),
+            z: (removeAltitude ? nil : altitude?.rounded(precision: precision)),
+            m: (removeM ? nil : m),
+            projection: projection)
     }
 
     /// Truncates the precision of the coordinate.

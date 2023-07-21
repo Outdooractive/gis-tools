@@ -18,6 +18,7 @@ final class LineStringTests: XCTestCase {
         let lineString = try XCTUnwrap(LineString(jsonString: lineStringJson))
 
         XCTAssertEqual(lineString.type, GeoJsonType.lineString)
+        XCTAssertEqual(lineString.projection, .epsg4326)
         XCTAssertEqual(lineString.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
         XCTAssertEqual(lineString.foreignMember(for: "other"), "something else")
         XCTAssertEqual(lineString[foreignMember: "other"], "something else")
@@ -27,6 +28,7 @@ final class LineStringTests: XCTestCase {
         let lineString = try XCTUnwrap(LineString([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)]))
         let string = try XCTUnwrap(lineString.asJsonString())
 
+        XCTAssertEqual(lineString.projection, .epsg4326)
         XCTAssert(string.contains("\"type\":\"LineString\""))
         XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
@@ -62,6 +64,7 @@ final class LineStringTests: XCTestCase {
         let lineStringData = try XCTUnwrap(LineString(jsonString: lineStringJson)?.asJsonData(prettyPrinted: true))
         let lineString = try JSONDecoder().decode(LineString.self, from: lineStringData)
 
+        XCTAssertEqual(lineString.projection, .epsg4326)
         XCTAssertEqual(lineStringData, lineString.asJsonData(prettyPrinted: true))
     }
 

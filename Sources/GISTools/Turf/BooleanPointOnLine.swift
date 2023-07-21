@@ -10,6 +10,8 @@ extension LineSegment {
 
     /// Tests if *Coordinate3D* is on the segment.
     public func checkIsOnSegment(_ coordinate: Coordinate3D) -> Bool {
+        let coordinate = coordinate.projected(to: projection)
+
         let ab = sqrt((second.longitude - first.longitude) * (second.longitude - first.longitude)
             + (second.latitude - first.latitude) * (second.latitude - first.latitude))
         let ap = sqrt((coordinate.longitude - first.longitude) * (coordinate.longitude - first.longitude)

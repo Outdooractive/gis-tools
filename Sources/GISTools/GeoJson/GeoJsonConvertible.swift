@@ -1,16 +1,16 @@
 import Foundation
 
-// MARK: - GeoJsonConvertible
-
 /// A protocol for GeoJSON objects that can be read from and written to JSON.
 public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
-// MARK: GeoJsonReadable
+// MARK: - GeoJsonReadable
 
 /// A protocol for GeoJSON objects that can be read/parsed from JSON.
 public protocol GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from any JSON.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     init?(json: Any?)
 
 }
@@ -18,18 +18,24 @@ public protocol GeoJsonReadable {
 extension GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from a file.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
         self.init(jsonData: data)
     }
 
     /// Try to initialize a GeoJSON object from a data object.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonData: Data) {
         guard let json = try? JSONSerialization.jsonObject(with: jsonData) else { return nil }
         self.init(json: json)
     }
 
     /// Try to initialize a GeoJSON object from a string.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonString: String) {
         guard let data = jsonString.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data)
@@ -45,6 +51,8 @@ extension GeoJsonReadable {
 public protocol GeoJsonWritable {
 
     /// Return the GeoJson object as Key/Value pairs.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     var asJson: [String: Any] { get }
 
 }
@@ -52,6 +60,8 @@ public protocol GeoJsonWritable {
 extension GeoJsonWritable {
 
     /// Dump the object as JSON data.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
@@ -63,6 +73,8 @@ extension GeoJsonWritable {
     }
 
     /// Dump the object as a JSON string.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 
@@ -70,6 +82,8 @@ extension GeoJsonWritable {
     }
 
     /// Write the object in it's JSON represenation to a file.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func write(to url: URL, prettyPrinted: Bool = false) throws {
         try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
     }
@@ -82,6 +96,8 @@ extension GeoJsonWritable {
 extension Sequence where Self.Iterator.Element: GeoJsonWritable {
 
     /// Returns all elements as an array of JSON objects
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [[String: Any]] {
         return self.map({ $0.asJson })
     }

@@ -25,6 +25,7 @@ extension LineSegment {
         tolerance: CLLocationDistance = 0.0)
         -> LineSegmentComparisonResult
     {
+        let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 
         if (first == other.first && second == other.second)
@@ -70,6 +71,7 @@ extension GeoJson {
         tolerance: CLLocationDistance = 0.0)
         -> [LineSegment]
     {
+        let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 
         var result: [LineSegment] = []

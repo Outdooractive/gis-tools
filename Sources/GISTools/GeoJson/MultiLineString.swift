@@ -4,10 +4,17 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `MultiLineString` object.
-public struct MultiLineString: LineStringGeometry, EmptyCreatable {
+public struct MultiLineString:
+    LineStringGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .multiLineString
+    }
+
+    public var projection: Projection {
+        coordinates.first?.first?.projection ?? .noSRID
     }
 
     /// The MultiLineString's coordinates.
@@ -135,6 +142,22 @@ extension MultiLineString {
 
 }
 
+// MARK: - Projection
+
+extension MultiLineString {
+
+    public func projected(to newProjection: Projection) -> MultiLineString {
+        guard newProjection != projection else { return self }
+
+        var lineString = MultiLineString(
+            unchecked: coordinates.map({ $0.map({ $0.projected(to: newProjection) }) }),
+            calculateBoundingBox: (boundingBox != nil))
+        lineString.foreignMembers = foreignMembers
+        return lineString
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)
@@ -180,7 +203,8 @@ extension MultiLineString: Equatable {
         rhs: MultiLineString)
         -> Bool
     {
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }

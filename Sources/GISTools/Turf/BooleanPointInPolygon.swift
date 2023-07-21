@@ -19,6 +19,8 @@ extension Ring {
         ignoreBoundary: Bool = false)
         -> Bool
     {
+        let coordinate = coordinate.projected(to: projection)
+
         var isInside = false
 
         var coordinatesCount = coordinates.count

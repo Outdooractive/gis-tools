@@ -4,10 +4,17 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `MultiPolygon` object.
-public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
+public struct MultiPolygon:
+    PolygonGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .multiPolygon
+    }
+
+    public var projection: Projection {
+        coordinates.first?.first?.first?.projection ?? .noSRID
     }
 
     /// The receiver's coordinates.
@@ -106,6 +113,22 @@ public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
 
 }
 
+// MARK: - Projection
+
+extension MultiPolygon {
+
+    public func projected(to newProjection: Projection) -> MultiPolygon {
+        guard newProjection != projection else { return self }
+
+        var polygon = MultiPolygon(
+            unchecked: coordinates.map({ $0.map({ $0.map({ $0.projected(to: newProjection) }) }) }),
+            calculateBoundingBox: (boundingBox != nil))
+        polygon.foreignMembers = foreignMembers
+        return polygon
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)
@@ -151,7 +174,8 @@ extension MultiPolygon: Equatable {
         -> Bool
     {
         // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }

@@ -1,9 +1,10 @@
 import Foundation
 
-// MARK: BoundingBoxRepresentable
-
 /// GeoJSON objects that may have a bounding box.
 public protocol BoundingBoxRepresentable {
+
+    /// The GeoJSON's projection.
+    var projection: Projection { get }
 
     /// The receiver's bounding box.
     var boundingBox: BoundingBox? { get set }
@@ -23,6 +24,8 @@ public protocol BoundingBoxRepresentable {
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool
 
 }
+
+// MARK: -
 
 extension BoundingBoxRepresentable {
 

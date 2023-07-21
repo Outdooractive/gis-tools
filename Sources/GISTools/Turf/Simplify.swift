@@ -163,7 +163,7 @@ public enum Simplify {
     /// - Returns: Returns an array of simplified coordinates
     public static func simplify(
         coordinates: [Coordinate3D],
-        tolerance: CLLocationDegrees = 1.0,
+        tolerance: CLLocationDegrees,
         highQuality: Bool = false)
         -> [Coordinate3D]
     {
@@ -193,13 +193,22 @@ public enum Simplify {
               let firstCoordinate = coordinates.first
         else { return coordinates }
 
-        let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
-        let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
+        switch firstCoordinate.projection {
+        case .epsg3857, .noSRID:
+            return simplify(
+                coordinates: coordinates,
+                tolerance: toleranceInMeters,
+                highQuality: highQuality)
 
-        return simplify(
-            coordinates: coordinates,
-            tolerance: toleranceInDegrees,
-            highQuality: highQuality)
+        case .epsg4326:
+            let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
+            let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
+
+            return simplify(
+                coordinates: coordinates,
+                tolerance: toleranceInDegrees,
+                highQuality: highQuality)
+        }
     }
 
     // simplification using Ramer-Douglas-Peucker algorithm

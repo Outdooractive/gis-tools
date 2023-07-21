@@ -4,10 +4,17 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `MultiPoint` object.
-public struct MultiPoint: PointGeometry, EmptyCreatable {
+public struct MultiPoint:
+    PointGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .multiPoint
+    }
+
+    public var projection: Projection {
+        coordinates.first?.projection ?? .noSRID
     }
 
     /// The receiver's coordinates.
@@ -103,6 +110,22 @@ public struct MultiPoint: PointGeometry, EmptyCreatable {
 
 }
 
+// MARK: - Projection
+
+extension MultiPoint {
+
+    public func projected(to newProjection: Projection) -> MultiPoint {
+        guard newProjection != projection else { return self }
+
+        var multiPoint = MultiPoint(
+            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
+            calculateBoundingBox: (boundingBox != nil))
+        multiPoint.foreignMembers = foreignMembers
+        return multiPoint
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)
@@ -147,7 +170,8 @@ extension MultiPoint: Equatable {
         rhs: MultiPoint)
         -> Bool
     {
-        return lhs.coordinates == rhs.coordinates
+        return lhs.projection == rhs.projection
+            && lhs.coordinates == rhs.coordinates
     }
 
 }
