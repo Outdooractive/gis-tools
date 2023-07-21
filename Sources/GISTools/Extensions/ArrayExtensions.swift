@@ -121,8 +121,11 @@ extension Array {
 
     /// Returns the array's elements pairwise, with every element only once in the result.
     /// For arrays with uneven length, the last element will be skipped.
+    ///
+    /// ```
     /// let a = [1, 2, 3, 4, 5]
     /// a.distinctPairs() -> [(1, 2), (3, 4)]
+    /// ```
     func distinctPairs() -> [(first: Element, second: Element)] {
         guard !isEmpty else { return [] }
 
@@ -133,8 +136,11 @@ extension Array {
     }
 
     /// Returns the array's elements pairwise, where each pair overlaps the previous pair.
+    ///
+    /// ```
     /// let a = [1, 2, 3, 4, 5]
     /// a.overlappingPairs() -> [(1, 2), (2, 3), (3, 4), (4, 5)]
+    /// ```
     func overlappingPairs() -> [(first: Element, second: Element)] {
         guard !isEmpty else { return [] }
 
@@ -169,6 +175,7 @@ extension Array {
         return self
     }
 
+    /// A Boolean value indicating whether the collection is not empty.
     var isNotEmpty: Bool {
         !isEmpty
     }

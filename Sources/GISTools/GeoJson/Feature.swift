@@ -193,6 +193,8 @@ extension Feature {
     }
 
     /// Set a property key/value pair.
+    ///
+    /// - important: `value` must be a valid JSON object or serialization will fail.
     public mutating func setProperty(_ value: Any?, for key: String) {
         var updatedProperties = properties
         updatedProperties[key] = value

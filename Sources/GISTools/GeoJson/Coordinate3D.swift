@@ -7,18 +7,22 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: Coordinate3D
+// MARK: -
 
 /// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``/``z``)
 /// plus a generic value ``m``.
-public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
+public struct Coordinate3D:
+    Projectable,
+    CustomStringConvertible,
+    Sendable
+{
 
     /// A coordinate at (0.0, 0.0) aka Null Island.
     public static var zero: Coordinate3D {
         Coordinate3D(latitude: 0.0, longitude: 0.0)
     }
 
-    /// The coordinates projection, either EPSG:4326 or EPSG:3857.
+    /// The coordinates projection.
     public let projection: Projection
 
     /// The coordinate's `latitude` or `northing`, depending on the projection.
@@ -45,7 +49,7 @@ public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
     public var y: Double { latitude }
 
     /// Create a coordinate with ``latitude`` and ``longitude``.
-    /// Projection will be EPSG:4326.
+    /// Projection will be *EPSG:4326*.
     public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
         self.projection = .epsg4326
         self.latitude = latitude
@@ -55,7 +59,7 @@ public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
     }
 
     /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
-    /// Projection will be EPSG:4326.
+    /// Projection will be *EPSG:4326*.
     public init(
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
@@ -70,7 +74,7 @@ public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
     }
 
     /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
-    /// Default projection will we EPSG:3857 but can be overridden.
+    /// Default projection will we *EPSG:3857* but can be overridden.
     public init(
         x: Double,
         y: Double,
@@ -90,7 +94,7 @@ public struct Coordinate3D: Projectable, CustomStringConvertible, Sendable {
         latitude == 0.0 && longitude == 0.0
     }
 
-    /// A textual representation of the receiver.
+    /// A textual representation of the coordinate.
     public var description: String {
         var compontents: [String] = [
             "\(projection == .epsg4326 ? "longitude" : "x"): \(longitude)",
@@ -160,6 +164,8 @@ extension Coordinate3D {
 }
 #endif
 
+// MARK: - Helpers
+
 extension Coordinate3D {
 
     /// Clamped to [-180.0, 180.0].
@@ -192,10 +198,6 @@ extension Coordinate3D {
             return self
         }
     }
-
-}
-
-extension Coordinate3D {
 
     /// Clamped to [[-180,-90], [180,90]]
     public mutating func clamp() {
@@ -341,6 +343,7 @@ extension Coordinate3D: GeoJsonReadable {
     ///         uses CRS:84 that specifies coordinates in longitude/latitude order.
     /// - Important: The third value will always be ``altitude``, the fourth value
     ///              will be ``m`` if it exists.
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         guard let pointArray = json as? [Double],
               pointArray.count >= 2
@@ -361,6 +364,7 @@ extension Coordinate3D: GeoJsonReadable {
     ///
     /// - Important: The output array will contain ``m`` only if this coordinate
     ///              also contains ``altitude`` to prevent any disambiguity.
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [Double] {
         var result: [Double] = (projection == .epsg4326 || projection == .noSRID
             ? [longitude, latitude]
@@ -384,6 +388,8 @@ extension Coordinate3D: GeoJsonReadable {
 extension Coordinate3D {
 
     /// Dump the coordinate as JSON data.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
@@ -395,6 +401,8 @@ extension Coordinate3D {
     }
 
     /// Dump the coordinate as JSON.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 
@@ -402,6 +410,8 @@ extension Coordinate3D {
     }
 
     /// Write the coordinate in it's JSON represenation to a file.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func write(to url: URL, prettyPrinted: Bool = false) throws {
         try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
     }
@@ -411,14 +421,16 @@ extension Coordinate3D {
 // Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects.
 extension Sequence<Coordinate3D> {
 
-    // Return the coordinate as JSON.
+    /// Returns all elements as an array of JSON objects
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [[Double]] {
         self.map(\.asJson)
     }
 
 }
 
-// MARK: - Coordinate3D + Equatable
+// MARK: - Equatable
 
 extension Coordinate3D: Equatable {
 
@@ -435,7 +447,7 @@ extension Coordinate3D: Equatable {
 
 }
 
-// MARK: - Coordinate3D + Hashable
+// MARK: - Hashable
 
 extension Coordinate3D: Hashable {}
 

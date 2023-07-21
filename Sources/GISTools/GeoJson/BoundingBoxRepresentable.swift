@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: BoundingBoxRepresentable
-
 /// GeoJSON objects that may have a bounding box.
 public protocol BoundingBoxRepresentable {
 
@@ -26,6 +24,8 @@ public protocol BoundingBoxRepresentable {
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool
 
 }
+
+// MARK: -
 
 extension BoundingBoxRepresentable {
 

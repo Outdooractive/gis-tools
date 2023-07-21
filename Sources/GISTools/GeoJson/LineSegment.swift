@@ -8,7 +8,6 @@ public struct LineSegment: Projectable, Sendable {
 
     public var boundingBox: BoundingBox?
 
-    /// The receivers projection.
     public var projection: Projection {
         first.projection
     }

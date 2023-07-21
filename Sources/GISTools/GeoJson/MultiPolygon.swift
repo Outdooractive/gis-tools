@@ -4,7 +4,10 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `MultiPolygon` object.
-public struct MultiPolygon: PolygonGeometry, EmptyCreatable {
+public struct MultiPolygon:
+    PolygonGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .multiPolygon

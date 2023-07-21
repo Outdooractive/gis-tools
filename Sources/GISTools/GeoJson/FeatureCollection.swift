@@ -1,7 +1,10 @@
 import Foundation
 
 /// A GeoJSON `FeatureCollection`.
-public struct FeatureCollection: GeoJson, EmptyCreatable {
+public struct FeatureCollection:
+    GeoJson,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .featureCollection
@@ -83,6 +86,8 @@ public struct FeatureCollection: GeoJson, EmptyCreatable {
     /// This initializer is slightly different to the other initializers
     /// because it will accept any valid GeoJSON object and normalize
     /// it into a FeatureCollection.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson: GeoJson = FeatureCollection.tryCreate(json: json) else { return nil }
         self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
@@ -181,6 +186,8 @@ extension FeatureCollection {
 extension FeatureCollection {
 
     /// Insert a Feature into the receiver.
+    ///
+    /// - note: `feature` must be in the same projection as the receiver.
     public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
         guard features.count == 0 || projection == feature.projection else { return }
 
@@ -197,6 +204,8 @@ extension FeatureCollection {
     }
 
     /// Append a Feature to the receiver.
+    ///
+    /// - note: `feature` must be in the same projection as the receiver.
     public mutating func appendFeature(_ feature: Feature) {
         guard features.count == 0 || projection == feature.projection else { return }
 

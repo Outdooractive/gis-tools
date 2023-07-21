@@ -4,7 +4,10 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `LineString` object.
-public struct LineString: LineStringGeometry, EmptyCreatable {
+public struct LineString:
+    LineStringGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .lineString

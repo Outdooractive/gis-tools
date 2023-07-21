@@ -3,8 +3,6 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: - MapTile
-
 public struct MapTile: CustomStringConvertible {
 
     public let x: Int
@@ -191,7 +189,7 @@ public struct MapTile: CustomStringConvertible {
         MapTile.metersPerPixel(at: z, latitude: centerCoordinate().latitude)
     }
 
-    // Private helpers
+    // MARK: - Private
 
     private static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
         var coordinate = coordinate

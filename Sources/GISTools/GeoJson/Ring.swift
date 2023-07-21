@@ -14,9 +14,11 @@ import Foundation
 /// - A linear ring MUST follow the right-hand rule with respect to the
 ///   area it bounds, i.e., exterior rings are counterclockwise, and
 ///   holes are clockwise.
-public struct Ring: Projectable, Sendable {
+public struct Ring:
+    Projectable,
+    Sendable
+{
 
-    /// The receivers projection.
     public var projection: Projection {
         coordinates.first?.projection ?? .noSRID
     }

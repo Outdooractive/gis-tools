@@ -5,8 +5,6 @@ import Foundation
 
 // This is a port from https://github.com/mourner/flatbush
 
-// MARK: RTreeSortOption
-
 /// Options for how to build the tree with different performance characteristics/tradeoffs.
 public enum RTreeSortOption: Sendable {
 
@@ -155,73 +153,15 @@ public struct RTree<T: BoundingBoxRepresentable> {
         buildTree()
     }
 
-    private mutating func sortByHilbertValue() {
-        assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
+}
 
-        var width = maxX - minX
-        var height = maxY - minY
-        if width == 0.0 { width = 1.0 }
-        if height == 0.0 { height = 1.0 }
+// MARK: - Search
 
-        var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
-        let hilbertMax = Double((1 << 16) - 1)
+extension RTree {
 
-        // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
-        for i in 0 ..< count {
-            let boundingBox = boundingBoxes[i]
-            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.x + boundingBox.northEast.x) / 2.0 - minX) / width))
-            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.y + boundingBox.northEast.y) / 2.0 - minY) / height))
-            hilbertValues[i] = RTree.hilbert(x: x, y: y)
-        }
-
-        // Sort items by their Hilbert value (for packing later)
-        RTree.sort(
-            hilbertValues: &hilbertValues,
-            boundingBoxes: &boundingBoxes,
-            indices: &indices,
-            low: 0,
-            high: count - 1,
-            nodeSize: nodeSize)
-    }
-
-    // Generate nodes at each tree level, bottom-up
-    private mutating func buildTree() {
-        var lowerBound = 0
-        for i in 0 ..< levelBounds.count - 1 {
-            let upperBound = levelBounds[i]
-
-            // Generate a parent node for each block of consecutive <nodeSize> nodes
-            while lowerBound < upperBound {
-                let nodeIndex = lowerBound
-
-                // calculate bbox for the new node
-                var nodeMinX = Double.infinity
-                var nodeMinY = Double.infinity
-                var nodeMaxX = -Double.infinity
-                var nodeMaxY = -Double.infinity
-
-                for _ in 0 ..< nodeSize {
-                    guard lowerBound < upperBound else { break }
-
-                    let boundingBox = boundingBoxes[lowerBound]
-                    lowerBound += 1
-
-                    nodeMinX = min(nodeMinX, boundingBox.southWest.x)
-                    nodeMinY = min(nodeMinY, boundingBox.southWest.y)
-                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.x)
-                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.y)
-                }
-
-                // Add the new node to the tree data
-                indices[position] = nodeIndex
-                boundingBoxes.append(
-                    BoundingBox(
-                        southWest: Coordinate3D(x: nodeMinX, y: nodeMinY, projection: projection),
-                        northEast: Coordinate3D(x: nodeMaxX, y: nodeMaxY, projection: projection)))
-                position = boundingBoxes.count
-            }
-        }
-    }
+    public typealias AroundSearchResult = (
+        object: T,
+        distance: CLLocationDistance)
 
     /// Search for objects inside a bounding box.
     public func search(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
@@ -288,10 +228,6 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
         return result
     }
-
-    public typealias AroundSearchResult = (
-        object: T,
-        distance: CLLocationDistance)
 
     /// Search for objects around a coordinate.
     public func search(
@@ -379,7 +315,77 @@ public struct RTree<T: BoundingBoxRepresentable> {
 
 }
 
+// MARK: - Private
+
 extension RTree {
+
+    // Generate nodes at each tree level, bottom-up
+    private mutating func buildTree() {
+        var lowerBound = 0
+        for i in 0 ..< levelBounds.count - 1 {
+            let upperBound = levelBounds[i]
+
+            // Generate a parent node for each block of consecutive <nodeSize> nodes
+            while lowerBound < upperBound {
+                let nodeIndex = lowerBound
+
+                // calculate bbox for the new node
+                var nodeMinX = Double.infinity
+                var nodeMinY = Double.infinity
+                var nodeMaxX = -Double.infinity
+                var nodeMaxY = -Double.infinity
+
+                for _ in 0 ..< nodeSize {
+                    guard lowerBound < upperBound else { break }
+
+                    let boundingBox = boundingBoxes[lowerBound]
+                    lowerBound += 1
+
+                    nodeMinX = min(nodeMinX, boundingBox.southWest.x)
+                    nodeMinY = min(nodeMinY, boundingBox.southWest.y)
+                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.x)
+                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.y)
+                }
+
+                // Add the new node to the tree data
+                indices[position] = nodeIndex
+                boundingBoxes.append(
+                    BoundingBox(
+                        southWest: Coordinate3D(x: nodeMinX, y: nodeMinY, projection: projection),
+                        northEast: Coordinate3D(x: nodeMaxX, y: nodeMaxY, projection: projection)))
+                position = boundingBoxes.count
+            }
+        }
+    }
+
+    private mutating func sortByHilbertValue() {
+        assert(count > nodeSize, "Bug: We don't build trees if serial search would be faster")
+
+        var width = maxX - minX
+        var height = maxY - minY
+        if width == 0.0 { width = 1.0 }
+        if height == 0.0 { height = 1.0 }
+
+        var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
+        let hilbertMax = Double((1 << 16) - 1)
+
+        // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
+        for i in 0 ..< count {
+            let boundingBox = boundingBoxes[i]
+            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.x + boundingBox.northEast.x) / 2.0 - minX) / width))
+            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.y + boundingBox.northEast.y) / 2.0 - minY) / height))
+            hilbertValues[i] = RTree.hilbert(x: x, y: y)
+        }
+
+        // Sort items by their Hilbert value (for packing later)
+        RTree.sort(
+            hilbertValues: &hilbertValues,
+            boundingBoxes: &boundingBoxes,
+            indices: &indices,
+            low: 0,
+            high: count - 1,
+            nodeSize: nodeSize)
+    }
 
     // Custom quicksort that partially sorts bbox data alongside the hilbert values
     private static func sort(

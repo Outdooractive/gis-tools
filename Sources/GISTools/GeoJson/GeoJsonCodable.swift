@@ -1,12 +1,14 @@
 import Foundation
 
-// MARK: - GeoJsonCodable
+// MARK: GeoJsonCodable
 
 // TODO: Check if this can be improved
 
 extension GeoJson {
 
     /// Try to initialize a GeoJSON object from a Decoder.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: GeoJsonCodingKey.self)
         let json = container.decodeGeoJsonDictionary()
@@ -19,6 +21,8 @@ extension GeoJson {
     }
 
     /// Write the GeoJSON object to an Encoder.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: GeoJsonCodingKey.self)
 
@@ -30,6 +34,8 @@ extension GeoJson {
 extension BoundingBox: Codable {
 
     /// Try to initialize a BoundingBox from a Decoder.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         let json = container.decodeGeoJsonArray()
@@ -42,6 +48,8 @@ extension BoundingBox: Codable {
     }
 
     /// Write the BoundingBox to an Encoder.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.unkeyedContainer()
 
@@ -55,6 +63,8 @@ extension BoundingBox: Codable {
 extension Coordinate3D: Codable {
 
     /// Try to initialize a Coordinate3D from a Decoder.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         let json = container.decodeGeoJsonArray()
@@ -67,6 +77,8 @@ extension Coordinate3D: Codable {
     }
 
     /// Write the Coordinate3D to an Encoder.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.unkeyedContainer()
 

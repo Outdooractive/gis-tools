@@ -4,7 +4,10 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON `MultiPoint` object.
-public struct MultiPoint: PointGeometry, EmptyCreatable {
+public struct MultiPoint:
+    PointGeometry,
+    EmptyCreatable
+{
 
     public var type: GeoJsonType {
         return .multiPoint

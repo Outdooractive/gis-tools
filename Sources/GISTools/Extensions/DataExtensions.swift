@@ -14,6 +14,7 @@ extension Data {
             .compactMap { UInt8($0, radix: 16) }
 
         guard hex.count / bytes.count == 2 else { return nil }
+
         self.init(bytes)
     }
 

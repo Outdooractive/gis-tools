@@ -2,8 +2,6 @@
 import CoreLocation
 #endif
 
-// MARK: GISTool
-
 /// Some constants used in this library.
 public enum GISTool {
 

@@ -1,6 +1,9 @@
 
 /// Projections that this library can handle (EPSG:3857 and EPSG:4326).
-public enum Projection: CustomStringConvertible, Sendable {
+public enum Projection:
+    CustomStringConvertible,
+    Sendable
+{
 
     /// No SRID (invalid/unknown projection)
     case noSRID

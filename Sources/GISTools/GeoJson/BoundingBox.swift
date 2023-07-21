@@ -3,10 +3,13 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: BoundingBox
-
 /// A GeoJSON bounding box.
-public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible, Sendable {
+public struct BoundingBox:
+    GeoJsonReadable,
+    Projectable,
+    CustomStringConvertible,
+    Sendable
+{
 
     /// A bounding box spanning across the whole world.
     public static var world: BoundingBox {
@@ -68,7 +71,7 @@ public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible
             case .epsg4326:
                 // Length of one minute at this latitude
                 let oneDegreeLongitudeDistanceInKilometers: Double = cos(southWest.latitude * Double.pi / 180.0) * 111.0
-                let oneDegreeLatitudeDistanceInKilometers: Double = 111.0
+                let oneDegreeLatitudeDistanceInKilometers = 111.0
 
                 let longitudeDistance: Double = (paddingKilometers / oneDegreeLongitudeDistanceInKilometers)
                 let latitudeDistance: Double = (paddingKilometers / oneDegreeLatitudeDistanceInKilometers)
@@ -102,6 +105,8 @@ public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible
     }
 
     /// Try to create a bounding box from some JSON.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.projection = .epsg4326
 
@@ -136,25 +141,24 @@ public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible
     }
 
     /// Dump the bounding box as JSON.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [Double] {
-        if southWest.altitude != nil || northEast.altitude != nil {
-            return [
-                southWest.longitudeProjected(to: .epsg4326),
-                southWest.latitudeProjected(to: .epsg4326),
-                southWest.altitude ?? 0.0,
-                northEast.longitudeProjected(to: .epsg4326),
-                northEast.latitudeProjected(to: .epsg4326),
-                northEast.altitude ?? 0.0,
-            ]
+        var bottomLeft: [Double] = (projection == .epsg4326 || projection == .noSRID
+            ? [southWest.longitude, southWest.latitude]
+            : [southWest.longitudeProjected(to: .epsg4326), southWest.latitudeProjected(to: .epsg4326)])
+        var topRight: [Double] = (projection == .epsg4326 || projection == .noSRID
+            ? [northEast.longitude, northEast.latitude]
+            : [northEast.longitudeProjected(to: .epsg4326), northEast.latitudeProjected(to: .epsg4326)])
+
+        if let bottomLeftAltitude = southWest.altitude,
+           let topRightAltitude = northEast.altitude
+        {
+            bottomLeft.append(bottomLeftAltitude)
+            topRight.append(topRightAltitude)
         }
-        else {
-            return [
-                southWest.longitudeProjected(to: .epsg4326),
-                southWest.latitudeProjected(to: .epsg4326),
-                northEast.longitudeProjected(to: .epsg4326),
-                northEast.latitudeProjected(to: .epsg4326),
-            ]
-        }
+
+        return bottomLeft + topRight
     }
 
     /// Returns a copy of the receiver with some padding in kilometers.
@@ -189,16 +193,16 @@ public struct BoundingBox: GeoJsonReadable, Projectable, CustomStringConvertible
 
     /// Returns a copy of the receiver that also includes `coordinate`.
     public func expand(including coordinate: Coordinate3D) -> BoundingBox {
-        return BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
+        BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
     public func expand(including boundingBox: BoundingBox) -> BoundingBox {
-        return BoundingBox(coordinates: [
+        BoundingBox(coordinates: [
             southWest,
             northEast,
             boundingBox.southWest.projected(to: projection),
-            boundingBox.northEast.projected(to: projection)
+            boundingBox.northEast.projected(to: projection),
         ])!
     }
 
@@ -261,10 +265,6 @@ extension BoundingBox {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!
     }
 
-}
-
-extension BoundingBox {
-
     /// The geodesic center of the bounding box.
     public var center: Coordinate3D {
         let boundingBox = self.normalized()
@@ -293,6 +293,12 @@ extension BoundingBox {
                     height: diagonalLength * cos(bearingAngle.degreesToRadians))
         }
     }
+
+}
+
+// MARK: - Helpers
+
+extension BoundingBox {
 
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: Coordinate3D) -> Bool {
@@ -333,17 +339,17 @@ extension BoundingBox {
             && coordinate.longitude <= boundingBox.northEast.longitude
     }
 
-#if !os(Linux)
+    #if !os(Linux)
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: CLLocationCoordinate2D) -> Bool {
-        return contains(Coordinate3D(coordinate))
+        contains(Coordinate3D(coordinate))
     }
 
     /// Check if the receiver contains `coordinate`.
     public func contains(_ location: CLLocation) -> Bool {
-        return contains(Coordinate3D(location))
+        contains(Coordinate3D(location))
     }
-#endif
+    #endif
 
     /// Check if the receiver fully contains the other bounding box.
     public func contains(_ other: BoundingBox) -> Bool {
@@ -529,6 +535,12 @@ extension BoundingBox {
 
         return nil
     }
+
+}
+
+// MARK: - Helpers
+
+extension BoundingBox {
 
     /// Clamped to [-180.0, 180.0].
     public mutating func normalize() {
