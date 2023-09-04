@@ -67,13 +67,13 @@ extension GeoJson {
         case let feature as Feature:
             var featureCollection: FeatureCollection
             if let multiLineString = feature.geometry as? MultiLineString {
-                featureCollection = FeatureCollection(multiLineString.lineStrings.map({ Feature($0, properties: feature.properties) }))
+                featureCollection = FeatureCollection(multiLineString.lineStrings.map({ Feature($0, id: feature.id, properties: feature.properties) }))
             }
             else if let multiPolygon = feature.geometry as? MultiPolygon {
-                featureCollection = FeatureCollection(multiPolygon.polygons.map({ Feature($0, properties: feature.properties) }))
+                featureCollection = FeatureCollection(multiPolygon.polygons.map({ Feature($0, id: feature.id, properties: feature.properties) }))
             }
             else if let multiPoint = feature.geometry as? MultiPoint {
-                featureCollection = FeatureCollection(multiPoint.points.map({ Feature($0, properties: feature.properties) }))
+                featureCollection = FeatureCollection(multiPoint.points.map({ Feature($0, id: feature.id, properties: feature.properties) }))
             }
             else {
                 featureCollection = FeatureCollection(feature)
@@ -85,13 +85,13 @@ extension GeoJson {
         case let featureCollection as FeatureCollection:
             let features: [Feature] = featureCollection.features.flatMap({ (feature) -> [Feature] in
                 if let multiLineString = feature.geometry as? MultiLineString {
-                    return multiLineString.lineStrings.map({ Feature($0, properties: feature.properties) })
+                    return multiLineString.lineStrings.map({ Feature($0, id: feature.id, properties: feature.properties) })
                 }
                 else if let multiPolygon = feature.geometry as? MultiPolygon {
-                    return multiPolygon.polygons.map({ Feature($0, properties: feature.properties) })
+                    return multiPolygon.polygons.map({ Feature($0, id: feature.id, properties: feature.properties) })
                 }
                 else if let multiPoint = feature.geometry as? MultiPoint {
-                    return multiPoint.points.map({ Feature($0, properties: feature.properties) })
+                    return multiPoint.points.map({ Feature($0, id: feature.id, properties: feature.properties) })
                 }
                 else {
                     return [feature]

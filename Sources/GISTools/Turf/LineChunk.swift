@@ -58,10 +58,10 @@ extension Feature {
 
         switch self.geometry {
         case let lineString as LineString:
-            features = lineString.chunked(segmentLength: segmentLength).lineStrings.map({ Feature($0) })
+            features = lineString.chunked(segmentLength: segmentLength).lineStrings.map({ Feature($0, id: id, properties: properties) })
 
         case let multiLineString as MultiLineString:
-            features = multiLineString.chunked(segmentLength: segmentLength).lineStrings.map({ Feature($0) })
+            features = multiLineString.chunked(segmentLength: segmentLength).lineStrings.map({ Feature($0, id: id, properties: properties) })
 
         default:
             features = [self]

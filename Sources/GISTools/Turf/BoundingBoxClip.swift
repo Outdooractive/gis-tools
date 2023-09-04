@@ -209,6 +209,7 @@ extension Feature {
 
         var feature = Feature(
             clipped,
+            id: id,
             properties: properties,
             calculateBoundingBox: (self.boundingBox != nil))
         feature.foreignMembers = foreignMembers

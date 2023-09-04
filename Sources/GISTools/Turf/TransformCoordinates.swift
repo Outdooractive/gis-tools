@@ -73,6 +73,7 @@ extension GeoJson {
         case let feature as Feature:
             var newFeature = Feature(
                 feature.geometry.transformedCoordinates(transform),
+                id: feature.id,
                 properties: feature.properties,
                 calculateBoundingBox: (feature.boundingBox != nil))
             newFeature.foreignMembers = feature.foreignMembers

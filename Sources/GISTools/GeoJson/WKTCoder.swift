@@ -181,10 +181,11 @@ extension String {
     public func asFeature(
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
+        id: Feature.Identifier? = nil,
         properties: [String: Any] = [:])
         -> Feature?
     {
-        Feature(wkt: self, sourceSrid: sourceSrid, targetProjection: targetProjection, properties: properties)
+        Feature(wkt: self, sourceSrid: sourceSrid, targetProjection: targetProjection, id: id, properties: properties)
     }
 
     /// Decode a GeoJSON object from WKT.
@@ -193,10 +194,11 @@ extension String {
     public func asFeature(
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
+        id: Feature.Identifier? = nil,
         properties: [String: Any] = [:])
         -> Feature?
     {
-        Feature(wkt: self, sourceProjection: sourceProjection, targetProjection: targetProjection, properties: properties)
+        Feature(wkt: self, sourceProjection: sourceProjection, targetProjection: targetProjection, id: id, properties: properties)
     }
 
     /// Decode a GeoJSON object from WKT.

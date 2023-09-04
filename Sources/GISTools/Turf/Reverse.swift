@@ -27,8 +27,7 @@ extension GeoJson {
             return newGeometryCollection as! Self
 
         case let feature as Feature:
-            var newFeature = Feature(feature.geometry.reversed)
-            newFeature.id = feature.id
+            var newFeature = Feature(feature.geometry.reversed, id: feature.id, properties: feature.properties)
             newFeature.boundingBox = feature.boundingBox
             newFeature.foreignMembers = feature.foreignMembers
             return newFeature as! Self

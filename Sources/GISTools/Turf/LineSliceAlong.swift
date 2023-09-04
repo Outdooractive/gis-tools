@@ -95,7 +95,7 @@ extension Feature {
               let lineSlice = lineString.sliceAlong(startDistance: startDistance, stopDistance: stopDistance)
         else { return nil }
 
-        var newFeature = Feature(lineSlice, properties: properties, calculateBoundingBox: (self.boundingBox != nil))
+        var newFeature = Feature(lineSlice, id: id, properties: properties, calculateBoundingBox: (self.boundingBox != nil))
         newFeature.foreignMembers = foreignMembers
         return newFeature
     }
