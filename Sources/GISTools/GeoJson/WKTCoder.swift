@@ -72,11 +72,12 @@ extension Feature {
         wkt: String,
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
+        id: Identifier? = nil,
         properties: [String: Any] = [:],
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
-        self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
+        self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Decode a GeoJSON Feature from WKT.
@@ -86,11 +87,12 @@ extension Feature {
         wkt: String,
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
+        id: Identifier? = nil,
         properties: [String: Any] = [:],
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
-        self.init(geometry, properties: properties, calculateBoundingBox: calculateBoundingBox)
+        self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Returns the receiver as a WKT encoded string.
