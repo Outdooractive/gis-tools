@@ -31,11 +31,11 @@ final class PolygonTests: XCTestCase {
                 [100.0, 0.0]
             ],
             [
-                [100.8, 0.8],
-                [100.8, 0.2],
-                [100.2, 0.2],
-                [100.2, 0.8],
-                [100.8, 0.8]
+                [100.8, 1.0],
+                [100.8, 2.0],
+                [100.2, 2.0],
+                [100.2, 1.0],
+                [100.8, 1.0]
             ]
         ],
         "other": "something else"
@@ -55,7 +55,7 @@ final class PolygonTests: XCTestCase {
 
         XCTAssertEqual(polygonWithHoles.type, GeoJsonType.polygon)
         XCTAssertEqual(polygonWithHoles.projection, .epsg4326)
-        XCTAssertEqual(polygonWithHoles.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 0.8, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.8), Coordinate3D(latitude: 0.2, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.2), Coordinate3D(latitude: 0.8, longitude: 100.8)]])
+        XCTAssertEqual(polygonWithHoles.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 100.0), Coordinate3D(latitude: 0.0, longitude: 100.0)], [Coordinate3D(latitude: 1.0, longitude: 100.8), Coordinate3D(latitude: 2.0, longitude: 100.8), Coordinate3D(latitude: 2.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.2), Coordinate3D(latitude: 1.0, longitude: 100.8)]])
         XCTAssertEqual(polygonWithHoles.foreignMember(for: "other"), "something else")
         XCTAssertEqual(polygonWithHoles[foreignMember: "other"], "something else")
     }
