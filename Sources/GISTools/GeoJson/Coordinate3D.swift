@@ -96,17 +96,26 @@ public struct Coordinate3D:
 
     /// A textual representation of the coordinate.
     public var description: String {
-        var compontents: [String] = [
-            "\(projection == .epsg4326 ? "longitude" : "x"): \(longitude)",
-            "\(projection == .epsg4326 ? "latitude" : "y"): \(latitude)",
-        ]
+        var components: [String] = []
+        if projection == .epsg4326 {
+            components.append(contentsOf: [
+                "latitude: \(latitude)",
+                "longitude: \(longitude)",
+            ])
+        }
+        else {
+            components.append(contentsOf: [
+                "x: \(longitude)",
+                "y: \(latitude)",
+            ])
+        }
         if let altitude {
-            compontents.append("\(projection == .epsg4326 ? "altitude" : "z"): \(altitude)")
+            components.append("\(projection == .epsg4326 ? "altitude" : "z"): \(altitude)")
         }
         if let m {
-            compontents.append("m: \(m)")
+            components.append("m: \(m)")
         }
-        return "Coordinate3D<\(projection.description)>(\(compontents.joined(separator: ", ")))"
+        return "Coordinate3D<\(projection.description)>(\(components.joined(separator: ", ")))"
     }
 
 }

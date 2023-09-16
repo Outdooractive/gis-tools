@@ -134,6 +134,36 @@ final class FeatureCollectionTests: XCTestCase {
         XCTAssertEqual(featureCollection.features.count, 1)
     }
 
+    func testEnumerate() throws {
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+
+        let expected: [(Int, Int, Coordinate3D)] = [
+            (0, 0, Coordinate3D(latitude: 0.5, longitude: 102.0)),
+            (1, 0, Coordinate3D(latitude: 0.0, longitude: 102.0)),
+            (1, 1, Coordinate3D(latitude: 1.0, longitude: 103.0)),
+            (1, 2, Coordinate3D(latitude: 0.0, longitude: 104.0)),
+            (1, 3, Coordinate3D(latitude: 1.0, longitude: 105.0)),
+            (2, 0, Coordinate3D(latitude: 0.0, longitude: 100.0)),
+            (2, 1, Coordinate3D(latitude: 0.0, longitude: 101.0)),
+            (2, 2, Coordinate3D(latitude: 1.0, longitude: 101.0)),
+            (2, 3, Coordinate3D(latitude: 1.0, longitude: 100.0)),
+            (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0))
+        ]
+
+        var result:[(Int, Int, Coordinate3D)] = []
+        featureCollection.enumerateCoordinates { featureIndex, coordinateIndex, coordinate in
+            result.append((featureIndex, coordinateIndex, coordinate))
+        }
+
+        XCTAssertEqual(result.count, expected.count)
+
+        for (lhs, rhs) in zip(result, expected) {
+            XCTAssertEqual(lhs.0, rhs.0)
+            XCTAssertEqual(lhs.1, rhs.1)
+            XCTAssertEqual(lhs.2, rhs.2)
+        }
+    }
+
     func testEncodable() throws {
         let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
 
