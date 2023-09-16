@@ -470,4 +470,12 @@ extension CLLocation {
 
 }
 
+extension CLLocationCoordinate2D {
+
+    /// The receiver as a ``Coordinate3D``.
+    public var coordinate3D: Coordinate3D {
+        Coordinate3D(self)
+    }
+
+}
 #endif
