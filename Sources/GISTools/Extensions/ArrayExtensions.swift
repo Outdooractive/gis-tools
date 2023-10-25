@@ -126,8 +126,12 @@ extension Array {
     /// let a = [1, 2, 3, 4, 5]
     /// a.distinctPairs() -> [(1, 2), (3, 4)]
     /// ```
-    func distinctPairs() -> [(first: Element, second: Element)] {
+    func distinctPairs() -> [(first: Element, second: Element?)] {
         guard !isEmpty else { return [] }
+
+        if count == 1 {
+            return [(first: self[0], second: nil)]
+        }
 
         return (0 ..< (self.count / 2)).map { (index) in
             let i = index * 2
@@ -141,8 +145,12 @@ extension Array {
     /// let a = [1, 2, 3, 4, 5]
     /// a.overlappingPairs() -> [(1, 2), (2, 3), (3, 4), (4, 5)]
     /// ```
-    func overlappingPairs() -> [(first: Element, second: Element)] {
+    func overlappingPairs() -> [(first: Element, second: Element?)] {
         guard !isEmpty else { return [] }
+
+        if count == 1 {
+            return [(first: self[0], second: nil)]
+        }
 
         return (0 ..< (self.count - 1)).map { (index) in
             return (first: self[index], second: self[index + 1])

@@ -34,7 +34,7 @@ final class ArrayExtensionsTests: XCTestCase {
         let smallPairs = small.distinctPairs()
 
         XCTAssertEqual(emptyPairs.count, 0)
-        XCTAssertEqual(smallPairs.count, 0)
+        XCTAssertEqual(smallPairs.count, 1)
     }
 
     func testOverlappingPairs() {
@@ -76,7 +76,7 @@ final class ArrayExtensionsTests: XCTestCase {
         let smallPairs = small.overlappingPairs()
 
         XCTAssertEqual(emptyPairs.count, 0)
-        XCTAssertEqual(smallPairs.count, 0)
+        XCTAssertEqual(smallPairs.count, 1)
     }
 
     func testGet() {

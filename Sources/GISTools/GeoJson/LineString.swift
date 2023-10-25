@@ -74,11 +74,13 @@ public struct LineString:
                 }
             }
 
-            if current.first != previous.second {
-                coordinates.append(current.first)
-            }
-            if current.second != current.first {
-                coordinates.append(current.second)
+            if let current {
+                if current.first != previous.second {
+                    coordinates.append(current.first)
+                }
+                if current.second != current.first {
+                    coordinates.append(current.second)
+                }
             }
         }
 

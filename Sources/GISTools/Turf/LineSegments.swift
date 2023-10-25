@@ -34,8 +34,9 @@ extension GeoJson {
             return []
 
         case let lineString as LineString:
-            return lineString.coordinates.overlappingPairs().map { (first, second) in
-                LineSegment(first: first, second: second)
+            return lineString.coordinates.overlappingPairs().compactMap { (first, second) in
+                guard let second else { return nil }
+                return LineSegment(first: first, second: second)
             }
 
         case let multiLineString as MultiLineString:
@@ -43,8 +44,9 @@ extension GeoJson {
 
         case let polygon as Polygon:
             return polygon.rings.flatMap({ (ring) in
-                ring.coordinates.overlappingPairs().map { (first, second) in
-                    LineSegment(first: first, second: second)
+                ring.coordinates.overlappingPairs().compactMap { (first, second) in
+                    guard let second else { return nil }
+                    return LineSegment(first: first, second: second)
                 }
             })
 
