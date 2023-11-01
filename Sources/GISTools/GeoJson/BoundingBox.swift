@@ -47,8 +47,8 @@ public struct BoundingBox:
 
         self.projection = coordinates.first?.projection ?? .epsg4326
 
-        var southWest = Coordinate3D(latitude: .infinity, longitude: .infinity)
-        var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity)
+        var southWest = Coordinate3D(latitude: .infinity, longitude: .infinity, projection: projection)
+        var northEast = Coordinate3D(latitude: -.infinity, longitude: -.infinity, projection: projection)
 
         for currentLocation in coordinates {
             let currentLocationLatitude = currentLocation.latitude
