@@ -21,6 +21,26 @@ final class BoundingBoxTests: XCTestCase {
         XCTAssertEqual(boundingBox3857.northEast.projection, .epsg3857)
     }
 
+    func testInitWithCoordinatesEPSG4326() throws {
+        let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let coordinate2 = Coordinate3D(latitude: 30.0, longitude: 30.0)
+
+        let boundingBox: BoundingBox = try XCTUnwrap(BoundingBox(coordinates: [coordinate1, coordinate2]))
+        XCTAssertEqual(boundingBox.projection, .epsg4326)
+        XCTAssertEqual(boundingBox.southWest.projection, .epsg4326)
+        XCTAssertEqual(boundingBox.northEast.projection, .epsg4326)
+    }
+
+    func testInitWithCoordinatesEPSG3857() throws {
+        let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514)
+        let coordinate2 = Coordinate3D(x: -10_859_458.446776, y: 4_235_169.496066)
+
+        let boundingBox: BoundingBox = try XCTUnwrap(BoundingBox(coordinates: [coordinate1, coordinate2]))
+        XCTAssertEqual(boundingBox.projection, .epsg3857)
+        XCTAssertEqual(boundingBox.southWest.projection, .epsg3857)
+        XCTAssertEqual(boundingBox.northEast.projection, .epsg3857)
+    }
+
     // MARK: - contains(_:)
 
     func testContains() {
