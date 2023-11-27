@@ -249,7 +249,7 @@ let geoJson = GeoJsonReader.geoJsonFrom(json: json)!
 print("Type is \(geoJson.type.rawValue)")
 print("Foreign members: \(geoJson.foreignMembers)")
 
-case geoJson {
+switch geoJson {
 case let point as Point:
     print("It's a Point!")
 case let multiPoint as MultiPoint:
