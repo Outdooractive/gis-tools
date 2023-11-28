@@ -74,7 +74,7 @@ extension LineString {
                     distance
                 }
                 else {
-                    .infinity
+                    Double.infinity
                 }
             }
         }
