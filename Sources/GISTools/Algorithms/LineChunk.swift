@@ -32,6 +32,18 @@ extension LineString {
         return MultiLineString(lineStrings) ?? MultiLineString()
     }
 
+    /// Divides a *LineString* into evenly spaced segments of a specified length.
+    /// If the line is shorter than the segment length then the original line is returned.
+    ///
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    public func evenlyDivided(segmentLength: CLLocationDistance) -> LineString {
+        guard self.isValid, segmentLength > 0.0 else {
+            return LineString()
+        }
+
+        return LineString(chunked(segmentLength: segmentLength).lineSegments) ?? LineString()
+    }
+
 }
 
 extension MultiLineString {

@@ -39,4 +39,19 @@ final class LineChunkTests: XCTestCase {
         XCTAssertEqual(chunks[0], lineString)
     }
 
+    func testEvenlyDivided() {
+        let a = Coordinate3D.zero
+        let b = a.destination(distance: 100.0, bearing: 90.0)
+        let line = LineString(unchecked: [a, b])
+        let dividedLine = line.evenlyDivided(segmentLength: 1.0)
+
+        XCTAssertEqual(line.allCoordinates.count, 2)
+        XCTAssertEqual(dividedLine.allCoordinates.count, 101)
+
+        for (first, second) in dividedLine.allCoordinates.overlappingPairs() {
+            guard let second else { break }
+            XCTAssertEqual(first.distance(from: second), 1.0, accuracy: 0.0001)
+        }
+    }
+
 }

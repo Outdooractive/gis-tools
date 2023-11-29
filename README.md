@@ -780,56 +780,56 @@ let mpp = MapTile.metersPerPixel(at: 15.0, latitude: 45.0)
 # Algorithms
 Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.
 
-| Name                        | Example                                                                                  |     | Source/Tests                 |
-| --------------------------- | ---------------------------------------------------------------------------------------- | --- | ---------------------------- |
-| along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                           |     | [Source][43] / [Tests][44]   |
-| area                        | `Polygon(…).area`                                                                        |     | [Source][45]                 |
-| bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                           |     | [Source][46] / [Tests][47]   |
-| boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                      |     | [Source][48] / [Tests][49]   |
-| boolean-crosses             | TODO                                                                                     |     | [Source][50]                 |
-| boolean-intersects          | TODO                                                                                     |     | [Source][51]                 |
-| boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                           |     | [Source][52] / [Tests][53]   |
-| boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                |     | [Source][54] / [Tests][55]   |
-| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                      |     | [Source][56]                 |
-| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                              |     | [Source][57]                 |
-| boolean-valid               | `anyGeometry.isValid`                                                                    |     | [Source][58]                 |
-| bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                      |     | [Source][59] / [Tests][60]   |
-| buffer                      | TODO                                                                                     |     | [Source][61]                 |
-| center/centroid/center-mean | `let center = polygon.center`                                                            |     | [Source][62]                 |
-| circle                      | `let circle = point.circle(radius: 5000.0)`                                              |     | [Source][63] / [Tests][64]   |
-| conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                 |     | [Source][65]                 |
-| destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`             |     | [Source][66] / [Tests][67]   |
-| distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                 |     | [Source][68] / [Tests][69]   |
-| flatten                     | `let featureCollection = anyGeometry.flattened`                                          |     | [Source][70] / [Tests][71]   |
-| frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                 |     | [Source][72] / [Tests][73]   |
-| length                      | `let length = lineString.length`                                                         |     | [Source][74] / [Tests][75]   |
-| line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`            |     | [Source][76] / [Tests][77]   |
-| line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings`                     |     | [Source][78] / [Tests][79]   |
-| line-intersect              | `let intersections = feature1.intersections(other: feature2)`                            |     | [Source][80] / [Tests][81]   |
-| line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`           |     | [Source][82] / [Tests][83]   |
-| line-segments               | `let segments = anyGeometry.lineSegments`                                                |     | [Source][84] / [Tests][85]   |
-| line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`             |     | [Source][86] / [Tests][87]   |
-| line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`          |     | [Source][88] / [Tests][89]   |
-| midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                     |     | [Source][90] / [Tests][91]   |
-| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                     |     | [Source][92]                 |
-| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`           |     | [Source][93]                 |
-| nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`    |     | [Source][94] / [Tests][95]   |
-| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                        |     | [Source][96]                 |
-| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                       |     | [Source][97]                 |
-| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                    |     | [Source][98]                 |
-| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                    |     | [Source][99] / [Tests][100]  |
-| pole-of-inaccessibility     | TODO                                                                                     |     | [Source][101]                |
-| reverse                     | `let lineStringReversed = lineString.reversed`                                           |     | [Source][102] / [Tests][103] |
-| rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                              |     | [Source][104] / [Tests][105] |
-| rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`          |     | [Source][106] / [Tests][107] |
-| rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                            |     | [Source][108] / [Tests][109] |
-| simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`            |     | [Source][110] / [Tests][111] |
-| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                             |     | [Source][112] / [Tests][113] |
-| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`  |     | [Source][114] / [Tests][115] |
-| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`          |     | [Source][116] / [Tests][117] |
-| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)` |     | [Source][118] / [Tests][119] |
-| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`               |     | [Source][120] / [Tests][121] |
-| union                       | TODO                                                                                     |     | [Source][122]                |
+| Name                        | Example                                                                                                                               |     | Source/Tests                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
+| along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                                                                        |     | [Source][43] / [Tests][44]   |
+| area                        | `Polygon(…).area`                                                                                                                     |     | [Source][45]                 |
+| bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
+| boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
+| boolean-crosses             | TODO                                                                                                                                  |     | [Source][50]                 |
+| boolean-intersects          | TODO                                                                                                                                  |     | [Source][51]                 |
+| boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
+| boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
+| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56]                 |
+| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57]                 |
+| boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58]                 |
+| bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
+| buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
+| center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62]                 |
+| circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
+| conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65]                 |
+| destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
+| distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
+| flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
+| frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
+| length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
+| line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
+| line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
+| line-intersect              | `let intersections = feature1.intersections(other: feature2)`                                                                         |     | [Source][80] / [Tests][81]   |
+| line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`                                                        |     | [Source][82] / [Tests][83]   |
+| line-segments               | `let segments = anyGeometry.lineSegments`                                                                                             |     | [Source][84] / [Tests][85]   |
+| line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
+| line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
+| midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
+| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92]                 |
+| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93]                 |
+| nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
+| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96]                 |
+| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97]                 |
+| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98]                 |
+| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
+| pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
+| reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
+| rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
+| rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`                                                       |     | [Source][106] / [Tests][107] |
+| rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
+| simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
+| transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                                                                          |     | [Source][112] / [Tests][113] |
+| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`                                               |     | [Source][114] / [Tests][115] |
+| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`                                                       |     | [Source][116] / [Tests][117] |
+| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)`                                              |     | [Source][118] / [Tests][119] |
+| truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`                                                            |     | [Source][120] / [Tests][121] |
+| union                       | TODO                                                                                                                                  |     | [Source][122]                |
 
 # Related packages
 Currently only one:
