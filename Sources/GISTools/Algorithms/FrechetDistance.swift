@@ -37,19 +37,25 @@ extension LineString {
     /// - Parameters:
     ///    - from: The other geometry of equal type
     ///    - distanceFunction: The algorithm to use for distance calculations
-    ///    - tolerance: Affects the amount of simplification (in meters)
+    ///    - segmentLength: Adds coordinates to the lines for improved matching (in meters)
     ///
     /// - Returns: The frechet distance between the to geometries
     public func frechetDistance(
         from other: LineString,
         distanceFunction: FrechetDistanceFunction = .haversine,
-        tolerance: CLLocationDistance? = nil)
+        segmentLength: CLLocationDistance? = nil)
         -> Double
     {
-        let other = other.projected(to: projection)
+        var firstLine = self
+        var secondLine = other.projected(to: projection)
 
-        let p = allCoordinates
-        let q = other.allCoordinates
+        if let segmentLength {
+            firstLine = firstLine.evenlyDivided(segmentLength: segmentLength)
+            secondLine = secondLine.evenlyDivided(segmentLength: segmentLength)
+        }
+
+        let p = firstLine.allCoordinates
+        let q = secondLine.allCoordinates
 
         var ca: [Double] = Array(repeating: -1.0, count: p.count * q.count)
 
