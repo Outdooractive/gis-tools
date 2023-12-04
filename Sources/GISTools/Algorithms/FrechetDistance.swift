@@ -35,11 +35,11 @@ extension LineString {
     /// Fréchet  distance between to geometries.
     ///
     /// - Parameters:
-    ///    - from: The other geometry of equal type
-    ///    - distanceFunction: The algorithm to use for distance calculations
-    ///    - segmentLength: Adds coordinates to the lines for improved matching (in meters)
+    ///    - from: The other geometry of equal type.
+    ///    - distanceFunction: The algorithm to use for distance calculations.
+    ///    - segmentLength: Adds coordinates to the lines for improved matching (in meters).
     ///
-    /// - Returns: The frechet distance between the to geometries
+    /// - Returns: The frechet distance between the two geometries.
     public func frechetDistance(
         from other: LineString,
         distanceFunction: FrechetDistanceFunction = .haversine,
