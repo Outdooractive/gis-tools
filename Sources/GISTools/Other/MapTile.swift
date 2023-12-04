@@ -10,7 +10,7 @@ public struct MapTile: CustomStringConvertible {
     public let z: Int
 
     public var description: String {
-        "MapTile<\(x),\(y))@\(z)>"
+        "MapTile<(\(x),\(y))@\(z)>"
     }
 
     public var parent: MapTile {
