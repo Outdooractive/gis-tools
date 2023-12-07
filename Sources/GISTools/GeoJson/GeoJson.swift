@@ -138,7 +138,7 @@ public protocol EmptyCreatable {
 // MARK: - GeoJsonGeometry
 
 /// GeoJSON geometry objects: `Point`, `MultiPoint`, `LineString`, `MultiLineString`,
-/// `Polygon`, `MultiPolygon`, `GeoJsonGeometry`.
+/// `Polygon`, `MultiPolygon`, `GeometryCollection`.
 public protocol GeoJsonGeometry: GeoJson {}
 
 // MARK: - Point, MultiPoint

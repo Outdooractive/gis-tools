@@ -139,13 +139,11 @@ extension GeoJson {
 
     /// Returns the intersecting point(s) with the receiver.
     ///
+    /// - note: Takes all poygon rings into account,  not just the outer ring.
+    ///
     /// - Parameter other: The other geometry
     public func intersections(other: GeoJson) -> [Point] {
         let other = other.projected(to: projection)
-
-        if self is Point || self is MultiPoint || other is Point || other is MultiPoint {
-            return []
-        }
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
            !intersects(otherBoundingBox)
@@ -155,10 +153,30 @@ extension GeoJson {
 
         var result: Set<Coordinate3D> = []
 
-        for lineSegment in lineSegments {
-            for otherLineSegment in other.lineSegments {
-                if let intersection = lineSegment.intersection(otherLineSegment) {
-                    result.insert(intersection)
+        if let point = self as? PointGeometry {
+            if let otherPoint = other as? PointGeometry {
+                for coordinate in point.allCoordinates
+                    where otherPoint.allCoordinates.contains(coordinate)
+                {
+                    result.insert(coordinate)
+                }
+            }
+            else {
+                for coordinate in point.allCoordinates {
+                    for otherLineSegment in other.lineSegments
+                        where otherLineSegment.checkIsOnSegment(coordinate)
+                    {
+                        result.insert(coordinate)
+                    }
+                }
+            }
+        }
+        else {
+            for lineSegment in lineSegments {
+                for otherLineSegment in other.lineSegments {
+                    if let intersection = lineSegment.intersection(otherLineSegment) {
+                        result.insert(intersection)
+                    }
                 }
             }
         }
