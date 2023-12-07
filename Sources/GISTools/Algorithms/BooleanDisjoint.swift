@@ -14,7 +14,13 @@ extension GeoJson {
     ///
     /// - Returns: *true* if the geometries don't overlap, *false* otherwise.
     public func isDisjoint(with other: GeoJson) -> Bool {
-        switch self {
+        if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
+           !intersects(otherBoundingBox)
+        {
+            return true
+        }
+
+        return switch self {
         case let point as PointGeometry:
             point.isPointDisjoint(with: other)
 
@@ -105,12 +111,6 @@ extension LineStringGeometry {
 
     fileprivate func isLineStringDisjoint(with other: GeoJson) -> Bool {
         let other = other.projected(to: projection)
-
-        if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
-           !intersects(otherBoundingBox)
-        {
-            return true
-        }
 
         switch other {
         case let otherPoint as PointGeometry:
