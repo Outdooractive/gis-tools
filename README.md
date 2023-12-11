@@ -787,7 +787,8 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
 | boolean-crosses             | TODO                                                                                                                                  |     | [Source][50]                 |
-| boolean-intersects          | TODO                                                                                                                                  |     | [Source][51]                 |
+| boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
+| boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
 | boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
 | boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56]                 |
@@ -819,6 +820,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98]                 |
 | point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
 | pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
+| polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
 | rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
 | rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`                                                       |     | [Source][106] / [Tests][107] |
@@ -970,6 +972,10 @@ Thomas Rasch, Outdooractive
 [123]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/TruncateTests.swift "TruncateTests"
 [124]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/Union.swift "Union"
 [125]:	https://github.com/Outdooractive/mvt-tools
+[126]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/BooleanDisjoint.swift "BooleanDisjoint"
+[127]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Turf/BooleanDisjointTests.swift "BooleanDisjointTests"
+[128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/BooleanIntersects.swift "BooleanIntersects"
+[129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Turf/PoygonToLine.swift "PoygonToLine"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
