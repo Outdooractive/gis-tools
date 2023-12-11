@@ -172,22 +172,14 @@ extension Polygon {
         return BoundingBox(coordinates: coordinates)
     }
 
-    // TODO: This is not (entirely) correct, needs improvement
-    // Check if one the of the bounding box corners or the center is inside the polygon
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        if let boundingBox = boundingBox,
+        if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
         {
             return false
         }
 
-        guard let outerRing = self.outerRing else { return false }
-
-        return outerRing.contains(otherBoundingBox.center)
-            || outerRing.contains(otherBoundingBox.northWest)
-            || outerRing.contains(otherBoundingBox.northEast)
-            || outerRing.contains(otherBoundingBox.southEast)
-            || outerRing.contains(otherBoundingBox.southWest)
+        return outerRing?.intersects(otherBoundingBox) ?? false
     }
 
 }

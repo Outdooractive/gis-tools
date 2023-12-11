@@ -260,6 +260,11 @@ extension BoundingBox {
 
 extension BoundingBox {
 
+    /// All of the bounding box's corner coordinates.
+    var allCoordinates: [Coordinate3D] {
+        [southWest, northWest, northEast, southEast]
+    }
+
     /// Converts the bounding box to a `Polygon` object.
     public var boundingBoxPolygon: Polygon {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!

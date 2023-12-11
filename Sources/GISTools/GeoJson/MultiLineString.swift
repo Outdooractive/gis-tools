@@ -186,11 +186,12 @@ extension MultiLineString {
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        if let boundingBox = boundingBox,
+        if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
         {
             return false
         }
+
         return lineStrings.contains { $0.intersects(otherBoundingBox) }
     }
 

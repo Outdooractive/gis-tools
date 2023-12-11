@@ -57,6 +57,22 @@ extension Ring {
 
 }
 
+// MARK: - BoundingBox
+
+extension Ring {
+
+    public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        if otherBoundingBox.allCoordinates.contains(where: { contains($0) })
+            || contains(otherBoundingBox.center)
+        {
+            return true
+        }
+
+        return lineString.intersects(otherBoundingBox)
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if !os(Linux)

@@ -139,7 +139,9 @@ extension Feature {
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        if let boundingBox = boundingBox, !boundingBox.intersects(otherBoundingBox) {
+        if let boundingBox = boundingBox ?? calculateBoundingBox(),
+            !boundingBox.intersects(otherBoundingBox)
+        {
             return false
         }
 
