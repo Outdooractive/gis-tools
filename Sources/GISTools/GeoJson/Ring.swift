@@ -26,6 +26,10 @@ public struct Ring:
     /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 
+    public var lineString: LineString {
+        LineString(unchecked: coordinates)
+    }
+
     /// Try to initialize a Ring with some coordinates.
     public init?(_ coordinates: [Coordinate3D]) {
         // TODO: Close the ring, if necessary
@@ -49,6 +53,22 @@ extension Ring {
         guard newProjection != projection else { return self }
 
         return Ring(unchecked: coordinates.map({ $0.projected(to: newProjection) }))
+    }
+
+}
+
+// MARK: - BoundingBox
+
+extension Ring {
+
+    public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        if otherBoundingBox.allCoordinates.contains(where: { contains($0) })
+            || contains(otherBoundingBox.center)
+        {
+            return true
+        }
+
+        return lineString.intersects(otherBoundingBox)
     }
 
 }
