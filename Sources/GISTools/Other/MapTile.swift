@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-public struct MapTile: CustomStringConvertible {
+public struct MapTile: CustomStringConvertible, Sendable {
 
     public let x: Int
     public let y: Int

@@ -23,7 +23,7 @@ public struct FeatureCollection:
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     public init() {
         self.features = []

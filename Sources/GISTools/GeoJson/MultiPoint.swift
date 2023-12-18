@@ -26,7 +26,7 @@ public struct MultiPoint:
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     public var points: [Point] {
         return coordinates.map { Point($0) }

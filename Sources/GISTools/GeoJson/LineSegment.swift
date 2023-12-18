@@ -4,7 +4,10 @@ import CoreLocation
 import Foundation
 
 /// A `LineSegment` is a line with exactly two coordinates.
-public struct LineSegment: Projectable, Sendable {
+public struct LineSegment:
+    Projectable,
+    Sendable
+{
 
     public var boundingBox: BoundingBox?
 

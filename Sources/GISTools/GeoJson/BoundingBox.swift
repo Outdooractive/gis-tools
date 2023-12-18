@@ -42,7 +42,13 @@ public struct BoundingBox:
     }
 
     /// Create a bounding box from `coordinates` and an optional padding in kilometers.
-    public init?(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0) {
+    @available(*, deprecated, renamed: "init(coordinates:padding:)", message: "Padding is now expressed in meters")
+    public init?(coordinates: [Coordinate3D], paddingKilometers: Double) {
+        self.init(coordinates: coordinates, padding: paddingKilometers * 1000.0)
+    }
+
+    /// Create a bounding box from `coordinates` and an optional padding.
+    public init?(coordinates: [Coordinate3D], padding: CLLocationDistance = 0.0) {
         guard !coordinates.isEmpty else { return nil }
 
         self.projection = coordinates.first?.projection ?? .epsg4326
@@ -60,21 +66,21 @@ public struct BoundingBox:
             northEast.longitude = max(northEast.longitude, currentLocationLongitude)
         }
 
-        if paddingKilometers > 0.0 {
+        if padding > 0.0 {
             switch projection {
             case .epsg3857:
-                southWest.latitude -= paddingKilometers * 1000.0
-                northEast.latitude += paddingKilometers * 1000.0
-                southWest.longitude -= paddingKilometers * 1000.0
-                northEast.longitude += paddingKilometers * 1000.0
+                southWest.latitude -= padding
+                northEast.latitude += padding
+                southWest.longitude -= padding
+                northEast.longitude += padding
 
             case .epsg4326:
                 // Length of one minute at this latitude
-                let oneDegreeLongitudeDistanceInKilometers: Double = cos(southWest.latitude * Double.pi / 180.0) * 111.0
-                let oneDegreeLatitudeDistanceInKilometers = 111.0
+                let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0 // ~111 km
+                let oneDegreeLongitudeDistance: CLLocationDistance = cos(southWest.latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
 
-                let longitudeDistance: Double = (paddingKilometers / oneDegreeLongitudeDistanceInKilometers)
-                let latitudeDistance: Double = (paddingKilometers / oneDegreeLatitudeDistanceInKilometers)
+                let longitudeDistance: Double = (padding / oneDegreeLongitudeDistance)
+                let latitudeDistance: Double = (padding / oneDegreeLatitudeDistance)
 
                 southWest.latitude -= latitudeDistance
                 northEast.latitude += latitudeDistance
@@ -162,17 +168,37 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver with some padding in kilometers.
+    ///
+    /// - Parameters:
+    ///    - padding: The padding, in kilometers
+    @available(*, deprecated, renamed: "padded(_:)", message: "Padding is now expressed in meters")
     public func with(padding paddingKilometers: Double) -> BoundingBox {
         BoundingBox(
             coordinates: [southWest, northEast],
             paddingKilometers: paddingKilometers)!
     }
 
+    /// Returns a copy of the receiver with some padding.
+    ///
+    /// - Parameters:
+    ///    - padding: The padding, in meters
+    public func padded(_ padding: CLLocationDistance) -> BoundingBox {
+        BoundingBox(
+            coordinates: [southWest, northEast],
+            padding: padding)!
+    }
+
     /// Returns a copy of the receiver expanded by `degrees`.
+    @available(*, deprecated, renamed: "expanded(byDegrees:)", message: "Renamed to expaned(byDegrees:)")
     public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
+        expanded(byDegrees: degrees)
+    }
+
+    /// Returns a copy of the receiver expanded by `degrees` horizontally and vertically.
+    public func expanded(byDegrees degrees: CLLocationDegrees) -> BoundingBox {
         switch projection {
         case .epsg3857:
-            return projected(to: .epsg4326).expand(degrees).projected(to: .epsg3857)
+            return projected(to: .epsg4326).expanded(byDegrees: degrees).projected(to: .epsg3857)
 
         case .epsg4326:
             return BoundingBox(
@@ -185,19 +211,43 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `distance` diagonally.
+    ///
+    /// - Parameters:
+    ///    - distance: The distance from the receiver, in meters
+    @available(*, deprecated, renamed: "expanded(byDistance:)", message: "Renamed to expaned(byDistance:)")
     public func expand(distance: CLLocationDistance) -> BoundingBox {
+        expanded(byDistance: distance)
+    }
+
+    /// Returns a copy of the receiver expanded by `distance` diagonally.
+    ///
+    /// - Parameters:
+    ///    - distance: The distance from the receiver, in meters
+    public func expanded(byDistance distance: CLLocationDistance) -> BoundingBox {
         BoundingBox(
             southWest: southWest.destination(distance: distance, bearing: 225.0),
             northEast: northEast.destination(distance: distance, bearing: 45.0))
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
+    @available(*, deprecated, renamed: "expanded(byIncluding:)", message: "Renamed to expanded(byIncluding:)")
     public func expand(including coordinate: Coordinate3D) -> BoundingBox {
+        expanded(byIncluding: coordinate)
+    }
+
+    /// Returns a copy of the receiver that also includes `coordinate`.
+    public func expanded(byIncluding coordinate: Coordinate3D) -> BoundingBox {
         BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
+    @available(*, deprecated, renamed: "expanded(byIncluding:)", message: "Renamed to expanded(byIncluding:)")
     public func expand(including boundingBox: BoundingBox) -> BoundingBox {
+        expanded(byIncluding: boundingBox)
+    }
+
+    /// Returns a copy of the receiver that also includes the other `boundingBox`.
+    public func expanded(byIncluding boundingBox: BoundingBox) -> BoundingBox {
         BoundingBox(coordinates: [
             southWest,
             northEast,
@@ -234,8 +284,17 @@ extension BoundingBox {
 extension BoundingBox {
 
     /// Create a bounding box from `coordinates` and an optional padding in kilometers.
-    public init?(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double = 0.0) {
+    @available(*, deprecated, renamed: "init(coordinates:padding:)", message: "Padding is now expressed in meters")
+    public init?(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double) {
         self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
+    }
+
+    /// Create a bounding box from `coordinates` and an optional padding.
+    ///
+    /// - Parameters:
+    ///    - padding: The padding, in meters
+    public init?(coordinates: [CLLocationCoordinate2D], padding: Double = 0.0) {
+        self.init(coordinates: coordinates.map({ Coordinate3D($0) }), padding: padding)
     }
 
     /// Create a bounding box from a south-west and north-east coordinate.
@@ -244,8 +303,17 @@ extension BoundingBox {
     }
 
     /// Create a bounding box from `locations` and an optional padding in kilometers.
+    @available(*, deprecated, renamed: "init(locations:padding:)", message: "Padding is now expressed in meters")
     public init?(locations: [CLLocation], paddingKilometers: Double = 0.0) {
         self.init(coordinates: locations.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
+    }
+
+    /// Create a bounding box from `locations` and an optional padding.
+    ///
+    /// - Parameters:
+    ///    - padding: The padding, in meters
+    public init?(locations: [CLLocation], padding: Double = 0.0) {
+        self.init(coordinates: locations.map({ Coordinate3D($0) }), padding: padding)
     }
 
     /// Create a bounding box from a south-west and north-east coordinate.

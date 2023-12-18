@@ -26,7 +26,7 @@ public struct MultiPolygon:
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     public var polygons: [Polygon] {
         return coordinates.compactMap { Polygon($0) }

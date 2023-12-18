@@ -20,7 +20,7 @@ public struct GeometryCollection: GeoJsonGeometry {
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     /// Initialize a GeometryCollection with a geometry object.
     public init(_ geometry: GeoJsonGeometry, calculateBoundingBox: Bool = false) {

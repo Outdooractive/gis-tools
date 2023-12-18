@@ -4,7 +4,7 @@ import Foundation
 public struct Feature: GeoJson {
 
     /// A GeoJSON identifier that can either be a string or number.
-    public enum Identifier: Equatable, Hashable, CustomStringConvertible {
+    public enum Identifier: Equatable, Hashable, CustomStringConvertible, Sendable {
         case string(String)
         case int(Int)
         case double(Double)
@@ -61,11 +61,11 @@ public struct Feature: GeoJson {
     }
 
     /// Only 'Feature' objects may have properties.
-    public var properties: [String: Any]
+    public var properties: [String: Sendable]
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     /// Create a ``Feature`` from any ``GeoJsonGeometry`` object.
     public init(

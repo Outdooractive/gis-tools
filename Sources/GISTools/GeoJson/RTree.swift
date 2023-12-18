@@ -33,7 +33,7 @@ public enum RTreeSortOption: Sendable {
 // MARK: - RTree
 
 /// An efficient implementation of the packed Hilbert R-tree algorithm.
-public struct RTree<T: BoundingBoxRepresentable> {
+public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
 
     /// The R-Tree's `projection`.
     public let projection: Projection
