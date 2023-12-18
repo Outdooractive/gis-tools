@@ -6,7 +6,6 @@ import Foundation
 /// A GeoJSON bounding box.
 public struct BoundingBox:
     GeoJsonReadable,
-    Projectable,
     CustomStringConvertible,
     Sendable
 {
@@ -48,6 +47,9 @@ public struct BoundingBox:
     }
 
     /// Create a bounding box from `coordinates` and an optional padding.
+    ///
+    /// - Parameters:
+    ///    - padding: The padding, in meters
     public init?(coordinates: [Coordinate3D], padding: CLLocationDistance = 0.0) {
         guard !coordinates.isEmpty else { return nil }
 
@@ -168,9 +170,6 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver with some padding in kilometers.
-    ///
-    /// - Parameters:
-    ///    - padding: The padding, in kilometers
     @available(*, deprecated, renamed: "padded(_:)", message: "Padding is now expressed in meters")
     public func with(padding paddingKilometers: Double) -> BoundingBox {
         BoundingBox(
@@ -178,7 +177,7 @@ public struct BoundingBox:
             paddingKilometers: paddingKilometers)!
     }
 
-    /// Returns a copy of the receiver with some padding.
+    /// Returns a copy of the receiver with some padding horizontally and vertically.
     ///
     /// - Parameters:
     ///    - padding: The padding, in meters
@@ -211,9 +210,6 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `distance` diagonally.
-    ///
-    /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
     @available(*, deprecated, renamed: "expanded(byDistance:)", message: "Renamed to expaned(byDistance:)")
     public func expand(distance: CLLocationDistance) -> BoundingBox {
         expanded(byDistance: distance)
@@ -265,7 +261,7 @@ public struct BoundingBox:
 
 // MARK: - Projection
 
-extension BoundingBox {
+extension BoundingBox: Projectable {
 
     /// Reproject this bounding box.
     public func projected(to newProjection: Projection) -> BoundingBox {
