@@ -33,7 +33,8 @@ public protocol GeoJson:
     Projectable,
     ValidatableGeoJson,
     Codable,
-    CustomDebugStringConvertible
+    CustomDebugStringConvertible,
+    Sendable
 {
 
     /// GeoJSON object type.
@@ -45,7 +46,7 @@ public protocol GeoJson:
     /// Any foreign members, i.e. keys in the JSON that are
     /// not part of the GeoJSON standard.
     /// - important: `values` must be a valid JSON objects or serialization will fail.
-    var foreignMembers: [String: Any] { get set }
+    var foreignMembers: [String: Sendable] { get set }
 
     /// Try to initialize a GeoJSON object from any JSON and calculate a bounding box if necessary.
     ///

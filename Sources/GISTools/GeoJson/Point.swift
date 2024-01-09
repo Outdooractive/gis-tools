@@ -23,7 +23,7 @@ public struct Point: PointGeometry {
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     public var points: [Point] {
         return [self]

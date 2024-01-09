@@ -26,7 +26,7 @@ public struct MultiLineString:
 
     public var boundingBox: BoundingBox?
 
-    public var foreignMembers: [String: Any] = [:]
+    public var foreignMembers: [String: Sendable] = [:]
 
     public var lineStrings: [LineString] {
         return coordinates.compactMap { LineString($0) }

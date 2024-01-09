@@ -12,7 +12,6 @@ import Foundation
 /// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``/``z``)
 /// plus a generic value ``m``.
 public struct Coordinate3D:
-    Projectable,
     CustomStringConvertible,
     Sendable
 {
@@ -247,7 +246,7 @@ extension Coordinate3D {
 
 // MARK: - Projection
 
-extension Coordinate3D {
+extension Coordinate3D: Projectable {
 
     /// Reproject this coordinate.
     public func projected(to newProjection: Projection) -> Coordinate3D {

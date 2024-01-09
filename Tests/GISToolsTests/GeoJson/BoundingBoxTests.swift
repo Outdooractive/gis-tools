@@ -518,4 +518,39 @@ final class BoundingBoxTests: XCTestCase {
         XCTAssertEqual(clamped, BoundingBox.world)
     }
 
+    // MARK: - Expanding
+
+    func testExpanding() throws {
+        let bbox1 = try XCTUnwrap(BoundingBox(coordinates: [.zero]))
+        let bbox1_3857 = bbox1.projected(to: .epsg3857)
+
+        // Note: Expands diagonally
+        let bbox2_3857_distance = bbox1_3857.expanded(byDistance: 1000.0)
+        let bbox2_degrees = bbox1.expanded(byDegrees: 1.0)
+
+        XCTAssertEqual(Coordinate3D.zero.distance(from: bbox2_3857_distance.southWest), 1000.0, accuracy: 0.00001)
+        XCTAssertEqual(Coordinate3D.zero.distance(from: bbox2_3857_distance.northEast), 1000.0, accuracy: 0.00001)
+        XCTAssertEqual(bbox2_degrees.southWest, Coordinate3D(latitude: -1.0, longitude: -1.0))
+        XCTAssertEqual(bbox2_degrees.northEast, Coordinate3D(latitude: 1.0, longitude: 1.0))
+
+        let bbox2_distance = bbox1.expanded(byDistance: 1000.0)
+        let bbox2_3857_degrees = bbox1_3857.expanded(byDegrees: 1.0)
+
+        XCTAssertEqual(bbox2_distance.projected(to: .epsg3857), bbox2_3857_distance)
+        XCTAssertEqual(bbox2_degrees, bbox2_3857_degrees.projected(to: .epsg4326))
+
+        // Note: Expanded horizontally and vertically
+        let bbox3_3857 = try XCTUnwrap(BoundingBox(coordinates: [.zero.projected(to: .epsg3857)], padding: 1000.0))
+        let bbox3_4326 = try XCTUnwrap(BoundingBox(coordinates: [.zero], padding: 1000.0))
+
+        XCTAssertEqual(bbox3_3857.southWest.x, -1000.0, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_3857.southWest.y, -1000.0, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_3857.northEast.x, 1000.0, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_3857.northEast.x, 1000.0, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_4326.projected(to: .epsg3857).southWest.x, bbox3_3857.southWest.x, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_4326.projected(to: .epsg3857).southWest.y, bbox3_3857.southWest.y, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_4326.projected(to: .epsg3857).northEast.x, bbox3_3857.northEast.x, accuracy: 0.00001)
+        XCTAssertEqual(bbox3_4326.projected(to: .epsg3857).northEast.y, bbox3_3857.northEast.y, accuracy: 0.00001)
+    }
+
 }

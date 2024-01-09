@@ -9,3 +9,14 @@ public protocol Projectable {
     func projected(to newProjection: Projection) -> Self
 
 }
+
+extension Projectable {
+
+    /// Reproject this coordinate.
+    public mutating func project(to newProjection: Projection) {
+        guard newProjection != projection else { return }
+
+        self = projected(to: newProjection)
+    }
+
+}
