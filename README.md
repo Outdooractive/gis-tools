@@ -836,8 +836,9 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | union                       | TODO                                                                                                                                  |     | [Source][124]                |
 
 # Related packages
-Currently only one:
+Currently only two:
 - [mvt-tools][125]: Vector tiles reader/writer for Swift
+- [mvt-postgis][130]: Creates vector tiles from Postgis databases
 
 # Contributing
 Please create an issue or open a pull request with a fix or enhancement.
@@ -977,6 +978,7 @@ Thomas Rasch, Outdooractive
 [127]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanDisjointTests.swift "BooleanDisjointTests"
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
 [129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PoygonToLine.swift "PoygonToLine"
+[130]:  https://github.com/Outdooractive/mvt-postgis
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
