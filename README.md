@@ -10,7 +10,7 @@ This package makes some assumptions about what is equal, i.e. coordinates that a
 
 ## Requirements
 
-This package requires Swift 5.7 or higher (at least Xcode 13), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
+This package requires Swift 5.9 or higher (at least Xcode 13), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
 
 ## Installation with Swift Package Manager
 
@@ -36,9 +36,10 @@ targets: [
 - Includes many spatial algorithms, and more to come
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 
+## Usage
+
 Please see also the [API documentation][8].
 
-## Usage
 ```swift
 import GISTools
 
