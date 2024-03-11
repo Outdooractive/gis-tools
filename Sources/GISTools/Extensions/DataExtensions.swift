@@ -18,6 +18,10 @@ extension Data {
         self.init(bytes)
     }
 
+    var asUTF8EncodedString: String? {
+        String(data: self, encoding: .utf8)
+    }
+
     /// The data, or nil if it is empty
     var nilIfEmpty: Data? {
         guard !isEmpty else { return nil }

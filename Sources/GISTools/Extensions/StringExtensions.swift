@@ -34,4 +34,8 @@ extension String {
         return self
     }
 
+    var asUTF8EncodedData: Data? {
+        self.data(using: .utf8)
+    }
+
 }

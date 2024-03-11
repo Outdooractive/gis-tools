@@ -16,7 +16,7 @@ This package requires Swift 5.9 or higher (at least Xcode 13), and compiles on i
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.3.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -35,6 +35,7 @@ targets: [
 - Spatial search with a R-tree
 - Includes many spatial algorithms, and more to come
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
+- Can encode/decode Polylines
 
 ## Usage
 
@@ -776,6 +777,14 @@ let tile3 = MapTile(quadkey: "1202211303220032")
 Also, not directly related to map tiles:
 ```swift
 let mpp = MapTile.metersPerPixel(at: 15.0, latitude: 45.0)
+```
+
+# Polylines
+Provides an encoder/decoder for Polylines.
+
+```swift
+let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline()
+let coordinates = polyline.decodePolyline()
 ```
 
 # Algorithms
