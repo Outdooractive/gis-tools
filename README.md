@@ -783,10 +783,8 @@ let mpp = MapTile.metersPerPixel(at: 15.0, latitude: 45.0)
 Provides an encoder/decoder for Polylines.
 
 ```swift
-let coordinates: [Coordinate3D] = ...
-let polyline = coordinates.encodePolyline()
-
-"_p~iF~ps|U_ulLnnqC_mqNvxq`@".decodePolyline()
+let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline()
+let coordinates = polyline.decodePolyline()
 ```
 
 # Algorithms
