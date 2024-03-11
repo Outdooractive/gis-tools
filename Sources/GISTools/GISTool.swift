@@ -23,4 +23,7 @@ public enum GISTool {
     /// The length in pixels of a map tile.
     public static let tileSideLength: Double = 256.0
 
+    /// The default precision for encoding/decoding Polylines.
+    public static let defaultPolylinePrecision: Double = 1e5
+
 }

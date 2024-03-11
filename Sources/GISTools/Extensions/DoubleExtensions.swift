@@ -74,4 +74,8 @@ extension Double {
         self = rounded(precision: precision)
     }
 
+    var toInt: Int {
+        Int(self)
+    }
+
 }
