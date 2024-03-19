@@ -105,4 +105,29 @@ final class FeatureTests: XCTestCase {
         XCTAssertEqual(featureData, feature.asJsonData(prettyPrinted: true))
     }
 
+    func testFeatureIds() throws {
+        XCTAssertEqual(Feature.Identifier(value: 1234), .int(1234))
+        XCTAssertEqual(Feature.Identifier(value: Int8(32)), .int(32))
+        XCTAssertEqual(Feature.Identifier(value: Int8(32))?.int64Value, 32)
+        XCTAssertEqual(Feature.Identifier(value: Int8(32))?.uint64Value, 32)
+
+        XCTAssertEqual(Feature.Identifier(value: -1234), .int(-1234))
+        XCTAssertEqual(Feature.Identifier(value: Int8(-32)), .int(-32))
+        XCTAssertEqual(Feature.Identifier(value: Int8(-32))?.int64Value, -32)
+        XCTAssertNil(Feature.Identifier(value: Int8(-32))?.uint64Value)
+
+        // UInt -> Int
+        XCTAssertEqual(Feature.Identifier(value: UInt64(32)), .int(32))
+
+        XCTAssertEqual(Feature.Identifier(value: Int64.max), .int(9223372036854775807))
+        XCTAssertEqual(Feature.Identifier(value: Int64.max)?.int64Value, 9223372036854775807)
+        XCTAssertEqual(Feature.Identifier(value: Int64.min), .int(-9223372036854775808))
+        XCTAssertEqual(Feature.Identifier(value: Int64.min)?.int64Value, -9223372036854775808)
+
+        // 9223372036854775808 is Int64.max+1
+        XCTAssertEqual(Feature.Identifier(value: UInt64(9223372036854775808)), .uint(9223372036854775808))
+        XCTAssertNil(Feature.Identifier(value: UInt64(9223372036854775808))?.int64Value)
+        XCTAssertEqual(Feature.Identifier(value: UInt64(9223372036854775808))?.uint64Value, 9223372036854775808)
+    }
+
 }
