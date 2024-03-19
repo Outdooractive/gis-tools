@@ -4,6 +4,10 @@ import Foundation
 public struct Feature: GeoJson {
 
     /// A GeoJSON identifier that can either be a string or number.
+    ///
+    /// Any parsed integer value `Int64.min ⪬ i ⪬ Int64.max`  will be cast to `Int`
+    /// (or `Int64` on 32-bit platforms), values above `Int64.max` will be cast to `UInt`
+    /// (or `UInt64` on 32-bit platforms).
     public enum Identifier: Equatable, Hashable, CustomStringConvertible, Sendable {
 
 #if _pointerBitWidth(_32)
