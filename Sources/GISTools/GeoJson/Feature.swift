@@ -5,39 +5,67 @@ public struct Feature: GeoJson {
 
     /// A GeoJSON identifier that can either be a string or number.
     public enum Identifier: Equatable, Hashable, CustomStringConvertible, Sendable {
+
+#if _pointerBitWidth(_32)
+        public typealias IntId = Int64
+        public typealias UIntId = UInt64
+#else
+        public typealias IntId = Int
+        public typealias UIntId = UInt
+#endif
+
         case string(String)
-        case int(Int)
+        case int(IntId)
+        case uint(UIntId)
         case double(Double)
 
         public init?(value: Any?) {
             guard let value else { return nil }
-            if let int = value as? Int {
+
+            switch value {
+            case let int as IntId:
                 self = .int(int)
-            }
-            else if let string = value as? String {
+
+            case let uint as UIntId:
+                self = .uint(uint)
+
+            case let string as String:
                 self = .string(string)
-            }
-            else if let double = value as? Double {
+
+            case let double as Double:
                 self = .double(double)
-            }
-            else {
+
+            case let binaryInt as (any BinaryInteger):
+                if let int = IntId(exactly: binaryInt) {
+                    self = .int(int)
+                }
+                else if let uint = UIntId(exactly: binaryInt) {
+                    self = .uint(uint)
+                }
+                else {
+                    return nil
+                }
+
+            default:
                 return nil
             }
         }
 
         public var asJson: Any {
             switch self {
-            case .double(let double): return double
-            case .int(let int): return int
-            case .string(let string): return string
+            case .double(let double): double
+            case .int(let int): int
+            case .uint(let uint): uint
+            case .string(let string): string
             }
         }
 
         public var description: String {
             switch self {
-            case .double(let double): return String(double)
-            case .int(let int): return String(int)
-            case .string(let string): return string
+            case .double(let double): String(double)
+            case .int(let int): String(int)
+            case .uint(let uint): String(uint)
+            case .string(let string): string
             }
         }
     }
