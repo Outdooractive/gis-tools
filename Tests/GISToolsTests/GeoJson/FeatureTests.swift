@@ -110,6 +110,9 @@ final class FeatureTests: XCTestCase {
         XCTAssertEqual(Feature.Identifier(value: Int8(32))?.int64Value, 32)
         XCTAssertEqual(Feature.Identifier(value: Int8(32))?.uint64Value, 32)
 
+        // UInt -> Int
+        XCTAssertEqual(Feature.Identifier(value: UInt64(32)), .int(32))
+
         XCTAssertEqual(Feature.Identifier(value: Int8(-32)), .int(-32))
         XCTAssertEqual(Feature.Identifier(value: Int8(-32))?.int64Value, -32)
         XCTAssertNil(Feature.Identifier(value: Int8(-32))?.uint64Value)

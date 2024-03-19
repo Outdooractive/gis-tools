@@ -19,10 +19,22 @@ public struct Feature: GeoJson {
         case uint(UIntId)
         case double(Double)
 
+        /// Note: This will prefer `Int` over `UInt` if possible.
         public init?(value: Any?) {
             guard let value else { return nil }
 
             switch value {
+            case let binaryInt as (any BinaryInteger):
+                if let int = IntId(exactly: binaryInt) {
+                    self = .int(int)
+                }
+                else if let uint = UIntId(exactly: binaryInt) {
+                    self = .uint(uint)
+                }
+                else {
+                    return nil
+                }
+
             case let int as IntId:
                 self = .int(int)
 
@@ -34,17 +46,6 @@ public struct Feature: GeoJson {
 
             case let double as Double:
                 self = .double(double)
-
-            case let binaryInt as (any BinaryInteger):
-                if let int = IntId(exactly: binaryInt) {
-                    self = .int(int)
-                }
-                else if let uint = UIntId(exactly: binaryInt) {
-                    self = .uint(uint)
-                }
-                else {
-                    return nil
-                }
 
             default:
                 return nil
