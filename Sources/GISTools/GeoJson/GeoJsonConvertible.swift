@@ -103,3 +103,16 @@ extension Sequence where Self.Iterator.Element: GeoJsonWritable {
     }
 
 }
+
+// MARK: - Debugging
+
+extension GeoJsonWritable {
+
+    /// Prints the receiver to the console.
+    public func dump() {
+        guard let stringified = asJsonString(prettyPrinted: true) else { return }
+
+        print(stringified, separator: "")
+    }
+
+}

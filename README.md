@@ -603,9 +603,13 @@ func projected(to newProjection: Projection) -> GeometryCollection
 A `Feature` is sort of a container for exactly one GeoJSON geometry (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`) together with some `properties` and an optional `id`:
 ```swift
 /// A GeoJSON identifier that can either be a string or number.
+/// Any parsed integer value `Int64.min ⪬ i ⪬ Int64.max`  will be cast to `Int`
+/// (or `Int64` on 32-bit platforms), values above `Int64.max` will be cast to `UInt`
+/// (or `UInt64` on 32-bit platforms).
 enum Identifier: Equatable, Hashable, CustomStringConvertible {
     case string(String)
     case int(Int)
+    case uint(UInt)
     case double(Double)
 }
 
