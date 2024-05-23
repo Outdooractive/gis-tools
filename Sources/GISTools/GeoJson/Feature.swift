@@ -1,7 +1,7 @@
 import Foundation
 
 /// A GeoJSON `Feature`.
-public struct Feature: GeoJson {
+public struct Feature: GeoJson, Identifiable {
 
     /// A GeoJSON identifier that can either be a string or number.
     ///
