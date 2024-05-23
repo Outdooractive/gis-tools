@@ -8,7 +8,7 @@ import Foundation
 extension Coordinate3D {
 
     /// Returns the destination coordinate having travelled the given distance along a Rhumb line from the
-    /// origin with the (varant) given bearing.
+    /// origin with the given bearing.
     ///
     /// - Parameters:
     ///    - distance: The distance from the receiver, in meters
@@ -51,7 +51,7 @@ extension Coordinate3D {
     }
 
     // Returns the destination point having travelled along a rhumb line from origin point the given
-    // distance on the  given bearing.
+    // distance with the given bearing.
     // Adapted from Geodesy: http://www.movable-type.co.uk/scripts/latlong.html#rhumblines
     private static func calculateRhumbDestination(
         from: Coordinate3D,
@@ -100,7 +100,7 @@ extension Coordinate3D {
 extension Point {
 
     /// Returns the destination coordinate having travelled the given distance along a Rhumb line from the
-    /// origin with the (varant) given bearing.
+    /// origin with the given bearing.
     ///
     /// - Parameters:
     ///    - distance: The distance from the receiver, in meters

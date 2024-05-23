@@ -16,3 +16,11 @@ extension GeoJson {
     }
 
 }
+
+extension BoundingBox {
+
+    public func tileCover(atZoom zoom: Int) -> [MapTile] {
+        boundingBoxPolygon.tileCover(atZoom: zoom)
+    }
+
+}
