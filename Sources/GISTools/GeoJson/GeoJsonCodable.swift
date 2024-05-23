@@ -91,6 +91,7 @@ extension Coordinate3D: Codable {
 
 // MARK: - SwiftData compatibility (see the README)
 
+#if canImport(SwiftData)
 @objc(GeoJsonTransformer)
 public final class GeoJsonTransformer: ValueTransformer {
 
@@ -124,6 +125,7 @@ public final class GeoJsonTransformer: ValueTransformer {
     }
 
 }
+#endif
 
 // MARK: - Private
 

@@ -1,8 +1,10 @@
 @testable import GISTools
-import SwiftData
 import XCTest
 
-@available(macOS 14, *)
+#if canImport(SwiftData)
+import SwiftData
+
+@available(macOS 14, iOS 17, watchOS 10, tvOS 17, *)
 final class SwiftDataTests: XCTestCase {
 
     @Model
@@ -56,3 +58,4 @@ final class SwiftDataTests: XCTestCase {
     }
 
 }
+#endif
