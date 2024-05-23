@@ -3,7 +3,7 @@ import XCTest
 
 final class PolygonTests: XCTestCase {
 
-    private let polygonJsonNoHole = """
+    static let polygonJsonNoHole = """
     {
         "type": "Polygon",
         "coordinates": [
@@ -19,7 +19,7 @@ final class PolygonTests: XCTestCase {
     }
     """
 
-    let polygonJsonWithHoles = """
+    static let polygonJsonWithHoles = """
     {
         "type": "Polygon",
         "coordinates": [
@@ -43,7 +43,7 @@ final class PolygonTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole))
+        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonNoHole))
 
         XCTAssertEqual(polygonNoHole.type, GeoJsonType.polygon)
         XCTAssertEqual(polygonNoHole.projection, .epsg4326)
@@ -51,7 +51,7 @@ final class PolygonTests: XCTestCase {
         XCTAssertEqual(polygonNoHole.foreignMember(for: "other"), "something else")
         XCTAssertEqual(polygonNoHole[foreignMember: "other"], "something else")
 
-        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles))
+        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonWithHoles))
 
         XCTAssertEqual(polygonWithHoles.type, GeoJsonType.polygon)
         XCTAssertEqual(polygonWithHoles.projection, .epsg4326)
@@ -79,8 +79,8 @@ final class PolygonTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole))
-        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles))
+        let polygonNoHole = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonNoHole))
+        let polygonWithHoles = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonWithHoles))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -90,10 +90,10 @@ final class PolygonTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let polygonNoHoleData = try XCTUnwrap(Polygon(jsonString: polygonJsonNoHole)?.asJsonData(prettyPrinted: true))
+        let polygonNoHoleData = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonNoHole)?.asJsonData(prettyPrinted: true))
         let polygonNoHole = try JSONDecoder().decode(Polygon.self, from: polygonNoHoleData)
 
-        let polygonWithHolesData = try XCTUnwrap(Polygon(jsonString: polygonJsonWithHoles)?.asJsonData(prettyPrinted: true))
+        let polygonWithHolesData = try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonWithHoles)?.asJsonData(prettyPrinted: true))
         let polygonWithHoles = try JSONDecoder().decode(Polygon.self, from: polygonWithHolesData)
 
         XCTAssertEqual(polygonNoHole.projection, .epsg4326)

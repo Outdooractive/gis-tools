@@ -3,7 +3,7 @@ import XCTest
 
 final class GeometryCollectionTests: XCTestCase {
 
-    private let geometryCollectionJson = """
+    static let geometryCollectionJson = """
     {
         "type": "GeometryCollection",
         "geometries": [{
@@ -21,7 +21,7 @@ final class GeometryCollectionTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson))
+        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
 
         XCTAssertNotNil(geometryCollection)
         XCTAssertEqual(geometryCollection.type, GeoJsonType.geometryCollection)
@@ -44,7 +44,7 @@ final class GeometryCollectionTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson))
+        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -53,7 +53,7 @@ final class GeometryCollectionTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let geometryCollectionData = try XCTUnwrap(GeometryCollection(jsonString: geometryCollectionJson)?.asJsonData(prettyPrinted: true))
+        let geometryCollectionData = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)?.asJsonData(prettyPrinted: true))
         let geometryCollection = try JSONDecoder().decode(GeometryCollection.self, from: geometryCollectionData)
 
         XCTAssertEqual(geometryCollection.projection, .epsg4326)

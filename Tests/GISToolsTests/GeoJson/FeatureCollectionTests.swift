@@ -3,7 +3,7 @@ import XCTest
 
 final class FeatureCollectionTests: XCTestCase {
 
-    private let featureCollectionJson = """
+    static let featureCollectionJson = """
     {
         "type": "FeatureCollection",
         "features": [{
@@ -56,7 +56,7 @@ final class FeatureCollectionTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         XCTAssertEqual(featureCollection.type, GeoJsonType.featureCollection)
         XCTAssertEqual(featureCollection.projection, .epsg4326)
@@ -94,7 +94,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testMap() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let prop0: String? = featureCollection.features.first?.property(for: "prop0")
         XCTAssertEqual(prop0, "value0")
@@ -110,7 +110,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testCompactMap() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         XCTAssertEqual(featureCollection.features.count, 3)
 
@@ -123,7 +123,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testFilter() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         XCTAssertEqual(featureCollection.features.count, 3)
 
@@ -135,7 +135,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testEnumerate() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let expected: [(Int, Int, Coordinate3D)] = [
             (0, 0, Coordinate3D(latitude: 0.5, longitude: 102.0)),
@@ -165,7 +165,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson))
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -174,7 +174,7 @@ final class FeatureCollectionTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let featureCollectionData = try XCTUnwrap(FeatureCollection(jsonString: featureCollectionJson)?.asJsonData(prettyPrinted: true))
+        let featureCollectionData = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)?.asJsonData(prettyPrinted: true))
         let featureCollection = try JSONDecoder().decode(FeatureCollection.self, from: featureCollectionData)
 
         XCTAssertEqual(featureCollection.projection, .epsg4326)

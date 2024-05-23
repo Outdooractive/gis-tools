@@ -3,7 +3,7 @@ import XCTest
 
 final class MultiPointTests: XCTestCase {
 
-    private let multiPointJson = """
+    static let multiPointJson = """
     {
         "type": "MultiPoint",
         "coordinates": [
@@ -15,7 +15,7 @@ final class MultiPointTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: multiPointJson))
+        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson))
 
         XCTAssertNotNil(multiPoint)
         XCTAssertEqual(multiPoint.type, GeoJsonType.multiPoint)
@@ -35,7 +35,7 @@ final class MultiPointTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: multiPointJson))
+        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -44,7 +44,7 @@ final class MultiPointTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let multiPointData = try XCTUnwrap(MultiPoint(jsonString: multiPointJson)?.asJsonData(prettyPrinted: true))
+        let multiPointData = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson)?.asJsonData(prettyPrinted: true))
         let multiPoint = try JSONDecoder().decode(MultiPoint.self, from: multiPointData)
 
         XCTAssertEqual(multiPoint.projection, .epsg4326)

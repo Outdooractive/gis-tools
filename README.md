@@ -29,7 +29,7 @@ targets: [
 
 - Supports the full [GeoJSON standard][6], with some exceptions (see [TODO.md][7])
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
-- Supports `Codable`
+- Supports `Codable` and `SwiftData` (see below)
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
 - Supports WKT/WKB, also with different projections
 - Spatial search with a R-tree
@@ -654,6 +654,24 @@ func projected(to newProjection: Projection) -> FeatureCollection
 ```
 
 This type is somewhat special since its initializers will accept any valid GeoJSON object and return a `FeatureCollection` with the input wrapped in `Feature` objects if the input are geometries, or by collecting the input if it’s a `Feature`.
+
+# SwiftData
+
+You need to use a transformer for using GeoJson with SwiftData (also have a look at the [SwiftData test cases](https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/SwiftDataTests.swift)).
+
+First, register the transformer like this:
+```swift
+GeoJsonTransformer.register()
+```
+
+Then create your models like this:
+```swift
+@Attribute(.transformable(by: GeoJsonTransformer.name.rawValue)) var geoJson: GeoJson?
+@Attribute(.transformable(by: GeoJsonTransformer.name.rawValue)) var point: Point?
+...
+```
+
+This is necessary because SwiftData doesn't work well with the default Codable implementation, so you need to do the serialization for yourself...
 
 # WKB/WKT
 The following geometry types are supported: `point`, `linestring`, `linearring`, `polygon`, `multipoint`, `multilinestring`, `multipolygon`, `geometrycollection` and `triangle`. Please open an issue if you need more.

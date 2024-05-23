@@ -3,7 +3,7 @@ import XCTest
 
 final class FeatureTests: XCTestCase {
 
-    private let featureJson = """
+    static let featureJson = """
     {
        "type": "Feature",
        "geometry": {
@@ -30,7 +30,7 @@ final class FeatureTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let feature = try XCTUnwrap(Feature(jsonString: featureJson))
+        let feature = try XCTUnwrap(Feature(jsonString: FeatureTests.featureJson))
 
         XCTAssertEqual(feature.type, GeoJsonType.feature)
         XCTAssertEqual(feature.projection, .epsg4326)
@@ -44,7 +44,7 @@ final class FeatureTests: XCTestCase {
         XCTAssertEqual(feature.id, .string("abcd.1234"))
     }
 
-    private let featureJsonWithIntId = """
+    static let featureJsonWithIntId = """
     {
        "type": "Feature",
        "geometry": {
@@ -71,7 +71,7 @@ final class FeatureTests: XCTestCase {
     """
 
     func testLoadJsonWithIntId() throws {
-        let feature = try XCTUnwrap(Feature(jsonString: featureJsonWithIntId))
+        let feature = try XCTUnwrap(Feature(jsonString: FeatureTests.featureJsonWithIntId))
 
         XCTAssertEqual(feature.id, .int(1234))
         XCTAssertEqual(feature.projection, .epsg4326)
@@ -89,7 +89,7 @@ final class FeatureTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let feature = try XCTUnwrap(Feature(jsonString: featureJson))
+        let feature = try XCTUnwrap(Feature(jsonString: FeatureTests.featureJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -98,7 +98,7 @@ final class FeatureTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let featureData = try XCTUnwrap(Feature(jsonString: featureJson)?.asJsonData(prettyPrinted: true))
+        let featureData = try XCTUnwrap(Feature(jsonString: FeatureTests.featureJson)?.asJsonData(prettyPrinted: true))
         let feature = try JSONDecoder().decode(Feature.self, from: featureData)
 
         XCTAssertEqual(feature.projection, .epsg4326)

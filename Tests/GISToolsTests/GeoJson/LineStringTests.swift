@@ -3,7 +3,7 @@ import XCTest
 
 final class LineStringTests: XCTestCase {
 
-    private let lineStringJson = """
+    static let lineStringJson = """
     {
         "type": "LineString",
         "coordinates": [
@@ -15,7 +15,7 @@ final class LineStringTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let lineString = try XCTUnwrap(LineString(jsonString: lineStringJson))
+        let lineString = try XCTUnwrap(LineString(jsonString: LineStringTests.lineStringJson))
 
         XCTAssertEqual(lineString.type, GeoJsonType.lineString)
         XCTAssertEqual(lineString.projection, .epsg4326)
@@ -52,7 +52,7 @@ final class LineStringTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let lineString = try XCTUnwrap(LineString(jsonString: lineStringJson))
+        let lineString = try XCTUnwrap(LineString(jsonString: LineStringTests.lineStringJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -61,7 +61,7 @@ final class LineStringTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let lineStringData = try XCTUnwrap(LineString(jsonString: lineStringJson)?.asJsonData(prettyPrinted: true))
+        let lineStringData = try XCTUnwrap(LineString(jsonString: LineStringTests.lineStringJson)?.asJsonData(prettyPrinted: true))
         let lineString = try JSONDecoder().decode(LineString.self, from: lineStringData)
 
         XCTAssertEqual(lineString.projection, .epsg4326)

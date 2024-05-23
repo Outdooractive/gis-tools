@@ -3,7 +3,7 @@ import XCTest
 
 final class MultiPolygonTests: XCTestCase {
 
-    private let multiPolygonJson = """
+    static let multiPolygonJson = """
     {
         "type": "MultiPolygon",
         "coordinates": [
@@ -38,7 +38,7 @@ final class MultiPolygonTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let multiPolygon = try XCTUnwrap(MultiPolygon(jsonString: multiPolygonJson))
+        let multiPolygon = try XCTUnwrap(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson))
 
         XCTAssertEqual(multiPolygon.type, GeoJsonType.multiPolygon)
         XCTAssertEqual(multiPolygon.projection, .epsg4326)
@@ -57,7 +57,7 @@ final class MultiPolygonTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let multiPolygon = try XCTUnwrap(MultiPolygon(jsonString: multiPolygonJson))
+        let multiPolygon = try XCTUnwrap(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -66,7 +66,7 @@ final class MultiPolygonTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let multiPolygonData = try XCTUnwrap(MultiPolygon(jsonString: multiPolygonJson)?.asJsonData(prettyPrinted: true))
+        let multiPolygonData = try XCTUnwrap(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson)?.asJsonData(prettyPrinted: true))
         let multiPolygon = try JSONDecoder().decode(MultiPolygon.self, from: multiPolygonData)
 
         XCTAssertEqual(multiPolygon.projection, .epsg4326)
