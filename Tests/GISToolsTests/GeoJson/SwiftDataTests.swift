@@ -20,7 +20,7 @@ final class SwiftDataTests: XCTestCase {
         GeoJsonTransformer.register()
 
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try? ModelContainer(for: GeoJsonModel.self, configurations: config)
+        return try! ModelContainer(for: GeoJsonModel.self, configurations: config)
     }()
 
     @MainActor
@@ -40,7 +40,7 @@ final class SwiftDataTests: XCTestCase {
         // Insert
         for (id, geoJson) in geoJsonTests {
             let model = GeoJsonModel(id: id, geoJson: geoJson)
-            container?.mainContext.insert(model)
+            container.mainContext.insert(model)
         }
 
         // Check
@@ -50,7 +50,7 @@ final class SwiftDataTests: XCTestCase {
                 sortBy: [SortDescriptor(\.id)])
             descriptor.fetchLimit = 1
 
-            let result = try XCTUnwrap(container?.mainContext.fetch(descriptor).first?.geoJson)
+            let result = try XCTUnwrap(container.mainContext.fetch(descriptor).first?.geoJson)
             XCTAssertTrue(result.isEqualTo(geoJson))
         }
     }
