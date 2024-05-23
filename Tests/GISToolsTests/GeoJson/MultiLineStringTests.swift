@@ -3,7 +3,7 @@ import XCTest
 
 final class MultiLineStringTests: XCTestCase {
 
-    private let multiLineStringJson = """
+    static let multiLineStringJson = """
     {
         "type": "MultiLineString",
         "coordinates": [
@@ -21,7 +21,7 @@ final class MultiLineStringTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson))
+        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
 
         XCTAssertNotNil(multiLineString)
         XCTAssertEqual(multiLineString.type, GeoJsonType.multiLineString)
@@ -50,7 +50,7 @@ final class MultiLineStringTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson))
+        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -59,7 +59,7 @@ final class MultiLineStringTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let multiLineStringData = try XCTUnwrap(MultiLineString(jsonString: multiLineStringJson)?.asJsonData(prettyPrinted: true))
+        let multiLineStringData = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)?.asJsonData(prettyPrinted: true))
         let multiLineString = try JSONDecoder().decode(MultiLineString.self, from: multiLineStringData)
 
         XCTAssertEqual(multiLineString.projection, .epsg4326)

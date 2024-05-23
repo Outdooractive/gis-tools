@@ -3,7 +3,7 @@ import XCTest
 
 final class PointTests: XCTestCase {
 
-    private let pointJson = """
+    static let pointJson = """
     {
         "type": "Point",
         "coordinates": [100.0, 0.0],
@@ -12,7 +12,7 @@ final class PointTests: XCTestCase {
     """
 
     func testLoadJson() throws {
-        let point =  try XCTUnwrap(Point(jsonString: pointJson))
+        let point = try XCTUnwrap(Point(jsonString: PointTests.pointJson))
 
         XCTAssertEqual(point.type, GeoJsonType.point)
         XCTAssertEqual(point.projection, .epsg4326)
@@ -31,7 +31,7 @@ final class PointTests: XCTestCase {
     }
 
     func testEncodable() throws {
-        let point = try XCTUnwrap(Point(jsonString: pointJson))
+        let point = try XCTUnwrap(Point(jsonString: PointTests.pointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -40,7 +40,7 @@ final class PointTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let pointData = try XCTUnwrap(Point(jsonString: pointJson)?.asJsonData(prettyPrinted: true))
+        let pointData = try XCTUnwrap(Point(jsonString: PointTests.pointJson)?.asJsonData(prettyPrinted: true))
         let point = try JSONDecoder().decode(Point.self, from: pointData)
 
         XCTAssertEqual(point.projection, .epsg4326)

@@ -89,6 +89,42 @@ extension Coordinate3D: Codable {
 
 }
 
+// MARK: - SwiftData compatibility (see the README)
+
+@objc(GeoJsonTransformer)
+public final class GeoJsonTransformer: ValueTransformer {
+
+    public static let name = NSValueTransformerName(rawValue: "GeoJsonTransformer")
+
+    public static func register() {
+        ValueTransformer.setValueTransformer(GeoJsonTransformer(), forName: name)
+    }
+
+    public override class func transformedValueClass() -> AnyClass {
+        // returns __SwiftValue
+        type(of: Point(Coordinate3D.zero) as AnyObject)
+    }
+
+    public override class func allowsReverseTransformation() -> Bool {
+        true
+    }
+
+    // Encode GeoJSON to Data
+    public override func transformedValue(_ value: Any?) -> Any? {
+        guard let geoJson = value as? GeoJson else { return nil }
+
+        return geoJson.asJsonData()
+    }
+
+    // Decode Data to GeoJSON
+    public override func reverseTransformedValue(_ value: Any?) -> Any? {
+        guard let data = value as? Data else { return nil }
+
+        return GeoJsonReader.geoJsonFrom(jsonData: data)
+    }
+
+}
+
 // MARK: - Private
 
 private struct GeoJsonCodingKey: CodingKey {
