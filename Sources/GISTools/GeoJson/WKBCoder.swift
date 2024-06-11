@@ -611,11 +611,13 @@ extension WKBCoder {
         into: inout T)
         throws
     {
-        try read(
-            bytes: bytes,
-            offset: &offset,
-            byteCount: MemoryLayout<T>.size,
-            into: &into)
+        try withUnsafeMutablePointer(to: &into) { into in
+            try read(
+                bytes: bytes,
+                offset: &offset,
+                byteCount: MemoryLayout<T>.size,
+                into: into)
+        }
     }
 
     private static func read(
