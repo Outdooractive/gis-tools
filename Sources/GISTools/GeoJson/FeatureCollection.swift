@@ -94,7 +94,7 @@ public struct FeatureCollection:
     }
 
     // To prevent an infinite recursion.
-    init?(geoJson: [String: Any], calculateBoundingBox: Bool = false) {
+    init?(geoJson: [String: Sendable], calculateBoundingBox: Bool = false) {
         guard FeatureCollection.isValid(geoJson: geoJson),
               let features: [Feature] = FeatureCollection.tryCreate(json: geoJson["features"])
         else { return nil }

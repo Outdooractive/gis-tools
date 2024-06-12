@@ -91,7 +91,7 @@ public struct MultiLineString:
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               MultiLineString.isValid(geoJson: geoJson),
               let coordinates: [[Coordinate3D]] = MultiLineString.tryCreate(json: geoJson["coordinates"])
         else { return nil }

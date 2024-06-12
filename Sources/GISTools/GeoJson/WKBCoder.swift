@@ -73,7 +73,7 @@ extension Feature {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
         id: Identifier? = nil,
-        properties: [String: Any] = [:],
+        properties: [String: Sendable] = [:],
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
@@ -88,7 +88,7 @@ extension Feature {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
         id: Identifier? = nil,
-        properties: [String: Any] = [:],
+        properties: [String: Sendable] = [:],
         calculateBoundingBox: Bool = false)
     {
         guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
@@ -172,7 +172,7 @@ extension Data {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
         id: Feature.Identifier? = nil,
-        properties: [String: Any] = [:])
+        properties: [String: Sendable] = [:])
         -> Feature?
     {
         Feature(wkb: self, sourceSrid: sourceSrid, targetProjection: targetProjection, id: id, properties: properties)
@@ -185,7 +185,7 @@ extension Data {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
         id: Feature.Identifier? = nil,
-        properties: [String: Any] = [:])
+        properties: [String: Sendable] = [:])
         -> Feature?
     {
         Feature(wkb: self, sourceProjection: sourceProjection, targetProjection: targetProjection, id: id, properties: properties)

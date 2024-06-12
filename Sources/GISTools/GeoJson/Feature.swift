@@ -1,7 +1,10 @@
 import Foundation
 
 /// A GeoJSON `Feature`.
-public struct Feature: GeoJson, Identifiable {
+public struct Feature:
+    GeoJson,
+    Identifiable
+{
 
     /// A GeoJSON identifier that can either be a string or number.
     ///
@@ -104,7 +107,7 @@ public struct Feature: GeoJson, Identifiable {
     public init(
         _ geometry: GeoJsonGeometry,
         id: Identifier? = nil,
-        properties: [String: Any] = [:],
+        properties: [String: Sendable] = [:],
         calculateBoundingBox: Bool = false)
     {
         self.geometry = geometry
@@ -121,14 +124,14 @@ public struct Feature: GeoJson, Identifiable {
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               Feature.isValid(geoJson: geoJson),
               let geometry: GeoJsonGeometry = Feature.tryCreateGeometry(json: geoJson["geometry"])
         else { return nil }
 
         self.geometry = geometry
         self.id = Identifier(value: geoJson["id"])
-        self.properties = (geoJson["properties"] as? [String: Any]) ?? [:]
+        self.properties = (geoJson["properties"] as? [String: Sendable]) ?? [:]
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
 
         if calculateBoundingBox, self.boundingBox == nil {
@@ -223,14 +226,14 @@ extension Feature {
 extension Feature {
 
     /// Returns a property by key.
-    public func property<T>(for key: String) -> T? {
+    public func property<T: Sendable>(for key: String) -> T? {
         return properties[key] as? T
     }
 
     /// Set a property key/value pair.
     ///
     /// - important: `value` must be a valid JSON object or serialization will fail.
-    public mutating func setProperty(_ value: Any?, for key: String) {
+    public mutating func setProperty(_ value: Sendable?, for key: String) {
         var updatedProperties = properties
         updatedProperties[key] = value
         properties = updatedProperties
@@ -238,7 +241,7 @@ extension Feature {
 
     /// Remove a property from the Feature.
     @discardableResult
-    public mutating func removeProperty(for key: String) -> Any? {
+    public mutating func removeProperty(for key: String) -> Sendable? {
         var updatedProperties = properties
         let previous = updatedProperties.removeValue(forKey: key)
         properties = updatedProperties
@@ -246,7 +249,7 @@ extension Feature {
     }
 
     /// Returns a property by key.
-    public subscript<T>(key: String) -> T? {
+    public subscript<T: Sendable>(key: String) -> T? {
         get {
             return property(for: key)
         }

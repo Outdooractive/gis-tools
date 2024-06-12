@@ -41,7 +41,7 @@ public struct GeometryCollection: GeoJsonGeometry {
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               GeometryCollection.isValid(geoJson: geoJson),
               let geometries: [GeoJsonGeometry] = GeometryCollection.tryCreate(json: geoJson["geometries"])
         else { return nil }

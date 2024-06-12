@@ -92,7 +92,7 @@ public struct Polygon:
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               Polygon.isValid(geoJson: geoJson),
               let coordinates: [[Coordinate3D]] = Polygon.tryCreate(json: geoJson["coordinates"])
         else { return nil }

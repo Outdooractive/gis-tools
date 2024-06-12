@@ -43,7 +43,7 @@ class TestData {
     // MARK: -
 
     class func stringFromFile(package: String, name: String) -> String {
-        let path = URL(fileURLWithPath: #file)
+        let path = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("TestData")
@@ -65,13 +65,13 @@ class TestData {
     }
 
     class func dataFromFile(package: String, name: String) -> Data {
-        let path = URL(fileURLWithPath: #file)
+        let path = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("TestData")
             .appendingPathComponent(package)
             .appendingPathComponent(name)
-        .appendingPathExtension("geojson")
+            .appendingPathExtension("geojson")
 
         do {
             if !(try path.checkResourceIsReachable()) {

@@ -91,14 +91,14 @@ extension GeoJson {
 extension GeoJson {
 
     /// Any foreign member by key.
-    public func foreignMember<T>(for key: String) -> T? {
+    public func foreignMember<T: Sendable>(for key: String) -> T? {
         return foreignMembers[key] as? T
     }
 
     /// Set a foreign member key/value pair.
     ///
     /// - important: `value` must be a valid JSON object or serialization will fail.
-    public mutating func setForeignMember(_ value: Any?, for key: String) {
+    public mutating func setForeignMember(_ value: Sendable?, for key: String) {
         var updatedProperties = foreignMembers
         updatedProperties[key] = value
         foreignMembers = updatedProperties
@@ -106,7 +106,7 @@ extension GeoJson {
 
     /// Remove a foreign member from the receiver.
     @discardableResult
-    public mutating func removeForeignMember(for key: String) -> Any? {
+    public mutating func removeForeignMember(for key: String) -> Sendable? {
         var updatedProperties = foreignMembers
         let previous = updatedProperties.removeValue(forKey: key)
         foreignMembers = updatedProperties
@@ -114,7 +114,7 @@ extension GeoJson {
     }
 
     /// Any foreign member by subscript.
-    public subscript<T>(foreignMember key: String) -> T? {
+    public subscript<T: Sendable>(foreignMember key: String) -> T? {
         get {
             return foreignMember(for: key)
         }
@@ -228,7 +228,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON object from any JSON object.
     public static func tryCreate(json: Any?) -> GeoJson? {
-        if let geoJson = json as? [String: Any],
+        if let geoJson = json as? [String: Sendable],
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid
@@ -251,7 +251,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON geometry from any JSON object.
     public static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
-        if let geoJson = json as? [String: Any],
+        if let geoJson = json as? [String: Sendable],
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid

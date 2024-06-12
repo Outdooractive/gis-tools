@@ -43,7 +43,7 @@ public struct Point: PointGeometry {
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               Point.isValid(geoJson: geoJson),
               let coordinate: Coordinate3D = Point.tryCreate(json: geoJson["coordinates"])
         else { return nil }

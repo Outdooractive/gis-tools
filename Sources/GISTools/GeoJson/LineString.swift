@@ -94,7 +94,7 @@ public struct LineString:
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               LineString.isValid(geoJson: geoJson),
               let coordinates: [Coordinate3D] = LineString.tryCreate(json: geoJson["coordinates"])
         else { return nil }

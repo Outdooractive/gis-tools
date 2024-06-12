@@ -73,7 +73,7 @@ public struct MultiPoint:
     }
 
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Any],
+        guard let geoJson = json as? [String: Sendable],
               MultiPoint.isValid(geoJson: geoJson),
               let coordinates: [Coordinate3D] = MultiPoint.tryCreate(json: geoJson["coordinates"])
         else { return nil }
