@@ -10,13 +10,13 @@ This package makes some assumptions about what is equal, i.e. coordinates that a
 
 ## Requirements
 
-This package requires Swift 5.9 or higher (at least Xcode 13), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
+This package requires Swift 5.10 or higher (at least Xcode 14), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
 
 ## Installation with Swift Package Manager
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.3.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.6.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -33,7 +33,7 @@ targets: [
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
 - Supports WKT/WKB, also with different projections
 - Spatial search with a R-tree
-- Includes many spatial algorithms, and more to come
+- Includes many spatial algorithms (ported from turf.js), and more to come
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 
