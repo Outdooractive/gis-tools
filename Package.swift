@@ -2,6 +2,10 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [
+    .enableUpcomingFeature("StrictConcurrency")
+]
+
 let package = Package(
     name: "gis-tools",
     platforms: [
@@ -18,10 +22,13 @@ let package = Package(
     dependencies: [
     ],
     targets: [
-        .target(name: "GISTools"),
+        .target(
+            name: "GISTools",
+            swiftSettings: swiftSettings),
         .testTarget(
             name: "GISToolsTests",
             dependencies: ["GISTools"],
-            exclude: ["TestData"]),
+            exclude: ["TestData"],
+            swiftSettings: swiftSettings),
     ]
 )
