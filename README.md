@@ -6,7 +6,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 
 ## Notes
 
-This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal. See [GISTool.equalityDelta][5].
+This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal (that's μm precision and is probably overkill). See [GISTool.equalityDelta][5].
 
 ## Requirements
 

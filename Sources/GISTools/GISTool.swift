@@ -17,7 +17,7 @@ public enum GISTool {
     /// Mercator projection origin shift.
     public static let originShift = 2.0 * Double.pi * GISTool.equatorialRadius / 2.0 // 20037508.342789244
 
-    /// The accuracy for testing what is equal.
+    /// The accuracy for testing what is equal (μm precision, mainly to counter small rounding errors).
     public static let equalityDelta: Double = 1e-10
 
     /// The length in pixels of a map tile.
