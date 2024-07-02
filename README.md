@@ -16,7 +16,7 @@ This package requires Swift 5.10 or higher (at least Xcode 14), and compiles on 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.6.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.7.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -36,6 +36,8 @@ targets: [
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
+- Pure Swift without external dependencies
+- Swift 6 ready
 
 ## Usage
 
@@ -297,7 +299,10 @@ var altitude: CLLocationDistance?
 /// The GeoJSON specification doesn't specifiy the meaning of this value,
 /// and it doesn't guarantee that parsers won't ignore or discard it. See
 /// https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1.
-/// - Important: `asJson` will output `m` only if the coordinate also has an `altitude`.
+/// - Important: The JSON for a coordinate will contain a `null` altitude value
+///              if `altitude` is `nil` so that `m` won't get lost (since it is
+///              the 4th value).
+///              This might lead to compatibilty issues with other GeoJSON readers.
 var m: Double?
 
 /// Alias for longitude

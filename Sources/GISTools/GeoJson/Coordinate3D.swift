@@ -36,7 +36,8 @@ public struct Coordinate3D:
     /// The GeoJSON specification doesn't specifiy the meaning of this value,
     /// and it doesn't guarantee that parsers won't ignore or discard it. See
     /// [chapter 3.1.1 in the spec](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1).
-    /// - Important: ``asJson`` will output `m` only if the coordinate also has an ``altitude``.
+    /// - Important: ``asJson`` will output a `null` altitude value if ``altitude`` is `nil` so that
+    ///              `m` won't get lost. This might lead to compatibilty issues with other GeoJSON readers.
     public var m: Double?
 
     /// Alias for longitude
@@ -350,41 +351,40 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Note: The [GeoJSON spec](https://datatracker.ietf.org/doc/html/rfc7946)
     ///         uses CRS:84 that specifies coordinates in longitude/latitude order.
     /// - Important: The third value will always be ``altitude``, the fourth value
-    ///              will be ``m`` if it exists.
+    ///              will be ``m`` if it exists. ``altitude`` can be a JSON `null` value.
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
-        guard let pointArray = json as? [Double],
-              pointArray.count >= 2
+        guard let pointArray = json as? [Double?],
+              pointArray.count >= 2,
+              let pLongitude = pointArray[0],
+              let pLatitude = pointArray[1]
         else { return nil }
 
-        if pointArray.count == 2 {
-            self.init(latitude: pointArray[1], longitude: pointArray[0])
-        }
-        else if pointArray.count == 3 {
-            self.init(latitude: pointArray[1], longitude: pointArray[0], altitude: pointArray[2])
-        }
-        else {
-            self.init(latitude: pointArray[1], longitude: pointArray[0], altitude: pointArray[2], m: pointArray[3])
-        }
+        let pAltitude: CLLocationDistance? = if pointArray.count >= 3 { pointArray[2] } else { nil }
+        let pM: Double? = if pointArray.count >= 4 { pointArray[3] } else { nil }
+
+        self.init(latitude: pLatitude, longitude: pLongitude, altitude: pAltitude, m: pM)
     }
 
     /// Dump the coordinate as a JSON object.
     ///
-    /// - Important: The output array will contain ``m`` only if this coordinate
-    ///              also contains ``altitude`` to prevent any disambiguity.
+    /// - Important: The result JSON object will have a `null` value for the altitude
+    ///              if the ``altitude`` is `nil` and ``m`` exists.
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public var asJson: [Double] {
-        var result: [Double] = (projection == .epsg4326 || projection == .noSRID
+    public var asJson: [Double?] {
+        var result: [Double?] = (projection == .epsg4326 || projection == .noSRID
             ? [longitude, latitude]
             : [longitudeProjected(to: .epsg4326), latitudeProjected(to: .epsg4326)])
 
         if let altitude {
             result.append(altitude)
-
-            // We can't add `m` if we don't have an altitude
             if let m {
                 result.append(m)
             }
+        }
+        else if let m {
+            result.append(nil)
+            result.append(m)
         }
 
         return result
@@ -432,7 +432,7 @@ extension Sequence<Coordinate3D> {
     /// Returns all elements as an array of JSON objects
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public var asJson: [[Double]] {
+    public var asJson: [[Double?]] {
         self.map(\.asJson)
     }
 
@@ -442,6 +442,8 @@ extension Sequence<Coordinate3D> {
 
 extension Coordinate3D: Equatable {
 
+    /// Coordinates are regarded as equal when they are within a few μm from each other.
+    /// See ``GISTool.equalityDelta``.
     public static func == (
         lhs: Coordinate3D,
         rhs: Coordinate3D)
