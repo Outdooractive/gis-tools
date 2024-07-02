@@ -234,8 +234,8 @@ extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
 
 extension UnkeyedDecodingContainer {
 
-    fileprivate mutating func decodeGeoJsonArray() -> [Any] {
-        var result: [Any] = []
+    fileprivate mutating func decodeGeoJsonArray() -> [Any?] {
+        var result: [Any?] = []
 
         while !isAtEnd {
             // Again, order is important
@@ -253,6 +253,9 @@ extension UnkeyedDecodingContainer {
             }
             else if let decoded = try? decode(Float.self) {
                 result.append(decoded)
+            }
+            else if let isNil = try? decodeNil(), isNil {
+                result.append(nil)
             }
             else if var decoded = try? nestedUnkeyedContainer() {
                 result.append(decoded.decodeGeoJsonArray())
