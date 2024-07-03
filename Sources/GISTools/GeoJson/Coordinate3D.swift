@@ -390,6 +390,22 @@ extension Coordinate3D: GeoJsonReadable {
         return result
     }
 
+    /// Dump the coordinate as a JSON object, as defined in the specification.
+    ///
+    /// - important: The returned array will always contain ``latitude`` and ``longitude``,
+    ///              and ``altitude`` only if it exists.
+    public var asMinimalJson: [Double] {
+        var result: [Double] = (projection == .epsg4326 || projection == .noSRID
+            ? [longitude, latitude]
+            : [longitudeProjected(to: .epsg4326), latitudeProjected(to: .epsg4326)])
+
+        if let altitude {
+            result.append(altitude)
+        }
+
+        return result
+    }
+
 }
 
 // Custom implementation, because the protocol has different prerequisites

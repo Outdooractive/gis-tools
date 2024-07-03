@@ -47,6 +47,9 @@ final class CoordinateTests: XCTestCase {
 
         XCTAssertEqual(String(data: coordinateDataM, encoding: .utf8), "[10,15,null,1234]")
         XCTAssertEqual(String(data: coordinateDataZ, encoding: .utf8), "[10,15,500]")
+
+        XCTAssertEqual(coordinateM.asMinimalJson, [10, 15])
+        XCTAssertEqual(coordinateZ.asMinimalJson, [10, 15, 500])
     }
 
     func testEncodable3857() throws {
@@ -97,6 +100,7 @@ final class CoordinateTests: XCTestCase {
         let decodedCoordinateZM = try JSONDecoder().decode(Coordinate3D.self, from: coordinateDataZM)
 
         XCTAssertEqual(decodedCoordinateM.asJson, [10.0, 15.0, nil, 1234])
+        XCTAssertEqual(decodedCoordinateM.asMinimalJson, [10.0, 15.0])
         XCTAssertEqual(decodedCoordinateZ.asJson, [10.0, 15.0, 500])
         XCTAssertEqual(decodedCoordinateZM.asJson, [10.0, 15.0, 500])
     }
