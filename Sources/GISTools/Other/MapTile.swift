@@ -52,6 +52,17 @@ public struct MapTile: CustomStringConvertible, Sendable {
         self.z = zoom
     }
 
+    public init?(string: String) {
+        guard let components = string.components(separatedBy: "/").nilIfEmpty,
+              components.count == 3,
+              let z = components[0].toInt,
+              let x = components[1].toInt,
+              let y = components[2].toInt
+        else { return nil }
+
+        self.init(x: x, y: y, z: z)
+    }
+
     public func centerCoordinate(projection: Projection = .epsg4326) -> Coordinate3D {
         // Flip y
         let y = (1 << z) - 1 - y

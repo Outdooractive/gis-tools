@@ -231,4 +231,11 @@ final class MapTileTests: XCTestCase {
         XCTAssertNil(MapTile(quadkey: "021X"))
     }
 
+    func testInitFromString() {
+        XCTAssertEqual(MapTile(string: "3/1/2"), MapTile(x: 1, y: 2, z: 3))
+        XCTAssertEqual(MapTile(string: "7/67/45"), MapTile(x: 67, y: 45, z: 7))
+        XCTAssertEqual(MapTile(string: "11/1082/715"), MapTile(x: 1082, y: 715, z: 11))
+        XCTAssertEqual(MapTile(string: "16/34626/22899"), MapTile(x: 34626, y: 22899, z: 16))
+    }
+
 }
