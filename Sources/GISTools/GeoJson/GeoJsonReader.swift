@@ -1,8 +1,9 @@
 import Foundation
 
+/// A generic helper for creating GeoJSON objects from various datasources.
 public enum GeoJsonReader {
 
-    /// Try to initialize a GeoJSON object from any JSON.
+    /// Try to initialize a GeoJSON object from any Swift object.
     ///
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(json: Any?) -> GeoJson? {

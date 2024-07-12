@@ -1,14 +1,15 @@
 import Foundation
 
-/// A protocol for GeoJSON objects that can be read from and written to JSON.
+/// A protocol for GeoJSON objects that can be read from and written to various datasources.
+/// like `URL`s, `Data`, `String`, or any Swift object that looks like GeoJSON.
 public protocol GeoJsonConvertible: GeoJsonReadable & GeoJsonWritable {}
 
 // MARK: - GeoJsonReadable
 
-/// A protocol for GeoJSON objects that can be read/parsed from JSON.
+/// A protocol for GeoJSON objects that can be read/parsed from any Swift object that looks like GeoJSON.
 public protocol GeoJsonReadable {
 
-    /// Try to initialize a GeoJSON object from any JSON.
+    /// Try to initialize a GeoJSON object from anything.
     ///
     /// - important: The source is expected to be in EPSG:4326.
     init?(json: Any?)
@@ -17,7 +18,7 @@ public protocol GeoJsonReadable {
 
 extension GeoJsonReadable {
 
-    /// Try to initialize a GeoJSON object from a file.
+    /// Try to initialize a GeoJSON object from a file/URL.
     ///
     /// - important: The source is expected to be in EPSG:4326.
     public init?(contentsOf url: URL) {
@@ -47,10 +48,10 @@ extension GeoJsonReadable {
 
 // MARK: - GeoJsonWritable
 
-/// A protocol for GeoJSON objects that can write to JSON.
+/// A protocol for GeoJSON objects that can write to Swift dictionaries.
 public protocol GeoJsonWritable {
 
-    /// Return the GeoJson object as Key/Value pairs.
+    /// Return the GeoJson object as a Swift dictionary.
     ///
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     var asJson: [String: Any] { get }

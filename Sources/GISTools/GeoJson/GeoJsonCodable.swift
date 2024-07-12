@@ -92,6 +92,9 @@ extension Coordinate3D: Codable {
 // MARK: - SwiftData compatibility (see the README)
 
 #if canImport(SwiftData)
+
+/// A `ValueTransformer` for SwiftData compatibility
+/// (see the README for more information/examples).
 @objc(GeoJsonTransformer)
 public final class GeoJsonTransformer: ValueTransformer {
 
@@ -110,14 +113,14 @@ public final class GeoJsonTransformer: ValueTransformer {
         true
     }
 
-    // Encode GeoJSON to Data
+    /// Encode GeoJSON to Data
     public override func transformedValue(_ value: Any?) -> Any? {
         guard let geoJson = value as? GeoJson else { return nil }
 
         return geoJson.asJsonData()
     }
 
-    // Decode Data to GeoJSON
+    /// Decode Data to GeoJSON
     public override func reverseTransformedValue(_ value: Any?) -> Any? {
         guard let data = value as? Data else { return nil }
 
