@@ -107,10 +107,10 @@ extension GISTool {
 extension GISTool {
 
     /// Converts pixel coordinates in a given zoom level to a coordinate.
-    public static func convertToCoordinate(
+    public static func coordinate(
         fromPixelX pixelX: Double,
         pixelY: Double,
-        atZoom zoom: Int,
+        zoom: Int,
         tileSideLength: Double = GISTool.tileSideLength,
         projection: Projection = .epsg4326)
         -> Coordinate3D
@@ -144,8 +144,8 @@ extension GISTool {
 
 extension GISTool {
 
-    public static func convertToDegrees(
-        fromMeters meters: Double,
+    public static func degrees(
+        fromMeters meters: CLLocationDistance,
         atLatitude latitude: CLLocationDegrees)
         -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees)
     {
@@ -157,6 +157,14 @@ extension GISTool {
         let latitudeDistance: Double = (meters / oneDegreeLatitudeDistance)
 
         return (latitudeDistance, longitudeDistance)
+    }
+
+}
+
+extension Coordinate3D {
+
+    public func degrees(fromMeters meters: CLLocationDistance) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
+        GISTool.degrees(fromMeters: meters, atLatitude: latitude)
     }
 
 }
