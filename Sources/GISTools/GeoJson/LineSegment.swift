@@ -1,5 +1,5 @@
 #if !os(Linux)
-import CoreLocation
+    import CoreLocation
 #endif
 import Foundation
 
@@ -39,7 +39,7 @@ extension LineSegment {
 
     /// The receiver's two coordinates.
     public var coordinates: [Coordinate3D] {
-        return [first, second]
+        [first, second]
     }
 
 }
@@ -90,7 +90,7 @@ extension LineSegment {
 extension LineSegment: BoundingBoxRepresentable {
 
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: coordinates)
+        BoundingBox(coordinates: coordinates)
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
@@ -131,12 +131,12 @@ extension LineSegment: BoundingBoxRepresentable {
 
 extension LineSegment: Equatable {
 
-    public static func ==(
+    public static func == (
         lhs: LineSegment,
         rhs: LineSegment)
         -> Bool
     {
-        return lhs.first == rhs.first
+        lhs.first == rhs.first
             && lhs.second == rhs.second
     }
 

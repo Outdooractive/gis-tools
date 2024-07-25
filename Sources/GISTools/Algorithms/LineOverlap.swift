@@ -59,6 +59,19 @@ extension LineSegment {
             {
                 return .otherPartialOverlapAtStart
             }
+            else if other.first != first,
+                    checkIsOnSegment(other.first),
+                    other.checkIsOnSegment(first)
+            {
+                return .otherPartialOverlapAtStart
+            }
+            else if other.second != second,
+                    checkIsOnSegment(other.second),
+                    other.checkIsOnSegment(second)
+            {
+                return .otherPartialOverlapAtEnd
+
+            }
         }
         else if tolerance > 0.0 {
             if other.nearestCoordinateOnSegment(from: first).distance <= tolerance,
@@ -83,6 +96,19 @@ extension LineSegment {
             {
                 return .otherPartialOverlapAtStart
             }
+            else if other.first.distance(from: first) > tolerance,
+                    nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+                    other.nearestCoordinateOnSegment(from: first).distance <= tolerance
+            {
+                return .otherPartialOverlapAtStart
+            }
+            else if other.second.distance(from: second) > tolerance,
+                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
+                    other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+            {
+                return .otherPartialOverlapAtEnd
+
+            }
         }
 
         return .notEqual
@@ -101,15 +127,16 @@ extension GeoJson {
     /// Returns the overlapping segments between the receiver and the other geometry.
     ///
     /// - Parameters:
-    ///    - other: The other geometry, or `nil` for overlapping segments within the receiver
+    ///    - other: The other geometry, or `nil` for overlapping segments with the receiver itself
     ///    - tolerance: The tolerance, in meters
     public func overlappingSegments(
-        with other: GeoJson,
+        with other: GeoJson?,
         tolerance: CLLocationDistance = 0.0)
         -> [SegmentOverlapResult]
     {
         let tolerance = abs(tolerance)
-        let other = other.projected(to: projection)
+        let isSelfMatching = other == nil
+        let other = other?.projected(to: projection) ?? self
 
         var result: [SegmentOverlapResult] = []
 
@@ -120,7 +147,17 @@ extension GeoJson {
 
             let matches = tree.search(inBoundingBox: boundingBox)
 
+            var hadSelfSegmentMatch = false
+
             for match in matches {
+                if isSelfMatching,
+                   !hadSelfSegmentMatch,
+                   segment == match
+                {
+                    hadSelfSegmentMatch = true
+                    continue
+                }
+
                 let comparison = segment.compare(other: match, tolerance: tolerance)
 
                 guard comparison != .notEqual else { continue }
@@ -135,7 +172,7 @@ extension GeoJson {
         return result
     }
 
-    /// Returns the overlapping segments within the receiver.
+    /// Returns the overlapping segments with the receiver itself.
     ///
     /// - Parameters:
     ///    - tolerance: The tolerance, in meters

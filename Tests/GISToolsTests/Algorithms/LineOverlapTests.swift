@@ -198,4 +198,24 @@ final class LineOverlapTests: XCTestCase {
         XCTAssertEqual(overlapping.count, 3)
     }
 
+    func testSelfOverlap3WithSegments() {
+        let lineString = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: -2.0),
+            Coordinate3D(latitude: 2.0, longitude: -2.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ])!
+
+        let overlapping = lineString.overlappingSegments(with: nil)
+        overlapping.forEach({ print("\($0.kind): \($0.segment.coordinates), other: \($0.other.coordinates)") })
+
+        XCTAssertEqual(overlapping.count, 6)
+    }
+
 }
