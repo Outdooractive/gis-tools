@@ -106,16 +106,16 @@ extension GISTool {
 
 extension GISTool {
 
-    /// Converts pixel coordinates in a given zoom level to EPSG:3857.
-    public static func pixelCoordinate(
-        pixelX: Double,
+    /// Converts pixel coordinates in a given zoom level to a coordinate.
+    public static func convertToCoordinate(
+        fromPixelX pixelX: Double,
         pixelY: Double,
         atZoom zoom: Int,
         tileSideLength: Double = GISTool.tileSideLength,
         projection: Projection = .epsg4326)
         -> Coordinate3D
     {
-        let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
+        let resolution = metersPerPixel(atZoom: zoom, tileSideLength: tileSideLength)
 
         let coordinateXY = Coordinate3D(
             x: pixelX * resolution - GISTool.originShift,
@@ -130,7 +130,7 @@ extension GISTool {
 
     /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
     public static func metersPerPixel(
-        at zoom: Int,
+        atZoom zoom: Int,
         latitude: CLLocationDegrees = 0.0, // equator
         tileSideLength: Double = GISTool.tileSideLength)
         -> Double

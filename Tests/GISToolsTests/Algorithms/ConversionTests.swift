@@ -10,7 +10,7 @@ final class ConversionTests: XCTestCase {
         for zoom in 1...20 {
             mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
 
-            XCTAssertEqual(GISTool.metersPerPixel(at: zoom),
+            XCTAssertEqual(GISTool.metersPerPixel(atZoom: zoom),
                            mppAtZoomLevels[zoom],
                            accuracy: 0.00001)
         }
@@ -23,7 +23,7 @@ final class ConversionTests: XCTestCase {
         for zoom in 1...20 {
             mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
 
-            XCTAssertEqual(GISTool.metersPerPixel(at: zoom, latitude: 45.0),
+            XCTAssertEqual(GISTool.metersPerPixel(atZoom: zoom, latitude: 45.0),
                            mppAtZoomLevels[zoom],
                            accuracy: 0.00001)
         }
