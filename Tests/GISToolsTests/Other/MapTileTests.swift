@@ -161,33 +161,10 @@ final class MapTileTests: XCTestCase {
     }
 
     func testMetersPerPixelAtEquator() {
-        var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
-        mppAtZoomLevels[0] = 156_543.03392804096
-
-        for zoom in 1...20 {
-            mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
-
-            XCTAssertEqual(MapTile.metersPerPixel(at: zoom),
-                           mppAtZoomLevels[zoom],
-                           accuracy: 0.00001)
-        }
-
-        // Alternative
         let worldTile = MapTile(x: 0, y: 0, z: 0)
-        XCTAssertEqual(worldTile.metersPerPixel, mppAtZoomLevels[0], accuracy: 0.00001)
-    }
+        let mppAtZoom0 = 156_543.03392804096
 
-    func testMetersPerPixelAt45() {
-        var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
-        mppAtZoomLevels[0] = 110_692.6408380335
-
-        for zoom in 1...20 {
-            mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
-
-            XCTAssertEqual(MapTile.metersPerPixel(at: zoom, latitude: 45.0),
-                           mppAtZoomLevels[zoom],
-                           accuracy: 0.00001)
-        }
+        XCTAssertEqual(worldTile.metersPerPixel, mppAtZoom0, accuracy: 0.00001)
     }
 
     func testQquadkey() {

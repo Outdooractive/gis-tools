@@ -70,8 +70,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
         let pixelX: Double = (Double(x) + 0.5) * GISTool.tileSideLength
         let pixelY: Double = (Double(y) + 0.5) * GISTool.tileSideLength
 
-        return MapTile.pixelCoordinate(
-            pixelX: pixelX,
+        return GISTool.convertToCoordinate(
+            fromPixelX: pixelX,
             pixelY: pixelY,
             atZoom: z,
             tileSideLength: GISTool.tileSideLength,
@@ -89,14 +89,14 @@ public struct MapTile: CustomStringConvertible, Sendable {
         // Flip y
         let y = (1 << z) - 1 - y
 
-        let southWest = MapTile.pixelCoordinate(
-            pixelX: Double(x) * GISTool.tileSideLength,
+        let southWest = GISTool.convertToCoordinate(
+            fromPixelX: Double(x) * GISTool.tileSideLength,
             pixelY: Double(y) * GISTool.tileSideLength,
             atZoom: z,
             tileSideLength: GISTool.tileSideLength,
             projection: projection)
-        let northEast = MapTile.pixelCoordinate(
-            pixelX: Double(x + 1) * GISTool.tileSideLength,
+        let northEast = GISTool.convertToCoordinate(
+            fromPixelX: Double(x + 1) * GISTool.tileSideLength,
             pixelY: Double(y + 1) * GISTool.tileSideLength,
             atZoom: z,
             tileSideLength: GISTool.tileSideLength,
@@ -161,7 +161,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     // MARK: - Conversion pixel to meters
 
-    /// Converts pixel coordinates in a given zoom level to EPSG:3857.
+    /// Converts pixel coordinates in a given zoom level to a coordinate.
+    @available(*, deprecated, renamed: "GISTool.convertToCoordinate", message: "This method has been moved to the GISTool namespace")
     public static func pixelCoordinate(
         pixelX: Double,
         pixelY: Double,
@@ -170,34 +171,30 @@ public struct MapTile: CustomStringConvertible, Sendable {
         projection: Projection = .epsg4326)
         -> Coordinate3D
     {
-        let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
-
-        let coordinateXY = Coordinate3D(
-            x: pixelX * resolution - GISTool.originShift,
-            y: pixelY * resolution - GISTool.originShift)
-
-        if projection == .epsg4326 {
-            return coordinateXY.projected(to: projection)
-        }
-
-        return coordinateXY
+        GISTool.convertToCoordinate(
+            fromPixelX: pixelX,
+            pixelY: pixelY,
+            atZoom: zoom,
+            tileSideLength: tileSideLength,
+            projection: projection)
     }
 
     // MARK: - Meters per pixel
 
     /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
+    @available(*, deprecated, renamed: "GISTool.metersPerPixel", message: "This method has been moved to the GISTool namespace")
     public static func metersPerPixel(
         at zoom: Int,
         latitude: Double = 0.0, // equator
         tileSideLength: Double = GISTool.tileSideLength)
         -> Double
     {
-        (cos(latitude * Double.pi / 180.0) * 2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
+        GISTool.metersPerPixel(atZoom: zoom, latitude: latitude, tileSideLength: tileSideLength)
     }
 
     /// Resolution (meters/pixel) for a given zoom level measured at the tile center.
     public var metersPerPixel: Double {
-        MapTile.metersPerPixel(at: z, latitude: centerCoordinate().latitude)
+        GISTool.metersPerPixel(atZoom: z, latitude: centerCoordinate().latitude)
     }
 
     // MARK: - Private
