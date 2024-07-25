@@ -77,17 +77,12 @@ public struct BoundingBox:
                 northEast.longitude += padding
 
             case .epsg4326:
-                // Length of one minute at this latitude
-                let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0 // ~111 km
-                let oneDegreeLongitudeDistance: CLLocationDistance = cos(southWest.latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
+                let latLongDegrees = GISTool.convertToDegrees(fromMeters: padding, atLatitude: southWest.latitude)
 
-                let longitudeDistance: Double = (padding / oneDegreeLongitudeDistance)
-                let latitudeDistance: Double = (padding / oneDegreeLatitudeDistance)
-
-                southWest.latitude -= latitudeDistance
-                northEast.latitude += latitudeDistance
-                southWest.longitude -= longitudeDistance
-                northEast.longitude += longitudeDistance
+                southWest.latitude -= latLongDegrees.latitudeDegrees
+                northEast.latitude += latLongDegrees.latitudeDegrees
+                southWest.longitude -= latLongDegrees.longitudeDegrees
+                northEast.longitude += latLongDegrees.longitudeDegrees
 
             case .noSRID:
                 break // Don't know what to do -> ignore
