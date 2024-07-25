@@ -5,6 +5,8 @@ import Foundation
 
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-helpers
 
+// MARK: Measurements
+
 extension GISTool {
 
     /// Unit of measurement.
@@ -12,6 +14,7 @@ extension GISTool {
         case acres
         case centimeters
         case centimetres
+        /// Latitude
         case degrees
         case feet
         case inches
@@ -31,7 +34,7 @@ extension GISTool {
     public static func factor(for unit: Unit) -> Double? {
         switch unit {
         case .centimeters, .centimetres: return earthRadius * 100.0
-        case .degrees: return earthRadius / 111_325.0
+        case .degrees: return earthRadius / (GISTool.earthCircumference / 360.0)
         case .feet: return earthRadius * 3.28084
         case .inches: return earthRadius * 39.370
         case .kilometers, .kilometres: return earthRadius / 1000.0
@@ -95,6 +98,65 @@ extension GISTool {
         else { return nil }
 
         return (area / startFactor) * finalFactor
+    }
+
+}
+
+// MARK: - Pixels
+
+extension GISTool {
+
+    /// Converts pixel coordinates in a given zoom level to EPSG:3857.
+    public static func pixelCoordinate(
+        pixelX: Double,
+        pixelY: Double,
+        atZoom zoom: Int,
+        tileSideLength: Double = GISTool.tileSideLength,
+        projection: Projection = .epsg4326)
+        -> Coordinate3D
+    {
+        let resolution = metersPerPixel(at: zoom, tileSideLength: tileSideLength)
+
+        let coordinateXY = Coordinate3D(
+            x: pixelX * resolution - GISTool.originShift,
+            y: pixelY * resolution - GISTool.originShift)
+
+        if projection == .epsg4326 {
+            return coordinateXY.projected(to: projection)
+        }
+
+        return coordinateXY
+    }
+
+    /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
+    public static func metersPerPixel(
+        at zoom: Int,
+        latitude: CLLocationDegrees = 0.0, // equator
+        tileSideLength: Double = GISTool.tileSideLength)
+        -> Double
+    {
+        (cos(latitude * Double.pi / 180.0) * 2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
+    }
+
+}
+
+// MARK: - Meters/latitude
+
+extension GISTool {
+
+    public static func convertToDegrees(
+        fromMeters meters: Double,
+        atLatitude latitude: CLLocationDegrees)
+        -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees)
+    {
+        // Length of one minute at this latitude
+        let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0 // ~111 km
+        let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
+
+        let longitudeDistance: Double = (meters / oneDegreeLongitudeDistance)
+        let latitudeDistance: Double = (meters / oneDegreeLatitudeDistance)
+
+        return (latitudeDistance, longitudeDistance)
     }
 
 }
