@@ -155,14 +155,27 @@ extension GeoJson {
 
         for currentIndex in stride(from: sortedSegments.index(before: sortedSegments.endIndex), through: sortedSegments.startIndex, by: -1) {
             let current = sortedSegments[currentIndex]
-            // TODO: Subtract tolerance
-            let currentMinX = current.boundingBox?.southWest.longitude ?? 0.0
+            var currentMinX = current.boundingBox?.southWest.longitude ?? 0.0
+            var currentMinY = current.boundingBox?.southWest.latitude ?? 0.0
+            var currentMaxY = current.boundingBox?.northEast.latitude ?? 0.0
+
+            if tolerance > 0.0 {
+                let latLongDegrees = GISTool.degrees(
+                    fromMeters: tolerance,
+                    atLatitude: currentMinY)
+                currentMinX -= latLongDegrees.longitudeDegrees
+                currentMinY -= latLongDegrees.latitudeDegrees
+                currentMaxY += latLongDegrees.latitudeDegrees
+            }
 
             for nextIndex in stride(from: sortedSegments.index(before: currentIndex), through: sortedSegments.startIndex, by: -1) {
                 let next = sortedSegments[nextIndex]
-                let nextMaxX = (next.boundingBox?.northEast.longitude ?? 0.0)
+                let nextMaxX = next.boundingBox?.northEast.longitude ?? 0.0
+                let nextMaxY = next.boundingBox?.northEast.latitude ?? 0.0
+                let nextMinY = next.boundingBox?.southWest.latitude ?? 0.0
 
                 guard nextMaxX >= currentMinX else { break }
+                guard nextMaxY >= currentMinY, nextMinY <= currentMaxY else { continue }
 
                 let comparison = current.compare(other: next, tolerance: tolerance)
                 if comparison == .notEqual { continue }
