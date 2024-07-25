@@ -11,9 +11,10 @@ final class LineOverlapTests: XCTestCase {
 
         XCTAssertEqual(overlappingSegments.count, 2)
 
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
+        XCTAssertEqual(overlappingSegments.map(\.kind), [.equal, .equal])
+        XCTAssertEqual(overlappingSegments[0].segment.second, overlappingSegments[1].segment.first)
+        XCTAssertEqual(overlappingSegments[0].segment.first, Coordinate3D(latitude: -30.0, longitude: 125.0))
+        XCTAssertEqual(overlappingSegments[1].segment.second, Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
     func testSimple2() {
@@ -24,9 +25,10 @@ final class LineOverlapTests: XCTestCase {
 
         XCTAssertEqual(overlappingSegments.count, 2)
 
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
+        XCTAssertEqual(overlappingSegments.map(\.kind), [.equal, .equal])
+        XCTAssertEqual(overlappingSegments[0].segment.second, overlappingSegments[1].segment.first)
+        XCTAssertEqual(overlappingSegments[0].segment.first, Coordinate3D(latitude: -30.0, longitude: 125.0))
+        XCTAssertEqual(overlappingSegments[1].segment.second, Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
     func testSimple3() {
@@ -37,9 +39,10 @@ final class LineOverlapTests: XCTestCase {
 
         XCTAssertEqual(overlappingSegments.count, 2)
 
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
+        XCTAssertEqual(overlappingSegments.map(\.kind), [.equal, .equal])
+        XCTAssertEqual(overlappingSegments[0].segment.second, overlappingSegments[1].segment.first)
+        XCTAssertEqual(overlappingSegments[0].segment.first, Coordinate3D(latitude: -30.0, longitude: 125.0))
+        XCTAssertEqual(overlappingSegments[1].segment.second, Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
     func testPolygons() {
@@ -50,12 +53,13 @@ final class LineOverlapTests: XCTestCase {
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2)
 
         XCTAssertEqual(overlappingSegments.count, 6)
+        XCTAssertEqual(Set(overlappingSegments.map(\.kind)), [.equalReversed])
 
         let firstSegments = result.lineStrings[0].lineSegments
         let secondSegments = result.lineStrings[1].lineSegments
 
-        XCTAssertEqual(Array(overlappingSegments[0 ..< 3]), firstSegments)
-        XCTAssertEqual(Array(overlappingSegments[3...]), secondSegments)
+        XCTAssertEqual(Array(overlappingSegments[0 ..< 3].map(\.segment)), firstSegments)
+        XCTAssertEqual(Array(overlappingSegments[3...].map(\.segment)), secondSegments)
     }
 
     func testNoOverlap() {
@@ -75,12 +79,13 @@ final class LineOverlapTests: XCTestCase {
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2)
 
         XCTAssertEqual(overlappingSegments.count, 4)
+        XCTAssertEqual(Set(overlappingSegments.map(\.kind)), [.otherOnThis])
 
         let firstSegments = result.lineStrings[0].lineSegments
         let secondSegments = result.lineStrings[1].lineSegments
 
-        XCTAssertEqual(Array(overlappingSegments[0 ... 1]), firstSegments)
-        XCTAssertEqual(Array(overlappingSegments[2...]), secondSegments)
+        XCTAssertEqual(Array(overlappingSegments[0 ... 1].map(\.other)), firstSegments)
+        XCTAssertEqual(Array(overlappingSegments[2...].map(\.other)), secondSegments)
     }
 
     func testPartlyOverlapping2() {
@@ -91,7 +96,8 @@ final class LineOverlapTests: XCTestCase {
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2, tolerance: 5000.0)
 
         XCTAssertEqual(overlappingSegments.count, 1)
-        XCTAssertEqual(overlappingSegments, result.lineSegments)
+        XCTAssertEqual(Set(overlappingSegments.map(\.kind)), [.otherOnThis])
+        XCTAssertEqual(overlappingSegments.map(\.other), result.lineSegments)
     }
 
     func testPartlyOverlapping3() {
@@ -114,8 +120,82 @@ final class LineOverlapTests: XCTestCase {
         XCTAssertEqual(overlappingSegments1.count, 1)
         XCTAssertEqual(overlappingSegments2.count, 1)
 
-        XCTAssertEqual(overlappingSegments1, result.lineSegments)
-        XCTAssertEqual(overlappingSegments2, result.lineSegments)
+        XCTAssertEqual(Set(overlappingSegments1.map(\.kind)), [.thisOnOther])
+        XCTAssertEqual(Set(overlappingSegments2.map(\.kind)), [.otherOnThis])
+
+        XCTAssertEqual(overlappingSegments1.map(\.segment), result.lineSegments)
+        XCTAssertEqual(overlappingSegments2.map(\.other), result.lineSegments)
+    }
+
+    // MARK: - Overlap in self
+
+    func testSelfNoOverlap() {
+        let lineString = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 12.0, longitude: 12.0),
+        ])!
+
+        let overlapping = lineString.overlappingSegments()
+        XCTAssertEqual(overlapping.count, 0)
+    }
+
+    func testSelfOverlap1() {
+        let lineString = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0), // overlap
+            Coordinate3D(latitude: 2.0, longitude: 1.0), // "
+            Coordinate3D(latitude: 3.0, longitude: 0.0),
+            Coordinate3D(latitude: 4.0, longitude: 0.0),
+            Coordinate3D(latitude: 5.0, longitude: 1.0), // overlap
+            Coordinate3D(latitude: 6.0, longitude: 1.0), // "
+            Coordinate3D(latitude: 7.0, longitude: 0.0),
+            Coordinate3D(latitude: 8.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ])!
+
+        let overlapping = lineString.overlappingSegments()
+        XCTAssertEqual(overlapping.count, 3)
+    }
+
+    func testSelfOverlap2() {
+        let lineString = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 8.0, longitude: -8.0),
+            Coordinate3D(latitude: 7.0, longitude: -9.0),
+            Coordinate3D(latitude: 6.0, longitude: -9.0),
+            Coordinate3D(latitude: 6.0, longitude: -6.0),
+            Coordinate3D(latitude: 5.0, longitude: -5.0),
+            Coordinate3D(latitude: 5.0, longitude: -7.0),
+            Coordinate3D(latitude: 4.0, longitude: -7.0),
+            Coordinate3D(latitude: 4.0, longitude: -4.0),
+            Coordinate3D(latitude: 3.0, longitude: -3.0),
+            Coordinate3D(latitude: 3.0, longitude: -1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ])!
+
+        let overlapping = lineString.overlappingSegments()
+        XCTAssertEqual(overlapping.count, 4)
+    }
+
+    func testSelfOverlap3() {
+        let lineString = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: -2.0),
+            Coordinate3D(latitude: 2.0, longitude: -2.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ])!
+
+        let overlapping = lineString.overlappingSegments()
+        XCTAssertEqual(overlapping.count, 3)
     }
 
 }
