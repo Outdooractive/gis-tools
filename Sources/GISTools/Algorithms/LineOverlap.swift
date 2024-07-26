@@ -177,7 +177,7 @@ extension GeoJson {
                 guard comparison != .notEqual else { continue }
 
                 result.append(SegmentOverlapResult(
-                    kind: comparison,
+                    overlap: comparison,
                     segment: segment,
                     other: match))
             }
