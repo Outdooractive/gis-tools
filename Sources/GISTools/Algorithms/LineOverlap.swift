@@ -9,18 +9,27 @@ extension LineSegment {
 
     /// Indicates how one segment compares to another segment.
     public enum LineSegmentComparisonResult {
+        /// The two segments are exactly equal
         case equal
+        /// The two segments are exactly equal, but in opposite directions.
         case equalReversed
+        /// The segments are not equal, even with tolerance.
         case notEqual
+        /// The second segment is fully included in the first segment.
         case otherOnThis
+        /// The other segment partially overlaps with the first segment
+        /// at the first segment's start.
         case otherPartialOverlapAtStart
+        /// The other segment partially overlaps with the first segment
+        /// at the first segment's end.
         case otherPartialOverlapAtEnd
+        /// The first segment is fully included in the second segment.
         case thisOnOther
     }
 
     /// Checks how the receiver and the other *LineSegment* lie in relation to each other.
     ///
-    /// - Note: With `tolerance != 0.0` the segments in the result are not necessarily
+    /// - Note: With `tolerance > 0.0` the segments in the result might not necessarily be
     ///         parallel with each other. The result can then be filtered with ``LineSegment.isParallel``.
     ///
     /// - Parameters:
@@ -47,12 +56,6 @@ extension LineSegment {
             else if checkIsOnSegment(other.first), checkIsOnSegment(other.second) {
                 return .otherOnThis
             }
-            else if other.first != second,
-                    checkIsOnSegment(other.first),
-                    other.checkIsOnSegment(second)
-            {
-                return .otherPartialOverlapAtEnd
-            }
             else if other.second != first,
                     checkIsOnSegment(other.second),
                     other.checkIsOnSegment(first)
@@ -64,6 +67,12 @@ extension LineSegment {
                     other.checkIsOnSegment(first)
             {
                 return .otherPartialOverlapAtStart
+            }
+            else if other.first != second,
+                    checkIsOnSegment(other.first),
+                    other.checkIsOnSegment(second)
+            {
+                return .otherPartialOverlapAtEnd
             }
             else if other.second != second,
                     checkIsOnSegment(other.second),
@@ -120,11 +129,14 @@ extension GeoJson {
 
     /// Indicates how segments overlap
     public typealias SegmentOverlapResult = (
-        kind: LineSegment.LineSegmentComparisonResult,
+        overlap: LineSegment.LineSegmentComparisonResult,
         segment: LineSegment,
         other: LineSegment)
 
     /// Returns the overlapping segments between the receiver and the other geometry.
+    ///
+    /// - Note: Every match will be included in the result twice when comparing an object with itself.
+    ///         I.e. when A-B overlap, the result will also include B-A.
     ///
     /// - Parameters:
     ///    - other: The other geometry, or `nil` for overlapping segments with the receiver itself
@@ -150,6 +162,8 @@ extension GeoJson {
             var hadSelfSegmentMatch = false
 
             for match in matches {
+                // One match must always be the segment when
+                // matching a geometry with itself
                 if isSelfMatching,
                    !hadSelfSegmentMatch,
                    segment == match
@@ -174,8 +188,13 @@ extension GeoJson {
 
     /// Returns the overlapping segments with the receiver itself.
     ///
+    /// This implementation is streamlined for finding self-overlaps.
+    ///
     /// - Parameters:
     ///    - tolerance: The tolerance, in meters
+    ///
+    /// - Returns: All segments that at least overlap with one other segment. Each segment will only be
+    ///            in the result once.
     public func overlappingSegments(tolerance: CLLocationDistance = 0.0) -> [LineSegment] {
         let tolerance = abs(tolerance)
         let sortedSegments: [LineSegment] = lineSegments
