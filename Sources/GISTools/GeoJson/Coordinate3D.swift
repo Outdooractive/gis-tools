@@ -471,6 +471,28 @@ extension Coordinate3D: Equatable {
             && lhs.altitude == rhs.altitude
     }
 
+    public func equals(
+        other: Coordinate3D,
+        compareAltitude: Bool,
+        equalityDelta: Double = GISTool.equalityDelta)
+        -> Bool
+    {
+        if projection != other.projection
+            || abs(latitude - other.latitude) >= equalityDelta
+            || abs(longitude - other.longitude) >= equalityDelta
+        {
+            return false
+        }
+
+        if compareAltitude,
+           altitude != other.altitude
+        {
+            return false
+        }
+
+        return true
+    }
+
 }
 
 // MARK: - Hashable

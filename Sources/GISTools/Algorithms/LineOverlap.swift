@@ -1,5 +1,5 @@
 #if !os(Linux)
-import CoreLocation
+    import CoreLocation
 #endif
 import Foundation
 
@@ -23,14 +23,20 @@ extension LineSegment {
         /// The other segment partially overlaps with the first segment
         /// at the first segment's end.
         case otherPartialOverlapAtEnd
+        /// One of the segments is shorter than the tolerance
+        case shortSegment
         /// The first segment is fully included in the second segment.
         case thisOnOther
+        /// One of the segments has zero length and will be skipped
+        case zeroLengthSegment
     }
 
     /// Checks how the receiver and the other *LineSegment* lie in relation to each other.
     ///
     /// - Note: With `tolerance > 0.0` the segments in the result might not necessarily be
     ///         parallel with each other. The result can then be filtered with ``LineSegment.isParallel``.
+    ///
+    /// - Note: Altitude values will be ignored.
     ///
     /// - Parameters:
     ///    - other: The other *LineSegment*
@@ -43,43 +49,66 @@ extension LineSegment {
         let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 
-        if first == other.first, second == other.second {
+        if tolerance > 0.0,
+           length <= tolerance
+            || other.length <= tolerance
+        {
+            return .shortSegment
+        }
+
+        if first.equals(other: second, compareAltitude: false)
+            || other.first.equals(other: other.second, compareAltitude: false)
+        {
+            return .zeroLengthSegment
+        }
+
+        if first.equals(other: other.first, compareAltitude: false),
+           second.equals(other: other.second, compareAltitude: false)
+        {
             return .equal
         }
-        else if first == other.second, second == other.first {
+
+        if first.equals(other: other.second, compareAltitude: false),
+           second.equals(other: other.first, compareAltitude: false)
+        {
             return .equalReversed
         }
-        else if tolerance == 0.0 {
+
+        if tolerance == 0.0 {
             if other.checkIsOnSegment(first), other.checkIsOnSegment(second) {
                 return .thisOnOther
             }
-            else if checkIsOnSegment(other.first), checkIsOnSegment(other.second) {
+
+            if checkIsOnSegment(other.first), checkIsOnSegment(other.second) {
                 return .otherOnThis
             }
-            else if other.second != first,
-                    checkIsOnSegment(other.second),
-                    other.checkIsOnSegment(first)
-            {
-                return .otherPartialOverlapAtStart
-            }
-            else if other.first != first,
-                    checkIsOnSegment(other.first),
-                    other.checkIsOnSegment(first)
-            {
-                return .otherPartialOverlapAtStart
-            }
-            else if other.first != second,
-                    checkIsOnSegment(other.first),
-                    other.checkIsOnSegment(second)
-            {
-                return .otherPartialOverlapAtEnd
-            }
-            else if other.second != second,
-                    checkIsOnSegment(other.second),
-                    other.checkIsOnSegment(second)
-            {
-                return .otherPartialOverlapAtEnd
 
+            if other.second != first,
+               checkIsOnSegment(other.second),
+               other.checkIsOnSegment(first)
+            {
+                return .otherPartialOverlapAtStart
+            }
+
+            if other.first != first,
+               checkIsOnSegment(other.first),
+               other.checkIsOnSegment(first)
+            {
+                return .otherPartialOverlapAtStart
+            }
+
+            if other.first != second,
+               checkIsOnSegment(other.first),
+               other.checkIsOnSegment(second)
+            {
+                return .otherPartialOverlapAtEnd
+            }
+
+            if other.second != second,
+               checkIsOnSegment(other.second),
+               other.checkIsOnSegment(second)
+            {
+                return .otherPartialOverlapAtEnd
             }
         }
         else if tolerance > 0.0 {
@@ -88,35 +117,39 @@ extension LineSegment {
             {
                 return .thisOnOther
             }
-            else if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance
+
+            if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+               nearestCoordinateOnSegment(from: other.second).distance <= tolerance
             {
                 return .otherOnThis
             }
-            else if other.first.distance(from: second) > tolerance,
-                    nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-                    other.nearestCoordinateOnSegment(from: second).distance <= tolerance
-            {
-                return .otherPartialOverlapAtEnd
-            }
-            else if other.second.distance(from: first) > tolerance,
-                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
-                    other.nearestCoordinateOnSegment(from: first).distance <= tolerance
-            {
-                return .otherPartialOverlapAtStart
-            }
-            else if other.first.distance(from: first) > tolerance,
-                    nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-                    other.nearestCoordinateOnSegment(from: first).distance <= tolerance
-            {
-                return .otherPartialOverlapAtStart
-            }
-            else if other.second.distance(from: second) > tolerance,
-                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
-                    other.nearestCoordinateOnSegment(from: second).distance <= tolerance
-            {
-                return .otherPartialOverlapAtEnd
 
+            if other.first.distance(from: second) > tolerance,
+               nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+            {
+                return .otherPartialOverlapAtEnd
+            }
+
+            if other.second.distance(from: first) > tolerance,
+               nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: first).distance <= tolerance
+            {
+                return .otherPartialOverlapAtStart
+            }
+
+            if other.first.distance(from: first) > tolerance,
+               nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: first).distance <= tolerance
+            {
+                return .otherPartialOverlapAtStart
+            }
+
+            if other.second.distance(from: second) > tolerance,
+               nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+            {
+                return .otherPartialOverlapAtEnd
             }
         }
 
@@ -137,6 +170,8 @@ extension GeoJson {
     ///
     /// - Note: Every match will be included in the result twice when comparing an object with itself.
     ///         I.e. when A-B overlap, the result will also include B-A.
+    ///
+    /// - Note: Altitude values will be ignored.
     ///
     /// - Parameters:
     ///    - other: The other geometry, or `nil` for overlapping segments with the receiver itself
@@ -174,7 +209,10 @@ extension GeoJson {
 
                 let comparison = segment.compare(other: match, tolerance: tolerance)
 
-                guard comparison != .notEqual else { continue }
+                guard comparison != .notEqual,
+                      comparison != .shortSegment,
+                      comparison != .zeroLengthSegment
+                else { continue }
 
                 result.append(SegmentOverlapResult(
                     overlap: comparison,
@@ -189,6 +227,8 @@ extension GeoJson {
     /// Returns the overlapping segments with the receiver itself.
     ///
     /// This implementation is streamlined for finding self-overlaps.
+    ///
+    /// - Note: Altitude values will be ignored.
     ///
     /// - Parameters:
     ///    - tolerance: The tolerance, in meters
@@ -234,7 +274,10 @@ extension GeoJson {
                 guard nextMaxY >= currentMinY, nextMinY <= currentMaxY else { continue }
 
                 let comparison = current.compare(other: next, tolerance: tolerance)
-                if comparison == .notEqual { continue }
+                if comparison == .notEqual
+                    || comparison == .shortSegment
+                    || comparison == .zeroLengthSegment
+                { continue }
 
                 result.insert(currentIndex)
                 result.insert(nextIndex)
