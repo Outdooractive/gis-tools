@@ -16,7 +16,7 @@ extension Polygon {
         var area: Double = abs(outerRing.area)
 
         if let innerRings = innerRings {
-            area += innerRings.reduce(0.0, { $0 + abs($1.area) })
+            area -= innerRings.reduce(0.0, { $0 + abs($1.area) })
         }
 
         return area
