@@ -1,5 +1,5 @@
 #if !os(Linux)
-import CoreLocation
+    import CoreLocation
 #endif
 import Foundation
 
@@ -11,12 +11,12 @@ extension Polygon {
     ///
     /// - Returns: The area of the outer ring minus the areas of the inner rings, in square meters.
     public var area: Double {
-        guard let outerRing = outerRing else { return 0.0 }
+        guard let outerRing else { return 0.0 }
 
         var area: Double = abs(outerRing.area)
 
-        if let innerRings = innerRings {
-            area += innerRings.reduce(0.0, { $0 + abs($1.area) })
+        if let innerRings {
+            area -= innerRings.reduce(0.0, { $0 + abs($1.area) })
         }
 
         return area
@@ -47,33 +47,34 @@ extension Ring {
     /// Laboratory, Pasadena, CA, June 2007 https://trs.jpl.nasa.gov/handle/2014/41271
     public var area: Double {
         let coordinates = projection == .epsg4326
-            ? self.coordinates
-            : self.coordinates.map({ $0.projected(to: .epsg4326) })
+            ? coordinates
+            : coordinates.map({ $0.projected(to: .epsg4326) })
 
-        var area: Double = 0.0
+        var area = 0.0
         let coordinatesCount = coordinates.count
 
         if coordinatesCount > 2 {
             for index in 0 ..< coordinatesCount {
-                let controlPoints: (Coordinate3D, Coordinate3D, Coordinate3D)
-
-                if index == coordinatesCount - 2 {
-                    controlPoints = (
+                let controlPoints: (Coordinate3D, Coordinate3D, Coordinate3D) = if index == coordinatesCount - 2 {
+                    (
                         coordinates[coordinatesCount - 2],
                         coordinates[coordinatesCount - 1],
-                        coordinates[0])
+                        coordinates[0]
+                    )
                 }
                 else if index == coordinatesCount - 1 {
-                    controlPoints = (
+                    (
                         coordinates[coordinatesCount - 1],
                         coordinates[0],
-                        coordinates[1])
+                        coordinates[1]
+                    )
                 }
                 else {
-                    controlPoints = (
+                    (
                         coordinates[index],
                         coordinates[index + 1],
-                        coordinates[index + 2])
+                        coordinates[index + 2]
+                    )
                 }
 
                 area += (controlPoints.2.longitude.degreesToRadians - controlPoints.0.longitude.degreesToRadians) * sin(controlPoints.1.latitude.degreesToRadians)
