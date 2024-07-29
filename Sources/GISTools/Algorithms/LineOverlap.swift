@@ -36,7 +36,7 @@ extension LineSegment {
     /// - Note: With `tolerance > 0.0` the segments in the result might not necessarily be
     ///         parallel with each other. The result can then be filtered with ``LineSegment.isParallel``.
     ///
-    /// - Note: Altitude values will be ignored.
+    /// - Note: Altitude/z values will be ignored.
     ///
     /// - Parameters:
     ///    - other: The other *LineSegment*
@@ -49,6 +49,12 @@ extension LineSegment {
         let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 
+        if first.equals(other: second, includingAltitude: false)
+            || other.first.equals(other: other.second, includingAltitude: false)
+        {
+            return .zeroLengthSegment
+        }
+
         if tolerance > 0.0,
            length <= tolerance
             || other.length <= tolerance
@@ -56,20 +62,14 @@ extension LineSegment {
             return .shortSegment
         }
 
-        if first.equals(other: second, compareAltitude: false)
-            || other.first.equals(other: other.second, compareAltitude: false)
-        {
-            return .zeroLengthSegment
-        }
-
-        if first.equals(other: other.first, compareAltitude: false),
-           second.equals(other: other.second, compareAltitude: false)
+        if first.equals(other: other.first, includingAltitude: false),
+           second.equals(other: other.second, includingAltitude: false)
         {
             return .equal
         }
 
-        if first.equals(other: other.second, compareAltitude: false),
-           second.equals(other: other.first, compareAltitude: false)
+        if first.equals(other: other.second, includingAltitude: false),
+           second.equals(other: other.first, includingAltitude: false)
         {
             return .equalReversed
         }
@@ -171,7 +171,7 @@ extension GeoJson {
     /// - Note: Every match will be included in the result twice when comparing an object with itself.
     ///         I.e. when A-B overlap, the result will also include B-A.
     ///
-    /// - Note: Altitude values will be ignored.
+    /// - Note: Altitude/z values will be ignored.
     ///
     /// - Parameters:
     ///    - other: The other geometry, or `nil` for overlapping segments with the receiver itself
