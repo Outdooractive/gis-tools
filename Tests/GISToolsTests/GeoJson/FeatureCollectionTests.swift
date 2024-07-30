@@ -150,7 +150,7 @@ final class FeatureCollectionTests: XCTestCase {
             (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0))
         ]
 
-        var result:[(Int, Int, Coordinate3D)] = []
+        var result: [(Int, Int, Coordinate3D)] = []
         featureCollection.enumerateCoordinates { featureIndex, coordinateIndex, coordinate in
             result.append((featureIndex, coordinateIndex, coordinate))
         }
@@ -162,6 +162,39 @@ final class FeatureCollectionTests: XCTestCase {
             XCTAssertEqual(lhs.1, rhs.1)
             XCTAssertEqual(lhs.2, rhs.2)
         }
+    }
+
+    func testEnumerateProperties() throws {
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+
+        let expected: [(Int, [String: Sendable])] = [
+            (0, ["prop0": "value0"]),
+            (1, ["prop0": "value0", "prop1": 0]),
+            (2, ["prop0": "value0", "prop1": ["this": "that"]])
+        ]
+
+        var result: [(Int, [String: Sendable])] = []
+        featureCollection.enumerateProperties { featureIndex, properties in
+            XCTAssertFalse(properties.isEmpty)
+            result.append((featureIndex, properties))
+        }
+
+        XCTAssertEqual(result.count, expected.count)
+
+        for (lhs, rhs) in zip(result, expected) {
+            XCTAssertEqual(lhs.0, rhs.0)
+        }
+    }
+
+    func testPropertiesSummary() throws {
+        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+
+        let summary = featureCollection.propertiesSummary()
+        XCTAssertEqual(summary.count, 2)
+        XCTAssertEqual(summary.keys.sorted(), ["prop0", "prop1"])
+        XCTAssertEqual(summary["prop0"], ["value0"])
+        XCTAssertTrue(summary["prop1"]!.contains(0))
+        XCTAssertTrue(summary["prop1"]!.contains(["this": "that"]))
     }
 
     func testEncodable() throws {
