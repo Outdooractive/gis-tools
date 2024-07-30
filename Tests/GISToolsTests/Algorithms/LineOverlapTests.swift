@@ -151,8 +151,8 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 5.0, longitude: 1.0), // overlap
             Coordinate3D(latitude: 6.0, longitude: 1.0), // "
             Coordinate3D(latitude: 7.0, longitude: 0.0),
-            Coordinate3D(latitude: 8.0, longitude: 1.0),
-            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 8.0, longitude: 1.0), // overlap
+            Coordinate3D(latitude: 0.0, longitude: 1.0), // "
         ])!
 
         let overlapping = lineString.overlappingSegments()
@@ -212,10 +212,8 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ])!
 
-        let overlapping = lineString.overlappingSegments(with: nil)
-        overlapping.forEach({ print("\($0.overlap): \($0.segment.coordinates), other: \($0.other.coordinates)") })
-
-        XCTAssertEqual(overlapping.count, 6)
+        let overlapping = lineString.overlappingSegments()
+        XCTAssertEqual(overlapping.count, 3)
     }
 
 }
