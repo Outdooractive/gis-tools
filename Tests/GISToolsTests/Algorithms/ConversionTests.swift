@@ -32,7 +32,7 @@ final class ConversionTests: XCTestCase {
     func testMetersAtLatitude() throws {
         let meters = 10000.0
         let degreesLatitude1 = try XCTUnwrap(GISTool.convert(length: meters, from: .meters, to: .degrees))
-        let degreesLatitude2 = GISTool.convertToDegrees(fromMeters: meters, atLatitude: 0.0).latitudeDegrees
+        let degreesLatitude2 = GISTool.degrees(fromMeters: meters, atLatitude: 0.0).latitudeDegrees
 
         XCTAssertEqual(degreesLatitude1, degreesLatitude2, accuracy: 0.00000001)
     }

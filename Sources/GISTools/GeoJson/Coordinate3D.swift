@@ -466,9 +466,34 @@ extension Coordinate3D: Equatable {
         -> Bool
     {
         lhs.projection == rhs.projection
-            && abs(lhs.latitude - rhs.latitude) < GISTool.equalityDelta
-            && abs(lhs.longitude - rhs.longitude) < GISTool.equalityDelta
+            && abs(lhs.latitude - rhs.latitude) <= GISTool.equalityDelta
+            && abs(lhs.longitude - rhs.longitude) <= GISTool.equalityDelta
             && lhs.altitude == rhs.altitude
+    }
+
+    public func equals(
+        other: Coordinate3D,
+        includingAltitude: Bool,
+        equalityDelta: Double = GISTool.equalityDelta,
+        altitudeDelta: Double = 0.0)
+        -> Bool
+    {
+        if projection != other.projection
+            || abs(latitude - other.latitude) > equalityDelta
+            || abs(longitude - other.longitude) > equalityDelta
+        {
+            return false
+        }
+
+        if includingAltitude {
+            if let altitude, let otherAltitude = other.altitude {
+                return abs(altitude - otherAltitude) <= altitudeDelta
+            }
+
+            return altitude == other.altitude
+        }
+
+        return true
     }
 
 }

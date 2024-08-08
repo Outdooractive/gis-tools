@@ -70,10 +70,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
         let pixelX: Double = (Double(x) + 0.5) * GISTool.tileSideLength
         let pixelY: Double = (Double(y) + 0.5) * GISTool.tileSideLength
 
-        return GISTool.convertToCoordinate(
+        return GISTool.coordinate(
             fromPixelX: pixelX,
             pixelY: pixelY,
-            atZoom: z,
+            zoom: z,
             tileSideLength: GISTool.tileSideLength,
             projection: projection)
     }
@@ -89,16 +89,16 @@ public struct MapTile: CustomStringConvertible, Sendable {
         // Flip y
         let y = (1 << z) - 1 - y
 
-        let southWest = GISTool.convertToCoordinate(
+        let southWest = GISTool.coordinate(
             fromPixelX: Double(x) * GISTool.tileSideLength,
             pixelY: Double(y) * GISTool.tileSideLength,
-            atZoom: z,
+            zoom: z,
             tileSideLength: GISTool.tileSideLength,
             projection: projection)
-        let northEast = GISTool.convertToCoordinate(
+        let northEast = GISTool.coordinate(
             fromPixelX: Double(x + 1) * GISTool.tileSideLength,
             pixelY: Double(y + 1) * GISTool.tileSideLength,
-            atZoom: z,
+            zoom: z,
             tileSideLength: GISTool.tileSideLength,
             projection: projection)
 
@@ -162,7 +162,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     // MARK: - Conversion pixel to meters
 
     /// Converts pixel coordinates in a given zoom level to a coordinate.
-    @available(*, deprecated, renamed: "GISTool.convertToCoordinate", message: "This method has been moved to the GISTool namespace")
+    @available(*, deprecated, renamed: "GISTool.coordinate(fromPixelX:pixelY:zoom:tileSideLength:projection:)", message: "This method has been moved to the GISTool namespace")
     public static func pixelCoordinate(
         pixelX: Double,
         pixelY: Double,
@@ -171,10 +171,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
         projection: Projection = .epsg4326)
         -> Coordinate3D
     {
-        GISTool.convertToCoordinate(
+        GISTool.coordinate(
             fromPixelX: pixelX,
             pixelY: pixelY,
-            atZoom: zoom,
+            zoom: zoom,
             tileSideLength: tileSideLength,
             projection: projection)
     }
