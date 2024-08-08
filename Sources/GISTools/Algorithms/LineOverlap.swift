@@ -235,7 +235,7 @@ extension GeoJson {
     ///
     /// - Returns: All segments that at least overlap with one other segment. Each segment will only be
     ///            in the result once.
-    public func overlappingSegments(tolerance: CLLocationDistance = 0.0) -> [LineSegment] {
+    public func overlappingSegments(tolerance: CLLocationDistance = 0.0) -> MultiLineString? {
         let tolerance = abs(tolerance)
         let sortedSegments: [LineSegment] = lineSegments
             .map { lineSegment in
@@ -284,7 +284,13 @@ extension GeoJson {
             }
         }
 
-        return result.map { sortedSegments[$0] }
+        var lineStrings: [LineString] = []
+
+        for range in result.rangeView {
+            lineStrings.append(LineString(range.map { sortedSegments[$0] })!)
+        }
+
+        return MultiLineString(lineStrings)
     }
 
 }

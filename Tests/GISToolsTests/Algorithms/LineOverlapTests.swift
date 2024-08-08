@@ -137,11 +137,10 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 12.0, longitude: 12.0),
         ])!
 
-        let overlapping = lineString.overlappingSegments()
-        XCTAssertEqual(overlapping.count, 0)
+        XCTAssertNil(lineString.overlappingSegments()?.lineStrings)
     }
 
-    func testSelfOverlap1() {
+    func testSelfOverlap1() throws {
         let lineString = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0), // overlap
@@ -155,32 +154,33 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 0.0, longitude: 1.0), // "
         ])!
 
-        let overlapping = lineString.overlappingSegments()
+        let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
         XCTAssertEqual(overlapping.count, 3)
     }
 
-    func testSelfOverlap2() {
+    func testSelfOverlap2() throws {
         let lineString = LineString([
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 8.0, longitude: -8.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),  // overlap
+            Coordinate3D(latitude: 8.0, longitude: -8.0), // "
             Coordinate3D(latitude: 7.0, longitude: -9.0),
             Coordinate3D(latitude: 6.0, longitude: -9.0),
-            Coordinate3D(latitude: 6.0, longitude: -6.0),
-            Coordinate3D(latitude: 5.0, longitude: -5.0),
+            Coordinate3D(latitude: 6.0, longitude: -6.0), // overlap
+            Coordinate3D(latitude: 5.0, longitude: -5.0), // "
             Coordinate3D(latitude: 5.0, longitude: -7.0),
             Coordinate3D(latitude: 4.0, longitude: -7.0),
-            Coordinate3D(latitude: 4.0, longitude: -4.0),
-            Coordinate3D(latitude: 3.0, longitude: -3.0),
+            Coordinate3D(latitude: 4.0, longitude: -4.0), // overlap
+            Coordinate3D(latitude: 3.0, longitude: -3.0), // "
             Coordinate3D(latitude: 3.0, longitude: -1.0),
-            Coordinate3D(latitude: 1.0, longitude: -1.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0), // overlap
+            Coordinate3D(latitude: 0.0, longitude: 0.0),  // "
         ])!
 
-        let overlapping = lineString.overlappingSegments()
+        let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
+        FeatureCollection(overlapping).dump()
         XCTAssertEqual(overlapping.count, 4)
     }
 
-    func testSelfOverlap3() {
+    func testSelfOverlap3() throws {
         let lineString = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 2.0, longitude: 0.0),
@@ -194,11 +194,11 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ])!
 
-        let overlapping = lineString.overlappingSegments()
+        let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
         XCTAssertEqual(overlapping.count, 3)
     }
 
-    func testSelfOverlap3WithSegments() {
+    func testSelfOverlap3WithSegments() throws {
         let lineString = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 2.0, longitude: 0.0),
@@ -212,8 +212,18 @@ final class LineOverlapTests: XCTestCase {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ])!
 
-        let overlapping = lineString.overlappingSegments()
+        let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
         XCTAssertEqual(overlapping.count, 3)
+    }
+
+    func testLongRouteSelfOverlap() throws {
+        let lineString = try XCTUnwrap(TestData.featureCollection(package: "LineOverlap", name: "LongRoute").features.first)
+
+        let overlapping = try XCTUnwrap(lineString.overlappingSegments(tolerance: 10.0)?.lineStrings)
+        print(overlapping.count)
+        print(overlapping.reduce(0.0, { $0 + $1.length }))
+        print(lineString.length)
+
     }
 
 }
