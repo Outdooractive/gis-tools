@@ -18,6 +18,25 @@ final class MapTileTests: XCTestCase {
 
     }
 
+    func testTileFromBoundingBox() throws {
+        let boundingBox1 = BoundingBox(
+            southWest: Coordinate3D(latitude: 46.5, longitude: 10.5),
+            northEast: Coordinate3D(latitude: 48.5, longitude: 11.0))
+        let boundingBox2 = BoundingBox(
+            southWest: Coordinate3D(latitude: 46.5, longitude: 10.5),
+            northEast: Coordinate3D(latitude: 48.5, longitude: 11.25))
+        let boundingBox3 = try XCTUnwrap(BoundingBox(coordinates: [Coordinate3D(latitude: 47.56, longitude: 10.22)]))
+
+        XCTAssertEqual(MapTile(boundingBox: boundingBox1), MapTile(x: 33, y: 22, z: 6))
+        XCTAssertEqual(MapTile(boundingBox: boundingBox2), MapTile(x: 8, y: 5, z: 4))
+
+        XCTAssertEqual(MapTile(boundingBox: boundingBox3), MapTile(x: 2269412997, y: 1500804469, z: 32))
+        XCTAssertEqual(MapTile(boundingBox: boundingBox3, maxZoom: 14), MapTile(x: 8657, y: 5725, z: 14))
+        XCTAssertEqual(MapTile(boundingBox: boundingBox3, maxZoom: 8), MapTile(x: 135, y: 89, z: 8))
+        XCTAssertEqual(MapTile(boundingBox: boundingBox3, maxZoom: 4), MapTile(x: 8, y: 5, z: 4))
+        XCTAssertEqual(MapTile(boundingBox: boundingBox3, maxZoom: 0), MapTile(x: 0, y: 0, z: 0))
+    }
+
     func testCenter() {
         let coordinate1 = MapTile(x: 138513, y: 91601, z: 18).centerCoordinate()
         XCTAssertEqual(coordinate1.latitude, 47.56031069944929, accuracy: 0.00001)

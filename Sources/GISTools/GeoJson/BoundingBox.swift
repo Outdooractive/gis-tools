@@ -600,6 +600,13 @@ extension BoundingBox {
         return nil
     }
 
+    /// `true` if the receiver crosses the anti-meridian.
+    public var crossesAntiMeridian: Bool {
+        let boundingBox = self.normalized()
+
+        return boundingBox.southWest.longitude > boundingBox.northEast.longitude
+    }
+
 }
 
 // MARK: - Helpers
