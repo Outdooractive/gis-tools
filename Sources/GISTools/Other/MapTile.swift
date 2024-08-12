@@ -37,6 +37,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
         ]
     }
 
+    public var siblings: [MapTile] {
+        parent.children
+    }
+
     public init(x: Int, y: Int, z: Int) {
         self.x = x
         self.y = y
@@ -50,6 +54,50 @@ public struct MapTile: CustomStringConvertible, Sendable {
         self.x = Int(normalizedCoordinate.longitude * scale)
         self.y = Int(normalizedCoordinate.latitude * scale)
         self.z = zoom
+    }
+
+    // Ported from https://github.com/mapbox/tilebelt/blob/master/index.js
+    /// Initialize a tile from a bounding box.
+    /// The resulting tile will have a zoom level in `0...maxZoom`.
+    ///
+    /// - parameter boundingBox: The bounding box that the tile should completely contain
+    /// - parameter maxZoom: The maximum zoom level of the resulting tile, 0...32
+    public init(
+        boundingBox: BoundingBox,
+        maxZoom: Int = 32)
+    {
+        if boundingBox.crossesAntiMeridian {
+            self.init(x: 0, y: 0, z: 0)
+            return
+        }
+
+        let maxZoom = max(0, min(32, maxZoom))
+
+        let min = MapTile(coordinate: boundingBox.southWest, atZoom: 32)
+        let max = MapTile(coordinate: boundingBox.northEast, atZoom: 32)
+
+        var bestZ = -1
+        for z in 0 ..< maxZoom {
+            let mask = 1 << (32 - (z + 1))
+            if (min.x & mask) != (max.x & mask)
+                || (min.y & mask) != (max.y & mask)
+            {
+                bestZ = z
+                break
+            }
+        }
+        if bestZ == 0 {
+            self.init(x: 0, y: 0, z: 0)
+            return
+        }
+        if bestZ == -1 {
+            bestZ = maxZoom
+        }
+
+        self.init(
+            x: min.x >> (32 - bestZ),
+            y: min.y >> (32 - bestZ),
+            z: bestZ)
     }
 
     public init?(string: String) {
