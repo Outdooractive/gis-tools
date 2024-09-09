@@ -24,7 +24,11 @@ extension GeoJson {
     public var centroid: Point? {
         let allCoordinates = self.allCoordinates
 
-        guard !allCoordinates.isEmpty else { return nil }
+        guard allCoordinates.isNotEmpty else { return nil }
+
+        if allCoordinates.count == 1 {
+            return Point(allCoordinates[0])
+        }
 
         var sumLongitude: Double = 0.0
         var sumLatitude: Double = 0.0
