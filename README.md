@@ -1,29 +1,16 @@
-[![][image-1]][1]
-[![][image-2]][2]
+[![][image-1]][1]  
+[![][image-2]][2]  
+[![](https://img.shields.io/github/license/Outdooractive/gis-tools)](https://github.com/Outdooractive/gis-tools/blob/main/LICENSE)  
+[![](https://img.shields.io/github/v/release/Outdooractive/gis-tools?sort=semver&display_name=tag)](https://github.com/Outdooractive/gis-tools/releases) [![](https://img.shields.io/github/release-date/Outdooractive/gis-tools?display_date=published_at
+)](https://github.com/Outdooractive/gis-tools/releases)  
+[![](https://img.shields.io/github/issues/Outdooractive/gis-tools
+)](https://github.com/Outdooractive/gis-tools/issues) [![](https://img.shields.io/github/issues-pr/Outdooractive/gis-tools
+)](https://github.com/Outdooractive/gis-tools/pulls)  
+[![](https://img.shields.io/github/check-runs/Outdooractive/gis-tools/main)](https://github.com/Outdooractive/gis-tools/actions)
+
 
 # GISTools
 GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms ported from [https://turfjs.org][4].
-
-## Notes
-
-This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal (that's μm precision and is probably overkill). See [GISTool.equalityDelta][5].
-
-## Requirements
-
-This package requires Swift 5.10 or higher (at least Xcode 14), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
-
-## Installation with Swift Package Manager
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.7.0"),
-],
-targets: [
-    .target(name: "MyTarget", dependencies: [
-        .product(name: "GISTools", package: "gis-tools"),
-    ]),
-]
-```
 
 ## Features
 
@@ -39,9 +26,30 @@ targets: [
 - Pure Swift without external dependencies
 - Swift 6 ready
 
+## Notes
+
+This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal (that's μm precision and is probably overkill). See [GISTool.equalityDelta][5].
+
+## Requirements
+
+This package requires Swift 5.10 or higher (at least Xcode 14), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
+
+## Installation with Swift Package Manager
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.8.2"),
+],
+targets: [
+    .target(name: "MyTarget", dependencies: [
+        .product(name: "GISTools", package: "gis-tools"),
+    ]),
+]
+```
+
 ## Usage
 
-Please see also the [API documentation][8].
+Please see also the [API documentation][8] (via Swift Package Index).
 
 ```swift
 import GISTools
@@ -877,7 +885,7 @@ Currently only two:
 - [mvt-postgis][130]: Creates vector tiles from Postgis databases
 
 # Contributing
-Please create an issue or open a pull request with a fix or enhancement.
+Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.
 
 # License
 MIT
