@@ -59,7 +59,7 @@ public struct Feature:
             }
         }
 
-        public var asJson: Any {
+        public var asJson: Sendable {
             switch self {
             case .double(let double): double
             case .int(let int): int
@@ -148,13 +148,13 @@ public struct Feature:
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,
             "geometry": geometry.asJson
         ]
-        if let id = id {
+        if let id {
             result["id"] = id.asJson
         }
         if let boundingBox = boundingBox {

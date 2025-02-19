@@ -5,6 +5,7 @@ import PackageDescription
 let swiftSettings: [SwiftSetting] = [
     .enableExperimentalFeature("StrictConcurrency"), // 5.10
     .enableUpcomingFeature("StrictConcurrency"), // 6.0
+    .enableUpcomingFeature("InferSendableFromCaptures"), // Silences a Sendable warning
 ]
 
 let package = Package(

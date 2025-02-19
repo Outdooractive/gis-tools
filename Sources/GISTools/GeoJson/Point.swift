@@ -64,8 +64,8 @@ public struct Point: PointGeometry {
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.point.rawValue,
             "coordinates": coordinate.asJson
         ]

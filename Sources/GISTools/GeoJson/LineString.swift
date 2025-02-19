@@ -115,8 +115,8 @@ public struct LineString:
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.lineString.rawValue,
             "coordinates": coordinates.map { $0.asJson }
         ]

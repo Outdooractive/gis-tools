@@ -62,8 +62,8 @@ public struct GeometryCollection: GeoJsonGeometry {
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.geometryCollection.rawValue,
             "geometries": geometries.map { $0.asJson }
         ]
