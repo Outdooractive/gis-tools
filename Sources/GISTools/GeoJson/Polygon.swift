@@ -113,8 +113,8 @@ public struct Polygon:
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.polygon.rawValue,
             "coordinates": coordinates.map { $0.map { $0.asJson } }
         ]

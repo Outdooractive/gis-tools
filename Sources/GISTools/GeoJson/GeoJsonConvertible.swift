@@ -54,7 +54,7 @@ public protocol GeoJsonWritable {
     /// Return the GeoJson object as a Swift dictionary.
     ///
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
-    var asJson: [String: Any] { get }
+    var asJson: [String: Sendable] { get }
 
 }
 
@@ -99,7 +99,7 @@ extension Sequence where Self.Iterator.Element: GeoJsonWritable {
     /// Returns all elements as an array of JSON objects
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public var asJson: [[String: Any]] {
+    public var asJson: [[String: Sendable]] {
         return self.map({ $0.asJson })
     }
 

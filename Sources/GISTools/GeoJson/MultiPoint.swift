@@ -94,8 +94,8 @@ public struct MultiPoint:
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.multiPoint.rawValue,
             "coordinates": coordinates.map { $0.asJson }
         ]
