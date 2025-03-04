@@ -266,3 +266,34 @@ public struct MapTile: CustomStringConvertible, Sendable {
 // MARK: - Equatable, Hashable
 
 extension MapTile: Equatable, Hashable {}
+
+// MARK: - Coordinate shortcuts
+
+extension Coordinate3D {
+
+    /// The receiver as a ``MapTile``.
+    public func mapTile(atZoom zoom: Int) -> MapTile {
+        MapTile(coordinate: self, atZoom: zoom)
+    }
+
+}
+
+#if !os(Linux)
+extension CLLocation {
+
+    /// The receiver as a ``MapTile``.
+    public func mapTile(atZoom zoom: Int) -> MapTile {
+        MapTile(coordinate: Coordinate3D(self), atZoom: zoom)
+    }
+
+}
+
+extension CLLocationCoordinate2D {
+
+    /// The receiver as a ``MapTile``.
+    public func mapTile(atZoom zoom: Int) -> MapTile {
+        MapTile(coordinate: Coordinate3D(self), atZoom: zoom)
+    }
+
+}
+#endif
