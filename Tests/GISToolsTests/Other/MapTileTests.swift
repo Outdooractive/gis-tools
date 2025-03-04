@@ -186,6 +186,13 @@ final class MapTileTests: XCTestCase {
         XCTAssertEqual(worldTile.metersPerPixel, mppAtZoom0, accuracy: 0.00001)
     }
 
+    func testEdgeCases() throws {
+        let coordinate = Coordinate3D(latitude: -90.0, longitude: -180.0)
+        let tile = MapTile(coordinate: coordinate, atZoom: 14)
+
+        XCTAssertEqual(tile, MapTile(x: 0, y: (1 << 14) - 1, z: 14))
+    }
+
     func testQquadkey() {
         let tiles = [
             MapTile(x: 1, y: 2, z: 3),

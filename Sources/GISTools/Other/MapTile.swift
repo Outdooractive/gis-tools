@@ -247,18 +247,20 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     // MARK: - Private
 
-    private static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
-        var coordinate = coordinate
+    static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
+        var (latitude, longitude) = (coordinate.latitude, coordinate.longitude)
 
-        if coordinate.longitude > 180.0 {
-            coordinate.longitude -= 360.0
+        if longitude > 180.0 {
+           longitude -= 360.0
         }
 
-        coordinate.longitude /= 360.0
-        coordinate.longitude += 0.5
-        coordinate.latitude = 0.5 - ((log(tan((Double.pi / 4) + ((0.5 * Double.pi * coordinate.latitude) / 180.0))) / Double.pi) / 2.0)
+        latitude = min(85.0511, max(-85.0511, latitude))
 
-        return coordinate
+        longitude /= 360.0
+        longitude += 0.5
+        latitude = 0.5 - ((log(tan((Double.pi / 4) + ((0.5 * Double.pi * latitude) / 180.0))) / Double.pi) / 2.0)
+
+        return Coordinate3D(latitude: latitude, longitude: longitude)
     }
 
 }
