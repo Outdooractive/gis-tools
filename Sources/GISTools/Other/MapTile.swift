@@ -254,7 +254,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
            longitude -= 360.0
         }
 
-        latitude = min(85.0511, max(-85.0511, latitude))
+        latitude = min(85.05112877980659, max(-85.05112877980659, latitude))
 
         longitude /= 360.0
         longitude += 0.5
