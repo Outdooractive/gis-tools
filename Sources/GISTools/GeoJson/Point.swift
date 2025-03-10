@@ -7,7 +7,7 @@ import Foundation
 public struct Point: PointGeometry {
 
     public var type: GeoJsonType {
-        return .point
+        .point
     }
 
     public var projection: Projection {
@@ -26,7 +26,7 @@ public struct Point: PointGeometry {
     public var foreignMembers: [String: Sendable] = [:]
 
     public var points: [Point] {
-        return [self]
+        [self]
     }
 
     /// Initialize a Point with a coordinate.
@@ -34,7 +34,7 @@ public struct Point: PointGeometry {
         self.coordinate = coordinate
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -51,8 +51,8 @@ public struct Point: PointGeometry {
         self.coordinate = coordinate
         self.boundingBox = Point.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -119,11 +119,11 @@ extension Point {
 extension Point {
 
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: [coordinate])
+        BoundingBox(coordinates: [coordinate])
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        return otherBoundingBox.contains(coordinate)
+        otherBoundingBox.contains(coordinate)
     }
 
 }

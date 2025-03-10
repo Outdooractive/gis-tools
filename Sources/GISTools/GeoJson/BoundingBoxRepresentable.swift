@@ -31,7 +31,7 @@ extension BoundingBoxRepresentable {
 
     @discardableResult
     public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
-        if boundingBox != nil && ifNecessary { return nil }
+        if boundingBox != nil && ifNecessary { return boundingBox }
         boundingBox = calculateBoundingBox()
         return boundingBox
     }

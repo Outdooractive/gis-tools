@@ -10,7 +10,7 @@ public struct MultiPolygon:
 {
 
     public var type: GeoJsonType {
-        return .multiPolygon
+        .multiPolygon
     }
 
     public var projection: Projection {
@@ -18,7 +18,14 @@ public struct MultiPolygon:
     }
 
     /// The receiver's coordinates.
-    public let coordinates: [[[Coordinate3D]]]
+    public private(set) var coordinates: [[[Coordinate3D]]] {
+        get {
+            polygons.map { $0.coordinates }
+        }
+        set {
+            polygons = newValue.compactMap({ Polygon($0) })
+        }
+    }
 
     public var allCoordinates: [Coordinate3D] {
         coordinates.flatMap({ $0 }).flatMap({ $0 })
@@ -28,12 +35,10 @@ public struct MultiPolygon:
 
     public var foreignMembers: [String: Sendable] = [:]
 
-    public var polygons: [Polygon] {
-        return coordinates.compactMap { Polygon($0) }
-    }
+    public private(set) var polygons: [Polygon] = []
 
     public init() {
-        self.coordinates = []
+        self.polygons = []
     }
 
     /// Try to initialize a MultiPolygon with some coordinates.
@@ -51,7 +56,7 @@ public struct MultiPolygon:
         self.coordinates = coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -64,10 +69,10 @@ public struct MultiPolygon:
 
     /// Try to initialize a MultiPolygon with some Polygons, don't check the coordinates for validity.
     public init(unchecked polygons: [Polygon], calculateBoundingBox: Bool = false) {
-        self.coordinates = polygons.map { $0.coordinates }
+        self.polygons = polygons
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -84,8 +89,8 @@ public struct MultiPolygon:
         self.coordinates = coordinates
         self.boundingBox = MultiPolygon.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -151,8 +156,22 @@ extension MultiPolygon {
 
 extension MultiPolygon {
 
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        mapPolygons { polygon in
+            var polygon = polygon
+            polygon.updateBoundingBox(onlyIfNecessary: ifNecessary)
+            return polygon
+        }
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
+
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: Array(coordinates.map({ $0.first ?? [] }).joined()))
+        BoundingBox(coordinates: Array(coordinates.map({ $0.first ?? [] }).joined()))
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
@@ -177,6 +196,72 @@ extension MultiPolygon: Equatable {
         // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
+    }
+
+}
+
+// MARK: - Polygons
+
+extension MultiPolygon {
+
+    /// Insert a Polygon into the receiver.
+    ///
+    /// - note: `polygon` must be in the same projection as the receiver.
+    public mutating func insertPolygon(_ polygon: Polygon, atIndex index: Int) {
+        guard polygons.count == 0 || projection == polygon.projection else { return }
+
+        if index < polygons.count {
+            polygons.insert(polygon, at: index)
+        }
+        else {
+            polygons.append(polygon)
+        }
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Append a Polygon to the receiver.
+    ///
+    /// - note: `polygon` must be in the same projection as the receiver.
+    public mutating func appendPolygon(_ polygon: Polygon) {
+        guard polygons.count == 0 || projection == polygon.projection else { return }
+
+        polygons.append(polygon)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Remove a Polygon from the receiver.
+    @discardableResult
+    public mutating func removePolygon(at index: Int) -> Polygon? {
+        guard index >= 0, index < polygons.count else { return nil }
+
+        let removedGeometry = polygons.remove(at: index)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+
+        return removedGeometry
+    }
+
+    /// Map Polygons in-place.
+    public mutating func mapPolygons(_ transform: (Polygon) -> Polygon) {
+        polygons = polygons.map(transform)
+    }
+
+    /// Map Polygons in-place, removing *nil* values.
+    public mutating func compactMapPolygons(_ transform: (Polygon) -> Polygon?) {
+        polygons = polygons.compactMap(transform)
+    }
+
+    /// Filter Polygons in-place.
+    public mutating func filterPolygons(_ isIncluded: (Polygon) -> Bool) {
+        polygons = polygons.filter(isIncluded)
     }
 
 }

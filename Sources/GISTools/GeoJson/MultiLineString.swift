@@ -10,7 +10,7 @@ public struct MultiLineString:
 {
 
     public var type: GeoJsonType {
-        return .multiLineString
+        .multiLineString
     }
 
     public var projection: Projection {
@@ -18,7 +18,14 @@ public struct MultiLineString:
     }
 
     /// The MultiLineString's coordinates.
-    public let coordinates: [[Coordinate3D]]
+    public private(set) var coordinates: [[Coordinate3D]] {
+        get {
+            lineStrings.map { $0.coordinates }
+        }
+        set {
+            lineStrings = newValue.compactMap({ LineString($0) })
+        }
+    }
 
     public var allCoordinates: [Coordinate3D] {
         coordinates.flatMap({ $0 })
@@ -28,12 +35,10 @@ public struct MultiLineString:
 
     public var foreignMembers: [String: Sendable] = [:]
 
-    public var lineStrings: [LineString] {
-        return coordinates.compactMap { LineString($0) }
-    }
+    public private(set) var lineStrings: [LineString] = []
 
     public init() {
-        self.coordinates = []
+        self.lineStrings = []
     }
 
     /// Try to initialize a MultiLineString with some coordinates.
@@ -50,7 +55,7 @@ public struct MultiLineString:
         self.coordinates = coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -63,10 +68,10 @@ public struct MultiLineString:
 
     /// Try to initialize a MultiLineString with some LineStrings, don't check the coordinates for validity.
     public init(unchecked lineStrings: [LineString], calculateBoundingBox: Bool = false) {
-        self.coordinates = lineStrings.map { $0.coordinates }
+        self.lineStrings = lineStrings
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -82,7 +87,7 @@ public struct MultiLineString:
         self.coordinates = lineSegments.map({ $0.coordinates })
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -99,8 +104,8 @@ public struct MultiLineString:
         self.coordinates = coordinates
         self.boundingBox = MultiLineString.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -132,12 +137,12 @@ extension MultiLineString {
 
     /// The receiver's first coordinate.
     public var firstCoordinate: Coordinate3D? {
-        return coordinates.first?.first
+        coordinates.first?.first
     }
 
     /// The receiver's last coordinate.
     public var lastCoordinate: Coordinate3D? {
-        return coordinates.last?.last
+        coordinates.last?.last
     }
 
 }
@@ -180,6 +185,20 @@ extension MultiLineString {
 
 extension MultiLineString {
 
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        mapLinestrings { linestring in
+            var linestring = linestring
+            linestring.updateBoundingBox(onlyIfNecessary: ifNecessary)
+            return linestring
+        }
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
+
     public func calculateBoundingBox() -> BoundingBox? {
         let flattened: [Coordinate3D] = Array(coordinates.joined())
         return BoundingBox(coordinates: flattened)
@@ -206,6 +225,72 @@ extension MultiLineString: Equatable {
     {
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
+    }
+
+}
+
+// MARK: - LineStrings
+
+extension MultiLineString {
+
+    /// Insert a LineString into the receiver.
+    ///
+    /// - note: `linestring` must be in the same projection as the receiver.
+    public mutating func insertLineString(_ lineString: LineString, atIndex index: Int) {
+        guard lineStrings.count == 0 || projection == lineString.projection else { return }
+
+        if index < lineStrings.count {
+            lineStrings.insert(lineString, at: index)
+        }
+        else {
+            lineStrings.append(lineString)
+        }
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Append a LineString to the receiver.
+    ///
+    /// - note: `linestring` must be in the same projection as the receiver.
+    public mutating func appendLineString(_ lineString: LineString) {
+        guard lineStrings.count == 0 || projection == lineString.projection else { return }
+
+        lineStrings.append(lineString)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Remove a LineString from the receiver.
+    @discardableResult
+    public mutating func removeLineString(at index: Int) -> LineString? {
+        guard index >= 0, index < lineStrings.count else { return nil }
+
+        let removedGeometry = lineStrings.remove(at: index)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+
+        return removedGeometry
+    }
+
+    /// Map Linestrings in-place.
+    public mutating func mapLinestrings(_ transform: (LineString) -> LineString) {
+        lineStrings = lineStrings.map(transform)
+    }
+
+    /// Map Linestrings in-place, removing *nil* values.
+    public mutating func compactMapLinestrings(_ transform: (LineString) -> LineString?) {
+        lineStrings = lineStrings.compactMap(transform)
+    }
+
+    /// Filter Linestrings in-place.
+    public mutating func filterLinestrings(_ isIncluded: (LineString) -> Bool) {
+        lineStrings = lineStrings.filter(isIncluded)
     }
 
 }

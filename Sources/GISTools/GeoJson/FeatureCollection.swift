@@ -7,7 +7,7 @@ public struct FeatureCollection:
 {
 
     public var type: GeoJsonType {
-        return .featureCollection
+        .featureCollection
     }
 
     public var projection: Projection {
@@ -39,7 +39,7 @@ public struct FeatureCollection:
         self.features = features
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -48,7 +48,7 @@ public struct FeatureCollection:
         self.features = geometries.compactMap { Feature($0) }
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -74,8 +74,8 @@ public struct FeatureCollection:
             return nil
         }
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
     }
 
@@ -102,8 +102,8 @@ public struct FeatureCollection:
         self.features = features
         self.boundingBox = FeatureCollection.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -132,6 +132,20 @@ public struct FeatureCollection:
 }
 
 extension FeatureCollection {
+
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        mapFeatures { feature in
+            var feature = feature
+            feature.updateBoundingBox(onlyIfNecessary: ifNecessary)
+            return feature
+        }
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
 
     public func calculateBoundingBox() -> BoundingBox? {
         let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
@@ -201,7 +215,7 @@ extension FeatureCollection {
         }
 
         if boundingBox != nil {
-            boundingBox = calculateBoundingBox()
+            updateBoundingBox(onlyIfNecessary: false)
         }
     }
 
@@ -214,17 +228,19 @@ extension FeatureCollection {
         features.append(feature)
 
         if boundingBox != nil {
-            boundingBox = calculateBoundingBox()
+            updateBoundingBox(onlyIfNecessary: false)
         }
     }
 
     /// Remove a Feature from the receiver.
     @discardableResult
-    public mutating func removeFeature(at index: Int) -> Feature {
+    public mutating func removeFeature(at index: Int) -> Feature? {
+        guard index >= 0, index < features.count else { return nil }
+
         let removedFeature = features.remove(at: index)
 
         if boundingBox != nil {
-            boundingBox = calculateBoundingBox()
+            updateBoundingBox(onlyIfNecessary: false)
         }
 
         return removedFeature
