@@ -10,7 +10,7 @@ public struct LineString:
 {
 
     public var type: GeoJsonType {
-        return .lineString
+        .lineString
     }
 
     public var projection: Projection {
@@ -29,7 +29,7 @@ public struct LineString:
     public var foreignMembers: [String: Sendable] = [:]
 
     public var lineStrings: [LineString] {
-        return [self]
+        [self]
     }
 
     public init() {
@@ -48,7 +48,7 @@ public struct LineString:
         self.coordinates = coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -57,7 +57,7 @@ public struct LineString:
         self.coordinates = lineSegment.coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -102,8 +102,8 @@ public struct LineString:
         self.coordinates = coordinates
         self.boundingBox = LineString.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -135,12 +135,12 @@ extension LineString {
 
     /// The receiver's first coordinate.
     public var firstCoordinate: Coordinate3D? {
-        return coordinates.first
+        coordinates.first
     }
 
     /// The receiver's last coordinate.
     public var lastCoordinate: Coordinate3D? {
-        return coordinates.last
+        coordinates.last
     }
 
 }
@@ -184,7 +184,7 @@ extension LineString {
 extension LineString {
 
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: coordinates)
+        BoundingBox(coordinates: coordinates)
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {

@@ -10,7 +10,7 @@ public struct Polygon:
 {
 
     public var type: GeoJsonType {
-        return .polygon
+        .polygon
     }
 
     public var projection: Projection {
@@ -29,7 +29,7 @@ public struct Polygon:
     public var foreignMembers: [String: Sendable] = [:]
 
     public var polygons: [Polygon] {
-        return [self]
+        [self]
     }
 
     /// The receiver's outer ring.
@@ -46,7 +46,7 @@ public struct Polygon:
 
     /// All of the receiver's rings (outer + inner).
     public var rings: [Ring] {
-        return coordinates.compactMap { Ring($0) }
+        coordinates.compactMap { Ring($0) }
     }
 
     public init() {
@@ -67,7 +67,7 @@ public struct Polygon:
         self.coordinates = coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -83,7 +83,7 @@ public struct Polygon:
         self.coordinates = rings.map { $0.coordinates }
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -100,8 +100,8 @@ public struct Polygon:
         self.coordinates = coordinates
         self.boundingBox = Polygon.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox && self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {

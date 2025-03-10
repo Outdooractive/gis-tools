@@ -4,7 +4,7 @@ import Foundation
 public struct GeometryCollection: GeoJsonGeometry {
 
     public var type: GeoJsonType {
-        return .geometryCollection
+        .geometryCollection
     }
 
     public var projection: Projection {
@@ -12,7 +12,7 @@ public struct GeometryCollection: GeoJsonGeometry {
     }
 
     /// The GeometryCollection's geometry objects.
-    public let geometries: [GeoJsonGeometry]
+    public private(set) var geometries: [GeoJsonGeometry]
 
     public var allCoordinates: [Coordinate3D] {
         geometries.flatMap(\.allCoordinates)
@@ -32,7 +32,7 @@ public struct GeometryCollection: GeoJsonGeometry {
         self.geometries = geometries
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -49,8 +49,8 @@ public struct GeometryCollection: GeoJsonGeometry {
         self.geometries = geometries
         self.boundingBox = GeometryCollection.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -79,6 +79,20 @@ public struct GeometryCollection: GeoJsonGeometry {
 }
 
 extension GeometryCollection {
+
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        mapGeometries { geometry in
+            var geometry = geometry
+            geometry.updateBoundingBox(onlyIfNecessary: ifNecessary)
+            return geometry
+        }
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
 
     public func calculateBoundingBox() -> BoundingBox? {
         let geometryBoundingBoxes: [BoundingBox] = geometries.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
@@ -128,5 +142,72 @@ extension GeometryCollection {
         geometryCollection.foreignMembers = foreignMembers
         return geometryCollection
     }
+
+}
+
+// MARK: - Geometries
+
+extension GeometryCollection {
+
+    /// Insert a GeoJsonGeometry into the receiver.
+    ///
+    /// - note: `geometry` must be in the same projection as the receiver.
+    public mutating func insertGeometry(_ geometry: GeoJsonGeometry, atIndex index: Int) {
+        guard geometries.count == 0 || projection == geometry.projection else { return }
+
+        if index < geometries.count {
+            geometries.insert(geometry, at: index)
+        }
+        else {
+            geometries.append(geometry)
+        }
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Append a GeoJsonGeometry to the receiver.
+    ///
+    /// - note: `geometry` must be in the same projection as the receiver.
+    public mutating func appendGeometry(_ geometry: GeoJsonGeometry) {
+        guard geometries.count == 0 || projection == geometry.projection else { return }
+
+        geometries.append(geometry)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Remove a GeoJsonGeometry from the receiver.
+    @discardableResult
+    public mutating func removeGeometry(at index: Int) -> GeoJsonGeometry? {
+        guard index >= 0, index < geometries.count else { return nil }
+
+        let removedGeometry = geometries.remove(at: index)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+
+        return removedGeometry
+    }
+
+    /// Map Geometries in-place.
+    public mutating func mapGeometries(_ transform: (GeoJsonGeometry) -> GeoJsonGeometry) {
+        geometries = geometries.map(transform)
+    }
+
+    /// Map Geometries in-place, removing *nil* values.
+    public mutating func compactMapGeometries(_ transform: (GeoJsonGeometry) -> GeoJsonGeometry?) {
+        geometries = geometries.compactMap(transform)
+    }
+
+    /// Filter Geometries in-place.
+    public mutating func filterGeometries(_ isIncluded: (GeoJsonGeometry) -> Bool) {
+        geometries = geometries.filter(isIncluded)
+    }
+
 
 }

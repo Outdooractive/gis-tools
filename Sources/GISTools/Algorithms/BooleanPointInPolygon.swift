@@ -88,15 +88,15 @@ extension Polygon {
         ignoreBoundary: Bool = false)
         -> Bool
     {
-        if let boundingBox = boundingBox, !boundingBox.contains(coordinate) {
+        if let boundingBox, !boundingBox.contains(coordinate) {
             return false
         }
 
-        guard let outerRing = outerRing, outerRing.contains(coordinate, ignoreBoundary: ignoreBoundary) else {
-            return false
-        }
+        guard let outerRing = outerRing,
+              outerRing.contains(coordinate, ignoreBoundary: ignoreBoundary)
+        else { return false }
 
-        if let innerRings = innerRings {
+        if let innerRings {
             for ring in innerRings {
                 if ring.contains(coordinate, ignoreBoundary: ignoreBoundary) {
                     return false
@@ -140,6 +140,10 @@ extension MultiPolygon {
         ignoreBoundary: Bool = false)
         -> Bool
     {
+        if let boundingBox, !boundingBox.contains(coordinate) {
+            return false
+        }
+
         for polygon in polygons {
             if polygon.contains(coordinate, ignoreBoundary: ignoreBoundary) {
                 return true

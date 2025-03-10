@@ -39,7 +39,7 @@ extension LineSegment {
 
     /// The receiver's two coordinates.
     public var coordinates: [Coordinate3D] {
-        return [first, second]
+        [first, second]
     }
 
 }
@@ -70,7 +70,9 @@ extension LineSegment {
         second: CLLocationCoordinate2D,
         calculateBoundingBox: Bool = false)
     {
-        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+        self.init(first: Coordinate3D(first),
+                  second: Coordinate3D(second),
+                  calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Initialize a LineSegment with two locations.
@@ -79,7 +81,9 @@ extension LineSegment {
         second: CLLocation,
         calculateBoundingBox: Bool = false)
     {
-        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+        self.init(first: Coordinate3D(first),
+                  second: Coordinate3D(second),
+                  calculateBoundingBox: calculateBoundingBox)
     }
 
 }
@@ -90,7 +94,7 @@ extension LineSegment {
 extension LineSegment: BoundingBoxRepresentable {
 
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: coordinates)
+        BoundingBox(coordinates: coordinates)
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {

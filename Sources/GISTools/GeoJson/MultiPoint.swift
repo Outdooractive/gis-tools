@@ -10,7 +10,7 @@ public struct MultiPoint:
 {
 
     public var type: GeoJsonType {
-        return .multiPoint
+        .multiPoint
     }
 
     public var projection: Projection {
@@ -18,7 +18,14 @@ public struct MultiPoint:
     }
 
     /// The receiver's coordinates.
-    public let coordinates: [Coordinate3D]
+    public private(set) var coordinates: [Coordinate3D] {
+        get {
+            points.map { $0.coordinate }
+        }
+        set {
+            points = newValue.compactMap({ Point($0) })
+        }
+    }
 
     public var allCoordinates: [Coordinate3D] {
         coordinates
@@ -28,12 +35,10 @@ public struct MultiPoint:
 
     public var foreignMembers: [String: Sendable] = [:]
 
-    public var points: [Point] {
-        return coordinates.map { Point($0) }
-    }
+    public private(set) var points: [Point] = []
 
     public init() {
-        self.coordinates = []
+        self.points = []
     }
 
     /// Try to initialize a MultiPoint with some coordinates.
@@ -48,7 +53,7 @@ public struct MultiPoint:
         self.coordinates = coordinates
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -61,10 +66,10 @@ public struct MultiPoint:
 
     /// Try to initialize a MultiPoint with some Points, don't check the coordinates for validity.
     public init(unchecked points: [Point], calculateBoundingBox: Bool = false) {
-        self.coordinates = points.map { $0.coordinate }
+        self.points = points
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -81,8 +86,8 @@ public struct MultiPoint:
         self.coordinates = coordinates
         self.boundingBox = MultiPoint.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -148,8 +153,22 @@ extension MultiPoint {
 
 extension MultiPoint {
 
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        mapPoints { point in
+            var point = point
+            point.updateBoundingBox(onlyIfNecessary: ifNecessary)
+            return point
+        }
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
+
     public func calculateBoundingBox() -> BoundingBox? {
-        return BoundingBox(coordinates: coordinates)
+        BoundingBox(coordinates: coordinates)
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
@@ -173,6 +192,72 @@ extension MultiPoint: Equatable {
     {
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
+    }
+
+}
+
+// MARK: - Points
+
+extension MultiPoint {
+
+    /// Insert a Point into the receiver.
+    ///
+    /// - note: `point` must be in the same projection as the receiver.
+    public mutating func insertPoint(_ point: Point, atIndex index: Int) {
+        guard points.count == 0 || projection == point.projection else { return }
+
+        if index < points.count {
+            points.insert(point, at: index)
+        }
+        else {
+            points.append(point)
+        }
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Append a Point to the receiver.
+    ///
+    /// - note: `point` must be in the same projection as the receiver.
+    public mutating func appendPoint(_ point: Point) {
+        guard points.count == 0 || projection == point.projection else { return }
+
+        points.append(point)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+    }
+
+    /// Remove a Point from the receiver.
+    @discardableResult
+    public mutating func removePoint(at index: Int) -> Point? {
+        guard index >= 0, index < points.count else { return nil }
+
+        let removedGeometry = points.remove(at: index)
+
+        if boundingBox != nil {
+            updateBoundingBox(onlyIfNecessary: false)
+        }
+
+        return removedGeometry
+    }
+
+    /// Map Points in-place.
+    public mutating func mapPoints(_ transform: (Point) -> Point) {
+        points = points.map(transform)
+    }
+
+    /// Map Points in-place, removing *nil* values.
+    public mutating func compactMapPoints(_ transform: (Point) -> Point?) {
+        points = points.compactMap(transform)
+    }
+
+    /// Filter Points in-place.
+    public mutating func filterPoints(_ isIncluded: (Point) -> Bool) {
+        points = points.filter(isIncluded)
     }
 
 }
