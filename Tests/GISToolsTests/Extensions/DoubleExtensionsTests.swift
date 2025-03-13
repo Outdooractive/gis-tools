@@ -28,4 +28,39 @@ final class DoubleExtensionsTests: XCTestCase {
         XCTAssertEqual(number.rounded(precision: -5), number)
     }
 
+    func testConversions() {
+        // 1 unit
+        XCTAssertEqual(1.0.meters, GISTool.convert(length: 1.0, from: .meters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.kilometers, GISTool.convert(length: 1.0, from: .kilometers, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.centimeters, GISTool.convert(length: 1.0, from: .centimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.millimeters, GISTool.convert(length: 1.0, from: .millimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.inches, GISTool.convert(length: 1.0, from: .inches, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.feet, GISTool.convert(length: 1.0, from: .feet, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.yards, GISTool.convert(length: 1.0, from: .yards, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.miles, GISTool.convert(length: 1.0, from: .miles, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(1.0.nauticalMiles, GISTool.convert(length: 1.0, from: .nauticalmiles, to: .meters)!, accuracy: 0.001)
+
+        // pi units
+        XCTAssertEqual(Double.pi.meters, GISTool.convert(length: Double.pi, from: .meters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.kilometers, GISTool.convert(length: Double.pi, from: .kilometers, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.centimeters, GISTool.convert(length: Double.pi, from: .centimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.millimeters, GISTool.convert(length: Double.pi, from: .millimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.inches, GISTool.convert(length: Double.pi, from: .inches, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.feet, GISTool.convert(length: Double.pi, from: .feet, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.yards, GISTool.convert(length: Double.pi, from: .yards, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.miles, GISTool.convert(length: Double.pi, from: .miles, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(Double.pi.nauticalMiles, GISTool.convert(length: Double.pi, from: .nauticalmiles, to: .meters)!, accuracy: 0.001)
+
+        // -1 unit
+        XCTAssertEqual(-1.0.meters, -GISTool.convert(length: 1.0, from: .meters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.kilometers, -GISTool.convert(length: 1.0, from: .kilometers, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.centimeters, -GISTool.convert(length: 1.0, from: .centimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.millimeters, -GISTool.convert(length: 1.0, from: .millimeters, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.inches, -GISTool.convert(length: 1.0, from: .inches, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.feet, -GISTool.convert(length: 1.0, from: .feet, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.yards, -GISTool.convert(length: 1.0, from: .yards, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.miles, -GISTool.convert(length: 1.0, from: .miles, to: .meters)!, accuracy: 0.001)
+        XCTAssertEqual(-1.0.nauticalMiles, -GISTool.convert(length: 1.0, from: .nauticalmiles, to: .meters)!, accuracy: 0.001)
+    }
+
 }
