@@ -1,5 +1,5 @@
 #if !os(Linux)
-import CoreLocation
+    import CoreLocation
 #endif
 import Foundation
 
@@ -135,12 +135,12 @@ extension LineSegment: BoundingBoxRepresentable {
 
 extension LineSegment: Equatable {
 
-    public static func ==(
+    public static func == (
         lhs: LineSegment,
         rhs: LineSegment)
         -> Bool
     {
-        return lhs.first == rhs.first
+        lhs.first == rhs.first
             && lhs.second == rhs.second
     }
 

@@ -136,4 +136,37 @@ final class CoordinateTests: XCTestCase {
         XCTAssertEqual(decodedCoordinateZM.asJson, [10.0, 15.0, 500])
     }
 
+    func testEqualityWithAltitude() {
+        let a = Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 100.0)
+        let b = Coordinate3D(latitude: -100.0, longitude: -100.0, altitude: 100.0)
+        let c = Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 99.0)
+
+        XCTAssertTrue(a == a)
+        XCTAssertFalse(a == b)
+        XCTAssertFalse(a == c)
+        XCTAssertFalse(b == c)
+
+        XCTAssertTrue(a.equals(other: a, includingAltitude: false))
+        XCTAssertTrue(a.equals(other: a, includingAltitude: true))
+        XCTAssertTrue(a.equals(other: c, includingAltitude: false))
+        XCTAssertFalse(a.equals(other: c, includingAltitude: true))
+        XCTAssertTrue(a.equals(other: c, includingAltitude: true, altitudeDelta: 1.0))
+        XCTAssertFalse(a.equals(other: c, includingAltitude: true, altitudeDelta: 0.5))
+
+        XCTAssertFalse(a.equals(other: b, includingAltitude: false))
+        XCTAssertFalse(a.equals(other: b, includingAltitude: true))
+    }
+
+    func testEqualityWithoutAltitude() {
+        let a = Coordinate3D(latitude: 10.0, longitude: 10.0)
+        let b = Coordinate3D(latitude: -100.0, longitude: -100.0)
+
+        XCTAssertTrue(a == a)
+        XCTAssertTrue(a.equals(other: a, includingAltitude: false))
+        XCTAssertTrue(a.equals(other: a, includingAltitude: true))
+        XCTAssertFalse(a == b)
+        XCTAssertFalse(a.equals(other: b, includingAltitude: false))
+        XCTAssertFalse(a.equals(other: b, includingAltitude: true))
+    }
+
 }

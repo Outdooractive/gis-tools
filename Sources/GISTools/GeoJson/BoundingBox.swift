@@ -77,7 +77,7 @@ public struct BoundingBox:
                 northEast.longitude += padding
 
             case .epsg4326:
-                let latLongDegrees = GISTool.convertToDegrees(fromMeters: padding, atLatitude: southWest.latitude)
+                let latLongDegrees = GISTool.degrees(fromMeters: padding, atLatitude: southWest.latitude)
 
                 southWest.latitude -= latLongDegrees.latitudeDegrees
                 northEast.latitude += latLongDegrees.latitudeDegrees
