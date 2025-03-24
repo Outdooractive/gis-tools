@@ -62,8 +62,17 @@ final class CoordinateTests: XCTestCase {
     }
 
     func testDecodable() throws {
-        let coordinateData =  try XCTUnwrap("[10,15]".data(using: .utf8))
+        let coordinateData = try XCTUnwrap("[10,15]".data(using: .utf8))
         let decodedCoordinate = try JSONDecoder().decode(Coordinate3D.self, from: coordinateData)
+
+        XCTAssertEqual(decodedCoordinate.asJson, [10.0, 15.0])
+    }
+
+    func testJSONDictionary() throws {
+        let decodedCoordinate = try XCTUnwrap(Coordinate3D(json: [
+            "x": 10.0,
+            "y": 15.0,
+        ]))
 
         XCTAssertEqual(decodedCoordinate.asJson, [10.0, 15.0])
     }
@@ -83,6 +92,28 @@ final class CoordinateTests: XCTestCase {
 
         let coordinateData5 =  try XCTUnwrap("[,15]".data(using: .utf8))
         XCTAssertThrowsError(try JSONDecoder().decode(Coordinate3D.self, from: coordinateData5))
+    }
+
+    func testJSONDictionaryInvalid() throws {
+        XCTAssertNil(Coordinate3D(json: [
+            "x": 10.0,
+        ]))
+
+        XCTAssertNil(Coordinate3D(json: [
+            "y": 15.0,
+        ]))
+
+        XCTAssertNil(Coordinate3D(json: []))
+
+        XCTAssertNil(Coordinate3D(json: [
+            "x": 10.0,
+            "y": nil,
+        ]))
+
+        XCTAssertNil(Coordinate3D(json: [
+            "x": 10.0,
+            "y": NSNull(),
+        ]))
     }
 
     func testDecodableInvalidNull() throws {

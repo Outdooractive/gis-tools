@@ -346,27 +346,45 @@ extension Coordinate3D: Projectable {
 
 extension Coordinate3D: GeoJsonReadable {
 
-    /// Create a coordinate from a JSON object.
+    /// Create a coordinate from a JSON object, which can either be
+    /// - GeoJSON,
+    /// - or a dictionary with `x`, `y` and `z` values.
     ///
     /// - Note: The [GeoJSON spec](https://datatracker.ietf.org/doc/html/rfc7946)
     ///         uses CRS:84 that specifies coordinates in longitude/latitude order.
-    /// - Important: The third value will always be ``altitude``, the fourth value
+    /// - Important: The third value in GeoJSON coordinates will always be ``altitude``, the fourth value
     ///              will be ``m`` if it exists. ``altitude`` can be a JSON `null` value.
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
-        guard let pointArray = json as? [Double?],
-              pointArray.count >= 2,
-              let pLongitude = pointArray[0],
-              let pLatitude = pointArray[1]
-        else { return nil }
+        var pLongitude: Double?
+        var pLatitude: Double?
+        var pAltitude: CLLocationDistance?
+        var pM: Double?
 
-        let pAltitude: CLLocationDistance? = if pointArray.count >= 3 { pointArray[2] } else { nil }
-        let pM: Double? = if pointArray.count >= 4 { pointArray[3] } else { nil }
+        if let pointArray = json as? [Double?],
+           pointArray.count >= 2
+        {
+            pLongitude = pointArray[0]
+            pLatitude = pointArray[1]
+            pAltitude = if pointArray.count >= 3 { pointArray[2] } else { nil }
+            pM = if pointArray.count >= 4 { pointArray[3] } else { nil }
+        }
+        else if let pointDictionary = json as? [String: Any] {
+            pLongitude = pointDictionary["x"] as? Double
+            pLatitude = pointDictionary["y"] as? Double
+            pAltitude = pointDictionary["z"] as? CLLocationDistance
+            pM = pointDictionary["m"] as? Double
+        }
+        else {
+            return nil
+        }
+
+        guard let pLongitude, let pLatitude else { return nil }
 
         self.init(latitude: pLatitude, longitude: pLongitude, altitude: pAltitude, m: pM)
     }
 
-    /// Dump the coordinate as a JSON object.
+    /// Dump the coordinate as a GeoJSON coordinate.
     ///
     /// - Important: The result JSON object will have a `null` value for the altitude
     ///              if the ``altitude`` is `nil` and ``m`` exists.
