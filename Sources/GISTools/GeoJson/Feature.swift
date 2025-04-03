@@ -59,7 +59,7 @@ public struct Feature:
             }
         }
 
-        public var asJson: Any {
+        public var asJson: Sendable {
             switch self {
             case .double(let double): double
             case .int(let int): int
@@ -79,7 +79,7 @@ public struct Feature:
     }
 
     public var type: GeoJsonType {
-        return .feature
+        .feature
     }
 
     public var projection: Projection {
@@ -90,7 +90,7 @@ public struct Feature:
     public var id: Identifier?
 
     /// The `Feature`s geometry object.
-    public let geometry: GeoJsonGeometry
+    public private(set) var geometry: GeoJsonGeometry
 
     public var allCoordinates: [Coordinate3D] {
         geometry.allCoordinates
@@ -115,7 +115,7 @@ public struct Feature:
         self.properties = properties
 
         if calculateBoundingBox {
-            self.boundingBox = self.calculateBoundingBox()
+            self.updateBoundingBox()
         }
     }
 
@@ -134,8 +134,8 @@ public struct Feature:
         self.properties = (geoJson["properties"] as? [String: Sendable]) ?? [:]
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
 
-        if calculateBoundingBox, self.boundingBox == nil {
-            self.boundingBox = self.calculateBoundingBox()
+        if calculateBoundingBox {
+            self.updateBoundingBox()
         }
 
         if geoJson.count > 3 {
@@ -148,13 +148,13 @@ public struct Feature:
         }
     }
 
-    public var asJson: [String: Any] {
-        var result: [String: Any] = [
+    public var asJson: [String: Sendable] {
+        var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,
             "geometry": geometry.asJson
         ]
-        if let id = id {
+        if let id {
             result["id"] = id.asJson
         }
         if let boundingBox = boundingBox {
@@ -170,8 +170,18 @@ public struct Feature:
 
 extension Feature {
 
+    @discardableResult
+    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+        geometry.updateBoundingBox(onlyIfNecessary: ifNecessary)
+
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        return boundingBox
+    }
+
     public func calculateBoundingBox() -> BoundingBox? {
-        return geometry.boundingBox ?? geometry.calculateBoundingBox()
+        geometry.boundingBox ?? geometry.calculateBoundingBox()
     }
 
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
@@ -227,7 +237,7 @@ extension Feature {
 
     /// Returns a property by key.
     public func property<T: Sendable>(for key: String) -> T? {
-        return properties[key] as? T
+        properties[key] as? T
     }
 
     /// Set a property key/value pair.

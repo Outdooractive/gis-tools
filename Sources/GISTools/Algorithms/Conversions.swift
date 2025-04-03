@@ -43,7 +43,7 @@ extension GISTool {
         case .millimeters, .millimetres: return earthRadius * 1000.0
         case .nauticalmiles: return earthRadius / 1852.0
         case .radians: return 1.0
-        case .yards: return earthRadius / 1.0936
+        case .yards: return earthRadius / (1.0 / 1.0936)
         default: return nil
         }
     }
@@ -70,13 +70,13 @@ extension GISTool {
     public static func areaFactor(for unit: Unit) -> Double? {
         switch unit {
         case .acres: return 0.000247105
-        case .centimeters, .centimetres: return 10000.0
+        case .centimeters, .centimetres: return 10_000.0
         case .feet: return 10.763910417
         case .inches: return 1550.003100006
         case .kilometers, .kilometres: return 0.000001
         case .meters, .metres: return 1.0
         case .miles: return 3.86e-7
-        case .millimeters, .millimetres: return 1_000_000
+        case .millimeters, .millimetres: return 1_000_000.0
         case .yards: return 1.195990046
         default: return nil
         }

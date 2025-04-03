@@ -92,7 +92,7 @@ extension GeoJson {
 
     /// Any foreign member by key.
     public func foreignMember<T: Sendable>(for key: String) -> T? {
-        return foreignMembers[key] as? T
+        foreignMembers[key] as? T
     }
 
     /// Set a foreign member key/value pair.

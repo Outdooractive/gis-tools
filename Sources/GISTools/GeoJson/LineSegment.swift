@@ -70,7 +70,9 @@ extension LineSegment {
         second: CLLocationCoordinate2D,
         calculateBoundingBox: Bool = false)
     {
-        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+        self.init(first: Coordinate3D(first),
+                  second: Coordinate3D(second),
+                  calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Initialize a LineSegment with two locations.
@@ -79,7 +81,9 @@ extension LineSegment {
         second: CLLocation,
         calculateBoundingBox: Bool = false)
     {
-        self.init(first: Coordinate3D(first), second: Coordinate3D(second), calculateBoundingBox: calculateBoundingBox)
+        self.init(first: Coordinate3D(first),
+                  second: Coordinate3D(second),
+                  calculateBoundingBox: calculateBoundingBox)
     }
 
 }
