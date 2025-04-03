@@ -476,8 +476,15 @@ extension Sequence<Coordinate3D> {
 
 extension Coordinate3D: Equatable {
 
-    /// Coordinates are regarded as equal when they are within a few μm from each other.
-    /// See ``GISTool.equalityDelta``.
+    /// Coordinates are regarded as equal when they are within a few μm from each other
+    /// (mainly to counter small rounding errors).
+    /// See also `GISTool.equalityDelta`.
+    ///
+    /// - note: `GISTool.equalityDelta` works only for coordinates in EPSG:4326 projection.
+    ///         Use `equals(other:includingAltitude:equalityDelta:altitudeDelta:)`
+    ///         for other projections or if you need more control.
+    ///
+    /// - note: This also compares the altitudes of coordinates.
     public static func == (
         lhs: Coordinate3D,
         rhs: Coordinate3D)
@@ -489,15 +496,19 @@ extension Coordinate3D: Equatable {
             && lhs.altitude == rhs.altitude
     }
 
+    /// Compares two coordinates with the given deltas.
+    ///
+    /// - note: The `other` coordinate will be projected to the projection of the reveiver.
     public func equals(
         other: Coordinate3D,
-        includingAltitude: Bool,
+        includingAltitude: Bool = true,
         equalityDelta: Double = GISTool.equalityDelta,
         altitudeDelta: Double = 0.0)
         -> Bool
     {
-        if projection != other.projection
-            || abs(latitude - other.latitude) > equalityDelta
+        let other = other.projected(to: projection)
+
+        if abs(latitude - other.latitude) > equalityDelta
             || abs(longitude - other.longitude) > equalityDelta
         {
             return false
