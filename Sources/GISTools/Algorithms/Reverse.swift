@@ -68,7 +68,10 @@ extension LineSegment {
 
     /// Returns the receiver with all coordinates reversed.
     public var reversed: LineSegment {
-        var result = LineSegment(first: second, second: first)
+        var result = LineSegment(
+            first: second,
+            second: first,
+            index: index)
         result.boundingBox = boundingBox
         return result
     }

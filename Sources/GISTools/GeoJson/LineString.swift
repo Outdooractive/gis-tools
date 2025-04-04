@@ -66,7 +66,7 @@ public struct LineString:
         guard !lineSegments.isEmpty else { return nil }
 
         var coordinates: [Coordinate3D] = []
-        for (previous, current) in lineSegments.overlappingPairs() {
+        for (previous, current, _) in lineSegments.overlappingPairs() {
             if coordinates.isEmpty {
                 coordinates.append(previous.first)
                 if previous.second != previous.first {
@@ -202,7 +202,9 @@ extension LineString {
         let maxLatitude = otherBoundingBox.northEast.latitude
 
         for index in 0 ..< coordinates.count - 1 {
-            let segment = LineSegment(first: coordinates[index], second: coordinates[index + 1])
+            let segment = LineSegment(
+                first: coordinates[index],
+                second: coordinates[index + 1])
 
             // The bbox contains one of the end points
             if otherBoundingBox.contains(segment.first)

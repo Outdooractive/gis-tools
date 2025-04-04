@@ -145,15 +145,15 @@ extension Array {
     /// let a = [1, 2, 3, 4, 5]
     /// a.overlappingPairs() -> [(1, 2), (2, 3), (3, 4), (4, 5)]
     /// ```
-    func overlappingPairs() -> [(first: Element, second: Element?)] {
+    func overlappingPairs() -> [(first: Element, second: Element?, index: Int)] {
         guard !isEmpty else { return [] }
 
         if count == 1 {
-            return [(first: self[0], second: nil)]
+            return [(first: self[0], second: nil, index: 0)]
         }
 
         return (0 ..< (self.count - 1)).map { (index) in
-            return (first: self[index], second: self[index + 1])
+            return (first: self[index], second: self[index + 1], index: index)
         }
     }
 

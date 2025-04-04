@@ -11,9 +11,13 @@ final class LengthTests: XCTestCase {
         let coordinate2 = Coordinate3D(latitude: 39.123, longitude: -75.534)
         let expectedLength: CLLocationDistance = 97129.22118967835
 
-        let lineSegment = LineSegment(first: coordinate1, second: coordinate2)
+        let lineSegment = LineSegment(
+            first: coordinate1,
+            second: coordinate2,
+            index: 0)
 
         XCTAssertEqual(lineSegment.length, expectedLength, accuracy: 0.000001)
+        XCTAssertEqual(lineSegment.index, 0)
     }
 
 }

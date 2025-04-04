@@ -3,8 +3,6 @@
 #endif
 import Foundation
 
-// Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-line-overlap
-
 extension LineSegment {
 
     /// Indicates how one segment compares to another segment.
