@@ -84,14 +84,22 @@ extension GISTool {
 
     /// Converts a length to the requested unit.
     /// Valid units: miles, nauticalmiles, inches, yards, meters, metres, kilometers, centimeters, feet
-    public static func convert(length: Double, from originalUnit: Unit, to finalUnit: Unit) -> Double? {
+    public static func convert(
+        length: Double,
+        from originalUnit: Unit,
+        to finalUnit: Unit
+    ) -> Double? {
         guard length >= 0 else { return nil }
         return length.lengthToRadians(unit: originalUnit)?.radiansToLength(unit: finalUnit)
     }
 
     /// Converts a area to the requested unit.
     /// Valid units: kilometers, kilometres, meters, metres, centimetres, millimeters, acres, miles, yards, feet, inches
-    public static func convert(area: Double, from originalUnit: Unit, to finalUnit: Unit) -> Double? {
+    public static func convert(
+        area: Double,
+        from originalUnit: Unit,
+        to finalUnit: Unit
+    ) -> Double? {
         guard area >= 0,
               let startFactor = areaFactor(for: originalUnit),
               let finalFactor = areaFactor(for: finalUnit)
@@ -106,15 +114,29 @@ extension GISTool {
 
 extension GISTool {
 
-    /// Converts pixel coordinates in a given zoom level to a coordinate.
+    @available(*, deprecated, renamed: "coordinate(fromPixelX:pixelY:zoom:tileSideLength:projection:)")
     public static func convertToCoordinate(
         fromPixelX pixelX: Double,
         pixelY: Double,
         atZoom zoom: Int,
         tileSideLength: Double = GISTool.tileSideLength,
-        projection: Projection = .epsg4326)
-        -> Coordinate3D
-    {
+        projection: Projection = .epsg4326
+    ) -> Coordinate3D {
+        coordinate(fromPixelX: pixelX,
+                   pixelY: pixelY,
+                   zoom: zoom,
+                   tileSideLength: tileSideLength,
+                   projection: projection)
+    }
+
+    /// Converts pixel coordinates in a given zoom level to a coordinate.
+    public static func coordinate(
+        fromPixelX pixelX: Double,
+        pixelY: Double,
+        zoom: Int,
+        tileSideLength: Double = GISTool.tileSideLength,
+        projection: Projection = .epsg4326
+    ) -> Coordinate3D {
         let resolution = metersPerPixel(atZoom: zoom, tileSideLength: tileSideLength)
 
         let coordinateXY = Coordinate3D(
@@ -144,11 +166,18 @@ extension GISTool {
 
 extension GISTool {
 
+    @available(*, deprecated, renamed: "degrees(fromMeters:atLatitude:)")
     public static func convertToDegrees(
         fromMeters meters: Double,
-        atLatitude latitude: CLLocationDegrees)
-        -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees)
-    {
+        atLatitude latitude: CLLocationDegrees
+    ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
+        degrees(fromMeters: meters, atLatitude: latitude)
+    }
+
+    public static func degrees(
+        fromMeters meters: CLLocationDistance,
+        atLatitude latitude: CLLocationDegrees
+    ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
         // Length of one minute at this latitude
         let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0 // ~111 km
         let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
@@ -157,6 +186,16 @@ extension GISTool {
         let latitudeDistance: Double = (meters / oneDegreeLatitudeDistance)
 
         return (latitudeDistance, longitudeDistance)
+    }
+
+}
+
+extension Coordinate3D {
+
+    public func degrees(
+        fromMeters meters: CLLocationDistance
+    ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
+        GISTool.degrees(fromMeters: meters, atLatitude: latitude)
     }
 
 }

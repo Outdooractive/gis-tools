@@ -144,16 +144,22 @@ final class LineIntersectionTests: XCTestCase {
     }
 
     func testBooleanIntersection() {
-        let segment1 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0), second: Coordinate3D(latitude: 1.0, longitude: 10.0))
-        let segment2 = LineSegment(first: Coordinate3D(latitude: 2.0, longitude: 1.0), second: Coordinate3D(latitude: 2.0, longitude: 10.0))
+        let segment1 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0),
+                                   second: Coordinate3D(latitude: 1.0, longitude: 10.0))
+        let segment2 = LineSegment(first: Coordinate3D(latitude: 2.0, longitude: 1.0),
+                                   second: Coordinate3D(latitude: 2.0, longitude: 10.0))
         XCTAssertFalse(segment1.intersects(segment2))
 
-        let segment3 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 10.0), second: Coordinate3D(latitude: 10.0, longitude: 0.0))
-        let segment4 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 0.0), second: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        let segment3 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 10.0),
+                                   second: Coordinate3D(latitude: 10.0, longitude: 0.0))
+        let segment4 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 0.0),
+                                   second: Coordinate3D(latitude: 10.0, longitude: 10.0))
         XCTAssertTrue(segment3.intersects(segment4))
 
-        let segment5 = LineSegment(first: Coordinate3D(latitude: -5.0, longitude: -5.0), second: Coordinate3D(latitude: 0.0, longitude: 0.0))
-        let segment6 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0), second: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        let segment5 = LineSegment(first: Coordinate3D(latitude: -5.0, longitude: -5.0),
+                                   second: Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let segment6 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0),
+                                   second: Coordinate3D(latitude: 10.0, longitude: 10.0))
         XCTAssertFalse(segment5.intersects(segment6))
     }
 
