@@ -8,10 +8,10 @@ extension BoundingBox {
     /// Returns the receiver as *LineSegment*s.
     public var lineSegments: [LineSegment] {
         [
-            LineSegment(first: northWest, second: northEast),
-            LineSegment(first: northEast, second: southEast),
-            LineSegment(first: southEast, second: southWest),
-            LineSegment(first: southWest, second: northWest),
+            LineSegment(first: northWest, second: northEast, index: 0),
+            LineSegment(first: northEast, second: southEast, index: 1),
+            LineSegment(first: southEast, second: southWest, index: 2),
+            LineSegment(first: southWest, second: northWest, index: 3),
         ]
     }
 
@@ -34,9 +34,9 @@ extension GeoJson {
             return []
 
         case let lineString as LineString:
-            return lineString.coordinates.overlappingPairs().compactMap { (first, second) in
+            return lineString.coordinates.overlappingPairs().compactMap { (first, second, index) in
                 guard let second else { return nil }
-                return LineSegment(first: first, second: second)
+                return LineSegment(first: first, second: second, index: index)
             }
 
         case let multiLineString as MultiLineString:
@@ -44,9 +44,9 @@ extension GeoJson {
 
         case let polygon as Polygon:
             return polygon.rings.flatMap({ (ring) in
-                ring.coordinates.overlappingPairs().compactMap { (first, second) in
+                ring.coordinates.overlappingPairs().compactMap { (first, second, index) in
                     guard let second else { return nil }
-                    return LineSegment(first: first, second: second)
+                    return LineSegment(first: first, second: second, index: index)
                 }
             })
 

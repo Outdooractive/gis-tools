@@ -14,9 +14,7 @@ final class LineChunkTests: XCTestCase {
     ])!
 
     func testLineChunkShort() {
-        let segmentLength: CLLocationDistance = GISTool.convert(length: 5.0, from: .miles, to: .meters)!
-
-        let chunks = lineString.chunked(segmentLength: segmentLength).lineStrings
+        let chunks = lineString.chunked(segmentLength: 5.miles).lineStrings
         XCTAssertEqual(chunks.count, 7)
 
         let some = chunks[3]
@@ -32,11 +30,21 @@ final class LineChunkTests: XCTestCase {
     }
 
     func testLineChunkLong() {
-        let segmentLength: CLLocationDistance = GISTool.convert(length: 50.0, from: .miles, to: .meters)!
-
-        let chunks = lineString.chunked(segmentLength: segmentLength).lineStrings
+        let chunks = lineString.chunked(segmentLength: 50.miles).lineStrings
         XCTAssertEqual(chunks.count, 1)
         XCTAssertEqual(chunks[0], lineString)
+    }
+
+    func testLineChunkDropIntermediates() {
+        let chunks = lineString.chunked(segmentLength: lineString.length / 2).lineStrings
+        XCTAssertEqual(chunks.count, 2)
+        XCTAssertEqual(chunks[0].coordinates.count, 3)
+        XCTAssertEqual(chunks[1].coordinates.count, 3)
+
+        let chunksSimplified = lineString.chunked(segmentLength: lineString.length / 2, dropIntermediateCoordinates: true).lineStrings
+        XCTAssertEqual(chunksSimplified.count, 2)
+        XCTAssertEqual(chunksSimplified[0].coordinates.count, 2)
+        XCTAssertEqual(chunksSimplified[1].coordinates.count, 2)
     }
 
     func testEvenlyDivided() {
@@ -48,7 +56,7 @@ final class LineChunkTests: XCTestCase {
         XCTAssertEqual(line.allCoordinates.count, 2)
         XCTAssertEqual(dividedLine.allCoordinates.count, 101)
 
-        for (first, second) in dividedLine.allCoordinates.overlappingPairs() {
+        for (first, second, _) in dividedLine.allCoordinates.overlappingPairs() {
             guard let second else { break }
             XCTAssertEqual(first.distance(from: second), 1.0, accuracy: 0.0001)
         }
