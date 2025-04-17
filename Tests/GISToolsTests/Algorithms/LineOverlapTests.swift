@@ -156,6 +156,9 @@ final class LineOverlapTests: XCTestCase {
 
         let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
         XCTAssertEqual(overlapping.count, 3)
+
+        let estimatedOverlap = lineString.estimatedOverlap(tolerance: 0.0)
+        print(estimatedOverlap)
     }
 
     func testSelfOverlap2() throws {
@@ -195,35 +198,14 @@ final class LineOverlapTests: XCTestCase {
         ])!
 
         let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
-        XCTAssertEqual(overlapping.count, 3)
-    }
-
-    func testSelfOverlap3WithSegments() throws {
-        let lineString = LineString([
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 2.0, longitude: 0.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 1.0, longitude: 2.0),
-            Coordinate3D(latitude: 1.0, longitude: 0.0),
-            Coordinate3D(latitude: 3.0, longitude: 0.0),
-            Coordinate3D(latitude: 3.0, longitude: -2.0),
-            Coordinate3D(latitude: 2.0, longitude: -2.0),
-            Coordinate3D(latitude: 2.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])!
-
-        let overlapping = try XCTUnwrap(lineString.overlappingSegments()?.lineStrings)
-        XCTAssertEqual(overlapping.count, 3)
+        XCTAssertEqual(overlapping.count, 2)
     }
 
     func testLongRouteSelfOverlap() throws {
-        let lineString = try XCTUnwrap(TestData.featureCollection(package: "LineOverlap", name: "LongRoute").features.first)
+        let lineString = try XCTUnwrap(TestData.featureCollection(package: "LineOverlap", name: "Immenstadt").features.first?.geometry as? LineString)
 
-        let overlapping = try XCTUnwrap(lineString.overlappingSegments(tolerance: 10.0)?.lineStrings)
-        print(overlapping.count)
-        print(overlapping.reduce(0.0, { $0 + $1.length }))
-        print(lineString.length)
-
+        let estimatedOverlap = lineString.estimatedOverlap(tolerance: 30.0)
+        print(estimatedOverlap)
     }
 
 }

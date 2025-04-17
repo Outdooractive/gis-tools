@@ -6,25 +6,24 @@ import Foundation
 extension LineSegment {
 
     /// Indicates how one segment compares to another segment.
-    public enum LineSegmentComparisonResult {
+    public enum LineSegmentComparisonResult: Comparable, Hashable {
         /// The two segments are exactly equal
         case equal
         /// The two segments are exactly equal, but in opposite directions.
         case equalReversed
         /// The segments are not equal, even with tolerance.
         case notEqual
+
         /// The second segment is fully included in the first segment.
         case otherOnThis
-        /// The other segment partially overlaps with the first segment
-        /// at the first segment's start.
-        case otherPartialOverlapAtStart
-        /// The other segment partially overlaps with the first segment
-        /// at the first segment's end.
-        case otherPartialOverlapAtEnd
-        /// One of the segments is shorter than the tolerance
-        case shortSegment
         /// The first segment is fully included in the second segment.
         case thisOnOther
+
+        /// The segments partially overlap.
+        case partialOverlap
+
+        /// One of the segments is shorter than the tolerance
+        case shortSegment
         /// One of the segments has zero length and will be skipped
         case zeroLengthSegment
     }
@@ -72,7 +71,8 @@ extension LineSegment {
             return .equalReversed
         }
 
-        if tolerance == 0.0 {
+        // 1. No tolerance
+        guard tolerance > 0.0 else {
             if other.checkIsOnSegment(first), other.checkIsOnSegment(second) {
                 return .thisOnOther
             }
@@ -85,70 +85,72 @@ extension LineSegment {
                checkIsOnSegment(other.second),
                other.checkIsOnSegment(first)
             {
-                return .otherPartialOverlapAtStart
+                return .partialOverlap
             }
 
             if other.first != first,
                checkIsOnSegment(other.first),
                other.checkIsOnSegment(first)
             {
-                return .otherPartialOverlapAtStart
+                return .partialOverlap
             }
 
             if other.first != second,
                checkIsOnSegment(other.first),
                other.checkIsOnSegment(second)
             {
-                return .otherPartialOverlapAtEnd
+                return .partialOverlap
             }
 
             if other.second != second,
                checkIsOnSegment(other.second),
                other.checkIsOnSegment(second)
             {
-                return .otherPartialOverlapAtEnd
+                return .partialOverlap
             }
+
+            return .notEqual
         }
-        else if tolerance > 0.0 {
-            if other.nearestCoordinateOnSegment(from: first).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
-            {
-                return .thisOnOther
-            }
 
-            if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-               nearestCoordinateOnSegment(from: other.second).distance <= tolerance
-            {
-                return .otherOnThis
-            }
+        // 2. with tolerance
+        if other.nearestCoordinateOnSegment(from: first).distance <= tolerance,
+           other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+        {
+            return .thisOnOther
+        }
 
-            if other.first.distance(from: second) > tolerance,
-               nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
-            {
-                return .otherPartialOverlapAtEnd
-            }
+        if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+           nearestCoordinateOnSegment(from: other.second).distance <= tolerance
+        {
+            return .otherOnThis
+        }
 
-            if other.second.distance(from: first) > tolerance,
-               nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: first).distance <= tolerance
-            {
-                return .otherPartialOverlapAtStart
-            }
+        if other.first.distance(from: second) > tolerance,
+           nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+           other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+        {
+            return .partialOverlap
+        }
 
-            if other.first.distance(from: first) > tolerance,
-               nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: first).distance <= tolerance
-            {
-                return .otherPartialOverlapAtStart
-            }
+        if other.second.distance(from: first) > tolerance,
+           nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
+           other.nearestCoordinateOnSegment(from: first).distance <= tolerance
+        {
+            return .partialOverlap
+        }
 
-            if other.second.distance(from: second) > tolerance,
-               nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
-            {
-                return .otherPartialOverlapAtEnd
-            }
+        if other.first.distance(from: first) > tolerance,
+           nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+           other.nearestCoordinateOnSegment(from: first).distance <= tolerance
+        {
+            return .partialOverlap
+        }
+
+        if other.second.distance(from: second) > tolerance,
+           nearestCoordinateOnSegment(from: other.second).distance <= tolerance,
+           other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+        {
+            return .partialOverlap
         }
 
         return .notEqual
@@ -229,66 +231,141 @@ extension GeoJson {
     /// - Note: Altitude values will be ignored.
     ///
     /// - Parameters:
-    ///    - tolerance: The tolerance, in meters
+    ///    - tolerance: The tolerance, in meters. Choosing this too small might lead to memory explosion.
+    ///                 Using `0.0` will only return segments that *exactly* overlap.
     ///
-    /// - Returns: All segments that at least overlap with one other segment. Each segment will only be
-    ///            in the result once.
-    public func overlappingSegments(tolerance: CLLocationDistance = 0.0) -> MultiLineString? {
+    /// - Returns: All segments that at least overlap with one other segment. Each segment will
+    ///            appear in the result only once.
+    public func overlappingSegments(
+        tolerance: CLLocationDistance = 0.0
+    ) -> MultiLineString? {
         let tolerance = abs(tolerance)
-        let sortedSegments: [LineSegment] = lineSegments
-            .map { lineSegment in
-                var lineSegment = lineSegment
-                lineSegment.updateBoundingBox()
-                return lineSegment
-            }
-            .sorted { left, right in
-                (left.boundingBox?.northEast.longitude ?? 0.0) < (right.boundingBox?.northEast.longitude ?? 0.0)
-            }
+        let distanceFunction = FrechetDistanceFunction.haversine
 
-        var result = IndexSet()
+        guard let line = if tolerance > 0.0 {
+            LineString(lineSegments)?.evenlyDivided(segmentLength: tolerance)
+        }
+        else {
+            LineString(lineSegments)
+        }
+        else {
+            return nil
+        }
 
-        for currentIndex in stride(from: sortedSegments.index(before: sortedSegments.endIndex), through: sortedSegments.startIndex, by: -1) {
-            let current = sortedSegments[currentIndex]
-            var currentMinX = current.boundingBox?.southWest.longitude ?? 0.0
-            var currentMinY = current.boundingBox?.southWest.latitude ?? 0.0
-            var currentMaxY = current.boundingBox?.northEast.latitude ?? 0.0
+        let p = line.allCoordinates
+        var ca: [IndexPair: Double] = [:]
 
-            if tolerance > 0.0 {
-                let latLongDegrees = GISTool.degrees(
-                    fromMeters: tolerance,
-                    atLatitude: currentMinY)
-                currentMinX -= latLongDegrees.longitudeDegrees
-                currentMinY -= latLongDegrees.latitudeDegrees
-                currentMaxY += latLongDegrees.latitudeDegrees
-            }
+        func index(_ pI: Int, _ qI: Int) -> IndexPair {
+            .init(first: pI, second: qI)
+        }
 
-            for nextIndex in stride(from: sortedSegments.index(before: currentIndex), through: sortedSegments.startIndex, by: -1) {
-                let next = sortedSegments[nextIndex]
-                let nextMaxX = next.boundingBox?.northEast.longitude ?? 0.0
-                let nextMaxY = next.boundingBox?.northEast.latitude ?? 0.0
-                let nextMinY = next.boundingBox?.southWest.latitude ?? 0.0
-
-                guard nextMaxX >= currentMinX else { break }
-                guard nextMaxY >= currentMinY, nextMinY <= currentMaxY else { continue }
-
-                let comparison = current.compare(other: next, tolerance: tolerance)
-                if comparison == .notEqual
-                    || comparison == .shortSegment
-                    || comparison == .zeroLengthSegment
-                { continue }
-
-                result.insert(currentIndex)
-                result.insert(nextIndex)
+        // Distances between each coordinate pair
+        for i in 0 ..< p.count {
+            for j in i + 1 ..< p.count {
+                let distance = distanceFunction.distance(between: p[i], and: p[j])
+                if distance > tolerance { continue }
+                ca[index(i, j)] = distance
             }
         }
 
-        var lineStrings: [LineString] = []
+        // Find coordinate pairs within the tolerance
+        var pairs: Set<IndexPair> = []
 
-        for range in result.rangeView {
-            lineStrings.append(LineString(range.map { sortedSegments[$0] })!)
+        var i = 0
+        outer: while i < p.count - 1 {
+            defer { i += 1 }
+
+            var j = i + 2
+            while ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                j += 1
+                if j == p.count { break outer }
+            }
+
+            while j < p.count {
+                defer { j += 1 }
+
+                if ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                    pairs.insert(.init(first: i, second: j))
+                }
+            }
         }
 
-        return MultiLineString(lineStrings)
+        // Find overlapping segments
+        var scratchList = pairs.sorted()
+        var result: Set<IndexPair> = []
+        while scratchList.isNotEmpty {
+            let candidate = scratchList.removeFirst()
+
+            if candidate.first > 0,
+               candidate.second > 0,
+               pairs.contains(.init(first: candidate.first - 1, second: candidate.second - 1))
+            {
+                result.insert(.init(first: candidate.first, second: candidate.first - 1))
+                result.insert(.init(first: candidate.second, second: candidate.second - 1))
+                continue
+            }
+
+            if candidate.first > 0,
+               candidate.second < p.count - 1,
+               pairs.contains(.init(first: candidate.first - 1, second: candidate.second + 1))
+            {
+                result.insert(.init(first: candidate.first, second: candidate.first - 1))
+                result.insert(.init(first: candidate.second, second: candidate.second + 1))
+                continue
+            }
+
+            if candidate.first < p.count - 1,
+               candidate.second > 0,
+               pairs.contains(.init(first: candidate.first + 1, second: candidate.second - 1))
+            {
+                result.insert(.init(first: candidate.first, second: candidate.first + 1))
+                result.insert(.init(first: candidate.second, second: candidate.second - 1))
+                continue
+            }
+
+            if candidate.first < p.count - 1,
+               candidate.second < p.count - 1,
+               pairs.contains(.init(first: candidate.first + 1, second: candidate.second + 1))
+            {
+                result.insert(.init(first: candidate.first, second: candidate.first + 1))
+                result.insert(.init(first: candidate.second, second: candidate.second + 1))
+                continue
+            }
+        }
+
+        return MultiLineString(result.map({ LineString(unchecked: [p[$0.first], p[$0.second]]) }))
+    }
+
+    public func estimatedOverlap(
+        tolerance: CLLocationDistance
+    ) -> Double {
+        guard let result = overlappingSegments(tolerance: tolerance) else { return 0.0 }
+
+        return result.length
+    }
+
+}
+
+// MARK: - Private
+
+private struct IndexPair: Hashable, Comparable, CustomStringConvertible {
+
+    let first: Int
+    let second: Int
+
+    init(first: Int, second: Int) {
+        self.first = min(first, second)
+        self.second = max(first, second)
+    }
+
+    var description: String {
+        "(\(first)-\(second))"
+    }
+
+    static func < (lhs: IndexPair, rhs: IndexPair) -> Bool {
+        if lhs.first < rhs.first { return true }
+        if lhs.first > rhs.first { return false }
+        return lhs.second < rhs.second
     }
 
 }

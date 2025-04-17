@@ -43,9 +43,8 @@ extension LineString {
     public func frechetDistance(
         from other: LineString,
         distanceFunction: FrechetDistanceFunction = .haversine,
-        segmentLength: CLLocationDistance? = nil)
-        -> Double
-    {
+        segmentLength: CLLocationDistance? = nil
+    ) -> Double {
         var firstLine = self
         var secondLine = other.projected(to: projection)
 

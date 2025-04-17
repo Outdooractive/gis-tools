@@ -177,6 +177,13 @@ extension Array {
         append(element)
     }
 
+    // Split the array into equal sized chunks
+    func chunked(into chunkSize: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: chunkSize).map { chunk in
+            Array(self[chunk ..< Swift.min(chunk + chunkSize, count)])
+        }
+    }
+
     /// The array, or nil if it is empty
     var nilIfEmpty: [Element]? {
         guard !isEmpty else { return nil }
