@@ -101,4 +101,155 @@ extension GeoJson {
         return result
     }
 
+    /// Returns the overlapping segments with the receiver itself.
+    ///
+    /// This implementation is streamlined for finding self-overlaps.
+    ///
+    /// - Note: Altitude values will be ignored.
+    ///
+    /// - Parameters:
+    ///    - tolerance: The tolerance, in meters. Choosing this too small might lead to memory explosion.
+    ///                 Using `0.0` will only return segments that *exactly* overlap.
+    ///
+    /// - Returns: All segments that at least overlap with one other segment. Each segment will
+    ///            appear in the result only once.
+    public func overlappingSegments(
+        tolerance: CLLocationDistance
+    ) -> MultiLineString? {
+        let tolerance = abs(tolerance)
+        let distanceFunction = FrechetDistanceFunction.haversine
+
+        guard let line = if tolerance > 0.0 {
+            LineString(lineSegments)?.evenlyDivided(segmentLength: tolerance)
+        }
+        else {
+            LineString(lineSegments)
+        }
+        else {
+            return nil
+        }
+
+        let p = line.allCoordinates
+        var ca: [OrderedIndexPair: Double] = [:]
+
+        func index(_ pI: Int, _ qI: Int) -> OrderedIndexPair {
+            .init(pI, qI)
+        }
+
+        // Distances between each coordinate pair
+        for i in 0 ..< p.count {
+            for j in i + 1 ..< p.count {
+                let distance = distanceFunction.distance(between: p[i], and: p[j])
+                if distance > tolerance { continue }
+                ca[index(i, j)] = distance
+            }
+        }
+
+        // Find coordinate pairs within the tolerance
+        var pairs: Set<OrderedIndexPair> = []
+
+        var i = 0
+        outer: while i < p.count - 1 {
+            defer { i += 1 }
+
+            var j = i + 2
+            while ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                j += 1
+                if j == p.count { break outer }
+            }
+
+            while j < p.count {
+                defer { j += 1 }
+
+                if ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                    pairs.insert(index(i, j))
+                }
+            }
+        }
+
+        // Find overlapping segments
+        var scratchList = pairs.sorted()
+        var result: Set<OrderedIndexPair> = []
+        while scratchList.isNotEmpty {
+            let candidate = scratchList.removeFirst()
+
+            if candidate.first > 0,
+               candidate.second > 0,
+               pairs.contains(index(candidate.first - 1, candidate.second - 1))
+            {
+                result.insert(index(candidate.first, candidate.first - 1))
+                result.insert(index(candidate.second, candidate.second - 1))
+                continue
+            }
+
+            if candidate.first > 0,
+               candidate.second < p.count - 1,
+               pairs.contains(index(candidate.first - 1, candidate.second + 1))
+            {
+                result.insert(index(candidate.first, candidate.first - 1))
+                result.insert(index(candidate.second, candidate.second + 1))
+                continue
+            }
+
+            if candidate.first < p.count - 1,
+               candidate.second > 0,
+               pairs.contains(index(candidate.first + 1, candidate.second - 1))
+            {
+                result.insert(index(candidate.first, candidate.first + 1))
+                result.insert(index(candidate.second, candidate.second - 1))
+                continue
+            }
+
+            if candidate.first < p.count - 1,
+               candidate.second < p.count - 1,
+               pairs.contains(index(candidate.first + 1, candidate.second + 1))
+            {
+                result.insert(index(candidate.first, candidate.first + 1))
+                result.insert(index(candidate.second, candidate.second + 1))
+                continue
+            }
+        }
+
+        return MultiLineString(result.map({ LineString(unchecked: [p[$0.first], p[$0.second]]) }))
+    }
+
+    /// An estimate of how much the receiver overlaps with itself.
+    ///
+    /// - Parameters:
+    ///    - tolerance: The tolerance, in meters. Choosing this too small might lead to memory explosion.
+    ///                 Using `0.0` will only use segments that *exactly* overlap.
+    ///
+    /// - Returns: The length of all segments that overlap within `tolerance`.
+    public func estimatedOverlap(
+        tolerance: CLLocationDistance
+    ) -> Double {
+        guard let result = overlappingSegments(tolerance: tolerance) else { return 0.0 }
+
+        return result.length
+    }
+
+}
+
+// MARK: - Private
+
+private struct OrderedIndexPair: Hashable, Comparable, CustomStringConvertible {
+
+    let first: Int
+    let second: Int
+
+    init(_ first: Int, _ second: Int) {
+        self.first = min(first, second)
+        self.second = max(first, second)
+    }
+
+    var description: String {
+        "(\(first)-\(second))"
+    }
+
+    static func < (lhs: OrderedIndexPair, rhs: OrderedIndexPair) -> Bool {
+        if lhs.first < rhs.first { return true }
+        if lhs.first > rhs.first { return false }
+        return lhs.second < rhs.second
+    }
+
 }
