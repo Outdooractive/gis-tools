@@ -103,24 +103,25 @@ extension GeoJson {
 
     /// Returns the overlapping segments with the receiver itself.
     ///
-    /// This implementation is streamlined for finding self-overlaps.
+    /// This implementation has been optimized for finding self-overlaps.
     ///
     /// - Note: Altitude values will be ignored.
     ///
     /// - Parameters:
-    ///    - tolerance: The tolerance, in meters. Choosing this too small might lead to memory explosion.
-    ///                 Using `0.0` will only return segments that *exactly* overlap.
+    ///    - tolerance: The tolerance, in meters. Using `0.0` will only return segments that *exactly* overlap.
+    ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
     ///
     /// - Returns: All segments that at least overlap with one other segment. Each segment will
     ///            appear in the result only once.
     public func overlappingSegments(
-        tolerance: CLLocationDistance
+        tolerance: CLLocationDistance,
+        segmentLength: Double? = nil
     ) -> MultiLineString? {
         let tolerance = abs(tolerance)
         let distanceFunction = FrechetDistanceFunction.haversine
 
-        guard let line = if tolerance > 0.0 {
-            LineString(lineSegments)?.evenlyDivided(segmentLength: tolerance)
+        guard let line = if let segmentLength, segmentLength > 0.0 {
+            LineString(lineSegments)?.evenlyDivided(segmentLength: segmentLength)
         }
         else {
             LineString(lineSegments)
@@ -216,14 +217,15 @@ extension GeoJson {
     /// An estimate of how much the receiver overlaps with itself.
     ///
     /// - Parameters:
-    ///    - tolerance: The tolerance, in meters. Choosing this too small might lead to memory explosion.
-    ///                 Using `0.0` will only use segments that *exactly* overlap.
+    ///    - tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
+    ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
     ///
     /// - Returns: The length of all segments that overlap within `tolerance`.
     public func estimatedOverlap(
-        tolerance: CLLocationDistance
+        tolerance: CLLocationDistance,
+        segmentLength: Double? = nil
     ) -> Double {
-        guard let result = overlappingSegments(tolerance: tolerance) else { return 0.0 }
+        guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength) else { return 0.0 }
 
         return result.length
     }
