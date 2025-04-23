@@ -4,7 +4,7 @@ import CoreLocation
 import Foundation
 
 /// The winding order for polygons.
-public enum PolygonWindingOrder {
+public enum PolygonWindingOrder: Sendable {
     case clockwise
     case counterClockwise
 }

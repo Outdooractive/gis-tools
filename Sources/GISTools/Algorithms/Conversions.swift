@@ -10,7 +10,7 @@ import Foundation
 extension GISTool {
 
     /// Unit of measurement.
-    public enum Unit {
+    public enum Unit: Sendable {
         case acres
         case centimeters
         case centimetres

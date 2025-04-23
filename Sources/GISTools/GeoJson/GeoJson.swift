@@ -1,7 +1,7 @@
 import Foundation
 
 /// All permitted GeoJSON types.
-public enum GeoJsonType: String {
+public enum GeoJsonType: String, Sendable {
     /// Marks an invalid object
     case invalid
     /// A GeoJSON Point object

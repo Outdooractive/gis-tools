@@ -8,7 +8,7 @@ import Foundation
 
 extension LineSegment {
 
-    private enum Orientation {
+    private enum Orientation: Sendable {
         case colinear
         case clockwise
         case counterClockwise
