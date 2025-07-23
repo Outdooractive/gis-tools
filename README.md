@@ -840,7 +840,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57]                 |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58]                 |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
-| buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
+| buffer                      | `let buffered = lineString.buffered(by: 1000.meters)`                                                                                 |     | [Source][61]                 |
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62]                 |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65]                 |

@@ -53,7 +53,7 @@ represented as a MultiPolygon.
 }
 ````
 
-### 5.  Bounding Box
+### 5. Bounding Box
 
 ```
 Example of a 3D bbox member with a depth of 100 meters:
