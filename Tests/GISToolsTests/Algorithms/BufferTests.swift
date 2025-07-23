@@ -3,7 +3,7 @@ import Testing
 
 struct BufferTests {
 
-    @Test()
+    @Test
     func bufferedPoint() async throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
         let buffered = point.buffered(by: 1000.meters)
@@ -11,7 +11,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedPoints() async throws {
         let multiPoint = try #require(MultiPoint([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -22,7 +22,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLineShort() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -33,7 +33,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLineShortFlatEnds() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -44,7 +44,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLineLong() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -58,7 +58,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLineLongFlatEnds() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -72,7 +72,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLines() async throws {
         let multiLineString = try #require(MultiLineString([
             [
@@ -90,7 +90,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedLinesFlatEnds() async throws {
         let multiLineString = try #require(MultiLineString([
             [
@@ -108,7 +108,7 @@ struct BufferTests {
         buffered?.dump()
     }
 
-    @Test()
+    @Test
     func bufferedPolygon() async throws {
         let polygon = try #require(Polygon([
             [
@@ -132,5 +132,38 @@ struct BufferTests {
         buffered?.dump()
     }
 
+    @Test
+    func bufferedMultiPolygon() async throws {
+        let multiPolygon = try #require(MultiPolygon([
+            Polygon([
+                [
+                    Coordinate3D(latitude: 47.5, longitude: 10.2),
+                    Coordinate3D(latitude: 47.5, longitude: 10.25),
+                    Coordinate3D(latitude: 47.6, longitude: 10.35),
+                    Coordinate3D(latitude: 47.7, longitude: 10.25),
+                    Coordinate3D(latitude: 47.6, longitude: 10.15),
+                    Coordinate3D(latitude: 47.5, longitude: 10.2),
+                ],
+                [
+                    Coordinate3D(latitude: 47.52, longitude: 10.25),
+                    Coordinate3D(latitude: 47.56, longitude: 10.30),
+                    Coordinate3D(latitude: 47.65, longitude: 10.23),
+                    Coordinate3D(latitude: 47.6, longitude: 10.22),
+                    Coordinate3D(latitude: 47.52, longitude: 10.25),
+                ],
+            ])!,
+            Polygon([[
+                Coordinate3D(latitude: 47.56, longitude: 10.1),
+                Coordinate3D(latitude: 47.56, longitude: 10.15),
+                Coordinate3D(latitude: 47.60, longitude: 10.15),
+                Coordinate3D(latitude: 47.65, longitude: 10.15),
+                Coordinate3D(latitude: 47.70, longitude: 10.1),
+                Coordinate3D(latitude: 47.56, longitude: 10.1),
+            ]])!,
+        ]))
+        let buffered = multiPolygon.buffered(by: 1000.meters)
+
+        buffered?.dump()
+    }
 
 }
