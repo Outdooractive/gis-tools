@@ -261,4 +261,12 @@ extension FeatureCollection {
         features = features.filter(isIncluded)
     }
 
+    public func divideFeatures(by key: (Feature) -> String) -> [String: [Feature]] {
+        return features.reduce([:]) { partialResult, feature in
+            var partialResult = partialResult
+            partialResult[key(feature), default: []].append(feature)
+            return partialResult
+        }
+    }
+
 }

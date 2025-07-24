@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class FeatureCollectionTests: XCTestCase {
+struct FeatureCollectionTests {
 
     static let featureCollectionJson = """
     {
@@ -13,7 +14,8 @@ final class FeatureCollectionTests: XCTestCase {
                 "coordinates": [102.0, 0.5]
             },
             "properties": {
-                "prop0": "value0"
+                "prop0": "value0",
+                "prop2": "a"
             }
         }, {
             "type": "Feature",
@@ -28,7 +30,8 @@ final class FeatureCollectionTests: XCTestCase {
             },
             "properties": {
                 "prop0": "value0",
-                "prop1": 0.0
+                "prop1": 0.0,
+                "prop2": "a"
             }
         }, {
             "type": "Feature",
@@ -48,56 +51,61 @@ final class FeatureCollectionTests: XCTestCase {
                 "prop0": "value0",
                 "prop1": {
                     "this": "that"
-                }
+                },
+                "prop2": "b"
             }
         }],
         "other": "something else"
     }
     """
 
-    func testLoadJson() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func loadJson() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
-        XCTAssertEqual(featureCollection.type, GeoJsonType.featureCollection)
-        XCTAssertEqual(featureCollection.projection, .epsg4326)
-        XCTAssertEqual(featureCollection.features.count, 3)
-        XCTAssertEqual(featureCollection.features.allSatisfy({ $0.type == .feature }), true)
-        XCTAssertEqual(featureCollection.foreignMember(for: "other"), "something else")
-        XCTAssertEqual(featureCollection[foreignMember: "other"], "something else")
+        #expect(featureCollection.type == GeoJsonType.featureCollection)
+        #expect(featureCollection.projection == .epsg4326)
+        #expect(featureCollection.features.count == 3)
+        #expect(featureCollection.features.allSatisfy({ $0.type == .feature }))
+        #expect(featureCollection.foreignMember(for: "other") == "something else")
+        #expect(featureCollection[foreignMember: "other"] == "something else")
     }
 
-    func testCreateJson() {
+    @Test
+    func createJson() async throws {
         // TODO:
     }
 
-    func testAddFeatures() {
+    @Test
+    func addFeatures() async throws {
         let feature4326 = Feature(Point(.zero))
         let feature3857 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0)))
 
         var featureCollection = FeatureCollection()
-        XCTAssertEqual(featureCollection.projection, .noSRID)
+        #expect(featureCollection.projection == .noSRID)
 
         featureCollection.appendFeature(feature4326)
-        XCTAssertEqual(featureCollection.projection, .epsg4326)
+        #expect(featureCollection.projection == .epsg4326)
 
-        XCTAssertEqual(featureCollection.features.count, 1)
+        #expect(featureCollection.features.count == 1)
         featureCollection.appendFeature(feature3857)
-        XCTAssertEqual(featureCollection.features.count, 1)
+        #expect(featureCollection.features.count == 1)
         featureCollection.insertFeature(feature3857, atIndex: 0)
-        XCTAssertEqual(featureCollection.features.count, 1)
+        #expect(featureCollection.features.count == 1)
 
         featureCollection.removeFeature(at: 0)
-        XCTAssertTrue(featureCollection.features.isEmpty)
+        #expect(featureCollection.features.isEmpty)
 
         featureCollection.appendFeature(feature3857)
-        XCTAssertEqual(featureCollection.features.count, 1)
+        #expect(featureCollection.features.count == 1)
     }
 
-    func testMap() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func mapFeatures() async throws {
+        var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let prop0: String? = featureCollection.features.first?.property(for: "prop0")
-        XCTAssertEqual(prop0, "value0")
+        #expect(prop0 == "value0")
 
         featureCollection.mapFeatures({ feature -> Feature in
             var feature = feature
@@ -106,36 +114,57 @@ final class FeatureCollectionTests: XCTestCase {
         })
 
         let prop0Updated: String? = featureCollection.features.first?.property(for: "prop0")
-        XCTAssertEqual(prop0Updated, "value1")
+        #expect(prop0Updated == "value1")
     }
 
-    func testCompactMap() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func compactMapFeatures() async throws {
+        var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
-        XCTAssertEqual(featureCollection.features.count, 3)
+        #expect(featureCollection.features.count == 3)
 
         featureCollection.compactMapFeatures({ feature -> Feature? in
             guard feature.properties["prop1"] != nil else { return nil }
             return feature
         })
 
-        XCTAssertEqual(featureCollection.features.count, 2)
+        #expect(featureCollection.features.count == 2)
     }
 
-    func testFilter() throws {
-        var featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func filterFeatures() async throws {
+        var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
-        XCTAssertEqual(featureCollection.features.count, 3)
+        #expect(featureCollection.features.count == 3)
 
         featureCollection.filterFeatures({ feature -> Bool in
             feature.properties["prop1"] == nil
         })
 
-        XCTAssertEqual(featureCollection.features.count, 1)
+        #expect(featureCollection.features.count == 1)
     }
 
-    func testEnumerate() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func divideByKey() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+        let divided = featureCollection.divideFeatures { feature in
+            feature.property(for: "prop2") ?? "n/a"
+        }
+
+        #expect(divided.keys.sorted() == ["a", "b"])
+
+        let featuresA = try #require(divided["a"])
+        #expect(featuresA.count == 2)
+        #expect(featuresA.allSatisfy({ $0.property(for: "prop2") == "a" }))
+
+        let featuresB = try #require(divided["b"])
+        #expect(featuresB.count == 1)
+        #expect(featuresB.allSatisfy({ $0.property(for: "prop2") == "b" }))
+    }
+
+    @Test
+    func enumerateFeatures() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let expected: [(Int, Int, Coordinate3D)] = [
             (0, 0, Coordinate3D(latitude: 0.5, longitude: 102.0)),
@@ -147,7 +176,7 @@ final class FeatureCollectionTests: XCTestCase {
             (2, 1, Coordinate3D(latitude: 0.0, longitude: 101.0)),
             (2, 2, Coordinate3D(latitude: 1.0, longitude: 101.0)),
             (2, 3, Coordinate3D(latitude: 1.0, longitude: 100.0)),
-            (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0))
+            (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0)),
         ]
 
         var result: [(Int, Int, Coordinate3D)] = []
@@ -155,17 +184,18 @@ final class FeatureCollectionTests: XCTestCase {
             result.append((featureIndex, coordinateIndex, coordinate))
         }
 
-        XCTAssertEqual(result.count, expected.count)
+        #expect(result.count == expected.count)
 
         for (lhs, rhs) in zip(result, expected) {
-            XCTAssertEqual(lhs.0, rhs.0)
-            XCTAssertEqual(lhs.1, rhs.1)
-            XCTAssertEqual(lhs.2, rhs.2)
+            #expect(lhs.0 == rhs.0)
+            #expect(lhs.1 == rhs.1)
+            #expect(lhs.2 == rhs.2)
         }
     }
 
-    func testEnumerateProperties() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func enumerateProperties() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let expected: [(Int, [String: Sendable])] = [
             (0, ["prop0": "value0"]),
@@ -175,58 +205,62 @@ final class FeatureCollectionTests: XCTestCase {
 
         var result: [(Int, [String: Sendable])] = []
         featureCollection.enumerateProperties { featureIndex, properties in
-            XCTAssertFalse(properties.isEmpty)
+            #expect(!properties.isEmpty)
             result.append((featureIndex, properties))
         }
 
-        XCTAssertEqual(result.count, expected.count)
+        #expect(result.count == expected.count)
 
         for (lhs, rhs) in zip(result, expected) {
-            XCTAssertEqual(lhs.0, rhs.0)
+            #expect(lhs.0 == rhs.0)
         }
     }
 
-    func testPropertiesSummary() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func propertiesSummary() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let summary = featureCollection.propertiesSummary()
-        XCTAssertEqual(summary.count, 2)
-        XCTAssertEqual(summary.keys.sorted(), ["prop0", "prop1"])
-        XCTAssertEqual(summary["prop0"], ["value0"])
-        XCTAssertTrue(summary["prop1"]!.contains(0))
-        XCTAssertTrue(summary["prop1"]!.contains(["this": "that"]))
+        #expect(summary.count == 2)
+        #expect(summary.keys.sorted() == ["prop0", "prop1"])
+        #expect(summary["prop0"] == ["value0"])
+        #expect(summary["prop1"]!.contains(0))
+        #expect(summary["prop1"]!.contains(["this": "that"]))
     }
 
-    func testEncodable() throws {
-        let featureCollection = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+    @Test
+    func encodable() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        XCTAssertEqual(try encoder.encode(featureCollection), featureCollection.asJsonData(prettyPrinted: true))
+        #expect(try encoder.encode(featureCollection) == featureCollection.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodable() throws {
-        let featureCollectionData = try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)?.asJsonData(prettyPrinted: true))
+    @Test
+    func decodable() async throws {
+        let featureCollectionData = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)?.asJsonData(prettyPrinted: true))
         let featureCollection = try JSONDecoder().decode(FeatureCollection.self, from: featureCollectionData)
 
-        XCTAssertEqual(featureCollection.projection, .epsg4326)
-        XCTAssertEqual(featureCollectionData, featureCollection.asJsonData(prettyPrinted: true))
+        #expect(featureCollection.projection == .epsg4326)
+        #expect(featureCollectionData == featureCollection.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodePoint() throws {
+    @Test
+    func decodePoint() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
-        let pointData = try XCTUnwrap(point.asJsonData(prettyPrinted: true))
-        let featureCollectionData = try XCTUnwrap(FeatureCollection([point]).asJsonData(prettyPrinted: true))
+        let pointData = try #require(point.asJsonData(prettyPrinted: true))
+        let featureCollectionData = try #require(FeatureCollection([point]).asJsonData(prettyPrinted: true))
 
-        let featureCollection1 = try XCTUnwrap(FeatureCollection(jsonData: pointData))
+        let featureCollection1 = try #require(FeatureCollection(jsonData: pointData))
         let featureCollection2 = try JSONDecoder().decode(FeatureCollection.self, from: pointData)
 
-        XCTAssertEqual(featureCollection1.projection, .epsg4326)
-        XCTAssertEqual(featureCollection2.projection, .epsg4326)
+        #expect(featureCollection1.projection == .epsg4326)
+        #expect(featureCollection2.projection == .epsg4326)
 
-        XCTAssertEqual(featureCollectionData, featureCollection1.asJsonData(prettyPrinted: true))
-        XCTAssertEqual(featureCollectionData, featureCollection2.asJsonData(prettyPrinted: true))
+        #expect(featureCollectionData == featureCollection1.asJsonData(prettyPrinted: true))
+        #expect(featureCollectionData == featureCollection2.asJsonData(prettyPrinted: true))
     }
 
 }
