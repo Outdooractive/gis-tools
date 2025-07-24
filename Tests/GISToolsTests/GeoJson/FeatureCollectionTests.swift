@@ -221,8 +221,8 @@ struct FeatureCollectionTests {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let summary = featureCollection.propertiesSummary()
-        #expect(summary.count == 2)
-        #expect(summary.keys.sorted() == ["prop0", "prop1"])
+        #expect(summary.count == 3)
+        #expect(summary.keys.sorted() == ["prop0", "prop1", "prop2"])
         #expect(summary["prop0"] == ["value0"])
         #expect(summary["prop1"]!.contains(0))
         #expect(summary["prop1"]!.contains(["this": "that"]))
