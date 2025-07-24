@@ -56,20 +56,20 @@ extension GeoJson {
 
         // MultiPoint
         case let multiPoint as MultiPoint:
-            let circles = multiPoint
+            let bufferedPoints = multiPoint
                 .points
                 .compactMap({ $0.circle(radius: distance, steps: steps) })
-            guard circles.isNotEmpty else { return nil }
+            guard bufferedPoints.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: bufferedPoints)
             }
 
-            return MultiPolygon(circles)
+            return MultiPolygon(bufferedPoints)
 
         // LineString
         case let lineString as LineString:
-            let bufferedSegments = lineString
+            var polygons = lineString
                 .lineSegments
                 .compactMap({
                     $0.buffered(
@@ -79,10 +79,11 @@ extension GeoJson {
                     .polygons
                     .first
                 })
-            guard var multiPolygon = MultiPolygon(bufferedSegments) else { return nil }
 
             var bufferCoordinates = lineString.coordinates
-            guard bufferCoordinates.count >= 2 else { return multiPolygon }
+            guard bufferCoordinates.count >= 2 else {
+                return MultiPolygon(polygons)
+            }
 
             if lineEndStyle == .flat {
                 bufferCoordinates.removeFirst()
@@ -91,18 +92,18 @@ extension GeoJson {
 
             for coordinate in bufferCoordinates {
                 guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
-                multiPolygon.appendPolygon(circle)
+                polygons.append(circle)
             }
 
             if unionType.isIn([.individual, .overlapping]) {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: polygons)
             }
 
-            return multiPolygon
+            return MultiPolygon(polygons)
 
         // MultiLineString
         case let multiLineString as MultiLineString:
-            let bufferedLines = multiLineString
+            let bufferedLineStrings = multiLineString
                 .lineStrings
                 .compactMap({
                     $0.buffered(
@@ -111,18 +112,22 @@ extension GeoJson {
                         unionType: unionType,
                         steps: steps)
                 })
-            guard bufferedLines.isNotEmpty else { return nil }
+                .map(\.polygons)
+                .flatMap({ $0 })
+            guard bufferedLineStrings.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: bufferedLineStrings)
             }
 
-            return MultiPolygon(bufferedLines.map(\.polygons).flatMap({ $0 }))
+            return MultiPolygon(bufferedLineStrings)
 
         // Polygon
         case let polygon as Polygon:
             let bufferCoordinates = polygon.allCoordinates
-            let bufferedSegments = polygon
+            guard bufferCoordinates.count >= 2 else { return nil }
+
+            var polygons = polygon
                 .lineSegments
                 .compactMap({
                     $0.buffered(
@@ -132,22 +137,19 @@ extension GeoJson {
                     .polygons
                     .first
                 })
-            guard bufferCoordinates.count >= 2,
-                  var multiPolygon = MultiPolygon(bufferedSegments)
-            else { return nil }
 
             for coordinate in bufferCoordinates {
                 guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
-                multiPolygon.appendPolygon(circle)
+                polygons.append(circle)
             }
 
-            multiPolygon.appendPolygon(polygon)
+            polygons.append(polygon)
 
             if unionType.isIn([.individual, .overlapping]) {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: polygons)
             }
 
-            return multiPolygon
+            return MultiPolygon(polygons)
 
         // MultiPolygon
         case let multiPolygon as MultiPolygon:
@@ -160,17 +162,19 @@ extension GeoJson {
                         unionType: unionType,
                         steps: steps)
                 })
+                .map(\.polygons)
+                .flatMap({ $0 })
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: bufferedPolygons)
             }
 
-            return MultiPolygon(bufferedPolygons.map(\.polygons).flatMap({ $0 }))
+            return MultiPolygon(bufferedPolygons)
 
         // GeometryCollection
         case let geometryCollection as GeometryCollection:
-            let bufferPolygons = geometryCollection
+            let bufferedPolygons = geometryCollection
                 .geometries
                 .compactMap({
                     $0.buffered(
@@ -181,13 +185,13 @@ extension GeoJson {
                     .polygons
                 })
                 .flatMap({ $0 })
-            guard bufferPolygons.isNotEmpty else { return nil }
+            guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: bufferedPolygons)
             }
 
-            return MultiPolygon(bufferPolygons)
+            return MultiPolygon(bufferedPolygons)
 
         // Feature
         case let feature as Feature:
@@ -199,7 +203,7 @@ extension GeoJson {
 
         // FeatureCollection
         case let featureCollection as FeatureCollection:
-            let bufferPolygons = featureCollection
+            let bufferedPolygons = featureCollection
                 .features
                 .compactMap({
                     $0.geometry.buffered(
@@ -210,13 +214,13 @@ extension GeoJson {
                     .polygons
                 })
                 .flatMap({ $0 })
-            guard bufferPolygons.isNotEmpty else { return nil }
+            guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                // TODO: formUnion
+                return UnionHelper.union(polygons: bufferedPolygons)
             }
 
-            return MultiPolygon(bufferPolygons)
+            return MultiPolygon(bufferedPolygons)
 
         // Can't happen
         default:
@@ -255,21 +259,21 @@ extension LineSegment {
             first.destination(distance: distance, bearing: leftBearing),
         ]
 
-        guard var multiPolygon = MultiPolygon([[corners]]) else { return nil }
+        var polygons = [Polygon([corners])!]
 
         if lineEndStyle == .round,
            let firstCircle = first.circle(radius: distance, steps: steps),
            let secondCircle = second.circle(radius: distance, steps: steps)
         {
-            multiPolygon.appendPolygon(firstCircle)
-            multiPolygon.appendPolygon(secondCircle)
+            polygons.append(firstCircle)
+            polygons.append(secondCircle)
         }
 
-        if unionType.isIn([.individual, .overlapping]) {
-            // TODO: formUnion
+        if unionType == .none {
+            return MultiPolygon(polygons)
         }
 
-        return multiPolygon
+        return UnionHelper.union(polygons: polygons)
     }
 
 }
