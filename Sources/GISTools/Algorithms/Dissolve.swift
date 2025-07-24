@@ -8,10 +8,12 @@ extension FeatureCollection {
     private static let unknownValuePlaceholder: String = UUID().uuidString
 
     /// Creates a new FeatureCollection where all (Multi)Polygon features with the same property value
-    /// are union'ed together.
+    /// are union'ed together. Features that are not (Multi)Polygon are removed from the result.
+    ///
+    /// This currently works only for properties with a String value.
     ///
     /// - Parameters:
-    ///    - by: The property name
+    ///    - property: The `property` name with which the Features should be divided
     ///    - removeUnknown: Whether to remove features without the property from the result
     public func dissolved(
         by property: String,
@@ -31,7 +33,10 @@ extension FeatureCollection {
         for (key, features) in dividedFeatures {
             let polygons: [PolygonGeometry] = features.compactMap({ $0.geometry as? PolygonGeometry })
             let union = UnionHelper.union(polygons: polygons)
-            result.append(Feature(union, properties: [property: key]))
+            let properties: [String: Sendable] = key == Self.unknownValuePlaceholder
+                ? [:]
+                : [property: key]
+            result.append(Feature(union, properties: properties))
         }
 
         return FeatureCollection(result)
