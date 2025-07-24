@@ -145,10 +145,10 @@ struct FeatureCollectionTests {
     }
 
     @Test
-    func divideByKey() async throws {
+    func divideFeaturesByKey() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
         let divided = featureCollection.divideFeatures { feature in
-            feature.property(for: "prop2") ?? "n/a"
+            feature.property(for: "prop2")
         }
 
         #expect(divided.keys.sorted() == ["a", "b"])
