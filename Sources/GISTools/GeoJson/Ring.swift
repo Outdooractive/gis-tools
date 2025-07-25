@@ -29,7 +29,14 @@ public struct Ring: Sendable {
 
     /// Try to initialize a Ring with some coordinates.
     public init?(_ coordinates: [Coordinate3D]) {
-        // TODO: Close the ring, if necessary
+        // Close the ring, if necessary
+        var coordinates = coordinates
+        if coordinates.count >= 3,
+           coordinates.first != coordinates.last
+        {
+            coordinates.append(coordinates[0])
+        }
+
         guard coordinates.count >= 4 else { return nil }
 
         self.init(unchecked: coordinates)

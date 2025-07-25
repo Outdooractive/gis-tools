@@ -34,7 +34,7 @@ public struct Polygon:
 
     /// The receiver's outer ring.
     public var outerRing: Ring? {
-        guard !coordinates.isEmpty else { return nil }
+        guard coordinates.isNotEmpty else { return nil }
         return Ring(coordinates[0])
     }
 
@@ -55,7 +55,7 @@ public struct Polygon:
 
     /// Try to initialize a Polygon with some coordinates.
     public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
-        guard !coordinates.isEmpty,
+        guard coordinates.isNotEmpty,
               coordinates[0].count >= 3
         else { return nil }
 
