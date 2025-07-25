@@ -40,6 +40,13 @@ public struct Ring: Sendable {
         self.coordinates = coordinates
     }
 
+    /// The Ring's circumference.
+    public var circumference: CLLocationDistance {
+        guard coordinates.count >= 2 else { return 0.0 }
+
+        return lineString.length
+    }
+
 }
 
 // MARK: - Projection
