@@ -8,7 +8,9 @@ extension GeoJson {
     /// Returns a new geometry with all coordinates transformed by the given function.
     ///
     /// - Parameter transform: The transformation function
-    public func transformedCoordinates(_ transform: (Coordinate3D) -> Coordinate3D) -> Self {
+    public func transformedCoordinates(
+        _ transform: (Coordinate3D) -> Coordinate3D
+    ) -> Self {
         switch self {
         case let point as Point:
             var newPoint = Point(
