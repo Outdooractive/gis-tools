@@ -1,20 +1,14 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 
 import PackageDescription
-
-let swiftSettings: [SwiftSetting] = [
-    .enableExperimentalFeature("StrictConcurrency"), // 5.10
-    .enableUpcomingFeature("StrictConcurrency"), // 6.0
-    .enableUpcomingFeature("InferSendableFromCaptures"), // Silences a Sendable warning
-]
 
 let package = Package(
     name: "gis-tools",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .iOS(.v15),
+        .macOS(.v13),
+        .tvOS(.v15),
+        .watchOS(.v8),
     ],
     products: [
         .library(
@@ -25,12 +19,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "GISTools",
-            swiftSettings: swiftSettings),
+            name: "GISTools"),
         .testTarget(
             name: "GISToolsTests",
             dependencies: ["GISTools"],
-            exclude: ["TestData"],
-            swiftSettings: swiftSettings),
+            exclude: ["TestData"]),
     ]
 )
