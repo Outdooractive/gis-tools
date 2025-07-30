@@ -20,9 +20,8 @@ extension Point {
         radius: CLLocationDistance,
         bearing1: CLLocationDegrees,
         bearing2: CLLocationDegrees,
-        steps: Int = 64)
-        -> LineString?
-    {
+        steps: Int = 64
+    ) -> LineString? {
         guard radius > 0.0, steps > 1 else { return nil }
 
         let angle1 = Point.normalizeAngle(alfa: bearing1)

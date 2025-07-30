@@ -16,9 +16,8 @@ extension Ring {
     /// - Returns: *true* if the coordinate is inside the ring, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         let coordinate = coordinate.projected(to: projection)
 
         var isInside = false
@@ -59,15 +58,14 @@ extension Ring {
     /// Determines if *Point* resides inside the *Ring*. The ring can be convex or concave.
     ///
     /// - Parameters:
-    ///    - coordinate: The point to check
+    ///    - point: The point to check
     ///    - ignoreBoundary: *true* if the ring boundary should be ignored when determining if the point is inside the ring (default *false*).
     ///
     /// - Returns: *true* if the point is inside the ring, *false* otherwise.
     public func contains(
         _ point: Point,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
@@ -85,9 +83,8 @@ extension Polygon {
     /// - Returns: *true* if the coordinate is inside the ring, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         if let boundingBox, !boundingBox.contains(coordinate) {
             return false
         }
@@ -111,15 +108,14 @@ extension Polygon {
     /// The function accounts for holes.
     ///
     /// - Parameters:
-    ///    - coordinate: The point to check
+    ///    - point: The point to check
     ///    - ignoreBoundary: *true* if the polygon boundary should be ignored when determining if the point is inside the polygon (default *false*).
     ///
     /// - Returns: *true* if the point is inside the ring, *false* otherwise.
     public func contains(
         _ point: Point,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
@@ -137,9 +133,8 @@ extension MultiPolygon {
     /// - Returns: *true* if the coordinate is inside of one of the polygons, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         if let boundingBox, !boundingBox.contains(coordinate) {
             return false
         }
@@ -157,15 +152,14 @@ extension MultiPolygon {
     /// The function accounts for holes.
     ///
     /// - Parameters:
-    ///    - coordinate: The coordinate to check
+    ///    - point: The coordinate to check
     ///    - ignoreBoundary: *true* if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default *false*).
     ///
     /// - Returns: *true* if the coordinate is inside of one of the polygons, *false* otherwise.
     public func contains(
         _ point: Point,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         contains(point.coordinate, ignoreBoundary: ignoreBoundary)
     }
 
@@ -182,9 +176,8 @@ extension GeometryCollection {
     /// - Returns: *true* if the coordinate is inside of one of the geometries, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         geometries.contains { (geometry) -> Bool in
             guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
 
@@ -205,9 +198,8 @@ extension Feature {
     /// - Returns: *true* if the coordinate is inside of one of the Feature's geometry, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
 
         return polygonGeometry.contains(coordinate, ignoreBoundary: ignoreBoundary)
@@ -226,9 +218,8 @@ extension FeatureCollection {
     /// - Returns: *true* if the coordinate is inside of one of the geometries, *false* otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool = false)
-        -> Bool
-    {
+        ignoreBoundary: Bool = false
+    ) -> Bool {
         features.contains(where: { $0.contains(coordinate, ignoreBoundary: ignoreBoundary) })
     }
 

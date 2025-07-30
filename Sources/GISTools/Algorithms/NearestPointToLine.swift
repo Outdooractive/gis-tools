@@ -10,9 +10,8 @@ extension LineString {
     /// Returns the closest coordinate out of a collection of coordinates to a line.
     /// The returned coordinate has a distance property indicating its distance to the line.
     public func nearestCoordinate(
-        outOf coordinates: [Coordinate3D])
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        outOf coordinates: [Coordinate3D]
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         guard !coordinates.isEmpty else { return nil }
 
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
@@ -33,9 +32,8 @@ extension LineString {
     /// Returns the closest point out of a collection of points to a line.
     /// The returned point has a distance property indicating its distance to the line.
     public func nearestPointAndDistance(
-        outOf points: [Point])
-        -> (point: Point, distance: CLLocationDistance)?
-    {
+        outOf points: [Point]
+    ) -> (point: Point, distance: CLLocationDistance)? {
         guard let bestCoordinateAndDistance = nearestCoordinate(outOf: points.map({ $0.coordinate })) else { return nil }
         return (point: Point(bestCoordinateAndDistance.coordinate), distance: bestCoordinateAndDistance.distance)
     }

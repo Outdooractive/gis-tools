@@ -17,9 +17,8 @@ extension LineString {
     ///   - stopDistance: The distance along the line to the ending point, in meters
     public func sliceAlong(
         startDistance: CLLocationDistance = 0.0,
-        stopDistance: CLLocationDistance = .greatestFiniteMagnitude)
-        -> LineString?
-    {
+        stopDistance: CLLocationDistance = .greatestFiniteMagnitude
+    ) -> LineString? {
         guard coordinates.count >= 2 else { return nil }
 
         var slice: [Coordinate3D] = []
@@ -88,9 +87,8 @@ extension Feature {
     ///   - stopDistance: The distance along the line to the ending point, in meters
     public func sliceAlong(
         startDistance: CLLocationDistance,
-        stopDistance: CLLocationDistance)
-        -> Feature?
-    {
+        stopDistance: CLLocationDistance
+    ) -> Feature? {
         guard let lineString = geometry as? LineString,
               let lineSlice = lineString.sliceAlong(startDistance: startDistance, stopDistance: stopDistance)
         else { return nil }

@@ -12,14 +12,14 @@ extension LineSegment {
     /// - Parameters:
     ///    - other: The other LineSegment
     ///    - tolerance: The tolerance, in degrees
+    ///    - undirectedEdge: Whether the segment should be treated as an undirected edge
     ///
     /// - Returns: *true* if the segments are parallel within the tolerance, *false* otherwise.
     public func isParallel(
         to other: LineSegment,
         tolerance: CLLocationDegrees = 0.0,
-        undirectedEdge: Bool = false)
-        -> Bool
-    {
+        undirectedEdge: Bool = false
+    ) -> Bool {
         var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
         let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth
 
@@ -50,9 +50,8 @@ extension LineString {
     /// - Returns: *true* if the lines are parallel within the tolerance, *false* otherwise.
     public func isParallel(
         to other: LineString,
-        tolerance: CLLocationDegrees = 0.0)
-        -> Bool
-    {
+        tolerance: CLLocationDegrees = 0.0
+    ) -> Bool {
         let segments1 = lineSegments
         let segments2 = other.lineSegments
         let count = min(segments1.count, segments2.count)

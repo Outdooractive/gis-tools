@@ -240,9 +240,8 @@ extension LineString: Equatable {
 
     public static func ==(
         lhs: LineString,
-        rhs: LineString)
-        -> Bool
-    {
+        rhs: LineString
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
     }

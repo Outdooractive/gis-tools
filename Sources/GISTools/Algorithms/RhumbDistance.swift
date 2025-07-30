@@ -44,9 +44,8 @@ extension Coordinate3D {
     // Adapted from Geodesy: https://github.com/chrisveness/geodesy/blob/master/latlon-spherical.js
     private static func calculateRhumbDistance(
         from: Coordinate3D,
-        to: Coordinate3D)
-        -> CLLocationDistance
-    {
+        to: Coordinate3D
+    ) -> CLLocationDistance {
         let radius: Double = GISTool.earthRadius
 
         let phi1: Double = from.latitude * .pi / 180.0

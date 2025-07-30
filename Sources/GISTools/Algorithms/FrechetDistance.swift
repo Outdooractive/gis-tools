@@ -3,7 +3,6 @@ import CoreLocation
 #endif
 import Foundation
 
-/// Distance functions for ```LineString.frechetDistance```.
 public enum FrechetDistanceFunction {
 
     /// Use the eudlidean distance.
@@ -15,7 +14,10 @@ public enum FrechetDistanceFunction {
     /// Use a custom distance function.
     case other((Coordinate3D, Coordinate3D) -> CLLocationDistance)
 
-    func distance(between first: Coordinate3D, and second: Coordinate3D) -> CLLocationDistance {
+    func distance(
+        between first: Coordinate3D,
+        and second: Coordinate3D
+    ) -> CLLocationDistance {
         switch self {
         case .euclidean:
             sqrt(pow(first.longitude - second.longitude, 2.0) + pow(first.latitude - second.latitude, 2.0))
@@ -35,7 +37,7 @@ extension LineString {
     /// Fréchet  distance between to geometries.
     ///
     /// - Parameters:
-    ///    - from: The other geometry of equal type.
+    ///    - other: The other geometry of equal type.
     ///    - distanceFunction: The algorithm to use for distance calculations.
     ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters.
     ///
@@ -43,9 +45,8 @@ extension LineString {
     public func frechetDistance(
         from other: LineString,
         distanceFunction: FrechetDistanceFunction = .haversine,
-        segmentLength: CLLocationDistance? = nil)
-        -> Double
-    {
+        segmentLength: CLLocationDistance? = nil
+    ) -> Double {
         var firstLine = self
         var secondLine = other.projected(to: projection)
 

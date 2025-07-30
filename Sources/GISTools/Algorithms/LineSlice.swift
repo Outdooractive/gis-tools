@@ -17,9 +17,8 @@ extension LineString {
     ///    - end: The stopping point
     public func slice(
         start: Coordinate3D? = nil,
-        end: Coordinate3D? = nil)
-        -> LineString?
-    {
+        end: Coordinate3D? = nil
+    ) -> LineString? {
         guard coordinates.count >= 2 else { return nil }
 
         let start = start?.projected(to: projection)
@@ -81,9 +80,8 @@ extension Feature {
     ///    - end: The stopping point
     public func slice(
         start: Coordinate3D? = nil,
-        end: Coordinate3D? = nil)
-        -> Feature?
-    {
+        end: Coordinate3D? = nil
+    ) -> Feature? {
         guard let lineString = geometry as? LineString,
               let lineSlice = lineString.slice(start: start, end: end)
         else { return nil }

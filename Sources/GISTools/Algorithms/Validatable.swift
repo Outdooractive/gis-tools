@@ -157,9 +157,8 @@ extension GeoJson {
     /// Check if the GeoJson has a valid geometry, i.e. it has enough coordinates to make sense.
     public static func checkIsValid(
         geoJson: [String: Any],
-        ofType expectedType: GeoJsonType? = nil)
-        -> Bool
-    {
+        ofType expectedType: GeoJsonType? = nil
+    ) -> Bool {
         guard !geoJson.isEmpty,
               let geometryType = geoJson["type"] as? String,
               let type = GeoJsonType(rawValue: geometryType)

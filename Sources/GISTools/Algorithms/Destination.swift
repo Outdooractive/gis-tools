@@ -16,9 +16,8 @@ extension Coordinate3D {
     ///    - bearing: The direction, ranging from -180 to 180
     public func destination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Coordinate3D
-    {
+        bearing: CLLocationDegrees
+    ) -> Coordinate3D {
         switch projection {
         case .epsg4326:
             return _destination(distance: distance, bearing: bearing)
@@ -31,9 +30,8 @@ extension Coordinate3D {
 
     private func _destination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Coordinate3D
-    {
+        bearing: CLLocationDegrees
+    ) -> Coordinate3D {
         guard let distanceRadians = distance.lengthToRadians(unit: .meters) else { return self }
 
         let longitude1 = longitude.degreesToRadians
@@ -74,9 +72,8 @@ extension Coordinate3D {
     ///    - distance: The distance from the receiver, in meters
     public func coordinate(
         inDirectionOf target: Coordinate3D,
-        distance: CLLocationDistance)
-        -> Coordinate3D
-    {
+        distance: CLLocationDistance
+    ) -> Coordinate3D {
         destination(distance: distance, bearing: bearing(to: target))
     }
 
@@ -93,9 +90,8 @@ extension Point {
     ///    - bearing: The direction, ranging from -180 to 180
     public func destination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Point
-    {
+        bearing: CLLocationDegrees
+    ) -> Point {
         Point(coordinate.destination(distance: distance, bearing: bearing))
     }
 
@@ -107,9 +103,8 @@ extension Point {
     ///    - distance: The distance from the receiver, in meters
     public func point(
         inDirectionOf target: Point,
-        distance: CLLocationDistance)
-        -> Point
-    {
+        distance: CLLocationDistance
+    ) -> Point {
         destination(distance: distance, bearing: bearing(to: target))
     }
 

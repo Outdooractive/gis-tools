@@ -16,9 +16,8 @@ extension GeoJson {
     public func transformedTranslate(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,
-        zTranslation: CLLocationDistance = 0.0)
-        -> Self
-    {
+        zTranslation: CLLocationDistance = 0.0
+    ) -> Self {
         guard distance != 0.0 || zTranslation != 0.0 else { return self }
 
         let distance = abs(distance)
@@ -44,8 +43,8 @@ extension GeoJson {
     public mutating func transformTranslate(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,
-        zTranslation: CLLocationDistance = 0.0)
-    {
+        zTranslation: CLLocationDistance = 0.0
+    ) {
         self = transformedTranslate(
             distance: distance,
             direction: direction,

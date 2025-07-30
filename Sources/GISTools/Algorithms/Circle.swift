@@ -14,9 +14,8 @@ extension Coordinate3D {
     ///    - steps: The number of steps (default 64)
     public func circle(
         radius: CLLocationDistance,
-        steps: Int = 64)
-        -> Polygon?
-    {
+        steps: Int = 64
+    ) -> Polygon? {
         guard radius > 0.0, steps > 1 else { return nil }
 
         var coordinates: [Coordinate3D] = []
@@ -39,9 +38,8 @@ extension Point {
     ///    - steps: The number of steps (default 64)
     public func circle(
         radius: CLLocationDistance,
-        steps: Int = 64)
-        -> Polygon?
-    {
+        steps: Int = 64
+    ) -> Polygon? {
         coordinate.circle(radius: radius, steps: steps)
     }
 

@@ -15,9 +15,8 @@ extension Coordinate3D {
     ///    - final: Calculated the final bearing if *true* (default *false*)
     public func rhumbBearing(
         to other: Coordinate3D,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         switch projection {
         case .epsg4326:
             return _rhumbBearing(to: other.projected(to: .epsg4326), final: final)
@@ -31,9 +30,8 @@ extension Coordinate3D {
 
     private func _rhumbBearing(
         to other: Coordinate3D,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         var bearing: CLLocationDegrees
         if final {
             bearing = Coordinate3D.calculateFinalRhumbBearing(from: other, to: self)
@@ -49,9 +47,8 @@ extension Coordinate3D {
 
     private static func calculateFinalRhumbBearing(
         from: Coordinate3D,
-        to: Coordinate3D)
-        -> CLLocationDegrees
-    {
+        to: Coordinate3D
+    ) -> CLLocationDegrees {
         let phi1 = from.latitude.degreesToRadians
         let phi2 = to.latitude.degreesToRadians
         var deltaLambda = (to.longitude - from.longitude).degreesToRadians
@@ -82,9 +79,8 @@ extension Point {
     ///    - final: Calculated the final bearing if *true* (default *false*)
     public func rhumbBearing(
         to other: Point,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         self.coordinate.rhumbBearing(to: other.coordinate, final: final)
     }
 

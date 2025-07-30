@@ -154,9 +154,8 @@ extension GISTool {
     public static func metersPerPixel(
         atZoom zoom: Int,
         latitude: CLLocationDegrees = 0.0, // equator
-        tileSideLength: Double = GISTool.tileSideLength)
-        -> Double
-    {
+        tileSideLength: Double = GISTool.tileSideLength
+    ) -> Double {
         (cos(latitude * Double.pi / 180.0) * 2.0 * Double.pi * GISTool.equatorialRadius / tileSideLength) / pow(2.0, Double(zoom))
     }
 

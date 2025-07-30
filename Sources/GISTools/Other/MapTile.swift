@@ -64,8 +64,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - parameter maxZoom: The maximum zoom level of the resulting tile, 0...32
     public init(
         boundingBox: BoundingBox,
-        maxZoom: Int = 32)
-    {
+        maxZoom: Int = 32
+    ) {
         if boundingBox.crossesAntiMeridian {
             self.init(x: 0, y: 0, z: 0)
             return
@@ -216,9 +216,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
         pixelY: Double,
         atZoom zoom: Int,
         tileSideLength: Double = GISTool.tileSideLength,
-        projection: Projection = .epsg4326)
-        -> Coordinate3D
-    {
+        projection: Projection = .epsg4326
+    ) -> Coordinate3D {
         GISTool.coordinate(
             fromPixelX: pixelX,
             pixelY: pixelY,
@@ -234,9 +233,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     public static func metersPerPixel(
         at zoom: Int,
         latitude: Double = 0.0, // equator
-        tileSideLength: Double = GISTool.tileSideLength)
-        -> Double
-    {
+        tileSideLength: Double = GISTool.tileSideLength
+    ) -> Double {
         GISTool.metersPerPixel(atZoom: zoom, latitude: latitude, tileSideLength: tileSideLength)
     }
 

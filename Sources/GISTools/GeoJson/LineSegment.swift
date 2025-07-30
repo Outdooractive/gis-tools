@@ -25,8 +25,8 @@ public struct LineSegment: Sendable {
         first: Coordinate3D,
         second: Coordinate3D,
         index: Int? = nil,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         assert(first.projection == second.projection, "Can't have different projections")
 
         self.first = first
@@ -75,8 +75,8 @@ extension LineSegment {
         first: CLLocationCoordinate2D,
         second: CLLocationCoordinate2D,
         index: Int? = nil,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         self.init(first: Coordinate3D(first),
                   second: Coordinate3D(second),
                   index: index,
@@ -88,8 +88,8 @@ extension LineSegment {
         first: CLLocation,
         second: CLLocation,
         index: Int? = nil,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         self.init(first: Coordinate3D(first),
                   second: Coordinate3D(second),
                   index: index,
@@ -147,9 +147,8 @@ extension LineSegment: Equatable {
 
     public static func == (
         lhs: LineSegment,
-        rhs: LineSegment)
-        -> Bool
-    {
+        rhs: LineSegment
+    ) -> Bool {
         lhs.first == rhs.first
             && lhs.second == rhs.second
     }

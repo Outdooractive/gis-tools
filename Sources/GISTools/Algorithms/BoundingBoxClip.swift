@@ -352,9 +352,8 @@ extension BoundingBox {
     private func intersect(
         a: Coordinate3D,
         b: Coordinate3D,
-        edge: UInt8)
-        -> Coordinate3D?
-    {
+        edge: UInt8
+    ) -> Coordinate3D? {
         if edge & 8 != 0 { // top
             return Coordinate3D(
                 x: a.x + (b.x - a.x) * (northEast.y - a.y) / (b.y - a.y),

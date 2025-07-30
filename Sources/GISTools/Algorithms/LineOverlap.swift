@@ -22,9 +22,8 @@ extension LineSegment {
     ///    - tolerance: The tolerance, in meters
     public func compare(
         other: LineSegment,
-        tolerance: CLLocationDistance = 0.0)
-        -> LineSegmentComparisonResult
-    {
+        tolerance: CLLocationDistance = 0.0
+    ) -> LineSegmentComparisonResult {
         let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 
@@ -68,9 +67,8 @@ extension GeoJson {
     ///    - tolerance: The tolerance, in meters
     public func overlappingSegments(
         with other: GeoJson,
-        tolerance: CLLocationDistance = 0.0)
-        -> [LineSegment]
-    {
+        tolerance: CLLocationDistance = 0.0
+    ) -> [LineSegment] {
         let other = other.projected(to: projection)
         let tolerance = abs(tolerance)
 

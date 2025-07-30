@@ -6,7 +6,9 @@ import Foundation
 extension [Coordinate3D] {
 
     /// Encodes the coordinates to a Polyline with the given precision.
-    public func encodePolyline(precision: Double = GISTool.defaultPolylinePrecision) -> String {
+    public func encodePolyline(
+        precision: Double = GISTool.defaultPolylinePrecision
+    ) -> String {
         Polyline.encode(coordinates: self, precision: precision)
     }
 
@@ -15,7 +17,9 @@ extension [Coordinate3D] {
 extension String {
 
     /// Decodes a Polyline to coordinates with the given precision (must match the encoding precision).
-    public func decodePolyline(precision: Double = GISTool.defaultPolylinePrecision) -> [Coordinate3D]? {
+    public func decodePolyline(
+        precision: Double = GISTool.defaultPolylinePrecision
+    ) -> [Coordinate3D]? {
         Polyline.decode(polyline: self, precision: precision)
     }
 
@@ -27,9 +31,8 @@ enum Polyline {
     /// Encodes the coordinates to a Polyline with the given precision.
     public static func encode(
         coordinates: [Coordinate3D],
-        precision: Double = GISTool.defaultPolylinePrecision)
-        -> String
-    {
+        precision: Double = GISTool.defaultPolylinePrecision
+    ) -> String {
         var previousIntLatitude = 0,
             previousIntLongitude = 0
 
@@ -52,9 +55,8 @@ enum Polyline {
     /// Decodes a Polyline to coordinates with the given precision (must match the encoding precision).
     public static func decode(
         polyline: String,
-        precision: Double = GISTool.defaultPolylinePrecision)
-        -> [Coordinate3D]?
-    {
+        precision: Double = GISTool.defaultPolylinePrecision
+    ) -> [Coordinate3D]? {
         guard let data = polyline.asUTF8EncodedData else { return nil }
 
         let length = data.count
@@ -130,9 +132,8 @@ enum Polyline {
         buffer: UnsafeRawBufferPointer,
         position: inout Int,
         length: Int,
-        precision: Double)
-        -> Double?
-    {
+        precision: Double
+    ) -> Double? {
         guard position < length else { return nil }
 
         var value = 0

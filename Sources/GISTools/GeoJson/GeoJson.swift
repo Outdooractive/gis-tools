@@ -179,14 +179,14 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     /// Check if this `(Multi)Polygon` contains *Coordinate3D*.
     func contains(
         _ coordinate: Coordinate3D,
-        ignoreBoundary: Bool)
-        -> Bool
+        ignoreBoundary: Bool
+    ) -> Bool
 
     /// Check if this `(Multi)Polygon` contains *Point*.
     func contains(
         _ point: Point,
-        ignoreBoundary: Bool)
-        -> Bool
+        ignoreBoundary: Bool
+    ) -> Bool
 
 }
 

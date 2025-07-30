@@ -12,9 +12,8 @@ extension BoundingBox {
     ///
     /// - Parameter other: The other coordinate
     public func nearestCoordinate(
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         self.boundingBoxPolygon.nearestCoordinate(from: other)
     }
 
@@ -23,9 +22,8 @@ extension BoundingBox {
     ///
     /// - Parameter other: The other point
     public func nearestPoint(
-        from other: Point)
-        -> (point: Point, distance: CLLocationDistance)?
-    {
+        from other: Point
+    ) -> (point: Point, distance: CLLocationDistance)? {
         self.boundingBoxPolygon.nearestPoint(from: other)
     }
 
@@ -38,9 +36,8 @@ extension GeoJson {
     ///
     /// - Parameter other: The other coordinate
     public func nearestCoordinate(
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         let other = other.projected(to: projection)
 
         let allCordinates = self.allCoordinates
@@ -65,9 +62,8 @@ extension GeoJson {
     ///
     /// - Parameter other: The other point
     public func nearestPoint(
-        from other: Point)
-        -> (point: Point, distance: CLLocationDistance)?
-    {
+        from other: Point
+    ) -> (point: Point, distance: CLLocationDistance)? {
         if let nearest = nearestCoordinate(from: other.coordinate) {
             return (point: Point(nearest.coordinate), distance: nearest.distance)
         }

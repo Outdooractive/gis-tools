@@ -66,8 +66,8 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
     public init(
         _ objects: [T],
         nodeSize: Int = 16,
-        sortOption: RTreeSortOption = .hilbert)
-    {
+        sortOption: RTreeSortOption = .hilbert
+    ) {
         var objectsWithBoundingBox: [T] = []
         objectsWithBoundingBox.reserveCapacity(objects.count)
 
@@ -233,9 +233,8 @@ extension RTree {
     public func search(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,
-        sorted: Bool = true)
-        -> [AroundSearchResult] where T: GeoJson
-    {
+        sorted: Bool = true
+    ) -> [AroundSearchResult] where T: GeoJson {
         guard count > nodeSize,
               position == boundingBoxes.count
         else { return searchSerial(aroundCoordinate: coordinate, maximumDistance: maximumDistance, sorted: sorted) }
@@ -289,9 +288,8 @@ extension RTree {
     public func searchSerial(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,
-        sorted: Bool = true)
-        -> [AroundSearchResult] where T: GeoJson
-    {
+        sorted: Bool = true
+    ) -> [AroundSearchResult] where T: GeoJson {
         var result: [AroundSearchResult] = []
 
         guard objects.isNotEmpty else { return result }
@@ -394,8 +392,8 @@ extension RTree {
         indices: inout [Int],
         low: Int,
         high: Int,
-        nodeSize: Int)
-    {
+        nodeSize: Int
+    ) {
         guard low < high else { return }
 //        guard floor(Double(low) / Double(nodeSize)) < floor(Double(high) / Double(nodeSize)) else { return }
 
@@ -431,9 +429,8 @@ extension RTree {
     // Binary search for the first value in the array bigger than the given
     private static func upperBound(
         of value: Int,
-        in array: [Int])
-        -> Int
-    {
+        in array: [Int]
+    ) -> Int {
         var (i, j) = (0, array.count - 1)
 
         while i < j {

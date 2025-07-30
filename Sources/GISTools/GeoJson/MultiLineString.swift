@@ -186,7 +186,9 @@ extension MultiLineString {
 extension MultiLineString {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         mapLinestrings { linestring in
             var linestring = linestring
             linestring.updateBoundingBox(onlyIfNecessary: ifNecessary)
@@ -220,9 +222,8 @@ extension MultiLineString: Equatable {
 
     public static func ==(
         lhs: MultiLineString,
-        rhs: MultiLineString)
-        -> Bool
-    {
+        rhs: MultiLineString
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
     }
@@ -236,7 +237,10 @@ extension MultiLineString {
     /// Insert a LineString into the receiver.
     ///
     /// - note: `linestring` must be in the same projection as the receiver.
-    public mutating func insertLineString(_ lineString: LineString, atIndex index: Int) {
+    public mutating func insertLineString(
+        _ lineString: LineString,
+        atIndex index: Int
+    ) {
         guard lineStrings.count == 0 || projection == lineString.projection else { return }
 
         if index < lineStrings.count {

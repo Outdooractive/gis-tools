@@ -157,7 +157,9 @@ extension MultiPolygon {
 extension MultiPolygon {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         mapPolygons { polygon in
             var polygon = polygon
             polygon.updateBoundingBox(onlyIfNecessary: ifNecessary)
@@ -190,9 +192,8 @@ extension MultiPolygon: Equatable {
 
     public static func ==(
         lhs: MultiPolygon,
-        rhs: MultiPolygon)
-        -> Bool
-    {
+        rhs: MultiPolygon
+    ) -> Bool {
         // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
@@ -207,7 +208,10 @@ extension MultiPolygon {
     /// Insert a Polygon into the receiver.
     ///
     /// - note: `polygon` must be in the same projection as the receiver.
-    public mutating func insertPolygon(_ polygon: Polygon, atIndex index: Int) {
+    public mutating func insertPolygon(
+        _ polygon: Polygon,
+        atIndex index: Int
+    ) {
         guard polygons.count == 0 || projection == polygon.projection else { return }
 
         if index < polygons.count {

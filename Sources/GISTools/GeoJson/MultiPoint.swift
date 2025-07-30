@@ -154,7 +154,9 @@ extension MultiPoint {
 extension MultiPoint {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         mapPoints { point in
             var point = point
             point.updateBoundingBox(onlyIfNecessary: ifNecessary)
@@ -187,9 +189,8 @@ extension MultiPoint: Equatable {
 
     public static func ==(
         lhs: MultiPoint,
-        rhs: MultiPoint)
-        -> Bool
-    {
+        rhs: MultiPoint
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
     }
@@ -203,7 +204,10 @@ extension MultiPoint {
     /// Insert a Point into the receiver.
     ///
     /// - note: `point` must be in the same projection as the receiver.
-    public mutating func insertPoint(_ point: Point, atIndex index: Int) {
+    public mutating func insertPoint(
+        _ point: Point,
+        atIndex index: Int
+    ) {
         guard points.count == 0 || projection == point.projection else { return }
 
         if index < points.count {

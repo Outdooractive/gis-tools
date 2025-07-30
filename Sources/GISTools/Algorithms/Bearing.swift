@@ -16,9 +16,8 @@ extension Coordinate3D {
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(
         to other: Coordinate3D,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         switch projection {
         case .epsg4326:
             return _bearing(to: other.projected(to: .epsg4326), final: final)
@@ -32,9 +31,8 @@ extension Coordinate3D {
 
     private func _bearing(
         to other: Coordinate3D,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         if final {
             return Coordinate3D.calculateFinalBearing(from: self, to: other)
         }
@@ -53,9 +51,8 @@ extension Coordinate3D {
 
     private static func calculateFinalBearing(
         from: Coordinate3D,
-        to: Coordinate3D)
-        -> CLLocationDegrees
-    {
+        to: Coordinate3D
+    ) -> CLLocationDegrees {
         let bearing = to._bearing(to: from)
         return (bearing + 180.0).truncatingRemainder(dividingBy: 360.0)
     }
@@ -71,9 +68,8 @@ extension Coordinate3D {
     public static func angleBetween(
         first: Coordinate3D,
         middle: Coordinate3D,
-        last: Coordinate3D)
-        -> CLLocationDegrees
-    {
+        last: Coordinate3D
+    ) -> CLLocationDegrees {
         angleBetween(
             firstAzimuth: first.bearing(to: middle).bearingToAzimuth,
             secondAzimuth: middle.bearing(to: last).bearingToAzimuth)
@@ -82,15 +78,14 @@ extension Coordinate3D {
     /// Takes two azimuth values in decimal degrees and returns the angle between them.
     ///
     /// - Parameters:
-    ///    - firstBearing: The first angle
-    ///    - secondBearing: The second angle
+    ///    - firstAzimuth: The first angle
+    ///    - secondAzimuth: The second angle
     ///
     /// - Returns: The angle, between -180 and 180.
     public static func angleBetween(
         firstAzimuth: CLLocationDegrees,
-        secondAzimuth: CLLocationDegrees)
-        -> CLLocationDegrees
-    {
+        secondAzimuth: CLLocationDegrees
+    ) -> CLLocationDegrees {
         var angle: CLLocationDegrees = secondAzimuth - firstAzimuth
         if angle > 180.0 {
             angle -= 360.0
@@ -115,9 +110,8 @@ extension Point {
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(
         to other: Point,
-        final: Bool = false)
-        -> CLLocationDegrees
-    {
+        final: Bool = false
+    ) -> CLLocationDegrees {
         self.coordinate.bearing(to: other.coordinate, final: final)
     }
 
@@ -132,9 +126,8 @@ extension Point {
     public static func angleBetween(
         first: Point,
         middle: Point,
-        last: Point)
-        -> CLLocationDegrees
-    {
+        last: Point
+    ) -> CLLocationDegrees {
         Coordinate3D.angleBetween(
             first: first.coordinate,
             middle: middle.coordinate,

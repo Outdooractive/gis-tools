@@ -11,8 +11,8 @@ extension GeoJsonGeometry {
         wkt: String,
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
@@ -24,8 +24,8 @@ extension GeoJsonGeometry {
         wkt: String,
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
@@ -36,9 +36,8 @@ extension GeoJsonGeometry {
     public static func parse(
         wkt: String,
         sourceSrid: Int?,
-        targetProjection: Projection = .epsg4326)
-        -> GeoJsonGeometry?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> GeoJsonGeometry? {
         try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection)
     }
 
@@ -48,9 +47,8 @@ extension GeoJsonGeometry {
     public static func parse(
         wkt: String,
         sourceProjection: Projection,
-        targetProjection: Projection = .epsg4326)
-        -> GeoJsonGeometry?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> GeoJsonGeometry? {
         try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
@@ -74,8 +72,8 @@ extension Feature {
         targetProjection: Projection = .epsg4326,
         id: Identifier? = nil,
         properties: [String: Sendable] = [:],
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
@@ -89,8 +87,8 @@ extension Feature {
         targetProjection: Projection = .epsg4326,
         id: Identifier? = nil,
         properties: [String: Sendable] = [:],
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
@@ -113,8 +111,8 @@ extension FeatureCollection {
         wkt: String,
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
         if let geometryCollection = geometry as? GeometryCollection {
             self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
@@ -131,8 +129,8 @@ extension FeatureCollection {
         wkt: String,
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
         if let geometryCollection = geometry as? GeometryCollection {
             self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
@@ -158,9 +156,8 @@ extension String {
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(
         sourceSrid: Int?,
-        targetProjection: Projection = .epsg4326)
-        -> GeoJsonGeometry?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkt: self, sourceSrid: sourceSrid, targetProjection: targetProjection)
     }
 
@@ -169,9 +166,8 @@ extension String {
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(
         sourceProjection: Projection,
-        targetProjection: Projection = .epsg4326)
-        -> GeoJsonGeometry?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> GeoJsonGeometry? {
         GeometryCollection.parse(wkt: self, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
@@ -182,9 +178,8 @@ extension String {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326,
         id: Feature.Identifier? = nil,
-        properties: [String: Sendable] = [:])
-        -> Feature?
-    {
+        properties: [String: Sendable] = [:]
+    ) -> Feature? {
         Feature(wkt: self, sourceSrid: sourceSrid, targetProjection: targetProjection, id: id, properties: properties)
     }
 
@@ -195,9 +190,8 @@ extension String {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326,
         id: Feature.Identifier? = nil,
-        properties: [String: Sendable] = [:])
-        -> Feature?
-    {
+        properties: [String: Sendable] = [:]
+    ) -> Feature? {
         Feature(wkt: self, sourceProjection: sourceProjection, targetProjection: targetProjection, id: id, properties: properties)
     }
 
@@ -206,9 +200,8 @@ extension String {
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(
         sourceSrid: Int?,
-        targetProjection: Projection = .epsg4326)
-        -> FeatureCollection?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> FeatureCollection? {
         FeatureCollection(wkt: self, sourceSrid: sourceSrid, targetProjection: targetProjection)
     }
 
@@ -217,9 +210,8 @@ extension String {
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(
         sourceProjection: Projection,
-        targetProjection: Projection = .epsg4326)
-        -> FeatureCollection?
-    {
+        targetProjection: Projection = .epsg4326
+    ) -> FeatureCollection? {
         FeatureCollection(wkt: self, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
@@ -266,9 +258,8 @@ extension WKTCoder {
     public static func decode(
         wkt: String,
         sourceSrid: Int?,
-        targetProjection: Projection = .epsg4326)
-        throws -> GeoJsonGeometry
-    {
+        targetProjection: Projection = .epsg4326
+    ) throws -> GeoJsonGeometry {
         var sourceProjection: Projection?
 
         if let sourceSrid {
@@ -285,9 +276,8 @@ extension WKTCoder {
     public static func decode(
         wkt: String,
         sourceProjection: Projection?,
-        targetProjection: Projection = .epsg4326)
-        throws -> GeoJsonGeometry
-    {
+        targetProjection: Projection = .epsg4326
+    ) throws -> GeoJsonGeometry {
         let scanner = Scanner(string: wkt)
         scanner.charactersToBeSkipped = .whitespaces
         scanner.caseSensitive = false
@@ -314,9 +304,8 @@ extension WKTCoder {
     private static func scanGeometry(
         scanner: Scanner,
         sourceProjection: Projection,
-        targetProjection: Projection)
-        throws -> GeoJsonGeometry
-    {
+        targetProjection: Projection
+    ) throws -> GeoJsonGeometry {
         var decodeZ = false
         var decodeM = false
 
@@ -411,9 +400,8 @@ extension WKTCoder {
         sourceProjection: Projection,
         targetProjection: Projection,
         decodeZ: Bool,
-        decodeM: Bool)
-        throws -> LineString
-    {
+        decodeM: Bool
+    ) throws -> LineString {
         if let coordinates = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM) {
             guard let lineString = LineString(coordinates) else {
                 throw WKTCoderError.dataCorrupted
@@ -428,9 +416,8 @@ extension WKTCoder {
         sourceProjection: Projection,
         targetProjection: Projection,
         decodeZ: Bool,
-        decodeM: Bool)
-        throws -> Polygon
-    {
+        decodeM: Bool
+    ) throws -> Polygon {
         var rings: [Ring] = []
 
         guard scanner.scanString("(") != nil else {
@@ -478,9 +465,8 @@ extension WKTCoder {
     private static func scanType(
         scanner: Scanner,
         decodeZ: inout Bool,
-        decodeM: inout Bool)
-        -> WKTTypeCode?
-    {
+        decodeM: inout Bool
+    ) -> WKTTypeCode? {
         let boundarySet = CharacterSet(charactersIn: "(")
         guard let rawType = scanner.scanUpToCharacters(from: boundarySet) else { return nil }
 
@@ -507,9 +493,8 @@ extension WKTCoder {
         sourceProjection: Projection,
         targetProjection: Projection,
         decodeZ: Bool,
-        decodeM: Bool)
-        throws -> [Coordinate3D]?
-    {
+        decodeM: Bool
+    ) throws -> [Coordinate3D]? {
         guard scanner.scanString("(") != nil else {
             throw WKTCoderError.dataCorrupted
         }
@@ -590,9 +575,8 @@ extension WKTCoder {
     /// Returns a geometry as a WKT encoded string.
     public static func encode(
         geometry: GeoJsonGeometry,
-        targetProjection: Projection? = .epsg4326)
-        -> String?
-    {
+        targetProjection: Projection? = .epsg4326
+    ) -> String? {
         var result = ""
 
         encode(geometry: geometry, targetProjection: targetProjection, to: &result)
@@ -605,8 +589,8 @@ extension WKTCoder {
     private static func encode(
         geometry: GeoJsonGeometry,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         switch geometry.type {
         case .point:
             encode(geometry as! Point, targetProjection: targetProjection, to: &result)
@@ -630,8 +614,8 @@ extension WKTCoder {
     private static func encode(
         _ value: Point,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.point.rawValue, for: value.coordinate, targetProjection: targetProjection, to: &result)
         appendString(string(for: [value.coordinate], targetProjection: targetProjection), to: &result)
     }
@@ -639,8 +623,8 @@ extension WKTCoder {
     private static func encode(
         _ value: MultiPoint,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.multiPoint.rawValue, for: value.points.first?.coordinate, targetProjection: targetProjection, to: &result)
         appendString(string(for: value.coordinates, targetProjection: targetProjection), to: &result)
     }
@@ -648,8 +632,8 @@ extension WKTCoder {
     private static func encode(
         _ value: LineString,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.lineString.rawValue, for: value.coordinates.first, targetProjection: targetProjection, to: &result)
         appendString(string(for: value.coordinates, targetProjection: targetProjection), to: &result)
     }
@@ -657,8 +641,8 @@ extension WKTCoder {
     private static func encode(
         _ value: MultiLineString,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.multiLineString.rawValue, for: value.lineStrings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
         appendString("(", to: &result)
         appendString(value.lineStrings.map({ string(for: $0.coordinates, targetProjection: targetProjection) }).joined(separator: ","), to: &result)
@@ -668,8 +652,8 @@ extension WKTCoder {
     private static func encode(
         _ value: Polygon,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
         appendString(string(for: value, targetProjection: targetProjection), to: &result)
     }
@@ -677,8 +661,8 @@ extension WKTCoder {
     private static func encode(
         _ value: MultiPolygon,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.multiPolygon.rawValue, for: value.polygons.first?.rings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
         appendString("(", to: &result)
         appendString(value.polygons.map({ string(for: $0, targetProjection: targetProjection) }).joined(separator: ","), to: &result)
@@ -688,8 +672,8 @@ extension WKTCoder {
     private static func encode(
         _ value: GeometryCollection,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         appendTypeCode(WKTTypeCode.geometryCollection.rawValue, for: nil, targetProjection: targetProjection, to: &result)
         appendString("(", to: &result)
         for (i, geometry) in value.geometries.enumerated() {
@@ -705,9 +689,8 @@ extension WKTCoder {
 
     private static func string(
         for coordinates: [Coordinate3D],
-        targetProjection: Projection?)
-        -> String
-    {
+        targetProjection: Projection?
+    ) -> String {
         var result: [String] = []
 
         for coordinate in coordinates {
@@ -729,9 +712,8 @@ extension WKTCoder {
 
     private static func string(
         for polygon: Polygon,
-        targetProjection: Projection?)
-        -> String
-    {
+        targetProjection: Projection?
+    ) -> String {
         "(\(polygon.rings.map({ string(for: $0.coordinates, targetProjection: targetProjection) }).joined(separator: ",")))"
     }
 
@@ -739,8 +721,8 @@ extension WKTCoder {
         _ typeCode: String,
         for coordinate: Coordinate3D? = nil,
         targetProjection: Projection?,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         var typeCode = typeCode.uppercased()
 
         if coordinate?.altitude != nil {
@@ -760,22 +742,22 @@ extension WKTCoder {
 
     private static func appendUInt32(
         _ value: UInt32,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         result += String(value)
     }
 
     private static func appendDouble(
         _ value: Double,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         result += String(value)
     }
 
     private static func appendString(
         _ value: String,
-        to result: inout String)
-    {
+        to result: inout String
+    ) {
         result += value
     }
 

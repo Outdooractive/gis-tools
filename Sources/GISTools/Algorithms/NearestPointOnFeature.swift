@@ -7,9 +7,8 @@ extension BoundingBox {
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the bounding box.
     public func nearestCoordinateOnFeature(
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         if self.contains(other) {
             return (coordinate: other, distance: 0.0)
         }
@@ -18,9 +17,8 @@ extension BoundingBox {
 
     /// Returns a *Point* guaranteed to be on the surface of the bounding box.
     public func nearestPointOnFeature(
-        from other: Point)
-        -> (point: Point, distance: CLLocationDistance)?
-    {
+        from other: Point
+    ) -> (point: Point, distance: CLLocationDistance)? {
         if self.contains(other.coordinate) {
             return (point: other, distance: 0.0)
         }
@@ -33,9 +31,8 @@ extension GeoJson {
 
     /// Returns a *Point* guaranteed to be on the surface of the feature.
     public func nearestPointOnFeature(
-        from other: Point)
-        -> (point: Point, distance: CLLocationDistance)?
-    {
+        from other: Point
+    ) -> (point: Point, distance: CLLocationDistance)? {
         if let nearest = nearestCoordinateOnFeature(from: other.coordinate) {
             return (point: Point(nearest.coordinate), distance: nearest.distance)
         }
@@ -44,9 +41,8 @@ extension GeoJson {
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the feature.
     public func nearestCoordinateOnFeature(
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         let other = other.projected(to: projection)
 
         switch self {
@@ -90,9 +86,8 @@ extension GeoJson {
 
     private func nearest(
         onSegments segments: [LineSegment],
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         var bestCandidate: Coordinate3D?
         var bestDistance: CLLocationDistance = Double.greatestFiniteMagnitude
 
@@ -110,9 +105,8 @@ extension GeoJson {
 
     private func nearest(
         onGeometries geometries: [GeoJsonGeometry],
-        from other: Coordinate3D)
-        -> (coordinate: Coordinate3D, distance: CLLocationDistance)?
-    {
+        from other: Coordinate3D
+    ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         var bestCandidate: Coordinate3D?
         var bestDistance: CLLocationDistance = Double.greatestFiniteMagnitude
 
