@@ -26,7 +26,7 @@ struct SwiftDataTests {
     }()
 
     @MainActor
-    @Test
+    @Test(.disabled(if: CIHelper.isRunningInCI, "This test will currently not run in CI"))
     func insert() async throws {
         let geoJsonTests: [Int: GeoJson] = [
             0: try #require(Point(jsonString: PointTests.pointJson)),
