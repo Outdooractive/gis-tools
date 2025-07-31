@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class PointTests: XCTestCase {
+struct PointTests {
 
     static let pointJson = """
     {
@@ -11,40 +12,44 @@ final class PointTests: XCTestCase {
     }
     """
 
-    func testLoadJson() throws {
-        let point = try XCTUnwrap(Point(jsonString: PointTests.pointJson))
+    @Test
+    func loadJson() async throws {
+        let point = try #require(Point(jsonString: PointTests.pointJson))
 
-        XCTAssertEqual(point.type, GeoJsonType.point)
-        XCTAssertEqual(point.projection, .epsg4326)
-        XCTAssertEqual(point.coordinate, Coordinate3D(latitude: 0.0, longitude: 100.0))
-        XCTAssertEqual(point.foreignMember(for: "other"), "something else")
-        XCTAssertEqual(point[foreignMember: "other"], "something else")
+        #expect(point.type == GeoJsonType.point)
+        #expect(point.projection == .epsg4326)
+        #expect(point.coordinate == Coordinate3D(latitude: 0.0, longitude: 100.0))
+        #expect(point.foreignMember(for: "other") == "something else")
+        #expect(point[foreignMember: "other"] == "something else")
     }
 
-    func testCreateJson() throws {
+    @Test
+    func createJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
-        let string = try XCTUnwrap(point.asJsonString())
+        let string = try #require(point.asJsonString())
 
-        XCTAssertEqual(point.projection, .epsg4326)
-        XCTAssert(string.contains("\"type\":\"Point\""))
-        XCTAssert(string.contains("\"coordinates\":[100,0]"))
+        #expect(point.projection == .epsg4326)
+        #expect(string.contains("\"type\":\"Point\""))
+        #expect(string.contains("\"coordinates\":[100,0]"))
     }
 
-    func testEncodable() throws {
-        let point = try XCTUnwrap(Point(jsonString: PointTests.pointJson))
+    @Test
+    func encodable() async throws {
+        let point = try #require(Point(jsonString: PointTests.pointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        XCTAssertEqual(try encoder.encode(point), point.asJsonData(prettyPrinted: true))
+        #expect(try encoder.encode(point) == point.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodable() throws {
-        let pointData = try XCTUnwrap(Point(jsonString: PointTests.pointJson)?.asJsonData(prettyPrinted: true))
+    @Test
+    func decodable() async throws {
+        let pointData = try #require(Point(jsonString: PointTests.pointJson)?.asJsonData(prettyPrinted: true))
         let point = try JSONDecoder().decode(Point.self, from: pointData)
 
-        XCTAssertEqual(point.projection, .epsg4326)
-        XCTAssertEqual(pointData, point.asJsonData(prettyPrinted: true))
+        #expect(point.projection == .epsg4326)
+        #expect(pointData == point.asJsonData(prettyPrinted: true))
     }
 
 }

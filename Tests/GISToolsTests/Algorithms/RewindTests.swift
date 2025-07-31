@@ -1,7 +1,7 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class RewindTests: XCTestCase {
+struct RewindTests {
 
     private static let lineStringClockwise = LineString([
         Coordinate3D(latitude: -20.0, longitude: 122.0),
@@ -45,33 +45,39 @@ final class RewindTests: XCTestCase {
 
     // MARK: -
 
-    func testLineStringClockwise() {
+    @Test
+    func lineStringClockwise() async throws {
         let lineStringRewinded = RewindTests.lineStringClockwise.rewinded
-        XCTAssertEqual(lineStringRewinded, RewindTests.lineStringClockwise)
+        #expect(lineStringRewinded == RewindTests.lineStringClockwise)
     }
 
-    func testLineStringCounterClockwise() {
+    @Test
+    func lineStringCounterClockwise() async throws {
         let lineStringRewinded = RewindTests.lineStringCounterClockwise.rewinded
-        XCTAssertEqual(lineStringRewinded.allCoordinates, RewindTests.lineStringClockwise.allCoordinates)
+        #expect(lineStringRewinded.allCoordinates == RewindTests.lineStringClockwise.allCoordinates)
     }
 
-    func testPolygonClockwise() {
+    @Test
+    func polygonClockwise() async throws {
         let polygonRewinded = RewindTests.polygonClockwise.rewinded
-        XCTAssertEqual(polygonRewinded.allCoordinates, RewindTests.polygonCounterClockwise.allCoordinates)
+        #expect(polygonRewinded.allCoordinates == RewindTests.polygonCounterClockwise.allCoordinates)
     }
 
-    func testPolygonCounterClockwise() {
+    @Test
+    func polygonCounterClockwise() async throws {
         let polygonRewinded = RewindTests.polygonCounterClockwise.rewinded
-        XCTAssertEqual(polygonRewinded, RewindTests.polygonCounterClockwise)
+        #expect(polygonRewinded == RewindTests.polygonCounterClockwise)
     }
 
-    func testFeature() {
+    @Test
+    func feature() async throws {
         let featureRewinded = Feature(RewindTests.lineStringCounterClockwise).rewinded
         let result = Feature(RewindTests.lineStringClockwise)
-        XCTAssertEqual(featureRewinded, result)
+        #expect(featureRewinded == result)
     }
 
-    func testFeatureCollection() {
+    @Test
+    func featureCollection() async throws {
         let featureCollectionRewinded = FeatureCollection([
             RewindTests.lineStringClockwise,
             RewindTests.lineStringCounterClockwise,
@@ -84,10 +90,11 @@ final class RewindTests: XCTestCase {
             RewindTests.polygonCounterClockwise,
             RewindTests.polygonCounterClockwise,
         ])
-        XCTAssertEqual(featureCollectionRewinded, result)
+        #expect(featureCollectionRewinded == result)
     }
 
-    func testGeometryCollection() {
+    @Test
+    func geometryCollection() async throws {
         let geometryCollectionRewinded = GeometryCollection([
             RewindTests.lineStringClockwise,
             RewindTests.lineStringCounterClockwise,
@@ -100,7 +107,7 @@ final class RewindTests: XCTestCase {
             RewindTests.polygonCounterClockwise,
             RewindTests.polygonCounterClockwise,
         ])
-        XCTAssertEqual(geometryCollectionRewinded, result)
+        #expect(geometryCollectionRewinded == result)
     }
 
 }

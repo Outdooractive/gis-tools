@@ -1,54 +1,60 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class FlattenTests: XCTestCase {
+struct FlattenTests {
 
-    func testFeatureCollection() {
-        let original = TestData.featureCollection(package: "Flatten", name: "FeatureCollection")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "FeatureCollectionResult")
+    @Test
+    func featureCollection() async throws {
+        let original = try TestData.featureCollection(package: "Flatten", name: "FeatureCollection")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "FeatureCollectionResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
-    func testGeometryCollection() {
-        let original = TestData.geometryCollection(package: "Flatten", name: "GeometryCollection")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "GeometryCollectionResult")
+    @Test
+    func geometryCollection() async throws {
+        let original = try TestData.geometryCollection(package: "Flatten", name: "GeometryCollection")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "GeometryCollectionResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
-    func testGeometryObject() {
-        let original = TestData.multiPolygon(package: "Flatten", name: "GeometryObject")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "GeometryObjectResult")
+    @Test
+    func geometryObject() async throws {
+        let original = try TestData.multiPolygon(package: "Flatten", name: "GeometryObject")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "GeometryObjectResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
-    func testMultiLineString() {
-        let original = TestData.feature(package: "Flatten", name: "MultiLineString")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "MultiLineStringResult")
+    @Test
+    func multiLineString() async throws {
+        let original = try TestData.feature(package: "Flatten", name: "MultiLineString")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "MultiLineStringResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
-    func testMultiPoint() {
-        let original = TestData.feature(package: "Flatten", name: "MultiPoint")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "MultiPointResult")
+    @Test
+    func multiPoint() async throws {
+        let original = try TestData.feature(package: "Flatten", name: "MultiPoint")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "MultiPointResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
-    func testPolygon() {
-        let original = TestData.feature(package: "Flatten", name: "Polygon")
-        let flattened = original.flattened!
-        let expected = TestData.featureCollection(package: "Flatten", name: "PolygonResult")
+    @Test
+    func polygon() async throws {
+        let original = try TestData.feature(package: "Flatten", name: "Polygon")
+        let flattened = try #require(original.flattened)
+        let expected = try TestData.featureCollection(package: "Flatten", name: "PolygonResult")
 
-        XCTAssertEqual(flattened, expected)
+        #expect(flattened == expected)
     }
 
 }

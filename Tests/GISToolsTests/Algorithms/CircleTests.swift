@@ -1,21 +1,22 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class CircleTests: XCTestCase {
+struct CircleTests {
 
-    func testCircle() {
+    @Test
+    func circle() async throws {
         let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
         let circle = point.circle(radius: 5000.0)
-        let expected = TestData.polygon(package: "Circle", name: "CircleResult")
+        let expected = try TestData.polygon(package: "Circle", name: "CircleResult")
 
         let circleCoordinates = circle!.outerRing!.coordinates
         let expectedCoordinates = expected.outerRing!.coordinates
 
-        XCTAssertEqual(circleCoordinates.count, expectedCoordinates.count)
+        #expect(circleCoordinates.count == expectedCoordinates.count)
 
         for index in 0 ..< circleCoordinates.count {
-            XCTAssertEqual(circleCoordinates[index].latitude, expectedCoordinates[index].latitude, accuracy: 0.00001)
-            XCTAssertEqual(circleCoordinates[index].longitude, expectedCoordinates[index].longitude, accuracy: 0.00001)
+            #expect(abs(circleCoordinates[index].latitude - expectedCoordinates[index].latitude) < 0.00001)
+            #expect(abs(circleCoordinates[index].longitude - expectedCoordinates[index].longitude) < 0.00001)
         }
     }
 

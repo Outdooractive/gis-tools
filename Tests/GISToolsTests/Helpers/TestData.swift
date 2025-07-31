@@ -1,48 +1,48 @@
+import Foundation
 import GISTools
 import struct GISTools.Polygon
-import XCTest
 
-class TestData {
+struct TestData {
 
-    class func featureCollection(package: String, name: String) -> FeatureCollection {
-        return FeatureCollection(jsonString: stringFromFile(package: package, name: name))!
+    static func featureCollection(package: String, name: String) throws -> FeatureCollection {
+        try FeatureCollection(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func feature(package: String, name: String) -> Feature {
-        return Feature(jsonString: stringFromFile(package: package, name: name))!
+    static func feature(package: String, name: String) throws -> Feature {
+        try Feature(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func geometryCollection(package: String, name: String) -> GeometryCollection {
-        return GeometryCollection(jsonString: stringFromFile(package: package, name: name))!
+    static func geometryCollection(package: String, name: String) throws -> GeometryCollection {
+        try GeometryCollection(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func point(package: String, name: String) -> Point {
-        return Point(jsonString: stringFromFile(package: package, name: name))!
+    static func point(package: String, name: String) throws -> Point {
+        try Point(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func multiPoint(package: String, name: String) -> MultiPoint {
-        return MultiPoint(jsonString: stringFromFile(package: package, name: name))!
+    static func multiPoint(package: String, name: String) throws -> MultiPoint {
+        try MultiPoint(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func lineString(package: String, name: String) -> LineString {
-        return LineString(jsonString: stringFromFile(package: package, name: name))!
+    static func lineString(package: String, name: String) throws -> LineString {
+        try LineString(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func multiLineString(package: String, name: String) -> MultiLineString {
-        return MultiLineString(jsonString: stringFromFile(package: package, name: name))!
+    static func multiLineString(package: String, name: String) throws -> MultiLineString {
+        try MultiLineString(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func polygon(package: String, name: String) -> Polygon {
-        return Polygon(jsonString: stringFromFile(package: package, name: name))!
+    static func polygon(package: String, name: String) throws -> Polygon {
+        try Polygon(jsonString: stringFromFile(package: package, name: name))!
     }
 
-    class func multiPolygon(package: String, name: String) -> MultiPolygon {
-        return MultiPolygon(jsonString: stringFromFile(package: package, name: name))!
+    static func multiPolygon(package: String, name: String) throws -> MultiPolygon {
+        try MultiPolygon(jsonString: stringFromFile(package: package, name: name))!
     }
 
     // MARK: -
 
-    class func stringFromFile(package: String, name: String) -> String {
+    static func stringFromFile(package: String, name: String) throws -> String {
         let path = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -51,20 +51,10 @@ class TestData {
             .appendingPathComponent(name)
             .appendingPathExtension("geojson")
 
-        do {
-            if !(try path.checkResourceIsReachable()) {
-                XCTAssert(false, "Test data for \(package)/\(name) not found.")
-                return ""
-            }
-            return try String(contentsOf: path, encoding: .utf8)
-        }
-        catch {
-            XCTAssert(false, "Unable to decode fixture at \(path): \(error).")
-            return ""
-        }
+        return try String(contentsOf: path, encoding: .utf8)
     }
 
-    class func dataFromFile(package: String, name: String) -> Data {
+    static func dataFromFile(package: String, name: String) throws -> Data {
         let path = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -73,17 +63,7 @@ class TestData {
             .appendingPathComponent(name)
             .appendingPathExtension("geojson")
 
-        do {
-            if !(try path.checkResourceIsReachable()) {
-                XCTAssert(false, "Test data for \(package)/\(name) not found.")
-                return Data()
-            }
-            return try Data(contentsOf: path)
-        }
-        catch {
-            XCTAssert(false, "Unable to decode fixture at \(path): \(error).")
-            return Data()
-        }
+        return try Data(contentsOf: path)
     }
 
 }

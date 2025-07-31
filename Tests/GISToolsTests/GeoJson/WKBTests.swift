@@ -1,8 +1,9 @@
+import Foundation
 @testable import GISTools
 @testable import struct GISTools.Polygon
-import XCTest
+import Testing
 
-final class WKBTests: XCTestCase {
+struct WKBTests {
 
     // MARK: - Point
 
@@ -15,152 +16,164 @@ final class WKBTests: XCTestCase {
     // SELECT 'POINT ZM (1 2 3 4)'::geometry;
     private let pointZMData = Data(hex: "01010000C0000000000000F03F000000000000004000000000000008400000000000001040")!
 
-    func testPointDecoding() throws {
+    @Test
+    func pointDecoding() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
-        XCTAssertEqual(point.coordinate.longitude, 1)
-        XCTAssertEqual(point.coordinate.latitude, 2)
-        XCTAssertNil(point.coordinate.altitude)
+        #expect(point.coordinate.longitude == 1)
+        #expect(point.coordinate.latitude == 2)
+        #expect(point.coordinate.altitude == nil)
 
         let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointZ.coordinate.longitude, 1)
-        XCTAssertEqual(pointZ.coordinate.latitude, 2)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.longitude == 1)
+        #expect(pointZ.coordinate.latitude == 2)
+        #expect(pointZ.coordinate.altitude == 3)
 
         let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointM.coordinate.longitude, 1)
-        XCTAssertEqual(pointM.coordinate.latitude, 2)
-        XCTAssertEqual(pointM.coordinate.m, 4)
-        XCTAssertNil(pointM.coordinate.altitude)
+        #expect(pointM.coordinate.longitude == 1)
+        #expect(pointM.coordinate.latitude == 2)
+        #expect(pointM.coordinate.m == 4)
+        #expect(pointM.coordinate.altitude == nil)
 
         let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointZM.coordinate.longitude, 1)
-        XCTAssertEqual(pointZM.coordinate.latitude, 2)
-        XCTAssertEqual(pointZM.coordinate.altitude, 3)
-        XCTAssertEqual(pointZM.coordinate.m, 4)
+        #expect(pointZM.coordinate.longitude == 1)
+        #expect(pointZM.coordinate.latitude == 2)
+        #expect(pointZM.coordinate.altitude == 3)
+        #expect(pointZM.coordinate.m == 4)
     }
 
-    func testPointDecoding4326To3857() throws {
+    @Test
+    func pointDecoding4326To3857() async throws {
         let expected = Coordinate3D(latitude: 2, longitude: 1).projected(to: .epsg3857)
 
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        XCTAssertEqual(point.coordinate.x, expected.x)
-        XCTAssertEqual(point.coordinate.y, expected.y)
-        XCTAssertNil(point.coordinate.altitude)
+        #expect(point.coordinate.x == expected.x)
+        #expect(point.coordinate.y == expected.y)
+        #expect(point.coordinate.altitude == nil)
 
         let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        XCTAssertEqual(pointZ.coordinate.x, expected.x)
-        XCTAssertEqual(pointZ.coordinate.y, expected.y)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.x == expected.x)
+        #expect(pointZ.coordinate.y == expected.y)
+        #expect(pointZ.coordinate.altitude == 3)
 
         let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        XCTAssertEqual(pointM.coordinate.x, expected.x)
-        XCTAssertEqual(pointM.coordinate.y, expected.y)
-        XCTAssertEqual(pointM.coordinate.m, 4)
-        XCTAssertNil(pointM.coordinate.altitude)
+        #expect(pointM.coordinate.x == expected.x)
+        #expect(pointM.coordinate.y == expected.y)
+        #expect(pointM.coordinate.m == 4)
+        #expect(pointM.coordinate.altitude == nil)
 
         let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        XCTAssertEqual(pointZM.coordinate.x, expected.x)
-        XCTAssertEqual(pointZM.coordinate.y, expected.y)
-        XCTAssertEqual(pointZM.coordinate.altitude, 3)
-        XCTAssertEqual(pointZM.coordinate.m, 4)
+        #expect(pointZM.coordinate.x == expected.x)
+        #expect(pointZM.coordinate.y == expected.y)
+        #expect(pointZM.coordinate.altitude == 3)
+        #expect(pointZM.coordinate.m == 4)
     }
 
-    func testPointDecoding3857To4326() throws {
+    @Test
+    func pointDecoding3857To4326() async throws {
         let expected = Coordinate3D(x: 1, y: 2).projected(to: .epsg4326)
 
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        XCTAssertEqual(point.coordinate.longitude, expected.longitude)
-        XCTAssertEqual(point.coordinate.latitude, expected.latitude)
-        XCTAssertNil(point.coordinate.altitude)
+        #expect(point.coordinate.longitude == expected.longitude)
+        #expect(point.coordinate.latitude == expected.latitude)
+        #expect(point.coordinate.altitude == nil)
 
         let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointZ.coordinate.x, expected.x)
-        XCTAssertEqual(pointZ.coordinate.y, expected.y)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.x == expected.x)
+        #expect(pointZ.coordinate.y == expected.y)
+        #expect(pointZ.coordinate.altitude == 3)
 
         let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointM.coordinate.x, expected.x)
-        XCTAssertEqual(pointM.coordinate.y, expected.y)
-        XCTAssertEqual(pointM.coordinate.m, 4)
-        XCTAssertNil(pointM.coordinate.altitude)
+        #expect(pointM.coordinate.x == expected.x)
+        #expect(pointM.coordinate.y == expected.y)
+        #expect(pointM.coordinate.m == 4)
+        #expect(pointM.coordinate.altitude == nil)
 
         let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointZM.coordinate.x, expected.x)
-        XCTAssertEqual(pointZM.coordinate.y, expected.y)
-        XCTAssertEqual(pointZM.coordinate.altitude, 3)
-        XCTAssertEqual(pointZM.coordinate.m, 4)
+        #expect(pointZM.coordinate.x == expected.x)
+        #expect(pointZM.coordinate.y == expected.y)
+        #expect(pointZM.coordinate.altitude == 3)
+        #expect(pointZM.coordinate.m == 4)
     }
 
-    func testPointDecodingNoSRID() throws {
+    @Test
+    func pointDecodingNoSRID() async throws {
         let expected = Coordinate3D(x: 1, y: 2, projection: .noSRID)
 
-        XCTAssertThrowsError(try WKBCoder.decode(wkb: pointData, sourceProjection: .noSRID) as! Point)
+        #expect(throws: WKBCoder.WKBCoderError.self) {
+            try WKBCoder.decode(wkb: pointData, sourceProjection: .noSRID) as! Point
+        }
 
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
-        XCTAssertEqual(point.coordinate.x, expected.x)
-        XCTAssertEqual(point.coordinate.y, expected.y)
-        XCTAssertNil(point.coordinate.altitude)
+        #expect(point.coordinate.x == expected.x)
+        #expect(point.coordinate.y == expected.y)
+        #expect(point.coordinate.altitude == nil)
 
         let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
-        XCTAssertEqual(pointZ.coordinate.x, expected.x)
-        XCTAssertEqual(pointZ.coordinate.y, expected.y)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.x == expected.x)
+        #expect(pointZ.coordinate.y == expected.y)
+        #expect(pointZ.coordinate.altitude == 3)
 
         let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
-        XCTAssertEqual(pointM.coordinate.x, expected.x)
-        XCTAssertEqual(pointM.coordinate.y, expected.y)
-        XCTAssertEqual(pointM.coordinate.m, 4)
-        XCTAssertNil(pointM.coordinate.altitude)
+        #expect(pointM.coordinate.x == expected.x)
+        #expect(pointM.coordinate.y == expected.y)
+        #expect(pointM.coordinate.m == 4)
+        #expect(pointM.coordinate.altitude == nil)
 
         let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
-        XCTAssertEqual(pointZM.coordinate.x, expected.x)
-        XCTAssertEqual(pointZM.coordinate.y, expected.y)
-        XCTAssertEqual(pointZM.coordinate.altitude, 3)
-        XCTAssertEqual(pointZM.coordinate.m, 4)
+        #expect(pointZM.coordinate.x == expected.x)
+        #expect(pointZM.coordinate.y == expected.y)
+        #expect(pointZM.coordinate.altitude == 3)
+        #expect(pointZM.coordinate.m == 4)
     }
 
-    func testPointEncoding() throws {
+    @Test
+    func pointEncoding() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
         let encodedPoint = WKBCoder.encode(geometry: point, targetProjection: nil)
-        XCTAssertEqual(encodedPoint, pointData)
+        #expect(encodedPoint == pointData)
 
         let pointZ = try WKBCoder.decode(wkb: pointZData, sourceProjection: .epsg4326) as! Point
         let encodedPointZ = WKBCoder.encode(geometry: pointZ, targetProjection: nil)
-        XCTAssertEqual(encodedPointZ, pointZData)
+        #expect(encodedPointZ == pointZData)
 
         let pointM = try WKBCoder.decode(wkb: pointMData, sourceProjection: .epsg4326) as! Point
         let encodedPointM = WKBCoder.encode(geometry: pointM, targetProjection: nil)
-        XCTAssertEqual(encodedPointM, pointMData)
+        #expect(encodedPointM == pointMData)
 
         let pointZM = try WKBCoder.decode(wkb: pointZMData, sourceProjection: .epsg4326) as! Point
         let encodedPointZM = WKBCoder.encode(geometry: pointZM, targetProjection: nil)
-        XCTAssertEqual(encodedPointZM, pointZMData)
+        #expect(encodedPointZM == pointZMData)
     }
 
-    func testPointConvenienceDecoding() throws {
+    @Test
+    func pointConvenienceDecoding() async throws {
         let pointZ = Point(wkb: pointZData, sourceProjection: .epsg4326)!
-        XCTAssertEqual(pointZ.coordinate.longitude, 1)
-        XCTAssertEqual(pointZ.coordinate.latitude, 2)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.longitude == 1)
+        #expect(pointZ.coordinate.latitude == 2)
+        #expect(pointZ.coordinate.altitude == 3)
     }
 
-    func testPointDataConvenienceDecoding() throws {
+    @Test
+    func pointDataConvenienceDecoding() async throws {
         let pointZ = pointZData.asGeoJsonGeometry(sourceProjection: .epsg4326) as! Point
-        XCTAssertEqual(pointZ.coordinate.longitude, 1)
-        XCTAssertEqual(pointZ.coordinate.latitude, 2)
-        XCTAssertEqual(pointZ.coordinate.altitude, 3)
+        #expect(pointZ.coordinate.longitude == 1)
+        #expect(pointZ.coordinate.latitude == 2)
+        #expect(pointZ.coordinate.altitude == 3)
 
         let feature = pointZData.asFeature(sourceProjection: .epsg4326)
-        XCTAssertEqual(feature?.geometry.allCoordinates.first?.longitude, 1)
-        XCTAssertEqual(feature?.geometry.allCoordinates.first?.latitude, 2)
-        XCTAssertEqual(feature?.geometry.allCoordinates.first?.altitude, 3)
+        #expect(feature?.geometry.allCoordinates.first?.longitude == 1)
+        #expect(feature?.geometry.allCoordinates.first?.latitude == 2)
+        #expect(feature?.geometry.allCoordinates.first?.altitude == 3)
     }
 
     // SELECT ST_ClipByBox2D(ToPoint('POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))'::geometry), ST_MakeEnvelope(0,0,0.2,0.2));
     private let invalidPointData = Data(hex: "0101000000000000000000F87F000000000000F87F")!
 
-    func testInvalidPointDecoding() throws {
-        XCTAssertThrowsError(try WKBCoder.decode(wkb: invalidPointData, sourceProjection: .epsg4326) as? Point)
+    @Test
+    func invalidPointDecoding() async throws {
+        #expect(throws: WKBCoder.WKBCoderError.self) {
+            try WKBCoder.decode(wkb: invalidPointData, sourceProjection: .epsg4326) as? Point
+        }
     }
 
     // MARK: - MultiPoint
@@ -168,17 +181,19 @@ final class WKBTests: XCTestCase {
     // SELECT 'MULTIPOINT((0 0),(1 2))'::geometry;
     private let multiPointData = Data(hex: "0104000000020000000101000000000000000000000000000000000000000101000000000000000000F03F0000000000000040")!
 
-    func testMultiPointDecoding() throws {
+    @Test
+    func multiPointDecoding() async throws {
         let multiPoint = try WKBCoder.decode(wkb: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
-        XCTAssertEqual(multiPoint.coordinates.count, 2)
-        XCTAssertEqual(multiPoint.coordinates[0], Coordinate3D(latitude: 0, longitude: 0))
-        XCTAssertEqual(multiPoint.coordinates[1], Coordinate3D(latitude: 2, longitude: 1))
+        #expect(multiPoint.coordinates.count == 2)
+        #expect(multiPoint.coordinates[0] == Coordinate3D(latitude: 0, longitude: 0))
+        #expect(multiPoint.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1))
     }
 
-    func testMultiPointEncoding() throws {
+    @Test
+    func multiPointEncoding() async throws {
         let multiPoint = try WKBCoder.decode(wkb: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
         let encodedMultiPoint = WKBCoder.encode(geometry: multiPoint, targetProjection: nil)
-        XCTAssertEqual(encodedMultiPoint, multiPointData)
+        #expect(encodedMultiPoint == multiPointData)
     }
 
     // MARK: - MultiPoint with SRID
@@ -186,17 +201,19 @@ final class WKBTests: XCTestCase {
     // SELECT 'SRID=4326;MULTIPOINTZ(0 0 0,1 2 1)'::geometry;
     private let multiPointZSRIDData = Data(hex: "01040000A0E61000000200000001010000800000000000000000000000000000000000000000000000000101000080000000000000F03F0000000000000040000000000000F03F")!
 
-    func testMultiPointSRIDDecoding() throws {
+    @Test
+    func multiPointSRIDDecoding() async throws {
         let multiPointZSRID = try WKBCoder.decode(wkb: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
-        XCTAssertEqual(multiPointZSRID.coordinates.count, 2)
-        XCTAssertEqual(multiPointZSRID.coordinates[0], Coordinate3D(latitude: 0, longitude: 0, altitude: 0))
-        XCTAssertEqual(multiPointZSRID.coordinates[1], Coordinate3D(latitude: 2, longitude: 1, altitude: 1))
+        #expect(multiPointZSRID.coordinates.count == 2)
+        #expect(multiPointZSRID.coordinates[0] == Coordinate3D(latitude: 0, longitude: 0, altitude: 0))
+        #expect(multiPointZSRID.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1, altitude: 1))
     }
 
-    func testMultiPointSRIDEncoding() throws {
+    @Test
+    func multiPointSRIDEncoding() async throws {
         let multiPointZSRID = try WKBCoder.decode(wkb: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
         let encodedMultiPointZSRID = WKBCoder.encode(geometry: multiPointZSRID, targetProjection: .epsg4326)
-        XCTAssertEqual(encodedMultiPointZSRID, multiPointZSRIDData)
+        #expect(encodedMultiPointZSRID == multiPointZSRIDData)
     }
 
     // MARK: - LineString
@@ -210,36 +227,38 @@ final class WKBTests: XCTestCase {
     // SELECT 'LINESTRING ZM (1 1 5 0, 1 2 5 0, 1 3 5 1, 2 2 5 0)'::geometry;
     private let lineStringZMData = Data(hex: "01020000C004000000000000000000F03F000000000000F03F00000000000014400000000000000000000000000000F03F000000000000004000000000000014400000000000000000000000000000F03F00000000000008400000000000001440000000000000F03F0000000000000040000000000000004000000000000014400000000000000000")!
 
-    func testLineStringDecoding() throws {
+    @Test
+    func lineStringDecoding() async throws {
         let lineString = try WKBCoder.decode(wkb: lineStringData, sourceProjection: .epsg4326) as! LineString
-        XCTAssertEqual(lineString.coordinates.count, 4)
+        #expect(lineString.coordinates.count == 4)
 
         let lineStringZ = try WKBCoder.decode(wkb: lineStringZData, sourceProjection: .epsg4326) as! LineString
-        XCTAssertEqual(lineStringZ.coordinates.count, 4)
+        #expect(lineStringZ.coordinates.count == 4)
 
         let lineStringM = try WKBCoder.decode(wkb: lineStringMData, sourceProjection: .epsg4326) as! LineString
-        XCTAssertEqual(lineStringM.coordinates.count, 4)
+        #expect(lineStringM.coordinates.count == 4)
 
         let lineStringZM = try WKBCoder.decode(wkb: lineStringZMData, sourceProjection: .epsg4326) as! LineString
-        XCTAssertEqual(lineStringZM.coordinates.count, 4)
+        #expect(lineStringZM.coordinates.count == 4)
     }
 
-    func testLineStringEncoding() throws {
+    @Test
+    func lineStringEncoding() async throws {
         let lineString = try WKBCoder.decode(wkb: lineStringData, sourceProjection: .epsg4326) as! LineString
         let encodedLineString = WKBCoder.encode(geometry: lineString, targetProjection: nil)
-        XCTAssertEqual(encodedLineString, lineStringData)
+        #expect(encodedLineString == lineStringData)
 
         let lineStringZ = try WKBCoder.decode(wkb: lineStringZData, sourceProjection: .epsg4326) as! LineString
         let encodedLineStringZ = WKBCoder.encode(geometry: lineStringZ, targetProjection: nil)
-        XCTAssertEqual(encodedLineStringZ, lineStringZData)
+        #expect(encodedLineStringZ == lineStringZData)
 
         let lineStringM = try WKBCoder.decode(wkb: lineStringMData, sourceProjection: .epsg4326) as! LineString
         let encodedLineStringM = WKBCoder.encode(geometry: lineStringM, targetProjection: nil)
-        XCTAssertEqual(encodedLineStringM, lineStringMData)
+        #expect(encodedLineStringM == lineStringMData)
 
         let lineStringZM = try WKBCoder.decode(wkb: lineStringZMData, sourceProjection: .epsg4326) as! LineString
         let encodedLineStringZM = WKBCoder.encode(geometry: lineStringZM, targetProjection: nil)
-        XCTAssertEqual(encodedLineStringZM, lineStringZMData)
+        #expect(encodedLineStringZM == lineStringZMData)
     }
 
     // MARK: - MultiLineString
@@ -247,15 +266,17 @@ final class WKBTests: XCTestCase {
     // SELECT 'MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))'::geometry;
     private let multiLineStringData = Data(hex: "01050000000200000001020000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F0000000000000040010200000003000000000000000000004000000000000008400000000000000840000000000000004000000000000014400000000000001040")!
 
-    func testMultiLineStringDecoding() throws {
+    @Test
+    func multiLineStringDecoding() async throws {
         let multiLineString = try WKBCoder.decode(wkb: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
-        XCTAssertEqual(multiLineString.lineStrings.count, 2)
+        #expect(multiLineString.lineStrings.count == 2)
     }
 
-    func testMultiLineStringEncoding() throws {
+    @Test
+    func multiLineStringEncoding() async throws {
         let multiLineString = try WKBCoder.decode(wkb: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
         let encodedMultiLineString = WKBCoder.encode(geometry: multiLineString, targetProjection: nil)
-        XCTAssertEqual(encodedMultiLineString, multiLineStringData)
+        #expect(encodedMultiLineString == multiLineStringData)
     }
 
     // MARK: - Polygon
@@ -271,49 +292,51 @@ final class WKBTests: XCTestCase {
     // SELECT 'POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))'::geometry;
     private let polygonWithHoleData = Data(hex: "01030000000200000005000000000000000000000000000000000000000000000000002440000000000000000000000000000024400000000000002440000000000000000000000000000024400000000000000000000000000000000005000000000000000000F03F000000000000F03F000000000000F03F0000000000000040000000000000004000000000000000400000000000000040000000000000F03F000000000000F03F000000000000F03F")!
 
-    func testPolygonDecoding() throws {
+    @Test
+    func polygonDecoding() async throws {
         let polygon = try WKBCoder.decode(wkb: polygonData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(polygon.rings.count, 1)
-        XCTAssertEqual(polygon.outerRing!.coordinates.count, 5)
+        #expect(polygon.rings.count == 1)
+        #expect(polygon.outerRing!.coordinates.count == 5)
 
         let polygonZ = try WKBCoder.decode(wkb: polygonZData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(polygonZ.rings.count, 1)
-        XCTAssertEqual(polygonZ.outerRing!.coordinates.count, 5)
+        #expect(polygonZ.rings.count == 1)
+        #expect(polygonZ.outerRing!.coordinates.count == 5)
 
         let polygonM = try WKBCoder.decode(wkb: polygonMData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(polygonM.rings.count, 1)
-        XCTAssertEqual(polygonM.outerRing!.coordinates.count, 5)
+        #expect(polygonM.rings.count == 1)
+        #expect(polygonM.outerRing!.coordinates.count == 5)
 
         let polygonZM = try WKBCoder.decode(wkb: polygonZMData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(polygonZM.rings.count, 1)
-        XCTAssertEqual(polygonZM.outerRing!.coordinates.count, 5)
+        #expect(polygonZM.rings.count == 1)
+        #expect(polygonZM.outerRing!.coordinates.count == 5)
 
         let polygonWithHole = try WKBCoder.decode(wkb: polygonWithHoleData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(polygonWithHole.rings.count, 2)
-        XCTAssertEqual(polygonWithHole.outerRing!.coordinates.count, 5)
-        XCTAssertEqual(polygonWithHole.innerRings![0].coordinates.count, 5)
+        #expect(polygonWithHole.rings.count == 2)
+        #expect(polygonWithHole.outerRing!.coordinates.count == 5)
+        #expect(polygonWithHole.innerRings![0].coordinates.count == 5)
     }
 
-    func testPolygonEncoding() throws {
+    @Test
+    func polygonEncoding() async throws {
         let polygon = try WKBCoder.decode(wkb: polygonData, sourceProjection: .epsg4326) as! Polygon
         let encodedPolygon = WKBCoder.encode(geometry: polygon, targetProjection: nil)
-        XCTAssertEqual(encodedPolygon, polygonData)
+        #expect(encodedPolygon == polygonData)
 
         let polygonZ = try WKBCoder.decode(wkb: polygonZData, sourceProjection: .epsg4326) as! Polygon
         let encodedPolygonZ = WKBCoder.encode(geometry: polygonZ, targetProjection: nil)
-        XCTAssertEqual(encodedPolygonZ, polygonZData)
+        #expect(encodedPolygonZ == polygonZData)
 
         let polygonM = try WKBCoder.decode(wkb: polygonMData, sourceProjection: .epsg4326) as! Polygon
         let encodedPolygonM = WKBCoder.encode(geometry: polygonM, targetProjection: nil)
-        XCTAssertEqual(encodedPolygonM, polygonMData)
+        #expect(encodedPolygonM == polygonMData)
 
         let polygonZM = try WKBCoder.decode(wkb: polygonZMData, sourceProjection: .epsg4326) as! Polygon
         let encodedPolygonZM = WKBCoder.encode(geometry: polygonZM, targetProjection: nil)
-        XCTAssertEqual(encodedPolygonZM, polygonZMData)
+        #expect(encodedPolygonZM == polygonZMData)
 
         let polygonWithHole = try WKBCoder.decode(wkb: polygonWithHoleData, sourceProjection: .epsg4326) as! Polygon
         let encodedPolygonWithHole = WKBCoder.encode(geometry: polygonWithHole, targetProjection: nil)
-        XCTAssertEqual(encodedPolygonWithHole, polygonWithHoleData)
+        #expect(encodedPolygonWithHole == polygonWithHoleData)
     }
 
     // MARK: - MultiPolygon
@@ -321,15 +344,17 @@ final class WKBTests: XCTestCase {
     // SELECT 'MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ((-1 -1,-1 -2,-2 -2,-2 -1,-1 -1)))'::geometry;
     private let multiPolygonData = Data(hex: "01060000000200000001030000000200000005000000000000000000000000000000000000000000000000001040000000000000000000000000000010400000000000001040000000000000000000000000000010400000000000000000000000000000000005000000000000000000F03F000000000000F03F0000000000000040000000000000F03F00000000000000400000000000000040000000000000F03F0000000000000040000000000000F03F000000000000F03F01030000000100000005000000000000000000F0BF000000000000F0BF000000000000F0BF00000000000000C000000000000000C000000000000000C000000000000000C0000000000000F0BF000000000000F0BF000000000000F0BF")!
 
-    func testMultiPolygonDecoding() throws {
+    @Test
+    func multiPolygonDecoding() async throws {
         let multiPolygon = try WKBCoder.decode(wkb: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
-        XCTAssertEqual(multiPolygon.polygons.count, 2)
+        #expect(multiPolygon.polygons.count == 2)
     }
 
-    func testMultiPolygonEncoding() throws {
+    @Test
+    func multiPolygonEncoding() async throws {
         let multiPolygon = try WKBCoder.decode(wkb: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
         let encodedMultiPolygon = WKBCoder.encode(geometry: multiPolygon, targetProjection: nil)
-        XCTAssertEqual(encodedMultiPolygon, multiPolygonData)
+        #expect(encodedMultiPolygon == multiPolygonData)
     }
 
     // MARK: - GeometryCollection
@@ -337,17 +362,19 @@ final class WKBTests: XCTestCase {
     // SELECT 'GEOMETRYCOLLECTION(POINT(2 0),POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))'::geometry;
     private let geometryCollectionData = Data(hex: "0107000000020000000101000000000000000000004000000000000000000103000000010000000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000")!
 
-    func testGeometryCollectionDecoding() throws {
+    @Test
+    func geometryCollectionDecoding() async throws {
         let geometryCollection = try WKBCoder.decode(wkb: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
-        XCTAssertEqual(geometryCollection.geometries.count, 2)
-        XCTAssertEqual(geometryCollection.geometries[0].type, .point)
-        XCTAssertEqual(geometryCollection.geometries[1].type, .polygon)
+        #expect(geometryCollection.geometries.count == 2)
+        #expect(geometryCollection.geometries[0].type == .point)
+        #expect(geometryCollection.geometries[1].type == .polygon)
     }
 
-    func testGeometryCollectionEncoding() throws {
+    @Test
+    func geometryCollectionEncoding() async throws {
         let geometryCollection = try WKBCoder.decode(wkb: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
         let encodedGeometryCollection = WKBCoder.encode(geometry: geometryCollection, targetProjection: nil)
-        XCTAssertEqual(encodedGeometryCollection, geometryCollectionData)
+        #expect(encodedGeometryCollection == geometryCollectionData)
     }
 
     // MARK: - Triangle
@@ -361,22 +388,23 @@ final class WKBTests: XCTestCase {
     // SELECT 'TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))'::geometry;
     private let triangleZMData = Data(hex: "01110000C0010000000400000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000F03F00000000000000000000000000000040000000000000F03F000000000000F03F000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040")!
 
-    func testTriangleDecoding() throws {
+    @Test
+    func triangleDecoding() async throws {
         let triangle = try WKBCoder.decode(wkb: triangleData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(triangle.rings.count, 1)
-        XCTAssertEqual(triangle.outerRing!.coordinates.count, 4)
+        #expect(triangle.rings.count == 1)
+        #expect(triangle.outerRing!.coordinates.count == 4)
 
         let triangleZ = try WKBCoder.decode(wkb: triangleZData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(triangleZ.rings.count, 1)
-        XCTAssertEqual(triangleZ.outerRing!.coordinates.count, 4)
+        #expect(triangleZ.rings.count == 1)
+        #expect(triangleZ.outerRing!.coordinates.count == 4)
 
         let triangleM = try WKBCoder.decode(wkb: triangleMData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(triangleM.rings.count, 1)
-        XCTAssertEqual(triangleM.outerRing!.coordinates.count, 4)
+        #expect(triangleM.rings.count == 1)
+        #expect(triangleM.outerRing!.coordinates.count == 4)
 
         let triangleZM = try WKBCoder.decode(wkb: triangleZMData, sourceProjection: .epsg4326) as! Polygon
-        XCTAssertEqual(triangleZM.rings.count, 1)
-        XCTAssertEqual(triangleZM.outerRing!.coordinates.count, 4)
+        #expect(triangleZM.rings.count == 1)
+        #expect(triangleZM.outerRing!.coordinates.count == 4)
     }
 
 }
