@@ -1,58 +1,62 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class TruncateTests: XCTestCase {
+struct TruncateTests {
 
-    func testPoint() {
+    @Test
+    func point() async throws {
         let point = Point(
             Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
             calculateBoundingBox: true)
 
         let truncated = point.truncated(precision: 2, removeAltitude: true)
-        XCTAssertEqual(truncated.coordinate.latitude, 123.46)
-        XCTAssertEqual(truncated.coordinate.longitude, 123.46)
-        XCTAssertNil(truncated.coordinate.altitude)
-        XCTAssertNotNil(truncated.boundingBox)
+        #expect(truncated.coordinate.latitude == 123.46)
+        #expect(truncated.coordinate.longitude == 123.46)
+        #expect(truncated.coordinate.altitude == nil)
+        #expect(truncated.boundingBox != nil)
     }
 
-    func testMultiPoint() {
-        let multiPoint = MultiPoint(
+    @Test
+    func multiPoint() async throws {
+        let multiPoint = try #require(MultiPoint(
             [
                 Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
                 Coordinate3D(latitude: 9.1234567, longitude: 9.1234567),
             ],
-            calculateBoundingBox: true)!
+            calculateBoundingBox: true))
 
         let truncated = multiPoint.truncated(precision: 2, removeAltitude: true)
-        XCTAssertEqual(truncated.coordinates[0].latitude, 123.46)
-        XCTAssertEqual(truncated.coordinates[0].longitude, 123.46)
-        XCTAssertNil(truncated.coordinates[0].altitude)
-        XCTAssertEqual(truncated.coordinates[1].latitude, 9.12)
-        XCTAssertEqual(truncated.coordinates[1].longitude, 9.12)
-        XCTAssertNil(truncated.coordinates[1].altitude)
-        XCTAssertNotNil(truncated.boundingBox)
+        #expect(truncated.coordinates[0].latitude == 123.46)
+        #expect(truncated.coordinates[0].longitude == 123.46)
+        #expect(truncated.coordinates[0].altitude == nil)
+        #expect(truncated.coordinates[1].latitude == 9.12)
+        #expect(truncated.coordinates[1].longitude == 9.12)
+        #expect(truncated.coordinates[1].altitude == nil)
+        #expect(truncated.boundingBox != nil)
     }
 
-    func testLineString() {
-        let lineString = LineString(
+    @Test
+    func lineString() async throws {
+        let lineString = try #require(LineString(
             [
                 Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
                 Coordinate3D(latitude: 9.1234567, longitude: 9.1234567),
             ],
-            calculateBoundingBox: true)!
+            calculateBoundingBox: true))
 
         let truncated = lineString.truncated(precision: 2, removeAltitude: true)
-        XCTAssertEqual(truncated.coordinates[0].latitude, 123.46)
-        XCTAssertEqual(truncated.coordinates[0].longitude, 123.46)
-        XCTAssertNil(truncated.coordinates[0].altitude)
-        XCTAssertEqual(truncated.coordinates[1].latitude, 9.12)
-        XCTAssertEqual(truncated.coordinates[1].longitude, 9.12)
-        XCTAssertNil(truncated.coordinates[1].altitude)
-        XCTAssertNotNil(truncated.boundingBox)
+        #expect(truncated.coordinates[0].latitude == 123.46)
+        #expect(truncated.coordinates[0].longitude == 123.46)
+        #expect(truncated.coordinates[0].altitude == nil)
+        #expect(truncated.coordinates[1].latitude == 9.12)
+        #expect(truncated.coordinates[1].longitude == 9.12)
+        #expect(truncated.coordinates[1].altitude == nil)
+        #expect(truncated.boundingBox != nil)
     }
 
-    func testMultiLineString() {
-        let multiLineString = MultiLineString(
+    @Test
+    func multiLineString() async throws {
+        let multiLineString = try #require(MultiLineString(
             [
                 [
                     Coordinate3D(latitude: 123.456789, longitude: 123.456789, altitude: 123.456789),
@@ -63,38 +67,43 @@ final class TruncateTests: XCTestCase {
                     Coordinate3D(latitude: 3.0, longitude: 103.0),
                 ],
             ],
-            calculateBoundingBox: true)!
+            calculateBoundingBox: true))
 
         let truncated = multiLineString.truncated(precision: 2, removeAltitude: true)
-        XCTAssertEqual(truncated.coordinates[0][0].latitude, 123.46)
-        XCTAssertEqual(truncated.coordinates[0][0].longitude, 123.46)
-        XCTAssertNil(truncated.coordinates[0][0].altitude)
-        XCTAssertEqual(truncated.coordinates[0][1].latitude, 1.0)
-        XCTAssertEqual(truncated.coordinates[0][1].longitude, 101.0)
-        XCTAssertNil(truncated.coordinates[0][1].altitude)
-        XCTAssertEqual(truncated.coordinates[1][0].latitude, 9.12)
-        XCTAssertEqual(truncated.coordinates[1][0].longitude, 9.12)
-        XCTAssertNil(truncated.coordinates[1][0].altitude)
-        XCTAssertNotNil(truncated.boundingBox)
+        #expect(truncated.coordinates[0][0].latitude == 123.46)
+        #expect(truncated.coordinates[0][0].longitude == 123.46)
+        #expect(truncated.coordinates[0][0].altitude == nil)
+        #expect(truncated.coordinates[0][1].latitude == 1.0)
+        #expect(truncated.coordinates[0][1].longitude == 101.0)
+        #expect(truncated.coordinates[0][1].altitude == nil)
+        #expect(truncated.coordinates[1][0].latitude == 9.12)
+        #expect(truncated.coordinates[1][0].longitude == 9.12)
+        #expect(truncated.coordinates[1][0].altitude == nil)
+        #expect(truncated.boundingBox != nil)
     }
 
-    func testPolygon() {
+    @Test
+    func polygon() async throws {
         // TODO:
     }
 
-    func testMultiPolygon() {
+    @Test
+    func multiPolygon() async throws {
         // TODO:
     }
 
-    func testGeometryCollection() {
+    @Test
+    func geometryCollection() async throws {
         // TODO:
     }
 
-    func testFeature() {
+    @Test
+    func feature() async throws {
         // TODO:
     }
 
-    func testFeatureCollection() {
+    @Test
+    func featureCollection() async throws {
         // TODO:
     }
 

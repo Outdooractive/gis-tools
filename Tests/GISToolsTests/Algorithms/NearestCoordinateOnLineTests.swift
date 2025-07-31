@@ -1,25 +1,26 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class NearestCoordinateOnLineTests: XCTestCase {
+struct NearestCoordinateOnLineTests {
 
-    func testFirstPoint() {
-        let lineString = LineString([
+    @Test
+    func firstPoint() async throws {
+        let lineString = try  #require(LineString([
             Coordinate3D(latitude: 37.720033, longitude: -122.457175),
             Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-        ])!
+        ]))
         let coordinate = Coordinate3D(latitude: 37.720033, longitude: -122.457175)
 
-        let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-        XCTAssertEqual(nearestCoordinate, lineString.coordinates[0])
+        let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+        #expect(nearestCoordinate == lineString.coordinates[0])
     }
 
-    func testPointsBehindFirstPoint() {
-        let lineString = LineString([
+    @Test
+    func pointsBehindFirstPoint() async throws {
+        let lineString = try #require(LineString([
             Coordinate3D(latitude: 37.720033, longitude: -122.457175),
             Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-        ])!
+        ]))
         let coordinates = [
             Coordinate3D(latitude: 37.720093, longitude: -122.457175),
             Coordinate3D(latitude: 37.820093, longitude: -122.457175),
@@ -28,18 +29,18 @@ final class NearestCoordinateOnLineTests: XCTestCase {
         ]
 
         for coordinate in coordinates {
-            let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-            XCTAssertEqual(nearestCoordinate, lineString.coordinates[0])
+            let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+            #expect(nearestCoordinate == lineString.coordinates[0])
         }
     }
 
-    func testPointsInFrontOfLastPoint() {
-        let lineString = LineString([
+    @Test
+    func pointsInFrontOfLastPoint() async throws {
+        let lineString = try #require(LineString([
             Coordinate3D(latitude: 37.721259, longitude: -122.456161),
             Coordinate3D(latitude: 37.720033, longitude: -122.457175),
             Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-        ])!
+        ]))
         let coordinates = [
             Coordinate3D(latitude: 37.718140, longitude: -122.456960),
             Coordinate3D(latitude: 37.718132, longitude: -122.457363),
@@ -48,20 +49,20 @@ final class NearestCoordinateOnLineTests: XCTestCase {
         ]
 
         for coordinate in coordinates {
-            let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-            XCTAssertEqual(nearestCoordinate, lineString.coordinates[2])
+            let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+            #expect(nearestCoordinate == lineString.coordinates[2])
         }
     }
 
-    func testPointsOnJoints() {
+    @Test
+    func pointsOnJoints() async throws {
         let lines: [LineString] = [
-            LineString([
+            try #require(LineString([
                 Coordinate3D(latitude: 37.721259, longitude: -122.456161),
                 Coordinate3D(latitude: 37.720033, longitude: -122.457175),
                 Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-            ])!,
-            LineString([
+            ])),
+            try #require(LineString([
                 Coordinate3D(latitude: 31.728167, longitude: 26.279296),
                 Coordinate3D(latitude: 32.694865, longitude: 21.796875),
                 Coordinate3D(latitude: 29.993002, longitude: 18.808593),
@@ -71,8 +72,8 @@ final class NearestCoordinateOnLineTests: XCTestCase {
                 Coordinate3D(latitude: 36.527294, longitude: -1.669921),
                 Coordinate3D(latitude: 34.741612, longitude: -5.449218),
                 Coordinate3D(latitude: 32.990235, longitude: -8.789062),
-            ])!,
-            LineString([
+            ])),
+            try #require(LineString([
                 Coordinate3D(latitude: 51.522042, longitude: -0.109198),
                 Coordinate3D(latitude: 51.521942, longitude: -0.109230),
                 Coordinate3D(latitude: 51.521862, longitude: -0.109165),
@@ -86,35 +87,34 @@ final class NearestCoordinateOnLineTests: XCTestCase {
                 Coordinate3D(latitude: 51.519285, longitude: -0.108146),
                 Coordinate3D(latitude: 51.518624, longitude: -0.107899),
                 Coordinate3D(latitude: 51.517782, longitude: -0.107599),
-            ])!,
+            ])),
         ]
 
         for line in lines {
             for coordinate in line.coordinates {
-                let nearestCoordinate = line.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-                XCTAssertEqual(nearestCoordinate, coordinate)
+                let nearestCoordinate = try #require(line.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+                #expect(nearestCoordinate == coordinate)
             }
         }
     }
 
-    func testPointAlongLine() {
-        let lineString = LineString([
+    @Test
+    func pointAlongLine() async throws {
+        let lineString = try #require(LineString([
             Coordinate3D(latitude: 37.720033, longitude: -122.457175),
             Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-        ])!
+        ]))
         let coordinate = lineString.coordinateAlong(distance: 20.0)
-
-        let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-        XCTAssertEqual(coordinate, nearestCoordinate)
+        let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+        #expect(coordinate == nearestCoordinate)
     }
 
-    func testPointsOnSidesOfLines() {
-        let lineString = LineString([
+    @Test
+    func pointsOnSidesOfLines() async throws {
+        let lineString = try #require(LineString([
             Coordinate3D(latitude: 37.721259, longitude: -122.456161),
             Coordinate3D(latitude: 37.718242, longitude: -122.457175),
-        ])!
+        ]))
         let coordinates = [
             Coordinate3D(latitude: 37.718810, longitude: -122.457025),
             Coordinate3D(latitude: 37.719235, longitude: -122.457336),
@@ -123,26 +123,24 @@ final class NearestCoordinateOnLineTests: XCTestCase {
         ]
 
         for coordinate in coordinates {
-            let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-            XCTAssertNotEqual(nearestCoordinate, lineString.coordinates[0])
-            XCTAssertNotEqual(nearestCoordinate, lineString.coordinates[1])
+            let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+            #expect(nearestCoordinate != lineString.coordinates[0])
+            #expect(nearestCoordinate != lineString.coordinates[1])
         }
     }
 
-    func testLine() {
-        let lineString = LineString([
+    @Test
+    func line() async throws {
+        let lineString = try #require(LineString([
             Coordinate3D(latitude: 22.466878, longitude: -97.881317),
             Coordinate3D(latitude: 22.299261, longitude: -97.867584),
             Coordinate3D(latitude: 22.17596, longitude: -97.820892),
             Coordinate3D(latitude: 21.87042, longitude: -97.619019),
-        ])!
+        ]))
         let coordinate = Coordinate3D(latitude: 22.26241, longitude: -97.879944)
         let result = Coordinate3D(latitude: 22.271125217965366, longitude: -97.8569294559593)
-
-        let nearestCoordinate = lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate
-
-        XCTAssertEqual(nearestCoordinate, result)
+        let nearestCoordinate = try #require(lineString.nearestCoordinateOnLine(from: coordinate)?.coordinate)
+        #expect(nearestCoordinate == result)
     }
 
 }

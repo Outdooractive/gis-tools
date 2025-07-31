@@ -1,17 +1,18 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class AreaTests: XCTestCase {
+struct AreaTests {
 
-    func testArea() throws {
-        let polygon1 = try XCTUnwrap(Polygon([[
+    @Test
+    func area() async throws {
+        let polygon1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 100.0, y: 0.0),
             Coordinate3D(x: 100.0, y: 100.0),
             Coordinate3D(x: 0.0, y: 100.0),
             Coordinate3D(x: 0.0, y: 0.0)
         ]]))
-        let polygon2 = try XCTUnwrap(Polygon([[
+        let polygon2 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 100.0, y: 0.0),
             Coordinate3D(x: 100.0, y: 100.0),
@@ -25,8 +26,8 @@ final class AreaTests: XCTestCase {
             Coordinate3D(x: 25.0, y: 25.0)
         ]]))
 
-        XCTAssertEqual(polygon1.area, 10000.0, accuracy: 0.1)
-        XCTAssertEqual(polygon2.area, 7500.0, accuracy: 0.1)
+        #expect(abs(polygon1.area - 10000.0) < 0.1)
+        #expect(abs(polygon2.area - 7500.0) < 0.1)
     }
 
 }

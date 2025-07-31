@@ -1,21 +1,25 @@
 #if !os(Linux)
 import CoreLocation
 #endif
+import Foundation
 @testable import GISTools
+import Testing
 import XCTest
 
-final class RTreeTests: XCTestCase {
+struct RTreeTests {
 
-    func testEmpty() throws {
+    @Test
+    func empty() async throws {
         let nodes: [Point] = []
         let rTree = RTree(nodes)
         let objects = rTree.search(inBoundingBox: BoundingBox.world)
-        XCTAssertTrue(objects.isEmpty)
+        #expect(objects.isEmpty)
     }
 
     // MARK: -
 
-    func testSimplePoints4326() throws {
+    @Test
+    func simplePoints4326() async throws {
         var nodes: [Point] = []
         5.times {
             nodes.append(Point(Coordinate3D(
@@ -24,19 +28,20 @@ final class RTreeTests: XCTestCase {
         }
 
         let rTreeHilbert = RTree(nodes, nodeSize: 4)
-        XCTAssertEqual(rTreeHilbert.projection, .epsg4326)
+        #expect(rTreeHilbert.projection == .epsg4326)
         _testSimplePoints(rTreeHilbert)
 
         let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .byLatitude)
-        XCTAssertEqual(rTreeRandom.projection, .epsg4326)
+        #expect(rTreeRandom.projection == .epsg4326)
         _testSimplePoints(rTreeRandom)
 
         let rTreeAsInput = RTree(nodes, nodeSize: 4, sortOption: .unsorted)
-        XCTAssertEqual(rTreeAsInput.projection, .epsg4326)
+        #expect(rTreeAsInput.projection == .epsg4326)
         _testSimplePoints(rTreeAsInput)
     }
 
-    func testSimplePoints3857() throws {
+    @Test
+    func simplePoints3857() async throws {
         var nodes: [Point] = []
         5.times {
             nodes.append(Point(Coordinate3D(
@@ -46,15 +51,15 @@ final class RTreeTests: XCTestCase {
         }
 
         let rTreeHilbert = RTree(nodes, nodeSize: 4)
-        XCTAssertEqual(rTreeHilbert.projection, .epsg3857)
+        #expect(rTreeHilbert.projection == .epsg3857)
         _testSimplePoints(rTreeHilbert)
 
         let rTreeRandom = RTree(nodes, nodeSize: 4, sortOption: .byLatitude)
-        XCTAssertEqual(rTreeRandom.projection, .epsg3857)
+        #expect(rTreeRandom.projection == .epsg3857)
         _testSimplePoints(rTreeRandom)
 
         let rTreeAsInput = RTree(nodes, nodeSize: 4, sortOption: .unsorted)
-        XCTAssertEqual(rTreeAsInput.projection, .epsg3857)
+        #expect(rTreeAsInput.projection == .epsg3857)
         _testSimplePoints(rTreeAsInput)
     }
 
@@ -78,15 +83,14 @@ final class RTreeTests: XCTestCase {
         let objects1 = rTree.search(inBoundingBox: boundingBox)
         let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
 
-        XCTAssertEqual(objects1.count, objects2.count)
-        XCTAssertEqual(
-            objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
-            objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+        #expect(objects1.count == objects2.count)
+        #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
     }
 
     // MARK: -
 
-    func testRTree4326() throws {
+    @Test
+    func rTree4326() async throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 10 ... 1000).times {
@@ -97,20 +101,21 @@ final class RTreeTests: XCTestCase {
 
             // Also test some invalid node sizes
             let rTreeHilbert = RTree(nodes, nodeSize: Int.random(in: -4 ... 16))
-            XCTAssertEqual(rTreeHilbert.projection, .epsg4326)
+            #expect(rTreeHilbert.projection == .epsg4326)
             _testRTree(rTreeHilbert)
 
             let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .byLatitude)
-            XCTAssertEqual(rTreeRandom.projection, .epsg4326)
+            #expect(rTreeRandom.projection == .epsg4326)
             _testRTree(rTreeRandom)
 
             let rTreeAsInput = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .unsorted)
-            XCTAssertEqual(rTreeAsInput.projection, .epsg4326)
+            #expect(rTreeAsInput.projection == .epsg4326)
             _testRTree(rTreeAsInput)
         }
     }
 
-    func testRTree3857() throws {
+    @Test
+    func rTree3857() async throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 10 ... 1000).times {
@@ -122,15 +127,15 @@ final class RTreeTests: XCTestCase {
 
             // Also test some invalid node sizes
             let rTreeHilbert = RTree(nodes, nodeSize: Int.random(in: -4 ... 16))
-            XCTAssertEqual(rTreeHilbert.projection, .epsg3857)
+            #expect(rTreeHilbert.projection == .epsg3857)
             _testRTree(rTreeHilbert)
 
             let rTreeRandom = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .byLatitude)
-            XCTAssertEqual(rTreeRandom.projection, .epsg3857)
+            #expect(rTreeRandom.projection == .epsg3857)
             _testRTree(rTreeRandom)
 
             let rTreeAsInput = RTree(nodes, nodeSize: Int.random(in: -4 ... 16), sortOption: .unsorted)
-            XCTAssertEqual(rTreeAsInput.projection, .epsg3857)
+            #expect(rTreeAsInput.projection == .epsg3857)
             _testRTree(rTreeAsInput)
         }
     }
@@ -155,14 +160,13 @@ final class RTreeTests: XCTestCase {
         let objects1 = rTree.search(inBoundingBox: boundingBox)
         let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
 
-        XCTAssertEqual(
-            objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
-            objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+        #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
     }
 
     // MARK: -
 
-    func testAroundSearch4326() throws {
+    @Test
+    func aroundSearch4326() async throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 1000 ... 10000).times {
@@ -171,7 +175,7 @@ final class RTreeTests: XCTestCase {
                     longitude: Double.random(in: -10.0 ... 10.0))))
             }
             let rTree = RTree(nodes)
-            XCTAssertEqual(rTree.projection, .epsg4326)
+            #expect(rTree.projection == .epsg4326)
             _testAroundSearch(
                 rTree,
                 center: Coordinate3D(
@@ -180,7 +184,8 @@ final class RTreeTests: XCTestCase {
         }
     }
 
-    func testAroundSearch3857() throws {
+    @Test
+    func aroundSearch3857() async throws {
         100.times {
             var nodes: [Point] = []
             Int.random(in: 1000 ... 10000).times {
@@ -190,7 +195,7 @@ final class RTreeTests: XCTestCase {
                     projection: .epsg3857)))
             }
             let rTree = RTree(nodes)
-            XCTAssertEqual(rTree.projection, .epsg3857)
+            #expect(rTree.projection == .epsg3857)
             _testAroundSearch(
                 rTree,
                 center: Coordinate3D(
@@ -208,7 +213,7 @@ final class RTreeTests: XCTestCase {
         assertCorrectDistance(result: objects1, from: center, maximumDistance: maximumDistance)
         assertCorrectDistance(result: objects2, from: center, maximumDistance: maximumDistance)
 
-        XCTAssertEqual(objects1.map(\.object), objects2.map(\.object))
+        #expect(objects1.map(\.object) == objects2.map(\.object))
     }
 
     private func assertCorrectDistance(
@@ -218,12 +223,51 @@ final class RTreeTests: XCTestCase {
     {
         for (object, distance) in result {
             let objectDistance = object.coordinate.distance(from: coordinate)
-            XCTAssertEqual(objectDistance, distance)
-            XCTAssertLessThan(objectDistance, maximumDistance)
+            #expect(objectDistance == distance)
+            #expect(objectDistance < maximumDistance)
         }
     }
 
     // MARK: -
+
+    func _testNodeSizes() async throws {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: 5.0))
+
+        for nodeSize in 4 ... 512 {
+            for objectCount in stride(from: nodeSize * 2, to: 10000, by: 10) {
+                var nodes: [Point] = []
+                objectCount.times {
+                    nodes.append(Point(Coordinate3D(
+                        latitude: Double.random(in: -30.0 ... 30.0),
+                        longitude: Double.random(in: -30.0 ... 30.0))))
+                }
+                let rTree = RTree(nodes, nodeSize: nodeSize)
+
+                let startTime1 = CFAbsoluteTimeGetCurrent()
+                let objects1 = rTree.search(inBoundingBox: boundingBox)
+                let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
+
+                let startTime2 = CFAbsoluteTimeGetCurrent()
+                let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
+                let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
+
+                #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+
+                if timeElapsed1 < timeElapsed2 {
+                    print("\(nodeSize): \(objectCount)")
+                    break
+                }
+            }
+        }
+    }
+
+}
+
+// MARK: - Benchmarks
+
+final class RTreeBenchmarks: XCTestCase {
 
     let performanceInput: [Point] = {
         let count = 100_000
@@ -267,25 +311,33 @@ final class RTreeTests: XCTestCase {
         return options
     }()
 
-    func testPerformanceBuildTreeHilbert() throws {
+    func testPerformanceBuildTreeHilbert() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         })
     }
 
-    func testPerformanceBuildTreeLatitude() throws {
+    func testPerformanceBuildTreeLatitude() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         })
     }
 
-    func testPerformanceBuildTreeLongitude() throws {
+    func testPerformanceBuildTreeLongitude() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLongitude)
         })
     }
 
-    func testPerformanceBuildTreeUnsorted() throws {
+    func testPerformanceBuildTreeUnsorted() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         measure(options: performanceOptions, block: {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         })
@@ -293,28 +345,36 @@ final class RTreeTests: XCTestCase {
 
     //
 
-    func testPerformanceQuerySerial() throws {
+    func testPerformanceQuerySerial() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
             _ = rTree.searchSerial(inBoundingBox: performanceSearchBoundingBox)
         })
     }
 
-    func testPerformanceQueryHilbert() throws {
+    func testPerformanceQueryHilbert() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
         })
     }
 
-    func testPerformanceQueryLatitude() throws {
+    func testPerformanceQueryLatitude() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
         })
     }
 
-    func testPerformanceQueryUnsorted() throws {
+    func testPerformanceQueryUnsorted() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
@@ -323,7 +383,9 @@ final class RTreeTests: XCTestCase {
 
     //
 
-    func testPerformanceAroundSearchSerial() throws {
+    func testPerformanceAroundSearchSerial() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
@@ -331,7 +393,9 @@ final class RTreeTests: XCTestCase {
         })
     }
 
-    func testPerformanceAroundSearchHilbert() throws {
+    func testPerformanceAroundSearchHilbert() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
         measure(options: performanceOptions, block: {
@@ -339,7 +403,9 @@ final class RTreeTests: XCTestCase {
         })
     }
 
-    func testPerformanceAroundSearchLatitude() throws {
+    func testPerformanceAroundSearchLatitude() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
         measure(options: performanceOptions, block: {
@@ -347,49 +413,14 @@ final class RTreeTests: XCTestCase {
         })
     }
 
-    func testPerformanceAroundSearchUnsorted() throws {
+    func testPerformanceAroundSearchUnsorted() async throws {
+        try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
+
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
         measure(options: performanceOptions, block: {
             _ = rTree.search(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
         })
-    }
-
-    // MARK: -
-
-    func _testNodeSizes() throws {
-        let boundingBox = BoundingBox(
-            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
-            northEast: Coordinate3D(latitude: 5.0, longitude: 5.0))
-
-        for nodeSize in 4 ... 512 {
-            for objectCount in stride(from: nodeSize * 2, to: 10000, by: 10) {
-                var nodes: [Point] = []
-                objectCount.times {
-                    nodes.append(Point(Coordinate3D(
-                        latitude: Double.random(in: -30.0 ... 30.0),
-                        longitude: Double.random(in: -30.0 ... 30.0))))
-                }
-                let rTree = RTree(nodes, nodeSize: nodeSize)
-
-                let startTime1 = CFAbsoluteTimeGetCurrent()
-                let objects1 = rTree.search(inBoundingBox: boundingBox)
-                let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
-
-                let startTime2 = CFAbsoluteTimeGetCurrent()
-                let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
-                let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
-
-                XCTAssertEqual(
-                    objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude },
-                    objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
-
-                if timeElapsed1 < timeElapsed2 {
-                    print("\(nodeSize): \(objectCount)")
-                    break
-                }
-            }
-        }
     }
 
 }

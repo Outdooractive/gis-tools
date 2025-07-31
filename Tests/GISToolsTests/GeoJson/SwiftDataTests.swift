@@ -1,11 +1,11 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
 #if canImport(SwiftData)
 import SwiftData
 
-@available(macOS 14, iOS 17, watchOS 10, tvOS 17, *)
-final class SwiftDataTests: XCTestCase {
+struct SwiftDataTests {
 
     @Model
     class GeoJsonModel {
@@ -26,17 +26,18 @@ final class SwiftDataTests: XCTestCase {
     }()
 
     @MainActor
-    func testInsert() throws {
+    @Test(.disabled(if: CIHelper.isRunningInCI, "This test will currently not run in CI"))
+    func insert() async throws {
         let geoJsonTests: [Int: GeoJson] = [
-            0: try XCTUnwrap(Point(jsonString: PointTests.pointJson)),
-            1: try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson)),
-            2: try XCTUnwrap(Feature(jsonString: FeatureTests.featureJson)),
-            3: try XCTUnwrap(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)),
-            4: try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)),
-            5: try XCTUnwrap(LineString(jsonString: LineStringTests.lineStringJson)),
-            6: try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)),
-            7: try XCTUnwrap(Polygon(jsonString: PolygonTests.polygonJsonNoHole)),
-            8: try XCTUnwrap(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson)),
+            0: try #require(Point(jsonString: PointTests.pointJson)),
+            1: try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson)),
+            2: try #require(Feature(jsonString: FeatureTests.featureJson)),
+            3: try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)),
+            4: try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)),
+            5: try #require(LineString(jsonString: LineStringTests.lineStringJson)),
+            6: try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)),
+            7: try #require(Polygon(jsonString: PolygonTests.polygonJsonNoHole)),
+            8: try #require(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson)),
         ]
 
         // Insert
@@ -52,8 +53,8 @@ final class SwiftDataTests: XCTestCase {
                 sortBy: [SortDescriptor(\.id)])
             descriptor.fetchLimit = 1
 
-            let result = try XCTUnwrap(container.mainContext.fetch(descriptor).first?.geoJson)
-            XCTAssertTrue(result.isEqualTo(geoJson))
+            let result = try #require(container.mainContext.fetch(descriptor).first?.geoJson)
+            #expect(result.isEqualTo(geoJson))
         }
     }
 

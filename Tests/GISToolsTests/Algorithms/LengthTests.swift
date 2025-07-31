@@ -2,11 +2,12 @@
 import CoreLocation
 #endif
 @testable import GISTools
-import XCTest
+import Testing
 
-final class LengthTests: XCTestCase {
+struct LengthTests {
 
-    func testLength() {
+    @Test
+    func length() async throws {
         let coordinate1 = Coordinate3D(latitude: 39.984, longitude: -75.343)
         let coordinate2 = Coordinate3D(latitude: 39.123, longitude: -75.534)
         let expectedLength: CLLocationDistance = 97129.22118967835
@@ -16,8 +17,8 @@ final class LengthTests: XCTestCase {
             second: coordinate2,
             index: 0)
 
-        XCTAssertEqual(lineSegment.length, expectedLength, accuracy: 0.000001)
-        XCTAssertEqual(lineSegment.index, 0)
+        #expect(abs(lineSegment.length - expectedLength) < 0.000001)
+        #expect(lineSegment.index == 0)
     }
 
 }

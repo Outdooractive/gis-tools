@@ -1,9 +1,10 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class LineIntersectionTests: XCTestCase {
+struct LineIntersectionTests {
 
-    func testLineIntersection2Vertex() {
+    @Test
+    func lineIntersection2Vertex() async throws {
         let feature1 = Feature(
             LineString([
                 Coordinate3D(latitude: -12.768946, longitude: 124.584961),
@@ -18,14 +19,15 @@ final class LineIntersectionTests: XCTestCase {
         let intersections: [Point] = feature1.intersections(other: feature2)
         let results: [Point] = [Point(Coordinate3D(latitude: -14.835723, longitude: 125.583754))]
 
-        XCTAssertEqual(intersections.count, 1)
-        XCTAssertEqual(intersections[0].coordinate.latitude, results[0].coordinate.latitude, accuracy: 0.00001)
-        XCTAssertEqual(intersections[0].coordinate.longitude, results[0].coordinate.longitude, accuracy: 0.00001)
+        #expect(intersections.count == 1)
+        #expect(abs(intersections[0].coordinate.latitude - results[0].coordinate.latitude) < 0.00001)
+        #expect(abs(intersections[0].coordinate.longitude - results[0].coordinate.longitude) < 0.00001)
     }
 
-    func testLineIntersectionDouble() {
-        let lineString1 = TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble1")
-        let lineString2 = TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble2")
+    @Test
+    func lineIntersectionDouble() async throws {
+        let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble1")
+        let lineString2 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble2")
 
         let intersections: [Point] = lineString1.intersections(other: lineString2)
         let results: [Point] = [
@@ -33,7 +35,7 @@ final class LineIntersectionTests: XCTestCase {
             Point(Coordinate3D(latitude: -19.58857, longitude: 119.832884)),
         ]
 
-        XCTAssertEqual(intersections.count, 2)
+        #expect(intersections.count == 2)
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
@@ -43,13 +45,14 @@ final class LineIntersectionTests: XCTestCase {
                     continue outerloop
                 }
             }
-            XCTFail("Intersection missing: \(results[resultIndex])")
+            Issue.record("Intersection missing: \(results[resultIndex])")
         }
     }
 
-    func testLineIntersectionPolygonsWithHoles() {
-        let polygon1 = TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles1")
-        let polygon2 = TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles2")
+    @Test
+    func lineIntersectionPolygonsWithHoles() async throws {
+        let polygon1 = try TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles1")
+        let polygon2 = try TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles2")
 
         let intersections: [Point] = polygon1.intersections(other: polygon2)
         let results: [Point] = [
@@ -73,7 +76,7 @@ final class LineIntersectionTests: XCTestCase {
             Point(Coordinate3D(latitude: -18.187607, longitude: 123.320136)),
         ]
 
-        XCTAssertEqual(intersections.count, 18)
+        #expect(intersections.count == 18)
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
@@ -83,13 +86,14 @@ final class LineIntersectionTests: XCTestCase {
                     continue outerloop
                 }
             }
-            XCTFail("Intersection missing: \(results[resultIndex])")
+            Issue.record("Intersection missing: \(results[resultIndex])")
         }
     }
 
-    func testLineIntersectionMultiLineStrings() {
-        let multiLineString1 = TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings1")
-        let multiLineString2 = TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings2")
+    @Test
+    func lineIntersectionMultiLineStrings() async throws {
+        let multiLineString1 = try TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings1")
+        let multiLineString2 = try TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings2")
 
         let intersections: [Point] = multiLineString1.intersections(other: multiLineString2)
         let results: [Point] = [
@@ -105,7 +109,7 @@ final class LineIntersectionTests: XCTestCase {
             Point(Coordinate3D(latitude: -18.403004, longitude: 135.197772)),
         ]
 
-        XCTAssertEqual(intersections.count, 10)
+        #expect(intersections.count == 10)
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
@@ -115,13 +119,14 @@ final class LineIntersectionTests: XCTestCase {
                     continue outerloop
                 }
             }
-            XCTFail("Intersection missing: \(results[resultIndex])")
+            Issue.record("Intersection missing: \(results[resultIndex])")
         }
     }
 
-    func testLineIntersectionSameCoordinates() {
-        let lineString1 = TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates1")
-        let lineString2 = TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates2")
+    @Test
+    func lineIntersectionSameCoordinates() async throws {
+        let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates1")
+        let lineString2 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates2")
 
         let intersections: [Point] = lineString1.intersections(other: lineString2)
         let results: [Point] = [
@@ -129,7 +134,7 @@ final class LineIntersectionTests: XCTestCase {
             Point(Coordinate3D(latitude: -20, longitude: 130)),
         ]
 
-        XCTAssertEqual(intersections.count, 2)
+        #expect(intersections.count == 2)
 
         outerloop: for resultIndex in 0 ..< results.count {
             for intersectionIndex in 0 ..< intersections.count {
@@ -139,28 +144,29 @@ final class LineIntersectionTests: XCTestCase {
                     continue outerloop
                 }
             }
-            XCTFail("Intersection missing: \(results[resultIndex])")
+            Issue.record("Intersection missing: \(results[resultIndex])")
         }
     }
 
-    func testBooleanIntersection() {
+    @Test
+    func booleanIntersection() async throws {
         let segment1 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0),
                                    second: Coordinate3D(latitude: 1.0, longitude: 10.0))
         let segment2 = LineSegment(first: Coordinate3D(latitude: 2.0, longitude: 1.0),
                                    second: Coordinate3D(latitude: 2.0, longitude: 10.0))
-        XCTAssertFalse(segment1.intersects(segment2))
+        #expect(segment1.intersects(segment2) == false)
 
         let segment3 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 10.0),
                                    second: Coordinate3D(latitude: 10.0, longitude: 0.0))
         let segment4 = LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 0.0),
                                    second: Coordinate3D(latitude: 10.0, longitude: 10.0))
-        XCTAssertTrue(segment3.intersects(segment4))
+        #expect(segment3.intersects(segment4))
 
         let segment5 = LineSegment(first: Coordinate3D(latitude: -5.0, longitude: -5.0),
                                    second: Coordinate3D(latitude: 0.0, longitude: 0.0))
         let segment6 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0),
                                    second: Coordinate3D(latitude: 10.0, longitude: 10.0))
-        XCTAssertFalse(segment5.intersects(segment6))
+        #expect(segment5.intersects(segment6) == false)
     }
 
 }

@@ -2,29 +2,31 @@
 import CoreLocation
 #endif
 @testable import GISTools
-import XCTest
+import Testing
 
-final class FrechetDistanceTests: XCTestCase {
+struct FrechetDistanceTests {
 
-    func testFrechetDistance4326() throws {
+    @Test
+    func frechetDistance4326() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
-        let lineArc1 = try XCTUnwrap(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
-        let lineArc2 = try XCTUnwrap(point.lineArc(radius: 6000.0, bearing1: 20.0, bearing2: 60.0))
+        let lineArc1 = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
+        let lineArc2 = try #require(point.lineArc(radius: 6000.0, bearing1: 20.0, bearing2: 60.0))
 
         let distanceHaversine = lineArc1.frechetDistance(from: lineArc2, distanceFunction: .haversine)
         let distanceRhumbLine = lineArc1.frechetDistance(from: lineArc2, distanceFunction: .rhumbLine)
 
-        XCTAssertEqual(distanceHaversine, 1000.0, accuracy: 0.0001)
-        XCTAssertEqual(distanceRhumbLine, 1000.0, accuracy: 0.0001)
+        #expect(abs(distanceHaversine - 1000.0) < 0.0001)
+        #expect(abs(distanceRhumbLine - 1000.0) < 0.0001)
     }
 
-    func testFrechetDistance3857() throws {
+    @Test
+    func frechetDistance3857() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0)).projected(to: .epsg3857)
-        let lineArc1 = try XCTUnwrap(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
-        let lineArc2 = try XCTUnwrap(point.lineArc(radius: 6000.0, bearing1: 20.0, bearing2: 60.0))
+        let lineArc1 = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
+        let lineArc2 = try #require(point.lineArc(radius: 6000.0, bearing1: 20.0, bearing2: 60.0))
 
         let distanceEucliden = lineArc1.frechetDistance(from: lineArc2, distanceFunction: .euclidean)
-        XCTAssertEqual(distanceEucliden, 1000.0, accuracy: 2.0)
+        #expect(abs(distanceEucliden - 1000.0) < 2.0)
     }
 
 }
