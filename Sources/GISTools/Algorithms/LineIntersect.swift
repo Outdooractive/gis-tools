@@ -18,9 +18,8 @@ extension LineSegment {
     private func orientation(
         p: Coordinate3D,
         q: Coordinate3D,
-        r: Coordinate3D)
-        -> Orientation
-    {
+        r: Coordinate3D
+    ) -> Orientation {
         // See https://www.geeksforgeeks.org/orientation-3-ordered-points for details of below formula.
         let value = (q.latitude - p.latitude) * (r.longitude - q.longitude) - (q.longitude - p.longitude) * (r.latitude - q.latitude)
 
@@ -39,9 +38,8 @@ extension LineSegment {
     private func onSegment(
         p: Coordinate3D,
         q: Coordinate3D,
-        r: Coordinate3D)
-        -> Bool
-    {
+        r: Coordinate3D
+    ) -> Bool {
         if q.longitude <= max(p.longitude, r.longitude),
            q.longitude >= min(p.longitude, r.longitude),
            q.latitude <= max(p.latitude, r.latitude),

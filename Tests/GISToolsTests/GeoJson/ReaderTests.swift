@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class ReaderTests: XCTestCase {
+struct ReaderTests {
 
     private let pointJson = """
     {
@@ -11,28 +12,26 @@ final class ReaderTests: XCTestCase {
     }
     """
 
-    func testLoadJson() throws {
+    @Test
+    func loadJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
-        let someGeoJson = try XCTUnwrap(GeoJsonReader.geoJsonFrom(json: point.asJson))
+        let someGeoJson = try #require(GeoJsonReader.geoJsonFrom(json: point.asJson))
+        let castedPoint = try #require(someGeoJson as? Point)
 
-        XCTAssertEqual(someGeoJson.type, .point)
-        XCTAssertEqual(someGeoJson.projection, .epsg4326)
-
-        let castedPoint = try XCTUnwrap(someGeoJson as? Point)
-
-        XCTAssertEqual(castedPoint.asJsonString(prettyPrinted: true), point.asJsonString(prettyPrinted: true))
+        #expect(someGeoJson.type == .point)
+        #expect(someGeoJson.projection == .epsg4326)
+        #expect(castedPoint.asJsonString(prettyPrinted: true) == point.asJsonString(prettyPrinted: true))
     }
 
-    func testLoadString() throws {
-        let someGeoJson = try XCTUnwrap(GeoJsonReader.geoJsonFrom(jsonString: pointJson))
+    @Test
+    func loadString() async throws {
+        let someGeoJson = try #require(GeoJsonReader.geoJsonFrom(jsonString: pointJson))
+        let point = try #require(Point(jsonString: pointJson))
+        let castedPoint = try #require(someGeoJson as? Point)
 
-        XCTAssertEqual(someGeoJson.type, .point)
-        XCTAssertEqual(someGeoJson.projection, .epsg4326)
-
-        let point = try XCTUnwrap(Point(jsonString: pointJson))
-        let castedPoint = try XCTUnwrap(someGeoJson as? Point)
-
-        XCTAssertEqual(castedPoint.asJsonString(prettyPrinted: true), point.asJsonString(prettyPrinted: true))
+        #expect(someGeoJson.type == .point)
+        #expect(someGeoJson.projection == .epsg4326)
+        #expect(castedPoint.asJsonString(prettyPrinted: true) == point.asJsonString(prettyPrinted: true))
     }
 
 }

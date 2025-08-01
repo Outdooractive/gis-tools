@@ -32,13 +32,13 @@ This package makes some assumptions about what is equal, i.e. coordinates that a
 
 ## Requirements
 
-This package requires Swift 5.10 or higher (at least Xcode 14), and compiles on iOS (\>= iOS 13), macOS (\>= macOS 10.15), tvOS (\>= tvOS 13), watchOS (\>= watchOS 6) as well as Linux.
+This package requires Swift 6.0 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 14), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux.
 
 ## Installation with Swift Package Manager
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.8.2"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.13.2"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [

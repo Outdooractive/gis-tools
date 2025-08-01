@@ -15,9 +15,8 @@ extension Coordinate3D {
     ///    - bearing: The direction, ranging from -180 to 180 degrees from north
     public func rhumbDestination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Coordinate3D
-    {
+        bearing: CLLocationDegrees
+    ) -> Coordinate3D {
         switch projection {
         case .epsg4326:
             return _rhumbDestination(distance: distance, bearing: bearing)
@@ -30,9 +29,8 @@ extension Coordinate3D {
 
     private func _rhumbDestination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Coordinate3D
-    {
+        bearing: CLLocationDegrees
+    ) -> Coordinate3D {
         let destination = Coordinate3D.calculateRhumbDestination(from: self, distance: distance, bearing: bearing)
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)
@@ -56,9 +54,8 @@ extension Coordinate3D {
     private static func calculateRhumbDestination(
         from: Coordinate3D,
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Coordinate3D
-    {
+        bearing: CLLocationDegrees
+    ) -> Coordinate3D {
         let radius: Double = GISTool.earthRadius
 
         let delta: CLLocationDistance = distance / radius
@@ -107,9 +104,8 @@ extension Point {
     ///    - bearing: The direction, ranging from -180 to 180 degrees from north
     public func rhumbDestination(
         distance: CLLocationDistance,
-        bearing: CLLocationDegrees)
-        -> Point
-    {
+        bearing: CLLocationDegrees
+    ) -> Point {
         Point(coordinate.rhumbDestination(distance: distance, bearing: bearing))
     }
 

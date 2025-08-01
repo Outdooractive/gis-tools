@@ -49,6 +49,7 @@ public struct BoundingBox:
     /// Create a bounding box from `coordinates` and an optional padding.
     ///
     /// - Parameters:
+    ///    - coordinates: An array of coordinates for which to calculate the bounding box
     ///    - padding: The padding, in meters
     public init?(coordinates: [Coordinate3D], padding: CLLocationDistance = 0.0) {
         guard !coordinates.isEmpty else { return nil }
@@ -283,6 +284,7 @@ extension BoundingBox {
     /// Create a bounding box from `coordinates` and an optional padding.
     ///
     /// - Parameters:
+    ///    - coordinates: An array of coordinates for which to calculate the bounding box
     ///    - padding: The padding, in meters
     public init?(coordinates: [CLLocationCoordinate2D], padding: Double = 0.0) {
         self.init(coordinates: coordinates.map({ Coordinate3D($0) }), padding: padding)
@@ -302,6 +304,7 @@ extension BoundingBox {
     /// Create a bounding box from `locations` and an optional padding.
     ///
     /// - Parameters:
+    ///    - locations: An array of coordinates for which to calculate the bounding box
     ///    - padding: The padding, in meters
     public init?(locations: [CLLocation], padding: Double = 0.0) {
         self.init(coordinates: locations.map({ Coordinate3D($0) }), padding: padding)
@@ -668,9 +671,8 @@ extension BoundingBox {
     /// Combine two bounding boxes.
     public static func + (
         lhs: BoundingBox,
-        rhs: BoundingBox)
-        -> BoundingBox
-    {
+        rhs: BoundingBox
+    ) -> BoundingBox {
         let rhs = rhs.projected(to: lhs.projection)
 
         return BoundingBox(
@@ -701,9 +703,8 @@ extension BoundingBox: Equatable {
 
     public static func == (
         lhs: BoundingBox,
-        rhs: BoundingBox)
-        -> Bool
-    {
+        rhs: BoundingBox
+    ) -> Bool {
         lhs.projection == rhs.projection
             && lhs.northWest == rhs.northWest
             && lhs.southEast == rhs.southEast

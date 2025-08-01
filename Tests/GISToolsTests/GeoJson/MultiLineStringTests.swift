@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class MultiLineStringTests: XCTestCase {
+struct MultiLineStringTests {
 
     static let multiLineStringJson = """
     {
@@ -20,19 +21,26 @@ final class MultiLineStringTests: XCTestCase {
     }
     """
 
-    func testLoadJson() throws {
-        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
+    @Test
+    func loadJson() async throws {
+        let multiLineString = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
 
-        XCTAssertNotNil(multiLineString)
-        XCTAssertEqual(multiLineString.type, GeoJsonType.multiLineString)
-        XCTAssertEqual(multiLineString.projection, .epsg4326)
-        XCTAssertEqual(multiLineString.coordinates, [[Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)], [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)]])
-        XCTAssertEqual(multiLineString.foreignMember(for: "other"), "something else")
-        XCTAssertEqual(multiLineString[foreignMember: "other"], "something else")
+        #expect(multiLineString.type == GeoJsonType.multiLineString)
+        #expect(multiLineString.projection == .epsg4326)
+        #expect(multiLineString.coordinates == [[
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0)
+        ], [
+            Coordinate3D(latitude: 2.0, longitude: 102.0),
+            Coordinate3D(latitude: 3.0, longitude: 103.0)
+        ]])
+        #expect(multiLineString.foreignMember(for: "other") == "something else")
+        #expect(multiLineString[foreignMember: "other"] == "something else")
     }
 
-    func testCreateJson() throws {
-        let multiLineString = try XCTUnwrap(MultiLineString([
+    @Test
+    func createJson() async throws {
+        let multiLineString = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 0.0, longitude: 100.0),
                 Coordinate3D(latitude: 1.0, longitude: 101.0)
@@ -42,28 +50,30 @@ final class MultiLineStringTests: XCTestCase {
                 Coordinate3D(latitude: 3.0, longitude: 103.0)
             ]
         ]))
-        let string = try XCTUnwrap(multiLineString.asJsonString())
+        let string = try #require(multiLineString.asJsonString())
 
-        XCTAssertEqual(multiLineString.projection, .epsg4326)
-        XCTAssert(string.contains("\"type\":\"MultiLineString\""))
-        XCTAssert(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
+        #expect(multiLineString.projection == .epsg4326)
+        #expect(string.contains("\"type\":\"MultiLineString\""))
+        #expect(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
     }
 
-    func testEncodable() throws {
-        let multiLineString = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
+    @Test
+    func encodable() async throws {
+        let multiLineString = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        XCTAssertEqual(try encoder.encode(multiLineString), multiLineString.asJsonData(prettyPrinted: true))
+        #expect(try encoder.encode(multiLineString) == multiLineString.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodable() throws {
-        let multiLineStringData = try XCTUnwrap(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)?.asJsonData(prettyPrinted: true))
+    @Test
+    func decodable() async throws {
+        let multiLineStringData = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)?.asJsonData(prettyPrinted: true))
         let multiLineString = try JSONDecoder().decode(MultiLineString.self, from: multiLineStringData)
 
-        XCTAssertEqual(multiLineString.projection, .epsg4326)
-        XCTAssertEqual(multiLineStringData, multiLineString.asJsonData(prettyPrinted: true))
+        #expect(multiLineString.projection == .epsg4326)
+        #expect(multiLineStringData == multiLineString.asJsonData(prettyPrinted: true))
     }
 
 }

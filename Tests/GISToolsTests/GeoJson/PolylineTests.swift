@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class PolylineTests: XCTestCase {
+struct PolylineTests {
 
     let coordinates: [Coordinate3D] = [
         .init(latitude: 38.5, longitude: -120.2),
@@ -15,16 +16,18 @@ final class PolylineTests: XCTestCase {
     ]
     let encodedPolyline = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
 
-    func testEncodePolyline() throws {
+    @Test
+    func encodePolyline() async throws {
         for (i, coordinate) in coordinates.enumerated() {
-            XCTAssertEqual(Polyline.encode(coordinates: [coordinate]), polylines[i])
+            #expect(Polyline.encode(coordinates: [coordinate]) == polylines[i])
         }
 
-        XCTAssertEqual(coordinates.encodePolyline(), encodedPolyline)
+        #expect(coordinates.encodePolyline() == encodedPolyline)
     }
 
-    func testDecodePolyline() throws {
-        XCTAssertEqual(encodedPolyline.decodePolyline(), coordinates)
+    @Test
+    func decodePolyline() async throws {
+        #expect(encodedPolyline.decodePolyline() == coordinates)
     }
 
 }

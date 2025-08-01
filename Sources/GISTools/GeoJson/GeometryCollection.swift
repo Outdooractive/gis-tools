@@ -81,7 +81,9 @@ public struct GeometryCollection: GeoJsonGeometry {
 extension GeometryCollection {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         mapGeometries { geometry in
             var geometry = geometry
             geometry.updateBoundingBox(onlyIfNecessary: ifNecessary)
@@ -118,9 +120,8 @@ extension GeometryCollection: Equatable {
 
     public static func ==(
         lhs: GeometryCollection,
-        rhs: GeometryCollection)
-        -> Bool
-    {
+        rhs: GeometryCollection
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.geometries.elementsEqual(rhs.geometries, by: { (left, right) -> Bool in
                 return left.isEqualTo(right)
@@ -152,7 +153,10 @@ extension GeometryCollection {
     /// Insert a GeoJsonGeometry into the receiver.
     ///
     /// - note: `geometry` must be in the same projection as the receiver.
-    public mutating func insertGeometry(_ geometry: GeoJsonGeometry, atIndex index: Int) {
+    public mutating func insertGeometry(
+        _ geometry: GeoJsonGeometry,
+        atIndex index: Int
+    ) {
         guard geometries.count == 0 || projection == geometry.projection else { return }
 
         if index < geometries.count {

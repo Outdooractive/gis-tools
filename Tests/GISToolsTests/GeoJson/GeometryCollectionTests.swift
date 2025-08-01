@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class GeometryCollectionTests: XCTestCase {
+struct GeometryCollectionTests {
 
     static let geometryCollectionJson = """
     {
@@ -20,44 +21,50 @@ final class GeometryCollectionTests: XCTestCase {
     }
     """
 
-    func testLoadJson() throws {
-        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
+    @Test
+    func loadJson() async throws {
+        let geometryCollection = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
 
-        XCTAssertNotNil(geometryCollection)
-        XCTAssertEqual(geometryCollection.type, GeoJsonType.geometryCollection)
-        XCTAssertEqual(geometryCollection.projection, .epsg4326)
-        XCTAssertEqual(geometryCollection.geometries.count, 2)
-        XCTAssertEqual(geometryCollection.foreignMember(for: "other"), "something else")
-        XCTAssertEqual(geometryCollection[foreignMember: "other"], "something else")
+        #expect(geometryCollection.type == GeoJsonType.geometryCollection)
+        #expect(geometryCollection.projection == .epsg4326)
+        #expect(geometryCollection.geometries.count == 2)
+        #expect(geometryCollection.foreignMember(for: "other") == "something else")
+        #expect(geometryCollection[foreignMember: "other"] == "something else")
     }
 
-    func testCreateJson() throws {
+    @Test
+    func createJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
-        let lineString = try XCTUnwrap(LineString([Coordinate3D(latitude: 0.0, longitude: 101.0), Coordinate3D(latitude: 1.0, longitude: 102.0)]))
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 102.0)
+        ]))
         let geometryCollection = GeometryCollection([point, lineString])
-        let string = try XCTUnwrap(geometryCollection.asJsonString())
+        let string = try #require(geometryCollection.asJsonString())
 
-        XCTAssertEqual(geometryCollection.projection, .epsg4326)
-        XCTAssert(string.contains("\"type\":\"GeometryCollection\""))
-        XCTAssert(string.contains("\"coordinates\":[100,0]"))
-        XCTAssert(string.contains("\"coordinates\":[[101,0],[102,1]]"))
+        #expect(geometryCollection.projection == .epsg4326)
+        #expect(string.contains("\"type\":\"GeometryCollection\""))
+        #expect(string.contains("\"coordinates\":[100,0]"))
+        #expect(string.contains("\"coordinates\":[[101,0],[102,1]]"))
     }
 
-    func testEncodable() throws {
-        let geometryCollection = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
+    @Test
+    func encodable() async throws {
+        let geometryCollection = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        XCTAssertEqual(try encoder.encode(geometryCollection), geometryCollection.asJsonData(prettyPrinted: true))
+        #expect(try encoder.encode(geometryCollection) == geometryCollection.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodable() throws {
-        let geometryCollectionData = try XCTUnwrap(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)?.asJsonData(prettyPrinted: true))
+    @Test
+    func decodable() async throws {
+        let geometryCollectionData = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)?.asJsonData(prettyPrinted: true))
         let geometryCollection = try JSONDecoder().decode(GeometryCollection.self, from: geometryCollectionData)
 
-        XCTAssertEqual(geometryCollection.projection, .epsg4326)
-        XCTAssertEqual(geometryCollectionData, geometryCollection.asJsonData(prettyPrinted: true))
+        #expect(geometryCollection.projection == .epsg4326)
+        #expect(geometryCollectionData == geometryCollection.asJsonData(prettyPrinted: true))
     }
 
 }

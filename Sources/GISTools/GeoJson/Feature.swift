@@ -108,8 +108,8 @@ public struct Feature:
         _ geometry: GeoJsonGeometry,
         id: Identifier? = nil,
         properties: [String: Sendable] = [:],
-        calculateBoundingBox: Bool = false)
-    {
+        calculateBoundingBox: Bool = false
+    ) {
         self.geometry = geometry
         self.id = id
         self.properties = properties
@@ -171,7 +171,9 @@ public struct Feature:
 extension Feature {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         geometry.updateBoundingBox(onlyIfNecessary: ifNecessary)
 
         if boundingBox != nil && ifNecessary { return boundingBox }
@@ -200,9 +202,8 @@ extension Feature: Equatable {
 
     public static func ==(
         lhs: Feature,
-        rhs: Feature)
-        -> Bool
-    {
+        rhs: Feature
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.geometry.isEqualTo(rhs.geometry)
             && lhs.id == rhs.id

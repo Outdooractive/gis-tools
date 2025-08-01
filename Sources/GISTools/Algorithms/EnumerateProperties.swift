@@ -8,7 +8,9 @@ extension FeatureCollection {
     /// Enumerate over all Feature properties in the FeatureCollection.
     ///
     /// - Parameter callback: The callback function, called for each Feature with Feature index and properties
-    public func enumerateProperties(_ callback: (_ featureIndex: Int, _ properties: [String: Sendable]) -> Void)  {
+    public func enumerateProperties(
+        _ callback: (_ featureIndex: Int, _ properties: [String: Sendable]) -> Void
+    ) {
         for (featureIndex, feature) in features.enumerated() {
             callback(featureIndex, feature.properties)
         }

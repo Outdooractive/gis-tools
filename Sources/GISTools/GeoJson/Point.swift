@@ -132,9 +132,8 @@ extension Point: Equatable {
 
     public static func ==(
         lhs: Point,
-        rhs: Point)
-        -> Bool
-    {
+        rhs: Point
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.coordinate == rhs.coordinate
     }

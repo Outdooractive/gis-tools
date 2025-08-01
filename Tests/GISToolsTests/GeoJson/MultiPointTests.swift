@@ -1,7 +1,8 @@
+import Foundation
 @testable import GISTools
-import XCTest
+import Testing
 
-final class MultiPointTests: XCTestCase {
+struct MultiPointTests {
 
     static let multiPointJson = """
     {
@@ -14,41 +15,50 @@ final class MultiPointTests: XCTestCase {
     }
     """
 
-    func testLoadJson() throws {
-        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson))
+    @Test
+    func loadJson() async throws {
+        let multiPoint = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson))
 
-        XCTAssertNotNil(multiPoint)
-        XCTAssertEqual(multiPoint.type, GeoJsonType.multiPoint)
-        XCTAssertEqual(multiPoint.projection, .epsg4326)
-        XCTAssertEqual(multiPoint.coordinates, [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)])
-        XCTAssertEqual(multiPoint.foreignMember(for: "other"), "something else")
-        XCTAssertEqual(multiPoint[foreignMember: "other"], "something else")
+        #expect(multiPoint.type == GeoJsonType.multiPoint)
+        #expect(multiPoint.projection == .epsg4326)
+        #expect(multiPoint.coordinates == [
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0)
+        ])
+        #expect(multiPoint.foreignMember(for: "other") == "something else")
+        #expect(multiPoint[foreignMember: "other"] == "something else")
     }
 
-    func testCreateJson() throws {
-        let multiPoint = try XCTUnwrap(MultiPoint([Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)]))
-        let string = try XCTUnwrap(multiPoint.asJsonString())
+    @Test
+    func createJson() async throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0)
+        ]))
+        let string = try #require(multiPoint.asJsonString())
 
-        XCTAssertEqual(multiPoint.projection, .epsg4326)
-        XCTAssert(string.contains("\"type\":\"MultiPoint\""))
-        XCTAssert(string.contains("\"coordinates\":[[100,0],[101,1]]"))
+        #expect(multiPoint.projection == .epsg4326)
+        #expect(string.contains("\"type\":\"MultiPoint\""))
+        #expect(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
-    func testEncodable() throws {
-        let multiPoint = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson))
+    @Test
+    func encodable() async throws {
+        let multiPoint = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson))
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-        XCTAssertEqual(try encoder.encode(multiPoint), multiPoint.asJsonData(prettyPrinted: true))
+        #expect(try encoder.encode(multiPoint) == multiPoint.asJsonData(prettyPrinted: true))
     }
 
-    func testDecodable() throws {
-        let multiPointData = try XCTUnwrap(MultiPoint(jsonString: MultiPointTests.multiPointJson)?.asJsonData(prettyPrinted: true))
+    @Test
+    func decodable() async throws {
+        let multiPointData = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson)?.asJsonData(prettyPrinted: true))
         let multiPoint = try JSONDecoder().decode(MultiPoint.self, from: multiPointData)
 
-        XCTAssertEqual(multiPoint.projection, .epsg4326)
-        XCTAssertEqual(multiPointData, multiPoint.asJsonData(prettyPrinted: true))
+        #expect(multiPoint.projection == .epsg4326)
+        #expect(multiPointData == multiPoint.asJsonData(prettyPrinted: true))
     }
 
 }

@@ -134,7 +134,9 @@ public struct FeatureCollection:
 extension FeatureCollection {
 
     @discardableResult
-    public mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool = true) -> BoundingBox? {
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
         mapFeatures { feature in
             var feature = feature
             feature.updateBoundingBox(onlyIfNecessary: ifNecessary)
@@ -172,9 +174,8 @@ extension FeatureCollection: Equatable {
 
     public static func ==(
         lhs: FeatureCollection,
-        rhs: FeatureCollection)
-        -> Bool
-    {
+        rhs: FeatureCollection
+    ) -> Bool {
         return lhs.projection == rhs.projection
             && lhs.features == rhs.features
     }
@@ -204,7 +205,10 @@ extension FeatureCollection {
     /// Insert a Feature into the receiver.
     ///
     /// - note: `feature` must be in the same projection as the receiver.
-    public mutating func insertFeature(_ feature: Feature, atIndex index: Int) {
+    public mutating func insertFeature(
+        _ feature: Feature,
+        atIndex index: Int
+    ) {
         guard features.count == 0 || projection == feature.projection else { return }
 
         if index < features.count {

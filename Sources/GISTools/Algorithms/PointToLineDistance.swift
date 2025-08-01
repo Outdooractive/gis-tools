@@ -24,19 +24,13 @@ extension LineString {
 
     /// Returns the minimum distance between a *Point* and the receiver, being the distance
     /// from a line the minimum distance between the point and any segment of the line.
-    public func distanceFrom(
-        point: Point)
-        -> CLLocationDistance
-    {
+    public func distanceFrom(point: Point) -> CLLocationDistance {
         distanceFrom(coordinate: point.coordinate)
     }
 
     /// Returns the minimum distance between a coordinate and the receiver, being the distance
     /// from a line the minimum distance between the coordinate and any segment of the line.
-    public func distanceFrom(
-        coordinate: Coordinate3D)
-        -> CLLocationDistance
-    {
+    public func distanceFrom(coordinate: Coordinate3D) -> CLLocationDistance {
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
 
         for segment in lineSegments {

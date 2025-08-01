@@ -30,9 +30,8 @@ extension GeoJson {
     ///    - anchor: The anchor from which the scaling will occur
     public func transformedScale(
         factor: Double,
-        anchor: ScaleAnchor = .centroid)
-        -> Self
-    {
+        anchor: ScaleAnchor = .centroid
+    ) -> Self {
         guard factor != 1.0 else { return self }
 
         var originIsPoint = false
@@ -63,8 +62,8 @@ extension GeoJson {
     ///    - anchor: The anchor from which the scaling will occur
     public mutating func transformScale(
         factor: Double,
-        anchor: ScaleAnchor = .centroid)
-    {
+        anchor: ScaleAnchor = .centroid
+    ) {
         self = transformedScale(factor: factor, anchor: anchor)
     }
 
@@ -72,9 +71,8 @@ extension GeoJson {
 
     private func scaled(
         factor: Double,
-        anchor: ScaleAnchor = .centroid)
-        -> Self
-    {
+        anchor: ScaleAnchor = .centroid
+    ) -> Self {
         guard let origin = defineOrigin(anchor: anchor) else { return self }
 
         return transformedCoordinates({ (coordinate) in

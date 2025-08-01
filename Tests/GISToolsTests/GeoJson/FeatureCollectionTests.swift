@@ -205,7 +205,7 @@ struct FeatureCollectionTests {
 
         var result: [(Int, [String: Sendable])] = []
         featureCollection.enumerateProperties { featureIndex, properties in
-            #expect(!properties.isEmpty)
+            #expect(properties.isEmpty == false)
             result.append((featureIndex, properties))
         }
 

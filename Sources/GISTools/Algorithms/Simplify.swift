@@ -19,9 +19,8 @@ extension GeoJson {
     /// - Returns: A new simplified GeoJson
     public func simplified(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false)
-        -> Self
-    {
+        highQuality: Bool = false
+    ) -> Self {
         switch self {
         case let lineString as LineString:
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
@@ -87,12 +86,10 @@ extension GeoJson {
     /// - Parameters:
     ///    - tolerance: Affects the amount of simplification (in meters)
     ///    - highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
-    ///
-    /// - returns: A new simplified GeoJson
     public mutating func simplify(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false)
-    {
+        highQuality: Bool = false
+    ) {
         self = simplified(
             tolerance: tolerance,
             highQuality: highQuality)
@@ -104,9 +101,8 @@ extension Ring {
 
     fileprivate func simplified(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false)
-        -> Ring
-    {
+        highQuality: Bool = false
+    ) -> Ring {
         guard coordinates.count > 3,
               tolerance > 0.0
         else { return self }
@@ -163,9 +159,8 @@ public enum Simplify {
     public static func simplify(
         coordinates: [Coordinate3D],
         tolerance: CLLocationDegrees,
-        highQuality: Bool = false)
-        -> [Coordinate3D]
-    {
+        highQuality: Bool = false
+    ) -> [Coordinate3D] {
         guard coordinates.count > 2 else { return coordinates }
 
         let sqTolerance: Double = tolerance * tolerance
@@ -185,9 +180,8 @@ public enum Simplify {
     fileprivate static func simplify(
         coordinates: [Coordinate3D],
         toleranceInMeters: CLLocationDistance = 1.0,
-        highQuality: Bool = false)
-        -> [Coordinate3D]
-    {
+        highQuality: Bool = false
+    ) -> [Coordinate3D] {
         guard coordinates.count > 2,
               let firstCoordinate = coordinates.first
         else { return coordinates }
@@ -213,9 +207,8 @@ public enum Simplify {
     // simplification using Ramer-Douglas-Peucker algorithm
     private static func simplifyDouglasPeucker(
         coordinates: [Coordinate3D],
-        tolerance: Double)
-        -> [Coordinate3D]
-    {
+        tolerance: Double
+    ) -> [Coordinate3D] {
         guard coordinates.count > 2 else { return coordinates }
 
         let last: Int = coordinates.count - 1
@@ -235,9 +228,8 @@ public enum Simplify {
 
     private static func simplifyRadialDistance(
         coordinates: [Coordinate3D],
-        tolerance: Double)
-        -> [Coordinate3D]
-    {
+        tolerance: Double
+    ) -> [Coordinate3D] {
         guard var previousCoordinate = coordinates.first else { return coordinates }
 
         var newCoordinates: [Coordinate3D] = [previousCoordinate]
@@ -265,8 +257,8 @@ public enum Simplify {
         first: Int,
         last: Int,
         tolerance: Double,
-        simplified: inout [Coordinate3D])
-    {
+        simplified: inout [Coordinate3D]
+    ) {
         guard last - first > 1 else { return }
 
         var maxSqDistance: Double = tolerance
@@ -311,9 +303,8 @@ public enum Simplify {
     private static func getSQSegDist(
         p: Coordinate3D,
         p1: Coordinate3D,
-        p2: Coordinate3D)
-        -> Double
-    {
+        p2: Coordinate3D
+    ) -> Double {
         var longitude: CLLocationDegrees = p1.longitude
         var latitude: CLLocationDegrees = p1.latitude
         var dLongitude: CLLocationDegrees = p2.longitude - longitude
@@ -340,9 +331,8 @@ public enum Simplify {
     // square distance between 2 points
     private static func getSqDist(
         p1: Coordinate3D,
-        p2: Coordinate3D)
-        -> Double
-    {
+        p2: Coordinate3D
+    ) -> Double {
         let dx = p1.longitude - p2.longitude
         let dy = p1.latitude - p2.latitude
         return (dx * dx) + (dy * dy)

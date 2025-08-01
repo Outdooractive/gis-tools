@@ -188,9 +188,8 @@ extension Polygon: Equatable {
 
     public static func ==(
         lhs: Polygon,
-        rhs: Polygon)
-        -> Bool
-    {
+        rhs: Polygon
+    ) -> Bool {
         // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates

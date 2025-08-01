@@ -17,9 +17,8 @@ extension PointGeometry {
     /// - Returns: *true* if the points overlap, *false* otherwise.
     public func isOverlapping(
         with other: PointGeometry,
-        tolerance: CLLocationDegrees = 0.0)
-        -> Bool
-    {
+        tolerance: CLLocationDegrees = 0.0
+    ) -> Bool {
         let other = other.projected(to: projection)
 
         guard !isEqualTo(other) else { return false }
@@ -60,9 +59,8 @@ extension LineStringGeometry {
     /// - Returns: *true* if the points overlap, *false* otherwise.
     public func isOverlapping(
         with other: LineStringGeometry,
-        tolerance: CLLocationDegrees = 0.0)
-        -> Bool
-    {
+        tolerance: CLLocationDegrees = 0.0
+    ) -> Bool {
         let other = other.projected(to: projection)
 
         guard !isEqualTo(other) else { return false }
@@ -96,9 +94,8 @@ extension PolygonGeometry {
     /// - Returns: *true* if the points overlap, *false* otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
-        tolerance: CLLocationDegrees = 0.0)
-        -> Bool
-    {
+        tolerance: CLLocationDegrees = 0.0
+    ) -> Bool {
         let other = other.projected(to: projection)
 
         guard !isEqualTo(other) else { return false }
@@ -132,9 +129,8 @@ extension Feature {
     /// - Returns: *true* if the points overlap, *false* otherwise.
     public func isOverlapping(
         with other: Feature,
-        tolerance: CLLocationDegrees = 0.0)
-        -> Bool
-    {
+        tolerance: CLLocationDegrees = 0.0
+    ) -> Bool {
         let other = other.projected(to: projection)
 
         if let first = self.geometry as? PointGeometry,

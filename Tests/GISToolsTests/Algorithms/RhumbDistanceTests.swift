@@ -2,11 +2,12 @@
 import CoreLocation
 #endif
 @testable import GISTools
-import XCTest
+import Testing
 
-final class RhumbDistanceTests: XCTestCase {
+struct RhumbDistanceTests {
 
-    func testDistance() {
+    @Test
+    func distance() async throws {
         let coordinate1 = Coordinate3D(latitude: 39.984, longitude: -75.343)
         let coordinate2 = Coordinate3D(latitude: 39.123, longitude: -75.534)
         let expectedDistance1: CLLocationDistance = 97129.239
@@ -23,10 +24,10 @@ final class RhumbDistanceTests: XCTestCase {
         let coordinate8 = Coordinate3D(latitude: -18.5, longitude: -541.5)
         let expectedDistance4: CLLocationDistance = 307_306.293
 
-        XCTAssertEqual(coordinate1.rhumbDistance(from: coordinate2), expectedDistance1, accuracy: 0.001)
-        XCTAssertEqual(coordinate3.rhumbDistance(from: coordinate4), expectedDistance2, accuracy: 0.001)
-        XCTAssertEqual(coordinate5.rhumbDistance(from: coordinate6), expectedDistance3, accuracy: 0.001)
-        XCTAssertEqual(coordinate7.rhumbDistance(from: coordinate8), expectedDistance4, accuracy: 0.001)
+        #expect(abs(coordinate1.rhumbDistance(from: coordinate2) - expectedDistance1) < 0.001)
+        #expect(abs(coordinate3.rhumbDistance(from: coordinate4) - expectedDistance2) < 0.001)
+        #expect(abs(coordinate5.rhumbDistance(from: coordinate6) - expectedDistance3) < 0.001)
+        #expect(abs(coordinate7.rhumbDistance(from: coordinate8) - expectedDistance4) < 0.001)
     }
 
 }

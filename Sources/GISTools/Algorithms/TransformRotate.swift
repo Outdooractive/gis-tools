@@ -15,9 +15,8 @@ extension GeoJson {
     ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
     public func transformedRotate(
         angle: CLLocationDegrees,
-        pivot: Coordinate3D? = nil)
-        -> Self
-    {
+        pivot: Coordinate3D? = nil
+    ) -> Self {
         guard angle != 0.0 else { return self }
 
         guard let pivot = pivot?.projected(to: projection) ?? centroid?.coordinate else { return self }
@@ -41,9 +40,8 @@ extension GeoJson {
     ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
     public func transformedRotate(
         angle: CLLocationDegrees,
-        pivot: Point? = nil)
-        -> Self
-    {
+        pivot: Point? = nil
+    ) -> Self {
         transformedRotate(angle: angle, pivot: pivot?.coordinate)
     }
 
@@ -55,8 +53,8 @@ extension GeoJson {
     ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
     public mutating func transformRotate(
         angle: CLLocationDegrees,
-        pivot: Coordinate3D? = nil)
-    {
+        pivot: Coordinate3D? = nil
+    ) {
         self = transformedRotate(angle: angle, pivot: pivot)
     }
 
@@ -68,8 +66,8 @@ extension GeoJson {
     ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
     public mutating func transformRotate(
         angle: CLLocationDegrees,
-        pivot: Point? = nil)
-    {
+        pivot: Point? = nil
+    ) {
         transformRotate(angle: angle, pivot: pivot?.coordinate)
     }
 

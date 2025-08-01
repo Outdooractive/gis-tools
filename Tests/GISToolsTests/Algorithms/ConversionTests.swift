@@ -1,40 +1,39 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class ConversionTests: XCTestCase {
+struct ConversionTests {
 
-    func testMetersPerPixelAtEquator() {
+    @Test
+    func metersPerPixelAtEquator() async throws {
         var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
         mppAtZoomLevels[0] = 156_543.03392804096
 
         for zoom in 1...20 {
             mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
 
-            XCTAssertEqual(GISTool.metersPerPixel(atZoom: zoom),
-                           mppAtZoomLevels[zoom],
-                           accuracy: 0.00001)
+            #expect(abs(GISTool.metersPerPixel(atZoom: zoom) - mppAtZoomLevels[zoom]) < 0.00001)
         }
     }
 
-    func testMetersPerPixelAt45() {
+    @Test
+    func metersPerPixelAt45() async throws {
         var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
         mppAtZoomLevels[0] = 110_692.6408380335
 
         for zoom in 1...20 {
             mppAtZoomLevels[zoom] = mppAtZoomLevels[zoom - 1] / 2.0
 
-            XCTAssertEqual(GISTool.metersPerPixel(atZoom: zoom, latitude: 45.0),
-                           mppAtZoomLevels[zoom],
-                           accuracy: 0.00001)
+            #expect(abs(GISTool.metersPerPixel(atZoom: zoom, latitude: 45.0) - mppAtZoomLevels[zoom]) < 0.00001)
         }
     }
 
-    func testMetersAtLatitude() throws {
+    @Test
+    func metersAtLatitude() async throws {
         let meters = 10000.0
-        let degreesLatitude1 = try XCTUnwrap(GISTool.convert(length: meters, from: .meters, to: .degrees))
+        let degreesLatitude1 = try #require(GISTool.convert(length: meters, from: .meters, to: .degrees))
         let degreesLatitude2 = GISTool.degrees(fromMeters: meters, atLatitude: 0.0).latitudeDegrees
 
-        XCTAssertEqual(degreesLatitude1, degreesLatitude2, accuracy: 0.00000001)
+        #expect(abs(degreesLatitude1 - degreesLatitude2) < 0.00000001)
     }
 
 }

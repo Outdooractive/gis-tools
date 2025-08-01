@@ -1,121 +1,117 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class LineOverlapTests: XCTestCase {
+struct LineOverlapTests {
 
-    func testSimple1() {
-        let lineString1 = TestData.lineString(package: "LineOverlap", name: "LineOverlap1_1")
-        let lineString2 = TestData.lineString(package: "LineOverlap", name: "LineOverlap1_2")
-
-        let overlappingSegments = lineString1.overlappingSegments(with: lineString2)
-
-        XCTAssertEqual(overlappingSegments.count, 2)
-
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
-    }
-
-    func testSimple2() {
-        let lineString1 = TestData.lineString(package: "LineOverlap", name: "LineOverlap2_1")
-        let lineString2 = TestData.lineString(package: "LineOverlap", name: "LineOverlap2_2")
+    @Test
+    func simple1() async throws {
+        let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap1_1")
+        let lineString2 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap1_2")
 
         let overlappingSegments = lineString1.overlappingSegments(with: lineString2)
-
-        XCTAssertEqual(overlappingSegments.count, 2)
-
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
+        #expect(overlappingSegments.count == 2)
+        #expect(overlappingSegments[0].second == overlappingSegments[1].first)
+        #expect(overlappingSegments[0].first == Coordinate3D(latitude: -30.0, longitude: 125.0))
+        #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
-    func testSimple3() {
-        let lineString1 = TestData.lineString(package: "LineOverlap", name: "LineOverlap3_1")
-        let lineString2 = TestData.lineString(package: "LineOverlap", name: "LineOverlap3_2")
+    @Test
+    func simple2() async throws {
+        let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap2_1")
+        let lineString2 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap2_2")
 
         let overlappingSegments = lineString1.overlappingSegments(with: lineString2)
-
-        XCTAssertEqual(overlappingSegments.count, 2)
-
-        XCTAssertEqual(overlappingSegments[0].second, overlappingSegments[1].first)
-        XCTAssertEqual(overlappingSegments[0].first, Coordinate3D(latitude: -30.0, longitude: 125.0))
-        XCTAssertEqual(overlappingSegments[1].second, Coordinate3D(latitude: -35.0, longitude: 145.0))
+        #expect(overlappingSegments.count == 2)
+        #expect(overlappingSegments[0].second == overlappingSegments[1].first)
+        #expect(overlappingSegments[0].first == Coordinate3D(latitude: -30.0, longitude: 125.0))
+        #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
-    func testPolygons() {
-        let polygon1 = TestData.polygon(package: "LineOverlap", name: "Polygon1_1")
-        let polygon2 = TestData.polygon(package: "LineOverlap", name: "Polygon1_2")
-        let result = TestData.multiLineString(package: "LineOverlap", name: "Polygon1Result")
+    @Test
+    func simple3() async throws {
+        let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap3_1")
+        let lineString2 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap3_2")
+
+        let overlappingSegments = lineString1.overlappingSegments(with: lineString2)
+        #expect(overlappingSegments.count == 2)
+        #expect(overlappingSegments[0].second == overlappingSegments[1].first)
+        #expect(overlappingSegments[0].first == Coordinate3D(latitude: -30.0, longitude: 125.0))
+        #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
+    }
+
+    @Test
+    func polygons() async throws {
+        let polygon1 = try TestData.polygon(package: "LineOverlap", name: "Polygon1_1")
+        let polygon2 = try TestData.polygon(package: "LineOverlap", name: "Polygon1_2")
+        let result = try TestData.multiLineString(package: "LineOverlap", name: "Polygon1Result")
 
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2)
-
-        XCTAssertEqual(overlappingSegments.count, 6)
+        #expect(overlappingSegments.count == 6)
 
         let firstSegments = result.lineStrings[0].lineSegments
         let secondSegments = result.lineStrings[1].lineSegments
-
-        XCTAssertEqual(Array(overlappingSegments[0 ..< 3]), firstSegments)
-        XCTAssertEqual(Array(overlappingSegments[3...]), secondSegments)
+        #expect(Array(overlappingSegments[0 ..< 3]) == firstSegments)
+        #expect(Array(overlappingSegments[3...]) == secondSegments)
     }
 
-    func testNoOverlap() {
-        let lineString1 = TestData.lineString(package: "LineOverlap", name: "NoOverlap1")
-        let lineString2 = TestData.lineString(package: "LineOverlap", name: "NoOverlap2")
+    @Test
+    func noOverlap() async throws {
+        let lineString1 = try TestData.lineString(package: "LineOverlap", name: "NoOverlap1")
+        let lineString2 = try TestData.lineString(package: "LineOverlap", name: "NoOverlap2")
 
         let overlappingSegments = lineString1.overlappingSegments(with: lineString2)
-
-        XCTAssertEqual(overlappingSegments.count, 0)
+        #expect(overlappingSegments.count == 0)
     }
 
-    func testPartlyOverlapping1() {
-        let polygon1 = TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping1_1")
-        let polygon2 = TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping1_2")
-        let result = TestData.multiLineString(package: "LineOverlap", name: "PartlyOverlapping1Result")
+    @Test
+    func partlyOverlapping1() async throws {
+        let polygon1 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping1_1")
+        let polygon2 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping1_2")
+        let result = try TestData.multiLineString(package: "LineOverlap", name: "PartlyOverlapping1Result")
 
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2)
-
-        XCTAssertEqual(overlappingSegments.count, 4)
+        #expect(overlappingSegments.count == 4)
 
         let firstSegments = result.lineStrings[0].lineSegments
         let secondSegments = result.lineStrings[1].lineSegments
-
-        XCTAssertEqual(Array(overlappingSegments[0 ... 1]), firstSegments)
-        XCTAssertEqual(Array(overlappingSegments[2...]), secondSegments)
+        #expect(Array(overlappingSegments[0 ... 1]) == firstSegments)
+        #expect(Array(overlappingSegments[2...]) == secondSegments)
     }
 
-    func testPartlyOverlapping2() {
-        let polygon1 = TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping2_1")
-        let polygon2 = TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping2_2")
-        let result = TestData.lineString(package: "LineOverlap", name: "PartlyOverlapping2Result")
+    @Test
+    func partlyOverlapping2() async throws {
+        let polygon1 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping2_1")
+        let polygon2 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping2_2")
+        let result = try TestData.lineString(package: "LineOverlap", name: "PartlyOverlapping2Result")
 
         let overlappingSegments = polygon1.overlappingSegments(with: polygon2, tolerance: 5000.0)
-
-        XCTAssertEqual(overlappingSegments.count, 1)
-        XCTAssertEqual(overlappingSegments, result.lineSegments)
+        #expect(overlappingSegments.count == 1)
+        #expect(overlappingSegments == result.lineSegments)
     }
 
-    func testPartlyOverlapping3() {
-        let lineString1 = LineString([
+    @Test
+    func partlyOverlapping3() async throws {
+        let lineString1 = try #require(LineString([
             Coordinate3D(latitude: 2.0, longitude: 2.0),
             Coordinate3D(latitude: 4.0, longitude: 4.0),
-        ])!
-        let lineString2 = LineString([
+        ]))
+        let lineString2 = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 6.0, longitude: 6.0),
-        ])!
-        let result = LineString([
+        ]))
+        let result = try #require(LineString([
             Coordinate3D(latitude: 2.0, longitude: 2.0),
             Coordinate3D(latitude: 4.0, longitude: 4.0),
-        ])!
+        ]))
 
         let overlappingSegments1 = lineString1.overlappingSegments(with: lineString2)
         let overlappingSegments2 = lineString2.overlappingSegments(with: lineString1)
 
-        XCTAssertEqual(overlappingSegments1.count, 1)
-        XCTAssertEqual(overlappingSegments2.count, 1)
+        #expect(overlappingSegments1.count == 1)
+        #expect(overlappingSegments2.count == 1)
 
-        XCTAssertEqual(overlappingSegments1, result.lineSegments)
-        XCTAssertEqual(overlappingSegments2, result.lineSegments)
+        #expect(overlappingSegments1 == result.lineSegments)
+        #expect(overlappingSegments2 == result.lineSegments)
     }
 
 }

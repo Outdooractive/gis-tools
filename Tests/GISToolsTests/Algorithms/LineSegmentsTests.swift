@@ -1,9 +1,10 @@
 @testable import GISTools
-import XCTest
+import Testing
 
-final class LineSegmentsTests: XCTestCase {
+struct LineSegmentsTests {
 
-    func testLineSegments() throws {
+    @Test
+    func lineSegments() async throws {
         let coordinates = [
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -21,10 +22,10 @@ final class LineSegmentsTests: XCTestCase {
             LineSegment(first: Coordinate3D(latitude: 0.0, longitude: 10.0),
                         second: Coordinate3D(latitude: 0.0, longitude: 0.0)),
         ]
-        let lineString = try XCTUnwrap(LineString(coordinates))
+        let lineString = try #require(LineString(coordinates))
 
-        XCTAssertEqual(lineString.lineSegments, lineSegments)
-        XCTAssertEqual(lineString.lineSegments.map(\.index), [0, 1, 2, 3])
+        #expect(lineString.lineSegments == lineSegments)
+        #expect(lineString.lineSegments.map(\.index) == [0, 1, 2, 3])
     }
 
 }

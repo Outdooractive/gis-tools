@@ -5,10 +5,10 @@ import PackageDescription
 let package = Package(
     name: "gis-tools",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .iOS(.v15),
+        .macOS(.v14),
+        .tvOS(.v15),
+        .watchOS(.v7),
     ],
     products: [
         .library(

@@ -12,12 +12,12 @@ extension Coordinate3D {
     /// - Parameters:
     ///    - precision: The coordinate decimal precision (default *6*)
     ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
     public func truncated(
         precision: Int = 6,
         removeAltitude: Bool = false,
-        removeM: Bool = false)
-        -> Coordinate3D
-    {
+        removeM: Bool = false
+    ) -> Coordinate3D {
         Coordinate3D(
             x: longitude.rounded(precision: precision),
             y: latitude.rounded(precision: precision),
@@ -31,8 +31,16 @@ extension Coordinate3D {
     /// - Parameters:
     ///    - precision: The coordinate decimal precision (default *6*)
     ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
-    public mutating func truncate(precision: Int, removeAltitude: Bool = false) {
-        self = truncated(precision: precision, removeAltitude: removeAltitude)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
+    public mutating func truncate(
+        precision: Int,
+        removeAltitude: Bool = false,
+        removeM: Bool = false
+    ) {
+        self = truncated(
+            precision: precision,
+            removeAltitude: removeAltitude,
+            removeM: removeM)
     }
 
 }
@@ -44,21 +52,22 @@ extension GeoJson {
     /// - Parameters:
     ///    - precision: The coordinate decimal precision (default *6*)
     ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
     public func truncated(
         precision: Int = 6,
-        removeAltitude: Bool = false)
-        -> Self
-    {
+        removeAltitude: Bool = false,
+        removeM: Bool = false
+    ) -> Self {
         switch self {
         case let point as Point:
-            var newPoint = Point(point.coordinate.truncated(precision: precision, removeAltitude: removeAltitude))
+            var newPoint = Point(point.coordinate.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM))
             newPoint.boundingBox = point.boundingBox
             newPoint.foreignMembers = point.foreignMembers
             return newPoint as! Self
 
         case let multiPoint as MultiPoint:
             guard var newMultiPoint = MultiPoint(multiPoint.coordinates.map({
-                $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             })) else { return self }
             newMultiPoint.boundingBox = multiPoint.boundingBox
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
@@ -66,7 +75,7 @@ extension GeoJson {
 
         case let lineString as LineString:
             guard var newLineString = LineString(lineString.coordinates.map({
-                $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))  else { return self }
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
@@ -75,7 +84,7 @@ extension GeoJson {
         case let multiLineString as MultiLineString:
             guard var newMultiLineString = MultiLineString(multiLineString.coordinates.map({
                 $0.map({
-                    $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                    $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
                 })
             }))  else { return self }
             newMultiLineString.boundingBox = multiLineString.boundingBox
@@ -85,7 +94,7 @@ extension GeoJson {
         case let polygon as Polygon:
             guard var newPolygon = Polygon(polygon.coordinates.map({
                 $0.map({
-                    $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                    $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
                 })
             })) else { return self }
             newPolygon.boundingBox = polygon.boundingBox
@@ -96,7 +105,7 @@ extension GeoJson {
             guard var newMultiPolygon = MultiPolygon(multiPolygon.coordinates.map({
                 $0.map({
                     $0.map({
-                        $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                        $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
                     })
                 })
             })) else { return self }
@@ -106,21 +115,21 @@ extension GeoJson {
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({
-                $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))
             newGeometryCollection.boundingBox = geometryCollection.boundingBox
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
             return newGeometryCollection as! Self
 
         case let feature as Feature:
-            var newFeature = Feature(feature.geometry.truncated(precision: precision, removeAltitude: removeAltitude), id: feature.id, properties: feature.properties)
+            var newFeature = Feature(feature.geometry.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM), id: feature.id, properties: feature.properties)
             newFeature.boundingBox = feature.boundingBox
             newFeature.foreignMembers = feature.foreignMembers
             return newFeature as! Self
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(featureCollection.features.map({
-                $0.truncated(precision: precision, removeAltitude: removeAltitude)
+                $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))
             newFeatureCollection.boundingBox = featureCollection.boundingBox
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
@@ -136,11 +145,16 @@ extension GeoJson {
     /// - Parameters:
     ///    - precision: The coordinate decimal precision (default *6*)
     ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
     public mutating func truncate(
         precision: Int = 6,
-        removeAltitude: Bool = false)
-    {
-        self = truncated(precision: precision, removeAltitude: removeAltitude)
+        removeAltitude: Bool = false,
+        removeM: Bool = false
+    ) {
+        self = truncated(
+            precision: precision,
+            removeAltitude: removeAltitude,
+            removeM: removeM)
     }
 
 }

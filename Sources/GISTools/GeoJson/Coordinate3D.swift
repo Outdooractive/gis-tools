@@ -48,9 +48,16 @@ public struct Coordinate3D:
     @inlinable
     public var y: Double { latitude }
 
+    /// Alias for altitude
+    @inlinable
+    public var z: Double? { altitude }
+
     /// Create a coordinate with ``latitude`` and ``longitude``.
     /// Projection will be *EPSG:4326*.
-    public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
+    public init(
+        latitude: CLLocationDegrees,
+        longitude: CLLocationDegrees
+    ) {
         self.projection = .epsg4326
         self.latitude = latitude
         self.longitude = longitude
@@ -64,8 +71,8 @@ public struct Coordinate3D:
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
         altitude: CLLocationDistance? = nil,
-        m: Double? = nil)
-    {
+        m: Double? = nil
+    ) {
         self.projection = .epsg4326
         self.latitude = latitude
         self.longitude = longitude
@@ -80,8 +87,8 @@ public struct Coordinate3D:
         y: Double,
         z: Double? = nil,
         m: Double? = nil,
-        projection: Projection = .epsg3857)
-    {
+        projection: Projection = .epsg3857
+    ) {
         self.projection = projection
         self.longitude = x
         self.latitude = y
@@ -126,7 +133,10 @@ public struct Coordinate3D:
 extension Coordinate3D {
 
     /// Create a `Coordinate3D` from a `CLLocationCoordinate2D`.
-    public init(_ coordinate: CLLocationCoordinate2D, altitude: CLLocationDistance? = nil) {
+    public init(
+        _ coordinate: CLLocationCoordinate2D,
+        altitude: CLLocationDistance? = nil
+    ) {
         self.projection = .epsg4326
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
@@ -487,9 +497,8 @@ extension Coordinate3D: Equatable {
     /// - note: This also compares the altitudes of coordinates.
     public static func == (
         lhs: Coordinate3D,
-        rhs: Coordinate3D)
-        -> Bool
-    {
+        rhs: Coordinate3D
+    ) -> Bool {
         lhs.projection == rhs.projection
             && abs(lhs.latitude - rhs.latitude) <= GISTool.equalityDelta
             && abs(lhs.longitude - rhs.longitude) <= GISTool.equalityDelta
@@ -503,9 +512,8 @@ extension Coordinate3D: Equatable {
         other: Coordinate3D,
         includingAltitude: Bool = true,
         equalityDelta: Double = GISTool.equalityDelta,
-        altitudeDelta: Double = 0.0)
-        -> Bool
-    {
+        altitudeDelta: Double = 0.0
+    ) -> Bool {
         let other = other.projected(to: projection)
 
         if abs(latitude - other.latitude) > equalityDelta
