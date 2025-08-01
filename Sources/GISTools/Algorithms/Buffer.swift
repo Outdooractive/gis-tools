@@ -3,7 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
-/// Line end styles for ```GeoJson.buffered(by:lineEndStyle:steps:formUnion:)```.
+/// Line end styles for GeoJSON buffer.
 public enum BufferLineEndStyle: Sendable {
 
     /// Line ends will be flat.
@@ -14,6 +14,7 @@ public enum BufferLineEndStyle: Sendable {
 
 }
 
+/// Options for how to form an union of polygons.
 public enum BufferUnionType: Sendable {
 
     /// Don't form a union from all geometries that make a buffer.
@@ -237,8 +238,8 @@ extension LineSegment {
     /// - Parameters:
     ///    - distance: The buffer distance, in meters
     ///    - lineEndStyle: Controls how line ends will be drawn (default round)
+    ///    - unionType: Whether to combine all overlapping buffers into one Polygon (default true)
     ///    - steps: The number of steps for the circles (default 64)
-    ///    - formUnion: Whether to combine all overlapping buffers into one Polygon (default true)
     public func buffered(
         by distance: Double,
         lineEndStyle: BufferLineEndStyle = .round,
