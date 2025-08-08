@@ -17,6 +17,18 @@ extension BoundingBox {
 
 }
 
+extension Ring {
+
+    /// Returns the receiver as *LineSegment*s.
+    public var lineSegments: [LineSegment] {
+        coordinates.overlappingPairs().compactMap { (first, second, index) in
+            guard let second else { return nil }
+            return LineSegment(first: first, second: second, index: index)
+        }
+    }
+
+}
+
 extension GeoJson {
 
     /// Returns line segments for the geometry.
