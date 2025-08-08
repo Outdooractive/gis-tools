@@ -184,21 +184,31 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `degrees`.
-    @available(*, deprecated, renamed: "expanded(byDegrees:)", message: "Renamed to expaned(byDegrees:)")
+    @available(*, deprecated, renamed: "expanded(byDegrees:)", message: "Renamed to expanded(byDegrees:)")
     public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
         expanded(byDegrees: degrees)
     }
 
     /// Returns a copy of the receiver expanded by `degrees` horizontally and vertically.
     public func expanded(byDegrees degrees: CLLocationDegrees) -> BoundingBox {
+        expanded(byHorizontalDegrees: degrees, verticalDegrees: degrees)
+    }
+
+    /// Returns a copy of the receiver expanded by `dx` and `dy` horizontally and vertically.
+    public func expanded(
+        byHorizontalDegrees dx: CLLocationDegrees,
+        verticalDegrees dy: CLLocationDegrees
+    ) -> BoundingBox {
         switch projection {
         case .epsg3857:
-            return projected(to: .epsg4326).expanded(byDegrees: degrees).projected(to: .epsg3857)
+            return projected(to: .epsg4326)
+                .expanded(byHorizontalDegrees: dx, verticalDegrees: dy)
+                .projected(to: .epsg3857)
 
         case .epsg4326:
             return BoundingBox(
-                southWest: Coordinate3D(latitude: southWest.latitude - degrees, longitude: southWest.longitude - degrees),
-                northEast: Coordinate3D(latitude: northEast.latitude + degrees, longitude: northEast.longitude + degrees))
+                southWest: Coordinate3D(latitude: southWest.latitude - dy, longitude: southWest.longitude - dx),
+                northEast: Coordinate3D(latitude: northEast.latitude + dy, longitude: northEast.longitude + dx))
 
         case .noSRID:
             return self // Don't know what to do -> ignore
@@ -206,7 +216,7 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `distance` diagonally.
-    @available(*, deprecated, renamed: "expanded(byDistance:)", message: "Renamed to expaned(byDistance:)")
+    @available(*, deprecated, renamed: "expanded(byDistance:)", message: "Renamed to expanded(byDistance:)")
     public func expand(distance: CLLocationDistance) -> BoundingBox {
         expanded(byDistance: distance)
     }
