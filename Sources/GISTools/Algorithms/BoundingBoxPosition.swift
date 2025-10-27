@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -66,7 +66,7 @@ extension BoundingBox {
 
     // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 
     /// Returns the relative position of a coordinate with regards to the bounding box.
     public func postion(of coordinate: CLLocationCoordinate2D) -> CoordinatePosition {

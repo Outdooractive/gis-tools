@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -282,7 +282,7 @@ extension BoundingBox: Projectable {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension BoundingBox {
 
     /// Create a bounding box from `coordinates` and an optional padding in kilometers.
@@ -416,7 +416,7 @@ extension BoundingBox {
             && coordinate.longitude <= boundingBox.northEast.longitude
     }
 
-    #if !os(Linux)
+    #if canImport(CoreLocation)
     /// Check if the receiver contains `coordinate`.
     public func contains(_ coordinate: CLLocationCoordinate2D) -> Bool {
         contains(Coordinate3D(coordinate))

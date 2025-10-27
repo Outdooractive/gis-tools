@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -165,7 +165,7 @@ extension MultiLineString {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension MultiLineString {
 
     /// Try to initialize a MultiLineString with some coordinates.

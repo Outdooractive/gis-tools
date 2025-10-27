@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 

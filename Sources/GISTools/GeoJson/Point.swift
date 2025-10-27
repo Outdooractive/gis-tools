@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -98,7 +98,7 @@ extension Point {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension Point {
 
     /// Initialize a Point with a coordinate.
