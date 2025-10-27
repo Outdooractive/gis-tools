@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -278,7 +278,7 @@ extension Coordinate3D {
 
 }
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension CLLocation {
 
     /// The receiver as a ``MapTile``.

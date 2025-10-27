@@ -1,9 +1,9 @@
-#if os(Linux)
+#if canImport(CoreLocation)
+import CoreLocation
+#else
 public typealias CLLocationDirection = Double
 public typealias CLLocationDistance = Double
 public typealias CLLocationDegrees = Double
-#else
-import CoreLocation
 #endif
 import Foundation
 
@@ -129,7 +129,7 @@ public struct Coordinate3D:
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension Coordinate3D {
 
     /// Create a `Coordinate3D` from a `CLLocationCoordinate2D`.
@@ -539,7 +539,7 @@ extension Coordinate3D: Equatable {
 
 extension Coordinate3D: Hashable {}
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension CLLocation {
 
     /// The receiver as a ``Coordinate3D``.

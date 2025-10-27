@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -133,7 +133,7 @@ extension MultiPoint {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension MultiPoint {
 
     /// Try to initialize a MultiPoint with some coordinates.
