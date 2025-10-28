@@ -1,5 +1,5 @@
-#if !os(Linux)
-import Foundation
+#if canImport(CoreFoundation)
+import CoreFoundation
 
 func benchmark(title: String, block: () -> Void) {
     let start = CFAbsoluteTimeGetCurrent()
