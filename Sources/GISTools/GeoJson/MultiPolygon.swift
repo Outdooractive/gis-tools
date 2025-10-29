@@ -62,7 +62,7 @@ public struct MultiPolygon:
 
     /// Try to initialize a MultiPolygon with some Polygons.
     public init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
-        guard !polygons.isEmpty else { return nil }
+        guard polygons.isNotEmpty else { return nil }
 
         self.init(unchecked: polygons, calculateBoundingBox: calculateBoundingBox)
     }

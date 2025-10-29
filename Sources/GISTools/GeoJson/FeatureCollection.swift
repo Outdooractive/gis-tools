@@ -265,4 +265,15 @@ extension FeatureCollection {
         features = features.filter(isIncluded)
     }
 
+    /// Divide Features by a property value.
+    ///
+    /// Features where the `key` function returns nil will be discarded.
+    public func divideFeatures(by key: (Feature) -> String?) -> [String: [Feature]] {
+        return features.reduce(into: [:]) { partialResult, feature in
+            guard let key = key(feature) else { return }
+
+            partialResult[key, default: []].append(feature)
+        }
+    }
+
 }

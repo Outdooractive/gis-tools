@@ -14,7 +14,8 @@ struct FeatureCollectionTests {
                 "coordinates": [102.0, 0.5]
             },
             "properties": {
-                "prop0": "value0"
+                "prop0": "value0",
+                "prop2": "a"
             }
         }, {
             "type": "Feature",
@@ -29,7 +30,8 @@ struct FeatureCollectionTests {
             },
             "properties": {
                 "prop0": "value0",
-                "prop1": 0.0
+                "prop1": 0.0,
+                "prop2": "a"
             }
         }, {
             "type": "Feature",
@@ -49,7 +51,8 @@ struct FeatureCollectionTests {
                 "prop0": "value0",
                 "prop1": {
                     "this": "that"
-                }
+                },
+                "prop2": "b"
             }
         }],
         "other": "something else"
@@ -98,7 +101,7 @@ struct FeatureCollectionTests {
     }
 
     @Test
-    func map() async throws {
+    func mapFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let prop0: String? = featureCollection.features.first?.property(for: "prop0")
@@ -115,7 +118,7 @@ struct FeatureCollectionTests {
     }
 
     @Test
-    func compactMap() async throws {
+    func compactMapFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         #expect(featureCollection.features.count == 3)
@@ -129,7 +132,7 @@ struct FeatureCollectionTests {
     }
 
     @Test
-    func filter() async throws {
+    func filterFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         #expect(featureCollection.features.count == 3)
@@ -142,7 +145,25 @@ struct FeatureCollectionTests {
     }
 
     @Test
-    func enumerate() async throws {
+    func divideFeaturesByKey() async throws {
+        let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
+        let divided = featureCollection.divideFeatures { feature in
+            feature.property(for: "prop2")
+        }
+
+        #expect(divided.keys.sorted() == ["a", "b"])
+
+        let featuresA = try #require(divided["a"])
+        #expect(featuresA.count == 2)
+        #expect(featuresA.allSatisfy({ $0.property(for: "prop2") == "a" }))
+
+        let featuresB = try #require(divided["b"])
+        #expect(featuresB.count == 1)
+        #expect(featuresB.allSatisfy({ $0.property(for: "prop2") == "b" }))
+    }
+
+    @Test
+    func enumerateFeatures() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let expected: [(Int, Int, Coordinate3D)] = [
@@ -155,7 +176,7 @@ struct FeatureCollectionTests {
             (2, 1, Coordinate3D(latitude: 0.0, longitude: 101.0)),
             (2, 2, Coordinate3D(latitude: 1.0, longitude: 101.0)),
             (2, 3, Coordinate3D(latitude: 1.0, longitude: 100.0)),
-            (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0))
+            (2, 4, Coordinate3D(latitude: 0.0, longitude: 100.0)),
         ]
 
         var result: [(Int, Int, Coordinate3D)] = []
@@ -200,8 +221,8 @@ struct FeatureCollectionTests {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let summary = featureCollection.propertiesSummary()
-        #expect(summary.count == 2)
-        #expect(summary.keys.sorted() == ["prop0", "prop1"])
+        #expect(summary.count == 3)
+        #expect(summary.keys.sorted() == ["prop0", "prop1", "prop2"])
         #expect(summary["prop0"] == ["value0"])
         #expect(summary["prop1"]!.contains(0))
         #expect(summary["prop1"]!.contains(["this": "that"]))
