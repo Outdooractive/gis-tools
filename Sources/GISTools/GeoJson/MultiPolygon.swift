@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -136,7 +136,7 @@ extension MultiPolygon {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension MultiPolygon {
 
     /// Try to initialize a MultiPolygon with some coordinates.

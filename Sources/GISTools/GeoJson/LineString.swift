@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -163,7 +163,7 @@ extension LineString {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension LineString {
 
     /// Try to initialize a LineString with some coordinates.

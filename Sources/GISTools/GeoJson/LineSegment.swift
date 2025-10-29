@@ -1,5 +1,5 @@
-#if !os(Linux)
-    import CoreLocation
+#if canImport(CoreLocation)
+import CoreLocation
 #endif
 import Foundation
 
@@ -67,7 +67,7 @@ extension LineSegment: Projectable {
 
 // MARK: - CoreLocation compatibility
 
-#if !os(Linux)
+#if canImport(CoreLocation)
 extension LineSegment {
 
     /// Initialize a LineSegment with two coordinates.

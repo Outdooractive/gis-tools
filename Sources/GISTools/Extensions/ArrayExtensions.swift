@@ -1,4 +1,4 @@
-#if !os(Linux)
+#if canImport(CoreLocation)
 import CoreLocation
 #endif
 import Foundation
@@ -7,7 +7,7 @@ import Foundation
 
 extension Array where Element == Coordinate3D {
 
-#if !os(Linux)
+#if canImport(CoreLocation)
     public var asCoordinates2D: [CLLocationCoordinate2D] {
         return map { $0.coordinate2D }
     }
