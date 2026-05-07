@@ -4,7 +4,7 @@ import Testing
 struct TransformScaleTests {
 
     @Test
-    func transformScale() async throws {
+    func scale() async throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -13,10 +13,10 @@ struct TransformScaleTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0)
         ]]))
 
-        let transformed1 = polygon.transformedScale(factor: 2.0, anchor: .southWest)
-        let transformed2 = polygon.transformedScale(factor: 2.0, anchor: .northEast)
-        let transformed3 = polygon.transformedScale(factor: 2.0, anchor: .center)
-        let transformed4 = polygon.transformedScale(factor: 2.0, anchor: .coordinate(.zero))
+        let scaled1 = polygon.scaled(factor: 2.0, anchor: .southWest)
+        let scaled2 = polygon.scaled(factor: 2.0, anchor: .northEast)
+        let scaled3 = polygon.scaled(factor: 2.0, anchor: .center)
+        let scaled4 = polygon.scaled(factor: 2.0, anchor: .coordinate(.zero))
 
         let result1 =  try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -47,10 +47,10 @@ struct TransformScaleTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0)
         ]]))
 
-        #expect(transformed1 == result1)
-        #expect(transformed2 == result2)
-        #expect(transformed3 == result3)
-        #expect(transformed4 == result4)
+        #expect(scaled1 == result1)
+        #expect(scaled2 == result2)
+        #expect(scaled3 == result3)
+        #expect(scaled4 == result4)
     }
 
 }

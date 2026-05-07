@@ -12,7 +12,7 @@ extension GeoJson {
     /// - Parameters:
     ///    - other: The other geometry
     ///
-    /// - Returns: *true* if the geometries don't overlap, *false* otherwise.
+    /// - Returns: `true` if the geometries don't overlap, `false` otherwise.
     public func isDisjoint(with other: GeoJson) -> Bool {
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
            !intersects(otherBoundingBox)
@@ -70,7 +70,7 @@ extension PointGeometry {
 
         case let otherPolygon as PolygonGeometry:
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoreBoundary: false) {
+                if otherPolygon.contains(coordinate, ignoringBoundary: false) {
                     return false
                 }
             }
@@ -130,7 +130,7 @@ extension LineStringGeometry {
         case let otherPolygon as PolygonGeometry:
             // Any point inside the polygon
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoreBoundary: false) {
+                if otherPolygon.contains(coordinate, ignoringBoundary: false) {
                     return false
                 }
             }
@@ -190,7 +190,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if otherPolygon.contains(coordinate, ignoreBoundary: false) {
+                    if otherPolygon.contains(coordinate, ignoringBoundary: false) {
                         return false
                     }
                 }
@@ -202,7 +202,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if self.contains(coordinate, ignoreBoundary: false) {
+                    if self.contains(coordinate, ignoringBoundary: false) {
                         return false
                     }
                 }

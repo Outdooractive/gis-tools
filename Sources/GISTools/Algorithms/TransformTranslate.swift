@@ -13,7 +13,7 @@ extension GeoJson {
     ///    - distance: The length of the motion, in meters
     ///    - direction: The direction of the motion, in decimal degrees from north, positive clockwise.
     ///    - zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
-    public func transformedTranslate(
+    public func translated(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,
         zTranslation: CLLocationDistance = 0.0
@@ -40,15 +40,33 @@ extension GeoJson {
     ///    - distance: The length of the motion, in meters
     ///    - direction: The direction of the motion, in decimal degrees from north, positive clockwise.
     ///    - zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
+    public mutating func translate(
+        distance: CLLocationDistance,
+        direction: CLLocationDegrees,
+        zTranslation: CLLocationDistance = 0.0
+    ) {
+        self = translated(
+            distance: distance,
+            direction: direction,
+            zTranslation: zTranslation)
+    }
+
+    @available(*, deprecated, renamed: "translated(distance:direction:zTranslation:)")
+    public func transformedTranslate(
+        distance: CLLocationDistance,
+        direction: CLLocationDegrees,
+        zTranslation: CLLocationDistance = 0.0
+    ) -> Self {
+        translated(distance: distance, direction: direction, zTranslation: zTranslation)
+    }
+
+    @available(*, deprecated, renamed: "translate(distance:direction:zTranslation:)")
     public mutating func transformTranslate(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,
         zTranslation: CLLocationDistance = 0.0
     ) {
-        self = transformedTranslate(
-            distance: distance,
-            direction: direction,
-            zTranslation: zTranslation)
+        translate(distance: distance, direction: direction, zTranslation: zTranslation)
     }
 
 }
