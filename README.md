@@ -32,7 +32,7 @@ This package makes some assumptions about what is equal, i.e. coordinates that a
 
 ## Requirements
 
-This package requires Swift 6.0 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 14), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux.
+This package requires Swift 6.0 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 14), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux, Android and Wasm.
 
 ## Installation with Swift Package Manager
 
