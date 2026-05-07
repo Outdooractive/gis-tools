@@ -52,19 +52,6 @@ public struct Coordinate3D:
     @inlinable
     public var z: Double? { altitude }
 
-    /// Create a coordinate with ``latitude`` and ``longitude``.
-    /// Projection will be *EPSG:4326*.
-    public init(
-        latitude: CLLocationDegrees,
-        longitude: CLLocationDegrees
-    ) {
-        self.projection = .epsg4326
-        self.latitude = latitude
-        self.longitude = longitude
-        self.altitude = nil
-        self.m = nil
-    }
-
     /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
     /// Projection will be *EPSG:4326*.
     public init(
