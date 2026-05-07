@@ -5,6 +5,10 @@ import Foundation
 
 extension GeoJson {
 
+    /// Returns an array of map tiles covering the receiver at the given zoom level.
+    ///
+    /// - Parameter zoom: The zoom level of the map.
+    /// - Returns: An array of ``MapTile`` instances.
     public func tileCover(atZoom zoom: Int) -> [MapTile] {
         var tiles: Set<MapTile> = []
 
@@ -19,6 +23,10 @@ extension GeoJson {
 
 extension BoundingBox {
 
+    /// Returns an array of map tiles covering the bounding box at the given zoom level.
+    ///
+    /// - Parameter zoom: The zoom level of the map.
+    /// - Returns: An array of ``MapTile`` instances.
     public func tileCover(atZoom zoom: Int) -> [MapTile] {
         boundingBoxPolygon.tileCover(atZoom: zoom)
     }

@@ -16,6 +16,7 @@ import Foundation
 ///   holes are clockwise.
 public struct Ring: Sendable {
 
+    /// The receiver's projection.
     public var projection: Projection {
         coordinates.first?.projection ?? .noSRID
     }
@@ -23,6 +24,7 @@ public struct Ring: Sendable {
     /// The receiver's coordinates.
     public let coordinates: [Coordinate3D]
 
+    /// The receiver as a LineString.
     public var lineString: LineString {
         LineString(unchecked: coordinates)
     }
@@ -46,6 +48,7 @@ public struct Ring: Sendable {
 
 extension Ring: Projectable {
 
+    /// Reproject the receiver.
     public func projected(to newProjection: Projection) -> Ring {
         guard newProjection != projection else { return self }
 
@@ -58,6 +61,7 @@ extension Ring: Projectable {
 
 extension Ring {
 
+    /// Check if the receiver intersects the given bounding box.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if otherBoundingBox.allCoordinates.contains(where: { contains($0) })
             || contains(otherBoundingBox.center)

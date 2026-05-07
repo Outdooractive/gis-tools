@@ -9,10 +9,12 @@ public struct MultiLineString:
     EmptyCreatable
 {
 
+    /// The GeoJSON object type.
     public var type: GeoJsonType {
         .multiLineString
     }
 
+    /// The receiver's projection.
     public var projection: Projection {
         coordinates.first?.first?.projection ?? .noSRID
     }
@@ -27,16 +29,21 @@ public struct MultiLineString:
         }
     }
 
+    /// All coordinates contained in the receiver.
     public var allCoordinates: [Coordinate3D] {
         coordinates.flatMap({ $0 })
     }
 
+    /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Foreign members not defined in the GeoJSON specification.
     public var foreignMembers: [String: Sendable] = [:]
 
+    /// The receiver's line strings.
     public private(set) var lineStrings: [LineString] = []
 
+    /// Initialize an empty MultiLineString.
     public init() {
         self.lineStrings = []
     }
@@ -91,10 +98,18 @@ public struct MultiLineString:
         }
     }
 
+    /// Try to initialize a MultiLineString from any GeoJSON object.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
+    /// Try to initialize a MultiLineString from any GeoJSON object.
+    ///
+    /// - parameter json: A GeoJSON object.
+    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               MultiLineString.isValid(geoJson: geoJson),
@@ -117,6 +132,9 @@ public struct MultiLineString:
         }
     }
 
+    /// The receiver represented as a JSON dictionary.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.multiLineString.rawValue,
@@ -151,6 +169,9 @@ extension MultiLineString {
 
 extension MultiLineString {
 
+    /// Returns the receiver projected to a different projection.
+    ///
+    /// - parameter newProjection: The target projection.
     public func projected(to newProjection: Projection) -> MultiLineString {
         guard newProjection != projection else { return self }
 
@@ -185,6 +206,9 @@ extension MultiLineString {
 
 extension MultiLineString {
 
+    /// Update the receiver's bounding box.
+    ///
+    /// - parameter ifNecessary: Only update if the receiver doesn't already have one.
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -201,11 +225,15 @@ extension MultiLineString {
         return boundingBox
     }
 
+    /// Calculate and return the receiver's bounding box.
     public func calculateBoundingBox() -> BoundingBox? {
         let flattened: [Coordinate3D] = Array(coordinates.joined())
         return BoundingBox(coordinates: flattened)
     }
 
+    /// Check if the receiver intersects the other bounding box.
+    ///
+    /// - parameter otherBoundingBox: The bounding box to check.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -220,6 +248,7 @@ extension MultiLineString {
 
 extension MultiLineString: Equatable {
 
+    /// Check if two MultiLineStrings are equal.
     public static func ==(
         lhs: MultiLineString,
         rhs: MultiLineString

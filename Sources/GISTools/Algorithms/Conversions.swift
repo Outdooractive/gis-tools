@@ -11,22 +11,37 @@ extension GISTool {
 
     /// Unit of measurement.
     public enum Unit: Sendable {
+        /// Acres.
         case acres
+        /// Centimeters.
         case centimeters
+        /// Centimetres.
         case centimetres
         /// Latitude
         case degrees
+        /// Feet.
         case feet
+        /// Inches.
         case inches
+        /// Kilometers.
         case kilometers
+        /// Kilometres.
         case kilometres
+        /// Meters.
         case meters
+        /// Metres.
         case metres
+        /// Miles.
         case miles
+        /// Millimeters.
         case millimeters
+        /// Millimetres.
         case millimetres
+        /// Nautical miles.
         case nauticalmiles
+        /// Radians.
         case radians
+        /// Yards.
         case yards
     }
 
@@ -173,6 +188,13 @@ extension GISTool {
         degrees(fromMeters: meters, atLatitude: latitude)
     }
 
+    /// Converts a distance in meters to degrees at a given latitude.
+    ///
+    /// - Parameters:
+    ///    - meters: The distance in meters
+    ///    - latitude: The latitude at which to calculate the conversion
+    ///
+    /// - Returns: A tuple of latitude degrees and longitude degrees.
     public static func degrees(
         fromMeters meters: CLLocationDistance,
         atLatitude latitude: CLLocationDegrees
@@ -191,6 +213,11 @@ extension GISTool {
 
 extension Coordinate3D {
 
+    /// Converts a distance in meters to degrees at the receiver's latitude.
+    ///
+    /// - Parameter meters: The distance in meters
+    ///
+    /// - Returns: A tuple of latitude degrees and longitude degrees.
     public func degrees(
         fromMeters meters: CLLocationDistance
     ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {

@@ -5,14 +5,19 @@ import Foundation
 
 public struct MapTile: CustomStringConvertible, Sendable {
 
+    /// The x-coordinate of the tile.
     public let x: Int
+    /// The y-coordinate of the tile.
     public let y: Int
+    /// The zoom level of the tile.
     public let z: Int
 
+    /// A textual representation of the tile.
     public var description: String {
         "MapTile<(\(x),\(y))@\(z)>"
     }
 
+    /// The parent tile at the previous zoom level.
     public var parent: MapTile {
         guard z > 0 else { return self }
         return MapTile(
@@ -21,6 +26,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
             z: z - 1)
     }
 
+    /// One of the four child tiles at the next zoom level (north-west quadrant).
     public var child: MapTile {
         MapTile(
             x: x << 1,
@@ -28,6 +34,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
             z: z + 1)
     }
 
+    /// All four child tiles at the next zoom level.
     public var children: [MapTile] {
         [
             MapTile(x: x << 1, y: y << 1, z: z + 1),
@@ -37,16 +44,19 @@ public struct MapTile: CustomStringConvertible, Sendable {
         ]
     }
 
+    /// The sibling tiles sharing the same parent.
     public var siblings: [MapTile] {
         parent.children
     }
 
+    /// Creates a map tile from its coordinates and zoom level.
     public init(x: Int, y: Int, z: Int) {
         self.x = x
         self.y = y
         self.z = z
     }
 
+    /// Creates a map tile from a geographic coordinate at the given zoom level.
     public init(coordinate: Coordinate3D, atZoom zoom: Int) {
         let scale = Double(1 << zoom)
         let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate.projected(to: .epsg4326))
@@ -100,6 +110,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
             z: bestZ)
     }
 
+    /// Creates a map tile from a ``String`` in the format `"z/x/y"`.
     public init?(string: String) {
         guard let components = string.components(separatedBy: "/").nilIfEmpty,
               components.count == 3,
@@ -111,6 +122,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
         self.init(x: x, y: y, z: z)
     }
 
+    /// Returns the center coordinate of the tile.
+    ///
+    /// - Parameter projection: The projection to use for the returned coordinate.
+    /// - Returns: The center ``Coordinate3D`` of the tile.
     public func centerCoordinate(projection: Projection = .epsg4326) -> Coordinate3D {
         // Flip y
         let y = (1 << z) - 1 - y
@@ -126,6 +141,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
             projection: projection)
     }
 
+    /// Returns the bounding box of the tile.
+    ///
+    /// - Parameter projection: The projection to use for the bounding box.
+    /// - Returns: The ``BoundingBox`` of the tile.
     public func boundingBox(projection: Projection = .epsg4326) -> BoundingBox {
         if projection == .noSRID {
             return BoundingBox(
@@ -155,6 +174,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     // MARK: - Quadkey
 
+    /// The quadkey representation of the tile.
     public var quadkey: String {
         var quadkey = ""
 
@@ -175,6 +195,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
         return quadkey
     }
 
+    /// Creates a map tile from a quadkey string.
     public init?(quadkey: String) {
         guard !quadkey.isEmpty else {
             self.x = 0
@@ -245,6 +266,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     // MARK: - Private
 
+    /// Normalizes a coordinate for tile indexing using Web Mercator projection.
     static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
         var (latitude, longitude) = (coordinate.latitude, coordinate.longitude)
 

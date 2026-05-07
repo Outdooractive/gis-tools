@@ -9,13 +9,21 @@ import Foundation
 
 /// The anchor from where a scale operation takes place.
 public enum ScaleAnchor: Sendable {
+    /// The south-west corner of the bounding box.
     case southWest
+    /// The south-east corner of the bounding box.
     case southEast
+    /// The north-west corner of the bounding box.
     case northWest
+    /// The north-east corner of the bounding box.
     case northEast
+    /// The geometric center of the geometry.
     case center
+    /// The centroid of the geometry.
     case centroid
+    /// A custom coordinate to use as the anchor.
     case coordinate(Coordinate3D)
+    /// A custom point to use as the anchor.
     case point(Point)
 }
 

@@ -6,10 +6,12 @@ public struct FeatureCollection:
     EmptyCreatable
 {
 
+    /// The GeoJSON object type.
     public var type: GeoJsonType {
         .featureCollection
     }
 
+    /// The receiver's projection.
     public var projection: Projection {
         features.first?.projection ?? .noSRID
     }
@@ -17,14 +19,18 @@ public struct FeatureCollection:
     /// The FeatureCollection's Feature objects.
     public private(set) var features: [Feature]
 
+    /// All of the receiver's coordinates.
     public var allCoordinates: [Coordinate3D] {
         features.flatMap(\.allCoordinates)
     }
 
+    /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Foreign members of the receiver.
     public var foreignMembers: [String: Sendable] = [:]
 
+    /// Create an empty FeatureCollection.
     public init() {
         self.features = []
     }
@@ -79,6 +85,7 @@ public struct FeatureCollection:
         }
     }
 
+    /// Try to initialize a FeatureCollection from any JSON object.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
@@ -115,6 +122,7 @@ public struct FeatureCollection:
         }
     }
 
+    /// The receiver as a JSON object.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.featureCollection.rawValue,
@@ -133,6 +141,7 @@ public struct FeatureCollection:
 
 extension FeatureCollection {
 
+    /// Update the bounding box, optionally only if it hasn't been calculated yet.
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -149,6 +158,7 @@ extension FeatureCollection {
         return boundingBox
     }
 
+    /// Calculate the bounding box from the receiver's features.
     public func calculateBoundingBox() -> BoundingBox? {
         let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
         guard !featureBoundingBoxes.isEmpty else { return nil}
@@ -158,6 +168,7 @@ extension FeatureCollection {
         }
     }
 
+    /// Check if the receiver intersects with the given bounding box.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -172,6 +183,7 @@ extension FeatureCollection {
 
 extension FeatureCollection: Equatable {
 
+    /// Two feature collections are equal when their projections and features are equal.
     public static func ==(
         lhs: FeatureCollection,
         rhs: FeatureCollection
@@ -186,6 +198,7 @@ extension FeatureCollection: Equatable {
 
 extension FeatureCollection {
 
+    /// Reproject the receiver.
     public func projected(to newProjection: Projection) -> FeatureCollection {
         guard newProjection != projection else { return self }
 

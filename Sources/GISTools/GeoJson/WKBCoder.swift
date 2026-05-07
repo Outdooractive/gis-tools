@@ -229,17 +229,25 @@ public enum WKBCoder {
 
     /// The WKB byte order (little or big endian).
     public enum ByteOrder: UInt8 {
+        /// Big endian byte order.
         case bigEndian = 0
+        /// Little endian byte order.
         case littleEndian = 1
     }
 
     /// WKB errors.
     public enum WKBCoderError: Error {
+        /// The WKB data is corrupted.
         case dataCorrupted
+        /// The geometry is empty.
         case emptyGeometry
+        /// The geometry is invalid.
         case invalidGeometry
+        /// The target projection must be noSRID when the source has no SRID.
         case targetProjectionMustBeNoSRID
+        /// The SRID is unknown.
         case unknownSRID
+        /// The geometry type is unexpected.
         case unexpectedType
     }
 
@@ -270,7 +278,7 @@ extension WKBCoder {
         return try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON object from WKB using a specified source projection.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(

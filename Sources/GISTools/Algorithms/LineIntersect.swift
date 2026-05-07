@@ -8,13 +8,17 @@ import Foundation
 
 extension LineSegment {
 
+    /// The orientation of three ordered points.
     private enum Orientation: Sendable {
+        /// Points are colinear.
         case colinear
+        /// Points are oriented clockwise.
         case clockwise
+        /// Points are oriented counter-clockwise.
         case counterClockwise
     }
 
-    // To find orientation of ordered triplet (p, q, r).
+    /// Determines the orientation of an ordered triplet of points.
     private func orientation(
         p: Coordinate3D,
         q: Coordinate3D,
@@ -34,7 +38,7 @@ extension LineSegment {
         }
     }
 
-    // Given three colinear points p, q, r, the function checks if point q lies on line segment 'pr'
+    /// Checks if point q lies on the line segment between p and r, given that all three are colinear.
     private func onSegment(
         p: Coordinate3D,
         q: Coordinate3D,

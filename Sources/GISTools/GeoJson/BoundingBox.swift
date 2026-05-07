@@ -711,6 +711,7 @@ extension BoundingBox {
 
 extension BoundingBox: Equatable {
 
+    /// Two bounding boxes are equal when their north-west and south-east coordinates are equal.
     public static func == (
         lhs: BoundingBox,
         rhs: BoundingBox

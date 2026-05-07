@@ -3,6 +3,7 @@ import CoreLocation
 #endif
 import Foundation
 
+/// The distance function used for Fréchet distance calculations.
 public enum FrechetDistanceFunction {
 
     /// Use the eudlidean distance.
@@ -14,6 +15,11 @@ public enum FrechetDistanceFunction {
     /// Use a custom distance function.
     case other((Coordinate3D, Coordinate3D) -> CLLocationDistance)
 
+    /// Calculates the distance between two coordinates using the selected method.
+    ///
+    /// - Parameters:
+    ///    - first: The first coordinate
+    ///    - second: The second coordinate
     func distance(
         between first: Coordinate3D,
         and second: Coordinate3D

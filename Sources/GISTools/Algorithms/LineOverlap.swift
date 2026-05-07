@@ -9,9 +9,13 @@ extension LineSegment {
 
     /// Indicates how one segment compares to another segment.
     public enum LineSegmentComparisonResult: Sendable {
+        /// The two segments are equal.
         case equal
+        /// The two segments are not equal.
         case notEqual
+        /// The receiver's segment lies on the other segment.
         case thisOnOther
+        /// The other segment lies on the receiver's segment.
         case otherOnThis
     }
 
@@ -232,20 +236,26 @@ extension GeoJson {
 
 // MARK: - Private
 
+/// A pair of indices used to track overlapping coordinate pairs.
 private struct OrderedIndexPair: Hashable, Comparable, CustomStringConvertible {
 
+    /// The first index of the pair.
     let first: Int
+    /// The second index of the pair.
     let second: Int
 
+    /// Creates an ordered index pair where the smaller value is stored as `first`.
     init(_ first: Int, _ second: Int) {
         self.first = min(first, second)
         self.second = max(first, second)
     }
 
+    /// A textual representation of the pair.
     var description: String {
         "(\(first)-\(second))"
     }
 
+    /// Returns true if the first pair precedes the second pair in lexicographic order.
     static func < (lhs: OrderedIndexPair, rhs: OrderedIndexPair) -> Bool {
         if lhs.first < rhs.first { return true }
         if lhs.first > rhs.first { return false }

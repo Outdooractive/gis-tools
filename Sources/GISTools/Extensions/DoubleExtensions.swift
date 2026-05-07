@@ -123,6 +123,7 @@ extension Double {
         self = rounded(precision: precision)
     }
 
+    /// Converts the value to an ``Int``, truncating any fractional part.
     var toInt: Int {
         Int(self)
     }
