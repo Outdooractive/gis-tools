@@ -448,11 +448,21 @@ extension Coordinate3D {
         return String(data: data, encoding: .utf8)!
     }
 
-    /// Write the coordinate in it's JSON represenation to a file.
+    /// Write the coordinate in it's JSON representation to a file.
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public func write(to url: URL, prettyPrinted: Bool = false) throws {
-        try asJsonData(prettyPrinted: prettyPrinted)?.write(to: url)
+    /// - Returns: `true` if the write succeeded, `false` if serialization failed.
+    @discardableResult
+    public func write(to url: URL, prettyPrinted: Bool = false) -> Bool {
+        guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return false }
+
+        do {
+            try data.write(to: url)
+            return true
+        }
+        catch {
+            return false
+        }
     }
 
 }
