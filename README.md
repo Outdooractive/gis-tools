@@ -865,6 +865,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98]                 |
 | point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
 | pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
+| polygon-smooth              | `let smoothed = polygon.smooth(iterations: 3)`                                                                                         |     | [Source][148] / [Tests][149] |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
 | rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
