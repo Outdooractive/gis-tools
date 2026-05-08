@@ -841,7 +841,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58]                 |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
-| center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62]                 |
+| center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65]                 |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
@@ -1023,6 +1023,7 @@ Thomas Rasch, Outdooractive
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
 [129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PoygonToLine.swift "PoygonToLine"
 [130]:  https://github.com/Outdooractive/mvt-postgis
+[137]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CenterTests.swift "CenterTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
