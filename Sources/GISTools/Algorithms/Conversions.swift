@@ -123,6 +123,31 @@ extension GISTool {
         return (area / startFactor) * finalFactor
     }
 
+    /// Converts a length value from any unit to meters.
+    ///
+    /// ```swift
+    /// GISTool.convertToMeters(5, .kilometers) // 5000.0
+    /// GISTool.convertToMeters(1, .miles)      // 1609.344
+    /// ```
+    /// - note: Mainly for tests.
+    public static func convertToMeters(
+        _ value: Double,
+        _ unit: Unit
+    ) -> Double {
+        switch unit {
+        case .millimeters, .millimetres: return value / 1000.0
+        case .centimeters, .centimetres: return value / 100.0
+        case .meters, .metres: return value
+        case .kilometers, .kilometres: return value * 1000.0
+        case .inches: return value / 39.370
+        case .feet: return value / 3.28084
+        case .yards: return value / 1.0936
+        case .miles: return value * 1609.344
+        case .nauticalmiles: return value * 1852.0
+        default: return value
+        }
+    }
+
 }
 
 // MARK: - Pixels

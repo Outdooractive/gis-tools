@@ -15,7 +15,7 @@ struct LineChunkTests {
 
     @Test
     func lineChunkShort() async throws {
-        let chunks = lineString.chunked(segmentLength: 5.miles).lineStrings
+        let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(5, .miles)).lineStrings
         #expect(chunks.count == 7)
 
         let some = chunks[3]
@@ -32,7 +32,7 @@ struct LineChunkTests {
 
     @Test
     func lineChunkLong() async throws {
-        let chunks = lineString.chunked(segmentLength: 50.miles).lineStrings
+        let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(50, .miles)).lineStrings
         #expect(chunks.count == 1)
         #expect(chunks[0] == lineString)
     }
