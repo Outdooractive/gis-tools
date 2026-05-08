@@ -857,12 +857,12 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
 | line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
-| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92]                 |
-| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93]                 |
+| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92] / [Tests][138]  |
+| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93] / [Tests][139]  |
 | nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
-| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96]                 |
-| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97]                 |
-| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98]                 |
+| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96] / [Tests][140]  |
+| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97] / [Tests][141]  |
+| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98] / [Tests][142]  |
 | point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
 | pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
@@ -1023,6 +1023,11 @@ Thomas Rasch, Outdooractive
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
 [129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PoygonToLine.swift "PoygonToLine"
 [130]:  https://github.com/Outdooractive/mvt-postgis
+[138]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointTests.swift "NearestPointTests"
+[139]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointOnFeatureTests.swift "NearestPointOnFeatureTests"
+[140]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointToLineTests.swift "NearestPointToLineTests"
+[141]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PointOnFeatureTests.swift "PointOnFeatureTests"
+[142]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PointsWithinPolygonTests.swift "PointsWithinPolygonTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
