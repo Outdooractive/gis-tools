@@ -14,7 +14,7 @@ extension LineSegment {
     ///    - tolerance: The tolerance, in degrees
     ///    - undirectedEdge: Whether the segment should be treated as an undirected edge
     ///
-    /// - Returns: *true* if the segments are parallel within the tolerance, *false* otherwise.
+    /// - Returns: `true` if the segments are parallel within the tolerance, `false` otherwise.
     public func isParallel(
         to other: LineSegment,
         tolerance: CLLocationDegrees = 0.0,
@@ -47,7 +47,7 @@ extension LineString {
     ///    - other: The other LineString
     ///    - tolerance: The tolerance for each pair of segments, in degrees
     ///
-    /// - Returns: *true* if the lines are parallel within the tolerance, *false* otherwise.
+    /// - Returns: `true` if the lines are parallel within the tolerance, `false` otherwise.
     public func isParallel(
         to other: LineString,
         tolerance: CLLocationDegrees = 0.0

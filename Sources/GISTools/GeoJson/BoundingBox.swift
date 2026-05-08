@@ -26,9 +26,9 @@ public struct BoundingBox:
     public let projection: Projection
 
     /// The bounding boxes south-west (bottom-left) coordinate.
-    public var southWest: Coordinate3D
+    public private(set) var southWest: Coordinate3D
     /// The bounding boxes north-east (upper-right) coordinate.
-    public var northEast: Coordinate3D
+    public private(set) var northEast: Coordinate3D
 
     /// The bounding boxes north-west (upper-left) coordinate.
     public var northWest: Coordinate3D {
@@ -677,8 +677,11 @@ extension BoundingBox {
 
 extension BoundingBox {
 
-    // TODO: Date line
     /// Combine two bounding boxes.
+    ///
+    /// - Note: The result may not be correct if either bounding box crosses
+    ///         the anti-meridian (date line). Use ``normalized()`` on each
+    ///         operand first to avoid this issue.
     public static func + (
         lhs: BoundingBox,
         rhs: BoundingBox
@@ -696,8 +699,11 @@ extension BoundingBox {
                 projection: lhs.projection))
     }
 
-    // TODO: Date line
     /// Combine two bounding boxes.
+    ///
+    /// - Note: The result may not be correct if either bounding box crosses
+    ///         the anti-meridian (date line). Use ``normalized()`` on each
+    ///         operand first to avoid this issue.
     public mutating func formUnion(_ other: BoundingBox) {
         let boundingBox = self.normalized()
         let other = other.projected(to: projection).normalized()

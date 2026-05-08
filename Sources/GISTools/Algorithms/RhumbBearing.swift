@@ -12,7 +12,7 @@ extension Coordinate3D {
     ///
     /// - Parameters:
     ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if *true* (default *false*)
+    ///    - final: Calculated the final bearing if `true` (default `false`)
     public func rhumbBearing(
         to other: Coordinate3D,
         final: Bool = false
@@ -76,7 +76,7 @@ extension Point {
     ///
     /// - Parameters:
     ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if *true* (default *false*)
+    ///    - final: Calculated the final bearing if `true` (default `false`)
     public func rhumbBearing(
         to other: Point,
         final: Bool = false

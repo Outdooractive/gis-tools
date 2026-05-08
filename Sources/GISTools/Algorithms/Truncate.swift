@@ -10,9 +10,9 @@ extension Coordinate3D {
     /// Truncates the precision of the coordinate.
     ///
     /// - Parameters:
-    ///    - precision: The coordinate decimal precision (default *6*)
-    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
-    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
+    ///    - precision: The coordinate decimal precision (default `6`)
+    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default `false`)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default `false`)
     public func truncated(
         precision: Int = 6,
         removeAltitude: Bool = false,
@@ -29,9 +29,9 @@ extension Coordinate3D {
     /// Truncates the precision of the coordinate.
     ///
     /// - Parameters:
-    ///    - precision: The coordinate decimal precision (default *6*)
-    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
-    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
+    ///    - precision: The coordinate decimal precision (default `6`)
+    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default `false`)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default `false`)
     public mutating func truncate(
         precision: Int,
         removeAltitude: Bool = false,
@@ -50,9 +50,9 @@ extension GeoJson {
     /// Truncates the precision of the geometry.
     ///
     /// - Parameters:
-    ///    - precision: The coordinate decimal precision (default *6*)
-    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
-    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
+    ///    - precision: The coordinate decimal precision (default `6`)
+    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default `false`)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default `false`)
     public func truncated(
         precision: Int = 6,
         removeAltitude: Bool = false,
@@ -143,9 +143,9 @@ extension GeoJson {
     /// Truncates the precision of the geometry.
     ///
     /// - Parameters:
-    ///    - precision: The coordinate decimal precision (default *6*)
-    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default *false*)
-    ///    - removeM: Whether to remote the coordinate's `m` value (default *false*)
+    ///    - precision: The coordinate decimal precision (default `6`)
+    ///    - removeAltitude: Whether to remove the coordinate's altitude value (default `false`)
+    ///    - removeM: Whether to remote the coordinate's `m` value (default `false`)
     public mutating func truncate(
         precision: Int = 6,
         removeAltitude: Bool = false,

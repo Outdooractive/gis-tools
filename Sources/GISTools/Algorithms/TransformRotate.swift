@@ -13,7 +13,7 @@ extension GeoJson {
     /// - Parameters:
     ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
     ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
-    public func transformedRotate(
+    public func rotated(
         angle: CLLocationDegrees,
         pivot: Coordinate3D? = nil
     ) -> Self {
@@ -38,11 +38,11 @@ extension GeoJson {
     /// - Parameters:
     ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
     ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
-    public func transformedRotate(
+    public func rotated(
         angle: CLLocationDegrees,
         pivot: Point? = nil
     ) -> Self {
-        transformedRotate(angle: angle, pivot: pivot?.coordinate)
+        rotated(angle: angle, pivot: pivot?.coordinate)
     }
 
     /// Rotates the receiver with a specified angle, around its centroid or a given pivot point.
@@ -51,11 +51,11 @@ extension GeoJson {
     /// - Parameters:
     ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
     ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
-    public mutating func transformRotate(
+    public mutating func rotate(
         angle: CLLocationDegrees,
         pivot: Coordinate3D? = nil
     ) {
-        self = transformedRotate(angle: angle, pivot: pivot)
+        self = rotated(angle: angle, pivot: pivot)
     }
 
     /// Rotates the receiver with a specified angle, around its centroid or a given pivot point.
@@ -64,11 +64,43 @@ extension GeoJson {
     /// - Parameters:
     ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
     ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
+    public mutating func rotate(
+        angle: CLLocationDegrees,
+        pivot: Point? = nil
+    ) {
+        rotate(angle: angle, pivot: pivot?.coordinate)
+    }
+
+    @available(*, deprecated, renamed: "rotated(angle:pivot:)")
+    public func transformedRotate(
+        angle: CLLocationDegrees,
+        pivot: Coordinate3D? = nil
+    ) -> Self {
+        rotated(angle: angle, pivot: pivot)
+    }
+
+    @available(*, deprecated, renamed: "rotated(angle:pivot:)")
+    public func transformedRotate(
+        angle: CLLocationDegrees,
+        pivot: Point? = nil
+    ) -> Self {
+        rotated(angle: angle, pivot: pivot)
+    }
+
+    @available(*, deprecated, renamed: "rotate(angle:pivot:)")
+    public mutating func transformRotate(
+        angle: CLLocationDegrees,
+        pivot: Coordinate3D? = nil
+    ) {
+        rotate(angle: angle, pivot: pivot)
+    }
+
+    @available(*, deprecated, renamed: "rotate(angle:pivot:)")
     public mutating func transformRotate(
         angle: CLLocationDegrees,
         pivot: Point? = nil
     ) {
-        transformRotate(angle: angle, pivot: pivot?.coordinate)
+        rotate(angle: angle, pivot: pivot)
     }
 
 }

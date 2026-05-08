@@ -10,14 +10,14 @@ extension PolygonGeometry {
     /// Finds coordinates that fall within the receiver.
     public func coordinatesWithin(_ coordinates: [Coordinate3D]) -> [Coordinate3D] {
         coordinates.filter({ (coordinate) -> Bool in
-            contains(coordinate, ignoreBoundary: false)
+            contains(coordinate, ignoringBoundary: false)
         })
     }
 
     /// Finds *Point*s that fall within the receiver.
     public func pointsWithin(_ points: [Point]) -> [Point] {
         points.filter({ (point) -> Bool in
-            contains(point.coordinate, ignoreBoundary: false)
+            contains(point.coordinate, ignoringBoundary: false)
         })
     }
 

@@ -14,7 +14,7 @@ extension PointGeometry {
     ///    - other: The other Point or MultiPoint
     ///    - tolerance: The tolerance, in meters.
     ///
-    /// - Returns: *true* if the points overlap, *false* otherwise.
+    /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: PointGeometry,
         tolerance: CLLocationDegrees = 0.0
@@ -56,7 +56,7 @@ extension LineStringGeometry {
     ///    - other: The other Point or MultiPoint
     ///    - tolerance: The tolerance, in meters.
     ///
-    /// - Returns: *true* if the points overlap, *false* otherwise.
+    /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: LineStringGeometry,
         tolerance: CLLocationDegrees = 0.0
@@ -91,7 +91,7 @@ extension PolygonGeometry {
     ///    - other: The other Point or MultiPoint
     ///    - tolerance: The tolerance, in meters.
     ///
-    /// - Returns: *true* if the points overlap, *false* otherwise.
+    /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
         tolerance: CLLocationDegrees = 0.0
@@ -126,7 +126,7 @@ extension Feature {
     ///    - other: The other Point or MultiPoint
     ///    - tolerance: The tolerance, in meters.
     ///
-    /// - Returns: *true* if the points overlap, *false* otherwise.
+    /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: Feature,
         tolerance: CLLocationDegrees = 0.0

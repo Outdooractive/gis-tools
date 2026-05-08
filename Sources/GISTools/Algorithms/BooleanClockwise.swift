@@ -9,7 +9,7 @@ extension Ring {
 
     /// Check whether or not the ring is clockwise.
     ///
-    /// - Returns: *true* if the ring is clockwise, *false* otherwise.
+    /// - Returns: `true` if the ring is clockwise, `false` otherwise.
     public var isClockwise: Bool {
         guard coordinates.count > 0 else { return false }
 
@@ -29,7 +29,7 @@ extension Ring {
 
     /// Check whether or not the ring is counter-clockwise.
     ///
-    /// - Returns: *true* if the ring is counter-clockwise, *false* otherwise.
+    /// - Returns: `true` if the ring is counter-clockwise, `false` otherwise.
     public var isCounterClockwise: Bool {
         !isClockwise
     }

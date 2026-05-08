@@ -90,7 +90,7 @@ extension MultiLineString {
 
 extension Point {
 
-    /// Check if the Point is valid. Always **true**.
+    /// Check if the Point is valid. Always `true`.
     public var isValid: Bool {
         true
     }
