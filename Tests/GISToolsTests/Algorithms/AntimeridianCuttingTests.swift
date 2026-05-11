@@ -78,6 +78,19 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[0].geometry is LineString)
         #expect(fc.features[1].geometry is LineString)
         #expect(fc.features[2].geometry is LineString)
+
+        let part1 = fc.features[0].geometry as! LineString
+        #expect(part1.coordinates[0] == Coordinate3D(latitude: 0.0, longitude: 170.0))
+        #expect(part1.coordinates[1] == Coordinate3D(latitude: 0.0, longitude: 180.0))
+
+        let part2 = fc.features[1].geometry as! LineString
+        #expect(part2.coordinates[0] == Coordinate3D(latitude: 0.0, longitude: -180.0))
+        #expect(part2.coordinates[1] == Coordinate3D(latitude: 0.0, longitude: -170.0))
+        #expect(part2.coordinates[2] == Coordinate3D(latitude: 0.0, longitude: -180.0))
+
+        let part3 = fc.features[2].geometry as! LineString
+        #expect(part3.coordinates[0] == Coordinate3D(latitude: 0.0, longitude: 180.0))
+        #expect(part3.coordinates[1] == Coordinate3D(latitude: 0.0, longitude: 170.0))
     }
 
     @Test
@@ -166,6 +179,22 @@ struct AntimeridianCuttingTests {
             #expect(coords.count >= 4)
             #expect(coords.first == coords.last)
         }
+
+        // Verify exact coordinates for the right (east) polygon
+        let rightPoly = fc.features[0].geometry as! Polygon
+        let rightCoords = rightPoly.outerRing!.coordinates
+        #expect(rightCoords.contains { $0 == Coordinate3D(latitude: 40.0, longitude: 170.0) })
+        #expect(rightCoords.contains { $0 == Coordinate3D(latitude: 50.0, longitude: 170.0) })
+        #expect(rightCoords.contains { $0 == Coordinate3D(latitude: 50.0, longitude: 180.0) })
+        #expect(rightCoords.contains { $0 == Coordinate3D(latitude: 40.0, longitude: 180.0) })
+
+        // Verify exact coordinates for the left (west) polygon
+        let leftPoly = fc.features[1].geometry as! Polygon
+        let leftCoords = leftPoly.outerRing!.coordinates
+        #expect(leftCoords.contains { $0 == Coordinate3D(latitude: 40.0, longitude: -170.0) })
+        #expect(leftCoords.contains { $0 == Coordinate3D(latitude: 50.0, longitude: -170.0) })
+        #expect(leftCoords.contains { $0 == Coordinate3D(latitude: 50.0, longitude: -180.0) })
+        #expect(leftCoords.contains { $0 == Coordinate3D(latitude: 40.0, longitude: -180.0) })
     }
 
     // MARK: - MultiLineString
