@@ -161,7 +161,7 @@ enum AntimeridianCutting {
     /// into a single closed ring by joining their endpoints along ±180°.
     static func connectRingParts(
         _ parts: [[Coordinate3D]],
-        alongLongitude lon: Double
+        alongLongitude longitude: Double
     ) -> [Coordinate3D] {
         guard parts.isNotEmpty else { return [] }
         guard parts.count > 1 else {
@@ -180,24 +180,24 @@ enum AntimeridianCutting {
                 if prevEnd.longitude != thisStart.longitude
                     || prevEnd.latitude != thisStart.latitude
                 {
-                    result.append(Coordinate3D(latitude: prevEnd.latitude, longitude: lon))
-                    result.append(Coordinate3D(latitude: thisStart.latitude, longitude: lon))
+                    result.append(Coordinate3D(latitude: prevEnd.latitude, longitude: longitude))
+                    result.append(Coordinate3D(latitude: thisStart.latitude, longitude: longitude))
                 }
             }
             result.append(contentsOf: part)
         }
 
-        if result.first != result.last {
-            let first = result.first!
-            let last = result.last!
-            if last.longitude != first.longitude
-                || last.latitude != first.latitude
-            {
-                result.append(Coordinate3D(latitude: last.latitude, longitude: lon))
-                result.append(Coordinate3D(latitude: first.latitude, longitude: lon))
-            }
+        let first = result.first!
+        let last = result.last!
+        // Add seam points along the meridian only when the 2D endpoints differ.
+        if last.longitude != first.longitude || last.latitude != first.latitude {
+            result.append(Coordinate3D(latitude: last.latitude, longitude: longitude))
+            result.append(Coordinate3D(latitude: first.latitude, longitude: longitude))
         }
-        result.append(result.first!)
+        // Ensure the ring is closed without creating a duplicate point.
+        if result.last != first {
+            result.append(first)
+        }
 
         return result
     }
