@@ -446,8 +446,12 @@ extension GeoJsonGeometry {
             return mp.cutAtAntimeridian()
         case let gc as GeometryCollection:
             return gc.cutAtAntimeridian()
-        default:
+        case is Point:
             return FeatureCollection([Feature(self)])
+        case is MultiPoint:
+            return FeatureCollection([Feature(self)])
+        default:
+            fatalError("Unsupported geometry type for antimeridian cutting: \(Swift.type(of: self))")
         }
     }
 
