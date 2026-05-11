@@ -294,7 +294,8 @@ extension Polygon {
     fileprivate func _cutParts() -> [Polygon] {
         guard crossesAntimeridian else { return [self] }
 
-        let outerResult = AntimeridianCutting.cutRing(outerRing!)
+        guard let outerRing else { return [self] }
+        let outerResult = AntimeridianCutting.cutRing(outerRing)
 
         var rightInnerRings: [[Coordinate3D]] = []
         var leftInnerRings: [[Coordinate3D]] = []
