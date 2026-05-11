@@ -356,26 +356,26 @@ extension BoundingBox {
         let boundingBox = self.normalized()
 
         guard boundingBox.crossesAntiMeridian else {
-            return Polygon([[boundingBox.southWest, boundingBox.northWest, boundingBox.northEast, boundingBox.southEast, boundingBox.southWest]])!
+            return Polygon(unchecked: [[boundingBox.southWest, boundingBox.northWest, boundingBox.northEast, boundingBox.southEast, boundingBox.southWest]])
         }
 
-        let rightPolygon = Polygon([[
+        let rightPolygon = Polygon(unchecked: [[
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
             Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0),
             Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.southWest.longitude),
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.southWest.longitude),
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
-        ]])!
+        ]])
 
-        let leftPolygon = Polygon([[
+        let leftPolygon = Polygon(unchecked: [[
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
             Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.northEast.longitude),
             Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: -180.0),
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
             Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
-        ]])!
+        ]])
 
-        return MultiPolygon([rightPolygon, leftPolygon])!
+        return MultiPolygon(unchecked: [rightPolygon, leftPolygon])
     }
 
     /// The geodesic center of the bounding box.
