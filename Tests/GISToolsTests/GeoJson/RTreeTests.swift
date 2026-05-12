@@ -4,7 +4,9 @@ import CoreLocation
 import Foundation
 @testable import GISTools
 import Testing
+#if canImport(XCTest)
 import XCTest
+#endif
 
 struct RTreeTests {
 
@@ -245,13 +247,13 @@ struct RTreeTests {
                 }
                 let rTree = RTree(nodes, nodeSize: nodeSize)
 
-                let startTime1 = CFAbsoluteTimeGetCurrent()
+                let startTime1 = Date().timeIntervalSinceReferenceDate
                 let objects1 = rTree.search(inBoundingBox: boundingBox)
-                let timeElapsed1 = CFAbsoluteTimeGetCurrent() - startTime1
+                let timeElapsed1 = Date().timeIntervalSinceReferenceDate - startTime1
 
-                let startTime2 = CFAbsoluteTimeGetCurrent()
+                let startTime2 = Date().timeIntervalSinceReferenceDate
                 let objects2 = rTree.searchSerial(inBoundingBox: boundingBox)
-                let timeElapsed2 = CFAbsoluteTimeGetCurrent() - startTime2
+                let timeElapsed2 = Date().timeIntervalSinceReferenceDate - startTime2
 
                 #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
 
@@ -267,6 +269,7 @@ struct RTreeTests {
 
 // MARK: - Benchmarks
 
+#if canImport(XCTest)
 final class RTreeBenchmarks: XCTestCase {
 
     let performanceInput: [Point] = {
@@ -305,42 +308,36 @@ final class RTreeBenchmarks: XCTestCase {
             longitude: Double.random(in: -10.0 ... 10.0))
     }
 
-    let performanceOptions: XCTMeasureOptions = {
-        let options = XCTMeasureOptions()
-        options.iterationCount = 10
-        return options
-    }()
-
     func testPerformanceBuildTreeHilbert() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
-        measure(options: performanceOptions, block: {
+        measure {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
-        })
+        }
     }
 
     func testPerformanceBuildTreeLatitude() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
-        measure(options: performanceOptions, block: {
+        measure {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
-        })
+        }
     }
 
     func testPerformanceBuildTreeLongitude() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
-        measure(options: performanceOptions, block: {
+        measure {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .byLongitude)
-        })
+        }
     }
 
     func testPerformanceBuildTreeUnsorted() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
-        measure(options: performanceOptions, block: {
+        measure {
             _ = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
-        })
+        }
     }
 
     //
@@ -349,36 +346,36 @@ final class RTreeBenchmarks: XCTestCase {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.searchSerial(inBoundingBox: performanceSearchBoundingBox)
-        })
+        }
     }
 
     func testPerformanceQueryHilbert() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
-        })
+        }
     }
 
     func testPerformanceQueryLatitude() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
-        })
+        }
     }
 
     func testPerformanceQueryUnsorted() async throws {
         try XCTSkipIf(CIHelper.isRunningInCI, "Skipping performance test in CI")
 
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(inBoundingBox: performanceSearchBoundingBox)
-        })
+        }
     }
 
     //
@@ -388,9 +385,9 @@ final class RTreeBenchmarks: XCTestCase {
 
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.searchSerial(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
-        })
+        }
     }
 
     func testPerformanceAroundSearchHilbert() async throws {
@@ -398,9 +395,9 @@ final class RTreeBenchmarks: XCTestCase {
 
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .hilbert)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
-        })
+        }
     }
 
     func testPerformanceAroundSearchLatitude() async throws {
@@ -408,9 +405,9 @@ final class RTreeBenchmarks: XCTestCase {
 
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .byLatitude)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
-        })
+        }
     }
 
     func testPerformanceAroundSearchUnsorted() async throws {
@@ -418,9 +415,10 @@ final class RTreeBenchmarks: XCTestCase {
 
         let maximumDistance = 100_000.0
         let rTree = RTree(performanceInput, nodeSize: 16, sortOption: .unsorted)
-        measure(options: performanceOptions, block: {
+        measure {
             _ = rTree.search(aroundCoordinate: performanceAroundSearchCenter, maximumDistance: maximumDistance)
-        })
+        }
     }
 
 }
+#endif
