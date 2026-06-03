@@ -884,6 +884,8 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
+| clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
+| clusters-kmeans             | `let result = featureCollection.kmeansClusters(numberOfClusters: 5)`                                                                  |     | [Source][156] / [Tests][157] |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
@@ -1093,6 +1095,8 @@ Thomas Rasch, Outdooractive
 [153]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/UnionTests.swift "UnionTests"
 [154]:	https://github.com/TWKB/Specification/blob/master/twkb.md
 [155]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/TWKBTests.swift
+[156]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Clusters.swift
+[157]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ClustersTests.swift
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
