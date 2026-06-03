@@ -11,7 +11,7 @@ struct KinksTests {
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]))
         let result = ls.kinks()
-        #expect(result.features.isEmpty)
+        #expect(result.points.isEmpty)
     }
 
     @Test
@@ -24,7 +24,7 @@ struct KinksTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let result = polygon.kinks()
-        #expect(result.features.isEmpty)
+        #expect(result.points.isEmpty)
     }
 
     @Test
@@ -38,10 +38,7 @@ struct KinksTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let result = polygon.kinks()
-        #expect(result.features.isNotEmpty)
-        for feature in result.features {
-            #expect(feature.geometry is Point)
-        }
+        #expect(result.points.isNotEmpty)
     }
 
     @Test
@@ -53,7 +50,7 @@ struct KinksTests {
             Coordinate3D(latitude: 10.0, longitude: 0.0),
         ]))
         let result = ls.kinks()
-        #expect(result.features.isNotEmpty)
+        #expect(result.points.isNotEmpty)
     }
 
     @Test
@@ -71,7 +68,7 @@ struct KinksTests {
         ]))
         let result = mls.kinks()
         // The second line crosses the first
-        #expect(result.features.isNotEmpty)
+        #expect(result.points.isNotEmpty)
     }
 
     @Test
@@ -85,14 +82,14 @@ struct KinksTests {
         ]]))
         let feature = Feature(polygon)
         let result = feature.kinks()
-        #expect(result.features.isNotEmpty)
+        #expect(result.points.isNotEmpty)
     }
 
     @Test
     func unsupportedGeometryKinks() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let result = point.kinks()
-        #expect(result.features.isEmpty)
+        #expect(result.points.isEmpty)
     }
 
 }

@@ -12,9 +12,9 @@ extension GeoJson {
     /// Supports ``LineString``, ``MultiLineString``, ``Polygon``,
     /// and ``MultiPolygon``.
     ///
-    /// - Returns: A ``FeatureCollection`` containing one ``Point``
-    ///   feature for each self-intersection.
-    public func kinks() -> FeatureCollection {
+    /// - Returns: A ``MultiPoint`` with one point for each
+    ///   self-intersection.
+    public func kinks() -> MultiPoint {
         let geometry = (self as? Feature)?.geometry ?? (self as? GeoJsonGeometry)
 
         let coordSets: [[Coordinate3D]]
@@ -29,7 +29,7 @@ extension GeoJson {
         case let mp as MultiPolygon:
             coordSets = mp.coordinates.flatMap { $0 }
         default:
-            return FeatureCollection()
+            return MultiPoint()
         }
 
         var intersectionPoints: Set<Coordinate3D> = []
@@ -54,9 +54,11 @@ extension GeoJson {
                         }
 
                         let seg1 = LineSegment(
-                            first: line1[i], second: line1[i + 1])
+                            first: line1[i],
+                            second: line1[i + 1])
                         let seg2 = LineSegment(
-                            first: line2[k], second: line2[k + 1])
+                            first: line2[k],
+                            second: line2[k + 1])
 
                         if let intersection = seg1.intersection(seg2) {
                             intersectionPoints.insert(intersection)
@@ -66,8 +68,7 @@ extension GeoJson {
             }
         }
 
-        let features = intersectionPoints.map { Feature(Point($0)) }
-        return FeatureCollection(features)
+        return MultiPoint(unchecked: Array(intersectionPoints))
     }
 
 }
