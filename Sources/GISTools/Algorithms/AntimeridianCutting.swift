@@ -3,14 +3,10 @@ import CoreLocation
 #endif
 import Foundation
 
-// MARK: - Antimeridian cutting of GeoJSON geometries
-//
 // Per RFC 7946 §3.1.9, geometries that cross the anti-meridian (±180°)
 // SHOULD be cut into parts such that no individual part crosses it.
 //
 // https://tools.ietf.org/html/rfc7946#section-3.1.9
-
-// MARK: - AntimeridianCutting namespace
 
 /// Namespace for anti-meridian cutting helpers.
 enum AntimeridianCutting {
@@ -42,6 +38,7 @@ enum AntimeridianCutting {
     /// crosses the anti-meridian.
     static func coordinatesCrossMeridian(_ coordinates: [Coordinate3D]) -> Bool {
         guard coordinates.count >= 2 else { return false }
+
         for i in 1..<coordinates.count {
             if segmentCrossesMeridian(coordinates[i - 1], coordinates[i]) {
                 return true
@@ -74,17 +71,17 @@ enum AntimeridianCutting {
         }
 
         let fraction = (180.0 - p1.longitude) / (unwrapped - p1.longitude)
-        let intersectionLat = p1.latitude + fraction * (p2.latitude - p1.latitude)
+        let intersectionLatitude = p1.latitude + fraction * (p2.latitude - p1.latitude)
 
         let first: Coordinate3D
         let second: Coordinate3D
         if p1.longitude >= 0.0 {
-            first = Coordinate3D(latitude: intersectionLat, longitude: 180.0)
-            second = Coordinate3D(latitude: intersectionLat, longitude: -180.0)
+            first = Coordinate3D(latitude: intersectionLatitude, longitude: 180.0)
+            second = Coordinate3D(latitude: intersectionLatitude, longitude: -180.0)
         }
         else {
-            first = Coordinate3D(latitude: intersectionLat, longitude: -180.0)
-            second = Coordinate3D(latitude: intersectionLat, longitude: 180.0)
+            first = Coordinate3D(latitude: intersectionLatitude, longitude: -180.0)
+            second = Coordinate3D(latitude: intersectionLatitude, longitude: 180.0)
         }
 
         return (first, second)
@@ -99,7 +96,7 @@ enum AntimeridianCutting {
         guard coords.count >= 4 else { return result }
 
         var currentPart: [Coordinate3D] = []
-        var currentSide: Side?
+        var currentSide: Side!
 
         for i in 1..<coords.count {
             let prev = coords[i - 1]
@@ -112,7 +109,7 @@ enum AntimeridianCutting {
 
             if let intersection = AntimeridianCutting.intersection(prev, curr) {
                 currentPart.append(intersection.first)
-                appendPart(&result, currentPart, side: currentSide!)
+                appendPart(&result, currentPart, side: currentSide)
                 currentSide = (currentSide == .right) ? .left : .right
                 currentPart = [intersection.second, curr]
             }
@@ -137,8 +134,8 @@ enum AntimeridianCutting {
     ) -> [Polygon] {
         guard outerParts.isNotEmpty else { return [] }
 
-        let lon = (side == .right) ? 180.0 : -180.0
-        let outerRing = connectRingParts(outerParts, alongLongitude: lon)
+        let longitude = (side == .right) ? 180.0 : -180.0
+        let outerRing = connectRingParts(outerParts, alongLongitude: longitude)
 
         var polygonInnerRings: [Ring] = []
         for innerCoords in innerParts {
@@ -209,6 +206,7 @@ enum AntimeridianCutting {
         side: Side
     ) {
         guard part.count >= 2 else { return }
+
         switch side {
         case .right: result.right.append(part)
         case .left: result.left.append(part)
