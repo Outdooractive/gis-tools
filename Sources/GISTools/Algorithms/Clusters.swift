@@ -21,11 +21,10 @@ extension FeatureCollection {
     public func dbscanClusters(
         maxDistance: CLLocationDistance,
         minPoints: Int = 3,
-        mutate: Bool = false
     ) -> FeatureCollection {
-        var features = mutate ? self.features : self.features
+        var features = self.features
         let count = features.count
-        guard count > 0 else { return FeatureCollection(features) }
+        guard count > 0 else { return self }
 
         var visited = Array(repeating: false, count: count)
         var assigned = Array(repeating: false, count: count)
@@ -38,17 +37,23 @@ extension FeatureCollection {
             visited[i] = true
 
             let neighbors = regionQuery(
-                features: features, index: i, maxDistance: maxDistance)
+                features: features,
+                index: i,
+                maxDistance: maxDistance)
 
             if neighbors.count >= minPoints {
                 let clusterId = nextClusterId
                 nextClusterId += 1
                 expandCluster(
-                    features: features, clusterId: clusterId,
+                    features: features,
+                    clusterId: clusterId,
                     neighbors: neighbors,
-                    visited: &visited, assigned: &assigned,
-                    clusterIds: &clusterIds, isNoise: &isNoise,
-                    maxDistance: maxDistance, minPoints: minPoints)
+                    visited: &visited,
+                    assigned: &assigned,
+                    clusterIds: &clusterIds,
+                    isNoise: &isNoise,
+                    maxDistance: maxDistance,
+                    minPoints: minPoints)
             }
             else {
                 isNoise[i] = true
@@ -66,7 +71,9 @@ extension FeatureCollection {
         }
 
         var result = FeatureCollection(features)
-        if boundingBox != nil { result.updateBoundingBox(onlyIfNecessary: false) }
+        if boundingBox != nil {
+            result.updateBoundingBox(onlyIfNecessary: false)
+        }
         return result
     }
 
@@ -81,24 +88,23 @@ extension FeatureCollection {
     ///   ([Double]) properties on each point.
     public func kmeansClusters(
         numberOfClusters: Int? = nil,
-        mutate: Bool = false
     ) -> FeatureCollection {
-        var features = mutate ? self.features : self.features
+        var features = self.features
         let count = features.count
-        guard count > 0 else { return FeatureCollection(features) }
+        guard count > 0 else { return self }
 
         let k = min(
             numberOfClusters ?? Int(round(sqrt(Double(count) / 2.0))),
             count)
-        guard k > 0 else { return FeatureCollection(features) }
+        guard k > 0 else { return self }
 
         // Extract coordinates
         let coords: [Coordinate3D] = features.compactMap {
             ($0.geometry as? Point)?.coordinate
         }
-        guard coords.count == count, k <= count else {
-            return FeatureCollection(features)
-        }
+        guard coords.count == count,
+              k <= count
+        else { return self }
 
         // Initialize centroids from first k points
         var centroids = Array(coords.prefix(k))
@@ -125,13 +131,15 @@ extension FeatureCollection {
             var changed = false
             for j in 0..<k {
                 guard !clusters[j].isEmpty else { continue }
+
                 let sumLat = clusters[j].reduce(0.0) { $0 + $1.latitude }
                 let sumLon = clusters[j].reduce(0.0) { $0 + $1.longitude }
                 let newCentroid = Coordinate3D(
                     latitude: sumLat / Double(clusters[j].count),
                     longitude: sumLon / Double(clusters[j].count))
-                if centroids[j].latitude != newCentroid.latitude ||
-                    centroids[j].longitude != newCentroid.longitude {
+                if centroids[j].latitude != newCentroid.latitude
+                    || centroids[j].longitude != newCentroid.longitude
+                {
                     centroids[j] = newCentroid
                     changed = true
                 }
@@ -158,16 +166,21 @@ extension FeatureCollection {
         }
 
         var result = FeatureCollection(features)
-        if boundingBox != nil { result.updateBoundingBox(onlyIfNecessary: false) }
+        if boundingBox != nil {
+            result.updateBoundingBox(onlyIfNecessary: false)
+        }
         return result
     }
 
     // MARK: - DBSCAN helpers
 
     private func regionQuery(
-        features: [Feature], index: Int, maxDistance: CLLocationDistance
+        features: [Feature],
+        index: Int,
+        maxDistance: CLLocationDistance
     ) -> [Int] {
         guard let point = features[index].geometry as? Point else { return [] }
+
         let center = point.coordinate
 
         // Approximate bounds: 1 degree ≈ 111 km at equator
@@ -185,6 +198,7 @@ extension FeatureCollection {
             guard i != index,
                   let neighbor = features[i].geometry as? Point
             else { continue }
+
             let neighborCoord = neighbor.coordinate
             if bbox.contains(neighborCoord) {
                 let d = center.distance(from: neighborCoord)
@@ -197,11 +211,15 @@ extension FeatureCollection {
     }
 
     private func expandCluster(
-        features: [Feature], clusterId: Int,
+        features: [Feature],
+        clusterId: Int,
         neighbors: [Int],
-        visited: inout [Bool], assigned: inout [Bool],
-        clusterIds: inout [Int], isNoise: inout [Bool],
-        maxDistance: CLLocationDistance, minPoints: Int
+        visited: inout [Bool],
+        assigned: inout [Bool],
+        clusterIds: inout [Int],
+        isNoise: inout [Bool],
+        maxDistance: CLLocationDistance,
+        minPoints: Int
     ) {
         var queue = neighbors
         var idx = 0
@@ -212,9 +230,12 @@ extension FeatureCollection {
             if !visited[neighborIndex] {
                 visited[neighborIndex] = true
                 let nextNeighbors = regionQuery(
-                    features: features, index: neighborIndex,
+                    features: features,
+                    index: neighborIndex,
                     maxDistance: maxDistance)
-                if nextNeighbors.count >= minPoints && isNoise[neighborIndex] {
+                if nextNeighbors.count >= minPoints,
+                   isNoise[neighborIndex]
+                {
                     isNoise[neighborIndex] = false
                 }
                 queue.append(contentsOf: nextNeighbors)
