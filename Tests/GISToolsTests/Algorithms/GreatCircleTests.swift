@@ -9,7 +9,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 48.0, longitude: -122.0)
         let end = Coordinate3D(latitude: 39.0, longitude: -77.0)
 
-        let result = GISTool.greatCircle(from: start, to: end)
+        let result = start.greatCircle(to: end)
         #expect(result is LineString)
 
         let ls = result as! LineString
@@ -23,7 +23,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 45.0, longitude: 170.0)
         let end = Coordinate3D(latitude: 45.0, longitude: -170.0)
 
-        let result = GISTool.greatCircle(from: start, to: end)
+        let result = start.greatCircle(to: end)
         // Should be a MultiLineString (crosses the date line)
         #expect(result is MultiLineString)
     }
@@ -31,7 +31,7 @@ struct GreatCircleTests {
     @Test
     func greatCircleSamePoint() async throws {
         let point = Coordinate3D(latitude: 40.0, longitude: -73.0)
-        let result = GISTool.greatCircle(from: point, to: point, npoints: 5)
+        let result = point.greatCircle(to: point, npoints: 5)
 
         #expect(result is LineString)
         let ls = result as! LineString
@@ -46,7 +46,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let end = Coordinate3D(latitude: 10.0, longitude: 10.0)
 
-        let result = GISTool.greatCircle(from: start, to: end, npoints: 10)
+        let result = start.greatCircle(to: end, npoints: 10)
         #expect(result is LineString)
 
         let ls = result as! LineString
@@ -58,7 +58,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let end = Coordinate3D(latitude: 0.0, longitude: 180.0)
 
-        let result = GISTool.greatCircle(from: start, to: end, npoints: 50)
+        let result = start.greatCircle(to: end, npoints: 50)
         #expect(result is LineString)
 
         let ls = result as! LineString
@@ -73,7 +73,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 80.0, longitude: 0.0)
         let end = Coordinate3D(latitude: -80.0, longitude: 0.0)
 
-        let result = GISTool.greatCircle(from: start, to: end, npoints: 50)
+        let result = start.greatCircle(to: end, npoints: 50)
         #expect(result is LineString)
 
         let ls = result as! LineString
@@ -88,7 +88,7 @@ struct GreatCircleTests {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let end = Coordinate3D(latitude: 10.0, longitude: 10.0)
 
-        let result = GISTool.greatCircle(from: start, to: end, npoints: 1)
+        let result = start.greatCircle(to: end, npoints: 1)
         // Falls back to a 2-point line
         #expect(result is LineString)
         let ls = result as! LineString

@@ -5,37 +5,38 @@ import Foundation
 
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-great-circle
 
-extension GISTool {
+extension Coordinate3D {
 
-    /// Calculates a great circle route between `start` and `end`.
+    /// Calculates a great circle route from `self` to `end`.
     ///
     /// If the start and end are identical a single-point ``LineString``
     /// of length `npoints` is returned.
     ///
     /// - Parameters:
-    ///   - start: Start coordinate.
     ///   - end: End coordinate.
     ///   - npoints: Number of points along the arc (default 100).
     ///   - offset: Controls anti-meridian split threshold (default 10).
     /// - Returns: A ``LineString`` or ``MultiLineString`` representing the arc.
-    public static func greatCircle(
-        from start: Coordinate3D,
+    public func greatCircle(
         to end: Coordinate3D,
         npoints: Int = 100,
         offset: Int = 10
-    ) -> any GeoJsonGeometry {
+    ) -> any LineStringGeometry {
         guard npoints > 1 else {
-            return LineString([start, end]) ?? LineString(unchecked: [start, end])
+            return LineString([self, end]) ?? LineString(unchecked: [self, end])
         }
 
         // Identical coordinates: return a line with npoints copies
-        if start == end {
-            let coords = Array(repeating: start, count: npoints)
+        if self == end {
+            let coords = Array(repeating: self, count: npoints)
             return LineString(unchecked: coords)
         }
 
-        let coords = greatCircleCoordinates(
-            from: start, to: end, npoints: npoints, offset: offset)
+        let coords = Self.greatCircleCoordinates(
+            from: self,
+            to: end,
+            npoints: npoints,
+            offset: offset)
 
         // Check if the arc crosses the anti-meridian
         var crossesAM = false
@@ -60,7 +61,7 @@ extension GISTool {
 
             if abs(prev.longitude - curr.longitude) > 180.0 {
                 // Crossing detected — find intersection at ±180
-                let intersection = interpolateIntersection(prev, curr)
+                let intersection = Self.interpolateIntersection(prev, curr)
                 current.append(intersection.first)
                 lines.append(current)
                 current = [intersection.second, curr]

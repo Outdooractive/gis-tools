@@ -852,7 +852,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
-| great-circle                | `let arc = GISTool.greatCircle(from: start, to: end)`                                                                                 |     | [Source][144] / [Tests][145] |
+| great-circle                | `let arc = start.greatCircle(to: end)`                                                                                                |     | [Source][144] / [Tests][145] |
 | frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
