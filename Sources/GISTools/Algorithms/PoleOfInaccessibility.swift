@@ -47,9 +47,13 @@ extension Polygon {
         var bestCell = centroidCell()
 
         let bboxCell = PQCell(
-            x: minX + width / 2, y: minY + height / 2,
-            h: 0, polygon: self)
-        if bboxCell.d > bestCell.d { bestCell = bboxCell }
+            x: minX + width / 2,
+            y: minY + height / 2,
+            h: 0,
+            polygon: self)
+        if bboxCell.d > bestCell.d {
+            bestCell = bboxCell
+        }
 
         // Cover with initial grid
         var h = cellSize / 2
@@ -57,7 +61,11 @@ extension Polygon {
         while x < maxX {
             var y = minY
             while y < maxY {
-                let cell = PQCell(x: x + h, y: y + h, h: h, polygon: self)
+                let cell = PQCell(
+                    x: x + h,
+                    y: y + h,
+                    h: h,
+                    polygon: self)
                 if cell.max > bestCell.d + precision {
                     insertSorted(&queue, cell)
                 }
@@ -72,8 +80,9 @@ extension Polygon {
         while queue.isNotEmpty {
             let cell = queue.removeLast()
 
-            if cell.max - bestCell.d <= precision { break }
-
+            if cell.max - bestCell.d <= precision {
+                break
+            }
             if cell.d > bestCell.d {
                 bestCell = cell
             }
@@ -100,7 +109,10 @@ extension Polygon {
     // MARK: - Private
 
     /// Insert into a max-sorted array (largest .max at end)
-    private func insertSorted(_ queue: inout [PQCell], _ cell: PQCell) {
+    private func insertSorted(
+        _ queue: inout [PQCell],
+        _ cell: PQCell)
+    {
         var lo = 0
         var hi = queue.count
         while lo < hi {
@@ -117,7 +129,9 @@ extension Polygon {
 
     /// Signed distance from point to polygon outline (negative if outside).
     fileprivate func pointToPolygonDist(
-        x: Double, y: Double, rings: [[Coordinate3D]]
+        x: Double,
+        y: Double,
+        rings: [[Coordinate3D]]
     ) -> Double {
         var inside = false
         var minDistSq = Double.greatestFiniteMagnitude
@@ -138,14 +152,18 @@ extension Polygon {
             }
         }
 
-        if minDistSq == 0 { return 0 }
+        if minDistSq == 0 {
+            return 0
+        }
         return (inside ? 1 : -1) * sqrt(minDistSq)
     }
 
     /// Squared distance from point to segment.
     private func segDistSq(
-        px: Double, py: Double,
-        a: Coordinate3D, b: Coordinate3D
+        px: Double,
+        py: Double,
+        a: Coordinate3D,
+        b: Coordinate3D
     ) -> Double {
         var x = a.longitude
         var y = a.latitude
@@ -192,15 +210,23 @@ extension Polygon {
 
         if area == 0 {
             return PQCell(
-                x: points[0].longitude, y: points[0].latitude,
-                h: 0, polygon: self)
+                x: points[0].longitude,
+                y: points[0].latitude,
+                h: 0,
+                polygon: self)
         }
 
-        let cell = PQCell(x: cx / area, y: cy / area, h: 0, polygon: self)
+        let cell = PQCell(
+            x: cx / area,
+            y: cy / area,
+            h: 0,
+            polygon: self)
         if cell.d < 0 {
             return PQCell(
-                x: points[0].longitude, y: points[0].latitude,
-                h: 0, polygon: self)
+                x: points[0].longitude,
+                y: points[0].latitude,
+                h: 0,
+                polygon: self)
         }
         return cell
     }
@@ -210,13 +236,18 @@ extension Polygon {
 // MARK: - Priority queue cell
 
 private struct PQCell {
+
     let x: Double
     let y: Double
     let h: Double
     let d: Double
     let max: Double
 
-    init(x: Double, y: Double, h: Double, polygon: Polygon) {
+    init(x: Double,
+         y: Double,
+         h: Double,
+         polygon: Polygon
+    ) {
         self.x = x
         self.y = y
         self.h = h
@@ -224,4 +255,5 @@ private struct PQCell {
         self.d = polygon.pointToPolygonDist(x: x, y: y, rings: rings)
         self.max = d + h * 1.4142135623730951 // √2
     }
+
 }
