@@ -338,8 +338,44 @@ extension BoundingBox {
     }
 
     /// Converts the bounding box to a `Polygon` object.
+    @available(*, deprecated, message: "Use boundingBoxGeometry instead (handles antimeridian crossing)")
     public var boundingBoxPolygon: Polygon {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!
+    }
+
+    /// The bounding box as a GeoJSON geometry.
+    ///
+    /// When the bounding box crosses the anti-meridian, the geometry is
+    /// properly cut into a ``MultiPolygon`` with two parts at ±180°.
+    /// Otherwise, a single ``Polygon`` is returned.
+    ///
+    /// Per [RFC 7946 § 5](https://tools.ietf.org/html/rfc7946#section-5):
+    /// a bounding box that crosses the anti-meridian is represented as a
+    /// `MultiPolygon` split at the date line.
+    public var boundingBoxGeometry: any GeoJsonGeometry {
+        let boundingBox = self.normalized()
+
+        guard boundingBox.crossesAntiMeridian else {
+            return Polygon([[boundingBox.southWest, boundingBox.northWest, boundingBox.northEast, boundingBox.southEast, boundingBox.southWest]])!
+        }
+
+        let rightPolygon = Polygon([[
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.southWest.longitude),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.southWest.longitude),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
+        ]])!
+
+        let leftPolygon = Polygon([[
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.northEast.longitude),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: -180.0),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
+        ]])!
+
+        return MultiPolygon([rightPolygon, leftPolygon])!
     }
 
     /// The geodesic center of the bounding box.

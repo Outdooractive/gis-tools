@@ -36,4 +36,109 @@ struct ConversionTests {
         #expect(abs(degreesLatitude1 - degreesLatitude2) < 0.00000001)
     }
 
+    // MARK: - unit factors
+
+    @Test
+    func factorForUnit() async throws {
+        #expect(GISTool.factor(for: .meters) == GISTool.earthRadius)
+        #expect(GISTool.factor(for: .kilometers)! < GISTool.earthRadius)
+        #expect(GISTool.factor(for: .miles)! < GISTool.earthRadius)
+        #expect(GISTool.factor(for: .radians) == 1.0)
+        #expect(GISTool.factor(for: .acres) == nil)
+    }
+
+    @Test
+    func unitsFactorForUnit() async throws {
+        #expect(GISTool.unitsFactor(for: .meters) == 1.0)
+        #expect(GISTool.unitsFactor(for: .kilometers) == 0.001)
+        #expect(abs(GISTool.unitsFactor(for: .feet)! - 3.28084) < 0.00001)
+        #expect(GISTool.unitsFactor(for: .acres) == nil)
+    }
+
+    @Test
+    func areaFactorForUnit() async throws {
+        #expect(GISTool.areaFactor(for: .meters) == 1.0)
+        #expect(GISTool.areaFactor(for: .kilometers) == 0.000001)
+        #expect(GISTool.areaFactor(for: .acres) == 0.000247105)
+        #expect(GISTool.areaFactor(for: .degrees) == nil)
+    }
+
+    // MARK: - length conversion
+
+    @Test
+    func convertLength() async throws {
+        // meters → kilometers
+        let km = try #require(GISTool.convert(length: 1000.0, from: .meters, to: .kilometers))
+        #expect(abs(km - 1.0) < 0.00001)
+
+        // miles → meters
+        let m = try #require(GISTool.convert(length: 1.0, from: .miles, to: .meters))
+        #expect(abs(m - 1609.344) < 0.1)
+
+        // negative → nil
+        #expect(GISTool.convert(length: -1.0, from: .meters, to: .kilometers) == nil)
+    }
+
+    @Test
+    func convertArea() async throws {
+        // sq meters → sq kilometers
+        let sqKm = try #require(GISTool.convert(area: 1_000_000.0, from: .meters, to: .kilometers))
+        #expect(abs(sqKm - 1.0) < 0.00001)
+
+        // sq meters → acres
+        let acres = try #require(GISTool.convert(area: 10000.0, from: .meters, to: .acres))
+        #expect(abs(acres - 2.47105) < 0.001)
+
+        // negative → nil
+        #expect(GISTool.convert(area: -1.0, from: .meters, to: .kilometers) == nil)
+    }
+
+    // MARK: - convertToMeters
+
+    @Test
+    func convertToMeters() async throws {
+        #expect(GISTool.convertToMeters(5.0, .kilometers) == 5000.0)
+        #expect(GISTool.convertToMeters(1.0, .miles) == 1609.344)
+        #expect(GISTool.convertToMeters(100.0, .centimeters) == 1.0)
+        #expect(GISTool.convertToMeters(1000.0, .millimeters) == 1.0)
+        #expect(GISTool.convertToMeters(1.0, .nauticalmiles) == 1852.0)
+        #expect(GISTool.convertToMeters(1.0, .meters) == 1.0)
+        #expect(GISTool.convertToMeters(1.0, .inches) > 0.0)
+    }
+
+    // MARK: - pixel to coordinate
+
+    @Test
+    func coordinateFromPixel() async throws {
+        // Validate round-trip: pixel → coordinate → pixel (roughly)
+        let coord = GISTool.coordinate(fromPixelX: 0.0, pixelY: 0.0, zoom: 0)
+        #expect(abs(coord.latitude) > 0)
+        #expect(abs(coord.longitude) > 0)
+    }
+
+    // MARK: - meters to degrees
+
+    @Test
+    func degreesFromMeters() async throws {
+        let result = GISTool.degrees(fromMeters: 111_325.0, atLatitude: 0.0)
+        #expect(abs(result.latitudeDegrees - 1.0) < 0.01)
+        #expect(abs(result.longitudeDegrees - 1.0) < 0.01)
+    }
+
+    @Test
+    func degreesFromMetersAtPole() async throws {
+        let result = GISTool.degrees(fromMeters: 111_325.0, atLatitude: 85.0)
+        // At 85°, longitude degrees should be much larger (meridians converge)
+        #expect(abs(result.latitudeDegrees - 1.0) < 0.01)
+        #expect(result.longitudeDegrees > 5.0) // much larger than latitude
+    }
+
+    @Test
+    func coordinateDegreesFromMeters() async throws {
+        let coord = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let result = coord.degrees(fromMeters: 111_325.0)
+        #expect(abs(result.latitudeDegrees - 1.0) < 0.01)
+        #expect(abs(result.longitudeDegrees - 1.0) < 0.01)
+    }
+
 }

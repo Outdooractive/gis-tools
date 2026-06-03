@@ -12,7 +12,7 @@ extension BoundingBox {
         if self.contains(other) {
             return (coordinate: other, distance: 0.0)
         }
-        return self.boundingBoxPolygon.nearestCoordinateOnFeature(from: other)
+        return self.boundingBoxGeometry.nearestCoordinateOnFeature(from: other)
     }
 
     /// Returns a *Point* guaranteed to be on the surface of the bounding box.
@@ -22,7 +22,7 @@ extension BoundingBox {
         if self.contains(other.coordinate) {
             return (point: other, distance: 0.0)
         }
-        return self.boundingBoxPolygon.nearestPointOnFeature(from: other)
+        return self.boundingBoxGeometry.nearestPointOnFeature(from: other)
     }
 
 }
