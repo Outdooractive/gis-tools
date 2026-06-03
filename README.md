@@ -690,10 +690,10 @@ Then create your models like this:
 
 This is necessary because SwiftData doesn't work well with the default Codable implementation, so you need to do the serialization for yourself...
 
-# WKB/WKT
+# WKB/WKT/TWKB
 The following geometry types are supported: `point`, `linestring`, `linearring`, `polygon`, `multipoint`, `multilinestring`, `multipolygon`, `geometrycollection` and `triangle`. Please open an issue if you need more.
 
-Every GeoJSON object has convenience methods to encode and decode themselves to and from WKB/WKT, and there are extensions for `Data` and `String` to decode from WKB and WKT to GeoJSON. In the end, they all forward to `WKBCoder` and `WKTCoder` which do the heavy lifting.
+Every GeoJSON object has convenience methods to encode and decode themselves to and from WKB/WKT, and there are extensions for `Data` and `String` to decode from WKB, WKT and TWKB to GeoJSON. In the end, they all forward to `WKBCoder`, `WKTCoder` and `TWKBCoder` which do the heavy lifting.
 
 ## WKB
 Also have a look at  the [WKB test cases][40].
@@ -778,6 +778,42 @@ let encodedPoint = WKTCoder.encode(geometry: point, targetProjection: nil)
 
 // Convenience
 let encodedPoint = point.asWKT
+```
+
+## TWKB
+This is a decode-only coder for [Tiny WKB][154]. Also have a look at the [TWKB test cases][155].
+
+Decoding:
+```swift
+// TWKB Point at (0, 0) with precision 6
+private let pointData = Data([0x61, 0x00, 0x00, 0x00])
+
+// Generic
+let point = try TWKBCoder.decode(twkb: pointData) as! Point
+let point = pointData.asGeoJsonGeometryFromTWKB(sourceProjection: .epsg4326) as! Point
+
+// Or with sourceSrid
+let point = try TWKBCoder.decode(twkb: pointData, sourceSrid: 4326) as! Point
+let point = pointData.asGeoJsonGeometryFromTWKB(sourceSrid: 4326) as! Point
+
+// Or create the geometry directly
+let point = Point(twkb: pointData)!
+
+// Or create a Feature that contains the geometry
+let feature = Feature(twkb: pointData)
+let feature = pointData.asFeatureFromTWKB(sourceProjection: .epsg4326)
+
+// Or create a FeatureCollection that contains a feature with the geometry
+let featureCollection = FeatureCollection(twkb: pointData)
+let featureCollection = pointData.asFeatureCollectionFromTWKB(sourceProjection: .epsg4326)
+
+// Can also reproject on the fly
+let point = try TWKBCoder.decode(
+    twkb: pointData,
+    sourceProjection: .epsg4326,
+    targetProjection: .epsg3857
+) as! Point
+print(point.projection) // EPSG:3857
 ```
 
 # Spatial index
@@ -1055,6 +1091,8 @@ Thomas Rasch, Outdooractive
 [151]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/KinksTests.swift "KinksTests"
 [152]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PoleOfInaccessibilityTests.swift "PoleOfInaccessibilityTests"
 [153]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/UnionTests.swift "UnionTests"
+[154]:	https://github.com/TWKB/Specification/blob/master/twkb.md
+[155]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/TWKBTests.swift
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
