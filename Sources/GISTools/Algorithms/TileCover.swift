@@ -28,7 +28,7 @@ extension BoundingBox {
     /// - Parameter zoom: The zoom level of the map.
     /// - Returns: An array of ``MapTile`` instances.
     public func tileCover(atZoom zoom: Int) -> [MapTile] {
-        boundingBoxPolygon.tileCover(atZoom: zoom)
+        boundingBoxGeometry.tileCover(atZoom: zoom)
     }
 
 }
