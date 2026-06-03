@@ -20,7 +20,7 @@ public enum FrechetDistanceFunction {
     /// - Parameters:
     ///    - first: The first coordinate
     ///    - second: The second coordinate
-    func distance(
+    public func distance(
         between first: Coordinate3D,
         and second: Coordinate3D
     ) -> CLLocationDistance {
