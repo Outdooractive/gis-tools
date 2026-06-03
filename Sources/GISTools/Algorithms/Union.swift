@@ -73,7 +73,7 @@ enum Union {
 
         if result.count == 1 {
             return result[0]
-        ∞}
+        }
         return MultiPolygon(unchecked: result)
     }
 
