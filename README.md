@@ -841,8 +841,8 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
 | boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
-| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56]                 |
-| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57]                 |
+| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56] / [Tests][134]  |
+| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58]                 |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
@@ -1030,6 +1030,7 @@ Thomas Rasch, Outdooractive
 [130]:  https://github.com/Outdooractive/mvt-postgis
 [131]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/AntimeridianCutting.swift "AntimeridianCutting"
 [132]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/AntimeridianCuttingTests.swift "AntimeridianCuttingTests"
-
+[134]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanPointInPolygonTests.swift "BooleanPointInPolygonTests"
+[135]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanPointOnLineTests.swift "BooleanPointOnLineTests"
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
