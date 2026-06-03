@@ -372,4 +372,116 @@ struct WKTTests {
         #expect(triangleZM.outerRing!.coordinates.count == 4)
     }
 
+    // MARK: - GeoJsonGeometry convenience
+
+    @Test
+    func geoJsonGeometryParseSourceSrid() async throws {
+        let geometry = GeometryCollection.parse(wkt: pointData, sourceSrid: 4326)
+        #expect(geometry is Point)
+        #expect((geometry as! Point).coordinate.longitude == 1)
+    }
+
+    @Test
+    func geoJsonGeometryParseSourceProjection() async throws {
+        let geometry = GeometryCollection.parse(wkt: pointData, sourceProjection: .epsg4326)
+        #expect(geometry is Point)
+        #expect((geometry as! Point).coordinate.longitude == 1)
+    }
+
+    @Test
+    func geoJsonGeometryAsWKT() async throws {
+        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+        #expect(point.asWKT?.uppercased().contains("POINT") == true)
+    }
+
+    // MARK: - Feature convenience
+
+    @Test
+    func featureInitSourceSrid() async throws {
+        let feature = Feature(
+            wkt: pointZData,
+            sourceSrid: 4326,
+            id: .string("f1"),
+            properties: ["key": "value"])
+        #expect(feature?.id == .string("f1"))
+        #expect(feature?.geometry is Point)
+        #expect(feature?.properties["key"] as? String == "value")
+    }
+
+    @Test
+    func featureInitSourceProjection() async throws {
+        let feature = Feature(
+            wkt: pointZData,
+            sourceProjection: .epsg4326,
+            id: .string("f2"))
+        #expect(feature?.id == .string("f2"))
+        #expect(feature?.geometry is Point)
+    }
+
+    @Test
+    func featureAsWKT() async throws {
+        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+        let feature = Feature(point)
+        #expect(feature.asWKT?.uppercased().contains("POINT") == true)
+    }
+
+    // MARK: - FeatureCollection convenience
+
+    @Test
+    func featureCollectionInitSourceSrid() async throws {
+        let fc = FeatureCollection(wkt: pointData, sourceSrid: 4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func featureCollectionInitSourceProjection() async throws {
+        let fc = FeatureCollection(wkt: pointData, sourceProjection: .epsg4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    // MARK: - String convenience
+
+    @Test
+    func stringAsGeoJsonGeometrySourceSrid() async throws {
+        let geometry = pointZData.asGeoJsonGeometry(sourceSrid: 4326)
+        #expect(geometry is Point)
+        #expect((geometry as! Point).coordinate.altitude == 3)
+    }
+
+    @Test
+    func stringAsGeoJsonGeometrySourceProjection() async throws {
+        let geometry = pointZData.asGeoJsonGeometry(sourceProjection: .epsg4326)
+        #expect(geometry is Point)
+        #expect((geometry as! Point).coordinate.altitude == 3)
+    }
+
+    @Test
+    func stringAsFeatureSourceSrid() async throws {
+        let feature = pointZData.asFeature(sourceSrid: 4326, id: .string("s1"))
+        #expect(feature?.id == .string("s1"))
+        #expect(feature?.geometry is Point)
+    }
+
+    @Test
+    func stringAsFeatureSourceProjection() async throws {
+        let feature = pointZData.asFeature(sourceProjection: .epsg4326)
+        #expect(feature?.geometry is Point)
+    }
+
+    @Test
+    func stringAsFeatureCollectionSourceSrid() async throws {
+        let fc = pointData.asFeatureCollection(sourceSrid: 4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func stringAsFeatureCollectionSourceProjection() async throws {
+        let fc = pointData.asFeatureCollection(sourceProjection: .epsg4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
 }
