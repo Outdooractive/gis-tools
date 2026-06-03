@@ -18,13 +18,12 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
-- Supports WKT/WKB, also with different projections
+- Supports WKT/WKB/TWKB, also with different projections
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 - Pure Swift without external dependencies
-- Swift 6 ready
 
 ## Notes
 
