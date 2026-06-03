@@ -38,11 +38,11 @@ struct CoordinateFormatTests {
 
     @Test
     func dmsComponents() async throws {
-        let coord = Coordinate3D(
+        let coord = try #require(Coordinate3D(
             latitudeDegrees: 40, latitudeMinutes: 26, latitudeSeconds: 46,
             latitudeDirection: "N",
             longitudeDegrees: 79, longitudeMinutes: 58, longitudeSeconds: 56,
-            longitudeDirection: "W")
+            longitudeDirection: "W"))
         #expect(abs(coord.latitude - 40.44611) < 0.001)
         #expect(abs(coord.longitude - (-79.98222)) < 0.001)
     }
