@@ -872,7 +872,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97] / [Tests][141]  |
 | points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98] / [Tests][142]  |
 | point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
-| pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
+| pole-of-inaccessibility     | `let pole = polygon.poleOfInaccessibility()`                                                                                           |     | [Source][101] / [Tests][152] |
 | polygon-smooth              | `let smoothed = polygon.smooth(iterations: 3)`                                                                                         |     | [Source][148] / [Tests][149] |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
@@ -1053,6 +1053,7 @@ Thomas Rasch, Outdooractive
 [149]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonSmoothTests.swift "PolygonSmoothTests"
 [150]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Kinks.swift "Kinks"
 [151]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/KinksTests.swift "KinksTests"
+[152]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PoleOfInaccessibilityTests.swift "PoleOfInaccessibilityTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
