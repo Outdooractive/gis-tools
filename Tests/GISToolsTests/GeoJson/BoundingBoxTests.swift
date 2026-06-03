@@ -574,4 +574,72 @@ struct BoundingBoxTests {
         #expect(abs(bbox3_4326.projected(to: .epsg3857).northEast.y - bbox3_3857.northEast.y) < 0.00001)
     }
 
+    // MARK: - boundingBoxGeometry
+
+    @Test
+    func boundingBoxGeometryNormal() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0))
+
+        let geometry = bbox.boundingBoxGeometry
+        #expect(geometry is Polygon)
+
+        let polygon = geometry as! Polygon
+        #expect(polygon.coordinates.count == 1)
+    }
+
+    @Test
+    func boundingBoxGeometryAntimeridian() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 40.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 50.0, longitude: -170.0))
+
+        #expect(bbox.crossesAntiMeridian)
+
+        let geometry = bbox.boundingBoxGeometry
+        #expect(geometry is MultiPolygon)
+
+        let multiPolygon = geometry as! MultiPolygon
+        #expect(multiPolygon.polygons.count == 2)
+
+        // Right polygon: from 170° to 180°
+        let rightPolygon = multiPolygon.polygons[0]
+        let rightCoords = rightPolygon.coordinates[0]
+        #expect(rightCoords[0] == Coordinate3D(latitude: 40.0, longitude: 180.0))
+        #expect(rightCoords[1] == Coordinate3D(latitude: 50.0, longitude: 180.0))
+        #expect(rightCoords[2] == Coordinate3D(latitude: 50.0, longitude: 170.0))
+        #expect(rightCoords[3] == Coordinate3D(latitude: 40.0, longitude: 170.0))
+
+        // Left polygon: from -170° to -180°
+        let leftPolygon = multiPolygon.polygons[1]
+        let leftCoords = leftPolygon.coordinates[0]
+        #expect(leftCoords[0] == Coordinate3D(latitude: 40.0, longitude: -170.0))
+        #expect(leftCoords[1] == Coordinate3D(latitude: 50.0, longitude: -170.0))
+        #expect(leftCoords[2] == Coordinate3D(latitude: 50.0, longitude: -180.0))
+        #expect(leftCoords[3] == Coordinate3D(latitude: 40.0, longitude: -180.0))
+    }
+
+    @Test
+    func boundingBoxGeometryAntimeridian2() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -53.8, longitude: 155.3),
+            northEast: Coordinate3D(latitude: -30.1, longitude: -174.4))
+
+        #expect(bbox.crossesAntiMeridian)
+
+        let geometry = bbox.boundingBoxGeometry
+        #expect(geometry is MultiPolygon)
+
+        let multiPolygon = geometry as! MultiPolygon
+        #expect(multiPolygon.polygons.count == 2)
+    }
+
+    @Test
+    func boundingBoxGeometryWorld() async throws {
+        #expect(BoundingBox.world.crossesAntiMeridian == false)
+        let geometry = BoundingBox.world.boundingBoxGeometry
+        #expect(geometry is Polygon)
+    }
+
 }
