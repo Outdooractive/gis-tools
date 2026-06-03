@@ -30,6 +30,10 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 
 This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal (that's μm precision and is probably overkill). See [GISTool.equalityDelta][5].
 
+Per [RFC 7946 §3.1.9](https://tools.ietf.org/html/rfc7946#section-3.1.9), geometries crossing the anti-meridian (±180°) should be cut into parts.
+Contrary to the standard—which calls for returning `MultiLineString` / `MultiPolygon`—the `cutAtAntimeridian()` functions return a `FeatureCollection`
+with one `Feature` per cut geometry part. This makes iterating the results uniform regardless of the input type.
+
 ## Requirements
 
 This package requires Swift 6.0 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 14), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux.
@@ -828,6 +832,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | Name                        | Example                                                                                                                               |     | Source/Tests                 |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
 | along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                                                                        |     | [Source][43] / [Tests][44]   |
+| antimeridian-cutting        | `let result = lineString.cutAtAntimeridian()`                                                                                         |     | [Source][131] / [Tests][132] |
 | area                        | `Polygon(…).area`                                                                                                                     |     | [Source][45]                 |
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
@@ -836,12 +841,12 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
 | boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
-| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56]                 |
-| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57]                 |
-| boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58]                 |
+| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56] / [Tests][134]  |
+| boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
+| boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | buffer                      | TODO                                                                                                                                  |     | [Source][61]                 |
-| center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62]                 |
+| center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
@@ -857,12 +862,12 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
 | line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
-| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92]                 |
-| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93]                 |
+| nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92] / [Tests][138]  |
+| nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93] / [Tests][139]  |
 | nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
-| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96]                 |
-| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97]                 |
-| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98]                 |
+| nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96] / [Tests][140]  |
+| point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97] / [Tests][141]  |
+| points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98] / [Tests][142]  |
 | point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
 | pole-of-inaccessibility     | TODO                                                                                                                                  |     | [Source][101]                |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
@@ -1023,6 +1028,17 @@ Thomas Rasch, Outdooractive
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
 [129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PoygonToLine.swift "PoygonToLine"
 [130]:  https://github.com/Outdooractive/mvt-postgis
+[131]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/AntimeridianCutting.swift "AntimeridianCutting"
+[132]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/AntimeridianCuttingTests.swift "AntimeridianCuttingTests"
+[134]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanPointInPolygonTests.swift "BooleanPointInPolygonTests"
+[135]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanPointOnLineTests.swift "BooleanPointOnLineTests"
+[136]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ValidatableTests.swift "ValidatableTests"
+[137]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CenterTests.swift "CenterTests"
+[138]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointTests.swift "NearestPointTests"
+[139]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointOnFeatureTests.swift "NearestPointOnFeatureTests"
+[140]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/NearestPointToLineTests.swift "NearestPointToLineTests"
+[141]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PointOnFeatureTests.swift "PointOnFeatureTests"
+[142]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PointsWithinPolygonTests.swift "PointsWithinPolygonTests"
 [143]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ConversionTests.swift "ConversionTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
