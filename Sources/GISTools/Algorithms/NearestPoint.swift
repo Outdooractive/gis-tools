@@ -14,7 +14,7 @@ extension BoundingBox {
     public func nearestCoordinate(
         from other: Coordinate3D
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
-        self.boundingBoxPolygon.nearestCoordinate(from: other)
+        self.boundingBoxGeometry.nearestCoordinate(from: other)
     }
 
     /// Takes a reference point and returns the point from the reveiver closest to the reference.
@@ -24,7 +24,7 @@ extension BoundingBox {
     public func nearestPoint(
         from other: Point
     ) -> (point: Point, distance: CLLocationDistance)? {
-        self.boundingBoxPolygon.nearestPoint(from: other)
+        self.boundingBoxGeometry.nearestPoint(from: other)
     }
 
 }
