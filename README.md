@@ -855,6 +855,7 @@ Hint: Most algorithms are optimized for EPSG:4326. Using other projections will 
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
 | great-circle                | `let arc = start.greatCircle(to: end)`                                                                                                |     | [Source][144] / [Tests][145] |
 | frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
+| kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
 | line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
@@ -1050,6 +1051,8 @@ Thomas Rasch, Outdooractive
 [147]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ConvexHullTests.swift "ConvexHullTests"
 [148]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PolygonSmooth.swift "PolygonSmooth"
 [149]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonSmoothTests.swift "PolygonSmoothTests"
+[150]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Kinks.swift "Kinks"
+[151]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/KinksTests.swift "KinksTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
