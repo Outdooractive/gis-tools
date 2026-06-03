@@ -114,6 +114,141 @@ public struct Coordinate3D:
 
 }
 
+// MARK: - DMS (Degrees, Minutes, Seconds)
+
+extension Coordinate3D {
+
+    /// Creates a coordinate from a DMS string.
+    ///
+    /// Supported formats:
+    /// - `"40°26'46\" N 79°58'56\" W"`
+    /// - `"40 26 46 N 79 58 56 W"`
+    /// - `"40°26.767' N 79°58.933' W"`
+    public init?(dms: String) {
+        let cleaned = dms
+            .replacingOccurrences(of: "\u{2032}", with: "'")  // prime
+            .replacingOccurrences(of: "\u{2033}", with: "\"") // double prime
+            .replacingOccurrences(of: "\u{00B0}", with: "°")  // degree
+        let pattern = #"(\d{1,3})[°\s]+(\d{1,2})[′'\s]+([\d.]+)["\s]*\s*([NSEWnsew])\s+(\d{1,3})[°\s]+(\d{1,2})[′'\s]+([\d.]+)["\s]*\s*([NSEWnsew])"#
+
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned)),
+              match.numberOfRanges == 9
+        else { return nil }
+
+        let ns = cleaned as NSString
+        func val(_ i: Int) -> Double? { Double(ns.substring(with: match.range(at: i))) }
+        func dir(_ i: Int) -> String { ns.substring(with: match.range(at: i)).uppercased() }
+
+        guard let d1 = val(1), let m1 = val(2), let s1 = val(3),
+              let d2 = val(5), let m2 = val(6), let s2 = val(7)
+        else { return nil }
+
+        let dir1 = dir(4)
+        let dir2 = dir(8)
+
+        let latitude = (dir1 == "N" ? 1.0 : -1.0) * (d1 + m1 / 60.0 + s1 / 3600.0)
+        let longitude = (dir2 == "E" ? 1.0 : -1.0) * (d2 + m2 / 60.0 + s2 / 3600.0)
+
+        self.init(latitude: latitude, longitude: longitude)
+    }
+
+    /// Creates a coordinate from separate DMS components.
+    public init?(
+        latitudeDegrees: Double,
+        latitudeMinutes: Double,
+        latitudeSeconds: Double,
+        latitudeDirection: String,
+        longitudeDegrees: Double,
+        longitudeMinutes: Double,
+        longitudeSeconds: Double,
+        longitudeDirection: String
+    ) {
+        guard latitudeDirection.uppercased().isIn(["N", "S"]),
+              longitudeDirection.uppercased().isIn(["E", "W"])
+        else { return nil }
+
+        let latitude = (latitudeDirection.uppercased() == "N" ? 1.0 : -1.0)
+            * (latitudeDegrees + latitudeMinutes / 60.0 + latitudeSeconds / 3600.0)
+        let longitude = (longitudeDirection.uppercased() == "E" ? 1.0 : -1.0)
+            * (longitudeDegrees + longitudeMinutes / 60.0 + longitudeSeconds / 3600.0)
+        self.init(latitude: latitude, longitude: longitude)
+    }
+
+}
+
+// MARK: - UTM (Universal Transverse Mercator)
+
+extension Coordinate3D {
+
+    /// Creates a coordinate from UTM zone, easting, northing, and hemisphere.
+    ///
+    /// - Parameters:
+    ///   - easting: Easting in meters.
+    ///   - northing: Northing in meters.
+    ///   - zone: UTM zone number (1-60).
+    ///   - hemisphere: "N" for northern, "S" for southern.
+    public init?(
+        easting: Double,
+        northing: Double,
+        zone: Int,
+        hemisphere: String
+    ) {
+        guard zone >= 1,
+              zone <= 60,
+              hemisphere.uppercased().isIn(["N", "S"])
+        else { return nil }
+
+        let isNorth = hemisphere.uppercased() == "N"
+
+        // WGS84 ellipsoid constants
+        let a: Double = 6_378_137.0 // semi-major axis
+        let f: Double = 1.0 / 298.257223563 // flattening
+        let b: Double = a * (1.0 - f) // semi-minor axis
+        let e: Double = sqrt(1.0 - (b * b) / (a * a))
+        let e1sq: Double = (e * e) / (1.0 - e * e)
+        let k0: Double = 0.9996
+
+        let falseEasting: Double = 500_000.0
+        let falseNorthing: Double = isNorth ? 0.0 : 10_000_000.0
+
+        let x = easting - falseEasting
+        let y = northing - falseNorthing
+
+        let M = y / k0
+        let mu = M / (a * (1.0 - e * e / 4.0 - 3.0 * e * e * e * e / 64.0 - 5.0 * pow(e, 6) / 256.0))
+
+        let e1 = (1.0 - sqrt(1.0 - e * e)) / (1.0 + sqrt(1.0 - e * e))
+
+        let phi1 = mu
+            + (3.0 * e1 / 2.0 - 27.0 * pow(e1, 3) / 32.0) * sin(2.0 * mu)
+            + (21.0 * e1 * e1 / 16.0 - 55.0 * pow(e1, 4) / 32.0) * sin(4.0 * mu)
+            + (151.0 * pow(e1, 3) / 96.0) * sin(6.0 * mu)
+            + (1097.0 * pow(e1, 4) / 512.0) * sin(8.0 * mu)
+
+        let N1 = a / sqrt(1.0 - e * e * sin(phi1) * sin(phi1))
+        let T1 = tan(phi1) * tan(phi1)
+        let C1 = e1sq * cos(phi1) * cos(phi1)
+        let R1 = a * (1.0 - e * e) / pow(1.0 - e * e * sin(phi1) * sin(phi1), 1.5)
+        let D = x / (N1 * k0)
+
+        let lat1 = N1 * tan(phi1) / R1
+        let lat2 = lat1 * (D * D / 2.0
+                           - (5.0 + 3.0 * T1 + 10.0 * C1 - 4.0 * C1 * C1 - 9.0 * e1sq) * pow(D, 4) / 24.0
+                           + (61.0 + 90.0 * T1 + 298.0 * C1 + 45.0 * T1 * T1 - 252.0 * e1sq - 3.0 * C1 * C1) * pow(D, 6) / 720.0)
+        let latitude = phi1 - lat2
+
+        let lon0 = Double((zone - 1) * 6 - 180 + 3) * .pi / 180.0
+        let lon1 = (D - (1.0 + 2.0 * T1 + C1) * pow(D, 3) / 6.0
+                    + (5.0 - 2.0 * C1 + 28.0 * T1 - 3.0 * C1 * C1 + 8.0 * e1sq + 24.0 * T1 * T1) * pow(D, 5) / 120.0) / cos(phi1)
+        let longitude = lon0 + lon1
+
+        self.init(latitude: latitude * 180.0 / .pi,
+                  longitude: longitude * 180.0 / .pi)
+    }
+
+}
+
 // MARK: - CoreLocation compatibility
 
 #if canImport(CoreLocation)
@@ -165,6 +300,24 @@ extension Coordinate3D {
             horizontalAccuracy: 1.0, // always valid
             verticalAccuracy: altitude == nil ? -1.0 : 1.0, // valid if altitude != nil
             timestamp: timestamp)
+    }
+
+}
+
+extension CLLocation {
+
+    /// The receiver as a ``Coordinate3D``.
+    public var coordinate3D: Coordinate3D {
+        Coordinate3D(self)
+    }
+
+}
+
+extension CLLocationCoordinate2D {
+
+    /// The receiver as a ``Coordinate3D``.
+    public var coordinate3D: Coordinate3D {
+        Coordinate3D(self)
     }
 
 }
@@ -535,23 +688,3 @@ extension Coordinate3D: Equatable {
 // MARK: - Hashable
 
 extension Coordinate3D: Hashable {}
-
-#if canImport(CoreLocation)
-extension CLLocation {
-
-    /// The receiver as a ``Coordinate3D``.
-    public var coordinate3D: Coordinate3D {
-        Coordinate3D(self)
-    }
-
-}
-
-extension CLLocationCoordinate2D {
-
-    /// The receiver as a ``Coordinate3D``.
-    public var coordinate3D: Coordinate3D {
-        Coordinate3D(self)
-    }
-
-}
-#endif
