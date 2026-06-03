@@ -13,7 +13,7 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
         let data = Data(bytes)
 
-        let result = try #require(try TWKBCoder.decode(twkb: data))
+        let result = try TWKBCoder.decode(twkb: data)
         #expect(result is Point)
 
         let point = result as! Point
@@ -31,7 +31,7 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x01, 0x00, 0x18, 0x44]
         let data = Data(bytes)
 
-        let result = try #require(try TWKBCoder.decode(twkb: data))
+        let result = try TWKBCoder.decode(twkb: data)
         let point = result as! Point
         #expect(abs(point.coordinate.latitude - 34.0) < 0.0001)
         #expect(abs(point.coordinate.longitude - 12.0) < 0.0001)
@@ -49,7 +49,7 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x02, 0x00, 0x02, 0x00, 0x00, 0x02, 0x04]
         let data = Data(bytes)
 
-        let result = try #require(try TWKBCoder.decode(twkb: data))
+        let result = try TWKBCoder.decode(twkb: data)
         #expect(result is LineString)
 
         let ls = result as! LineString
@@ -88,7 +88,7 @@ struct TWKBTests {
         ]
         let data = Data(bytes)
 
-        let result = try #require(try TWKBCoder.decode(twkb: data))
+        let result = try TWKBCoder.decode(twkb: data)
         #expect(result is Polygon)
 
         let poly = result as! Polygon
@@ -106,7 +106,7 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x04, 0x00, 0x02, 0x00, 0x00, 0x02, 0x04]
         let data = Data(bytes)
 
-        let result = try #require(try TWKBCoder.decode(twkb: data))
+        let result = try TWKBCoder.decode(twkb: data)
         #expect(result is MultiPoint)
     }
 
@@ -115,6 +115,231 @@ struct TWKBTests {
         #expect(throws: TWKBCoder.TWKBError.self) {
             try _ = TWKBCoder.decode(twkb: Data())
         }
+    }
+
+    // MARK: - sourceSrid decode
+
+    @Test
+    func decodeSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let result = try TWKBCoder.decode(twkb: data, sourceSrid: 4326)
+        #expect(result is Point)
+    }
+
+    @Test
+    func decodeSourceSridUnknown() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        #expect(throws: TWKBCoder.TWKBError.self) {
+            try _ = TWKBCoder.decode(twkb: data, sourceSrid: 9999)
+        }
+    }
+
+    // MARK: - GeoJsonGeometry convenience
+
+    @Test
+    func geoJsonGeometryInitSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let point = Point(twkb: data, sourceSrid: 4326)
+        #expect(point?.coordinate.latitude == 0.0)
+    }
+
+    @Test
+    func geoJsonGeometryInitSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let point = Point(twkb: data, sourceProjection: .epsg4326)
+        #expect(point?.coordinate.latitude == 0.0)
+    }
+
+    @Test
+    func geoJsonGeometryInitDefaultProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let point = Point(twkb: data)
+        #expect(point?.coordinate.latitude == 0.0)
+    }
+
+    @Test
+    func geoJsonGeometryInitBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(Point(twkb: data) == nil)
+    }
+
+    @Test
+    func geoJsonGeometryParseSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let geometry = GeometryCollection.parse(twkb: data, sourceSrid: 4326)
+        #expect(geometry is Point)
+    }
+
+    @Test
+    func geoJsonGeometryParseSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let geometry = GeometryCollection.parse(twkb: data, sourceProjection: .epsg4326)
+        #expect(geometry is Point)
+    }
+
+    @Test
+    func geoJsonGeometryParseBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(GeometryCollection.parse(twkb: data) == nil)
+    }
+
+    // MARK: - Feature convenience
+
+    @Test
+    func featureInitSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let feature = Feature(
+            twkb: data,
+            sourceSrid: 4326,
+            id: .string("test"),
+            properties: ["key": "value"])
+        #expect(feature?.id == .string("test"))
+        #expect(feature?.geometry is Point)
+        #expect(feature?.properties["key"] as? String == "value")
+    }
+
+    @Test
+    func featureInitSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let feature = Feature(
+            twkb: data,
+            sourceProjection: .epsg4326,
+            id: .string("test"))
+        #expect(feature?.id == .string("test"))
+        #expect(feature?.geometry is Point)
+    }
+
+    @Test
+    func featureInitBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(Feature(twkb: data) == nil)
+    }
+
+    // MARK: - FeatureCollection convenience
+
+    @Test
+    func featureCollectionInitSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let fc = FeatureCollection(twkb: data, sourceSrid: 4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func featureCollectionInitSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let fc = FeatureCollection(twkb: data, sourceProjection: .epsg4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func featureCollectionInitBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(FeatureCollection(twkb: data) == nil)
+    }
+
+    // MARK: - Data convenience
+
+    @Test
+    func dataAsGeoJsonGeometryFromTWKBSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let geometry = data.asGeoJsonGeometryFromTWKB(sourceSrid: 4326)
+        #expect(geometry is Point)
+    }
+
+    @Test
+    func dataAsGeoJsonGeometryFromTWKBSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let geometry = data.asGeoJsonGeometryFromTWKB(sourceProjection: .epsg4326)
+        #expect(geometry is Point)
+    }
+
+    @Test
+    func dataAsGeoJsonGeometryFromTWKBBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(data.asGeoJsonGeometryFromTWKB(sourceProjection: .epsg4326) == nil)
+    }
+
+    @Test
+    func dataAsFeatureFromTWKBSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let feature = data.asFeatureFromTWKB(
+            sourceSrid: 4326,
+            id: .string("f1"),
+            properties: ["a": 1 as Sendable])
+        #expect(feature?.id == .string("f1"))
+        #expect(feature?.geometry is Point)
+        #expect(feature?.properties["a"] as? Int == 1)
+    }
+
+    @Test
+    func dataAsFeatureFromTWKBSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let feature = data.asFeatureFromTWKB(sourceProjection: .epsg4326)
+        #expect(feature?.geometry is Point)
+    }
+
+    @Test
+    func dataAsFeatureFromTWKBBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(data.asFeatureFromTWKB(sourceProjection: .epsg4326) == nil)
+    }
+
+    @Test
+    func dataAsFeatureCollectionFromTWKBSourceSrid() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let fc = data.asFeatureCollectionFromTWKB(sourceSrid: 4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func dataAsFeatureCollectionFromTWKBSourceProjection() async throws {
+        let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
+        let data = Data(bytes)
+
+        let fc = data.asFeatureCollectionFromTWKB(sourceProjection: .epsg4326)
+        #expect(fc?.features.isNotEmpty == true)
+        #expect(fc?.features.first?.geometry is Point)
+    }
+
+    @Test
+    func dataAsFeatureCollectionFromTWKBBadData() async throws {
+        let data = Data([0xFF, 0xFF])
+        #expect(data.asFeatureCollectionFromTWKB(sourceProjection: .epsg4326) == nil)
     }
 
 }
