@@ -21,7 +21,7 @@ extension GeoJson {
 
         var all = pg1.polygons
         all.append(contentsOf: pg2.polygons)
-        return unionPolygons(all)
+        return Union.unionPolygons(all)
     }
 
 }
@@ -30,54 +30,69 @@ extension FeatureCollection {
 
     /// Computes the union of all polygon features in the collection.
     public func union() -> Feature? {
-        let geometries = features.compactMap { ($0.geometry as? PolygonGeometry)?.polygons }.flatMap { $0 }
-        guard let result = unionPolygons(geometries) else { return nil }
+        let geometries = features
+            .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }
+            .flatMap { $0 }
+        guard let result = Union.unionPolygons(geometries) else { return nil }
         return Feature(result)
     }
 
 }
 
-private func unionPolygons(_ polygons: [Polygon]) -> (any GeoJsonGeometry)? {
-    guard !polygons.isEmpty else { return nil }
+// MARK: - Private implementation
 
-    var result: [Polygon] = []
-    var remaining = polygons
+enum Union {
 
-    while !remaining.isEmpty {
-        var merged = remaining.removeFirst()
-        var didMerge: Bool
-        repeat {
-            didMerge = false
-            var newRemaining: [Polygon] = []
-            for poly in remaining {
-                if let union = mergeTwo(merged, poly) {
-                    merged = union
-                    didMerge = true
+    fileprivate static func unionPolygons(
+        _ polygons: [Polygon]
+    ) -> (any GeoJsonGeometry)? {
+        guard polygons.isNotEmpty else { return nil }
+
+        var result: [Polygon] = []
+        var remaining = polygons
+
+        while remaining.isNotEmpty {
+            var merged = remaining.removeFirst()
+            var didMerge: Bool
+            repeat {
+                didMerge = false
+                var newRemaining: [Polygon] = []
+                for poly in remaining {
+                    if let union = mergeTwo(merged, poly) {
+                        merged = union
+                        didMerge = true
+                    }
+                    else {
+                        newRemaining.append(poly)
+                    }
                 }
-                else {
-                    newRemaining.append(poly)
-                }
-            }
-            remaining = newRemaining
-        } while didMerge
-        result.append(merged)
+                remaining = newRemaining
+            } while didMerge
+            result.append(merged)
+        }
+
+        if result.count == 1 {
+            return result[0]
+        ∞}
+        return MultiPolygon(unchecked: result)
     }
 
-    if result.count == 1 { return result[0] }
-    return MultiPolygon(unchecked: result)
-}
+    private static func mergeTwo(
+        _ a: Polygon,
+        _ b: Polygon
+    ) -> Polygon? {
+        guard let outerA = a.outerRing?.coordinates.first,
+              let outerB = b.outerRing?.coordinates.first
+        else { return nil }
 
-private func mergeTwo(_ a: Polygon, _ b: Polygon) -> Polygon? {
-    guard let outerA = a.outerRing?.coordinates.first,
-          let outerB = b.outerRing?.coordinates.first
-    else { return nil }
+        if a.contains(outerB, ignoringBoundary: true) { return a }
+        if b.contains(outerA, ignoringBoundary: true) { return b }
 
-    if a.contains(outerB, ignoringBoundary: true) { return a }
-    if b.contains(outerA, ignoringBoundary: true) { return b }
+        guard a.intersects(b.calculateBoundingBox() ?? BoundingBox(coordinates: b.allCoordinates)!),
+              b.intersects(a.calculateBoundingBox() ?? BoundingBox(coordinates: a.allCoordinates)!)
+        else { return nil }
 
-    guard a.intersects(b.calculateBoundingBox() ?? BoundingBox(coordinates: b.allCoordinates)!),
-          b.intersects(a.calculateBoundingBox() ?? BoundingBox(coordinates: a.allCoordinates)!)
-    else { return nil }
+        return nil
+    }
 
-    return nil
 }
