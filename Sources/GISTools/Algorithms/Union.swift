@@ -5,36 +5,41 @@ import Foundation
 
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-union
 
-extension GeoJson {
+extension Polygon {
 
-    /// Combines two polygon geometries into their union.
-    ///
-    /// Returns a Polygon if the union is contiguous, a MultiPolygon
-    /// for disjoint parts, or nil if either input is not a polygon.
-    public func union(with other: GeoJson) -> (any GeoJsonGeometry)? {
-        let g1: GeoJson = (self as? Feature)?.geometry ?? self
-        let g2: GeoJson = (other as? Feature)?.geometry ?? other
-
-        guard let pg1 = g1 as? PolygonGeometry,
-              let pg2 = g2 as? PolygonGeometry
-        else { return nil }
-
-        var all = pg1.polygons
-        all.append(contentsOf: pg2.polygons)
+    public func union(with other: PolygonGeometry) -> MultiPolygon? {
+        var all = self.polygons
+        all.append(contentsOf: other.polygons)
         return Union.unionPolygons(all)
     }
 
 }
 
+extension MultiPolygon {
+
+    public func union(with other: PolygonGeometry) -> MultiPolygon? {
+        var all = self.polygons
+        all.append(contentsOf: other.polygons)
+        return Union.unionPolygons(all)
+    }
+
+    public mutating func formUnion(with other: PolygonGeometry) {
+        guard let merged = union(with: other) else { return }
+        self = merged
+    }
+
+}
+
+
 extension FeatureCollection {
 
     /// Computes the union of all polygon features in the collection.
-    public func union() -> Feature? {
+    public func union() -> FeatureCollection? {
         let geometries = features
             .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }
             .flatMap { $0 }
         guard let result = Union.unionPolygons(geometries) else { return nil }
-        return Feature(result)
+        return FeatureCollection(Feature(result))
     }
 
 }
@@ -43,9 +48,9 @@ extension FeatureCollection {
 
 enum Union {
 
-    fileprivate static func unionPolygons(
+    public static func unionPolygons(
         _ polygons: [Polygon]
-    ) -> (any GeoJsonGeometry)? {
+    ) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
 
         var result: [Polygon] = []
@@ -71,9 +76,6 @@ enum Union {
             result.append(merged)
         }
 
-        if result.count == 1 {
-            return result[0]
-        }
         return MultiPolygon(unchecked: result)
     }
 

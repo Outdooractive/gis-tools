@@ -63,7 +63,7 @@ extension GeoJson {
             guard bufferedPoints.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return UnionHelper.union(polygons: bufferedPoints)
+                return Union.unionPolygons(bufferedPoints)
             }
 
             return MultiPolygon(bufferedPoints)
@@ -97,7 +97,7 @@ extension GeoJson {
             }
 
             if unionType.isIn([.individual, .overlapping]) {
-                return UnionHelper.union(polygons: polygons)
+                return Union.unionPolygons(polygons)
             }
 
             return MultiPolygon(polygons)
@@ -118,7 +118,7 @@ extension GeoJson {
             guard bufferedLineStrings.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return UnionHelper.union(polygons: bufferedLineStrings)
+                return Union.unionPolygons(bufferedLineStrings)
             }
 
             return MultiPolygon(bufferedLineStrings)
@@ -147,7 +147,7 @@ extension GeoJson {
             polygons.append(polygon)
 
             if unionType.isIn([.individual, .overlapping]) {
-                return UnionHelper.union(polygons: polygons)
+                return Union.unionPolygons(polygons)
             }
 
             return MultiPolygon(polygons)
@@ -168,7 +168,7 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return UnionHelper.union(polygons: bufferedPolygons)
+                return Union.unionPolygons(bufferedPolygons)
             }
 
             return MultiPolygon(bufferedPolygons)
@@ -189,7 +189,7 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return UnionHelper.union(polygons: bufferedPolygons)
+                return Union.unionPolygons(bufferedPolygons)
             }
 
             return MultiPolygon(bufferedPolygons)
@@ -218,7 +218,7 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return UnionHelper.union(polygons: bufferedPolygons)
+                return Union.unionPolygons(bufferedPolygons)
             }
 
             return MultiPolygon(bufferedPolygons)
@@ -274,7 +274,7 @@ extension LineSegment {
             return MultiPolygon(polygons)
         }
 
-        return UnionHelper.union(polygons: polygons)
+        return Union.unionPolygons(polygons)
     }
 
 }

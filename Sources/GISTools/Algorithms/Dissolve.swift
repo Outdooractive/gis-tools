@@ -31,8 +31,8 @@ extension FeatureCollection {
 
         var result: [Feature] = []
         for (key, features) in dividedFeatures {
-            let polygons: [PolygonGeometry] = features.compactMap({ $0.geometry as? PolygonGeometry })
-            let union = UnionHelper.union(polygons: polygons)
+            let polygons: [Polygon] = features.compactMap({ $0.geometry as? PolygonGeometry }).flatMap({ $0.polygons })
+            guard let union = Union.unionPolygons(polygons) else { continue }
             let properties: [String: Sendable] = key == Self.unknownValuePlaceholder
                 ? [:]
                 : [property: key]

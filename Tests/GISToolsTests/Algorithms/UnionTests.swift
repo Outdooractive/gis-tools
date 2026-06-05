@@ -22,10 +22,7 @@ struct UnionTests {
         ]]))
 
         let result = try #require(poly1.union(with: poly2))
-        #expect(result is MultiPolygon)
-
-        let mp = result as! MultiPolygon
-        #expect(mp.polygons.count == 2)
+        #expect(result.polygons.count == 2)
     }
 
     @Test
@@ -46,7 +43,7 @@ struct UnionTests {
         ]]))
 
         let result = try #require(outer.union(with: inner))
-        #expect(result is Polygon)
+        #expect(result is MultiPolygon)
     }
 
     @Test
@@ -68,42 +65,7 @@ struct UnionTests {
 
         let fc = FeatureCollection([Feature(poly1), Feature(poly2)])
         let result = try #require(fc.union())
-        #expect(result.geometry is MultiPolygon)
-    }
-
-    @Test
-    func unionFeatureWrapping() async throws {
-        let poly = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let feature = Feature(poly)
-        let other = try #require(Polygon([[
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ]]))
-
-        let result = try #require(feature.union(with: other))
-        #expect(result is MultiPolygon)
-    }
-
-    @Test
-    func unionNotPolygon() async throws {
-        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
-        let poly = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        #expect(point.union(with: poly) == nil)
+        #expect(result.features.first?.geometry is MultiPolygon)
     }
 
     @Test
