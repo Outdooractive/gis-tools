@@ -6,7 +6,7 @@ struct BufferTests {
     @Test
     func bufferedPoint() async throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
-        let buffered = point.buffered(by: 1000.meters)
+        let buffered = point.buffered(by: GISTool.convertToMeters(1000, .meters))
 
         buffered?.dump()
     }
@@ -17,7 +17,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = multiPoint.buffered(by: 1000.meters)
+        let buffered = multiPoint.buffered(by: GISTool.convertToMeters(1000, .meters))
 
         buffered?.dump()
     }
@@ -28,8 +28,8 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = lineString.buffered(by: 1000.meters)
-        
+        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters))
+
         buffered?.dump()
     }
 
@@ -39,7 +39,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = lineString.buffered(by: 1000.meters, lineEndStyle: .flat)
+        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
 
         buffered?.dump()
     }
@@ -53,7 +53,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let buffered = lineString.buffered(by: 1000.meters)
+        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters))
 
         buffered?.dump()
     }
@@ -67,7 +67,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let buffered = lineString.buffered(by: 1000.meters, lineEndStyle: .flat)
+        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
 
         buffered?.dump()
     }
@@ -85,8 +85,8 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let buffered = multiLineString.buffered(by: 1000.meters)
-        
+        let buffered = multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters))
+
         buffered?.dump()
     }
 
@@ -103,7 +103,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let buffered = multiLineString.buffered(by: 1000.meters, lineEndStyle: .flat)
+        let buffered = multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
 
         buffered?.dump()
     }
@@ -127,7 +127,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.52, longitude: 10.25),
             ],
         ]))
-        let buffered = polygon.buffered(by: 1000.meters)
+        let buffered = polygon.buffered(by: GISTool.convertToMeters(1000, .meters))
 
         buffered?.dump()
     }
@@ -161,7 +161,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.56, longitude: 10.1),
             ]])!,
         ]))
-        let buffered = multiPolygon.buffered(by: 1000.meters)
+        let buffered = multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters))
 
         buffered?.dump()
     }
