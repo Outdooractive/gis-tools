@@ -6,10 +6,12 @@ import Foundation
 /// A GeoJSON `Point` object.
 public struct Point: PointGeometry {
 
+    /// The GeoJSON object type.
     public var type: GeoJsonType {
         .point
     }
 
+    /// The receiver's projection.
     public var projection: Projection {
         coordinate.projection
     }
@@ -17,14 +19,18 @@ public struct Point: PointGeometry {
     /// The receiver's coordinate.
     public let coordinate: Coordinate3D
 
+    /// All coordinates contained in the receiver.
     public var allCoordinates: [Coordinate3D] {
         [coordinate]
     }
 
+    /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Foreign members not defined in the GeoJSON specification.
     public var foreignMembers: [String: Sendable] = [:]
 
+    /// The receiver represented as an array of Points (containing only itself).
     public var points: [Point] {
         [self]
     }
@@ -38,10 +44,18 @@ public struct Point: PointGeometry {
         }
     }
 
+    /// Try to initialize a Point from any GeoJSON object.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
+    /// Try to initialize a Point from any GeoJSON object.
+    ///
+    /// - parameter json: A GeoJSON object.
+    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               Point.isValid(geoJson: geoJson),
@@ -64,6 +78,9 @@ public struct Point: PointGeometry {
         }
     }
 
+    /// The receiver represented as a JSON dictionary.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.point.rawValue,
@@ -84,6 +101,9 @@ public struct Point: PointGeometry {
 
 extension Point {
 
+    /// Returns the receiver projected to a different projection.
+    ///
+    /// - parameter newProjection: The target projection.
     public func projected(to newProjection: Projection) -> Point {
         guard newProjection != projection else { return self }
 
@@ -118,10 +138,14 @@ extension Point {
 
 extension Point {
 
+    /// Calculate and return the receiver's bounding box.
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: [coordinate])
     }
 
+    /// Check if the receiver intersects the other bounding box.
+    ///
+    /// - parameter otherBoundingBox: The bounding box to check.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         otherBoundingBox.contains(coordinate)
     }
@@ -130,6 +154,7 @@ extension Point {
 
 extension Point: Equatable {
 
+    /// Check if two Points are equal.
     public static func ==(
         lhs: Point,
         rhs: Point

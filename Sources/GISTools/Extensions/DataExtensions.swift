@@ -18,6 +18,7 @@ extension Data {
         self.init(bytes)
     }
 
+    /// Decodes the data as a UTF-8 string.
     var asUTF8EncodedString: String? {
         String(data: self, encoding: .utf8)
     }

@@ -5,7 +5,9 @@ import Foundation
 
 /// The winding order for polygons.
 public enum PolygonWindingOrder: Sendable {
+    /// Vertices are ordered in a clockwise direction.
     case clockwise
+    /// Vertices are ordered in a counter-clockwise direction.
     case counterClockwise
 }
 

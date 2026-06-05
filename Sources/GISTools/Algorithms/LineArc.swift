@@ -56,6 +56,7 @@ extension Point {
         return LineString(coordinates)
     }
 
+    /// Normalizes an angle to the range 0..<360 degrees.
     private static func normalizeAngle(alfa: CLLocationDegrees) -> CLLocationDegrees {
         var beta = alfa.remainder(dividingBy: 360.0)
         if beta < 0.0 {

@@ -238,11 +238,17 @@ public enum WKTCoder {
 
     /// WKT errors.
     public enum WKTCoderError: Error {
+        /// The WKT data is corrupted.
         case dataCorrupted
+        /// The geometry is empty.
         case emptyGeometry
+        /// The geometry is invalid.
         case invalidGeometry
+        /// The target projection must be noSRID when the source has no SRID.
         case targetProjectionMustBeNoSRID
+        /// The SRID is unknown.
         case unknownSRID
+        /// The geometry type is unexpected.
         case unexpectedType
     }
 
@@ -270,7 +276,7 @@ extension WKTCoder {
         return try decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
-    /// Decode a GeoJSON object from WKT.
+    /// Decode a GeoJSON object from WKT using a specified source projection.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(

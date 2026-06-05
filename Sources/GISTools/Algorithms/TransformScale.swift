@@ -9,13 +9,21 @@ import Foundation
 
 /// The anchor from where a scale operation takes place.
 public enum ScaleAnchor: Sendable {
+    /// The south-west corner of the bounding box.
     case southWest
+    /// The south-east corner of the bounding box.
     case southEast
+    /// The north-west corner of the bounding box.
     case northWest
+    /// The north-east corner of the bounding box.
     case northEast
+    /// The geometric center of the geometry.
     case center
+    /// The centroid of the geometry.
     case centroid
+    /// A custom coordinate to use as the anchor.
     case coordinate(Coordinate3D)
+    /// A custom point to use as the anchor.
     case point(Point)
 }
 
@@ -28,7 +36,7 @@ extension GeoJson {
     /// - Parameters:
     ///    - factor: The scaling factor, positive or negative
     ///    - anchor: The anchor from which the scaling will occur
-    public func transformedScale(
+    public func scaled(
         factor: Double,
         anchor: ScaleAnchor = .centroid
     ) -> Self {
@@ -50,7 +58,7 @@ extension GeoJson {
             return newFeatureCollection as! Self
         }
 
-        return scaled(factor: factor, anchor: anchor)
+        return _scaledBy(factor: factor, anchor: anchor)
     }
 
     /// Scale the receiver from a given point by a factor of scaling (ex: factor=2 would make the
@@ -60,16 +68,32 @@ extension GeoJson {
     /// - Parameters:
     ///    - factor: The scaling factor, positive or negative
     ///    - anchor: The anchor from which the scaling will occur
+    public mutating func scale(
+        factor: Double,
+        anchor: ScaleAnchor = .centroid
+    ) {
+        self = scaled(factor: factor, anchor: anchor)
+    }
+
+    @available(*, deprecated, renamed: "scaled(factor:anchor:)")
+    public func transformedScale(
+        factor: Double,
+        anchor: ScaleAnchor = .centroid
+    ) -> Self {
+        scaled(factor: factor, anchor: anchor)
+    }
+
+    @available(*, deprecated, renamed: "scale(factor:anchor:)")
     public mutating func transformScale(
         factor: Double,
         anchor: ScaleAnchor = .centroid
     ) {
-        self = transformedScale(factor: factor, anchor: anchor)
+        scale(factor: factor, anchor: anchor)
     }
 
     // MARK: - Internal
 
-    private func scaled(
+    private func _scaledBy(
         factor: Double,
         anchor: ScaleAnchor = .centroid
     ) -> Self {

@@ -13,7 +13,11 @@ extension GeoJsonGeometry {
         targetProjection: Projection = .epsg4326,
         calculateBoundingBox: Bool = false
     ) {
-        guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+        guard let geometry = try? WKBCoder.decode(
+            wkb: wkb,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection
+        ) else { return nil }
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -26,7 +30,11 @@ extension GeoJsonGeometry {
         targetProjection: Projection = .epsg4326,
         calculateBoundingBox: Bool = false
     ) {
-        guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+        guard let geometry = try? WKBCoder.decode(
+            wkb: wkb,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection
+        ) else { return nil }
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -38,7 +46,10 @@ extension GeoJsonGeometry {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
-        try? WKBCoder.decode(wkb: wkb, sourceSrid: sourceSrid, targetProjection: targetProjection)
+        try? WKBCoder.decode(
+            wkb: wkb,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -49,7 +60,10 @@ extension GeoJsonGeometry {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
-        try? WKBCoder.decode(wkb: wkb, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        try? WKBCoder.decode(
+            wkb: wkb,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
     }
 
     /// Returns the receiver as WKB encoded data.
@@ -74,7 +88,11 @@ extension Feature {
         properties: [String: Sendable] = [:],
         calculateBoundingBox: Bool = false
     ) {
-        guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+        guard let geometry = try? WKBCoder.decode(
+            wkb: wkb,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection
+        ) else { return nil }
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -148,7 +166,10 @@ extension Data {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
-        GeometryCollection.parse(wkb: self, sourceSrid: sourceSrid, targetProjection: targetProjection)
+        GeometryCollection.parse(
+            wkb: self,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -158,7 +179,10 @@ extension Data {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
-        GeometryCollection.parse(wkb: self, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        GeometryCollection.parse(
+            wkb: self,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -170,7 +194,12 @@ extension Data {
         id: Feature.Identifier? = nil,
         properties: [String: Sendable] = [:]
     ) -> Feature? {
-        Feature(wkb: self, sourceSrid: sourceSrid, targetProjection: targetProjection, id: id, properties: properties)
+        Feature(
+            wkb: self,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection,
+            id: id,
+            properties: properties)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -182,7 +211,12 @@ extension Data {
         id: Feature.Identifier? = nil,
         properties: [String: Sendable] = [:]
     ) -> Feature? {
-        Feature(wkb: self, sourceProjection: sourceProjection, targetProjection: targetProjection, id: id, properties: properties)
+        Feature(
+            wkb: self,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection,
+            id: id,
+            properties: properties)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -192,7 +226,10 @@ extension Data {
         sourceSrid: Int?,
         targetProjection: Projection = .epsg4326
     ) -> FeatureCollection? {
-        FeatureCollection(wkb: self, sourceSrid: sourceSrid, targetProjection: targetProjection)
+        FeatureCollection(
+            wkb: self,
+            sourceSrid: sourceSrid,
+            targetProjection: targetProjection)
     }
 
     /// Decode a GeoJSON object from WKB.
@@ -202,7 +239,10 @@ extension Data {
         sourceProjection: Projection,
         targetProjection: Projection = .epsg4326
     ) -> FeatureCollection? {
-        FeatureCollection(wkb: self, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        FeatureCollection(
+            wkb: self,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
     }
 
 }
@@ -229,17 +269,25 @@ public enum WKBCoder {
 
     /// The WKB byte order (little or big endian).
     public enum ByteOrder: UInt8 {
+        /// Big endian byte order.
         case bigEndian = 0
+        /// Little endian byte order.
         case littleEndian = 1
     }
 
     /// WKB errors.
     public enum WKBCoderError: Error {
+        /// The WKB data is corrupted.
         case dataCorrupted
+        /// The geometry is empty.
         case emptyGeometry
+        /// The geometry is invalid.
         case invalidGeometry
+        /// The target projection must be noSRID when the source has no SRID.
         case targetProjectionMustBeNoSRID
+        /// The SRID is unknown.
         case unknownSRID
+        /// The geometry type is unexpected.
         case unexpectedType
     }
 
@@ -270,7 +318,7 @@ extension WKBCoder {
         return try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection)
     }
 
-    /// Decode a GeoJSON object from WKB.
+    /// Decode a GeoJSON object from WKB using a specified source projection.
     ///
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
@@ -281,7 +329,11 @@ extension WKBCoder {
         let bytes = [UInt8](wkb)
         var offset = 0
 
-        return try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        return try decodeGeometry(
+            bytes: bytes,
+            offset: &offset,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
     }
 
     // MARK: -

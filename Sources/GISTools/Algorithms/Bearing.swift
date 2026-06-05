@@ -11,7 +11,7 @@ extension Coordinate3D {
     ///
     /// - Parameters:
     ///    - other: The end point
-    ///    - final: Calculates the final bearing (optional, default *false*)
+    ///    - final: Calculates the final bearing (optional, default `false`)
     ///
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(
@@ -105,7 +105,7 @@ extension Point {
     ///
     /// - Parameters:
     ///    - other: The end point
-    ///    - final: Calculates the final bearing (optional, default *false*)
+    ///    - final: Calculates the final bearing (optional, default `false`)
     ///
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(

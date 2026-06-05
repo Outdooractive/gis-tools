@@ -21,9 +21,13 @@ public struct Feature:
         public typealias UIntId = UInt
 #endif
 
+        /// A string identifier.
         case string(String)
+        /// An integer identifier.
         case int(IntId)
+        /// An unsigned integer identifier.
         case uint(UIntId)
+        /// A double identifier.
         case double(Double)
 
         /// Note: This will prefer `Int` over `UInt` if possible.
@@ -59,6 +63,7 @@ public struct Feature:
             }
         }
 
+        /// The identifier as a JSON value.
         public var asJson: Sendable {
             switch self {
             case .double(let double): double
@@ -68,6 +73,7 @@ public struct Feature:
             }
         }
 
+        /// A textual representation of the identifier.
         public var description: String {
             switch self {
             case .double(let double): String(double)
@@ -78,10 +84,12 @@ public struct Feature:
         }
     }
 
+    /// The GeoJSON object type.
     public var type: GeoJsonType {
         .feature
     }
 
+    /// The receiver's projection.
     public var projection: Projection {
         geometry.projection
     }
@@ -92,6 +100,7 @@ public struct Feature:
     /// The `Feature`s geometry object.
     public private(set) var geometry: GeoJsonGeometry
 
+    /// All of the receiver's coordinates.
     public var allCoordinates: [Coordinate3D] {
         geometry.allCoordinates
     }
@@ -99,8 +108,10 @@ public struct Feature:
     /// Only 'Feature' objects may have properties.
     public var properties: [String: Sendable]
 
+    /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Foreign members of the receiver.
     public var foreignMembers: [String: Sendable] = [:]
 
     /// Create a ``Feature`` from any ``GeoJsonGeometry`` object.
@@ -119,10 +130,12 @@ public struct Feature:
         }
     }
 
+    /// Try to initialize a Feature from any JSON object.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
+    /// Try to initialize a Feature from JSON and calculate a bounding box if necessary.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               Feature.isValid(geoJson: geoJson),
@@ -148,6 +161,7 @@ public struct Feature:
         }
     }
 
+    /// The receiver as a JSON object.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
@@ -170,6 +184,7 @@ public struct Feature:
 
 extension Feature {
 
+    /// Update the bounding box, optionally only if it hasn't been calculated yet.
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -182,10 +197,12 @@ extension Feature {
         return boundingBox
     }
 
+    /// Calculate the bounding box from the receiver's geometry.
     public func calculateBoundingBox() -> BoundingBox? {
         geometry.boundingBox ?? geometry.calculateBoundingBox()
     }
 
+    /// Check if the receiver intersects with the given bounding box.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
             !boundingBox.intersects(otherBoundingBox)
@@ -200,6 +217,7 @@ extension Feature {
 
 extension Feature: Equatable {
 
+    /// Two features are equal when their projection, geometry, identifier, and property keys match.
     public static func ==(
         lhs: Feature,
         rhs: Feature
@@ -218,6 +236,7 @@ extension Feature: Equatable {
 
 extension Feature {
 
+    /// Reproject the receiver.
     public func projected(to newProjection: Projection) -> Feature {
         guard newProjection != projection else { return self }
 

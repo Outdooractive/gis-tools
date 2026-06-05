@@ -11,22 +11,37 @@ extension GISTool {
 
     /// Unit of measurement.
     public enum Unit: Sendable {
+        /// Acres.
         case acres
+        /// Centimeters.
         case centimeters
+        /// Centimetres.
         case centimetres
         /// Latitude
         case degrees
+        /// Feet.
         case feet
+        /// Inches.
         case inches
+        /// Kilometers.
         case kilometers
+        /// Kilometres.
         case kilometres
+        /// Meters.
         case meters
+        /// Metres.
         case metres
+        /// Miles.
         case miles
+        /// Millimeters.
         case millimeters
+        /// Millimetres.
         case millimetres
+        /// Nautical miles.
         case nauticalmiles
+        /// Radians.
         case radians
+        /// Yards.
         case yards
     }
 
@@ -108,6 +123,31 @@ extension GISTool {
         return (area / startFactor) * finalFactor
     }
 
+    /// Converts a length value from any unit to meters.
+    ///
+    /// ```swift
+    /// GISTool.convertToMeters(5, .kilometers) // 5000.0
+    /// GISTool.convertToMeters(1, .miles)      // 1609.344
+    /// ```
+    /// - note: Mainly for tests.
+    public static func convertToMeters(
+        _ value: Double,
+        _ unit: Unit
+    ) -> Double {
+        switch unit {
+        case .millimeters, .millimetres: return value / 1000.0
+        case .centimeters, .centimetres: return value / 100.0
+        case .meters, .metres: return value
+        case .kilometers, .kilometres: return value * 1000.0
+        case .inches: return value / 39.370
+        case .feet: return value / 3.28084
+        case .yards: return value / 1.0936
+        case .miles: return value * 1609.344
+        case .nauticalmiles: return value * 1852.0
+        default: return value
+        }
+    }
+
 }
 
 // MARK: - Pixels
@@ -173,6 +213,13 @@ extension GISTool {
         degrees(fromMeters: meters, atLatitude: latitude)
     }
 
+    /// Converts a distance in meters to degrees at a given latitude.
+    ///
+    /// - Parameters:
+    ///    - meters: The distance in meters
+    ///    - latitude: The latitude at which to calculate the conversion
+    ///
+    /// - Returns: A tuple of latitude degrees and longitude degrees.
     public static func degrees(
         fromMeters meters: CLLocationDistance,
         atLatitude latitude: CLLocationDegrees
@@ -191,6 +238,11 @@ extension GISTool {
 
 extension Coordinate3D {
 
+    /// Converts a distance in meters to degrees at the receiver's latitude.
+    ///
+    /// - Parameter meters: The distance in meters
+    ///
+    /// - Returns: A tuple of latitude degrees and longitude degrees.
     public func degrees(
         fromMeters meters: CLLocationDistance
     ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {

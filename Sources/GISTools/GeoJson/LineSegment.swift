@@ -6,8 +6,10 @@ import Foundation
 /// A `LineSegment` is a line with exactly two coordinates.
 public struct LineSegment: Sendable {
 
+    /// The segment's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// The receiver's projection.
     public var projection: Projection {
         first.projection
     }
@@ -53,6 +55,9 @@ extension LineSegment {
 
 extension LineSegment: Projectable {
 
+    /// Returns the receiver projected to a different projection.
+    ///
+    /// - parameter newProjection: The target projection.
     public func projected(to newProjection: Projection) -> LineSegment {
         guard newProjection != projection else { return self }
 
@@ -103,10 +108,14 @@ extension LineSegment {
 
 extension LineSegment: BoundingBoxRepresentable {
 
+    /// Calculate and return the segment's bounding box.
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: coordinates)
     }
 
+    /// Check if the receiver intersects the other bounding box.
+    ///
+    /// - parameter otherBoundingBox: The bounding box to check.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -145,6 +154,7 @@ extension LineSegment: BoundingBoxRepresentable {
 
 extension LineSegment: Equatable {
 
+    /// Check if two LineSegments are equal.
     public static func == (
         lhs: LineSegment,
         rhs: LineSegment

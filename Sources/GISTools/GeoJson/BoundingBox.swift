@@ -26,9 +26,9 @@ public struct BoundingBox:
     public let projection: Projection
 
     /// The bounding boxes south-west (bottom-left) coordinate.
-    public var southWest: Coordinate3D
+    public private(set) var southWest: Coordinate3D
     /// The bounding boxes north-east (upper-right) coordinate.
-    public var northEast: Coordinate3D
+    public private(set) var northEast: Coordinate3D
 
     /// The bounding boxes north-west (upper-left) coordinate.
     public var northWest: Coordinate3D {
@@ -338,8 +338,44 @@ extension BoundingBox {
     }
 
     /// Converts the bounding box to a `Polygon` object.
+    @available(*, deprecated, message: "Use boundingBoxGeometry instead (handles antimeridian crossing)")
     public var boundingBoxPolygon: Polygon {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!
+    }
+
+    /// The bounding box as a GeoJSON geometry.
+    ///
+    /// When the bounding box crosses the anti-meridian, the geometry is
+    /// properly cut into a ``MultiPolygon`` with two parts at ±180°.
+    /// Otherwise, a single ``Polygon`` is returned.
+    ///
+    /// Per [RFC 7946 § 5](https://tools.ietf.org/html/rfc7946#section-5):
+    /// a bounding box that crosses the anti-meridian is represented as a
+    /// `MultiPolygon` split at the date line.
+    public var boundingBoxGeometry: any GeoJsonGeometry {
+        let boundingBox = self.normalized()
+
+        guard boundingBox.crossesAntiMeridian else {
+            return Polygon([[boundingBox.southWest, boundingBox.northWest, boundingBox.northEast, boundingBox.southEast, boundingBox.southWest]])!
+        }
+
+        let rightPolygon = Polygon([[
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.southWest.longitude),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.southWest.longitude),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: 180.0),
+        ]])!
+
+        let leftPolygon = Polygon([[
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: boundingBox.northEast.longitude),
+            Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: -180.0),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
+            Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: boundingBox.northEast.longitude),
+        ]])!
+
+        return MultiPolygon([rightPolygon, leftPolygon])!
     }
 
     /// The geodesic center of the bounding box.
@@ -677,8 +713,11 @@ extension BoundingBox {
 
 extension BoundingBox {
 
-    // TODO: Date line
     /// Combine two bounding boxes.
+    ///
+    /// - Note: The result may not be correct if either bounding box crosses
+    ///         the anti-meridian (date line). Use ``normalized()`` on each
+    ///         operand first to avoid this issue.
     public static func + (
         lhs: BoundingBox,
         rhs: BoundingBox
@@ -696,8 +735,11 @@ extension BoundingBox {
                 projection: lhs.projection))
     }
 
-    // TODO: Date line
     /// Combine two bounding boxes.
+    ///
+    /// - Note: The result may not be correct if either bounding box crosses
+    ///         the anti-meridian (date line). Use ``normalized()`` on each
+    ///         operand first to avoid this issue.
     public mutating func formUnion(_ other: BoundingBox) {
         let boundingBox = self.normalized()
         let other = other.projected(to: projection).normalized()
@@ -711,6 +753,7 @@ extension BoundingBox {
 
 extension BoundingBox: Equatable {
 
+    /// Two bounding boxes are equal when their north-west and south-east coordinates are equal.
     public static func == (
         lhs: BoundingBox,
         rhs: BoundingBox

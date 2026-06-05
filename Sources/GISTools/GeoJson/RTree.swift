@@ -159,6 +159,7 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
 
 extension RTree {
 
+    /// A search result around a coordinate containing the object and its distance.
     public typealias AroundSearchResult = (
         object: T,
         distance: CLLocationDistance)
@@ -211,6 +212,7 @@ extension RTree {
         return result
     }
 
+    /// Search for objects inside a bounding box using serial search.
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         let searchBoundingBox = searchBoundingBox.projected(to: projection)
 
@@ -285,6 +287,7 @@ extension RTree {
         return result
     }
 
+    /// Search for objects around a coordinate using serial search.
     public func searchSerial(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,

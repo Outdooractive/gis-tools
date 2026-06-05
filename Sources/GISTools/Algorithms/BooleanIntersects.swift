@@ -12,8 +12,8 @@ extension GeoJson {
     /// - Parameters:
     ///    - other: The other geometry
     ///
-    /// - Returns: *true* if the geometries intersect, *false* otherwise.
-    public func intersects(with other: GeoJson) -> Bool {
+    /// - Returns: `true` if the geometries intersect, `false` otherwise.
+    public func intersects(_ other: GeoJson) -> Bool {
         !isDisjoint(with: other)
     }
 

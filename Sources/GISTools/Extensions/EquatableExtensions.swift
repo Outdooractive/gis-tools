@@ -8,10 +8,12 @@ import Foundation
 
 extension Equatable {
 
+    /// Returns ``true`` if the value is contained in the specified array.
     func isIn(_ c: [Self]) -> Bool {
         return c.contains(self)
     }
 
+    /// Returns ``true`` if the value is not contained in the specified array.
     func isNotIn(_ c: [Self]) -> Bool {
         return !c.contains(self)
     }

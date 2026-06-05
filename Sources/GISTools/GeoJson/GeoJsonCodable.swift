@@ -98,17 +98,21 @@ extension Coordinate3D: Codable {
 @objc(GeoJsonTransformer)
 public final class GeoJsonTransformer: ValueTransformer {
 
+    /// The name used to register this transformer.
     public static let name = NSValueTransformerName(rawValue: "GeoJsonTransformer")
 
+    /// Register the transformer with the `ValueTransformer` system.
     public static func register() {
         ValueTransformer.setValueTransformer(GeoJsonTransformer(), forName: name)
     }
 
+    /// Returns the class of the transformed value.
     public override class func transformedValueClass() -> AnyClass {
         // returns __SwiftValue
         type(of: Point(Coordinate3D.zero) as AnyObject)
     }
 
+    /// Returns whether the transformer supports reverse transformation.
     public override class func allowsReverseTransformation() -> Bool {
         true
     }
@@ -132,15 +136,20 @@ public final class GeoJsonTransformer: ValueTransformer {
 
 // MARK: - Private
 
+/// A coding key used for encoding and decoding GeoJSON dictionaries.
 private struct GeoJsonCodingKey: CodingKey {
 
+    /// The string value of the coding key.
     var stringValue: String
+    /// The integer value of the coding key (always nil for GeoJSON keys).
     var intValue: Int? { nil }
 
+    /// Initialize a coding key from a string value.
     init?(stringValue: String) {
         self.stringValue = stringValue
     }
 
+    /// Initialize a coding key from an integer value (returns nil).
     init?(intValue: Int) {
         nil
     }
@@ -149,6 +158,7 @@ private struct GeoJsonCodingKey: CodingKey {
 
 extension KeyedEncodingContainer where Key == GeoJsonCodingKey {
 
+    /// Encode a GeoJSON dictionary into the encoder's container.
     fileprivate mutating func encode(geoJson dictionary: [String: Any]) throws {
         for (key, value) in dictionary {
             guard let codingKey = GeoJsonCodingKey(stringValue: key) else { continue }
@@ -199,6 +209,7 @@ extension KeyedEncodingContainer where Key == GeoJsonCodingKey {
 
 extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
 
+    /// Decode a GeoJSON dictionary from the decoder's container.
     fileprivate func decodeGeoJsonDictionary() -> [String: Any] {
         var result: [String: Any] = [:]
 
@@ -237,6 +248,7 @@ extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
 
 extension UnkeyedDecodingContainer {
 
+    /// Decode a GeoJSON array from the decoder's unkeyed container.
     fileprivate mutating func decodeGeoJsonArray() -> [Any?] {
         var result: [Any?] = []
 

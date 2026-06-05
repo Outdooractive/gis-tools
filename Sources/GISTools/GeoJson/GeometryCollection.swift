@@ -3,10 +3,12 @@ import Foundation
 /// A GeoJSON `GeometryCollection`.
 public struct GeometryCollection: GeoJsonGeometry {
 
+    /// The GeoJSON object type.
     public var type: GeoJsonType {
         .geometryCollection
     }
 
+    /// The receiver's projection.
     public var projection: Projection {
         geometries.first?.projection ?? .noSRID
     }
@@ -14,12 +16,15 @@ public struct GeometryCollection: GeoJsonGeometry {
     /// The GeometryCollection's geometry objects.
     public private(set) var geometries: [GeoJsonGeometry]
 
+    /// All coordinates contained in the receiver.
     public var allCoordinates: [Coordinate3D] {
         geometries.flatMap(\.allCoordinates)
     }
 
+    /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Foreign members not defined in the GeoJSON specification.
     public var foreignMembers: [String: Sendable] = [:]
 
     /// Initialize a GeometryCollection with a geometry object.
@@ -36,10 +41,18 @@ public struct GeometryCollection: GeoJsonGeometry {
         }
     }
 
+    /// Try to initialize a GeometryCollection from any GeoJSON object.
+    ///
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
+    /// Try to initialize a GeometryCollection from any GeoJSON object.
+    ///
+    /// - parameter json: A GeoJSON object.
+    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               GeometryCollection.isValid(geoJson: geoJson),
@@ -62,6 +75,9 @@ public struct GeometryCollection: GeoJsonGeometry {
         }
     }
 
+    /// The receiver represented as a JSON dictionary.
+    ///
+    /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.geometryCollection.rawValue,
@@ -80,6 +96,9 @@ public struct GeometryCollection: GeoJsonGeometry {
 
 extension GeometryCollection {
 
+    /// Update the receiver's bounding box.
+    ///
+    /// - parameter ifNecessary: Only update if the receiver doesn't already have one.
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -96,6 +115,7 @@ extension GeometryCollection {
         return boundingBox
     }
 
+    /// Calculate and return the receiver's bounding box by combining all geometry bounding boxes.
     public func calculateBoundingBox() -> BoundingBox? {
         let geometryBoundingBoxes: [BoundingBox] = geometries.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
         guard !geometryBoundingBoxes.isEmpty else { return nil }
@@ -105,6 +125,9 @@ extension GeometryCollection {
         }
     }
 
+    /// Check if the receiver intersects the other bounding box.
+    ///
+    /// - parameter otherBoundingBox: The bounding box to check.
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox,
            !boundingBox.intersects(otherBoundingBox)
@@ -118,6 +141,7 @@ extension GeometryCollection {
 
 extension GeometryCollection: Equatable {
 
+    /// Check if two GeometryCollections are equal.
     public static func ==(
         lhs: GeometryCollection,
         rhs: GeometryCollection
@@ -134,6 +158,9 @@ extension GeometryCollection: Equatable {
 
 extension GeometryCollection {
 
+    /// Returns the receiver projected to a different projection.
+    ///
+    /// - parameter newProjection: The target projection.
     public func projected(to newProjection: Projection) -> GeometryCollection {
         guard newProjection != projection else { return self }
 

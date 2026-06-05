@@ -90,7 +90,7 @@ extension MultiLineString {
 
 extension Point {
 
-    /// Check if the Point is valid. Always **true**.
+    /// Check if the Point is valid. Always `true`.
     public var isValid: Bool {
         true
     }
@@ -151,10 +151,12 @@ extension MultiPolygon {
 
 extension GeoJson {
 
-    // Sanity checks
-
-    // TODO:
-    /// Check if the GeoJson has a valid geometry, i.e. it has enough coordinates to make sense.
+    /// Check if the GeoJson dictionary has a valid structure for the given type.
+    ///
+    /// - Parameters:
+    ///   - geoJson: A dictionary representing a GeoJSON object.
+    ///   - expectedType: The expected ``GeoJsonType`` of the object (optional).
+    /// - Returns: `true` if the dictionary has the required keys for the given type.
     public static func checkIsValid(
         geoJson: [String: Any],
         ofType expectedType: GeoJsonType? = nil
