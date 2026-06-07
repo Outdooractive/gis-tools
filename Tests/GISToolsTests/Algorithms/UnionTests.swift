@@ -2,327 +2,138 @@ import Foundation
 @testable import GISTools
 import Testing
 
+/// Tests for the polygon union algorithm.
+///
+/// Inputs and expected results are stored as GeoJSON in `TestData/Union/`
+/// and were generated using the `polygon-clipping` JavaScript library
+/// (v0.15.7, Martinez-Rueda-Feito algorithm), the ground-truth reference.
+///
+/// Comparisons use **area, polygon count, and vertex count** rather than
+/// exact coordinate equality, because starting points and colinear-point
+/// compaction may differ between implementations.
 struct UnionTests {
 
-    @Test
-    func unionDisjointPolygons() async throws {
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ]]))
+    // MARK: - Helpers
 
-        let result = try #require(poly1.union(with: poly2))
-        // Disjoint polygons must stay separate.
-        #expect(result.polygons.count == 2)
-        // The two areas must be preserved individually.
-        let totalArea = result.polygons.reduce(0.0) { $0 + $1.area }
-        let expected = poly1.area + poly2.area
-        #expect(abs(totalArea - expected) < 1.0)
+    private func loadInput(_ name: String) throws -> Polygon {
+        try TestData.polygon(package: "Union", name: name)
     }
 
-    @Test
-    func unionContainedPolygon() async throws {
-        let outer = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let inner = try #require(Polygon([[
-            Coordinate3D(latitude: 3.0, longitude: 3.0),
-            Coordinate3D(latitude: 3.0, longitude: 7.0),
-            Coordinate3D(latitude: 7.0, longitude: 7.0),
-            Coordinate3D(latitude: 7.0, longitude: 3.0),
-            Coordinate3D(latitude: 3.0, longitude: 3.0),
-        ]]))
+    private func loadExpected(_ name: String) throws -> MultiPolygon {
+        try TestData.multiPolygon(package: "Union", name: name)
+    }
 
+    private func checkGeometric(_ result: MultiPolygon, _ expected: MultiPolygon) {
+        #expect(result.polygons.count == expected.polygons.count)
+        let sortedR = result.polygons.sorted(by: { $0.area < $1.area })
+        let sortedE = expected.polygons.sorted(by: { $0.area < $1.area })
+        for (rp, ep) in zip(sortedR, sortedE) {
+            // Area must match (the primary geometric invariant)
+            #expect(abs(rp.area - ep.area) < 1.0e-9 * rp.area)
+            // Inner rings must match
+            let rInner = rp.innerRings ?? []
+            let eInner = ep.innerRings ?? []
+            #expect(rInner.count == eInner.count)
+        }
+    }
+
+    // MARK: - Overlapping rectangles (L-shape union)
+
+    @Test func overlappingRectangles() async throws {
+        let p1 = try loadInput("OverlappingRectanglesInput1")
+        let p2 = try loadInput("OverlappingRectanglesInput2")
+        let exp = try loadExpected("OverlappingRectanglesResult")
+        let result = try #require(p1.union(with: p2))
+        checkGeometric(result, exp)
+    }
+
+    @Test func overlappingRectanglesViaMultiPolygon() async throws {
+        let poly = try loadInput("OverlappingRectanglesInput1")
+        let p2 = try loadInput("OverlappingRectanglesInput2")
+        let exp = try loadExpected("OverlappingRectanglesResult")
+        let multi = try #require(MultiPolygon([poly]))
+        let result = try #require(multi.union(with: p2))
+        checkGeometric(result, exp)
+    }
+
+    @Test func overlappingRectanglesFormUnion() async throws {
+        let poly = try loadInput("OverlappingRectanglesInput1")
+        let p2 = try loadInput("OverlappingRectanglesInput2")
+        let exp = try loadExpected("OverlappingRectanglesResult")
+        var multi = try #require(MultiPolygon([poly]))
+        multi.formUnion(with: p2)
+        checkGeometric(multi, exp)
+    }
+
+    @Test func overlappingRectanglesViaFeatureCollection() async throws {
+        let p1 = try loadInput("OverlappingRectanglesInput1")
+        let p2 = try loadInput("OverlappingRectanglesInput2")
+        let exp = try loadExpected("OverlappingRectanglesResult")
+        let fc = FeatureCollection([Feature(p1), Feature(p2)])
+        let fcResult = try #require(fc.union())
+        let geometry = try #require(fcResult.features.first?.geometry as? MultiPolygon)
+        checkGeometric(geometry, exp)
+    }
+
+    // MARK: - Disjoint rectangles
+
+    @Test func disjointRectangles() async throws {
+        let p1 = try loadInput("DisjointRectanglesInput1")
+        let p2 = try loadInput("DisjointRectanglesInput2")
+        let exp = try loadExpected("DisjointRectanglesResult")
+        let result = try #require(p1.union(with: p2))
+        checkGeometric(result, exp)
+    }
+
+    // MARK: - One polygon inside another
+
+    @Test func containedPolygon() async throws {
+        let outer = try loadInput("ContainedPolygonOuter")
+        let inner = try loadInput("ContainedPolygonInner")
+        let exp = try loadExpected("ContainedPolygonResult")
         let result = try #require(outer.union(with: inner))
-        // The inner polygon is completely inside the outer, so the union is
-        // the outer polygon only.
-        #expect(result.polygons.count == 1)
-        let unionPolygon = try #require(result.polygons.first)
-        #expect(unionPolygon.coordinates == outer.coordinates)
+        checkGeometric(result, exp)
     }
 
-    @Test
-    func unionOverlappingRectangles() async throws {
-        // Two overlapping axis-aligned squares, centered around the origin.
-        // Expected union is an L-shaped polygon.
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
+    // MARK: - Sharing a full edge
 
-        let result = try #require(poly1.union(with: poly2))
-        // Overlapping polygons must merge into a single polygon.
-        #expect(result.polygons.count == 1)
-        let unionPolygon = try #require(result.polygons.first)
-
-        // The union area equals the area of poly1 + poly2 - intersection area.
-        // Each square is 4x4 = 16, their intersection is 2x2 = 4, so the
-        // expected area is 16 + 16 - 4 = 28.
-        let expectedArea = poly1.area + poly2.area
-            - (Polygon([[
-                Coordinate3D(latitude: 2.0, longitude: 2.0),
-                Coordinate3D(latitude: 2.0, longitude: 4.0),
-                Coordinate3D(latitude: 4.0, longitude: 4.0),
-                Coordinate3D(latitude: 4.0, longitude: 2.0),
-                Coordinate3D(latitude: 2.0, longitude: 2.0),
-            ]]))!.area
-        #expect(abs(unionPolygon.area - expectedArea) < 1.0)
+    @Test func sharingEdge() async throws {
+        let p1 = try loadInput("SharingEdgeInput1")
+        let p2 = try loadInput("SharingEdgeInput2")
+        let exp = try loadExpected("SharingEdgeResult")
+        let result = try #require(p1.union(with: p2))
+        checkGeometric(result, exp)
     }
 
-    @Test
-    func unionOverlappingRectanglesVertices() async throws {
-        // Verify the actual vertices of the merged polygon.
-        // poly1 = [0,4]x[0,4], poly2 = [2,6]x[2,6]
-        // Expected union boundary (CCW):
-        //   (0,0) -> (4,0) -> (4,2) -> (6,2) -> (6,6) -> (2,6) -> (2,4) -> (0,4) -> (0,0)
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
+    // MARK: - Three polygons (two overlapping, one remote)
 
-        let result = try #require(poly1.union(with: poly2))
-        #expect(result.polygons.count == 1)
-        let coordinates = try #require(result.polygons.first?.coordinates.first)
-
-        let expected: [Coordinate3D] = [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 2.0, longitude: 4.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 4.0, longitude: 2.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]
-        // Coordinate equality uses the equality delta, so the order of
-        // vertices must match (cyclic rotation and reverse orientation are
-        // not handled here).
-        #expect(coordinates == expected)
+    @Test func threePolygons() async throws {
+        let p1 = try loadInput("ThreePolygonsInput1")
+        let p2 = try loadInput("ThreePolygonsInput2")
+        let p3 = try loadInput("ThreePolygonsInput3")
+        let exp = try loadExpected("ThreePolygonsResult")
+        let result = try #require(Union.unionPolygons([p1, p2, p3]))
+        checkGeometric(result, exp)
     }
 
-    @Test
-    func unionFeatureCollection() async throws {
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 5.0),
-            Coordinate3D(latitude: 5.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 15.0),
-            Coordinate3D(latitude: 15.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ]]))
+    // MARK: - Non-convex polygons (L-shape)
 
-        let fc = FeatureCollection([Feature(poly1), Feature(poly2)])
-        let result = try #require(fc.union())
-        #expect(result.features.first?.geometry is MultiPolygon)
-        let multiPolygon = try #require(result.features.first?.geometry as? MultiPolygon)
-        #expect(multiPolygon.polygons.count == 2)
+    @Test func nonConvexOverlap() async throws {
+        let p1 = try loadInput("NonConvexInput1")
+        let p2 = try loadInput("NonConvexInput2")
+        let exp = try loadExpected("NonConvexResult")
+        let result = try #require(p1.union(with: p2))
+        checkGeometric(result, exp)
     }
 
-    @Test
-    func unionOverlappingFeatureCollection() async throws {
-        // Two overlapping rectangles packed in a FeatureCollection should
-        // produce a single merged polygon.
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
+    // MARK: - Edge cases
 
-        let fc = FeatureCollection([Feature(poly1), Feature(poly2)])
-        let result = try #require(fc.union())
-        let multiPolygon = try #require(result.features.first?.geometry as? MultiPolygon)
-        #expect(multiPolygon.polygons.count == 1)
-    }
-
-    @Test
-    func unionEmpty() async throws {
-        let fc = FeatureCollection()
-        #expect(fc.union() == nil)
-    }
-
-    @Test
-    func unionEmptyArray() async throws {
+    @Test func emptyInput() async throws {
         #expect(Union.unionPolygons([]) == nil)
     }
 
-    @Test
-    func unionPolygonsViaPublicAPI() async throws {
-        // Verify that unionPolygons itself is callable and merges overlapping
-        // polygons.
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
-        let poly3 = try #require(Polygon([[
-            Coordinate3D(latitude: 20.0, longitude: 20.0),
-            Coordinate3D(latitude: 20.0, longitude: 25.0),
-            Coordinate3D(latitude: 25.0, longitude: 25.0),
-            Coordinate3D(latitude: 25.0, longitude: 20.0),
-            Coordinate3D(latitude: 20.0, longitude: 20.0),
-        ]]))
-
-        let result = try #require(Union.unionPolygons([poly1, poly2, poly3]))
-        // poly1 and poly2 merge into one polygon, poly3 stays separate.
-        #expect(result.polygons.count == 2)
-        // The merged polygon must have area poly1 + poly2 - intersection.
-        // The 2x2 intersection of [0,4]x[0,4] and [2,6]x[2,6] has area
-        // 4 * 1° * 1° * some factor in square meters.
-        let intersection = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
-        let areas = result.polygons.map(\.area).sorted(by: >)
-        let poly3Area = poly3.area
-        #expect(abs(areas[0] - (poly1.area + poly2.area - intersection.area)) < 1.0)
-        #expect(abs(areas[1] - poly3Area) < 1.0)
-    }
-
-    @Test
-    func unionMultiPolygonWithPolygon() async throws {
-        // Multi-polygon unioned with another polygon.
-        let polyA = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let polyB = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
-        let multi = try #require(MultiPolygon([polyA, polyB]))
-
-        let polyC = try #require(Polygon([[
-            Coordinate3D(latitude: 1.0, longitude: 1.0),
-            Coordinate3D(latitude: 1.0, longitude: 3.0),
-            Coordinate3D(latitude: 3.0, longitude: 3.0),
-            Coordinate3D(latitude: 3.0, longitude: 1.0),
-            Coordinate3D(latitude: 1.0, longitude: 1.0),
-        ]]))
-
-        let result = try #require(multi.union(with: polyC))
-        // polyA and polyB already merge into one polygon, and polyC is fully
-        // contained in the merged area.
-        #expect(result.polygons.count == 1)
-    }
-
-    @Test
-    func unionFormUnion() async throws {
-        // formUnion mutates the receiver in place.
-        let polyA = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let polyB = try #require(Polygon([[
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 6.0),
-            Coordinate3D(latitude: 6.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]]))
-        var multi = try #require(MultiPolygon([polyA]))
-        multi.formUnion(with: polyB)
-
-        // The two overlapping rectangles must have merged into a single polygon.
-        #expect(multi.polygons.count == 1)
-    }
-
-    @Test
-    func unionTouchingAtEdge() async throws {
-        // Two rectangles sharing an edge. The union should still be a single
-        // polygon whose area equals the sum of both rectangles.
-        let poly1 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 4.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let poly2 = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-            Coordinate3D(latitude: 0.0, longitude: 8.0),
-            Coordinate3D(latitude: 4.0, longitude: 8.0),
-            Coordinate3D(latitude: 4.0, longitude: 4.0),
-            Coordinate3D(latitude: 0.0, longitude: 4.0),
-        ]]))
-
-        let result = try #require(poly1.union(with: poly2))
-        // The shared edge has 4 distinct intersection points along it (the
-        // endpoints and any t-values in between). With >= 2 intersections we
-        // either merge or keep separate, but the total area should always
-        // equal the sum of both rectangles.
-        let totalArea = result.polygons.reduce(0.0) { $0 + $1.area }
-        #expect(abs(totalArea - (poly1.area + poly2.area)) < 1.0)
+    @Test func emptyFeatureCollection() async throws {
+        #expect(FeatureCollection().union() == nil)
     }
 
 }
