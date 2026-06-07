@@ -6,9 +6,11 @@ struct BufferTests {
     @Test
     func bufferedPoint() async throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
-        let buffered = point.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let polygon = try #require(buffered.polygons.first)
+        let ring = try #require(polygon.outerRing)
+        #expect(ring.coordinates.count <= 66)
+        #expect(polygon.area > 0)
     }
 
     @Test
@@ -17,9 +19,11 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = multiPoint.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(multiPoint.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(buffered.polygons.count == 2)
+        for polygon in buffered.polygons {
+            #expect(polygon.area > 0)
+        }
     }
 
     @Test
@@ -28,9 +32,20 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters))
+        let buffered = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(buffered.polygons.count == 1)
+        let polygon = try #require(buffered.polygons.first)
+        let ring = try #require(polygon.outerRing)
+        let coords = ring.coordinates
 
-        buffered?.dump()
+        // Must be a proper stadium: ~64 vertices, no duplicates, correct area
+        #expect(coords.count >= 60)
+        for i in 0..<(coords.count - 1) {
+            let latDiff = abs(coords[i].latitude - coords[i + 1].latitude)
+            let lonDiff = abs(coords[i].longitude - coords[i + 1].longitude)
+            #expect(latDiff > 1e-5 || lonDiff > 1e-5, "Near-duplicate consecutive vertices")
+        }
+        #expect(abs(polygon.area - 10600000) < 600000)
     }
 
     @Test
@@ -39,9 +54,10 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
-
-        buffered?.dump()
+        let buffered = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        #expect(buffered.polygons.count == 1)
+        let polygon = try #require(buffered.polygons.first)
+        #expect(polygon.area > 0)
     }
 
     @Test
@@ -53,9 +69,10 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(!buffered.polygons.isEmpty)
+        let totalArea = buffered.polygons.reduce(0) { $0 + $1.area }
+        #expect(totalArea > 0)
     }
 
     @Test
@@ -67,9 +84,10 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let buffered = lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
-
-        buffered?.dump()
+        let buffered = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        #expect(!buffered.polygons.isEmpty)
+        let totalArea = buffered.polygons.reduce(0) { $0 + $1.area }
+        #expect(totalArea > 0)
     }
 
     @Test
@@ -85,9 +103,11 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let buffered = multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(buffered.polygons.count == 2)
+        for polygon in buffered.polygons {
+            #expect(polygon.area > 0)
+        }
     }
 
     @Test
@@ -103,9 +123,11 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let buffered = multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat)
-
-        buffered?.dump()
+        let buffered = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        #expect(buffered.polygons.count == 2)
+        for polygon in buffered.polygons {
+            #expect(polygon.area > 0)
+        }
     }
 
     @Test
@@ -127,9 +149,9 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.52, longitude: 10.25),
             ],
         ]))
-        let buffered = polygon.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(polygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(!buffered.polygons.isEmpty)
+        #expect(buffered.polygons.first!.outerRing != nil)
     }
 
     @Test
@@ -161,9 +183,9 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.56, longitude: 10.1),
             ]])!,
         ]))
-        let buffered = multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters))
-
-        buffered?.dump()
+        let buffered = try #require(multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(!buffered.polygons.isEmpty)
+        #expect(buffered.polygons.first!.area > 0)
     }
 
 }
