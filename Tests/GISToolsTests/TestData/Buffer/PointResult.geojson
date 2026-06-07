@@ -1,5 +1,4 @@
 {
-  "type" : "MultiPolygon",
   "coordinates" : [
     [
       [
@@ -265,5 +264,6 @@
         ]
       ]
     ]
-  ]
+  ],
+  "type" : "MultiPolygon"
 }
