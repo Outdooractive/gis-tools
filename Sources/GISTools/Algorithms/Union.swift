@@ -107,9 +107,7 @@ enum Union {
         _ a: Polygon,
         _ b: Polygon
     ) -> Polygon? {
-        guard let ringA = a.outerRing, let ringB = b.outerRing,
-              let outerA = ringA.coordinates.first,
-              let outerB = ringB.coordinates.first
+        guard let ringA = a.outerRing, let ringB = b.outerRing
         else { return nil }
 
         // One completely contains the other?
