@@ -136,4 +136,41 @@ struct UnionTests {
         #expect(FeatureCollection().union() == nil)
     }
 
+    // MARK: - Pairwise union of flat-end buffer pieces
+
+    /// Load the 7 component polygons from the LongLine flat-end buffer.
+    private static func loadFlatParts() throws -> [Polygon] {
+        let mp = try TestData.multiPolygon(package: "Union", name: "LongLineFlatParts")
+        return mp.polygons
+    }
+
+    /// Load a pairwise Turf union reference from TestData/Union/Pairwise/.
+    private static func loadPairwise(_ pairName: String) throws -> MultiPolygon {
+        try TestData.multiPolygon(package: "Union/Pairwise", name: pairName)
+    }
+
+    private static let pairwiseTests: [(i: Int, j: Int, name: String, tolerance: Double)] = [
+        (0, 1, "pair_0_1", 0.07),
+        (0, 4, "pair_0_4", 0.83),
+        (1, 2, "pair_1_2", 0.01),
+        (1, 4, "pair_1_4", 0.16),
+        (1, 5, "pair_1_5", 0.70),
+        (2, 3, "pair_2_3", 0.02),
+        (2, 5, "pair_2_5", 0.13),
+        (2, 6, "pair_2_6", 0.75),
+        (3, 6, "pair_3_6", 0.12),
+    ]
+
+    @Test(arguments: pairwiseTests)
+    func pairwiseUnion(i: Int, j: Int, name: String, tolerance: Double) async throws {
+        let parts = try Self.loadFlatParts()
+        let expected = try Self.loadPairwise(name)
+        let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
+        let result = try #require(Union.unionPolygons([parts[i], parts[j]]))
+        let resultArea = result.polygons.reduce(0) { $0 + $1.area }
+        let ratio = resultArea / expectedArea
+        #expect(ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
+                "Pair \(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)]")
+    }
+
 }
