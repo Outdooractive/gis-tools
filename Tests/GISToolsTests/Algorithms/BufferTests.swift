@@ -85,7 +85,6 @@ struct BufferTests {
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
         checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
-        result.dump()
     }
 
     @Test func bufferedLines() async throws {
