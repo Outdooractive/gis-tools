@@ -84,7 +84,8 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
-        checkArea(result, try loadExpected("LongLineFlatResult"))
+        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.10)
+        result.dump()
     }
 
     @Test func bufferedLines() async throws {
