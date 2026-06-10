@@ -122,7 +122,6 @@ enum Union {
 
     private static func findIntersections(between edges: [Edge]) -> [SplitPoint] {
         var result: [SplitPoint] = []
-        let snapEpsMeters = 2.0
         let splitEps = 1.0e-10
 
         for i in 0..<edges.count {
@@ -138,54 +137,14 @@ enum Union {
                     continue
                 }
 
-                let di0 = raw.distance(to: edges[i].start)
-                let di1 = raw.distance(to: edges[i].end)
-                let dj0 = raw.distance(to: edges[j].start)
-                let dj1 = raw.distance(to: edges[j].end)
-
-                let pointI: Coordinate3D
-                let pointJ: Coordinate3D
-
-                if di0 < snapEpsMeters {
-                    pointI = edges[i].start
-                }
-                else if di1 < snapEpsMeters {
-                    pointI = edges[i].end
-                }
-                else {
-                    pointI = raw
+                let dI = distanceAlong(edges[i], at: raw)
+                if dI > splitEps && dI < 1.0 - splitEps {
+                    result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
                 }
 
-                if dj0 < snapEpsMeters {
-                    pointJ = edges[j].start
-                }
-                else if dj1 < snapEpsMeters {
-                    pointJ = edges[j].end
-                }
-                else {
-                    pointJ = raw
-                }
-
-                if pointI != raw {
-                    let d = distanceAlong(edges[i], at: pointI)
-                    if d > splitEps && d < 1.0 - splitEps {
-                        result.append(SplitPoint(coordinate: pointI, edgeIndex: i, distanceAlong: d))
-                    }
-                }
-                else {
-                    let d = distanceAlong(edges[i], at: raw)
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: d))
-                }
-
-                if pointJ != raw {
-                    let d = distanceAlong(edges[j], at: pointJ)
-                    if d > splitEps && d < 1.0 - splitEps {
-                        result.append(SplitPoint(coordinate: pointJ, edgeIndex: j, distanceAlong: d))
-                    }
-                }
-                else {
-                    let d = distanceAlong(edges[j], at: raw)
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: d))
+                let dJ = distanceAlong(edges[j], at: raw)
+                if dJ > splitEps && dJ < 1.0 - splitEps {
+                    result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
                 }
             }
         }
