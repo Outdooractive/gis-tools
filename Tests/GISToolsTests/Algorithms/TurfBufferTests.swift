@@ -246,7 +246,7 @@ struct TurfBufferTests {
         let params = try Self.bufferParams(name)
         let feature = try TestData.feature(package: "TurfBuffer/in", name: name)
         let geometry = try #require(feature.geometry as? MultiPoint)
-        let result = try #require(geometry.buffered(by: params.distance, steps: params.steps))
+        let result = try #require(geometry.buffered(by: params.distance, unionType: .overlapping, steps: params.steps))
         let (expected, tolerance) = try Self.expectedArea(name)
         let actual = result.polygons.reduce(0) { $0 + $1.area }
         let ratio = expected > 0 ? actual / expected : (actual == 0 ? 1 : 0)

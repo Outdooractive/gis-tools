@@ -408,48 +408,23 @@ enum Union {
 
         let sorted = candidates.sorted { abs($0.area) > abs($1.area) }
 
-        var outerCoordinates: [[Coordinate3D]] = []
-        var holeCoordinates: [[Coordinate3D]] = []
-
-        for (coords, area) in sorted {
-            if area >= 0 {
-                holeCoordinates.append(coords)
-            }
-            else {
-                outerCoordinates.append(coords)
-            }
-        }
-
         var result: [Polygon] = []
-        for outer in outerCoordinates {
-            let outerRing = Ring(unchecked: outer)
-            var innerRings: [Ring] = []
-            for hole in holeCoordinates {
-                let holeRing = Ring(unchecked: hole)
-                if let testPoint = holeRing.coordinates.first,
-                   outerRing.contains(testPoint, ignoringBoundary: false)
-                {
-                    innerRings.append(holeRing)
-                }
-            }
-            let polygon = Polygon(unchecked: [outerRing] + innerRings)
-            result.append(polygon)
-        }
+        for (coords, _) in sorted {
+            let ring = Ring(unchecked: coords)
+            let testPoint = ring.coordinates.first!
 
-        for hole in holeCoordinates {
-            let holeRing = Ring(unchecked: hole)
-            let isContained = result.contains { poly in
-                if let testPoint = holeRing.coordinates.first,
-                   poly.contains(testPoint, ignoringBoundary: false)
-                {
-                    return true
+            var assigned = false
+            for (i, _) in result.enumerated() {
+                if result[i].contains(testPoint, ignoringBoundary: false) {
+                    let poly = Polygon(unchecked: [result[i].outerRing!] + (result[i].innerRings ?? []) + [ring])
+                    result[i] = poly
+                    assigned = true
+                    break
                 }
-                return false
             }
-            if !isContained {
-                let outerRing = Ring(unchecked: hole)
-                let polygon = Polygon(unchecked: [outerRing])
-                result.append(polygon)
+            if !assigned {
+                let poly = Polygon(unchecked: [ring])
+                result.append(poly)
             }
         }
 
