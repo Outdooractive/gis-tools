@@ -63,18 +63,30 @@ enum Union {
 
     /// Normalizes a coordinate to a fixed-precision key for use as dictionary keys.
     /// This avoids the Hashable contract violation from tolerance-based ==.
+    /// Uses 10cm bucket quantization in EPSG:3857 meter space.
     private static func vertexKey(_ coord: Coordinate3D) -> String {
-        let lat = round(coord.latitude / 1.0e-6) * 1.0e-6
-        let lon = round(coord.longitude / 1.0e-6) * 1.0e-6
-        return "\(lat),\(lon)"
+        let q = 0.1
+        let x = round(coord.x / q) * q
+        let y = round(coord.y / q) * q
+        return "\(x),\(y)"
     }
 
     // MARK: - Public API
 
+    /// - Note: The union algorithm works in EPSG:3857 (Web Mercator) for uniform
+    ///   Cartesian tolerances. Inputs are automatically reprojected. This limits
+    ///   the usable latitude range to approximately ±85°.
     public static func unionPolygons(_ polygons: [Polygon]) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
+
+        // Work in EPSG:3857 so all tolerances are uniform meters
+        let originalProj = polygons.first?.projection ?? .epsg4326
+        let polygons = originalProj == .epsg3857
+            ? polygons
+            : polygons.map { $0.projected(to: .epsg3857) }
+
         guard polygons.count > 1 else {
-            return MultiPolygon(unchecked: polygons)
+            return MultiPolygon(unchecked: polygons).projected(to: originalProj)
         }
 
         let allEdges = extractEdges(from: polygons)
@@ -95,7 +107,7 @@ enum Union {
 
         guard result.isNotEmpty else { return nil }
 
-        return MultiPolygon(unchecked: result)
+        return MultiPolygon(unchecked: result).projected(to: originalProj)
     }
 
     // MARK: - Edge extraction
@@ -269,12 +281,12 @@ enum Union {
         let len = sqrt(dx * dx + dy * dy)
         guard len > 0 else { return false }
 
-        let eps = 1.0e-8
+        let eps = 0.001
         let offsetX = -dy / len * eps
         let offsetY = dx / len * eps
 
-        let leftPoint = Coordinate3D(latitude: midLatitude + offsetY, longitude: midLongitude + offsetX)
-        let rightPoint = Coordinate3D(latitude: midLatitude - offsetY, longitude: midLongitude - offsetX)
+        let leftPoint = Coordinate3D(x: midLongitude + offsetX, y: midLatitude + offsetY, projection: .epsg3857)
+        let rightPoint = Coordinate3D(x: midLongitude - offsetX, y: midLatitude - offsetY, projection: .epsg3857)
 
         let leftInside = polygons.contains { polygon in
             polygon.contains(leftPoint, ignoringBoundary: true)
@@ -301,7 +313,7 @@ enum Union {
             adj[ek, default: []].append(i)
         }
 
-        let snapEpsDegrees = 5.0e-6
+        let snapEpsMeters = 0.5
 
         var used = Set<Int>()
         var rings: [[Coordinate3D]] = []
@@ -343,14 +355,14 @@ enum Union {
                     let cur = currentCoord()
                     var best: (ci: Int, useEnd: Bool, dist: Double)?
                     for (i, e) in edges.enumerated() where !used.contains(i) {
-                        let dStart = hypot(e.start.latitude - cur.latitude, e.start.longitude - cur.longitude)
-                        let dEnd = hypot(e.end.latitude - cur.latitude, e.end.longitude - cur.longitude)
-                        if dStart < snapEpsDegrees,
+                        let dStart = hypot(e.start.x - cur.x, e.start.y - cur.y)
+                        let dEnd = hypot(e.end.x - cur.x, e.end.y - cur.y)
+                        if dStart < snapEpsMeters,
                            dStart < (best?.dist ?? .greatestFiniteMagnitude)
                         {
                             best = (i, false, dStart)
                         }
-                        if dEnd < snapEpsDegrees,
+                        if dEnd < snapEpsMeters,
                            dEnd < (best?.dist ?? .greatestFiniteMagnitude)
                         {
                             best = (i, true, dEnd)

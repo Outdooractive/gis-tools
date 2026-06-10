@@ -862,7 +862,8 @@ let coordinates = polyline.decodePolyline()
 ```
 
 # Algorithms
-Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.
+Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.<br>
+The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tolerances. This limits its usable latitude range to approximately ±85°.
 
 | Name                        | Example                                                                                                                               |     | Source/Tests                 |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
