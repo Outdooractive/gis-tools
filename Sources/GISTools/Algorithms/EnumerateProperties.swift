@@ -30,6 +30,12 @@ extension FeatureCollection {
                 if let hashable = value as? AnyHashable {
                     keyValuePairs.append((key, Set([hashable])))
                 }
+                else if let dict = value as? NSDictionary {
+                    keyValuePairs.append((key, Set([dict as AnyHashable])))
+                }
+                else if let array = value as? NSArray {
+                    keyValuePairs.append((key, Set([array as AnyHashable])))
+                }
             }
         }
 
