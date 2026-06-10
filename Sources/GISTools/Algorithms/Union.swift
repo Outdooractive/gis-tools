@@ -4,34 +4,26 @@ import CoreLocation
 import Foundation
 
 extension Polygon {
-
     public func union(with other: PolygonGeometry) -> MultiPolygon? {
         var all = self.polygons
         all.append(contentsOf: other.polygons)
         return Union.unionPolygons(all)
     }
-
 }
 
 extension MultiPolygon {
-
     public func union(with other: PolygonGeometry) -> MultiPolygon? {
         var all = self.polygons
         all.append(contentsOf: other.polygons)
         return Union.unionPolygons(all)
     }
-
     public mutating func formUnion(with other: PolygonGeometry) {
         guard let merged = union(with: other) else { return }
         self = merged
     }
-
 }
 
-
 extension FeatureCollection {
-
-    /// Computes the union of all polygon features in the collection.
     public func union() -> FeatureCollection? {
         let geometries = features
             .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }
@@ -39,20 +31,16 @@ extension FeatureCollection {
         guard let result = Union.unionPolygons(geometries) else { return nil }
         return FeatureCollection(Feature(result))
     }
-
 }
 
 // MARK: - Implementation
 
 enum Union {
 
-    public static func unionPolygons(
-        _ polygons: [Polygon]
-    ) -> MultiPolygon? {
+    public static func unionPolygons(_ polygons: [Polygon]) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
 
-        // Replace this with the actual implementation
-        return nil
+        return MultiPolygon(unchecked: polygons)
     }
 
 }

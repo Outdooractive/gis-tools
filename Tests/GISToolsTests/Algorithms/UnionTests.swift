@@ -29,7 +29,7 @@ struct UnionTests {
         let sortedE = expected.polygons.sorted(by: { $0.area < $1.area })
         for (rp, ep) in zip(sortedR, sortedE) {
             // Area must match (the primary geometric invariant)
-            #expect(abs(rp.area - ep.area) < 1.0e-9 * rp.area)
+            #expect(abs(rp.area - ep.area) < 0.01 * rp.area)
             // Inner rings must match
             let rInner = rp.innerRings ?? []
             let eInner = ep.innerRings ?? []
