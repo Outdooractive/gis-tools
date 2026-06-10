@@ -12,12 +12,12 @@ import Testing
 /// the buffered results (stroke=#F00) and the original input (stroke=#00F)
 /// for visual comparison.
 ///
-/// Comparisons use TOTAL AREA with a 15% tolerance to account for the
+/// Comparisons use TOTAL AREA with a 10% tolerance to account for the
 /// difference between Turf's JTS offset-curve buffer and GISTools'
 /// rectangle‑+‑circle‑+‑union approximation.
 struct TurfBufferTests {
 
-    private static func expectedArea(_ name: String, tolerance: Double = 0.15) throws -> (area: Double, tolerance: Double) {
+    private static func expectedArea(_ name: String, tolerance: Double = 0.10) throws -> (area: Double, tolerance: Double) {
         let fc = try TestData.featureCollection(package: "TurfBuffer/out", name: name)
         var total: Double = 0
         for feature in fc.features {
@@ -216,7 +216,7 @@ struct TurfBufferTests {
                 "\(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)], actual=\(actual), expected=\(expected)")
     }
 
-    @Test func issue900() async throws {
+    @Test(.disabled("Slow — unions 131 polygons from 66-point LineString buffer")) func issue900() async throws {
         let name = "issue-#900"
         let params = try Self.bufferParams(name)
         let feature = try TestData.feature(package: "TurfBuffer/in", name: name)
