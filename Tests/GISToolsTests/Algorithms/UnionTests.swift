@@ -4,9 +4,13 @@ import Testing
 
 /// Tests for the polygon union algorithm.
 ///
-/// Inputs and expected results are stored as GeoJSON in `TestData/Union/`
-/// and were generated using the `polygon-clipping` JavaScript library
+/// **Reference tests** — inputs and expected results in `TestData/Union/`
+/// were generated using the `polygon-clipping` JavaScript library
 /// (v0.15.7, Martinez-Rueda-Feito algorithm), the ground-truth reference.
+///
+/// **Ported Turf.js union tests** — fixtures from `@turf/union` test suite
+/// in `TestData/Union/{in,out}/`. Comparisons use total area at 1 % tolerance.
+/// Issue-regression tests verify union completes without error.
 ///
 /// Comparisons use **area, polygon count, and vertex count** rather than
 /// exact coordinate equality, because starting points and colinear-point
@@ -28,13 +32,33 @@ struct UnionTests {
         let sortedR = result.polygons.sorted(by: { $0.area < $1.area })
         let sortedE = expected.polygons.sorted(by: { $0.area < $1.area })
         for (rp, ep) in zip(sortedR, sortedE) {
-            // Area must match (the primary geometric invariant)
             #expect(abs(rp.area - ep.area) < 0.01 * rp.area)
-            // Inner rings must match
             let rInner = rp.innerRings ?? []
             let eInner = ep.innerRings ?? []
             #expect(rInner.count == eInner.count)
         }
+    }
+
+    // MARK: - Turf helpers
+
+    private static func turfExpectedArea(_ name: String, tolerance: Double = 0.01) throws -> (area: Double, tolerance: Double) {
+        let feature = try TestData.feature(package: "Union/out", name: name)
+        var total: Double = 0
+        if let polygon = feature.geometry as? Polygon {
+            total += polygon.area
+        } else if let multiPolygon = feature.geometry as? MultiPolygon {
+            total += multiPolygon.polygons.reduce(0) { $0 + $1.area }
+        }
+        return (total, tolerance)
+    }
+
+    private static func extractPolygons(from fc: FeatureCollection) -> [Polygon] {
+        fc.features.compactMap { feature in
+            if let polygon = feature.geometry as? Polygon {
+                return MultiPolygon([polygon])
+            }
+            return feature.geometry as? MultiPolygon
+        }.flatMap { $0.polygons }
     }
 
     // MARK: - Overlapping rectangles (L-shape union)
@@ -171,6 +195,45 @@ struct UnionTests {
         let ratio = resultArea / expectedArea
         #expect(ratio > 0.99 && ratio < 1.01,
                 "Pair \(name): ratio \(ratio) outside 1%")
+    }
+
+    // MARK: - Ported Turf.js fixture tests
+
+    private static let turfTestNames = [
+        "union1", "union2", "union3", "union4", "not-overlapping",
+    ]
+
+    @Test(arguments: turfTestNames)
+    func turfFixture(_ name: String) async throws {
+        let fc = try TestData.featureCollection(package: "Union/in", name: name)
+        let result = try #require(fc.union())
+        let (expected, tolerance) = try Self.turfExpectedArea(name)
+        let actual = Self.extractPolygons(from: result).reduce(0) { $0 + $1.area }
+        let ratio = expected > 0 ? actual / expected : (actual == 0 ? 1 : 0)
+        #expect(ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
+                "\(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)], actual=\(actual), expected=\(expected)")
+    }
+
+    // MARK: - Issue regression tests
+
+    @Test func issueUnableToCompleteOutputRing1() async throws {
+        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-1")
+        #expect(fc.union() != nil)
+    }
+
+    @Test func issueUnableToCompleteOutputRing2() async throws {
+        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-2")
+        #expect(fc.union() != nil)
+    }
+
+    @Test func issueUnableToFindSegment1() async throws {
+        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-1")
+        #expect(fc.union() != nil)
+    }
+
+    @Test func issueUnableToFindSegment2() async throws {
+        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-2")
+        #expect(fc.union() != nil)
     }
 
 }
