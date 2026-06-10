@@ -96,13 +96,15 @@ enum Union {
         let splitEdges = splitEdges(allEdges, at: intersections)
         guard splitEdges.isNotEmpty else { return nil }
 
-        let withDuplicatesRemoved = removeDuplicatePairs(splitEdges)
-        let boundary = withDuplicatesRemoved.filter { edge in
+        let boundary = splitEdges.filter { edge in
             isOnUnionBoundary(edge, polygons: polygons)
         }
         guard boundary.isNotEmpty else { return nil }
 
-        let rings = buildRings(from: boundary)
+        let mergedBoundary = mergeReversePairs(boundary)
+        guard mergedBoundary.isNotEmpty else { return nil }
+
+        let rings = buildRings(from: mergedBoundary)
         let result = assemblePolygons(from: rings)
 
         guard result.isNotEmpty else { return nil }
@@ -234,34 +236,38 @@ enum Union {
 
     // MARK: - Duplicate removal
 
-    /// Removes edge pairs that are identical but in opposite directions
-    /// (shared boundaries between two polygons become interior to the union).
-    private static func removeDuplicatePairs(_ edges: [Edge]) -> [Edge] {
-        var remaining: [Edge] = []
-        var skipIndices = Set<Int>()
+    /// Merges edge pairs that are identical but in opposite directions into a single edge.
+    /// Unlike the old `removeDuplicatePairs` (which removed both), this keeps one copy
+    /// so the ring builder still has a connected boundary graph when a polygon is inside
+    /// another with shared boundary segments.
+    private static func mergeReversePairs(_ edges: [Edge]) -> [Edge] {
+        var result: [Edge] = []
+        var used = Set<Int>()
 
         for i in 0..<edges.count {
-            guard !skipIndices.contains(i) else { continue }
+            guard !used.contains(i) else { continue }
 
+            var merged = false
             for j in (i + 1)..<edges.count {
-                guard !skipIndices.contains(j) else { continue }
+                guard !used.contains(j) else { continue }
 
                 if edges[i].start == edges[j].end,
                    edges[i].end == edges[j].start
                 {
-                    skipIndices.insert(i)
-                    skipIndices.insert(j)
+                    result.append(edges[i])
+                    used.insert(i)
+                    used.insert(j)
+                    merged = true
                     break
                 }
             }
-        }
-
-        for (i, edge) in edges.enumerated() {
-            if !skipIndices.contains(i) {
-                remaining.append(edge)
+            if !merged {
+                result.append(edges[i])
+                used.insert(i)
             }
         }
-        return remaining
+
+        return result
     }
 
     // MARK: - Union boundary detection
