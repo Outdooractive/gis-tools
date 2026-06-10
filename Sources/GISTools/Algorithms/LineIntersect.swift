@@ -99,10 +99,15 @@ extension LineSegment {
         return false
     }
 
-    /// Returns the intersection of two line segments.
+    /// Returns the intersection of two line segments with an epsilon tolerance.
     ///
-    /// - Parameter other: The other *LineSegment*
-    public func intersection(_ other: LineSegment) -> Coordinate3D? {
+    /// - Parameters:
+    ///   - other: The other *LineSegment*
+    ///   - epsilon: Tolerance for endpoint parameter checks
+    public func intersection(
+        _ other: LineSegment,
+        epsilon: Double = 0.0
+    ) -> Coordinate3D? {
         let other = other.projected(to: projection)
 
         // TODO: BBox check
@@ -121,10 +126,10 @@ extension LineSegment {
         let uA: Double = numeratorA / denominator
         let uB: Double = numeratorB / denominator
 
-        if uA >= 0.0,
-           uA <= 1.0,
-           uB >= 0.0,
-           uB <= 1.0
+        if uA >= -epsilon,
+           uA <= 1.0 + epsilon,
+           uB >= -epsilon,
+           uB <= 1.0 + epsilon
         {
             let longitude = self.first.longitude + (uA * (self.second.longitude - self.first.longitude))
             let latitude = self.first.latitude + (uA * (self.second.latitude - self.first.latitude))

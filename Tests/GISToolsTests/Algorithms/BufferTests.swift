@@ -139,6 +139,7 @@ struct BufferTests {
         ]))
         let result = try #require(polygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
         checkArea(result, try loadExpected("PolygonWithHoleResult"))
+        result.dump()
     }
 
     @Test func bufferedMultiPolygon() async throws {
@@ -171,6 +172,7 @@ struct BufferTests {
         ]))
         let result = try #require(multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
         checkArea(result, try loadExpected("MultiPolygonResult"))
+        result.dump()
     }
 
 }

@@ -12,3 +12,4 @@
 
 ## General instructions
 - DO NOT take any shortcuts while implementing an algorithm. Correctness is the highest priority
+- DO NOT commit changes unless the user tells you to do so
