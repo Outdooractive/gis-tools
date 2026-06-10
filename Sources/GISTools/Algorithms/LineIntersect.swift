@@ -59,6 +59,7 @@ extension LineSegment {
     /// - Parameters:
     ///   - other: The other *LineSegment*
     ///   - epsilon: Tolerance for collinearity and on-segment checks
+    ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
     public func intersects(_ other: LineSegment, epsilon: Double = 0.0) -> Bool {
         let other = other.projected(to: projection)
 
@@ -100,9 +101,13 @@ extension LineSegment {
 
     /// Returns the intersection of two line segments with an epsilon tolerance.
     ///
+    /// Returns `nil` when the segments are parallel or collinear (overlapping
+    /// collinear segments produce a line segment, not a single point).
+    ///
     /// - Parameters:
     ///   - other: The other *LineSegment*
     ///   - epsilon: Tolerance for endpoint parameter checks
+    ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
     public func intersection(
         _ other: LineSegment,
         epsilon: Double = 0.0
