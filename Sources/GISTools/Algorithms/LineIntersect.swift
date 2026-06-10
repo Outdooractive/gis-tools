@@ -150,8 +150,11 @@ extension GeoJson {
     ///
     /// - note: Takes all poygon rings into account,  not just the outer ring.
     ///
-    /// - Parameter other: The other geometry
-    public func intersections(other: GeoJson) -> [Point] {
+    /// - Parameters:
+    ///   - other: The other geometry
+    ///   - epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
+    ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    public func intersections(other: GeoJson, epsilon: Double = 0.0) -> [Point] {
         let other = other.projected(to: projection)
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
@@ -183,7 +186,7 @@ extension GeoJson {
         else {
             for lineSegment in lineSegments {
                 for otherLineSegment in other.lineSegments {
-                    if let intersection = lineSegment.intersection(otherLineSegment) {
+                    if let intersection = lineSegment.intersection(otherLineSegment, epsilon: epsilon) {
                         result.insert(intersection)
                     }
                 }
