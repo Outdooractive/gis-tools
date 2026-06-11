@@ -46,10 +46,18 @@ enum Union {
 
     // MARK: - Internal types
 
-    private struct Edge {
+    fileprivate struct Edge {
         let start: Coordinate3D
         let end: Coordinate3D
         let polygonIndex: Int
+        var boundingBox: BoundingBox?
+
+        init(start: Coordinate3D, end: Coordinate3D, polygonIndex: Int) {
+            self.start = start
+            self.end = end
+            self.polygonIndex = polygonIndex
+            self.boundingBox = BoundingBox(coordinates: [start, end])
+        }
     }
 
     private struct SplitPoint {
@@ -79,15 +87,15 @@ enum Union {
     public static func unionPolygons(_ polygons: [Polygon]) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
 
+        guard polygons.count > 1 else {
+            return MultiPolygon(unchecked: polygons)
+        }
+
         // Work in EPSG:3857 so all tolerances are uniform meters
         let originalProj = polygons.first?.projection ?? .epsg4326
         let polygons = originalProj == .epsg3857
             ? polygons
             : polygons.map { $0.projected(to: .epsg3857) }
-
-        guard polygons.count > 1 else {
-            return MultiPolygon(unchecked: polygons).projected(to: originalProj)
-        }
 
         let allEdges = extractEdges(from: polygons)
         guard allEdges.isNotEmpty else { return nil }
@@ -144,8 +152,16 @@ enum Union {
                     continue
                 }
 
+                guard let bbi = edges[i].boundingBox,
+                      let bbj = edges[j].boundingBox,
+                      bbi.intersects(bbj) else { continue }
+
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
+
+                guard segI.intersects(segJ, epsilon: 1.0e-12) else {
+                    continue
+                }
 
                 guard let raw = segI.intersection(segJ, epsilon: 1.0e-12) else {
                     continue
@@ -237,9 +253,6 @@ enum Union {
     // MARK: - Duplicate removal
 
     /// Merges edge pairs that are identical but in opposite directions into a single edge.
-    /// Unlike the old `removeDuplicatePairs` (which removed both), this keeps one copy
-    /// so the ring builder still has a connected boundary graph when a polygon is inside
-    /// another with shared boundary segments.
     private static func mergeReversePairs(_ edges: [Edge]) -> [Edge] {
         var result: [Edge] = []
         var used = Set<Int>()
@@ -273,8 +286,7 @@ enum Union {
     // MARK: - Union boundary detection
 
     /// An edge is on the union boundary if the two sides of the edge have different
-    /// "inside the union" status. If both sides are inside or both outside, the edge
-    /// is interior to the union and should be removed.
+    /// "inside the union" status.
     private static func isOnUnionBoundary(
         _ edge: Edge,
         polygons: [Polygon]
@@ -438,3 +450,21 @@ enum Union {
     }
 
 }
+
+// MARK: - BoundingBoxRepresentable conformance (for future RTree use)
+
+extension Union.Edge: BoundingBoxRepresentable {
+
+    var projection: Projection { start.projection }
+
+    func calculateBoundingBox() -> BoundingBox? {
+        BoundingBox(coordinates: [start, end])
+    }
+
+    func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        boundingBox?.intersects(otherBoundingBox) ?? true
+    }
+
+}
+
+

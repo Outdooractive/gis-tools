@@ -280,8 +280,7 @@ struct BufferTests {
         try runTurfTest(name: fixture.name, result: try #require(geoJson.buffered(by: params.distance, unionType: fixture.unionType, steps: params.steps)))
     }
 
-    @Test(.disabled("Slow — unions 131 polygons from 66-point LineString buffer"))
-    func issue900() async throws {
+    @Test func issue900() async throws {
         let params = try Self.bufferParams("issue-#900")
         try runTurfTest(name: "issue-#900", result: try #require(TestData.feature(package: "Buffer/in", name: "issue-#900").buffered(by: params.distance, steps: params.steps)))
     }
