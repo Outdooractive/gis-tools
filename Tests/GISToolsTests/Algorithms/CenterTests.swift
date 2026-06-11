@@ -189,4 +189,122 @@ struct CenterTests {
         #expect(mean.coordinate.longitude == 0.0)
     }
 
+    // MARK: - centerOfMass
+
+    // Validates that the center of mass of a `Point` is the point itself.
+    @Test
+    func pointCenterOfMass() async throws {
+        let point = Point(Coordinate3D(latitude: 45.75764678012361, longitude: 4.831961989402771))
+        let com = try #require(point.centerOfMass)
+        #expect(com.coordinate.latitude == 45.75764678012361)
+        #expect(com.coordinate.longitude == 4.831961989402771)
+    }
+
+    // Validates that the center of mass of a `Polygon` is computed correctly using the signed area method.
+    @Test
+    func polygonCenterOfMass() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 45.79398056386735, longitude: 4.8250579833984375),
+            Coordinate3D(latitude: 45.79254427435898, longitude: 4.882392883300781),
+            Coordinate3D(latitude: 45.76081677972451, longitude: 4.910373687744141),
+            Coordinate3D(latitude: 45.7271539426975, longitude: 4.894924163818359),
+            Coordinate3D(latitude: 45.71337148333104, longitude: 4.824199676513671),
+            Coordinate3D(latitude: 45.74021417890731, longitude: 4.773387908935547),
+            Coordinate3D(latitude: 45.778418789239055, longitude: 4.778022766113281),
+            Coordinate3D(latitude: 45.79398056386735, longitude: 4.8250579833984375),
+        ]]))
+        let com = try #require(polygon.centerOfMass)
+        #expect(abs(com.coordinate.latitude - 45.75581209996416) < 0.0001)
+        #expect(abs(com.coordinate.longitude - 4.840728965137111) < 0.0001)
+    }
+
+    // Validates that the center of mass of a `Feature` wrapping a `Polygon` delegates correctly.
+    @Test
+    func featurePolygonCenterOfMass() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 45.79398056386735, longitude: 4.8250579833984375),
+            Coordinate3D(latitude: 45.79254427435898, longitude: 4.882392883300781),
+            Coordinate3D(latitude: 45.76081677972451, longitude: 4.910373687744141),
+            Coordinate3D(latitude: 45.7271539426975, longitude: 4.894924163818359),
+            Coordinate3D(latitude: 45.71337148333104, longitude: 4.824199676513671),
+            Coordinate3D(latitude: 45.74021417890731, longitude: 4.773387908935547),
+            Coordinate3D(latitude: 45.778418789239055, longitude: 4.778022766113281),
+            Coordinate3D(latitude: 45.79398056386735, longitude: 4.8250579833984375),
+        ]]))
+        let feature = Feature(polygon)
+        let com = try #require(feature.centerOfMass)
+        #expect(abs(com.coordinate.latitude - 45.75581209996416) < 0.0001)
+        #expect(abs(com.coordinate.longitude - 4.840728965137111) < 0.0001)
+    }
+
+    // Validates that the center of mass of a `Feature` wrapping a `Point` delegates correctly.
+    @Test
+    func featurePointCenterOfMass() async throws {
+        let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let feature = Feature(point)
+        let com = try #require(feature.centerOfMass)
+        #expect(com.coordinate.latitude == 10.0)
+        #expect(com.coordinate.longitude == 20.0)
+    }
+
+    // Validates that the center of mass falls back to the convex hull for non-polygon geometries (e.g., MultiPoint).
+    @Test
+    func multiPointCenterOfMass() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        // The convex hull of these 4 points is a square. Center of mass ≈ (5, 5).
+        let com = try #require(mp.centerOfMass)
+        #expect(abs(com.coordinate.latitude - 5.0) < 0.0001)
+        #expect(abs(com.coordinate.longitude - 5.0) < 0.0001)
+    }
+
+    // Validates that the center of mass falls back to the convex hull for a LineString.
+    @Test
+    func lineStringCenterOfMass() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        // 2 points -> convex hull returns nil (need >= 3 unique) -> fallback to centroid
+        let com = ls.centerOfMass
+        #expect(com != nil)
+        #expect(abs(com!.coordinate.latitude - 5.0) < 0.0001)
+        #expect(abs(com!.coordinate.longitude - 5.0) < 0.0001)
+    }
+
+    // Validates that center of mass is nil for empty geometries.
+    @Test
+    func emptyCenterOfMass() async throws {
+        let ls = LineString()
+        #expect(ls.centerOfMass == nil)
+    }
+
+    // Validates that center of mass works with a MultiPolygon (falls through to convex hull).
+    @Test
+    func multiPolygonCenterOfMass() async throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+            Coordinate3D(latitude: 20.0, longitude: 10.0),
+            Coordinate3D(latitude: 30.0, longitude: 10.0),
+            Coordinate3D(latitude: 30.0, longitude: 0.0),
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+        ]]))
+        let mp = try #require(MultiPolygon([p1, p2]))
+        let com = try #require(mp.centerOfMass)
+        // Convex hull is a rectangle spanning lat 0-30, lon 0-10, center of mass ≈ (15, 5)
+        #expect(abs(com.coordinate.latitude - 15.0) < 0.001)
+        #expect(abs(com.coordinate.longitude - 5.0) < 0.001)
+    }
+
 }
