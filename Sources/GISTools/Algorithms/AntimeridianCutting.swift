@@ -70,7 +70,8 @@ enum AntimeridianCutting {
             unwrapped = p2.longitude + 360.0
         }
 
-        let fraction = (180.0 - p1.longitude) / (unwrapped - p1.longitude)
+        let target = p1.longitude >= 0.0 ? 180.0 : -180.0
+        let fraction = (target - p1.longitude) / (unwrapped - p1.longitude)
         let intersectionLatitude = p1.latitude + fraction * (p2.latitude - p1.latitude)
 
         let first: Coordinate3D
@@ -300,8 +301,14 @@ extension Polygon {
             for hole in innerRings {
                 if AntimeridianCutting.coordinatesCrossMeridian(hole.coordinates) {
                     let holeResult = AntimeridianCutting.cutRing(hole)
-                    rightInnerRings.append(contentsOf: holeResult.right)
-                    leftInnerRings.append(contentsOf: holeResult.left)
+                    if holeResult.right.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts(holeResult.right, alongLongitude: 180.0)
+                        rightInnerRings.append(connected)
+                    }
+                    if holeResult.left.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts(holeResult.left, alongLongitude: -180.0)
+                        leftInnerRings.append(connected)
+                    }
                 }
                 else {
                     if hole.coordinates.first?.longitude ?? 0 >= 0 {

@@ -9,17 +9,19 @@ extension Polygon {
 
     /// Returns the *Polygon*'s area.
     ///
-    /// - Returns: The area of the outer ring minus the areas of the inner rings, in square meters.
+    /// - Returns: The area of the outer ring minus the area of the *union* of the inner rings, in square meters.
     public var area: Double {
         guard let outerRing else { return 0.0 }
 
-        var area: Double = abs(outerRing.area)
+        let outerArea = abs(outerRing.area)
 
-        if let innerRings {
-            area -= innerRings.reduce(0.0, { $0 + abs($1.area) })
+        guard let innerRings, innerRings.isNotEmpty else { return outerArea }
+
+        let holePolygons = innerRings.map { Polygon(unchecked: [$0.coordinates]) }
+        if let union = Union.unionPolygons(holePolygons) {
+            return outerArea - abs(union.area)
         }
-
-        return area
+        return outerArea
     }
 
 }

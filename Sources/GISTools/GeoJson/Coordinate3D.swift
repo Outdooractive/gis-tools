@@ -687,4 +687,15 @@ extension Coordinate3D: Equatable {
 
 // MARK: - Hashable
 
-extension Coordinate3D: Hashable {}
+extension Coordinate3D: Hashable {
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        let lat = (latitude / GISTool.equalityDelta).rounded()
+        let lon = (longitude / GISTool.equalityDelta).rounded()
+        hasher.combine(lat)
+        hasher.combine(lon)
+        hasher.combine(altitude)
+    }
+
+}

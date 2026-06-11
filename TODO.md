@@ -6,7 +6,7 @@
 
 ## TODOs from the GeoJSON spec: https://tools.ietf.org/html/rfc7946
 
-### 5.  Bounding Box
+### 5. Bounding Box
 
 ```
 Example of a 3D bbox member with a depth of 100 meters:

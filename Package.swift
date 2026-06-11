@@ -6,7 +6,7 @@ let package = Package(
     name: "gis-tools",
     platforms: [
         .iOS(.v15),
-        .macOS(.v14),
+        .macOS(.v15),
         .tvOS(.v15),
         .watchOS(.v7),
     ],
