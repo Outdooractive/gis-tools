@@ -84,3 +84,87 @@ extension FeatureCollection {
     }
 
 }
+
+// Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-center-of-mass
+
+extension GeoJson {
+
+    /// Returns the center of mass of the receiver.
+    ///
+    /// Uses the centroid of polygon formula (signed area method) for polygons,
+    /// and falls back to the convex hull's center of mass for other geometries.
+    public var centerOfMass: Point? {
+        if let feature = self as? Feature {
+            return feature.geometry.centerOfMass
+        }
+
+        switch type {
+        case .point:
+            return (self as? Point).map { Point($0.coordinate) }
+
+        case .polygon:
+            return polygonCenterOfMass(allCoordinates: allCoordinates, projection: projection)
+
+        default:
+            if let hull = convexHull() {
+                return hull.centerOfMass
+            }
+            return centroid
+        }
+    }
+
+    private func polygonCenterOfMass(
+        allCoordinates coords: [Coordinate3D],
+        projection: Projection
+    ) -> Point? {
+        guard coords.isNotEmpty else { return nil }
+
+        if coords.count == 1 {
+            return Point(coords[0])
+        }
+
+        // Compute centroid for neutralization (to reduce rounding errors)
+        var sumLat: Double = 0.0
+        var sumLon: Double = 0.0
+        for coord in coords {
+            sumLat += coord.latitude
+            sumLon += coord.longitude
+        }
+        let centerLat = sumLat / Double(coords.count)
+        let centerLon = sumLon / Double(coords.count)
+
+        // Neutralized signed area computation
+        var sx: Double = 0.0
+        var sy: Double = 0.0
+        var sArea: Double = 0.0
+
+        for i in 0..<(coords.count - 1) {
+            let xi = coords[i].longitude - centerLon
+            let yi = coords[i].latitude - centerLat
+            let xj = coords[i + 1].longitude - centerLon
+            let yj = coords[i + 1].latitude - centerLat
+
+            let a = xi * yj - xj * yi
+            sArea += a
+            sx += (xi + xj) * a
+            sy += (yi + yj) * a
+        }
+
+        // Shape has no area: fallback on centroid
+        if sArea == 0.0 {
+            return Point(Coordinate3D(
+                x: centerLon,
+                y: centerLat,
+                projection: projection))
+        }
+
+        let area = sArea * 0.5
+        let areaFactor = 1.0 / (6.0 * area)
+
+        return Point(Coordinate3D(
+            x: centerLon + areaFactor * sx,
+            y: centerLat + areaFactor * sy,
+            projection: projection))
+    }
+
+}
