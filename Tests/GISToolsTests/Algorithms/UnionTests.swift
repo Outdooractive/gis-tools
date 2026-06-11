@@ -9,7 +9,7 @@ import Testing
 /// (v0.15.7, Martinez-Rueda-Feito algorithm), the ground-truth reference.
 ///
 /// **Ported Turf.js union tests** — fixtures from `@turf/union` test suite
-/// in `TestData/Union/{in,out}/`. Comparisons use total area at 1 % tolerance.
+/// in `TestData/Union/{in,out}/`. Comparisons use total area at 1% tolerance.
 /// Issue-regression tests verify union completes without error.
 ///
 /// Comparisons use **area, polygon count, and vertex count** rather than
@@ -27,7 +27,10 @@ struct UnionTests {
         try TestData.multiPolygon(package: "Union", name: name)
     }
 
-    private func checkGeometric(_ result: MultiPolygon, _ expected: MultiPolygon) {
+    private func checkGeometric(
+        _ result: MultiPolygon,
+        _ expected: MultiPolygon
+    ) {
         #expect(result.polygons.count == expected.polygons.count)
         let sortedR = result.polygons.sorted(by: { $0.area < $1.area })
         let sortedE = expected.polygons.sorted(by: { $0.area < $1.area })
@@ -41,18 +44,24 @@ struct UnionTests {
 
     // MARK: - Turf helpers
 
-    private static func turfExpectedArea(_ name: String, tolerance: Double = 0.01) throws -> (area: Double, tolerance: Double) {
+    private static func turfExpectedArea(
+        _ name: String,
+        tolerance: Double = 0.01
+    ) throws -> (area: Double, tolerance: Double) {
         let feature = try TestData.feature(package: "Union/out", name: name)
         var total: Double = 0
         if let polygon = feature.geometry as? Polygon {
             total += polygon.area
-        } else if let multiPolygon = feature.geometry as? MultiPolygon {
+        }
+        else if let multiPolygon = feature.geometry as? MultiPolygon {
             total += multiPolygon.polygons.reduce(0) { $0 + $1.area }
         }
         return (total, tolerance)
     }
 
-    private static func extractPolygons(from fc: FeatureCollection) -> [Polygon] {
+    private static func extractPolygons(
+        from fc: FeatureCollection
+    ) -> [Polygon] {
         fc.features.compactMap { feature in
             if let polygon = feature.geometry as? Polygon {
                 return MultiPolygon([polygon])
@@ -186,7 +195,11 @@ struct UnionTests {
     ]
 
     @Test(arguments: pairwiseTests)
-    func pairwiseUnion(i: Int, j: Int, name: String) async throws {
+    func pairwiseUnion(
+        i: Int,
+        j: Int,
+        name: String
+    ) async throws {
         let parts = try Self.loadFlatParts()
         let expected = try Self.loadPairwise(name)
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }

@@ -234,131 +234,56 @@ struct BufferTests {
                 "\(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)], actual=\(actual), expected=\(expected)")
     }
 
-    private func turfBuffer(name: String, steps: Int? = nil) throws -> (distance: Double, steps: Int) {
-        let params = try Self.bufferParams(name)
-        return (params.distance, steps ?? params.steps)
+    private struct TurfFixture: Sendable {
+        let name: String
+        let loadFeatureCollection: Bool
+        let loadGeometryCollection: Bool
+        let unionType: BufferUnionType
+
+        init(name: String, loadFeatureCollection: Bool = false, loadGeometryCollection: Bool = false, unionType: BufferUnionType = .individual) {
+            self.name = name
+            self.loadFeatureCollection = loadFeatureCollection
+            self.loadGeometryCollection = loadGeometryCollection
+            self.unionType = unionType
+        }
     }
 
-    @Test func featureCollectionPoints() async throws {
-        let name = "feature-collection-points"
-        let (distance, steps) = try turfBuffer(name: name)
-        let fc = try TestData.featureCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(fc.buffered(by: distance, steps: steps)))
+    private static let turfFixtures: [TurfFixture] = [
+        .init(name: "feature-collection-points", loadFeatureCollection: true),
+        .init(name: "geometry-collection-points", loadGeometryCollection: true),
+        .init(name: "linestring"),
+        .init(name: "multi-linestring"),
+        .init(name: "multi-point"),
+        .init(name: "multi-polygon"),
+        .init(name: "point"),
+        .init(name: "polygon-with-holes"),
+        .init(name: "northern-polygon"),
+        .init(name: "issue-#783", loadFeatureCollection: true),
+        .init(name: "issue-#801-Ecuador", loadFeatureCollection: true),
+        .init(name: "issue-#801", loadFeatureCollection: true),
+        .init(name: "issue-#815"),
+        .init(name: "issue-#916", loadFeatureCollection: true),
+        .init(name: "north-latitude-points", unionType: .overlapping),
+    ]
+
+    @Test(arguments: turfFixtures)
+    private func turfFixture(_ fixture: TurfFixture) async throws {
+        let params = try Self.bufferParams(fixture.name)
+        let geoJson: GeoJson
+        if fixture.loadGeometryCollection {
+            geoJson = try TestData.geometryCollection(package: "Buffer/in", name: fixture.name)
+        } else if fixture.loadFeatureCollection {
+            geoJson = try TestData.featureCollection(package: "Buffer/in", name: fixture.name)
+        } else {
+            geoJson = try TestData.feature(package: "Buffer/in", name: fixture.name)
+        }
+        try runTurfTest(name: fixture.name, result: try #require(geoJson.buffered(by: params.distance, unionType: fixture.unionType, steps: params.steps)))
     }
 
-    @Test func geometryCollectionPoints() async throws {
-        let name = "geometry-collection-points"
-        let (distance, steps) = try turfBuffer(name: name)
-        let gc = try TestData.geometryCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(gc.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func turfLinestring() async throws {
-        let name = "linestring"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? LineString)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func turfMultiLinestring() async throws {
-        let name = "multi-linestring"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? MultiLineString)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func turfMultiPoint() async throws {
-        let name = "multi-point"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? MultiPoint)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func turfMultiPolygon() async throws {
-        let name = "multi-polygon"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? MultiPolygon)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func turfBufferPoint() async throws {
-        let name = "point"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? Point)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func polygonWithHoles() async throws {
-        let name = "polygon-with-holes"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? Polygon)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func northernPolygon() async throws {
-        let name = "northern-polygon"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? Polygon)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func issue783() async throws {
-        let name = "issue-#783"
-        let (distance, steps) = try turfBuffer(name: name)
-        let fc = try TestData.featureCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(fc.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func issue801Ecuador() async throws {
-        let name = "issue-#801-Ecuador"
-        let (distance, steps) = try turfBuffer(name: name)
-        let fc = try TestData.featureCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(fc.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func issue801() async throws {
-        let name = "issue-#801"
-        let (distance, steps) = try turfBuffer(name: name)
-        let fc = try TestData.featureCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(fc.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func issue815() async throws {
-        let name = "issue-#815"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? LineString)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test(.disabled("Slow — unions 131 polygons from 66-point LineString buffer")) func issue900() async throws {
-        let name = "issue-#900"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? LineString)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func issue916() async throws {
-        let name = "issue-#916"
-        let (distance, steps) = try turfBuffer(name: name)
-        let fc = try TestData.featureCollection(package: "Buffer/in", name: name)
-        try runTurfTest(name: name, result: try #require(fc.buffered(by: distance, steps: steps)))
-    }
-
-    @Test func northLatitudePoints() async throws {
-        let name = "north-latitude-points"
-        let (distance, steps) = try turfBuffer(name: name)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? MultiPoint)
-        try runTurfTest(name: name, result: try #require(geometry.buffered(by: distance, unionType: .overlapping, steps: steps)))
+    @Test(.disabled("Slow — unions 131 polygons from 66-point LineString buffer"))
+    func issue900() async throws {
+        let params = try Self.bufferParams("issue-#900")
+        try runTurfTest(name: "issue-#900", result: try #require(TestData.feature(package: "Buffer/in", name: "issue-#900").buffered(by: params.distance, steps: params.steps)))
     }
 
     // MARK: - Negative buffer
@@ -377,4 +302,5 @@ struct BufferTests {
         let geometry = try #require(feature.geometry as? Polygon)
         #expect(geometry.buffered(by: GISTool.convertToMeters(radius, .miles)) == nil)
     }
+
 }
