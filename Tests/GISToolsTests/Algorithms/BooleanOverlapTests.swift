@@ -3,6 +3,7 @@ import Testing
 
 struct BooleanOverlapTests {
 
+    // Validates that `isOverlapping` returns false for non-overlapping geometries.
     @Test
     func isFalse() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanOverlap", name: "OverlapFalse1_1")
@@ -38,6 +39,7 @@ struct BooleanOverlapTests {
         #expect(polygon3.isOverlapping(with: polygon4) == false)
     }
 
+    // Validates that `isOverlapping` returns true for overlapping geometries.
     @Test
     func isTrue() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanOverlap", name: "OverlapTrue1_1")

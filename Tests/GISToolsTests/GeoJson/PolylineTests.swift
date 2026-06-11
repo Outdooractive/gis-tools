@@ -16,6 +16,7 @@ struct PolylineTests {
     ]
     let encodedPolyline = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
 
+    // Validates encoding coordinates to Google Polyline format.
     @Test
     func encodePolyline() async throws {
         for (i, coordinate) in coordinates.enumerated() {
@@ -25,6 +26,7 @@ struct PolylineTests {
         #expect(coordinates.encodePolyline() == encodedPolyline)
     }
 
+    // Validates decoding a Google Polyline encoded string back to coordinates.
     @Test
     func decodePolyline() async throws {
         #expect(encodedPolyline.decodePolyline() == coordinates)

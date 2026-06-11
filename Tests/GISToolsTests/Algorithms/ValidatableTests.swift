@@ -6,6 +6,7 @@ struct ValidatableTests {
 
     // MARK: - Point
 
+    // Validates that a valid Point is recognized as valid.
     @Test
     func pointValid() async throws {
         #expect(Point(Coordinate3D(latitude: 1.0, longitude: 1.0)).isValid)
@@ -13,6 +14,7 @@ struct ValidatableTests {
 
     // MARK: - MultiPoint
 
+    // Validates that a valid MultiPoint is recognized as valid.
     @Test
     func multiPointValid() async throws {
         let mp = try #require(MultiPoint([
@@ -22,6 +24,7 @@ struct ValidatableTests {
         #expect(mp.isValid)
     }
 
+    // Validates that an empty MultiPoint is recognized as invalid.
     @Test
     func multiPointInvalid() async throws {
         let mp = MultiPoint()
@@ -30,6 +33,7 @@ struct ValidatableTests {
 
     // MARK: - LineString
 
+    // Validates that a valid LineString is recognized as valid.
     @Test
     func lineStringValid() async throws {
         let ls = try #require(LineString([
@@ -39,6 +43,7 @@ struct ValidatableTests {
         #expect(ls.isValid)
     }
 
+    // Validates that an empty LineString is recognized as invalid.
     @Test
     func lineStringInvalid() async throws {
         let ls = LineString()
@@ -47,6 +52,7 @@ struct ValidatableTests {
 
     // MARK: - MultiLineString
 
+    // Validates that a valid MultiLineString is recognized as valid.
     @Test
     func multiLineStringValid() async throws {
         let mls = try #require(MultiLineString([[
@@ -56,6 +62,7 @@ struct ValidatableTests {
         #expect(mls.isValid)
     }
 
+    // Validates that an empty MultiLineString is recognized as invalid.
     @Test
     func multiLineStringInvalid() async throws {
         let mls = MultiLineString()
@@ -64,6 +71,7 @@ struct ValidatableTests {
 
     // MARK: - Polygon
 
+    // Validates that a valid Polygon is recognized as valid.
     @Test
     func polygonValid() async throws {
         let polygon = try #require(Polygon([[
@@ -75,6 +83,7 @@ struct ValidatableTests {
         #expect(polygon.isValid)
     }
 
+    // Validates that an empty Polygon is recognized as invalid.
     @Test
     func polygonInvalid() async throws {
         let polygon = Polygon()
@@ -83,6 +92,7 @@ struct ValidatableTests {
 
     // MARK: - MultiPolygon
 
+    // Validates that a valid MultiPolygon is recognized as valid.
     @Test
     func multiPolygonValid() async throws {
         let poly = try #require(Polygon([[
@@ -95,6 +105,7 @@ struct ValidatableTests {
         #expect(mp.isValid)
     }
 
+    // Validates that an empty MultiPolygon is recognized as invalid.
     @Test
     func multiPolygonInvalid() async throws {
         let mp = MultiPolygon()
@@ -103,12 +114,14 @@ struct ValidatableTests {
 
     // MARK: - GeometryCollection
 
+    // Validates that an empty GeometryCollection is recognized as valid.
     @Test
     func geometryCollectionValid() async throws {
         let gc = GeometryCollection([])
         #expect(gc.isValid)
     }
 
+    // Validates that a GeometryCollection with valid geometries is recognized as valid.
     @Test
     func geometryCollectionWithValidGeometries() async throws {
         let point = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
@@ -116,6 +129,7 @@ struct ValidatableTests {
         #expect(gc.isValid)
     }
 
+    // Validates that a GeometryCollection containing an invalid geometry is invalid.
     @Test
     func geometryCollectionWithInvalidGeometry() async throws {
         let emptyLS = LineString()
@@ -126,12 +140,14 @@ struct ValidatableTests {
 
     // MARK: - Feature
 
+    // Validates that a Feature with a valid geometry is recognized as valid.
     @Test
     func featureValid() async throws {
         let point = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
         #expect(Feature(point).isValid)
     }
 
+    // Validates that a Feature with an invalid geometry is recognized as invalid.
     @Test
     func featureInvalid() async throws {
         #expect(Feature(LineString()).isValid == false)
@@ -139,18 +155,21 @@ struct ValidatableTests {
 
     // MARK: - FeatureCollection
 
+    // Validates that an empty FeatureCollection is recognized as valid.
     @Test
     func featureCollectionValid() async throws {
         let fc = FeatureCollection()
         #expect(fc.isValid)
     }
 
+    // Validates that a FeatureCollection with all valid features is recognized as valid.
     @Test
     func featureCollectionAllValid() async throws {
         let fc = FeatureCollection([Feature(Point(Coordinate3D(latitude: 1.0, longitude: 1.0)))])
         #expect(fc.isValid)
     }
 
+    // Validates that a FeatureCollection containing an invalid feature is invalid.
     @Test
     func featureCollectionWithInvalidFeature() async throws {
         let fc = FeatureCollection([Feature(LineString())])
@@ -159,6 +178,7 @@ struct ValidatableTests {
 
     // MARK: - Static per-type isValid
 
+    // Validates that static isValid returns true for valid GeoJSON objects of each type.
     @Test
     func staticIsValid() async throws {
         #expect(Point.isValid(geoJson: ["type": "Point", "coordinates": [1.0, 2.0]]))
@@ -172,6 +192,7 @@ struct ValidatableTests {
         #expect(FeatureCollection.isValid(geoJson: ["type": "FeatureCollection", "features": []]))
     }
 
+    // Validates that static isValid returns false when the GeoJSON type does not match the expected type.
     @Test
     func staticIsValidWrongType() async throws {
         let geoJson: [String: Any] = ["type": "Point", "coordinates": [1.0, 2.0]]
@@ -179,6 +200,7 @@ struct ValidatableTests {
         #expect(LineString.isValid(geoJson: geoJson) == false)
     }
 
+    // Validates that static isValid returns false for malformed or incomplete GeoJSON.
     @Test
     func staticIsValidInvalid() async throws {
         #expect(Point.isValid(geoJson: [:]) == false)

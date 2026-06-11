@@ -6,6 +6,7 @@ struct BooleanPointOnLineTests {
 
     // MARK: - LineSegment.checkIsOnSegment
 
+    // Validates that `LineSegment.checkIsOnSegment` returns true for the midpoint.
     @Test
     func segmentOnSegmentMidpoint() async throws {
         let segment = LineSegment(
@@ -14,6 +15,7 @@ struct BooleanPointOnLineTests {
         #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 5.0, longitude: 5.0)))
     }
 
+    // Validates that `LineSegment.checkIsOnSegment` returns true for both endpoints.
     @Test
     func segmentOnSegmentEndpoint() async throws {
         let segment = LineSegment(
@@ -24,6 +26,7 @@ struct BooleanPointOnLineTests {
         #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 10.0, longitude: 10.0)))
     }
 
+    // Validates that `LineSegment.checkIsOnSegment` returns false for a point not on the segment.
     @Test
     func segmentNotOnSegment() async throws {
         let segment = LineSegment(
@@ -32,6 +35,7 @@ struct BooleanPointOnLineTests {
         #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 5.0, longitude: 10.0)) == false)
     }
 
+    // Validates that `LineSegment.checkIsOnSegment` returns false for collinear points beyond the segment.
     @Test
     func segmentOnSegmentCollinearOutside() async throws {
         let segment = LineSegment(
@@ -41,6 +45,7 @@ struct BooleanPointOnLineTests {
         #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 15.0, longitude: 15.0)) == false)
     }
 
+    // Validates that `LineSegment.checkIsOnSegment` works correctly with a `Point` instance.
     @Test
     func segmentPointOnSegment() async throws {
         let segment = LineSegment(
@@ -51,6 +56,7 @@ struct BooleanPointOnLineTests {
 
     // MARK: - LineString.checkIsOnLine
 
+    // Validates that `LineString.checkIsOnLine` returns true for points on any segment of the line.
     @Test
     func lineStringOnLine() async throws {
         let ls = try #require(LineString([
@@ -66,6 +72,7 @@ struct BooleanPointOnLineTests {
         #expect(ls.checkIsOnLine(Coordinate3D(latitude: 0.0, longitude: 10.0)))
     }
 
+    // Validates that `LineString.checkIsOnLine` returns false for points not on the line.
     @Test
     func lineStringNotOnLine() async throws {
         let ls = try #require(LineString([
@@ -76,6 +83,7 @@ struct BooleanPointOnLineTests {
         #expect(ls.checkIsOnLine(Coordinate3D(latitude: 5.0, longitude: 5.0)) == false)
     }
 
+    // Validates that `LineString.checkIsOnLine` works correctly with a `Point` instance.
     @Test
     func lineStringPointOnLine() async throws {
         let ls = try #require(LineString([
@@ -87,6 +95,7 @@ struct BooleanPointOnLineTests {
 
     // MARK: - MultiLineString.checkIsOnLine
 
+    // Validates that `MultiLineString.checkIsOnLine` returns correct results across multiple line segments.
     @Test
     func multiLineStringOnLine() async throws {
         let mls = try #require(MultiLineString([

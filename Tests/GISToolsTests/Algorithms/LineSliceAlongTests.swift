@@ -3,6 +3,7 @@ import Testing
 
 struct LineSliceAlongTests {
 
+    // Verifies that slicing a line between two valid distances returns the correct start and end coordinates.
     @Test
     func slice() async throws {
         let lineString = try TestData.lineString(package: "LineSliceAlong", name: "LineSliceAlong")
@@ -18,6 +19,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates[sliced.coordinates.count - 1] == endCoordinate)
     }
 
+    // Verifies that slicing when the stop distance exceeds the line length still returns valid start and end coordinates.
     @Test
     func sliceOvershoot() async throws {
         let lineString = try TestData.lineString(package: "LineSliceAlong", name: "LineSliceAlong")

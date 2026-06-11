@@ -3,6 +3,7 @@ import Testing
 
 struct DestinationTests {
 
+    // Validates destination calculation for a 0-degree (north) bearing.
     @Test
     func destination1() async throws {
         let bearing = 0.0
@@ -15,6 +16,7 @@ struct DestinationTests {
         #expect(abs(destination.longitude - -75.0) < 0.000001)
     }
 
+    // Validates destination calculation for a 180-degree (south) bearing.
     @Test
     func destination2() async throws {
         let bearing = 180.0
@@ -27,6 +29,7 @@ struct DestinationTests {
         #expect(abs(destination.longitude - -75.0) < 0.000001)
     }
 
+    // Validates destination calculation for a 90-degree (east) bearing.
     @Test
     func destination3() async throws {
         let bearing = 90.0
@@ -40,6 +43,7 @@ struct DestinationTests {
     }
 
     // TODO: This returns a completly different result than the original Turf implementation
+    // Validates destination calculation over a long distance (5000 miles east).
     @Test
     func destination4() async throws {
         let bearing = 90.0

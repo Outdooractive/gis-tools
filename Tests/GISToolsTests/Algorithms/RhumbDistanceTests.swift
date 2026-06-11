@@ -6,6 +6,7 @@ import Testing
 
 struct RhumbDistanceTests {
 
+    // Validates rhumb distance calculations between multiple coordinate pairs.
     @Test
     func distance() async throws {
         let coordinate1 = Coordinate3D(latitude: 39.984, longitude: -75.343)

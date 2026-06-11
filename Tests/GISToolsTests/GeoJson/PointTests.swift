@@ -12,6 +12,7 @@ struct PointTests {
     }
     """
 
+    // Validates loading a Point from a JSON string.
     @Test
     func loadJson() async throws {
         let point = try #require(Point(jsonString: PointTests.pointJson))
@@ -23,6 +24,7 @@ struct PointTests {
         #expect(point[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a Point and generating its JSON representation.
     @Test
     func createJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -33,6 +35,7 @@ struct PointTests {
         #expect(string.contains("\"coordinates\":[100,0]"))
     }
 
+    // Validates that Point conforms to Encodable and matches the pretty-printed JSON output.
     @Test
     func encodable() async throws {
         let point = try #require(Point(jsonString: PointTests.pointJson))
@@ -43,6 +46,7 @@ struct PointTests {
         #expect(try encoder.encode(point) == point.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that Point conforms to Decodable and round-trips through JSON encoding.
     @Test
     func decodable() async throws {
         let pointData = try #require(Point(jsonString: PointTests.pointJson)?.asJsonData(prettyPrinted: true))

@@ -12,6 +12,7 @@ struct WKTTests {
     private let pointMData = "POINT M (1 2 4)"
     private let pointZMData = "POINTZM(1 2 3 4)"
 
+    // Validates decoding WKT Point types (XY, XYZ, XYM, XYZM).
     @Test
     func pointDecoding() async throws {
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
@@ -37,6 +38,7 @@ struct WKTTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKT Point with reprojection from EPSG:4326 to EPSG:3857.
     @Test
     func pointDecoding4326To3857() async throws {
         let expected = Coordinate3D(latitude: 2, longitude: 1).projected(to: .epsg3857)
@@ -64,6 +66,7 @@ struct WKTTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKT Point with reprojection from EPSG:3857 to EPSG:4326.
     @Test
     func pointDecoding3857To4326() async throws {
         let expected = Coordinate3D(x: 1, y: 2).projected(to: .epsg4326)
@@ -91,6 +94,7 @@ struct WKTTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKT Point with no SRID (noSRID).
     @Test
     func pointDecodingNoSRID() async throws {
         let expected = Coordinate3D(x: 1, y: 2, projection: .noSRID)
@@ -122,6 +126,7 @@ struct WKTTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates encoding a Point to WKT string.
     @Test
     func pointEncoding() async throws {
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
@@ -141,6 +146,7 @@ struct WKTTests {
         #expect(encodedPointZM == "POINTZM(1.0 2.0 3.0 4.0)")
     }
 
+    // Validates encoding a Point to WKT with SRID prefix for target projections.
     @Test
     func pointEncodingWithProjections() async throws {
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
@@ -159,6 +165,7 @@ struct WKTTests {
 
     private let multiPointData = "MULTIPOINT((0 0),(1 2))"
 
+    // Validates decoding a WKT MultiPoint.
     @Test
     func multiPointDecoding() async throws {
         let multiPoint = try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
@@ -167,6 +174,7 @@ struct WKTTests {
         #expect(multiPoint.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1))
     }
 
+    // Validates encoding a MultiPoint to WKT.
     @Test
     func multiPointEncoding() async throws {
         let multiPoint = try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
@@ -178,6 +186,7 @@ struct WKTTests {
 
     private let multiPointZSRIDData = "SRID=4326;MULTIPOINTZ(0 0 0,1 2 1)"
 
+    // Validates decoding a WKT MultiPoint with SRID prefix.
     @Test
     func multiPointSRIDDecoding() async throws {
         let multiPointZSRID = try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
@@ -186,6 +195,7 @@ struct WKTTests {
         #expect(multiPointZSRID.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1, altitude: 1))
     }
 
+    // Validates encoding a MultiPoint with SRID back to WKT.
     @Test
     func multiPointSRIDEncoding() async throws {
         let multiPointZSRID = try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
@@ -201,6 +211,7 @@ struct WKTTests {
     private let lineStringZMData = "LINESTRING ZM (1 1 5 0, 1 2 5 0, 1 3 5 1, 2 2 5 0)"
     private let linearRingZData = "LINEARRING (0 0 0, 4 0 0, 4 4 0, 0 4 0, 0 0 0)"
 
+    // Validates decoding WKT LineString and LinearRing types.
     @Test
     func lineStringDecoding() async throws {
         let lineString = try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as! LineString
@@ -219,6 +230,7 @@ struct WKTTests {
         #expect(linearRingZ.coordinates.count == 5)
     }
 
+    // Validates encoding a LineString to WKT.
     @Test
     func lineStringEncoding() async throws {
         let lineString = try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as! LineString
@@ -242,12 +254,14 @@ struct WKTTests {
 
     private let multiLineStringData = "MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))"
 
+    // Validates decoding a WKT MultiLineString.
     @Test
     func multiLineStringDecoding() async throws {
         let multiLineString = try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
         #expect(multiLineString.lineStrings.count == 2)
     }
 
+    // Validates encoding a MultiLineString to WKT.
     @Test
     func multiLineStringEncoding() async throws {
         let multiLineString = try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
@@ -263,6 +277,7 @@ struct WKTTests {
     private let polygonZMData = "POLYGON ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 1 0 0 2, 0 0 0 2))"
     private let polygonWithHoleData = "POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))"
 
+    // Validates decoding WKT Polygon types (XY, XYZ, XYM, XYZM, with hole).
     @Test
     func polygonDecoding() async throws {
         let polygon = try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as! Polygon
@@ -287,6 +302,7 @@ struct WKTTests {
         #expect(polygonWithHole.innerRings![0].coordinates.count == 5)
     }
 
+    // Validates encoding a Polygon to WKT.
     @Test
     func polygonEncoding() async throws {
         let polygon = try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as! Polygon
@@ -314,12 +330,14 @@ struct WKTTests {
 
     private let multiPolygonData = "MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ((-1 -1,-1 -2,-2 -2,-2 -1,-1 -1)))"
 
+    // Validates decoding a WKT MultiPolygon.
     @Test
     func multiPolygonDecoding() async throws {
         let multiPolygon = try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
         #expect(multiPolygon.polygons.count == 2)
     }
 
+    // Validates encoding a MultiPolygon to WKT.
     @Test
     func multiPolygonEncoding() async throws {
         let multiPolygon = try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
@@ -331,6 +349,7 @@ struct WKTTests {
 
     private let geometryCollectionData = "GEOMETRYCOLLECTION(POINT(2 0),POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))"
 
+    // Validates decoding a WKT GeometryCollection.
     @Test
     func geometryCollectionDecoding() async throws {
         let geometryCollection = try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
@@ -339,6 +358,7 @@ struct WKTTests {
         #expect(geometryCollection.geometries[1].type == .polygon)
     }
 
+    // Validates encoding a GeometryCollection to WKT.
     @Test
     func geometryCollectionEncoding() async throws {
         let geometryCollection = try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
@@ -353,6 +373,7 @@ struct WKTTests {
     private let triangleMData = "TRIANGLE M ((0 0 2, 0 1 2, 1 1 2, 0 0 2))"
     private let triangleZMData = "TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))"
 
+    // Validates decoding WKT Triangle types (XY, XYZ, XYM, XYZM) as Polygon.
     @Test
     func triangleDecoding() async throws {
         let triangle = try WKTCoder.decode(wkt: triangleData, sourceProjection: .epsg4326) as! Polygon
@@ -374,6 +395,7 @@ struct WKTTests {
 
     // MARK: - GeoJsonGeometry convenience
 
+    // Validates parsing a geometry from WKT with a source SRID.
     @Test
     func geoJsonGeometryParseSourceSrid() async throws {
         let geometry = GeometryCollection.parse(wkt: pointData, sourceSrid: 4326)
@@ -381,6 +403,7 @@ struct WKTTests {
         #expect((geometry as! Point).coordinate.longitude == 1)
     }
 
+    // Validates parsing a geometry from WKT with a source projection.
     @Test
     func geoJsonGeometryParseSourceProjection() async throws {
         let geometry = GeometryCollection.parse(wkt: pointData, sourceProjection: .epsg4326)
@@ -388,6 +411,7 @@ struct WKTTests {
         #expect((geometry as! Point).coordinate.longitude == 1)
     }
 
+    // Validates encoding a geometry to WKT string.
     @Test
     func geoJsonGeometryAsWKT() async throws {
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
@@ -396,6 +420,7 @@ struct WKTTests {
 
     // MARK: - Feature convenience
 
+    // Validates creating a Feature from WKT with a source SRID.
     @Test
     func featureInitSourceSrid() async throws {
         let feature = Feature(
@@ -408,6 +433,7 @@ struct WKTTests {
         #expect(feature?.properties["key"] as? String == "value")
     }
 
+    // Validates creating a Feature from WKT with a source projection.
     @Test
     func featureInitSourceProjection() async throws {
         let feature = Feature(
@@ -418,6 +444,7 @@ struct WKTTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates encoding a Feature to WKT string.
     @Test
     func featureAsWKT() async throws {
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
@@ -427,6 +454,7 @@ struct WKTTests {
 
     // MARK: - FeatureCollection convenience
 
+    // Validates creating a FeatureCollection from WKT with a source SRID.
     @Test
     func featureCollectionInitSourceSrid() async throws {
         let fc = FeatureCollection(wkt: pointData, sourceSrid: 4326)
@@ -434,6 +462,7 @@ struct WKTTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates creating a FeatureCollection from WKT with a source projection.
     @Test
     func featureCollectionInitSourceProjection() async throws {
         let fc = FeatureCollection(wkt: pointData, sourceProjection: .epsg4326)
@@ -443,6 +472,7 @@ struct WKTTests {
 
     // MARK: - String convenience
 
+    // Validates decoding a WKT string to a geometry using a source SRID.
     @Test
     func stringAsGeoJsonGeometrySourceSrid() async throws {
         let geometry = pointZData.asGeoJsonGeometry(sourceSrid: 4326)
@@ -450,6 +480,7 @@ struct WKTTests {
         #expect((geometry as! Point).coordinate.altitude == 3)
     }
 
+    // Validates decoding a WKT string to a geometry using a source projection.
     @Test
     func stringAsGeoJsonGeometrySourceProjection() async throws {
         let geometry = pointZData.asGeoJsonGeometry(sourceProjection: .epsg4326)
@@ -457,6 +488,7 @@ struct WKTTests {
         #expect((geometry as! Point).coordinate.altitude == 3)
     }
 
+    // Validates decoding a WKT string to a Feature using a source SRID.
     @Test
     func stringAsFeatureSourceSrid() async throws {
         let feature = pointZData.asFeature(sourceSrid: 4326, id: .string("s1"))
@@ -464,12 +496,14 @@ struct WKTTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates decoding a WKT string to a Feature using a source projection.
     @Test
     func stringAsFeatureSourceProjection() async throws {
         let feature = pointZData.asFeature(sourceProjection: .epsg4326)
         #expect(feature?.geometry is Point)
     }
 
+    // Validates decoding a WKT string to a FeatureCollection using a source SRID.
     @Test
     func stringAsFeatureCollectionSourceSrid() async throws {
         let fc = pointData.asFeatureCollection(sourceSrid: 4326)
@@ -477,6 +511,7 @@ struct WKTTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates decoding a WKT string to a FeatureCollection using a source projection.
     @Test
     func stringAsFeatureCollectionSourceProjection() async throws {
         let fc = pointData.asFeatureCollection(sourceProjection: .epsg4326)

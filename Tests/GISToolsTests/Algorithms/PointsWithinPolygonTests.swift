@@ -4,6 +4,7 @@ import Testing
 
 struct PointsWithinPolygonTests {
 
+    // Tests filtering an array of coordinates to those that lie inside a polygon.
     @Test
     func coordinatesWithin() async throws {
         let polygon = try #require(Polygon([[
@@ -25,6 +26,7 @@ struct PointsWithinPolygonTests {
         #expect(!result.contains(Coordinate3D(latitude: 15.0, longitude: 5.0)))
     }
 
+    // Tests filtering an array of Point objects to those that lie inside a polygon.
     @Test
     func pointsWithin() async throws {
         let polygon = try #require(Polygon([[
@@ -43,6 +45,7 @@ struct PointsWithinPolygonTests {
         #expect(result[0].coordinate == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
+    // Tests filtering coordinates within a MultiPolygon, returning matches from both constituent polygons.
     @Test
     func pointsWithinMultiPolygon() async throws {
         let poly1 = try #require(Polygon([[
@@ -69,6 +72,7 @@ struct PointsWithinPolygonTests {
         #expect(result.count == 2)
     }
 
+    // Tests that an empty candidates array returns an empty result when filtering coordinates within a polygon.
     @Test
     func coordinatesWithinEmpty() async throws {
         let polygon = try #require(Polygon([[

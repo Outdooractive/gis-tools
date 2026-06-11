@@ -4,6 +4,7 @@ import Testing
 
 struct TWKBTests {
 
+    // Validates decoding a TWKB Point at the origin (0, 0).
     @Test
     func decodePoint() async throws {
         // TWKB Point at (0, 0) with precision 6:
@@ -21,6 +22,7 @@ struct TWKBTests {
         #expect(point.coordinate.longitude == 0.0)
     }
 
+    // Validates decoding a TWKB Point at non-zero coordinates.
     @Test
     func decodePointNonzero() async throws {
         // Point at (12, 34), precision 0 (raw degrees, scale=1):
@@ -37,6 +39,7 @@ struct TWKBTests {
         #expect(abs(point.coordinate.longitude - 12.0) < 0.0001)
     }
 
+    // Validates decoding a TWKB LineString with two points.
     @Test
     func decodeLineString() async throws {
         // LineString with 2 points: (0,0) → (1,2), precision 0
@@ -60,6 +63,7 @@ struct TWKBTests {
         #expect(abs(ls.coordinates[1].longitude - 1.0) < 0.0001)
     }
 
+    // Validates decoding a TWKB Polygon with one ring.
     @Test
     func decodePolygon() async throws {
         // Polygon with 1 ring, 4 points: (0,0)→(10,0)→(10,10)→(0,0), precision 1
@@ -95,6 +99,7 @@ struct TWKBTests {
         #expect(poly.outerRing?.coordinates.count == 5) // 4 points + closing
     }
 
+    // Validates decoding a TWKB MultiPoint with two points.
     @Test
     func decodeMultiPoint() async throws {
         // MultiPoint with 2 points: (0,0) and (1,2), precision 0
@@ -110,6 +115,7 @@ struct TWKBTests {
         #expect(result is MultiPoint)
     }
 
+    // Validates that decoding an empty TWKB data throws an error.
     @Test
     func decodeEmptyFails() async throws {
         #expect(throws: TWKBCoder.TWKBError.self) {
@@ -119,6 +125,7 @@ struct TWKBTests {
 
     // MARK: - sourceSrid decode
 
+    // Validates decoding TWKB data with a known source SRID.
     @Test
     func decodeSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -128,6 +135,7 @@ struct TWKBTests {
         #expect(result is Point)
     }
 
+    // Validates that an unknown source SRID causes a TWKB decoding error.
     @Test
     func decodeSourceSridUnknown() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -140,6 +148,7 @@ struct TWKBTests {
 
     // MARK: - GeoJsonGeometry convenience
 
+    // Validates creating a Point from TWKB data with a source SRID.
     @Test
     func geoJsonGeometryInitSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -149,6 +158,7 @@ struct TWKBTests {
         #expect(point?.coordinate.latitude == 0.0)
     }
 
+    // Validates creating a Point from TWKB data with a source projection.
     @Test
     func geoJsonGeometryInitSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -158,6 +168,7 @@ struct TWKBTests {
         #expect(point?.coordinate.latitude == 0.0)
     }
 
+    // Validates creating a Point from TWKB data using the default projection.
     @Test
     func geoJsonGeometryInitDefaultProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -167,12 +178,14 @@ struct TWKBTests {
         #expect(point?.coordinate.latitude == 0.0)
     }
 
+    // Validates that initializing a Point from bad TWKB data returns nil.
     @Test
     func geoJsonGeometryInitBadData() async throws {
         let data = Data([0xFF, 0xFF])
         #expect(Point(twkb: data) == nil)
     }
 
+    // Validates parsing a geometry from TWKB data with a source SRID.
     @Test
     func geoJsonGeometryParseSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -182,6 +195,7 @@ struct TWKBTests {
         #expect(geometry is Point)
     }
 
+    // Validates parsing a geometry from TWKB data with a source projection.
     @Test
     func geoJsonGeometryParseSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -191,6 +205,7 @@ struct TWKBTests {
         #expect(geometry is Point)
     }
 
+    // Validates that parsing bad TWKB data returns nil.
     @Test
     func geoJsonGeometryParseBadData() async throws {
         let data = Data([0xFF, 0xFF])
@@ -199,6 +214,7 @@ struct TWKBTests {
 
     // MARK: - Feature convenience
 
+    // Validates creating a Feature from TWKB data with a source SRID.
     @Test
     func featureInitSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -214,6 +230,7 @@ struct TWKBTests {
         #expect(feature?.properties["key"] as? String == "value")
     }
 
+    // Validates creating a Feature from TWKB data with a source projection.
     @Test
     func featureInitSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -227,6 +244,7 @@ struct TWKBTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates that creating a Feature from bad TWKB data returns nil.
     @Test
     func featureInitBadData() async throws {
         let data = Data([0xFF, 0xFF])
@@ -235,6 +253,7 @@ struct TWKBTests {
 
     // MARK: - FeatureCollection convenience
 
+    // Validates creating a FeatureCollection from TWKB data with a source SRID.
     @Test
     func featureCollectionInitSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -245,6 +264,7 @@ struct TWKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates creating a FeatureCollection from TWKB data with a source projection.
     @Test
     func featureCollectionInitSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -255,6 +275,7 @@ struct TWKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates that creating a FeatureCollection from bad TWKB data returns nil.
     @Test
     func featureCollectionInitBadData() async throws {
         let data = Data([0xFF, 0xFF])
@@ -263,6 +284,7 @@ struct TWKBTests {
 
     // MARK: - Data convenience
 
+    // Validates decoding TWKB Data to a geometry using a source SRID.
     @Test
     func dataAsGeoJsonGeometryFromTWKBSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -272,6 +294,7 @@ struct TWKBTests {
         #expect(geometry is Point)
     }
 
+    // Validates decoding TWKB Data to a geometry using a source projection.
     @Test
     func dataAsGeoJsonGeometryFromTWKBSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -281,12 +304,14 @@ struct TWKBTests {
         #expect(geometry is Point)
     }
 
+    // Validates that decoding bad TWKB Data to a geometry returns nil.
     @Test
     func dataAsGeoJsonGeometryFromTWKBBadData() async throws {
         let data = Data([0xFF, 0xFF])
         #expect(data.asGeoJsonGeometryFromTWKB(sourceProjection: .epsg4326) == nil)
     }
 
+    // Validates decoding TWKB Data to a Feature using a source SRID.
     @Test
     func dataAsFeatureFromTWKBSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -301,6 +326,7 @@ struct TWKBTests {
         #expect(feature?.properties["a"] as? Int == 1)
     }
 
+    // Validates decoding TWKB Data to a Feature using a source projection.
     @Test
     func dataAsFeatureFromTWKBSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -310,12 +336,14 @@ struct TWKBTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates that decoding bad TWKB Data to a Feature returns nil.
     @Test
     func dataAsFeatureFromTWKBBadData() async throws {
         let data = Data([0xFF, 0xFF])
         #expect(data.asFeatureFromTWKB(sourceProjection: .epsg4326) == nil)
     }
 
+    // Validates decoding TWKB Data to a FeatureCollection using a source SRID.
     @Test
     func dataAsFeatureCollectionFromTWKBSourceSrid() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -326,6 +354,7 @@ struct TWKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates decoding TWKB Data to a FeatureCollection using a source projection.
     @Test
     func dataAsFeatureCollectionFromTWKBSourceProjection() async throws {
         let bytes: [UInt8] = [0x61, 0x00, 0x00, 0x00]
@@ -336,6 +365,7 @@ struct TWKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates that decoding bad TWKB Data to a FeatureCollection returns nil.
     @Test
     func dataAsFeatureCollectionFromTWKBBadData() async throws {
         let data = Data([0xFF, 0xFF])

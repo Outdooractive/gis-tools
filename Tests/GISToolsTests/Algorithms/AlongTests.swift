@@ -3,6 +3,7 @@ import Testing
 
 struct AlongTests {
 
+    // Tests coordinateAlong(distance:) returns the correct coordinate at a given distance along a LineString.
     @Test
     func along() async throws {
         let lineString = try TestData.lineString(package: "Along", name: "AlongLineString1")

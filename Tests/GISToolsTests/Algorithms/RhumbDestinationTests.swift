@@ -3,6 +3,7 @@ import Testing
 
 struct RhumbDestinationTests {
 
+    // Tests rhumb line destination calculation for north, south, and east bearings at various distances.
     @Test
     func distance() async throws {
         let coordinate1 = Coordinate3D(latitude: 38, longitude: -75)
@@ -27,6 +28,7 @@ struct RhumbDestinationTests {
         #expect(other4 == result4)
     }
 
+    // Tests rhumb line destination calculation near the antimeridian maintains correct longitude wrapping.
     @Test
     func meridian() async throws {
         let coordinate1 = Coordinate3D(latitude: -16.5, longitude: -539.5)
@@ -46,6 +48,7 @@ struct RhumbDestinationTests {
         #expect(other3 == result3)
     }
 
+    // Tests that a zero-distance rhumb destination returns the original coordinate.
     @Test
     func allowsZeroDistance() async throws {
         let coordinate = Coordinate3D(latitude: 38, longitude: -75)
@@ -54,6 +57,7 @@ struct RhumbDestinationTests {
         #expect(other == coordinate)
     }
 
+    // Tests that a negative-distance rhumb destination calculates correctly (travels in the opposite direction).
     @Test
     func allowsNegativeDistance() async throws {
         let coordinate = Coordinate3D(latitude: -54.0, longitude: 12.0)

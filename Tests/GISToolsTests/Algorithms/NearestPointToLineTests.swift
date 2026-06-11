@@ -4,6 +4,7 @@ import Testing
 
 struct NearestPointToLineTests {
 
+    // Verifies that the nearest coordinate to a line is selected from a list of candidates.
     @Test
     func nearestCoordinateOutOf() async throws {
         let ls = try #require(LineString([
@@ -20,6 +21,7 @@ struct NearestPointToLineTests {
         #expect(result.coordinate == Coordinate3D(latitude: 0.0, longitude: 1.0))
     }
 
+    // Verifies that the nearest point with distance to a line is selected from a list of candidate points.
     @Test
     func nearestPointAndDistance() async throws {
         let ls = try #require(LineString([
@@ -34,6 +36,7 @@ struct NearestPointToLineTests {
         #expect(result.point.coordinate == Coordinate3D(latitude: 0.0, longitude: 2.0))
     }
 
+    // Verifies that an empty candidate list returns nil when querying the nearest coordinate.
     @Test
     func nearestCoordinateOutOfEmpty() async throws {
         let ls = try #require(LineString([

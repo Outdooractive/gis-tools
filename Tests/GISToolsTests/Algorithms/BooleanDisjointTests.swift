@@ -3,6 +3,7 @@ import Testing
 
 struct BooleanDisjointTests {
 
+    // Tests that spatially separated geometries are correctly identified as disjoint.
     @Test
     func isTrue() async throws {
         let point1 = try TestData.point(package: "BooleanDisjoint", name: "Point1")
@@ -45,6 +46,7 @@ struct BooleanDisjointTests {
         #expect(multiPolygon1.isDisjoint(with: point2))
     }
 
+    // Tests that intersecting geometries are correctly identified as not disjoint.
     @Test
     func isFalse() async throws {
         let point3 = try TestData.point(package: "BooleanDisjoint", name: "Point3")

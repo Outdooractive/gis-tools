@@ -4,6 +4,7 @@ import Testing
 
 struct PointOnFeatureTests {
 
+    // Verifies that a point feature returns its own coordinate as the point on feature.
     @Test
     func pointOnPoint() async throws {
         let p = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -11,6 +12,7 @@ struct PointOnFeatureTests {
         #expect(result == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
+    // Verifies that a line string returns its centroid as the point on feature.
     @Test
     func pointOnLineString() async throws {
         let ls = try #require(LineString([
@@ -22,6 +24,7 @@ struct PointOnFeatureTests {
         #expect(result == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
+    // Verifies that a polygon returns a point on its surface as the point on feature.
     @Test
     func pointOnPolygon() async throws {
         let polygon = try #require(Polygon([[
@@ -37,6 +40,7 @@ struct PointOnFeatureTests {
         #expect(result.coordinate.latitude <= 10.0)
     }
 
+    // Verifies that a multi-polygon returns a point inside one of its constituent polygons.
     @Test
     func pointOnMultiPolygon() async throws {
         let poly1 = try #require(Polygon([[
@@ -60,6 +64,7 @@ struct PointOnFeatureTests {
         #expect(result.coordinate.latitude <= 15.0)
     }
 
+    // Verifies that a generic feature wrapping a point returns the point's coordinate as the point on feature.
     @Test
     func pointOnFeature() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))

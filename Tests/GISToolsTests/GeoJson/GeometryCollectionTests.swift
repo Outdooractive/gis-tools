@@ -21,6 +21,7 @@ struct GeometryCollectionTests {
     }
     """
 
+    // Validates loading a GeometryCollection from JSON and accessing its geometries and foreign members.
     @Test
     func loadJson() async throws {
         let geometryCollection = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
@@ -32,6 +33,7 @@ struct GeometryCollectionTests {
         #expect(geometryCollection[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a GeometryCollection from geometries and verifying its JSON string output.
     @Test
     func createJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -48,6 +50,7 @@ struct GeometryCollectionTests {
         #expect(string.contains("\"coordinates\":[[101,0],[102,1]]"))
     }
 
+    // Validates that a GeometryCollection encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let geometryCollection = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson))
@@ -58,6 +61,7 @@ struct GeometryCollectionTests {
         #expect(try encoder.encode(geometryCollection) == geometryCollection.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a GeometryCollection round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let geometryCollectionData = try #require(GeometryCollection(jsonString: GeometryCollectionTests.geometryCollectionJson)?.asJsonData(prettyPrinted: true))

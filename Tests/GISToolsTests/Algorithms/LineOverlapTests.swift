@@ -3,6 +3,7 @@ import Testing
 
 struct LineOverlapTests {
 
+    // Tests overlapping segments detection between two line strings (case 1).
     @Test
     func simple1() async throws {
         let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap1_1")
@@ -15,6 +16,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
+    // Tests overlapping segments detection between two line strings (case 2).
     @Test
     func simple2() async throws {
         let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap2_1")
@@ -27,6 +29,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
+    // Tests overlapping segments detection between two line strings (case 3).
     @Test
     func simple3() async throws {
         let lineString1 = try TestData.lineString(package: "LineOverlap", name: "LineOverlap3_1")
@@ -39,6 +42,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments[1].second == Coordinate3D(latitude: -35.0, longitude: 145.0))
     }
 
+    // Tests overlapping segments detection between two polygons.
     @Test
     func polygons() async throws {
         let polygon1 = try TestData.polygon(package: "LineOverlap", name: "Polygon1_1")
@@ -54,6 +58,7 @@ struct LineOverlapTests {
         #expect(Array(overlappingSegments[3...]) == secondSegments)
     }
 
+    // Tests that non-overlapping line strings return no overlapping segments.
     @Test
     func noOverlap() async throws {
         let lineString1 = try TestData.lineString(package: "LineOverlap", name: "NoOverlap1")
@@ -63,6 +68,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments.count == 0)
     }
 
+    // Tests partial overlap detection between two polygons (case 1).
     @Test
     func partlyOverlapping1() async throws {
         let polygon1 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping1_1")
@@ -78,6 +84,7 @@ struct LineOverlapTests {
         #expect(Array(overlappingSegments[2...]) == secondSegments)
     }
 
+    // Tests partial overlap detection between two polygons with a tolerance value (case 2).
     @Test
     func partlyOverlapping2() async throws {
         let polygon1 = try TestData.polygon(package: "LineOverlap", name: "PartlyOverlapping2_1")
@@ -89,6 +96,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments == result.lineSegments)
     }
 
+    // Tests that overlapping segments detection is symmetric regardless of argument order.
     @Test
     func partlyOverlapping3() async throws {
         let lineString1 = try #require(LineString([

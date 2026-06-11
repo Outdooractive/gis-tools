@@ -7,6 +7,7 @@ import Testing
 
 struct RTreeTests {
 
+    // Verifies that an R-tree initialized with no nodes returns an empty search result.
     @Test
     func empty() async throws {
         let nodes: [Point] = []
@@ -17,6 +18,7 @@ struct RTreeTests {
 
     // MARK: -
 
+    // Verifies R-tree bounding-box search with simple points in EPSG:4326 for Hilbert, latitude, and unsorted sort options.
     @Test
     func simplePoints4326() async throws {
         var nodes: [Point] = []
@@ -39,6 +41,7 @@ struct RTreeTests {
         _testSimplePoints(rTreeAsInput)
     }
 
+    // Verifies R-tree bounding-box search with simple points in EPSG:3857 for Hilbert, latitude, and unsorted sort options.
     @Test
     func simplePoints3857() async throws {
         var nodes: [Point] = []
@@ -88,6 +91,7 @@ struct RTreeTests {
 
     // MARK: -
 
+    // Verifies R-tree construction and search in EPSG:4326 across randomized node sizes and point counts.
     @Test
     func rTree4326() async throws {
         100.times {
@@ -113,6 +117,7 @@ struct RTreeTests {
         }
     }
 
+    // Verifies R-tree construction and search in EPSG:3857 across randomized node sizes and point counts.
     @Test
     func rTree3857() async throws {
         100.times {
@@ -164,6 +169,7 @@ struct RTreeTests {
 
     // MARK: -
 
+    // Verifies around-coordinate search in EPSG:4326 matches serial search results.
     @Test
     func aroundSearch4326() async throws {
         100.times {
@@ -183,6 +189,7 @@ struct RTreeTests {
         }
     }
 
+    // Verifies around-coordinate search in EPSG:3857 matches serial search results.
     @Test
     func aroundSearch3857() async throws {
         100.times {
@@ -336,6 +343,7 @@ struct RTreeBenchmarks {
         String(format: "%.3f", value)
     }
 
+    // Measures R-tree build performance using Hilbert sort.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceBuildTreeHilbert() {
         Self.measure("BuildTree/hilbert") {
@@ -343,6 +351,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures R-tree build performance using latitude sort.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceBuildTreeLatitude() {
         Self.measure("BuildTree/byLatitude") {
@@ -350,6 +359,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures R-tree build performance using longitude sort.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceBuildTreeLongitude() {
         Self.measure("BuildTree/byLongitude") {
@@ -357,6 +367,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures R-tree build performance with unsorted input.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceBuildTreeUnsorted() {
         Self.measure("BuildTree/unsorted") {
@@ -364,6 +375,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures serial bounding-box query performance on an unsorted R-tree.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceQuerySerial() {
         let rTree = RTree(Self.performanceInput, nodeSize: 16, sortOption: .unsorted)
@@ -372,6 +384,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures Hilbert-sorted R-tree bounding-box query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceQueryHilbert() {
         let rTree = RTree(Self.performanceInput, nodeSize: 16, sortOption: .hilbert)
@@ -380,6 +393,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures latitude-sorted R-tree bounding-box query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceQueryLatitude() {
         let rTree = RTree(Self.performanceInput, nodeSize: 16, sortOption: .byLatitude)
@@ -388,6 +402,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures unsorted R-tree bounding-box query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceQueryUnsorted() {
         let rTree = RTree(Self.performanceInput, nodeSize: 16, sortOption: .unsorted)
@@ -396,6 +411,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures serial around-coordinate query performance on an unsorted R-tree.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceAroundSearchSerial() {
         let maximumDistance = 100_000.0
@@ -405,6 +421,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures Hilbert-sorted R-tree around-coordinate query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceAroundSearchHilbert() {
         let maximumDistance = 100_000.0
@@ -414,6 +431,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures latitude-sorted R-tree around-coordinate query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceAroundSearchLatitude() {
         let maximumDistance = 100_000.0
@@ -423,6 +441,7 @@ struct RTreeBenchmarks {
         }
     }
 
+    // Measures unsorted R-tree around-coordinate query performance.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceAroundSearchUnsorted() {
         let maximumDistance = 100_000.0

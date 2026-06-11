@@ -4,6 +4,7 @@ import Testing
 
 struct GreatCircleTests {
 
+    // Validates a great circle line between two points in the same hemisphere produces a LineString with 100 coordinates.
     @Test
     func greatCircleSameHemisphere() async throws {
         let start = Coordinate3D(latitude: 48.0, longitude: -122.0)
@@ -18,6 +19,7 @@ struct GreatCircleTests {
         #expect(ls.coordinates.last == end)
     }
 
+    // Validates a great circle crossing the antimeridian produces a MultiLineString.
     @Test
     func greatCircleCrossingAntimeridian() async throws {
         let start = Coordinate3D(latitude: 45.0, longitude: 170.0)
@@ -28,6 +30,7 @@ struct GreatCircleTests {
         #expect(result is MultiLineString)
     }
 
+    // Validates a great circle from a point to itself returns a LineString with all identical coordinates.
     @Test
     func greatCircleSamePoint() async throws {
         let point = Coordinate3D(latitude: 40.0, longitude: -73.0)
@@ -41,6 +44,7 @@ struct GreatCircleTests {
         }
     }
 
+    // Validates a great circle with a custom number of waypoints produces the expected coordinate count.
     @Test
     func greatCircleCustomNpoints() async throws {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)
@@ -53,6 +57,7 @@ struct GreatCircleTests {
         #expect(ls.coordinates.count == 10)
     }
 
+    // Validates a great circle along the equator keeps all points near the equator.
     @Test
     func greatCircleEquator() async throws {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)
@@ -68,6 +73,7 @@ struct GreatCircleTests {
         }
     }
 
+    // Validates a great circle from north to south along the prime meridian keeps longitude near zero.
     @Test
     func greatCircleNorthSouth() async throws {
         let start = Coordinate3D(latitude: 80.0, longitude: 0.0)
@@ -83,6 +89,7 @@ struct GreatCircleTests {
         }
     }
 
+    // Validates requesting fewer than 2 waypoints falls back to a 2-point LineString.
     @Test
     func greatCircleMinPoints() async throws {
         let start = Coordinate3D(latitude: 0.0, longitude: 0.0)

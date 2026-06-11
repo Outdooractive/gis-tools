@@ -3,6 +3,7 @@ import Testing
 
 struct TileCoverTests {
 
+    // Validates tile cover calculation for a single point at zoom level 1.
     @Test
     func tileCover1() async throws {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 90.0))
@@ -10,6 +11,7 @@ struct TileCoverTests {
         #expect(tileCover == [MapTile(x: 1, y: 0, z: 1)])
     }
 
+    // Validates tile cover calculation for a line string at zoom level 2.
     @Test
     func tileCover2() async throws {
         let lineString = try #require(LineString([

@@ -3,6 +3,7 @@ import Testing
 
 struct TransformTranslateTests {
 
+    // Validates translating a point east and west using rhumb distance.
     @Test
     func translate() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 0.0))
@@ -17,6 +18,7 @@ struct TransformTranslateTests {
         #expect(translated2 == result2)
     }
 
+    // Validates translating a point east with an altitude adjustment.
     @Test
     func translateAltitude() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 500.0))

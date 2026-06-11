@@ -3,6 +3,7 @@ import Testing
 
 struct LineArcTests {
 
+    // Tests that a circular arc generated from a point with radius and bearings matches the expected coordinates.
     @Test
     func lineArc() async throws {
         let point = Point(Coordinate3D(latitude: 44.495, longitude: 11.343))

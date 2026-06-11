@@ -3,6 +3,7 @@ import Testing
 
 struct LineSegmentsTests {
 
+    // Tests that a line string is correctly decomposed into its constituent line segments with proper indices.
     @Test
     func lineSegments() async throws {
         let coordinates = [

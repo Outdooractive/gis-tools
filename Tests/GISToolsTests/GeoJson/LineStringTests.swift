@@ -15,6 +15,7 @@ struct LineStringTests {
     }
     """
 
+    // Validates loading a LineString from JSON and verifying its coordinates and foreign members.
     @Test
     func loadJson() async throws {
         let lineString = try #require(LineString(jsonString: LineStringTests.lineStringJson))
@@ -29,6 +30,7 @@ struct LineStringTests {
         #expect(lineString[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a LineString from coordinates and verifying its JSON string output.
     @Test
     func createJson() async throws {
         let lineString = try #require(LineString([
@@ -42,6 +44,7 @@ struct LineStringTests {
         #expect(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
+    // Validates creating a LineString from an array of LineSegments.
     @Test
     func createLineString() async throws {
         let lineSegments = [
@@ -64,6 +67,7 @@ struct LineStringTests {
         #expect(lineString.coordinates == expected)
     }
 
+    // Validates that a LineString encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let lineString = try #require(LineString(jsonString: LineStringTests.lineStringJson))
@@ -74,6 +78,7 @@ struct LineStringTests {
         #expect(try encoder.encode(lineString) == lineString.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a LineString round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let lineStringData = try #require(LineString(jsonString: LineStringTests.lineStringJson)?.asJsonData(prettyPrinted: true))

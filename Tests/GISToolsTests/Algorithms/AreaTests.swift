@@ -3,6 +3,7 @@ import Testing
 
 struct AreaTests {
 
+    // Tests polygon area calculation for a simple polygon without holes.
     @Test
     func areaWithNoHoles() async throws {
         let polygon = try #require(Polygon([[
@@ -15,6 +16,7 @@ struct AreaTests {
         #expect(abs(polygon.area - 10000.0) < 0.1)
     }
 
+    // Tests polygon area calculation for a polygon with a single hole.
     @Test
     func areaWithSingleHole() async throws {
         let polygon = try #require(Polygon([[
@@ -34,6 +36,7 @@ struct AreaTests {
     }
 
     // Two overlapping holes: their union area is less than the sum of individuals.
+    // Tests polygon area calculation for a polygon with overlapping holes (hole union area is subtracted).
     @Test
     func areaWithOverlappingHoles() async throws {
         let outerRing = try #require(Ring([

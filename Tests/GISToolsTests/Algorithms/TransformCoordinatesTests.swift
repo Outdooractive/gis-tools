@@ -3,6 +3,7 @@ import Testing
 
 struct TransformCoordinatesTests {
 
+    // Validates coordinate transformation across all geometry types (Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, GeometryCollection, Feature, FeatureCollection).
     @Test
     func transformCoordinates() async throws {
         let transformer: (Coordinate3D) -> Coordinate3D = { coordinate in

@@ -3,6 +3,7 @@ import Testing
 
 struct MapTileTests {
 
+    // Verifies MapTile initialization from a coordinate at various zoom levels.
     @Test
     func tileFromCoordinate() async throws {
         #expect(MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: 0.0), atZoom: 0) == MapTile(x: 0, y: 0, z: 0))
@@ -14,6 +15,7 @@ struct MapTileTests {
         #expect(MapTile(coordinate: Coordinate3D(latitude: -33.8566, longitude: 151.215), atZoom: 14) == MapTile(x: 15073, y: 9831, z: 14))
     }
 
+    // Verifies MapTile initialization from bounding boxes with optional maxZoom clamping.
     @Test
     func tileFromBoundingBox() async throws {
         let boundingBox1 = BoundingBox(
@@ -34,6 +36,7 @@ struct MapTileTests {
         #expect(MapTile(boundingBox: boundingBox3, maxZoom: 0) == MapTile(x: 0, y: 0, z: 0))
     }
 
+    // Verifies that centerCoordinate() returns the correct geographic center for various tiles.
     @Test
     func center() async throws {
         let coordinate1 = MapTile(x: 138513, y: 91601, z: 18).centerCoordinate()
@@ -54,6 +57,7 @@ struct MapTileTests {
         #expect(abs(coordinate4.longitude - -90.0) < 0.00001)
     }
 
+    // Verifies MapTile from a single coordinate produces the expected tile at every zoom level 0 through 18.
     @Test
     func tileFromHQCoordinate() async throws {
         let coordinate = Coordinate3D(latitude: 47.56, longitude: 10.22)
@@ -79,6 +83,7 @@ struct MapTileTests {
         #expect(MapTile(coordinate: coordinate, atZoom: 18) == MapTile(x: 138513, y: 91601, z: 18))
     }
 
+    // Verifies that parent returns the tile at the previous zoom level (or itself at zoom 0).
     @Test
     func parent() async throws {
         #expect(MapTile(x: 0, y: 0, z: 0).parent == MapTile(x: 0, y: 0, z: 0))
@@ -87,6 +92,7 @@ struct MapTileTests {
         #expect(MapTile(x: 138513, y: 91601, z: 18).parent == MapTile(x: 69256, y: 45800, z: 17))
     }
 
+    // Verifies that child returns the north-west quadrant tile at the next zoom level.
     @Test
     func child() async throws {
         #expect(MapTile(x: 0, y: 0, z: 0).child == MapTile(x: 0, y: 0, z: 1))
@@ -95,6 +101,7 @@ struct MapTileTests {
         #expect(MapTile(x: 69256, y: 45800, z: 17).child == MapTile(x: 138512, y: 91600, z: 18))
     }
 
+    // Verifies that children returns all four quadrant tiles at the next zoom level.
     @Test
     func children() async throws {
         #expect(MapTile(x: 0, y: 0, z: 0).children == [
@@ -111,6 +118,7 @@ struct MapTileTests {
         ])
     }
 
+    // Verifies MapTile bounding boxes in EPSG:3857 projection at various zoom levels.
     @Test
     func epsg3857TileBounds() async throws {
         let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg3857)
@@ -144,6 +152,7 @@ struct MapTileTests {
         #expect(abs(z32Bounds.northEast.latitude - 6711666.729793) < 0.00001)
     }
 
+    // Verifies MapTile bounding boxes in EPSG:4326 projection at various zoom levels.
     @Test
     func epsg4236TileBounds() async throws {
         let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox()
@@ -183,6 +192,7 @@ struct MapTileTests {
         #expect(abs(z32Bounds.northEast.latitude - 51.508094) < 0.00001)
     }
 
+    // Verifies the meters-per-pixel value at zoom level 0 matches the expected Web Mercator constant.
     @Test
     func metersPerPixelAtEquator() async throws {
         let worldTile = MapTile(x: 0, y: 0, z: 0)
@@ -191,6 +201,7 @@ struct MapTileTests {
         #expect(abs(worldTile.metersPerPixel - mppAtZoom0) < 0.00001)
     }
 
+    // Verifies MapTile initialization at extreme coordinate values (south pole, date line).
     @Test
     func edgeCases() async throws {
         let coordinate = Coordinate3D(latitude: -90.0, longitude: -180.0)
@@ -199,6 +210,7 @@ struct MapTileTests {
         #expect(tile == MapTile(x: 0, y: (1 << 14) - 1, z: 14))
     }
 
+    // Verifies quadkey generation matches expected values for various tiles.
     @Test
     func quadkey() async throws {
         let tiles = [
@@ -219,6 +231,7 @@ struct MapTileTests {
         }
     }
 
+    // Verifies MapTile initialization from quadkey strings, including rejection of invalid keys.
     @Test
     func quadkeyInit() async throws {
         let quadkeys = [
@@ -242,6 +255,7 @@ struct MapTileTests {
         #expect(MapTile(quadkey: "021X") == nil)
     }
 
+    // Verifies MapTile initialization from "z/x/y" string format.
     @Test
     func initFromString() async throws {
         #expect(MapTile(string: "3/1/2") == MapTile(x: 1, y: 2, z: 3))

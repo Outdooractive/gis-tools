@@ -3,6 +3,7 @@ import Testing
 
 struct ReverseTests {
 
+    // Tests reversing the coordinate order of a LineString and MultiLineString.
     @Test
     func lineString() async throws {
         let lineString = try #require(LineString([
@@ -39,6 +40,7 @@ struct ReverseTests {
         #expect(multiLineStringReversed.lineStrings[1].coordinates.map(\.latitude) == [5.0, 4.0, 3.0, 2.0, 1.0, 0.0])
     }
 
+    // Tests reversing the geometry order within a FeatureCollection and the coordinate order of each line geometry.
     @Test
     func featureCollection() async throws {
         let featureCollection = FeatureCollection([

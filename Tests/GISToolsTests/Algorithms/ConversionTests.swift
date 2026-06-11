@@ -3,6 +3,7 @@ import Testing
 
 struct ConversionTests {
 
+    // Validates meters per pixel at the equator halves correctly at each zoom level.
     @Test
     func metersPerPixelAtEquator() async throws {
         var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
@@ -15,6 +16,7 @@ struct ConversionTests {
         }
     }
 
+    // Validates meters per pixel at 45 degrees latitude halves correctly at each zoom level.
     @Test
     func metersPerPixelAt45() async throws {
         var mppAtZoomLevels: [Double] = Array(repeating: 0.0, count: 21)
@@ -27,6 +29,7 @@ struct ConversionTests {
         }
     }
 
+    // Validates that meter-to-degree conversion at the equator matches the degrees(fromMeters:) method.
     @Test
     func metersAtLatitude() async throws {
         let meters = 10000.0
@@ -38,6 +41,7 @@ struct ConversionTests {
 
     // MARK: - unit factors
 
+    // Validates the factor returned for each supported unit type.
     @Test
     func factorForUnit() async throws {
         #expect(GISTool.factor(for: .meters) == GISTool.earthRadius)
@@ -47,6 +51,7 @@ struct ConversionTests {
         #expect(GISTool.factor(for: .acres) == nil)
     }
 
+    // Validates the units factor returned for each supported unit type.
     @Test
     func unitsFactorForUnit() async throws {
         #expect(GISTool.unitsFactor(for: .meters) == 1.0)
@@ -55,6 +60,7 @@ struct ConversionTests {
         #expect(GISTool.unitsFactor(for: .acres) == nil)
     }
 
+    // Validates the area factor returned for each supported unit type.
     @Test
     func areaFactorForUnit() async throws {
         #expect(GISTool.areaFactor(for: .meters) == 1.0)
@@ -65,6 +71,7 @@ struct ConversionTests {
 
     // MARK: - length conversion
 
+    // Validates length conversion between meters, kilometers, and miles, and rejects negative values.
     @Test
     func convertLength() async throws {
         // meters → kilometers
@@ -79,6 +86,7 @@ struct ConversionTests {
         #expect(GISTool.convert(length: -1.0, from: .meters, to: .kilometers) == nil)
     }
 
+    // Validates area conversion between square meters, square kilometers, and acres, and rejects negative values.
     @Test
     func convertArea() async throws {
         // sq meters → sq kilometers
@@ -95,6 +103,7 @@ struct ConversionTests {
 
     // MARK: - convertToMeters
 
+    // Validates conversion of various distance units to meters.
     @Test
     func convertToMeters() async throws {
         #expect(GISTool.convertToMeters(5.0, .kilometers) == 5000.0)
@@ -108,6 +117,7 @@ struct ConversionTests {
 
     // MARK: - pixel to coordinate
 
+    // Validates round-trip conversion from pixel coordinates to geographic coordinates at zoom level 0.
     @Test
     func coordinateFromPixel() async throws {
         // Validate round-trip: pixel → coordinate → pixel (roughly)
@@ -118,6 +128,7 @@ struct ConversionTests {
 
     // MARK: - meters to degrees
 
+    // Validates that 111,325 meters at the equator converts to approximately 1 degree of latitude and longitude.
     @Test
     func degreesFromMeters() async throws {
         let result = GISTool.degrees(fromMeters: 111_325.0, atLatitude: 0.0)
@@ -125,6 +136,7 @@ struct ConversionTests {
         #expect(abs(result.longitudeDegrees - 1.0) < 0.01)
     }
 
+    // Validates longitude degrees expand near the pole due to meridian convergence.
     @Test
     func degreesFromMetersAtPole() async throws {
         let result = GISTool.degrees(fromMeters: 111_325.0, atLatitude: 85.0)
@@ -133,6 +145,7 @@ struct ConversionTests {
         #expect(result.longitudeDegrees > 5.0) // much larger than latitude
     }
 
+    // Validates the Coordinate3D instance method for converting meters to degrees at the origin.
     @Test
     func coordinateDegreesFromMeters() async throws {
         let coord = Coordinate3D(latitude: 0.0, longitude: 0.0)

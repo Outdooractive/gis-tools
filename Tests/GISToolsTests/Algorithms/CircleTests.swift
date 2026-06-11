@@ -3,6 +3,7 @@ import Testing
 
 struct CircleTests {
 
+    // Validates that `point.circle(radius:)` generates a polygon approximating a circle within tolerance.
     @Test
     func circle() async throws {
         let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))

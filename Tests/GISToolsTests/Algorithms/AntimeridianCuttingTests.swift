@@ -6,6 +6,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - LineString
 
+    // Tests that a LineString not crossing the antimeridian is detected and returned unchanged.
     @Test
     func lineStringNoCrossing() async throws {
         let ls = try #require(LineString([
@@ -19,6 +20,7 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[0].geometry is LineString)
     }
 
+    // Tests antimeridian cutting of a LineString per RFC 7946 §3.1.9.
     @Test
     func lineStringCrossingRFCExample() async throws {
         // RFC 7946 §3.1.9: line from 45N,170E to 45N,170W
@@ -42,6 +44,7 @@ struct AntimeridianCuttingTests {
         #expect(part2.coordinates[1] == Coordinate3D(latitude: 45.0, longitude: -170.0))
     }
 
+    // Tests antimeridian cutting of a LineString with latitude interpolation at the crossing point.
     @Test
     func lineStringCrossingWithLatitude() async throws {
         let ls = try #require(LineString([
@@ -64,6 +67,7 @@ struct AntimeridianCuttingTests {
         #expect(part2.coordinates[1] == Coordinate3D(latitude: 50.0, longitude: -150.0))
     }
 
+    // Tests antimeridian cutting of a LineString that crosses the antimeridian multiple times.
     @Test
     func lineStringMultipleCrossings() async throws {
         let ls = try #require(LineString([
@@ -80,6 +84,7 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[2].geometry is LineString)
     }
 
+    // Tests antimeridian cutting of a LineString crossing from west to east.
     @Test
     func lineStringReverseCrossing() async throws {
         let ls = try #require(LineString([
@@ -100,6 +105,7 @@ struct AntimeridianCuttingTests {
         #expect(part2.coordinates[1] == Coordinate3D(latitude: 45.0, longitude: 170.0))
     }
 
+    // Tests that a single-point LineString does not cross the antimeridian.
     @Test
     func lineStringSinglePoint() async throws {
         let ls = LineString()
@@ -112,6 +118,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - Polygon
 
+    // Tests that a Polygon not crossing the antimeridian is detected and returned unchanged.
     @Test
     func polygonNoCrossing() async throws {
         let polygon = try #require(Polygon([[
@@ -128,6 +135,7 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[0].geometry is Polygon)
     }
 
+    // Tests antimeridian cutting of a Polygon spanning the antimeridian.
     @Test
     func polygonCrossingRFCExample() async throws {
         let polygon = try #require(Polygon([[
@@ -146,6 +154,7 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[1].geometry is Polygon)
     }
 
+    // Tests that antimeridian-cut Polygon rings remain properly closed (first equals last coordinate).
     @Test
     func polygonCrossingClosedRings() async throws {
         let polygon = try #require(Polygon([[
@@ -170,6 +179,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - MultiLineString
 
+    // Tests antimeridian cutting of a MultiLineString with both crossing and non-crossing segments.
     @Test
     func multiLineStringCutting() async throws {
         let mls = try #require(MultiLineString([
@@ -193,6 +203,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - MultiPolygon
 
+    // Tests antimeridian cutting of a MultiPolygon with both crossing and non-crossing polygons.
     @Test
     func multiPolygonCutting() async throws {
         let crossingPoly = try #require(Polygon([[
@@ -222,6 +233,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - Feature
 
+    // Tests that antimeridian cutting preserves feature id and properties on the first part.
     @Test
     func featureCutting() async throws {
         let ls = try #require(LineString([
@@ -248,6 +260,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - FeatureCollection
 
+    // Tests antimeridian cutting of a FeatureCollection containing both crossing and non-crossing features.
     @Test
     func featureCollectionCutting() async throws {
         let ls = try #require(LineString([
@@ -274,6 +287,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - GeometryCollection
 
+    // Tests antimeridian cutting of a GeometryCollection with mixed geometry types.
     @Test
     func geometryCollectionCutting() async throws {
         let ls = try #require(LineString([
@@ -293,6 +307,7 @@ struct AntimeridianCuttingTests {
 
     // MARK: - Point (unchanged)
 
+    // Tests that a Point is returned unchanged by antimeridian cutting.
     @Test
     func pointCutting() async throws {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 170.0))

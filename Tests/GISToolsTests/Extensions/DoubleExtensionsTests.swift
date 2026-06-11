@@ -3,6 +3,7 @@ import Testing
 
 struct DoubleExtensionsTests {
 
+    // Verifies Double.rounded(precision:) produces correct rounding at precisions 0 through 6.
     @Test
     func rounding() async throws {
         let number1 = 123.45678987654
@@ -24,12 +25,14 @@ struct DoubleExtensionsTests {
         #expect(number2.rounded(precision: 6) == 9.876543)
     }
 
+    // Verifies that a negative precision argument leaves the number unchanged.
     @Test
     func roundingInvalidPrecision() async throws {
         let number = 123.456
         #expect(number.rounded(precision: -5) == number)
     }
 
+    // Verifies GISTool.convertToMeters for all supported length units with positive and negative values.
     @Test
     func conversions() async throws {
         // 1 unit
