@@ -60,6 +60,23 @@ enum Union {
         }
     }
 
+    /// Wraps an `Edge` with its array index for RTree search results.
+    private struct IndexedEdge: BoundingBoxRepresentable {
+        let edge: Edge
+        let index: Int
+        var boundingBox: BoundingBox?
+
+        var projection: Projection { edge.projection }
+
+        func calculateBoundingBox() -> BoundingBox? {
+            edge.calculateBoundingBox()
+        }
+
+        func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+            edge.boundingBox?.intersects(otherBoundingBox) ?? true
+        }
+    }
+
     private struct SplitPoint {
         let coordinate: Coordinate3D
         let edgeIndex: Int
@@ -146,15 +163,20 @@ enum Union {
         var result: [SplitPoint] = []
         let splitEps = 1.0e-10
 
-        for i in 0..<edges.count {
-            for j in (i + 1)..<edges.count {
-                if edges[i].polygonIndex == edges[j].polygonIndex {
-                    continue
-                }
+        let indexedEdges = edges.enumerated().map { (i, e) in
+            IndexedEdge(edge: e, index: i, boundingBox: e.boundingBox)
+        }
+        let tree = RTree(indexedEdges)
 
-                guard let bbi = edges[i].boundingBox,
-                      let bbj = edges[j].boundingBox,
-                      bbi.intersects(bbj) else { continue }
+        for i in 0..<edges.count {
+            guard let bbI = edges[i].boundingBox else { continue }
+
+            let candidates = tree.search(inBoundingBox: bbI)
+
+            for candidate in candidates {
+                let j = candidate.index
+                guard j > i else { continue }
+                guard edges[i].polygonIndex != edges[j].polygonIndex else { continue }
 
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
