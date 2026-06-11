@@ -13,6 +13,7 @@ struct LineChunkTests {
         Coordinate3D(latitude: 40.15578608609647, longitude: -85.77987670898438),
     ])!
 
+    // Tests that chunking a line string into short segments produces the expected number and positions of chunks.
     @Test
     func lineChunkShort() async throws {
         let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(5, .miles)).lineStrings
@@ -30,6 +31,7 @@ struct LineChunkTests {
         #expect(abs(some.coordinates[2].longitude - -85.978314) < 0.000001)
     }
 
+    // Tests that chunking a line string with segments longer than the line returns a single chunk equal to the original.
     @Test
     func lineChunkLong() async throws {
         let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(50, .miles)).lineStrings
@@ -37,6 +39,7 @@ struct LineChunkTests {
         #expect(chunks[0] == lineString)
     }
 
+    // Tests that dropping intermediate coordinates during chunking produces simplified chunks with fewer vertices.
     @Test
     func lineChunkDropIntermediates() async throws {
         let chunks = lineString.chunked(segmentLength: lineString.length / 2).lineStrings
@@ -50,6 +53,7 @@ struct LineChunkTests {
         #expect(chunksSimplified[1].coordinates.count == 2)
     }
 
+    // Tests that evenly dividing a line produces coordinates at consistent intervals matching the segment length.
     @Test
     func evenlyDivided() async throws {
         let a = Coordinate3D.zero

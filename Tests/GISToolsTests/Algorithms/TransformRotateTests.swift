@@ -3,6 +3,7 @@ import Testing
 
 struct TransformRotateTests {
 
+    // Validates rotating a point 90 degrees around the origin.
     @Test
     func rotate() async throws {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 0.0))

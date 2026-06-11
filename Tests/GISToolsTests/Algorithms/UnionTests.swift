@@ -72,7 +72,9 @@ struct UnionTests {
 
     // MARK: - Overlapping rectangles (L-shape union)
 
-    @Test func overlappingRectangles() async throws {
+    // Tests union of two overlapping rectangle polygons.
+    @Test
+    func overlappingRectangles() async throws {
         let p1 = try loadInput("OverlappingRectanglesInput1")
         let p2 = try loadInput("OverlappingRectanglesInput2")
         let exp = try loadExpected("OverlappingRectanglesResult")
@@ -80,7 +82,9 @@ struct UnionTests {
         checkGeometric(result, exp)
     }
 
-    @Test func overlappingRectanglesViaMultiPolygon() async throws {
+    // Tests union of a MultiPolygon with a single Polygon.
+    @Test
+    func overlappingRectanglesViaMultiPolygon() async throws {
         let poly = try loadInput("OverlappingRectanglesInput1")
         let p2 = try loadInput("OverlappingRectanglesInput2")
         let exp = try loadExpected("OverlappingRectanglesResult")
@@ -89,7 +93,9 @@ struct UnionTests {
         checkGeometric(result, exp)
     }
 
-    @Test func overlappingRectanglesFormUnion() async throws {
+    // Tests in-place formUnion on a MultiPolygon.
+    @Test
+    func overlappingRectanglesFormUnion() async throws {
         let poly = try loadInput("OverlappingRectanglesInput1")
         let p2 = try loadInput("OverlappingRectanglesInput2")
         let exp = try loadExpected("OverlappingRectanglesResult")
@@ -98,7 +104,9 @@ struct UnionTests {
         checkGeometric(multi, exp)
     }
 
-    @Test func overlappingRectanglesViaFeatureCollection() async throws {
+    // Tests feature collection union of overlapping rectangles.
+    @Test
+    func overlappingRectanglesViaFeatureCollection() async throws {
         let p1 = try loadInput("OverlappingRectanglesInput1")
         let p2 = try loadInput("OverlappingRectanglesInput2")
         let exp = try loadExpected("OverlappingRectanglesResult")
@@ -110,7 +118,9 @@ struct UnionTests {
 
     // MARK: - Disjoint rectangles
 
-    @Test func disjointRectangles() async throws {
+    // Tests union of two disjoint (non-overlapping) rectangles.
+    @Test
+    func disjointRectangles() async throws {
         let p1 = try loadInput("DisjointRectanglesInput1")
         let p2 = try loadInput("DisjointRectanglesInput2")
         let exp = try loadExpected("DisjointRectanglesResult")
@@ -120,7 +130,9 @@ struct UnionTests {
 
     // MARK: - One polygon inside another
 
-    @Test func containedPolygon() async throws {
+    // Tests union of a polygon with another polygon fully contained inside it.
+    @Test
+    func containedPolygon() async throws {
         let outer = try loadInput("ContainedPolygonOuter")
         let inner = try loadInput("ContainedPolygonInner")
         let exp = try loadExpected("ContainedPolygonResult")
@@ -130,7 +142,9 @@ struct UnionTests {
 
     // MARK: - Sharing a full edge
 
-    @Test func sharingEdge() async throws {
+    // Tests union of two polygons that share a full edge.
+    @Test
+    func sharingEdge() async throws {
         let p1 = try loadInput("SharingEdgeInput1")
         let p2 = try loadInput("SharingEdgeInput2")
         let exp = try loadExpected("SharingEdgeResult")
@@ -140,7 +154,9 @@ struct UnionTests {
 
     // MARK: - Three polygons (two overlapping, one remote)
 
-    @Test func threePolygons() async throws {
+    // Tests union of three polygons via the static unionPolygons method.
+    @Test
+    func threePolygons() async throws {
         let p1 = try loadInput("ThreePolygonsInput1")
         let p2 = try loadInput("ThreePolygonsInput2")
         let p3 = try loadInput("ThreePolygonsInput3")
@@ -151,7 +167,9 @@ struct UnionTests {
 
     // MARK: - Non-convex polygons (L-shape)
 
-    @Test func nonConvexOverlap() async throws {
+    // Tests union of two non-convex (L-shape) overlapping polygons.
+    @Test
+    func nonConvexOverlap() async throws {
         let p1 = try loadInput("NonConvexInput1")
         let p2 = try loadInput("NonConvexInput2")
         let exp = try loadExpected("NonConvexResult")
@@ -161,11 +179,15 @@ struct UnionTests {
 
     // MARK: - Edge cases
 
-    @Test func emptyInput() async throws {
+    // Tests that unionPolygons with an empty array returns nil.
+    @Test
+    func emptyInput() async throws {
         #expect(Union.unionPolygons([]) == nil)
     }
 
-    @Test func emptyFeatureCollection() async throws {
+    // Tests that an empty feature collection returns nil from union.
+    @Test
+    func emptyFeatureCollection() async throws {
         #expect(FeatureCollection().union() == nil)
     }
 
@@ -194,6 +216,7 @@ struct UnionTests {
         (3, 6, "pair_3_6"),
     ]
 
+    // Tests pairwise union of flat-end buffer component polygons.
     @Test(arguments: pairwiseTests)
     func pairwiseUnion(
         i: Int,
@@ -216,6 +239,7 @@ struct UnionTests {
         "union1", "union2", "union3", "union4", "not-overlapping",
     ]
 
+    // Tests union against ported Turf.js fixture test cases.
     @Test(arguments: turfTestNames)
     func turfFixture(_ name: String) async throws {
         let fc = try TestData.featureCollection(package: "Union/in", name: name)
@@ -229,22 +253,30 @@ struct UnionTests {
 
     // MARK: - Issue regression tests
 
-    @Test func issueUnableToCompleteOutputRing1() async throws {
+    // Verifies issue #1983 case 1 (unable to complete output ring) completes without error.
+    @Test
+    func issueUnableToCompleteOutputRing1() async throws {
         let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-1")
         #expect(fc.union() != nil)
     }
 
-    @Test func issueUnableToCompleteOutputRing2() async throws {
+    // Verifies issue #1983 case 2 completes without error.
+    @Test
+    func issueUnableToCompleteOutputRing2() async throws {
         let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-2")
         #expect(fc.union() != nil)
     }
 
-    @Test func issueUnableToFindSegment1() async throws {
+    // Verifies issue #2258 case 1 (unable to find segment) completes without error.
+    @Test
+    func issueUnableToFindSegment1() async throws {
         let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-1")
         #expect(fc.union() != nil)
     }
 
-    @Test func issueUnableToFindSegment2() async throws {
+    // Verifies issue #2258 case 2 completes without error.
+    @Test
+    func issueUnableToFindSegment2() async throws {
         let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-2")
         #expect(fc.union() != nil)
     }

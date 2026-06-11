@@ -3,6 +3,7 @@ import Testing
 
 struct TransformScaleTests {
 
+    // Validates scaling a polygon with different anchor points (southWest, northEast, center, coordinate).
     @Test
     func scale() async throws {
         let polygon = try #require(Polygon([[

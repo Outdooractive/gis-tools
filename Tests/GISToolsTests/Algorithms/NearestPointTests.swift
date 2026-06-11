@@ -4,6 +4,7 @@ import Testing
 
 struct NearestPointTests {
 
+    // Verifies that the nearest vertex on a line string to a reference point is correctly identified.
     @Test
     func nearestPointLineString() async throws {
         let ls = try #require(LineString([
@@ -18,6 +19,7 @@ struct NearestPointTests {
         #expect(result.distance > 0)
     }
 
+    // Verifies that the nearest vertex on a multi-point to a reference point is correctly identified.
     @Test
     func nearestPointMultiPoint() async throws {
         let mp = try #require(MultiPoint([
@@ -30,6 +32,7 @@ struct NearestPointTests {
         #expect(result.coordinate == Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
+    // Verifies that the nearest point on a feature wrapping a line string is correctly identified.
     @Test
     func nearestPointFeature() async throws {
         let ls = try #require(LineString([
@@ -43,6 +46,7 @@ struct NearestPointTests {
         #expect(result.point.coordinate == Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
+    // Verifies that an empty line string returns nil for the nearest coordinate query.
     @Test
     func nearestPointEmpty() async throws {
         let ls = LineString()

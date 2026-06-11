@@ -45,30 +45,35 @@ struct RewindTests {
 
     // MARK: -
 
+    // Tests that a clockwise LineString remains unchanged after rewinding.
     @Test
     func lineStringClockwise() async throws {
         let lineStringRewinded = RewindTests.lineStringClockwise.rewinded
         #expect(lineStringRewinded == RewindTests.lineStringClockwise)
     }
 
+    // Tests that a counter-clockwise LineString is rewound to clockwise order.
     @Test
     func lineStringCounterClockwise() async throws {
         let lineStringRewinded = RewindTests.lineStringCounterClockwise.rewinded
         #expect(lineStringRewinded.allCoordinates == RewindTests.lineStringClockwise.allCoordinates)
     }
 
+    // Tests that a clockwise Polygon is rewound to counter-clockwise order.
     @Test
     func polygonClockwise() async throws {
         let polygonRewinded = RewindTests.polygonClockwise.rewinded
         #expect(polygonRewinded.allCoordinates == RewindTests.polygonCounterClockwise.allCoordinates)
     }
 
+    // Tests that a counter-clockwise Polygon remains unchanged after rewinding.
     @Test
     func polygonCounterClockwise() async throws {
         let polygonRewinded = RewindTests.polygonCounterClockwise.rewinded
         #expect(polygonRewinded == RewindTests.polygonCounterClockwise)
     }
 
+    // Tests rewinding the geometry inside a Feature.
     @Test
     func feature() async throws {
         let featureRewinded = Feature(RewindTests.lineStringCounterClockwise).rewinded
@@ -76,6 +81,7 @@ struct RewindTests {
         #expect(featureRewinded == result)
     }
 
+    // Tests rewinding all geometries within a FeatureCollection.
     @Test
     func featureCollection() async throws {
         let featureCollectionRewinded = FeatureCollection([
@@ -93,6 +99,7 @@ struct RewindTests {
         #expect(featureCollectionRewinded == result)
     }
 
+    // Tests rewinding all geometries within a GeometryCollection.
     @Test
     func geometryCollection() async throws {
         let geometryCollectionRewinded = GeometryCollection([

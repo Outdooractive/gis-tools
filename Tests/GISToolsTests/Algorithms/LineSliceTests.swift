@@ -5,6 +5,7 @@ struct LineSliceTests {
 
     // TODO: Test open ended slices
 
+    // Tests that slicing a line string between two points returns the expected sub-line.
     @Test
     func slice() async throws {
         let lineString = try #require(LineString([

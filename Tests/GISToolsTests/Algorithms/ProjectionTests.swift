@@ -3,6 +3,7 @@ import Testing
 
 struct ProjectionTests {
 
+    // Tests coordinate projection from EPSG:4326 to EPSG:3857, including coordinates crossing the 180th meridian.
     @Test
     func convertTo3857() async throws {
         // A simple case
@@ -41,6 +42,7 @@ struct ProjectionTests {
         #expect(abs(result5.latitude - 1_271_912.1506653326) < 0.000001)
     }
 
+    // Tests coordinate projection from EPSG:3857 to EPSG:4326, including coordinates crossing the 180th meridian.
     @Test
     func convertTo4326() async throws {
         // A simple case

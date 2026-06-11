@@ -59,6 +59,7 @@ struct FeatureCollectionTests {
     }
     """
 
+    // Validates loading a FeatureCollection from a JSON string produces correct properties.
     @Test
     func loadJson() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -71,11 +72,13 @@ struct FeatureCollectionTests {
         #expect(featureCollection[foreignMember: "other"] == "something else")
     }
 
+    // Placeholder test for creating a FeatureCollection JSON.
     @Test
     func createJson() async throws {
         // TODO:
     }
 
+    // Validates adding features with mismatched projections filters them by projection.
     @Test
     func addFeatures() async throws {
         let feature4326 = Feature(Point(.zero))
@@ -100,6 +103,7 @@ struct FeatureCollectionTests {
         #expect(featureCollection.features.count == 1)
     }
 
+    // Validates mapping over features updates their properties in place.
     @Test
     func mapFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -117,6 +121,7 @@ struct FeatureCollectionTests {
         #expect(prop0Updated == "value1")
     }
 
+    // Validates compact-mapping removes features whose transform returns nil.
     @Test
     func compactMapFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -131,6 +136,7 @@ struct FeatureCollectionTests {
         #expect(featureCollection.features.count == 2)
     }
 
+    // Validates filtering removes features not matching the predicate.
     @Test
     func filterFeatures() async throws {
         var featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -144,6 +150,7 @@ struct FeatureCollectionTests {
         #expect(featureCollection.features.count == 1)
     }
 
+    // Validates dividing features by a property key produces correctly grouped dictionaries.
     @Test
     func divideFeaturesByKey() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -162,6 +169,7 @@ struct FeatureCollectionTests {
         #expect(featuresB.allSatisfy({ $0.property(for: "prop2") == "b" }))
     }
 
+    // Validates enumerating all coordinates across features in correct order.
     @Test
     func enumerateFeatures() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -193,6 +201,7 @@ struct FeatureCollectionTests {
         }
     }
 
+    // Validates enumerating properties across features.
     @Test
     func enumerateProperties() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -216,6 +225,7 @@ struct FeatureCollectionTests {
         }
     }
 
+    // Validates the properties summary returns all unique property keys and values.
     @Test
     func propertiesSummary() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -228,6 +238,7 @@ struct FeatureCollectionTests {
         #expect(summary["prop1"]!.contains(["this": "that"]))
     }
 
+    // Validates JSON encoding matches the output of asJsonData.
     @Test
     func encodable() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
@@ -238,6 +249,7 @@ struct FeatureCollectionTests {
         #expect(try encoder.encode(featureCollection) == featureCollection.asJsonData(prettyPrinted: true))
     }
 
+    // Validates round-trip JSON encoding and decoding preserves the feature collection.
     @Test
     func decodable() async throws {
         let featureCollectionData = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson)?.asJsonData(prettyPrinted: true))
@@ -247,6 +259,7 @@ struct FeatureCollectionTests {
         #expect(featureCollectionData == featureCollection.asJsonData(prettyPrinted: true))
     }
 
+    // Validates decoding a single point geometry wraps it in a FeatureCollection.
     @Test
     func decodePoint() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))

@@ -4,6 +4,7 @@ import Testing
 
 struct NearestPointOnFeatureTests {
 
+    // Verifies that the nearest point on a line string from a reference coordinate is correctly computed.
     @Test
     func nearestOnLineString() async throws {
         let ls = try #require(LineString([
@@ -19,6 +20,7 @@ struct NearestPointOnFeatureTests {
         #expect(result.distance > 0)
     }
 
+    // Verifies that a point inside a polygon returns itself with distance zero as the nearest coordinate.
     @Test
     func nearestOnPolygonInside() async throws {
         let polygon = try #require(Polygon([[
@@ -35,6 +37,7 @@ struct NearestPointOnFeatureTests {
         #expect(result.distance == 0.0)
     }
 
+    // Verifies that a point outside a polygon returns a point on the polygon boundary with positive distance.
     @Test
     func nearestOnPolygonOutside() async throws {
         let polygon = try #require(Polygon([[
@@ -51,6 +54,7 @@ struct NearestPointOnFeatureTests {
         #expect(result.distance > 0)
     }
 
+    // Verifies that the nearest point on a feature wrapping a line string returns a positive distance.
     @Test
     func nearestOnFeature() async throws {
         let ls = try #require(LineString([
@@ -64,6 +68,7 @@ struct NearestPointOnFeatureTests {
         #expect(result.distance > 0)
     }
 
+    // Verifies that the nearest coordinate on a multi-point from a reference coordinate is correctly identified.
     @Test
     func nearestOnMultiPoint() async throws {
         let mp = try #require(MultiPoint([

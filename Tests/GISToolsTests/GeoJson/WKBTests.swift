@@ -16,6 +16,7 @@ struct WKBTests {
     // SELECT 'POINT ZM (1 2 3 4)'::geometry;
     private let pointZMData = Data(hex: "01010000C0000000000000F03F000000000000004000000000000008400000000000001040")!
 
+    // Validates decoding WKB Point types (XY, XYZ, XYM, XYZM).
     @Test
     func pointDecoding() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
@@ -41,6 +42,7 @@ struct WKBTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKB Point with reprojection from EPSG:4326 to EPSG:3857.
     @Test
     func pointDecoding4326To3857() async throws {
         let expected = Coordinate3D(latitude: 2, longitude: 1).projected(to: .epsg3857)
@@ -68,6 +70,7 @@ struct WKBTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKB Point with reprojection from EPSG:3857 to EPSG:4326.
     @Test
     func pointDecoding3857To4326() async throws {
         let expected = Coordinate3D(x: 1, y: 2).projected(to: .epsg4326)
@@ -95,6 +98,7 @@ struct WKBTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates decoding WKB Point with no SRID (noSRID).
     @Test
     func pointDecodingNoSRID() async throws {
         let expected = Coordinate3D(x: 1, y: 2, projection: .noSRID)
@@ -126,6 +130,7 @@ struct WKBTests {
         #expect(pointZM.coordinate.m == 4)
     }
 
+    // Validates encoding a Point back to WKB round-trips correctly.
     @Test
     func pointEncoding() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
@@ -145,6 +150,7 @@ struct WKBTests {
         #expect(encodedPointZM == pointZMData)
     }
 
+    // Validates the convenience initializer for decoding a Point from WKB data.
     @Test
     func pointConvenienceDecoding() async throws {
         let pointZ = Point(wkb: pointZData, sourceProjection: .epsg4326)!
@@ -153,6 +159,7 @@ struct WKBTests {
         #expect(pointZ.coordinate.altitude == 3)
     }
 
+    // Validates Data convenience methods for decoding a geometry and Feature from WKB.
     @Test
     func pointDataConvenienceDecoding() async throws {
         let pointZ = pointZData.asGeoJsonGeometry(sourceProjection: .epsg4326) as! Point
@@ -169,6 +176,7 @@ struct WKBTests {
     // SELECT ST_ClipByBox2D(ToPoint('POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))'::geometry), ST_MakeEnvelope(0,0,0.2,0.2));
     private let invalidPointData = Data(hex: "0101000000000000000000F87F000000000000F87F")!
 
+    // Validates that decoding an invalid WKB Point (NaN coordinates) throws an error.
     @Test
     func invalidPointDecoding() async throws {
         #expect(throws: WKBCoder.WKBCoderError.self) {
@@ -181,6 +189,7 @@ struct WKBTests {
     // SELECT 'MULTIPOINT((0 0),(1 2))'::geometry;
     private let multiPointData = Data(hex: "0104000000020000000101000000000000000000000000000000000000000101000000000000000000F03F0000000000000040")!
 
+    // Validates decoding a WKB MultiPoint.
     @Test
     func multiPointDecoding() async throws {
         let multiPoint = try WKBCoder.decode(wkb: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
@@ -189,6 +198,7 @@ struct WKBTests {
         #expect(multiPoint.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1))
     }
 
+    // Validates encoding a MultiPoint back to WKB round-trips correctly.
     @Test
     func multiPointEncoding() async throws {
         let multiPoint = try WKBCoder.decode(wkb: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
@@ -201,6 +211,7 @@ struct WKBTests {
     // SELECT 'SRID=4326;MULTIPOINTZ(0 0 0,1 2 1)'::geometry;
     private let multiPointZSRIDData = Data(hex: "01040000A0E61000000200000001010000800000000000000000000000000000000000000000000000000101000080000000000000F03F0000000000000040000000000000F03F")!
 
+    // Validates decoding a WKB MultiPoint with embedded SRID.
     @Test
     func multiPointSRIDDecoding() async throws {
         let multiPointZSRID = try WKBCoder.decode(wkb: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
@@ -209,6 +220,7 @@ struct WKBTests {
         #expect(multiPointZSRID.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1, altitude: 1))
     }
 
+    // Validates encoding a MultiPoint with SRID back to WKB round-trips correctly.
     @Test
     func multiPointSRIDEncoding() async throws {
         let multiPointZSRID = try WKBCoder.decode(wkb: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
@@ -227,6 +239,7 @@ struct WKBTests {
     // SELECT 'LINESTRING ZM (1 1 5 0, 1 2 5 0, 1 3 5 1, 2 2 5 0)'::geometry;
     private let lineStringZMData = Data(hex: "01020000C004000000000000000000F03F000000000000F03F00000000000014400000000000000000000000000000F03F000000000000004000000000000014400000000000000000000000000000F03F00000000000008400000000000001440000000000000F03F0000000000000040000000000000004000000000000014400000000000000000")!
 
+    // Validates decoding WKB LineString types (XY, XYZ, XYM, XYZM).
     @Test
     func lineStringDecoding() async throws {
         let lineString = try WKBCoder.decode(wkb: lineStringData, sourceProjection: .epsg4326) as! LineString
@@ -242,6 +255,7 @@ struct WKBTests {
         #expect(lineStringZM.coordinates.count == 4)
     }
 
+    // Validates encoding a LineString back to WKB round-trips correctly.
     @Test
     func lineStringEncoding() async throws {
         let lineString = try WKBCoder.decode(wkb: lineStringData, sourceProjection: .epsg4326) as! LineString
@@ -266,12 +280,14 @@ struct WKBTests {
     // SELECT 'MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))'::geometry;
     private let multiLineStringData = Data(hex: "01050000000200000001020000000300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F0000000000000040010200000003000000000000000000004000000000000008400000000000000840000000000000004000000000000014400000000000001040")!
 
+    // Validates decoding a WKB MultiLineString.
     @Test
     func multiLineStringDecoding() async throws {
         let multiLineString = try WKBCoder.decode(wkb: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
         #expect(multiLineString.lineStrings.count == 2)
     }
 
+    // Validates encoding a MultiLineString back to WKB round-trips correctly.
     @Test
     func multiLineStringEncoding() async throws {
         let multiLineString = try WKBCoder.decode(wkb: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
@@ -292,6 +308,7 @@ struct WKBTests {
     // SELECT 'POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))'::geometry;
     private let polygonWithHoleData = Data(hex: "01030000000200000005000000000000000000000000000000000000000000000000002440000000000000000000000000000024400000000000002440000000000000000000000000000024400000000000000000000000000000000005000000000000000000F03F000000000000F03F000000000000F03F0000000000000040000000000000004000000000000000400000000000000040000000000000F03F000000000000F03F000000000000F03F")!
 
+    // Validates decoding WKB Polygon types (XY, XYZ, XYM, XYZM, with hole).
     @Test
     func polygonDecoding() async throws {
         let polygon = try WKBCoder.decode(wkb: polygonData, sourceProjection: .epsg4326) as! Polygon
@@ -316,6 +333,7 @@ struct WKBTests {
         #expect(polygonWithHole.innerRings![0].coordinates.count == 5)
     }
 
+    // Validates encoding a Polygon back to WKB round-trips correctly.
     @Test
     func polygonEncoding() async throws {
         let polygon = try WKBCoder.decode(wkb: polygonData, sourceProjection: .epsg4326) as! Polygon
@@ -344,12 +362,14 @@ struct WKBTests {
     // SELECT 'MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ((-1 -1,-1 -2,-2 -2,-2 -1,-1 -1)))'::geometry;
     private let multiPolygonData = Data(hex: "01060000000200000001030000000200000005000000000000000000000000000000000000000000000000001040000000000000000000000000000010400000000000001040000000000000000000000000000010400000000000000000000000000000000005000000000000000000F03F000000000000F03F0000000000000040000000000000F03F00000000000000400000000000000040000000000000F03F0000000000000040000000000000F03F000000000000F03F01030000000100000005000000000000000000F0BF000000000000F0BF000000000000F0BF00000000000000C000000000000000C000000000000000C000000000000000C0000000000000F0BF000000000000F0BF000000000000F0BF")!
 
+    // Validates decoding a WKB MultiPolygon.
     @Test
     func multiPolygonDecoding() async throws {
         let multiPolygon = try WKBCoder.decode(wkb: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
         #expect(multiPolygon.polygons.count == 2)
     }
 
+    // Validates encoding a MultiPolygon back to WKB round-trips correctly.
     @Test
     func multiPolygonEncoding() async throws {
         let multiPolygon = try WKBCoder.decode(wkb: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
@@ -362,6 +382,7 @@ struct WKBTests {
     // SELECT 'GEOMETRYCOLLECTION(POINT(2 0),POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))'::geometry;
     private let geometryCollectionData = Data(hex: "0107000000020000000101000000000000000000004000000000000000000103000000010000000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000")!
 
+    // Validates decoding a WKB GeometryCollection.
     @Test
     func geometryCollectionDecoding() async throws {
         let geometryCollection = try WKBCoder.decode(wkb: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
@@ -370,6 +391,7 @@ struct WKBTests {
         #expect(geometryCollection.geometries[1].type == .polygon)
     }
 
+    // Validates encoding a GeometryCollection back to WKB round-trips correctly.
     @Test
     func geometryCollectionEncoding() async throws {
         let geometryCollection = try WKBCoder.decode(wkb: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
@@ -388,6 +410,7 @@ struct WKBTests {
     // SELECT 'TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))'::geometry;
     private let triangleZMData = Data(hex: "01110000C0010000000400000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000F03F00000000000000000000000000000040000000000000F03F000000000000F03F000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040")!
 
+    // Validates decoding WKB Triangle types (XY, XYZ, XYM, XYZM) as Polygon.
     @Test
     func triangleDecoding() async throws {
         let triangle = try WKBCoder.decode(wkb: triangleData, sourceProjection: .epsg4326) as! Polygon
@@ -409,6 +432,7 @@ struct WKBTests {
 
     // MARK: - GeoJsonGeometry convenience
 
+    // Validates parsing a geometry from WKB data with a source SRID.
     @Test
     func geoJsonGeometryParseSourceSrid() async throws {
         let geometry = GeometryCollection.parse(wkb: pointData, sourceSrid: 4326)
@@ -416,6 +440,7 @@ struct WKBTests {
         #expect((geometry as! Point).coordinate.longitude == 1)
     }
 
+    // Validates parsing a geometry from WKB data with a source projection.
     @Test
     func geoJsonGeometryParseSourceProjection() async throws {
         let geometry = GeometryCollection.parse(wkb: pointData, sourceProjection: .epsg4326)
@@ -423,6 +448,7 @@ struct WKBTests {
         #expect((geometry as! Point).coordinate.longitude == 1)
     }
 
+    // Validates encoding a geometry to WKB and decoding it back round-trips correctly.
     @Test
     func geoJsonGeometryAsWKB() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
@@ -434,6 +460,7 @@ struct WKBTests {
 
     // MARK: - Feature convenience
 
+    // Validates creating a Feature from WKB data with a source SRID.
     @Test
     func featureInitSourceSrid() async throws {
         let feature = Feature(
@@ -446,6 +473,7 @@ struct WKBTests {
         #expect(feature?.properties["key"] as? String == "value")
     }
 
+    // Validates creating a Feature from WKB data with a source projection.
     @Test
     func featureInitSourceProjection() async throws {
         let feature = Feature(
@@ -456,6 +484,7 @@ struct WKBTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates encoding a Feature to WKB and decoding it back round-trips correctly.
     @Test
     func featureAsWKB() async throws {
         let point = try WKBCoder.decode(wkb: pointData, sourceProjection: .epsg4326) as! Point
@@ -468,6 +497,7 @@ struct WKBTests {
 
     // MARK: - FeatureCollection convenience
 
+    // Validates creating a FeatureCollection from WKB data with a source SRID.
     @Test
     func featureCollectionInitSourceSrid() async throws {
         let fc = FeatureCollection(wkb: pointData, sourceSrid: 4326)
@@ -475,6 +505,7 @@ struct WKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates creating a FeatureCollection from WKB data with a source projection.
     @Test
     func featureCollectionInitSourceProjection() async throws {
         let fc = FeatureCollection(wkb: pointData, sourceProjection: .epsg4326)
@@ -484,6 +515,7 @@ struct WKBTests {
 
     // MARK: - Data convenience
 
+    // Validates decoding WKB Data to a geometry using a source SRID.
     @Test
     func dataAsGeoJsonGeometrySourceSrid() async throws {
         let geometry = pointZData.asGeoJsonGeometry(sourceSrid: 4326)
@@ -491,6 +523,7 @@ struct WKBTests {
         #expect((geometry as! Point).coordinate.altitude == 3)
     }
 
+    // Validates decoding WKB Data to a Feature using a source SRID.
     @Test
     func dataAsFeatureSourceSrid() async throws {
         let feature = pointZData.asFeature(sourceSrid: 4326, id: .string("d1"))
@@ -498,6 +531,7 @@ struct WKBTests {
         #expect(feature?.geometry is Point)
     }
 
+    // Validates decoding WKB Data to a FeatureCollection using a source SRID.
     @Test
     func dataAsFeatureCollectionSourceSrid() async throws {
         let fc = pointData.asFeatureCollection(sourceSrid: 4326)
@@ -505,6 +539,7 @@ struct WKBTests {
         #expect(fc?.features.first?.geometry is Point)
     }
 
+    // Validates decoding WKB Data to a FeatureCollection using a source projection.
     @Test
     func dataAsFeatureCollectionSourceProjection() async throws {
         let fc = pointData.asFeatureCollection(sourceProjection: .epsg4326)

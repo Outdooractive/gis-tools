@@ -3,6 +3,7 @@ import Testing
 
 struct BooleanParallelTests {
 
+    // Validates that `isParallel` returns true for parallel line strings.
     @Test
     func isTrue() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanParallel", name: "LineStringTrue1_1")
@@ -23,6 +24,7 @@ struct BooleanParallelTests {
         #expect(lineString7.isParallel(to: lineString8))
     }
 
+    // Validates that `isParallel` returns false for non-parallel line strings.
     @Test
     func isFalse() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanParallel", name: "LineStringFalse1_1")

@@ -81,13 +81,17 @@ struct BufferTests {
 
     // MARK: - Reference tests
 
-    @Test func bufferedPoint() async throws {
+    // Validates buffer around a single point matches the expected area.
+    @Test
+    func bufferedPoint() async throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
         let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
         checkArea(result, try loadExpected("PointResult"))
     }
 
-    @Test func bufferedPoints() async throws {
+    // Validates buffer around multiple points matches the expected area.
+    @Test
+    func bufferedPoints() async throws {
         let multiPoint = try #require(MultiPoint([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -96,7 +100,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("MultiPointResult"))
     }
 
-    @Test func bufferedLineShort() async throws {
+    // Validates round-end buffer around a short line matches the expected area.
+    @Test
+    func bufferedLineShort() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -105,7 +111,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("LineRoundResult"))
     }
 
-    @Test func bufferedLineShortFlatEnds() async throws {
+    // Validates flat-end buffer around a short line matches the expected area.
+    @Test
+    func bufferedLineShortFlatEnds() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -114,7 +122,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("LineFlatResult"))
     }
 
-    @Test func bufferedLineLong() async throws {
+    // Validates round-end buffer around a long line matches the expected area.
+    @Test
+    func bufferedLineLong() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -126,7 +136,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.15)
     }
 
-    @Test func bufferedLineLongFlatEnds() async throws {
+    // Validates flat-end buffer around a long line matches the expected area.
+    @Test
+    func bufferedLineLongFlatEnds() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -138,7 +150,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
     }
 
-    @Test func bufferedLines() async throws {
+    // Validates round-end buffer around multiple lines matches the expected area.
+    @Test
+    func bufferedLines() async throws {
         let multiLineString = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -154,7 +168,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.25)
     }
 
-    @Test func bufferedLinesFlatEnds() async throws {
+    // Validates flat-end buffer around multiple lines matches the expected area.
+    @Test
+    func bufferedLinesFlatEnds() async throws {
         let multiLineString = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -170,7 +186,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("MultiLineFlatResult"))
     }
 
-    @Test func bufferedPolygon() async throws {
+    // Validates buffer around a polygon with a hole matches the expected area.
+    @Test
+    func bufferedPolygon() async throws {
         let polygon = try #require(Polygon([
             [
                 Coordinate3D(latitude: 47.5, longitude: 10.2),
@@ -192,7 +210,9 @@ struct BufferTests {
         checkArea(result, try loadExpected("PolygonWithHoleResult"))
     }
 
-    @Test func bufferedMultiPolygon() async throws {
+    // Validates buffer around a multi-polygon matches the expected area.
+    @Test
+    func bufferedMultiPolygon() async throws {
         let multiPolygon = try #require(MultiPolygon([
             Polygon([
                 [
@@ -281,6 +301,7 @@ struct BufferTests {
         .init(name: "issue-#916", loadFeatureCollection: true),
     ]
 
+    // Validates buffer against ported Turf.js fixture test cases.
     @Test(arguments: turfFixtures)
     private func turfFixture(_ fixture: TurfFixture) async throws {
         let params = try Self.bufferParams(fixture.name)
@@ -303,7 +324,9 @@ struct BufferTests {
     }
 
     // Buffering a long LineString creates kinks / self-intersection artifacts.
-    @Test func issue900() async throws {
+    // Validates buffer on a long line that produces kinks and self-intersection artifacts.
+    @Test
+    func issue900() async throws {
         let params = try Self.bufferParams("issue-#900")
         try runTurfTest(
             name: "issue-#900",
@@ -317,7 +340,9 @@ struct BufferTests {
 
     // MARK: - Antimeridian tests
 
-    @Test func bufferedPointAntimeridian() async throws {
+    // Validates buffer around a point near the antimeridian stays within valid coordinate bounds.
+    @Test
+    func bufferedPointAntimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 179.0))
         let result = try #require(point.buffered(by: 200_000.0))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
@@ -336,7 +361,9 @@ struct BufferTests {
         #expect(area > expected * 0.1 && area < expected * 10.0)
     }
 
-    @Test func bufferedLineAntimeridian() async throws {
+    // Validates buffer around a line crossing the antimeridian produces multiple non-crossing polygons.
+    @Test
+    func bufferedLineAntimeridian() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
@@ -346,7 +373,9 @@ struct BufferTests {
         #expect(result.polygons.count >= 2)
     }
 
-    @Test func bufferedLineNearAntimeridianNoCross() async throws {
+    // Validates buffer near the antimeridian does not cross it.
+    @Test
+    func bufferedLineNearAntimeridianNoCross() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 178.0),
             Coordinate3D(latitude: 1.0, longitude: 179.0),
@@ -355,7 +384,9 @@ struct BufferTests {
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
     }
 
-    @Test func bufferedPointNoAntimeridian() async throws {
+    // Validates buffer away from the antimeridian does not cross it and produces a single polygon.
+    @Test
+    func bufferedPointNoAntimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 10.0))
         let result = try #require(point.buffered(by: 200_000.0))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
@@ -364,7 +395,9 @@ struct BufferTests {
 
     // MARK: - Negative buffer
 
-    @Test func negativeBuffer() async throws {
+    // Validates negative (inset) buffer reduces the area of a polygon.
+    @Test
+    func negativeBuffer() async throws {
         let name = "negative-buffer"
         let json = try TestData.stringFromFile(package: "Buffer/in", name: name)
         guard let data = json.data(using: .utf8),
@@ -382,7 +415,9 @@ struct BufferTests {
         #expect(resultPolygon.isValid)
     }
 
-    @Test func insetSimpleConvex() async throws {
+    // Validates insetting a simple convex polygon reduces area and remains valid.
+    @Test
+    func insetSimpleConvex() async throws {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -403,7 +438,9 @@ struct BufferTests {
         }
     }
 
-    @Test func insetTooLargeReturnsNil() async throws {
+    // Validates that an inset larger than the polygon returns nil.
+    @Test
+    func insetTooLargeReturnsNil() async throws {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -417,13 +454,17 @@ struct BufferTests {
         #expect(result == nil)
     }
 
-    @Test func insetPointReturnsNil() async throws {
+    // Validates that a negative buffer on a point returns nil.
+    @Test
+    func insetPointReturnsNil() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let result = point.buffered(by: -1000.0)
         #expect(result == nil)
     }
 
-    @Test func insetLineStringReturnsNil() async throws {
+    // Validates that a negative buffer on a line string returns nil.
+    @Test
+    func insetLineStringReturnsNil() async throws {
         guard let line = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
@@ -432,7 +473,9 @@ struct BufferTests {
         #expect(result == nil)
     }
 
-    @Test func insetPolygonWithHoles() async throws {
+    // Validates insetting a polygon with holes reduces area and remains valid.
+    @Test
+    func insetPolygonWithHoles() async throws {
         guard let outerRing = Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -454,7 +497,9 @@ struct BufferTests {
         #expect(inset.isValid)
     }
 
-    @Test func insetMultiPolygon() async throws {
+    // Validates insetting each polygon in a multi-polygon independently reduces area.
+    @Test
+    func insetMultiPolygon() async throws {
         guard let poly1 = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -485,7 +530,9 @@ struct BufferTests {
         #expect(resultPolygons[1].isValid)
     }
 
-    @Test func insetAcrossAntimeridian() async throws {
+    // Validates insetting a polygon crossing the antimeridian produces a valid non-crossing result.
+    @Test
+    func insetAcrossAntimeridian() async throws {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 175.0),
@@ -506,7 +553,9 @@ struct BufferTests {
         }
     }
 
-    @Test func insetFeatureWrappingPolygon() async throws {
+    // Validates insetting a polygon wrapped in a Feature reduces area.
+    @Test
+    func insetFeatureWrappingPolygon() async throws {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -522,7 +571,9 @@ struct BufferTests {
         #expect(inset.area < polygon.area)
     }
 
-    @Test func insetDonutAcrossAntimeridian() async throws {
+    // Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
+    @Test
+    func insetDonutAcrossAntimeridian() async throws {
         guard let outerRing = Ring([
             Coordinate3D(latitude: 0.0, longitude: -175.0),
             Coordinate3D(latitude: 10.0, longitude: -175.0),

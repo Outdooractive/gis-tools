@@ -6,6 +6,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Ring.contains(_ coordinate)
 
+    // Validates that `Ring.contains` returns true for a coordinate inside the ring.
     @Test
     func ringContainsCoordinateInside() async throws {
         let ring = try #require(Ring([
@@ -18,6 +19,7 @@ struct BooleanPointInPolygonTests {
         #expect(ring.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
     }
 
+    // Validates that `Ring.contains` returns false for a coordinate outside the ring.
     @Test
     func ringContainsCoordinateOutside() async throws {
         let ring = try #require(Ring([
@@ -30,6 +32,7 @@ struct BooleanPointInPolygonTests {
         #expect(ring.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
+    // Validates that `Ring.contains` returns true for a coordinate on the boundary by default, and false when ignoring the boundary.
     @Test
     func ringContainsCoordinateOnBoundary() async throws {
         let ring = try #require(Ring([
@@ -45,6 +48,7 @@ struct BooleanPointInPolygonTests {
         #expect(ring.contains(Coordinate3D(latitude: 0.0, longitude: 5.0), ignoringBoundary: true) == false)
     }
 
+    // Validates that `Ring.contains` works correctly with `Point` instances.
     @Test
     func ringContainsPoint() async throws {
         let ring = try #require(Ring([
@@ -62,6 +66,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Ring (convex)
 
+    // Validates that `Ring.contains` correctly determines point inclusion in a convex shape.
     @Test
     func ringContainsConvexShape() async throws {
         let ring = try #require(Ring([
@@ -81,6 +86,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Ring (concave / L-shaped)
 
+    // Validates that `Ring.contains` correctly handles point inclusion in a concave (L-shaped) ring.
     @Test
     func ringContainsConcaveShape() async throws {
         let ring = try #require(Ring([
@@ -103,6 +109,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Polygon (with hole)
 
+    // Validates that `Polygon.contains` correctly handles polygons with holes (points in the hole are excluded).
     @Test
     func polygonContainsWithHole() async throws {
         let polygon = try #require(Polygon([
@@ -129,6 +136,7 @@ struct BooleanPointInPolygonTests {
         #expect(polygon.contains(Coordinate3D(latitude: 15.0, longitude: 5.0)) == false)
     }
 
+    // Validates that `Polygon.contains` works correctly with `Point` instances.
     @Test
     func polygonContainsPoint() async throws {
         let polygon = try #require(Polygon([[
@@ -144,6 +152,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - MultiPolygon
 
+    // Validates that `MultiPolygon.contains` returns correct results for points inside any constituent polygon and false otherwise.
     @Test
     func multiPolygonContains() async throws {
         let poly1 = try #require(Polygon([[
@@ -169,6 +178,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Feature
 
+    // Validates that `Feature.contains` delegates correctly to its underlying polygon geometry.
     @Test
     func featureContains() async throws {
         let polygon = try #require(Polygon([[
@@ -183,6 +193,7 @@ struct BooleanPointInPolygonTests {
         #expect(feature.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
+    // Validates that `Feature.contains` returns false when the feature wraps a non-polygon geometry.
     @Test
     func featureContainsNonPolygon() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -193,6 +204,7 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - FeatureCollection
 
+    // Validates that `FeatureCollection.contains` checks containment across all features in the collection.
     @Test
     func featureCollectionContains() async throws {
         let polygon = try #require(Polygon([[

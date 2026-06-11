@@ -3,6 +3,7 @@ import Testing
 
 struct TruncateTests {
 
+    // Validates truncating coordinate precision and removing altitude for a Point.
     @Test
     func point() async throws {
         let point = Point(
@@ -16,6 +17,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
+    // Validates truncating coordinate precision and removing altitude for a MultiPoint.
     @Test
     func multiPoint() async throws {
         let multiPoint = try #require(MultiPoint(
@@ -35,6 +37,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
+    // Validates truncating coordinate precision and removing altitude for a LineString.
     @Test
     func lineString() async throws {
         let lineString = try #require(LineString(
@@ -54,6 +57,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
+    // Validates truncating coordinate precision and removing altitude for a MultiLineString.
     @Test
     func multiLineString() async throws {
         let multiLineString = try #require(MultiLineString(
@@ -82,26 +86,31 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
+    // Validates truncating coordinate precision for a Polygon.
     @Test
     func polygon() async throws {
         // TODO:
     }
 
+    // Validates truncating coordinate precision for a MultiPolygon.
     @Test
     func multiPolygon() async throws {
         // TODO:
     }
 
+    // Validates truncating coordinate precision for a GeometryCollection.
     @Test
     func geometryCollection() async throws {
         // TODO:
     }
 
+    // Validates truncating coordinate precision for a Feature.
     @Test
     func feature() async throws {
         // TODO:
     }
 
+    // Validates truncating coordinate precision for a FeatureCollection.
     @Test
     func featureCollection() async throws {
         // TODO:

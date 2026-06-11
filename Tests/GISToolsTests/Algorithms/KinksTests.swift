@@ -4,6 +4,7 @@ import Testing
 
 struct KinksTests {
 
+    // Tests that a simple line string with two vertices has no kinks.
     @Test
     func lineStringNoKinks() async throws {
         let ls = try #require(LineString([
@@ -14,6 +15,7 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
+    // Tests that a simple closed polygon has no kinks.
     @Test
     func polygonNoKinks() async throws {
         let polygon = try #require(Polygon([[
@@ -27,6 +29,7 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
+    // Tests that a self-intersecting (bow-tie) polygon detects kinks.
     @Test
     func polygonWithKinks() async throws {
         // Bow-tie polygon: self-intersecting
@@ -41,6 +44,7 @@ struct KinksTests {
         #expect(result.points.isNotEmpty)
     }
 
+    // Tests that a self-intersecting line string detects kinks.
     @Test
     func lineStringWithKinks() async throws {
         let ls = try #require(LineString([
@@ -53,6 +57,7 @@ struct KinksTests {
         #expect(result.points.isNotEmpty)
     }
 
+    // Tests that a multi-line string with intersecting lines detects kinks.
     @Test
     func multiLineStringWithKinks() async throws {
         let mls = try #require(MultiLineString([
@@ -71,6 +76,7 @@ struct KinksTests {
         #expect(result.points.isNotEmpty)
     }
 
+    // Tests that kink detection works through the Feature wrapper type.
     @Test
     func featureKinks() async throws {
         let polygon = try #require(Polygon([[
@@ -85,6 +91,7 @@ struct KinksTests {
         #expect(result.points.isNotEmpty)
     }
 
+    // Tests that unsupported geometry types (e.g., Point) return no kinks.
     @Test
     func unsupportedGeometryKinks() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))

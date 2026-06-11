@@ -6,6 +6,7 @@ struct ClustersTests {
 
     // MARK: - DBSCAN
 
+    // Validates that DBSCAN clusters nearby points together and separates distant points into different clusters.
     @Test
     func dbscanBasic() async throws {
         let points: [Feature] = [
@@ -29,6 +30,7 @@ struct ClustersTests {
         #expect(c0 != c1)
     }
 
+    // Validates that DBSCAN marks isolated points (fewer than minPoints within maxDistance) as noise.
     @Test
     func dbscanNoise() async throws {
         let points: [Feature] = [
@@ -43,6 +45,7 @@ struct ClustersTests {
         #expect(dbscan == "noise")
     }
 
+    // Validates that DBSCAN returns an empty result for an empty feature collection.
     @Test
     func dbscanEmpty() async throws {
         let fc = FeatureCollection()
@@ -52,6 +55,7 @@ struct ClustersTests {
 
     // MARK: - K-means
 
+    // Validates that K-means clusters nearby points together and separates distant points.
     @Test
     func kmeansBasic() async throws {
         let points: [Feature] = [
@@ -74,6 +78,7 @@ struct ClustersTests {
         #expect(centroid != nil)
     }
 
+    // Validates that K-means returns an empty result for an empty feature collection.
     @Test
     func kmeansEmpty() async throws {
         let fc = FeatureCollection()
@@ -81,6 +86,7 @@ struct ClustersTests {
         #expect(result.features.isEmpty)
     }
 
+    // Validates that K-means with automatic cluster count estimation produces clusters.
     @Test
     func kmeansAutoK() async throws {
         let points: [Feature] = [

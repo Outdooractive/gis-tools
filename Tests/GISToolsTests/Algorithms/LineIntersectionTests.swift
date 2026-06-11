@@ -3,6 +3,7 @@ import Testing
 
 struct LineIntersectionTests {
 
+    // Tests intersection of two simple 2-vertex line strings at a single point.
     @Test
     func lineIntersection2Vertex() async throws {
         let feature1 = Feature(
@@ -24,6 +25,7 @@ struct LineIntersectionTests {
         #expect(abs(intersections[0].coordinate.longitude - results[0].coordinate.longitude) < 0.00001)
     }
 
+    // Tests intersection of two line strings that cross at two points.
     @Test
     func lineIntersectionDouble() async throws {
         let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble1")
@@ -49,6 +51,7 @@ struct LineIntersectionTests {
         }
     }
 
+    // Tests intersection detection between two polygons with holes.
     @Test
     func lineIntersectionPolygonsWithHoles() async throws {
         let polygon1 = try TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles1")
@@ -90,6 +93,7 @@ struct LineIntersectionTests {
         }
     }
 
+    // Tests intersection detection between two multi-line strings.
     @Test
     func lineIntersectionMultiLineStrings() async throws {
         let multiLineString1 = try TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings1")
@@ -123,6 +127,7 @@ struct LineIntersectionTests {
         }
     }
 
+    // Tests intersection detection for line strings sharing coordinate points.
     @Test
     func lineIntersectionSameCoordinates() async throws {
         let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates1")
@@ -148,6 +153,7 @@ struct LineIntersectionTests {
         }
     }
 
+    // Tests the boolean intersects method on line segments for crossing, parallel, and offset cases.
     @Test
     func booleanIntersection() async throws {
         let segment1 = LineSegment(first: Coordinate3D(latitude: 1.0, longitude: 1.0),
@@ -171,7 +177,9 @@ struct LineIntersectionTests {
 
     // MARK: - Edge case tests for intersection()
 
-    @Test func intersectionCrossing() async throws {
+    // Tests that two crossing line segments return the correct intersection point.
+    @Test
+    func intersectionCrossing() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 10),
@@ -181,7 +189,9 @@ struct LineIntersectionTests {
         #expect(abs(result.longitude - 5) < 1e-10)
     }
 
-    @Test func intersectionMeetingAtEndpoint() async throws {
+    // Tests that two line segments meeting at an endpoint return that endpoint as the intersection.
+    @Test
+    func intersectionMeetingAtEndpoint() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 5, longitude: 5),
@@ -191,7 +201,9 @@ struct LineIntersectionTests {
         #expect(abs(result.longitude - 5) < 1e-10)
     }
 
-    @Test func intersectionTouchingAtEndpointWithEpsilon() async throws {
+    // Tests that near-miss segments touching at endpoints are detected as intersecting with an epsilon tolerance.
+    @Test
+    func intersectionTouchingAtEndpointWithEpsilon() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.000000001, longitude: 10.000000001),
@@ -200,7 +212,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2, epsilon: 1e-6) != nil)
     }
 
-    @Test func intersectionNoCrossing() async throws {
+    // Tests that non-crossing, non-overlapping line segments return no intersection.
+    @Test
+    func intersectionNoCrossing() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 6, longitude: 6),
@@ -208,7 +222,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionParallelNoOverlap() async throws {
+    // Tests that parallel, non-overlapping line segments return no intersection.
+    @Test
+    func intersectionParallelNoOverlap() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 0))
         let s2 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 5),
@@ -216,7 +232,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionCollinearOverlapFull() async throws {
+    // Tests that fully overlapping collinear segments return no single point intersection.
+    @Test
+    func intersectionCollinearOverlapFull() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 2, longitude: 2),
@@ -224,7 +242,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionCollinearOverlapPartial() async throws {
+    // Tests that partially overlapping collinear segments return no single point intersection.
+    @Test
+    func intersectionCollinearOverlapPartial() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 5, longitude: 5),
@@ -232,7 +252,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionCollinearTouchingAtEndpoint() async throws {
+    // Tests that collinear segments touching at endpoints return no single point intersection.
+    @Test
+    func intersectionCollinearTouchingAtEndpoint() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 10, longitude: 10),
@@ -240,7 +262,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionCollinearNoOverlap() async throws {
+    // Tests that collinear non-overlapping segments return no intersection.
+    @Test
+    func intersectionCollinearNoOverlap() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 6, longitude: 6),
@@ -248,7 +272,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionCollinearSameEndpoint() async throws {
+    // Tests that identical collinear segments return no single point intersection.
+    @Test
+    func intersectionCollinearSameEndpoint() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
@@ -256,7 +282,9 @@ struct LineIntersectionTests {
         #expect(s1.intersection(s2) == nil)
     }
 
-    @Test func intersectionVerticalSegments() async throws {
+    // Tests intersection of a horizontal and a vertical line segment.
+    @Test
+    func intersectionVerticalSegments() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 5),
                              second: Coordinate3D(latitude: 10, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 2, longitude: 3),
@@ -268,7 +296,9 @@ struct LineIntersectionTests {
 
     // MARK: - Edge case tests for intersects()
 
-    @Test func intersectsNoCrossing() async throws {
+    // Tests that the boolean intersects method returns false for non-crossing, non-overlapping segments.
+    @Test
+    func intersectsNoCrossing() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 6, longitude: 6),
@@ -276,7 +306,9 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2) == false)
     }
 
-    @Test func intersectsEndpointTouching() async throws {
+    // Tests that the boolean intersects method returns true for segments touching at endpoints.
+    @Test
+    func intersectsEndpointTouching() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 5, longitude: 5),
@@ -284,7 +316,9 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2))
     }
 
-    @Test func intersectsCollinearOverlap() async throws {
+    // Tests that the boolean intersects method returns true for overlapping collinear segments.
+    @Test
+    func intersectsCollinearOverlap() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 3, longitude: 3),
@@ -292,7 +326,9 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2))
     }
 
-    @Test func intersectsCollinearNoOverlap() async throws {
+    // Tests that the boolean intersects method returns false for collinear non-overlapping segments.
+    @Test
+    func intersectsCollinearNoOverlap() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 5, longitude: 5))
         let s2 = LineSegment(first: Coordinate3D(latitude: 6, longitude: 6),
@@ -300,7 +336,9 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2) == false)
     }
 
-    @Test func intersectsNearMissWithEpsilon() async throws {
+    // Tests that near-miss segments are detected as intersecting only when an epsilon tolerance is provided.
+    @Test
+    func intersectsNearMissWithEpsilon() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 0))
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.0000001, longitude: 0),
@@ -309,7 +347,9 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2, epsilon: 1e-6))
     }
 
-    @Test func intersectsMeetingAtEndpointWithEpsilon() async throws {
+    // Tests that segments nearly meeting at endpoints are detected as intersecting only with an epsilon tolerance.
+    @Test
+    func intersectsMeetingAtEndpointWithEpsilon() async throws {
         let s1 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 0),
                              second: Coordinate3D(latitude: 10, longitude: 10))
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.000000001, longitude: 10.000000001),

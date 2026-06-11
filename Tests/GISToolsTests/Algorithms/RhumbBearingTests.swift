@@ -6,6 +6,7 @@ import Testing
 
 struct RhumbBearingTests {
 
+    // Tests rhumb line bearing calculation between two coordinates for both initial and final bearings.
     @Test
     func rhumbBearing() async throws {
         let start = Coordinate3D(latitude: 45.0, longitude: -75.0)

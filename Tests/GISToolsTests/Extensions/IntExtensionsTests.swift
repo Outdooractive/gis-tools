@@ -3,6 +3,7 @@ import Testing
 
 struct IntExtensionsTests {
 
+    // Verifies GISTool.convertToMeters with integer inputs for all supported length units.
     @Test
     func conversions() async throws {
         // 1 unit

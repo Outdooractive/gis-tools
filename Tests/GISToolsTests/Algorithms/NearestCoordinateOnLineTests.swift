@@ -3,6 +3,7 @@ import Testing
 
 struct NearestCoordinateOnLineTests {
 
+    // Verifies that a coordinate matching a line's first vertex returns that vertex as the nearest.
     @Test
     func firstPoint() async throws {
         let lineString = try  #require(LineString([
@@ -15,6 +16,7 @@ struct NearestCoordinateOnLineTests {
         #expect(nearestCoordinate == lineString.coordinates[0])
     }
 
+    // Verifies that points located before the line's first vertex snap to that first vertex.
     @Test
     func pointsBehindFirstPoint() async throws {
         let lineString = try #require(LineString([
@@ -34,6 +36,7 @@ struct NearestCoordinateOnLineTests {
         }
     }
 
+    // Verifies that points located beyond the line's last vertex snap to that last vertex.
     @Test
     func pointsInFrontOfLastPoint() async throws {
         let lineString = try #require(LineString([
@@ -54,6 +57,7 @@ struct NearestCoordinateOnLineTests {
         }
     }
 
+    // Verifies that coordinates at line vertices return themselves as the nearest point.
     @Test
     func pointsOnJoints() async throws {
         let lines: [LineString] = [
@@ -98,6 +102,7 @@ struct NearestCoordinateOnLineTests {
         }
     }
 
+    // Verifies that a coordinate projected onto a line at a given distance returns itself as nearest.
     @Test
     func pointAlongLine() async throws {
         let lineString = try #require(LineString([
@@ -109,6 +114,7 @@ struct NearestCoordinateOnLineTests {
         #expect(coordinate == nearestCoordinate)
     }
 
+    // Verifies that points near but not at the line endpoints snap to an intermediate segment point.
     @Test
     func pointsOnSidesOfLines() async throws {
         let lineString = try #require(LineString([
@@ -129,6 +135,7 @@ struct NearestCoordinateOnLineTests {
         }
     }
 
+    // Verifies that the nearest coordinate on a multi-segment line is correctly computed.
     @Test
     func line() async throws {
         let lineString = try #require(LineString([

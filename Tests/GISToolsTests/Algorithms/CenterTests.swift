@@ -6,6 +6,7 @@ struct CenterTests {
 
     // MARK: - center
 
+    // Validates that the center of a `Point` is the point itself.
     @Test
     func pointCenter() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
@@ -14,6 +15,7 @@ struct CenterTests {
         #expect(center.coordinate.longitude == 20.0)
     }
 
+    // Validates that the geodesic center of a `LineString` is computed correctly (with curvature shift).
     @Test
     func lineStringCenter() async throws {
         let ls = try #require(LineString([
@@ -26,6 +28,7 @@ struct CenterTests {
         #expect(abs(center.coordinate.longitude - 5.0) < 0.2)
     }
 
+    // Validates that the center of a `Polygon` is computed correctly.
     @Test
     func polygonCenter() async throws {
         let polygon = try #require(Polygon([[
@@ -40,6 +43,7 @@ struct CenterTests {
         #expect(abs(center.coordinate.longitude - 5.0) < 1.0)
     }
 
+    // Validates that the center of a `Feature` delegates to its underlying geometry.
     @Test
     func featureCenter() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
@@ -51,6 +55,7 @@ struct CenterTests {
 
     // MARK: - centroid
 
+    // Validates that the centroid of a `Point` is the point itself.
     @Test
     func pointCentroid() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
@@ -59,6 +64,7 @@ struct CenterTests {
         #expect(centroid.coordinate.longitude == 20.0)
     }
 
+    // Validates that the centroid of a `LineString` is the mean of its coordinates.
     @Test
     func lineStringCentroid() async throws {
         let ls = try #require(LineString([
@@ -71,6 +77,7 @@ struct CenterTests {
         #expect(centroid.coordinate.longitude == 5.0)
     }
 
+    // Validates that the centroid of a `Polygon` is the mean of all its coordinates (including the closing point).
     @Test
     func polygonCentroid() async throws {
         let polygon = try #require(Polygon([[
@@ -88,6 +95,7 @@ struct CenterTests {
         #expect(centroid.coordinate.longitude == expectedLon)
     }
 
+    // Validates that the centroid of a `MultiPoint` is the mean of all its points.
     @Test
     func multiPointCentroid() async throws {
         let mp = try #require(MultiPoint([
@@ -103,6 +111,7 @@ struct CenterTests {
 
     // MARK: - centroid (edge cases)
 
+    // Validates that the centroid is nil for empty geometries.
     @Test
     func emptyCentroid() async throws {
         let ls = LineString()
@@ -111,6 +120,7 @@ struct CenterTests {
 
     // MARK: - centerMean
 
+    // Validates that the unweighted center mean of a feature collection is correctly computed.
     @Test
     func centerMeanUnweighted() async throws {
         let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -122,6 +132,7 @@ struct CenterTests {
         #expect(mean.coordinate.longitude == 5.0)
     }
 
+    // Validates that the weighted center mean correctly applies per-feature weights.
     @Test
     func centerMeanWeighted() async throws {
         let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -139,6 +150,7 @@ struct CenterTests {
         #expect(mean.coordinate.longitude == 8.0)
     }
 
+    // Validates that features with zero weight are skipped when computing the weighted center mean.
     @Test
     func centerMeanZeroWeightSkipped() async throws {
         let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -155,6 +167,7 @@ struct CenterTests {
         #expect(mean.coordinate.longitude == 10.0)
     }
 
+    // Validates that center mean returns nil for an empty feature collection.
     @Test
     func centerMeanEmpty() async throws {
         let fc = FeatureCollection()
@@ -163,6 +176,7 @@ struct CenterTests {
 
     // MARK: - centerMean with LineString coordinates
 
+    // Validates that center mean works correctly with `LineString` coordinates.
     @Test
     func centerMeanLineString() async throws {
         let ls = try #require(LineString([

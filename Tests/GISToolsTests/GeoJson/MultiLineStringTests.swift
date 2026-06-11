@@ -21,6 +21,7 @@ struct MultiLineStringTests {
     }
     """
 
+    // Validates loading a MultiLineString from JSON and verifying its coordinates and foreign members.
     @Test
     func loadJson() async throws {
         let multiLineString = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
@@ -38,6 +39,7 @@ struct MultiLineStringTests {
         #expect(multiLineString[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a MultiLineString from coordinates and verifying its JSON string output.
     @Test
     func createJson() async throws {
         let multiLineString = try #require(MultiLineString([
@@ -57,6 +59,7 @@ struct MultiLineStringTests {
         #expect(string.contains("\"coordinates\":[[[100,0],[101,1]],[[102,2],[103,3]]]"))
     }
 
+    // Validates that a MultiLineString encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let multiLineString = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson))
@@ -67,6 +70,7 @@ struct MultiLineStringTests {
         #expect(try encoder.encode(multiLineString) == multiLineString.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a MultiLineString round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let multiLineStringData = try #require(MultiLineString(jsonString: MultiLineStringTests.multiLineStringJson)?.asJsonData(prettyPrinted: true))

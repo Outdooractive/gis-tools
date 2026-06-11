@@ -6,6 +6,7 @@ import Testing
 
 struct FrechetDistanceTests {
 
+    // Validates Frechet distance between two arcs in EPSG:4326 using haversine and rhumb line distance functions.
     @Test
     func frechetDistance4326() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -19,6 +20,7 @@ struct FrechetDistanceTests {
         #expect(abs(distanceRhumbLine - 1000.0) < 0.0001)
     }
 
+    // Validates Frechet distance between two arcs in EPSG:3857 using the Euclidean distance function.
     @Test
     func frechetDistance3857() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0)).projected(to: .epsg3857)

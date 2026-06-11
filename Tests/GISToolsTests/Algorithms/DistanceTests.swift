@@ -6,6 +6,7 @@ import Testing
 
 struct DistanceTests {
 
+    // Validates the haversine distance between two coordinates matches the expected value.
     @Test
     func distance() async throws {
         let coordinate1 = Coordinate3D(latitude: 39.984, longitude: -75.343)

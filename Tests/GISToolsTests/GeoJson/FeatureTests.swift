@@ -30,6 +30,7 @@ struct FeatureTests {
     }
     """
 
+    // Validates loading a Feature with a string ID from JSON and accessing its properties and foreign members.
     @Test
     func loadJson() async throws {
         let feature = try #require(Feature(jsonString: FeatureTests.featureJson))
@@ -72,6 +73,7 @@ struct FeatureTests {
     }
     """
 
+    // Validates loading a Feature with an integer ID from JSON.
     @Test
     func loadJsonWithIntId() async throws {
         let feature = try #require(Feature(jsonString: FeatureTests.featureJsonWithIntId))
@@ -80,6 +82,7 @@ struct FeatureTests {
         #expect(feature.projection == .epsg4326)
     }
 
+    // Validates creating a Feature from a geometry and verifying its JSON output.
     @Test
     func createJson() async throws {
         let feature = Feature(Point(.zero), id: .int(5))
@@ -92,6 +95,7 @@ struct FeatureTests {
         #expect(geometry["coordinates"] as? [Double] == [0.0, 0.0])
     }
 
+    // Validates that a Feature encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let feature = try #require(Feature(jsonString: FeatureTests.featureJson))
@@ -102,6 +106,7 @@ struct FeatureTests {
         #expect(try encoder.encode(feature) == feature.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a Feature round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let featureData = try #require(Feature(jsonString: FeatureTests.featureJson)?.asJsonData(prettyPrinted: true))
@@ -111,6 +116,7 @@ struct FeatureTests {
         #expect(featureData == feature.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that Feature.Identifier handles various signed and unsigned integer types correctly.
     @Test
     func featureIds() async throws {
         #expect(Feature.Identifier(value: 1234) == .int(1234))

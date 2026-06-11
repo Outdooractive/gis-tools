@@ -38,6 +38,7 @@ struct MultiPolygonTests {
     }
     """
 
+    // Validates loading a MultiPolygon from JSON and verifying its coordinates and foreign members.
     @Test
     func loadJson() async throws {
         let multiPolygon = try #require(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson))
@@ -67,6 +68,7 @@ struct MultiPolygonTests {
         #expect(multiPolygon[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a MultiPolygon from coordinates and verifying its JSON string output.
     @Test
     func createJson() async throws {
         let multiPolygon = try #require(MultiPolygon([[[
@@ -95,6 +97,7 @@ struct MultiPolygonTests {
         #expect(string.contains("\"coordinates\":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0],[100.2,1],[100.8,1],[100.8,0],[100.2,0]]]]"))
     }
 
+    // Validates that a MultiPolygon encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let multiPolygon = try #require(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson))
@@ -105,6 +108,7 @@ struct MultiPolygonTests {
         #expect(try encoder.encode(multiPolygon) == multiPolygon.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a MultiPolygon round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let multiPolygonData = try #require(MultiPolygon(jsonString: MultiPolygonTests.multiPolygonJson)?.asJsonData(prettyPrinted: true))

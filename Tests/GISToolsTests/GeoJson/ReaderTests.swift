@@ -12,6 +12,7 @@ struct ReaderTests {
     }
     """
 
+    // Validates reading a GeoJson object from an in-memory JSON dictionary.
     @Test
     func loadJson() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -23,6 +24,7 @@ struct ReaderTests {
         #expect(castedPoint.asJsonString(prettyPrinted: true) == point.asJsonString(prettyPrinted: true))
     }
 
+    // Validates reading a GeoJson object from a JSON string.
     @Test
     func loadString() async throws {
         let someGeoJson = try #require(GeoJsonReader.geoJsonFrom(jsonString: pointJson))

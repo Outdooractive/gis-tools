@@ -3,6 +3,7 @@ import Testing
 
 struct FlattenTests {
 
+    // Validates flattening a nested FeatureCollection produces the expected flat result.
     @Test
     func featureCollection() async throws {
         let original = try TestData.featureCollection(package: "Flatten", name: "FeatureCollection")
@@ -12,6 +13,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Validates flattening a nested GeometryCollection produces the expected flat result.
     @Test
     func geometryCollection() async throws {
         let original = try TestData.geometryCollection(package: "Flatten", name: "GeometryCollection")
@@ -21,6 +23,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Validates flattening a MultiPolygon geometry object produces the expected flat result.
     @Test
     func geometryObject() async throws {
         let original = try TestData.multiPolygon(package: "Flatten", name: "GeometryObject")
@@ -30,6 +33,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Validates flattening a Feature containing a MultiLineString produces the expected flat result.
     @Test
     func multiLineString() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiLineString")
@@ -39,6 +43,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Validates flattening a Feature containing a MultiPoint produces the expected flat result.
     @Test
     func multiPoint() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiPoint")
@@ -48,6 +53,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Validates flattening a Feature containing a Polygon produces the expected flat result.
     @Test
     func polygon() async throws {
         let original = try TestData.feature(package: "Flatten", name: "Polygon")

@@ -4,6 +4,7 @@ import Testing
 
 struct PolygonSmoothTests {
 
+    // Tests that Chaikin smoothing a square polygon doubles the number of points and remains closed.
     @Test
     func smoothSquare() async throws {
         let polygon = try #require(Polygon([[
@@ -22,6 +23,7 @@ struct PolygonSmoothTests {
         #expect(outerRing.coordinates.first == outerRing.coordinates.last)
     }
 
+    // Tests that multiple smoothing iterations continue doubling the number of points.
     @Test
     func smoothMultipleIterations() async throws {
         let polygon = try #require(Polygon([[
@@ -39,6 +41,7 @@ struct PolygonSmoothTests {
         #expect(outerRing.coordinates.count == 17) // 16 points + closing
     }
 
+    // Tests that smoothing a triangle polygon produces the expected number of points (3 corners to 6).
     @Test
     func smoothTriangle() async throws {
         let polygon = try #require(Polygon([[
@@ -55,6 +58,7 @@ struct PolygonSmoothTests {
         #expect(outerRing.coordinates.count == 7)
     }
 
+    // Tests that smoothing a polygon with a hole preserves both the outer ring and the hole.
     @Test
     func smoothWithHole() async throws {
         let polygon = try #require(Polygon([
@@ -78,6 +82,7 @@ struct PolygonSmoothTests {
         #expect(smoothed.rings.count == 2) // outer + hole
     }
 
+    // Tests that smoothing a MultiPolygon applies Chaikin smoothing to each constituent polygon.
     @Test
     func smoothMultiPolygon() async throws {
         let poly1 = try #require(Polygon([[
@@ -105,6 +110,7 @@ struct PolygonSmoothTests {
         }
     }
 
+    // Tests that additional smoothing iterations continue to modify the geometry further.
     @Test
     func smoothIdempotency() async throws {
         let polygon = try #require(Polygon([[

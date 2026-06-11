@@ -25,6 +25,7 @@ struct SwiftDataTests {
         return try! ModelContainer(for: GeoJsonModel.self, configurations: config)
     }()
 
+    // Validates inserting and fetching various GeoJson types via SwiftData.
     @MainActor
     @Test(.disabled(if: CIHelper.isRunningInCI, "This test will currently not run in CI"))
     func insert() async throws {

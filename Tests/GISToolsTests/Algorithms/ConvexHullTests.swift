@@ -4,6 +4,7 @@ import Testing
 
 struct ConvexHullTests {
 
+    // Validates the convex hull of a square produces 5 coordinates (4 corners + closing) and contains a center point.
     @Test
     func convexHullSquare() async throws {
         let mp = try #require(MultiPoint([
@@ -18,6 +19,7 @@ struct ConvexHullTests {
         #expect(hull.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
     }
 
+    // Validates the convex hull of a triangle produces 4 coordinates (3 corners + closing).
     @Test
     func convexHullTriangle() async throws {
         let mp = try #require(MultiPoint([
@@ -30,6 +32,7 @@ struct ConvexHullTests {
         #expect(hull.outerRing?.coordinates.count == 4) // 3 corners + closing
     }
 
+    // Validates interior points are excluded from the convex hull of a square.
     @Test
     func convexHullWithInteriorPoint() async throws {
         let mp = try #require(MultiPoint([
@@ -44,6 +47,7 @@ struct ConvexHullTests {
         #expect(hull.outerRing?.coordinates.count == 5) // 4 corners + closing
     }
 
+    // Validates the convex hull correctly handles collinear points along the top edge.
     @Test
     func convexHullCollinearTop() async throws {
         let mp = try #require(MultiPoint([
@@ -58,6 +62,7 @@ struct ConvexHullTests {
         #expect(hull.outerRing?.coordinates.count == 5)
     }
 
+    // Validates that fewer than 3 distinct points returns nil for the convex hull.
     @Test
     func convexHullInsufficientPoints() async throws {
         let mp = try #require(MultiPoint([
@@ -67,6 +72,7 @@ struct ConvexHullTests {
         #expect(mp.convexHull() == nil)
     }
 
+    // Validates the convex hull computed from a LineString produces the expected result.
     @Test
     func convexHullLineString() async throws {
         let ls = try #require(LineString([
@@ -80,6 +86,7 @@ struct ConvexHullTests {
         #expect(hull.outerRing?.coordinates.count == 5)
     }
 
+    // Validates the convex hull computed from a Feature wrapping a MultiPoint produces the expected result.
     @Test
     func convexHullFeature() async throws {
         let mp = try #require(MultiPoint([

@@ -8,6 +8,7 @@ struct SimplifyTests {
     // https://github.com/Turfjs/turf/tree/master/packages/turf-simplify/test/in
     // https://github.com/Turfjs/turf/tree/master/packages/turf-simplify/test/out
 
+    // Validates that invalid polygons return nil when simplified.
     @Test
     func invalidPolygons() async throws {
         // TODO: Improve the polygon validity check
@@ -19,6 +20,7 @@ struct SimplifyTests {
 //        XCTAssertNil(polygon2?.simplified())
     }
 
+    // Validates that simplification with degenerate rings does not enter an endless loop.
     @Test
     func ringValidationBackoff() async throws {
         let polygon = Polygon([[

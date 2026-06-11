@@ -3,6 +3,7 @@ import Testing
 
 struct ArrayExtensionsTests {
 
+    // Verifies that distinctPairs() returns non-overlapping pairs from even and uneven length arrays.
     @Test
     func distinctPairs() async throws {
         let even: [Int] = [1, 2, 3, 4, 5, 6]
@@ -27,6 +28,7 @@ struct ArrayExtensionsTests {
         #expect(unevenPairs[1].second == 4)
     }
 
+    // Verifies that distinctPairs() handles empty and single-element arrays correctly.
     @Test
     func smallDistinctPairs() async throws {
         let empty: [Int] = []
@@ -39,6 +41,7 @@ struct ArrayExtensionsTests {
         #expect(smallPairs.count == 1)
     }
 
+    // Verifies that overlappingPairs() returns sliding window pairs from even and uneven length arrays.
     @Test
     func overlappingPairs() async throws {
         let even: [Int] = [1, 2, 3, 4, 5, 6]
@@ -71,6 +74,7 @@ struct ArrayExtensionsTests {
         #expect(evenPairs[3].second == 5)
     }
 
+    // Verifies that overlappingPairs() handles empty and single-element arrays correctly.
     @Test
     func smallOverlappingPairs() async throws {
         let empty: [Int] = []
@@ -83,6 +87,7 @@ struct ArrayExtensionsTests {
         #expect(smallPairs.count == 1)
     }
 
+    // Verifies safe array element access via get(at:) with positive, negative, and out-of-bounds indices.
     @Test
     func get() async throws {
         let array = [0, 1, 2, 3, 4, 5, 6]

@@ -6,6 +6,7 @@ struct BoundingBoxTests {
 
     // MARK: - Projection
 
+    // Validates that projecting a bounding box correctly updates the projection property for both the box and its corners.
     @Test
     func projection() async throws {
         let boundingBox = BoundingBox(
@@ -23,6 +24,7 @@ struct BoundingBoxTests {
         #expect(boundingBox3857.northEast.projection == .epsg3857)
     }
 
+    // Validates that initializing a bounding box with EPSG:4326 coordinates sets the correct projection.
     @Test
     func initWithCoordinatesEPSG4326() async throws {
         let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 0.0)
@@ -34,6 +36,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.northEast.projection == .epsg4326)
     }
 
+    // Validates that initializing a bounding box with EPSG:3857 coordinates sets the correct projection.
     @Test
     func initWithCoordinatesEPSG3857() async throws {
         let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514)
@@ -47,6 +50,7 @@ struct BoundingBoxTests {
 
     // MARK: - contains(_:)
 
+    // Validates that `contains` correctly determines whether a coordinate lies within the bounding box.
     @Test
     func contains() async throws {
         let boundingBox = BoundingBox(
@@ -64,6 +68,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.contains(point2) == false)
     }
 
+    // Validates that `contains` handles coordinates correctly when the bounding box crosses the anti-meridian with longitude > 180.
     @Test
     func containsDateline1() async throws {
         let boundingBox = BoundingBox(
@@ -83,6 +88,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.contains(point3))
     }
 
+    // Validates that `contains` handles coordinates correctly when the bounding box crosses the anti-meridian with normalized longitude.
     @Test
     func containsDateline2() async throws {
         let boundingBox = BoundingBox(
@@ -106,6 +112,7 @@ struct BoundingBoxTests {
 
     // MARK: - contains(_:) (rect)
 
+    // Validates that `contains` correctly determines whether another bounding box is fully contained.
     @Test
     func containsRect() async throws {
         let boundingBox = BoundingBox(
@@ -135,6 +142,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.contains(other2) == false)
     }
 
+    // Validates that `contains` correctly determines containment of another bounding box across the anti-meridian.
     @Test
     func containsRectDateline1() async throws {
         let boundingBox = BoundingBox(
@@ -188,6 +196,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.contains(other5) == false)
     }
 
+    // Validates that `contains` handles containment of another bounding box across the anti-meridian with normalized longitude.
     @Test
     func containsRectDateline2() async throws {
         let boundingBox = BoundingBox(
@@ -243,6 +252,7 @@ struct BoundingBoxTests {
 
     // MARK: - intersects(_:)
 
+    // Validates that `intersects` correctly determines whether two bounding boxes overlap.
     @Test
     func intersectsRect() async throws {
         let boundingBox = BoundingBox(
@@ -288,6 +298,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.intersects(other4) == false)
     }
 
+    // Validates that `intersects` correctly determines overlap of bounding boxes across the anti-meridian.
     @Test
     func intersectsRectDateline1() async throws {
         let boundingBox = BoundingBox(
@@ -335,6 +346,7 @@ struct BoundingBoxTests {
 
     // MARK: - intersection(_:)
 
+    // Validates that `intersection` computes the overlapping region of two bounding boxes.
     @Test
     func intersection() async throws {
         let boundingBox = BoundingBox(
@@ -394,6 +406,7 @@ struct BoundingBoxTests {
         #expect(boundingBox.intersection(other4) == nil)
     }
 
+    // Validates that `intersection` correctly computes overlap of bounding boxes across the anti-meridian.
     @Test
     func intersectionRectDateline1() async throws {
         let boundingBox = BoundingBox(
@@ -455,6 +468,7 @@ struct BoundingBoxTests {
 
     // MARK: - center
 
+    // Validates that `center` returns the correct geographic center of a bounding box.
     @Test
     func center() async throws {
         let boundingBox = BoundingBox(
@@ -470,6 +484,7 @@ struct BoundingBoxTests {
         #expect(point == center)
     }
 
+    // Validates that `center` computes the correct center when the bounding box crosses the anti-meridian with longitude > 180.
     @Test
     func centerDateline1() async throws {
         let boundingBox = BoundingBox(
@@ -485,6 +500,7 @@ struct BoundingBoxTests {
         #expect(point == center)
     }
 
+    // Validates that `center` computes the correct center when the bounding box crosses the anti-meridian with normalized longitude.
     @Test
     func centerDateline2() async throws {
         let boundingBox = BoundingBox(
@@ -500,6 +516,7 @@ struct BoundingBoxTests {
         #expect(point == center)
     }
 
+    // Validates that a bounding box encodes to the expected JSON array format.
     @Test
     func encodable() async throws {
         let boundingBox = BoundingBox(
@@ -514,6 +531,7 @@ struct BoundingBoxTests {
         #expect(String(data: boundingBoxData, encoding: .utf8) == "[0,0,20,20]")
     }
 
+    // Validates that a bounding box decodes correctly from a JSON array.
     @Test
     func decodable() async throws {
         let boundingBoxData =  try #require("[0,0,20,20]".data(using: .utf8))
@@ -524,6 +542,7 @@ struct BoundingBoxTests {
 
     // MARK: - Clamp
 
+    // Validates that `clamped()` constrains a bounding box to within world bounds.
     @Test
     func clamped() async throws {
         let boundingBox = BoundingBox(
@@ -540,6 +559,7 @@ struct BoundingBoxTests {
 
     // MARK: - Expanding
 
+    // Validates that a bounding box can be expanded by distance and by degrees in both coordinate systems.
     @Test
     func expanding() async throws {
         let bbox1 = try #require(BoundingBox(coordinates: [.zero]))
@@ -576,6 +596,7 @@ struct BoundingBoxTests {
 
     // MARK: - boundingBoxGeometry
 
+    // Validates that a non-wrapping bounding box produces a Polygon geometry.
     @Test
     func boundingBoxGeometryNormal() async throws {
         let bbox = BoundingBox(
@@ -589,6 +610,7 @@ struct BoundingBoxTests {
         #expect(polygon.coordinates.count == 1)
     }
 
+    // Validates that a bounding box crossing the anti-meridian produces a MultiPolygon with two polygons.
     @Test
     func boundingBoxGeometryAntimeridian() async throws {
         let bbox = BoundingBox(
@@ -620,6 +642,7 @@ struct BoundingBoxTests {
         #expect(leftCoords[3] == Coordinate3D(latitude: 40.0, longitude: -180.0))
     }
 
+    // Validates that a bounding box crossing the anti-meridian produces a MultiPolygon with two polygons (asymmetric bbox).
     @Test
     func boundingBoxGeometryAntimeridian2() async throws {
         let bbox = BoundingBox(
@@ -635,6 +658,7 @@ struct BoundingBoxTests {
         #expect(multiPolygon.polygons.count == 2)
     }
 
+    // Validates that the world bounding box produces a single Polygon and does not cross the anti-meridian.
     @Test
     func boundingBoxGeometryWorld() async throws {
         #expect(BoundingBox.world.crossesAntiMeridian == false)

@@ -3,6 +3,7 @@ import Testing
 
 struct BoundingBoxClipTests {
 
+    // Validates clipping a single line segment to a bounding box.
     @Test
     func lineStringSingleLine() async throws {
         let lineString = try TestData.lineString(package: "BoundingBoxClip", name: "SingleLine")
@@ -17,6 +18,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates clipping a multi-segment line string to a bounding box.
     @Test
     func lineString() async throws {
         let lineString = try TestData.lineString(package: "BoundingBoxClip", name: "LineString")
@@ -29,6 +31,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates clipping a `MultiLineString` to a bounding box.
     @Test
     func multiLineString() async throws {
         let lineString = try TestData.multiLineString(package: "BoundingBoxClip", name: "MultiLineString")
@@ -41,6 +44,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates clipping a `MultiPolygon` to a bounding box.
     @Test
     func multiPolygon() async throws {
         let multiPolygon = try TestData.multiPolygon(package: "BoundingBoxClip", name: "MultiPolygon")
@@ -53,6 +57,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates clipping a polygon with a crossing hole to a bounding box.
     @Test
     func polygonCrossingHole() async throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonCrossingHole")
@@ -65,6 +70,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates clipping a polygon with multiple holes to a bounding box.
     @Test
     func polygonHoles() async throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonHoles")
@@ -77,6 +83,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
+    // Validates that clipping returns nil when the bounding box intersects at only a point (degenerate/invalid).
     @Test
     func polygonPointIntersection() async throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonPointIntersection")

@@ -6,6 +6,7 @@ struct BooleanCrossesTests {
 
     // MARK: - LineString × LineString — true
 
+    // Tests that two LineStrings intersecting at an interior point are detected as crossing.
     @Test
     func lineStringLineStringCrosses() async throws {
         // Vertical line at lon=2, from lat=1 to lat=4
@@ -23,6 +24,7 @@ struct BooleanCrossesTests {
         #expect(line2.crosses(line1))
     }
 
+    // Tests that diagonally crossing LineStrings are detected as crossing.
     @Test
     func lineStringLineStringCrossesDiagonal() async throws {
         let line1 = try #require(LineString([
@@ -38,6 +40,7 @@ struct BooleanCrossesTests {
 
     // MARK: - LineString × LineString — false
 
+    // Tests that parallel non-intersecting LineStrings do not cross.
     @Test
     func lineStringLineStringDoesNotCross() async throws {
         let line1 = try #require(LineString([
@@ -52,6 +55,7 @@ struct BooleanCrossesTests {
         #expect(line1.crosses(line2) == false)
     }
 
+    // Tests that LineStrings touching only at endpoints are not considered to cross.
     @Test
     func lineStringLineStringEndpointTouching() async throws {
         let line1 = try #require(LineString([
@@ -68,6 +72,7 @@ struct BooleanCrossesTests {
 
     // MARK: - MultiPoint × LineString
 
+    // Tests that a MultiPoint with points both on and off a LineString is detected as crossing.
     @Test
     func multiPointLineStringCrosses() async throws {
         let mp = try #require(MultiPoint([
@@ -84,6 +89,7 @@ struct BooleanCrossesTests {
         #expect(mp.crosses(ls))
     }
 
+    // Tests that a MultiPoint entirely on a LineString does not cross it.
     @Test
     func multiPointLineStringDoesNotCross() async throws {
         // Points on the interior of the line (not at endpoints)
@@ -101,6 +107,7 @@ struct BooleanCrossesTests {
 
     // MARK: - MultiPoint × Polygon
 
+    // Tests that a MultiPoint with points both inside and outside a Polygon is detected as crossing.
     @Test
     func multiPointPolygonCrosses() async throws {
         let mp = try #require(MultiPoint([
@@ -117,6 +124,7 @@ struct BooleanCrossesTests {
         #expect(mp.crosses(polygon))
     }
 
+    // Tests that a MultiPoint entirely inside a Polygon does not cross it.
     @Test
     func multiPointPolygonDoesNotCross() async throws {
         let mp = try #require(MultiPoint([
@@ -136,6 +144,7 @@ struct BooleanCrossesTests {
 
     // MARK: - LineString × Polygon
 
+    // Tests that a LineString crossing a Polygon boundary is detected as crossing.
     @Test
     func lineStringPolygonCrosses() async throws {
         let ls = try #require(LineString([
@@ -152,6 +161,7 @@ struct BooleanCrossesTests {
         #expect(ls.crosses(polygon))
     }
 
+    // Tests that a LineString entirely outside a Polygon does not cross it.
     @Test
     func lineStringPolygonDoesNotCross() async throws {
         let ls = try #require(LineString([
@@ -171,6 +181,7 @@ struct BooleanCrossesTests {
 
     // MARK: - LineString × MultiPolygon
 
+    // Tests that a LineString crossing one polygon in a MultiPolygon is detected as crossing.
     @Test
     func lineStringMultiPolygonCrosses() async throws {
         let ls = try #require(LineString([
@@ -198,6 +209,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Feature unwrapping
 
+    // Tests that crossing detection works through Feature geometry unwrapping.
     @Test
     func featureCrosses() async throws {
         // Vertical line at lon=2
@@ -217,6 +229,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Unsupported combinations
 
+    // Tests that unsupported geometry type combinations return false for crosses.
     @Test
     func unsupportedCombinationsReturnFalse() async throws {
         let point = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
@@ -249,6 +262,7 @@ struct BooleanCrossesTests {
 
     // MARK: - FeatureCollection
 
+    // Tests that crossing detection works through FeatureCollection geometry unwrapping.
     @Test
     func featureCollectionCrosses() async throws {
         let line1 = try #require(LineString([
@@ -266,6 +280,7 @@ struct BooleanCrossesTests {
         #expect(line2.crosses(fc))
     }
 
+    // Tests that a FeatureCollection with no crossing features returns false for crosses.
     @Test
     func featureCollectionDoesNotCross() async throws {
         let line1 = try #require(LineString([
@@ -284,6 +299,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Commutativity
 
+    // Tests that crossing detection is commutative (a.crosses(b) == b.crosses(a)).
     @Test
     func crossesIsCommutative() async throws {
         let line1 = try #require(LineString([

@@ -43,6 +43,7 @@ struct PolygonTests {
     }
     """
 
+    // Validates loading Polygons (without and with holes) from JSON strings.
     @Test
     func loadJson() async throws {
         let polygonNoHole = try #require(Polygon(jsonString: PolygonTests.polygonJsonNoHole))
@@ -80,6 +81,7 @@ struct PolygonTests {
         #expect(polygonWithHoles[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating Polygons and generating their JSON representations.
     @Test
     func createJson() async throws {
         let polygonNoHole = try #require(Polygon([[
@@ -116,6 +118,7 @@ struct PolygonTests {
         #expect(stringWithHoles.contains("\"coordinates\":[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.8,1],[100.8,0],[100.2,0],[100.2,1],[100.8,1]]]"))
     }
 
+    // Validates that Polygon conforms to Encodable and matches the pretty-printed JSON output.
     @Test
     func encodable() async throws {
         let polygonNoHole = try #require(Polygon(jsonString: PolygonTests.polygonJsonNoHole))
@@ -128,6 +131,7 @@ struct PolygonTests {
         #expect(try encoder.encode(polygonWithHoles) == polygonWithHoles.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that Polygon conforms to Decodable and round-trips through JSON encoding.
     @Test
     func decodable() async throws {
         let polygonNoHoleData = try #require(Polygon(jsonString: PolygonTests.polygonJsonNoHole)?.asJsonData(prettyPrinted: true))

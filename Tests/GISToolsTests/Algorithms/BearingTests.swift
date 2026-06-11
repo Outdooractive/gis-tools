@@ -6,6 +6,7 @@ import Testing
 
 struct BearingTests {
 
+    // Tests initial and final bearing calculation between two coordinates.
     @Test
     func bearing() async throws {
         let start = Coordinate3D(latitude: 45.0, longitude: -75.0)
@@ -18,6 +19,7 @@ struct BearingTests {
         #expect(abs(finalBearing - 120.01) < 0.01)
     }
 
+    // Tests conversion of bearing values to azimuth (normalized to 0-360 degrees).
     @Test
     func bearingToAzimuth() async throws {
         #expect(40.0.bearingToAzimuth == 40.0)

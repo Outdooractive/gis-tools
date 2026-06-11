@@ -15,6 +15,7 @@ struct MultiPointTests {
     }
     """
 
+    // Validates loading a MultiPoint from JSON and verifying its coordinates and foreign members.
     @Test
     func loadJson() async throws {
         let multiPoint = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson))
@@ -29,6 +30,7 @@ struct MultiPointTests {
         #expect(multiPoint[foreignMember: "other"] == "something else")
     }
 
+    // Validates creating a MultiPoint from coordinates and verifying its JSON string output.
     @Test
     func createJson() async throws {
         let multiPoint = try #require(MultiPoint([
@@ -42,6 +44,7 @@ struct MultiPointTests {
         #expect(string.contains("\"coordinates\":[[100,0],[101,1]]"))
     }
 
+    // Validates that a MultiPoint encodes to JSON data matching its jsonData output.
     @Test
     func encodable() async throws {
         let multiPoint = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson))
@@ -52,6 +55,7 @@ struct MultiPointTests {
         #expect(try encoder.encode(multiPoint) == multiPoint.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that a MultiPoint round-trips through JSON encoding and decoding.
     @Test
     func decodable() async throws {
         let multiPointData = try #require(MultiPoint(jsonString: MultiPointTests.multiPointJson)?.asJsonData(prettyPrinted: true))

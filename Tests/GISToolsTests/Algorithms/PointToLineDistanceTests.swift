@@ -3,6 +3,7 @@ import Testing
 
 struct PointToLineDistanceTests {
 
+    // Verifies that the distance from a point to a line string is correctly computed.
     @Test
     func pointToLineDistance() async throws {
         let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
