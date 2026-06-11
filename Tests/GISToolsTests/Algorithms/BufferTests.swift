@@ -262,12 +262,23 @@ struct BufferTests {
         .init(name: "point"),
         .init(name: "polygon-with-holes"),
         .init(name: "northern-polygon"),
-        .init(name: "issue-#783", loadFeatureCollection: true),
-        .init(name: "issue-#801-Ecuador", loadFeatureCollection: true),
-        .init(name: "issue-#801", loadFeatureCollection: true),
-        .init(name: "issue-#815"),
-        .init(name: "issue-#916", loadFeatureCollection: true),
         .init(name: "north-latitude-points", unionType: .overlapping),
+
+        // Buffer around a simple polygon produces incorrect shape;
+        // buffered circles at extreme points fall outside the polygon.
+        .init(name: "issue-#783", loadFeatureCollection: true),
+        // Buffering polygons yields a radius that's too small;
+        // point buffers are correct (Ecuador variant).
+        .init(name: "issue-#801-Ecuador", loadFeatureCollection: true),
+        // Buffering polygons yields a radius that's too small;
+        // point buffers are correct.
+        .init(name: "issue-#801", loadFeatureCollection: true),
+        // Buffer on a LineString has non-uniform stroke-width;
+        // width varies along the line.
+        .init(name: "issue-#815"),
+        // Buffer that touches itself merges into a single area
+        // instead of creating a hole.
+        .init(name: "issue-#916", loadFeatureCollection: true),
     ]
 
     @Test(arguments: turfFixtures)
@@ -283,12 +294,25 @@ struct BufferTests {
         else {
             geoJson = try TestData.feature(package: "Buffer/in", name: fixture.name)
         }
-        try runTurfTest(name: fixture.name, result: try #require(geoJson.buffered(by: params.distance, unionType: fixture.unionType, steps: params.steps)))
+        try runTurfTest(
+            name: fixture.name,
+            result: try #require(geoJson.buffered(
+                by: params.distance,
+                unionType: fixture.unionType,
+                steps: params.steps)))
     }
 
+    // Buffering a long LineString creates kinks / self-intersection artifacts.
     @Test func issue900() async throws {
         let params = try Self.bufferParams("issue-#900")
-        try runTurfTest(name: "issue-#900", result: try #require(TestData.feature(package: "Buffer/in", name: "issue-#900").buffered(by: params.distance, steps: params.steps)))
+        try runTurfTest(
+            name: "issue-#900",
+            result: try #require(TestData.feature(
+                package: "Buffer/in",
+                name: "issue-#900")
+                .buffered(
+                    by: params.distance,
+                    steps: params.steps)))
     }
 
     // MARK: - Antimeridian tests
