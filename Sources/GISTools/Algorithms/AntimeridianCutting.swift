@@ -301,8 +301,14 @@ extension Polygon {
             for hole in innerRings {
                 if AntimeridianCutting.coordinatesCrossMeridian(hole.coordinates) {
                     let holeResult = AntimeridianCutting.cutRing(hole)
-                    rightInnerRings.append(contentsOf: holeResult.right)
-                    leftInnerRings.append(contentsOf: holeResult.left)
+                    if holeResult.right.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts(holeResult.right, alongLongitude: 180.0)
+                        rightInnerRings.append(connected)
+                    }
+                    if holeResult.left.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts(holeResult.left, alongLongitude: -180.0)
+                        leftInnerRings.append(connected)
+                    }
                 }
                 else {
                     if hole.coordinates.first?.longitude ?? 0 >= 0 {

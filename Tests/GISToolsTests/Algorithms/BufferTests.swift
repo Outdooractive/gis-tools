@@ -240,7 +240,11 @@ struct BufferTests {
         let loadGeometryCollection: Bool
         let unionType: BufferUnionType
 
-        init(name: String, loadFeatureCollection: Bool = false, loadGeometryCollection: Bool = false, unionType: BufferUnionType = .individual) {
+        init(name: String,
+             loadFeatureCollection: Bool = false,
+             loadGeometryCollection: Bool = false,
+             unionType: BufferUnionType = .individual
+        ) {
             self.name = name
             self.loadFeatureCollection = loadFeatureCollection
             self.loadGeometryCollection = loadGeometryCollection
@@ -272,9 +276,11 @@ struct BufferTests {
         let geoJson: GeoJson
         if fixture.loadGeometryCollection {
             geoJson = try TestData.geometryCollection(package: "Buffer/in", name: fixture.name)
-        } else if fixture.loadFeatureCollection {
+        }
+        else if fixture.loadFeatureCollection {
             geoJson = try TestData.featureCollection(package: "Buffer/in", name: fixture.name)
-        } else {
+        }
+        else {
             geoJson = try TestData.feature(package: "Buffer/in", name: fixture.name)
         }
         try runTurfTest(name: fixture.name, result: try #require(geoJson.buffered(by: params.distance, unionType: fixture.unionType, steps: params.steps)))
