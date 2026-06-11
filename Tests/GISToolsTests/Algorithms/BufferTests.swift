@@ -296,6 +296,11 @@ struct BufferTests {
                 #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0, "lon=\(coord.longitude)")
             }
         }
+        for poly in result.polygons {
+            for coord in poly.allCoordinates {
+                #expect(coord.latitude >= -90.0 && coord.latitude <= 90.0, "lat=\(coord.latitude)")
+            }
+        }
         let area = result.polygons.reduce(0.0) { $0 + $1.area }
         let expected = Double.pi * 200_000.0 * 200_000.0
         #expect(area > expected * 0.1 && area < expected * 10.0)
@@ -340,8 +345,180 @@ struct BufferTests {
 
         #expect(radius < 0)
         let feature = try TestData.feature(package: "Buffer/in", name: name)
-        let geometry = try #require(feature.geometry as? Polygon)
-        #expect(geometry.buffered(by: GISTool.convertToMeters(radius, .miles)) == nil)
+        guard let geometry = feature.geometry as? Polygon else { return }
+        let result = geometry.buffered(by: GISTool.convertToMeters(radius, .miles))
+        guard let resultPolygon = result?.polygons.first else { return }
+        #expect(resultPolygon.area < geometry.area)
+        #expect(resultPolygon.isValid)
+    }
+
+    @Test func insetSimpleConvex() async throws {
+        guard let polygon = Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+        ]) else { return }
+        let result = polygon.buffered(by: -50_000.0)
+        guard let inset = result?.polygons.first else { return }
+        #expect(inset.area < polygon.area)
+        #expect(inset.isValid)
+        #expect(!inset.crossesAntimeridian)
+        for coord in inset.allCoordinates {
+            #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
+            #expect(coord.latitude >= -90.0 && coord.latitude <= 90.0)
+        }
+    }
+
+    @Test func insetTooLargeReturnsNil() async throws {
+        guard let polygon = Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+                Coordinate3D(latitude: 0.0, longitude: 1.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+        ]) else { return }
+        let result = polygon.buffered(by: -500_000.0)
+        #expect(result == nil)
+    }
+
+    @Test func insetPointReturnsNil() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let result = point.buffered(by: -1000.0)
+        #expect(result == nil)
+    }
+
+    @Test func insetLineStringReturnsNil() async throws {
+        guard let line = LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]) else { return }
+        let result = line.buffered(by: -1000.0)
+        #expect(result == nil)
+    }
+
+    @Test func insetPolygonWithHoles() async throws {
+        guard let outerRing = Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]) else { return }
+        guard let hole = Ring([
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]) else { return }
+        guard let polygon = Polygon([outerRing, hole]) else { return }
+        let result = polygon.buffered(by: -50_000.0)
+        guard let inset = result?.polygons.first else { return }
+        #expect(inset.area < polygon.area)
+        #expect(inset.isValid)
+    }
+
+    @Test func insetMultiPolygon() async throws {
+        guard let poly1 = Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 5.0, longitude: 0.0),
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+                Coordinate3D(latitude: 0.0, longitude: 5.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+        ]) else { return }
+        let area1 = poly1.area
+        guard let poly2 = Polygon([
+            [
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 15.0, longitude: 10.0),
+                Coordinate3D(latitude: 15.0, longitude: 15.0),
+                Coordinate3D(latitude: 10.0, longitude: 15.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+            ],
+        ]) else { return }
+        let area2 = poly2.area
+        guard let multiPolygon = MultiPolygon([poly1, poly2]) else { return }
+        let result = multiPolygon.buffered(by: -50_000.0)
+        guard let resultPolygons = result?.polygons else { return }
+        #expect(resultPolygons.count == 2)
+        #expect(resultPolygons[0].area < area1)
+        #expect(resultPolygons[1].area < area2)
+        #expect(resultPolygons[0].isValid)
+        #expect(resultPolygons[1].isValid)
+    }
+
+    @Test func insetAcrossAntimeridian() async throws {
+        guard let polygon = Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 175.0),
+                Coordinate3D(latitude: 10.0, longitude: 175.0),
+                Coordinate3D(latitude: 10.0, longitude: -175.0),
+                Coordinate3D(latitude: 0.0, longitude: -175.0),
+                Coordinate3D(latitude: 0.0, longitude: 175.0),
+            ],
+        ]) else { return }
+        #expect(polygon.crossesAntimeridian)
+        let result = polygon.buffered(by: -50_000.0)
+        guard let inset = result?.polygons.first else { return }
+        #expect(inset.area < polygon.area)
+        #expect(inset.isValid)
+        #expect(!inset.crossesAntimeridian)
+        for coord in inset.allCoordinates {
+            #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
+        }
+    }
+
+    @Test func insetFeatureWrappingPolygon() async throws {
+        guard let polygon = Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 5.0, longitude: 0.0),
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+                Coordinate3D(latitude: 0.0, longitude: 5.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+        ]) else { return }
+        let feature = Feature(polygon)
+        let result = feature.buffered(by: -30_000.0)
+        let inset = try #require(result?.polygons.first)
+        #expect(inset.area < polygon.area)
+    }
+
+    @Test func insetDonutAcrossAntimeridian() async throws {
+        guard let outerRing = Ring([
+            Coordinate3D(latitude: 0.0, longitude: -175.0),
+            Coordinate3D(latitude: 10.0, longitude: -175.0),
+            Coordinate3D(latitude: 10.0, longitude: 175.0),
+            Coordinate3D(latitude: 0.0, longitude: 175.0),
+        ]) else { return }
+        guard let innerRing = Ring([
+            Coordinate3D(latitude: 2.0, longitude: 177.0),
+            Coordinate3D(latitude: 8.0, longitude: 177.0),
+            Coordinate3D(latitude: 8.0, longitude: -177.0),
+            Coordinate3D(latitude: 2.0, longitude: -177.0),
+        ]) else { return }
+        guard let polygon = Polygon([outerRing, innerRing]) else { return }
+        #expect(polygon.crossesAntimeridian)
+        let result = polygon.buffered(by: -50_000.0)
+        guard let insetPolygons = result?.polygons, insetPolygons.isNotEmpty else { return }
+        let totalArea = insetPolygons.reduce(0.0) { $0 + $1.area }
+        #expect(totalArea < polygon.area)
+        for poly in insetPolygons {
+            #expect(poly.isValid)
+            #expect(!poly.crossesAntimeridian)
+            for coord in poly.allCoordinates {
+                #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
+                #expect(coord.latitude >= -90.0 && coord.latitude <= 90.0)
+            }
+        }
     }
 
 }

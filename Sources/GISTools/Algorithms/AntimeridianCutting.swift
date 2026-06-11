@@ -70,7 +70,8 @@ enum AntimeridianCutting {
             unwrapped = p2.longitude + 360.0
         }
 
-        let fraction = (180.0 - p1.longitude) / (unwrapped - p1.longitude)
+        let target = p1.longitude >= 0.0 ? 180.0 : -180.0
+        let fraction = (target - p1.longitude) / (unwrapped - p1.longitude)
         let intersectionLatitude = p1.latitude + fraction * (p2.latitude - p1.latitude)
 
         let first: Coordinate3D
