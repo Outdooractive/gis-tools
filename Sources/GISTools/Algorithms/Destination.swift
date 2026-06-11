@@ -42,14 +42,14 @@ extension Coordinate3D {
         let longitude2 = longitude1 + atan2(sin(bearingRadians) * sin(distanceRadians) * cos(latitude1), cos(distanceRadians) - sin(latitude1) * sin(latitude2))
 
         var normalizedLatitude = latitude2.radiansToDegrees
-        var normalizedLongitude = longitude2.radiansToDegrees
+        var normalizedLongitude = longitude2 * 180.0 / .pi
 
-        // We don't want coordinates to "wrap around"
+        // Keep longitudes in the [-180, 180] range
         if longitude2 < -.pi {
-            normalizedLongitude -= 360.0
+            normalizedLongitude += 360.0
         }
         else if longitude2 > .pi {
-            normalizedLongitude += 360.0
+            normalizedLongitude -= 360.0
         }
 
         if latitude2 < -(.pi / 2.0) {

@@ -195,4 +195,233 @@ struct CoordinateTests {
         #expect(a.equals(other: b, includingAltitude: true) == false)
     }
 
+    // MARK: - Normalization
+
+    @Test
+    func normalizedEPSG4326() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 200.0)
+        let n = a.normalized()
+        #expect(n.longitude == -160.0)
+        #expect(n.latitude == 10.0)
+    }
+
+    @Test
+    func normalizedEPSG4326MultipleWrap() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 730.0)
+        let n = a.normalized()
+        #expect(n.longitude == 10.0)
+        #expect(n.latitude == 10.0)
+    }
+
+    @Test
+    func normalizedEPSG4326Negative() async throws {
+        let a = Coordinate3D(latitude: -20.0, longitude: -190.0)
+        let n = a.normalized()
+        #expect(n.longitude == 170.0)
+        #expect(n.latitude == -20.0)
+    }
+
+    @Test
+    func normalizedEPSG4326InRange() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 45.0)
+        let n = a.normalized()
+        #expect(n.longitude == 45.0)
+        #expect(n.latitude == 10.0)
+    }
+
+    @Test
+    func normalizedEPSG4326Boundary180() async throws {
+        let a = Coordinate3D(latitude: 0.0, longitude: 180.0)
+        let n = a.normalized()
+        #expect(n.longitude == 180.0)
+    }
+
+    @Test
+    func normalizedEPSG4326BoundaryNegative180() async throws {
+        let a = Coordinate3D(latitude: 0.0, longitude: -180.0)
+        let n = a.normalized()
+        #expect(n.longitude == -180.0)
+    }
+
+    @Test
+    func normalizedEPSG3857() async throws {
+        let shift = GISTool.originShift
+        let a = Coordinate3D(x: shift * 3.0, y: 10.0)
+        let n = a.normalized()
+        #expect(abs(n.x - shift) < 1e-6)
+    }
+
+    @Test
+    func normalizedPreservesAltitudeAndM() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 200.0, altitude: 500.0, m: 42.0)
+        let n = a.normalized()
+        #expect(n.longitude == -160.0)
+        #expect(n.altitude == 500.0)
+        #expect(n.m == 42.0)
+    }
+
+    @Test
+    func normalizedMutating() async throws {
+        var a = Coordinate3D(latitude: 10.0, longitude: 200.0)
+        a.normalize()
+        #expect(a.longitude == -160.0)
+    }
+
+    // MARK: - Clamping
+
+    @Test
+    func clampedEPSG4326LongitudeTooLarge() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 200.0)
+        let c = a.clamped()
+        #expect(c.longitude == 180.0)
+        #expect(c.latitude == 10.0)
+    }
+
+    @Test
+    func clampedEPSG4326LongitudeTooSmall() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: -200.0)
+        let c = a.clamped()
+        #expect(c.longitude == -180.0)
+        #expect(c.latitude == 10.0)
+    }
+
+    @Test
+    func clampedEPSG4326LatitudeTooLarge() async throws {
+        let a = Coordinate3D(latitude: 100.0, longitude: 10.0)
+        let c = a.clamped()
+        #expect(c.latitude == 90.0)
+        #expect(c.longitude == 10.0)
+    }
+
+    @Test
+    func clampedEPSG4326LatitudeTooSmall() async throws {
+        let a = Coordinate3D(latitude: -100.0, longitude: 10.0)
+        let c = a.clamped()
+        #expect(c.latitude == -90.0)
+        #expect(c.longitude == 10.0)
+    }
+
+    @Test
+    func clampedEPSG4326BothOutOfRange() async throws {
+        let a = Coordinate3D(latitude: 200.0, longitude: 300.0)
+        let c = a.clamped()
+        #expect(c.latitude == 90.0)
+        #expect(c.longitude == 180.0)
+    }
+
+    @Test
+    func clampedEPSG4326InRange() async throws {
+        let a = Coordinate3D(latitude: 45.0, longitude: 90.0)
+        let c = a.clamped()
+        #expect(a == c)
+    }
+
+    @Test
+    func clampedEPSG3857() async throws {
+        let shift = GISTool.originShift
+        let a = Coordinate3D(x: shift * 3.0, y: shift * 4.0)
+        let c = a.clamped()
+        #expect(c.x == shift)
+        #expect(c.y == shift)
+    }
+
+    @Test
+    func clampedPreservesAltitudeAndM() async throws {
+        let a = Coordinate3D(latitude: 200.0, longitude: 300.0, altitude: 1000.0, m: 7.0)
+        let c = a.clamped()
+        #expect(c.latitude == 90.0)
+        #expect(c.longitude == 180.0)
+        #expect(c.altitude == 1000.0)
+        #expect(c.m == 7.0)
+    }
+
+    @Test
+    func clampedMutating() async throws {
+        var a = Coordinate3D(latitude: 200.0, longitude: 10.0)
+        a.clamp()
+        #expect(a.latitude == 90.0)
+    }
+
+    // MARK: - Hashable
+
+    @Test
+    func hashableEquality() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        let b = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        #expect(a.hashValue == b.hashValue)
+    }
+
+    @Test
+    func hashableInequality() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        let b = Coordinate3D(latitude: 10.0, longitude: 21.0)
+        #expect(a != b)
+    }
+
+    @Test
+    func hashableWithinSameBucket() async throws {
+        let a = Coordinate3D(latitude: 10.0 + 0.4e-10, longitude: 20.0)
+        let b = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        #expect(a == b)
+        #expect(a.hashValue == b.hashValue)
+    }
+
+    @Test
+    func hashableEdgeDelta() async throws {
+        let a = Coordinate3D(latitude: 10.0 + 1.1e-10, longitude: 20.0)
+        let b = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        #expect(a != b)
+    }
+
+    @Test
+    func hashableInSet() async throws {
+        let coords: Set<Coordinate3D> = [
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 30.0, longitude: 40.0),
+        ]
+        #expect(coords.contains(Coordinate3D(latitude: 10.0, longitude: 20.0)))
+        #expect(coords.count == 2)
+    }
+
+    @Test
+    func hashableInDictionary() async throws {
+        let dict: [Coordinate3D: String] = [
+            Coordinate3D(latitude: 10.0, longitude: 20.0): "A",
+            Coordinate3D(latitude: 30.0, longitude: 40.0): "B",
+        ]
+        #expect(dict[Coordinate3D(latitude: 10.0, longitude: 20.0)] == "A")
+    }
+
+    // MARK: - Equality edge cases
+
+    @Test
+    func equalityProjectionMismatch() async throws {
+        let epsg4326 = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        let epsg3857 = Coordinate3D(x: 20.0, y: 10.0)
+        #expect(epsg4326 != epsg3857)
+    }
+
+    @Test
+    func equalityCustomDeltaProjection() async throws {
+        let a = Coordinate3D(x: 1000.0, y: 2000.0)
+        let b = Coordinate3D(x: 1000.000_001, y: 2000.0)
+        #expect(a.equals(other: b, equalityDelta: 0.001))
+        #expect(a.equals(other: b, equalityDelta: 1e-10) == false)
+    }
+
+    @Test
+    func equalityProjected() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        let b = Coordinate3D(x: 2226389.0, y: 1118889.0)
+        #expect(a.equals(other: b, equalityDelta: 0.5))
+    }
+
+    @Test
+    func equalityAltitudeNilVsNonNil() async throws {
+        let a = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        let b = Coordinate3D(latitude: 10.0, longitude: 20.0, altitude: 100.0)
+        #expect(a != b)
+        #expect(a.equals(other: b, includingAltitude: false))
+    }
+
 }

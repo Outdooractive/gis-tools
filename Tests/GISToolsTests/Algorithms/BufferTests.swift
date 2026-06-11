@@ -285,6 +285,48 @@ struct BufferTests {
         try runTurfTest(name: "issue-#900", result: try #require(TestData.feature(package: "Buffer/in", name: "issue-#900").buffered(by: params.distance, steps: params.steps)))
     }
 
+    // MARK: - Antimeridian tests
+
+    @Test func bufferedPointAntimeridian() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 179.0))
+        let result = try #require(point.buffered(by: 200_000.0))
+        #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
+        for poly in result.polygons {
+            for coord in poly.allCoordinates {
+                #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0, "lon=\(coord.longitude)")
+            }
+        }
+        let area = result.polygons.reduce(0.0) { $0 + $1.area }
+        let expected = Double.pi * 200_000.0 * 200_000.0
+        #expect(area > expected * 0.1 && area < expected * 10.0)
+    }
+
+    @Test func bufferedLineAntimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let result = try #require(lineString.buffered(by: 100_000.0))
+        #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
+        #expect(result.polygons.count >= 2)
+    }
+
+    @Test func bufferedLineNearAntimeridianNoCross() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 178.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+        ]))
+        let result = try #require(lineString.buffered(by: 50_000.0))
+        #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
+    }
+
+    @Test func bufferedPointNoAntimeridian() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 10.0))
+        let result = try #require(point.buffered(by: 200_000.0))
+        #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
+        #expect(result.polygons.count == 1)
+    }
+
     // MARK: - Negative buffer
 
     @Test func negativeBuffer() async throws {

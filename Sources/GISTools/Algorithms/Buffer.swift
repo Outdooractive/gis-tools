@@ -30,8 +30,6 @@ public enum BufferUnionType: Sendable {
 
 extension GeoJson {
 
-    // TODO: Antimeridian Cutting
-    // TODO: formUnion
     // TODO: Negative distance?
 
     /// Returns the receiver with a buffer.
@@ -49,11 +47,13 @@ extension GeoJson {
     ) -> MultiPolygon? {
         guard distance > 0.0 else { return nil }
 
+        let result: MultiPolygon?
+
         switch self {
         // Point
         case let point as Point:
             guard let circle = point.circle(radius: distance, steps: steps) else { return nil }
-            return MultiPolygon([circle])
+            result = MultiPolygon([circle])
 
         // MultiPoint
         case let multiPoint as MultiPoint:
@@ -63,10 +63,11 @@ extension GeoJson {
             guard bufferedPoints.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return Union.unionPolygons(bufferedPoints)
+                result = Union.unionPolygons(bufferedPoints)
             }
-
-            return MultiPolygon(bufferedPoints)
+            else {
+                result = MultiPolygon(bufferedPoints)
+            }
 
         // LineString
         case let lineString as LineString:
@@ -83,7 +84,8 @@ extension GeoJson {
 
             var bufferCoordinates = lineString.coordinates
             guard bufferCoordinates.count >= 2 else {
-                return MultiPolygon(polygons)
+                result = MultiPolygon(polygons)
+                break
             }
 
             if lineEndStyle == .flat {
@@ -97,10 +99,11 @@ extension GeoJson {
             }
 
             if unionType.isIn([.individual, .overlapping]) {
-                return Union.unionPolygons(polygons)
+                result = Union.unionPolygons(polygons)
             }
-
-            return MultiPolygon(polygons)
+            else {
+                result = MultiPolygon(polygons)
+            }
 
         // MultiLineString
         case let multiLineString as MultiLineString:
@@ -118,10 +121,11 @@ extension GeoJson {
             guard bufferedLineStrings.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return Union.unionPolygons(bufferedLineStrings)
+                result = Union.unionPolygons(bufferedLineStrings)
             }
-
-            return MultiPolygon(bufferedLineStrings)
+            else {
+                result = MultiPolygon(bufferedLineStrings)
+            }
 
         // Polygon
         case let polygon as Polygon:
@@ -147,10 +151,11 @@ extension GeoJson {
             polygons.append(polygon)
 
             if unionType.isIn([.individual, .overlapping]) {
-                return Union.unionPolygons(polygons)
+                result = Union.unionPolygons(polygons)
             }
-
-            return MultiPolygon(polygons)
+            else {
+                result = MultiPolygon(polygons)
+            }
 
         // MultiPolygon
         case let multiPolygon as MultiPolygon:
@@ -168,10 +173,11 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return Union.unionPolygons(bufferedPolygons)
+                result = Union.unionPolygons(bufferedPolygons)
             }
-
-            return MultiPolygon(bufferedPolygons)
+            else {
+                result = MultiPolygon(bufferedPolygons)
+            }
 
         // GeometryCollection
         case let geometryCollection as GeometryCollection:
@@ -189,10 +195,11 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return Union.unionPolygons(bufferedPolygons)
+                result = Union.unionPolygons(bufferedPolygons)
             }
-
-            return MultiPolygon(bufferedPolygons)
+            else {
+                result = MultiPolygon(bufferedPolygons)
+            }
 
         // Feature
         case let feature as Feature:
@@ -218,15 +225,41 @@ extension GeoJson {
             guard bufferedPolygons.isNotEmpty else { return nil }
 
             if unionType == .overlapping {
-                return Union.unionPolygons(bufferedPolygons)
+                result = Union.unionPolygons(bufferedPolygons)
             }
-
-            return MultiPolygon(bufferedPolygons)
+            else {
+                result = MultiPolygon(bufferedPolygons)
+            }
 
         // Can't happen
         default:
             return nil
         }
+
+        return Self.cutAtAntimeridianIfNeeded(result)
+    }
+
+    /// Returns self with any polygons that cross the antimeridian cut into
+    /// valid pieces. All pieces are returned as a single ``MultiPolygon``.
+    private static func cutAtAntimeridianIfNeeded(_ result: MultiPolygon?) -> MultiPolygon? {
+        guard let mp = result else { return nil }
+        guard mp.polygons.contains(where: { $0.crossesAntimeridian }) else { return mp }
+
+        var cutPolygons: [Polygon] = []
+        for polygon in mp.polygons {
+            if polygon.crossesAntimeridian {
+                let fc = polygon.cutAtAntimeridian()
+                for feature in fc.features {
+                    if let part = feature.geometry as? Polygon {
+                        cutPolygons.append(part)
+                    }
+                }
+            }
+            else {
+                cutPolygons.append(polygon)
+            }
+        }
+        return MultiPolygon(unchecked: cutPolygons)
     }
 
 }
