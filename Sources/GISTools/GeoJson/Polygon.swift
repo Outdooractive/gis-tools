@@ -61,6 +61,11 @@ public struct Polygon:
     }
 
     /// Try to initialize a Polygon with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The ring coordinates (first array is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         guard coordinates.isNotEmpty,
               coordinates[0].count >= 3
@@ -70,6 +75,10 @@ public struct Polygon:
     }
 
     /// Try to initialize a Polygon with some coordinates, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The ring coordinates (first array is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -79,13 +88,22 @@ public struct Polygon:
     }
 
     /// Try to initialize a Polygon with some Rings.
+    ///
+    /// - Parameters:
+    ///    - rings: The rings (first is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A polygon, or `nil` if the rings array is empty
     public init?(_ rings: [Ring], calculateBoundingBox: Bool = false) {
-        guard !rings.isEmpty else { return nil }
+        guard rings.isNotEmpty else { return nil }
 
         self.init(unchecked: rings, calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Try to initialize a Polygon with some Rings, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - rings: The rings (first is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked rings: [Ring], calculateBoundingBox: Bool = false) {
         self.coordinates = rings.map { $0.coordinates }
 
@@ -97,14 +115,18 @@ public struct Polygon:
     /// Try to initialize a Polygon from any GeoJSON object.
     ///
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    /// - Returns: A polygon, or `nil` if the input is invalid
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
     /// Try to initialize a Polygon from any GeoJSON object.
     ///
-    /// - parameter json: A GeoJSON object.
-    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
@@ -131,6 +153,7 @@ public struct Polygon:
     /// The receiver represented as a JSON dictionary.
     ///
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
+    /// - Returns: A GeoJSON dictionary
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.polygon.rawValue,
@@ -153,7 +176,8 @@ extension Polygon {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameter newProjection: The target projection.
+    /// - Returns: A new polygon in the requested projection
     public func projected(to newProjection: Projection) -> Polygon {
         guard newProjection != projection else { return self }
 
@@ -172,11 +196,21 @@ extension Polygon {
 extension Polygon {
 
     /// Try to initialize a Polygon with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The ring coordinates (first array is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[CLLocationCoordinate2D]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Try to initialize a Polygon with some locations.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The ring locations (first array is the outer ring, subsequent are holes)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[CLLocation]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ Coordinate3D($0) }) }), calculateBoundingBox: calculateBoundingBox)
     }
@@ -189,6 +223,8 @@ extension Polygon {
 extension Polygon {
 
     /// Calculate and return the receiver's bounding box.
+    ///
+    /// - Returns: The calculated bounding box, or `nil` if there are no coordinates
     public func calculateBoundingBox() -> BoundingBox? {
         guard let coordinates = outerRing?.coordinates else { return nil }
         return BoundingBox(coordinates: coordinates)
@@ -196,7 +232,8 @@ extension Polygon {
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameter otherBoundingBox: The bounding box to check.
+    /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -216,7 +253,7 @@ extension Polygon: Equatable {
         lhs: Polygon,
         rhs: Polygon
     ) -> Bool {
-        // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
+        // Fix: The coordinates might be shifted (like [1, 2, 3] => [3, 1, 2])
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
     }

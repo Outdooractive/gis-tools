@@ -54,6 +54,12 @@ public struct Coordinate3D:
 
     /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
     /// Projection will be *EPSG:4326*.
+    ///
+    /// - Parameters:
+    ///    - latitude: The latitude (or northing)
+    ///    - longitude: The longitude (or easting)
+    ///    - altitude: The altitude in meters (optional)
+    ///    - m: A generic value (optional)
     public init(
         latitude: CLLocationDegrees,
         longitude: CLLocationDegrees,
@@ -69,6 +75,13 @@ public struct Coordinate3D:
 
     /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
     /// Default projection will we *EPSG:3857* but can be overridden.
+    ///
+    /// - Parameters:
+    ///    - x: The easting (or longitude)
+    ///    - y: The northing (or latitude)
+    ///    - z: The altitude in meters (optional)
+    ///    - m: A generic value (optional)
+    ///    - projection: The coordinate projection (default `.epsg3857`)
     public init(
         x: Double,
         y: Double,
@@ -124,6 +137,10 @@ extension Coordinate3D {
     /// - `"40°26'46\" N 79°58'56\" W"`
     /// - `"40 26 46 N 79 58 56 W"`
     /// - `"40°26.767' N 79°58.933' W"`
+    ///
+    /// - Parameters:
+    ///    - dms: A DMS-formatted coordinate string
+    /// - Returns: A coordinate, or `nil` if parsing fails
     public init?(dms: String) {
         let cleaned = dms
             .replacingOccurrences(of: "\u{2032}", with: "'")  // prime
@@ -154,6 +171,17 @@ extension Coordinate3D {
     }
 
     /// Creates a coordinate from separate DMS components.
+    ///
+    /// - Parameters:
+    ///    - latitudeDegrees: Degrees of latitude
+    ///    - latitudeMinutes: Minutes of latitude
+    ///    - latitudeSeconds: Seconds of latitude
+    ///    - latitudeDirection: `"N"` or `"S"`
+    ///    - longitudeDegrees: Degrees of longitude
+    ///    - longitudeMinutes: Minutes of longitude
+    ///    - longitudeSeconds: Seconds of longitude
+    ///    - longitudeDirection: `"E"` or `"W"`
+    /// - Returns: A coordinate, or `nil` if direction is invalid
     public init?(
         latitudeDegrees: Double,
         latitudeMinutes: Double,
@@ -255,6 +283,10 @@ extension Coordinate3D {
 extension Coordinate3D {
 
     /// Create a `Coordinate3D` from a `CLLocationCoordinate2D`.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The Core Location coordinate
+    ///    - altitude: The altitude in meters (optional)
     public init(
         _ coordinate: CLLocationCoordinate2D,
         altitude: CLLocationDistance? = nil
@@ -267,6 +299,8 @@ extension Coordinate3D {
     }
 
     /// This coordinate as `CLLocationCoordinate2D`.
+    ///
+    /// - Returns: A `CLLocationCoordinate2D` projected to EPSG:4326
     public var coordinate2D: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
             latitude: latitudeProjected(to: .epsg4326),
@@ -276,6 +310,9 @@ extension Coordinate3D {
     /// Create a `Coordinate3D` from a `CLLocation`.
     ///
     /// This will set ``m`` to the location's timestamp using `timeIntervalSinceReferenceDate`.
+    ///
+    /// - Parameters:
+    ///    - location: The Core Location object
     public init(_ location: CLLocation) {
         self.projection = .epsg4326
         self.latitude = location.coordinate.latitude
@@ -289,6 +326,7 @@ extension Coordinate3D {
     /// - Important: This will set the location's timestamp using ``m``
     ///              if it exists, using `Date(timeIntervalSinceReferenceDate:)`.
     ///              See also ``init(_:)`` and ``asJson``.
+    /// - Returns: A `CLLocation` representing this coordinate
     public var location: CLLocation {
         let timestamp = (m != nil
             ? Date(timeIntervalSinceReferenceDate: m!)
@@ -307,6 +345,8 @@ extension Coordinate3D {
 extension CLLocation {
 
     /// The receiver as a ``Coordinate3D``.
+    ///
+    /// - Returns: A `Coordinate3D` representing this location
     public var coordinate3D: Coordinate3D {
         Coordinate3D(self)
     }
@@ -316,6 +356,8 @@ extension CLLocation {
 extension CLLocationCoordinate2D {
 
     /// The receiver as a ``Coordinate3D``.
+    ///
+    /// - Returns: A `Coordinate3D` representing this coordinate
     public var coordinate3D: Coordinate3D {
         Coordinate3D(self)
     }
@@ -333,6 +375,8 @@ extension Coordinate3D {
     }
 
     /// Clamped to [-180.0, 180.0].
+    ///
+    /// - Returns: A copy with longitude normalized to the [-180, 180] range
     public func normalized() -> Coordinate3D {
         switch projection {
         case .epsg3857:
@@ -363,7 +407,9 @@ extension Coordinate3D {
         self = self.clamped()
     }
 
-    /// Clamped to [[-180,-90], [180,90]]
+    /// Clamped to [[-180,-90], [180,90]].
+    ///
+    /// - Returns: A copy clamped to the valid coordinate range
     public func clamped() -> Coordinate3D {
         switch projection {
         case .epsg3857:
@@ -400,6 +446,10 @@ extension Coordinate3D {
 extension Coordinate3D: Projectable {
 
     /// Reproject this coordinate.
+    ///
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: A new coordinate in the requested projection
     public func projected(to newProjection: Projection) -> Coordinate3D {
         guard newProjection != projection else { return self }
 
@@ -441,6 +491,10 @@ extension Coordinate3D: Projectable {
     }
 
     /// Project this coordinate's latitude.
+    ///
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: The latitude value in the requested projection
     public func latitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:
@@ -467,6 +521,10 @@ extension Coordinate3D: Projectable {
     }
 
     /// Project this coordinate's longitude.
+    ///
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: The longitude value in the requested projection
     public func longitudeProjected(to newProjection: Projection) -> Double {
         switch newProjection {
         case .epsg3857:
@@ -505,6 +563,9 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Important: The third value in GeoJSON coordinates will always be ``altitude``, the fourth value
     ///              will be ``m`` if it exists. ``altitude`` can be a JSON `null` value.
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Parameters:
+    ///    - json: A GeoJSON position array or a dictionary with `x`, `y`, `z` keys
+    /// - Returns: A coordinate, or `nil` if parsing fails
     public init?(json: Any?) {
         var pLongitude: Double?
         var pLatitude: Double?
@@ -539,6 +600,7 @@ extension Coordinate3D: GeoJsonReadable {
     /// - Important: The result JSON object will have a `null` value for the altitude
     ///              if the ``altitude`` is `nil` and ``m`` exists.
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Returns: An array of doubles (and `nil` placeholders) in GeoJSON order
     public var asJson: [Double?] {
         var result: [Double?] = (projection == .epsg4326 || projection == .noSRID
             ? [longitude, latitude]
@@ -562,6 +624,7 @@ extension Coordinate3D: GeoJsonReadable {
     ///
     /// - important: The returned array will always contain ``latitude`` and ``longitude``,
     ///              and ``altitude`` only if it exists.
+    /// - Returns: An array of doubles in GeoJSON order (no `nil` placeholders)
     public var asMinimalJson: [Double] {
         var result: [Double] = (projection == .epsg4326 || projection == .noSRID
             ? [longitude, latitude]
@@ -582,6 +645,9 @@ extension Coordinate3D {
     /// Dump the coordinate as JSON data.
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Parameters:
+    ///    - prettyPrinted: Whether to pretty-print the output (default `false`)
+    /// - Returns: JSON data, or `nil` if serialization fails
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
         if prettyPrinted {
@@ -595,15 +661,21 @@ extension Coordinate3D {
     /// Dump the coordinate as JSON.
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Parameters:
+    ///    - prettyPrinted: Whether to pretty-print the output (default `false`)
+    /// - Returns: A JSON string, or `nil` if serialization fails
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 
-        return String(data: data, encoding: .utf8)!
+        return String(data: data, encoding: .utf8)
     }
 
     /// Write the coordinate in it's JSON representation to a file.
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Parameters:
+    ///    - url: The file URL to write to
+    ///    - prettyPrinted: Whether to pretty-print the output (default `false`)
     /// - Returns: `true` if the write succeeded, `false` if serialization failed.
     @discardableResult
     public func write(to url: URL, prettyPrinted: Bool = false) -> Bool {
@@ -626,6 +698,7 @@ extension Sequence<Coordinate3D> {
     /// Returns all elements as an array of JSON objects
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Returns: An array of GeoJSON position arrays
     public var asJson: [[Double?]] {
         self.map(\.asJson)
     }
@@ -658,6 +731,12 @@ extension Coordinate3D: Equatable {
     /// Compares two coordinates with the given deltas.
     ///
     /// - note: The `other` coordinate will be projected to the projection of the reveiver.
+    /// - Parameters:
+    ///    - other: The coordinate to compare against
+    ///    - includingAltitude: Whether to compare altitude (default `true`)
+    ///    - equalityDelta: The horizontal tolerance (default `GISTool.equalityDelta`)
+    ///    - altitudeDelta: The vertical tolerance (default `0.0`)
+    /// - Returns: `true` if the coordinates are within the given deltas
     public func equals(
         other: Coordinate3D,
         includingAltitude: Bool = true,

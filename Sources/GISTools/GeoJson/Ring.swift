@@ -30,6 +30,10 @@ public struct Ring: Sendable {
     }
 
     /// Try to initialize a Ring with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates forming the ring (will be closed automatically if needed)
+    /// - Returns: A ring, or `nil` if there are fewer than 4 positions
     public init?(_ coordinates: [Coordinate3D]) {
         // Close the ring, if necessary
         var coordinates = coordinates
@@ -45,11 +49,16 @@ public struct Ring: Sendable {
     }
 
     /// Try to initialize a Ring with some coordinates, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates forming the ring
     public init(unchecked coordinates: [Coordinate3D]) {
         self.coordinates = coordinates
     }
 
     /// The Ring's circumference.
+    ///
+    /// - Returns: The circumference in meters
     public var circumference: CLLocationDistance {
         guard coordinates.count >= 2 else { return 0.0 }
 
@@ -63,6 +72,9 @@ public struct Ring: Sendable {
 extension Ring: Projectable {
 
     /// Reproject the receiver.
+    ///
+    /// - Parameter newProjection: The target projection
+    /// - Returns: A new ring in the requested projection
     public func projected(to newProjection: Projection) -> Ring {
         guard newProjection != projection else { return self }
 
@@ -76,6 +88,9 @@ extension Ring: Projectable {
 extension Ring {
 
     /// Check if the receiver intersects the given bounding box.
+    ///
+    /// - Parameter otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if otherBoundingBox.allCoordinates.contains(where: { contains($0) })
             || contains(otherBoundingBox.center)
@@ -94,11 +109,19 @@ extension Ring {
 extension Ring {
 
     /// Try to initialize a Ring with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates forming the ring
+    /// - Returns: A ring, or `nil` if there are fewer than 4 positions
     public init?(_ coordinates: [CLLocationCoordinate2D]) {
         self.init(coordinates.map({ Coordinate3D($0) }))
     }
 
     /// Try to initialize a Ring with some locations.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The locations forming the ring
+    /// - Returns: A ring, or `nil` if there are fewer than 4 positions
     public init?(_ coordinates: [CLLocation]) {
         self.init(coordinates.map({ Coordinate3D($0) }))
     }

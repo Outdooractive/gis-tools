@@ -49,6 +49,10 @@ public struct MultiPoint:
     }
 
     /// Try to initialize a MultiPoint with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty else { return nil }
 
@@ -56,6 +60,10 @@ public struct MultiPoint:
     }
 
     /// Try to initialize a MultiPoint with some coordinates, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked coordinates: [Coordinate3D], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -65,6 +73,10 @@ public struct MultiPoint:
     }
 
     /// Try to initialize a MultiPoint with some Points.
+    ///
+    /// - Parameters:
+    ///    - points: The points
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init?(_ points: [Point], calculateBoundingBox: Bool = false) {
         guard !points.isEmpty else { return nil }
 
@@ -72,6 +84,10 @@ public struct MultiPoint:
     }
 
     /// Try to initialize a MultiPoint with some Points, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - points: The points
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked points: [Point], calculateBoundingBox: Bool = false) {
         self.points = points
 
@@ -82,6 +98,9 @@ public struct MultiPoint:
 
     /// Try to initialize a MultiPoint from any GeoJSON object.
     ///
+    /// - Parameters:
+    ///    - json: A GeoJSON-compatible Swift object
+    /// - Returns: A `MultiPoint`, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
@@ -89,8 +108,10 @@ public struct MultiPoint:
 
     /// Try to initialize a MultiPoint from any GeoJSON object.
     ///
-    /// - parameter json: A GeoJSON object.
-    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - Parameters:
+    ///    - json: A GeoJSON-compatible Swift object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A `MultiPoint`, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
@@ -116,6 +137,7 @@ public struct MultiPoint:
 
     /// The receiver represented as a JSON dictionary.
     ///
+    /// - Returns: A JSON-compatible dictionary
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
@@ -139,7 +161,9 @@ extension MultiPoint {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: A new `MultiPoint` in the target projection
     public func projected(to newProjection: Projection) -> MultiPoint {
         guard newProjection != projection else { return self }
 
@@ -158,11 +182,19 @@ extension MultiPoint {
 extension MultiPoint {
 
     /// Try to initialize a MultiPoint with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init?(_ coordinates: [CLLocationCoordinate2D], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Try to initialize a MultiPoint with some locations.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The locations
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init?(_ coordinates: [CLLocation], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ Coordinate3D($0) }), calculateBoundingBox: calculateBoundingBox)
     }
@@ -176,7 +208,9 @@ extension MultiPoint {
 
     /// Update the receiver's bounding box.
     ///
-    /// - parameter ifNecessary: Only update if the receiver doesn't already have one.
+    /// - Parameters:
+    ///    - ifNecessary: Only update if the receiver doesn't already have one
+    /// - Returns: The updated bounding box, or `nil` if it could not be calculated
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -194,13 +228,17 @@ extension MultiPoint {
     }
 
     /// Calculate and return the receiver's bounding box.
+    ///
+    /// - Returns: The bounding box, or `nil` if it could not be calculated
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: coordinates)
     }
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameters:
+    ///    - otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the geometries intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -232,6 +270,9 @@ extension MultiPoint {
 
     /// Insert a Point into the receiver.
     ///
+    /// - Parameters:
+    ///    - point: The point to insert
+    ///    - index: The index at which to insert
     /// - note: `point` must be in the same projection as the receiver.
     public mutating func insertPoint(
         _ point: Point,
@@ -253,6 +294,8 @@ extension MultiPoint {
 
     /// Append a Point to the receiver.
     ///
+    /// - Parameters:
+    ///    - point: The point to append
     /// - note: `point` must be in the same projection as the receiver.
     public mutating func appendPoint(_ point: Point) {
         guard points.count == 0 || projection == point.projection else { return }
@@ -265,6 +308,10 @@ extension MultiPoint {
     }
 
     /// Remove a Point from the receiver.
+    ///
+    /// - Parameters:
+    ///    - index: The index of the point to remove
+    /// - Returns: The removed point, or `nil` if the index is out of range
     @discardableResult
     public mutating func removePoint(at index: Int) -> Point? {
         guard index >= 0, index < points.count else { return nil }
@@ -279,16 +326,25 @@ extension MultiPoint {
     }
 
     /// Map Points in-place.
+    ///
+    /// - Parameters:
+    ///    - transform: The transform to apply to each point
     public mutating func mapPoints(_ transform: (Point) -> Point) {
         points = points.map(transform)
     }
 
     /// Map Points in-place, removing *nil* values.
+    ///
+    /// - Parameters:
+    ///    - transform: The transform to apply to each point
     public mutating func compactMapPoints(_ transform: (Point) -> Point?) {
         points = points.compactMap(transform)
     }
 
     /// Filter Points in-place.
+    ///
+    /// - Parameters:
+    ///    - isIncluded: A closure that determines whether a point should be kept
     public mutating func filterPoints(_ isIncluded: (Point) -> Bool) {
         points = points.filter(isIncluded)
     }

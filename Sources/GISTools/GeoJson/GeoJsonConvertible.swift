@@ -20,6 +20,8 @@ extension GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from a file/URL.
     ///
+    /// - Parameters:
+    ///    - url: The URL of the file to read
     /// - important: The source is expected to be in EPSG:4326.
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
@@ -28,6 +30,8 @@ extension GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from a data object.
     ///
+    /// - Parameters:
+    ///    - jsonData: The JSON data
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonData: Data) {
         guard let json = try? JSONSerialization.jsonObject(with: jsonData) else { return nil }
@@ -36,6 +40,8 @@ extension GeoJsonReadable {
 
     /// Try to initialize a GeoJSON object from a string.
     ///
+    /// - Parameters:
+    ///    - jsonString: The JSON string
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonString: String) {
         guard let data = jsonString.data(using: .utf8),
@@ -62,6 +68,9 @@ extension GeoJsonWritable {
 
     /// Dump the object as JSON data.
     ///
+    /// - Parameters:
+    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
+    /// - Returns: The JSON data, or `nil` if serialization failed
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonData(prettyPrinted: Bool = false) -> Data? {
         var options: JSONSerialization.WritingOptions = []
@@ -75,16 +84,21 @@ extension GeoJsonWritable {
 
     /// Dump the object as a JSON string.
     ///
+    /// - Parameters:
+    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
+    /// - Returns: The JSON string, or `nil` if serialization failed
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public func asJsonString(prettyPrinted: Bool = false) -> String? {
         guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
 
-        return String(data: data, encoding: .utf8)!
+        return String(data: data, encoding: .utf8)
     }
 
     /// Write the object in it's JSON representation to a file.
     ///
-    /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Parameters:
+    ///    - url: The file URL to write to
+    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
     /// - Returns: `true` if the write succeeded, `false` if serialization failed.
     @discardableResult
     public func write(to url: URL, prettyPrinted: Bool = false) -> Bool {
@@ -108,6 +122,7 @@ extension Sequence where Self.Iterator.Element: GeoJsonWritable {
 
     /// Returns all elements as an array of JSON objects
     ///
+    /// - Returns: An array of JSON dictionaries
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [[String: Sendable]] {
         self.map({ $0.asJson })

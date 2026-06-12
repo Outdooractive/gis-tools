@@ -95,6 +95,10 @@ public struct BoundingBox:
     }
 
     /// Create a bounding box with a `southWest` and `northEast` coordinate.
+    ///
+    /// - Parameters:
+    ///    - southWest: The south-west (bottom-left) coordinate
+    ///    - northEast: The north-east (upper-right) coordinate
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
         assert(southWest.projection == northEast.projection, "Projections must be the same")
 
@@ -104,6 +108,10 @@ public struct BoundingBox:
     }
 
     /// Create a bounding box from other bounding boxes.
+    ///
+    /// - Parameters:
+    ///    - boundingBoxes: An array of bounding boxes to encompass
+    /// - Returns: A bounding box covering all input boxes, or `nil` if the array is empty
     public init?(boundingBoxes: [BoundingBox]) {
         self.init(coordinates: boundingBoxes.flatMap({ [$0.southWest, $0.northEast] }))
     }
@@ -111,6 +119,9 @@ public struct BoundingBox:
     /// Try to create a bounding box from some JSON.
     ///
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Parameters:
+    ///    - json: A GeoJSON bounding box value (an array of 4 or 6 doubles, or an array of 2 coordinate arrays)
+    /// - Returns: A bounding box, or `nil` if the input is invalid
     public init?(json: Any?) {
         self.projection = .epsg4326
 
@@ -147,6 +158,7 @@ public struct BoundingBox:
     /// Dump the bounding box as JSON.
     ///
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
+    /// - Returns: An array of 4 or 6 doubles representing the GeoJSON bounding box
     public var asJson: [Double] {
         var bottomLeft: [Double] = (projection == .epsg4326 || projection == .noSRID
             ? [southWest.longitude, southWest.latitude]
@@ -190,11 +202,20 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `degrees` horizontally and vertically.
+    ///
+    /// - Parameters:
+    ///    - degrees: The number of degrees to expand in each direction
+    /// - Returns: A new bounding box expanded by the given amount
     public func expanded(byDegrees degrees: CLLocationDegrees) -> BoundingBox {
         expanded(byHorizontalDegrees: degrees, verticalDegrees: degrees)
     }
 
     /// Returns a copy of the receiver expanded by `dx` and `dy` horizontally and vertically.
+    ///
+    /// - Parameters:
+    ///    - dx: The horizontal expansion in degrees
+    ///    - dy: The vertical expansion in degrees
+    /// - Returns: A new bounding box expanded by the given amounts
     public func expanded(
         byHorizontalDegrees dx: CLLocationDegrees,
         verticalDegrees dy: CLLocationDegrees
@@ -238,6 +259,10 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to include
+    /// - Returns: A new bounding box that encompasses both the receiver and the coordinate
     public func expanded(byIncluding coordinate: Coordinate3D) -> BoundingBox {
         BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
     }
@@ -249,6 +274,10 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
+    ///
+    /// - Parameters:
+    ///    - boundingBox: The other bounding box to include
+    /// - Returns: A new bounding box that encompasses both boxes
     public func expanded(byIncluding boundingBox: BoundingBox) -> BoundingBox {
         BoundingBox(coordinates: [
             southWest,
@@ -270,6 +299,10 @@ public struct BoundingBox:
 extension BoundingBox: Projectable {
 
     /// Reproject this bounding box.
+    ///
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: A new bounding box in the requested projection
     public func projected(to newProjection: Projection) -> BoundingBox {
         guard newProjection != projection else { return self }
 
@@ -301,6 +334,10 @@ extension BoundingBox {
     }
 
     /// Create a bounding box from a south-west and north-east coordinate.
+    ///
+    /// - Parameters:
+    ///    - southWest: The south-west (bottom-left) coordinate
+    ///    - northEast: The north-east (upper-right) coordinate
     public init(southWest: CLLocationCoordinate2D, northEast: CLLocationCoordinate2D) {
         self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
     }
@@ -321,6 +358,10 @@ extension BoundingBox {
     }
 
     /// Create a bounding box from a south-west and north-east coordinate.
+    ///
+    /// - Parameters:
+    ///    - southWest: The south-west (bottom-left) location
+    ///    - northEast: The north-east (upper-right) location
     public init(southWest: CLLocation, northEast: CLLocation) {
         self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
     }
@@ -338,6 +379,9 @@ extension BoundingBox {
     }
 
     /// Converts the bounding box to a `Polygon` object.
+    ///
+    /// The result may not be correct if the bounding box crosses the anti-meridian.
+    /// - Returns: A polygon representing the bounding box corners
     @available(*, deprecated, message: "Use boundingBoxGeometry instead (handles antimeridian crossing)")
     public var boundingBoxPolygon: Polygon {
         Polygon([[southWest, northWest, northEast, southEast, southWest]])!
@@ -352,7 +396,8 @@ extension BoundingBox {
     /// Per [RFC 7946 § 5](https://tools.ietf.org/html/rfc7946#section-5):
     /// a bounding box that crosses the anti-meridian is represented as a
     /// `MultiPolygon` split at the date line.
-    public var boundingBoxGeometry: any GeoJsonGeometry {
+    /// - Returns: A polygon or multi-polygon representing this bounding box
+    public var boundingBoxGeometry: PolygonGeometry {
         let boundingBox = self.normalized()
 
         guard boundingBox.crossesAntiMeridian else {
@@ -414,6 +459,10 @@ extension BoundingBox {
 extension BoundingBox {
 
     /// Check if the receiver contains `coordinate`.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to test
+    /// - Returns: `true` if the coordinate lies within this bounding box or on its borders
     public func contains(_ coordinate: Coordinate3D) -> Bool {
         let boundingBox = self.normalized()
         let coordinate = coordinate.projected(to: projection).normalized()
@@ -454,23 +503,39 @@ extension BoundingBox {
 
     #if canImport(CoreLocation)
     /// Check if the receiver contains `coordinate`.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to test
+    /// - Returns: `true` if the coordinate lies within this bounding box or on its borders
     public func contains(_ coordinate: CLLocationCoordinate2D) -> Bool {
         contains(Coordinate3D(coordinate))
     }
 
     /// Check if the receiver contains `coordinate`.
+    ///
+    /// - Parameters:
+    ///    - location: The location to test
+    /// - Returns: `true` if the location lies within this bounding box or on its borders
     public func contains(_ location: CLLocation) -> Bool {
         contains(Coordinate3D(location))
     }
     #endif
 
     /// Check if the receiver fully contains the other bounding box.
+    ///
+    /// - Parameters:
+    ///    - other: The other bounding box to test
+    /// - Returns: `true` if the other bounding box is fully inside this one
     public func contains(_ other: BoundingBox) -> Bool {
         self.contains(other.southWest)
             && self.contains(other.northEast)
     }
 
     /// Check if the receiver intersects with the other bounding box.
+    ///
+    /// - Parameters:
+    ///    - other: The other bounding box to test
+    /// - Returns: `true` if the two bounding boxes overlap
     public func intersects(_ other: BoundingBox) -> Bool {
         let boundingBox = self.normalized()
         let other = other.projected(to: projection).normalized()
@@ -538,6 +603,10 @@ extension BoundingBox {
     }
 
     /// Returns the intersection between the receiver and the other bounding box.
+    ///
+    /// - Parameters:
+    ///    - other: The other bounding box
+    /// - Returns: The overlapping region, or `nil` if the boxes do not intersect
     public func intersection(_ other: BoundingBox) -> BoundingBox? {
         let boundingBox = self.normalized()
         let other = other.projected(to: projection).normalized()
@@ -668,6 +737,8 @@ extension BoundingBox {
     }
 
     /// Clamped to [-180.0, 180.0].
+    ///
+    /// - Returns: A copy of this bounding box with longitudes normalized to the [-180, 180] range
     public func normalized() -> BoundingBox {
         switch projection {
         case .noSRID:
@@ -703,6 +774,8 @@ extension BoundingBox {
     }
 
     /// Clamped to [[-180,-90], [180,90]]
+    ///
+    /// - Returns: A copy of this bounding box clamped to the valid coordinate range
     public func clamped() -> BoundingBox {
         BoundingBox(
             southWest: southWest.clamped(),
@@ -718,6 +791,10 @@ extension BoundingBox {
     /// - Note: The result may not be correct if either bounding box crosses
     ///         the anti-meridian (date line). Use ``normalized()`` on each
     ///         operand first to avoid this issue.
+    /// - Parameters:
+    ///    - lhs: The first bounding box
+    ///    - rhs: The second bounding box
+    /// - Returns: A bounding box that encompasses both inputs
     public static func + (
         lhs: BoundingBox,
         rhs: BoundingBox
@@ -740,6 +817,8 @@ extension BoundingBox {
     /// - Note: The result may not be correct if either bounding box crosses
     ///         the anti-meridian (date line). Use ``normalized()`` on each
     ///         operand first to avoid this issue.
+    /// - Parameters:
+    ///    - other: The bounding box to union with the receiver
     public mutating func formUnion(_ other: BoundingBox) {
         let boundingBox = self.normalized()
         let other = other.projected(to: projection).normalized()

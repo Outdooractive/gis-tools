@@ -36,6 +36,10 @@ public struct Point: PointGeometry {
     }
 
     /// Initialize a Point with a coordinate.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(_ coordinate: Coordinate3D, calculateBoundingBox: Bool = false) {
         self.coordinate = coordinate
 
@@ -46,6 +50,9 @@ public struct Point: PointGeometry {
 
     /// Try to initialize a Point from any GeoJSON object.
     ///
+    /// - Parameters:
+    ///    - json: A GeoJSON-compatible Swift object
+    /// - Returns: A `Point`, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
@@ -53,8 +60,10 @@ public struct Point: PointGeometry {
 
     /// Try to initialize a Point from any GeoJSON object.
     ///
-    /// - parameter json: A GeoJSON object.
-    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - Parameters:
+    ///    - json: A GeoJSON-compatible Swift object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A `Point`, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
@@ -80,6 +89,7 @@ public struct Point: PointGeometry {
 
     /// The receiver represented as a JSON dictionary.
     ///
+    /// - Returns: A JSON-compatible dictionary
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
@@ -103,7 +113,9 @@ extension Point {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: A new `Point` in the target projection
     public func projected(to newProjection: Projection) -> Point {
         guard newProjection != projection else { return self }
 
@@ -122,11 +134,19 @@ extension Point {
 extension Point {
 
     /// Initialize a Point with a coordinate.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(_ coordinate: CLLocationCoordinate2D, calculateBoundingBox: Bool = false) {
         self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Initialize a Point with a location.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The location
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(_ coordinate: CLLocation, calculateBoundingBox: Bool = false) {
         self.init(Coordinate3D(coordinate), calculateBoundingBox: calculateBoundingBox)
     }
@@ -139,13 +159,17 @@ extension Point {
 extension Point {
 
     /// Calculate and return the receiver's bounding box.
+    ///
+    /// - Returns: The bounding box, or `nil` if it could not be calculated
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: [coordinate])
     }
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameters:
+    ///    - otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the geometries intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         otherBoundingBox.contains(coordinate)
     }

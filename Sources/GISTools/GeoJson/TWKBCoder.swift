@@ -9,6 +9,12 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -26,6 +32,12 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -43,6 +55,11 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         twkb: Data,
@@ -57,6 +74,11 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         twkb: Data,
@@ -77,6 +99,14 @@ extension Feature {
 
     /// Decode a GeoJSON Feature from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON Feature object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -96,6 +126,14 @@ extension Feature {
 
     /// Decode a GeoJSON Feature from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON Feature object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -121,6 +159,12 @@ extension FeatureCollection {
 
     /// Decode a GeoJSON FeatureCollection from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON FeatureCollection object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -138,6 +182,12 @@ extension FeatureCollection {
 
     /// Decode a GeoJSON FeatureCollection from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A GeoJSON FeatureCollection object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         twkb: Data,
@@ -161,6 +211,10 @@ extension Data {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometryFromTWKB(
         sourceSrid: Int?,
@@ -174,6 +228,10 @@ extension Data {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON geometry object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometryFromTWKB(
         sourceProjection: Projection?,
@@ -185,8 +243,14 @@ extension Data {
             targetProjection: targetProjection)
     }
 
-    /// Decode a GeoJSON object from TWKB.
+    /// Decode a GeoJSON Feature from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    /// - Returns: A GeoJSON Feature object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureFromTWKB(
         sourceSrid: Int?,
@@ -202,8 +266,14 @@ extension Data {
             properties: properties)
     }
 
-    /// Decode a GeoJSON object from TWKB.
+    /// Decode a GeoJSON Feature from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    /// - Returns: A GeoJSON Feature object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureFromTWKB(
         sourceProjection: Projection?,
@@ -219,8 +289,12 @@ extension Data {
             properties: properties)
     }
 
-    /// Decode a GeoJSON object from TWKB.
+    /// Decode a GeoJSON FeatureCollection from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON FeatureCollection object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollectionFromTWKB(
         sourceSrid: Int?,
@@ -232,8 +306,12 @@ extension Data {
             targetProjection: targetProjection)
     }
 
-    /// Decode a GeoJSON object from TWKB.
+    /// Decode a GeoJSON FeatureCollection from TWKB.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A GeoJSON FeatureCollection object, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollectionFromTWKB(
         sourceProjection: Projection?,
@@ -270,6 +348,12 @@ public enum TWKBCoder {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceSrid: The SRID of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A decoded GeoJSON geometry object.
+    /// - Throws: A `TWKBError` if the data is corrupted, empty, invalid, or of an unexpected type.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         twkb: Data,
@@ -291,6 +375,12 @@ public enum TWKBCoder {
 
     /// Decode a GeoJSON object from TWKB.
     ///
+    /// - Parameters:
+    ///    - twkb: The TWKB data to decode.
+    ///    - sourceProjection: The projection of the source data.
+    ///    - targetProjection: The projection to transform the result into. Defaults to EPSG:4326.
+    /// - Returns: A decoded GeoJSON geometry object.
+    /// - Throws: A `TWKBError` if the data is corrupted, empty, invalid, or of an unexpected type.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         twkb: Data,

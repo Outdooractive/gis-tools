@@ -5,6 +5,9 @@ public enum GeoJsonReader {
 
     /// Try to initialize a GeoJSON object from any Swift object.
     ///
+    /// - Parameters:
+    ///    - json: A GeoJSON-compatible Swift object
+    /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(json: Any?) -> GeoJson? {
         // Need a concrete type...
@@ -13,6 +16,9 @@ public enum GeoJsonReader {
 
     /// Try to initialize a GeoJSON object from a file.
     ///
+    /// - Parameters:
+    ///    - url: The URL of the file to read
+    /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(contentsOf url: URL) -> GeoJson? {
         geoJsonFrom(json: try? Data(contentsOf: url))
@@ -20,6 +26,9 @@ public enum GeoJsonReader {
 
     /// Try to initialize a GeoJSON object from a data object.
     ///
+    /// - Parameters:
+    ///    - jsonData: The JSON data
+    /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonData: Data) -> GeoJson? {
         geoJsonFrom(json: try? JSONSerialization.jsonObject(with: jsonData))
@@ -27,6 +36,9 @@ public enum GeoJsonReader {
 
     /// Try to initialize a GeoJSON object from a string.
     ///
+    /// - Parameters:
+    ///    - jsonString: The JSON string
+    /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonString: String) -> GeoJson? {
         guard let data = jsonString.data(using: .utf8),

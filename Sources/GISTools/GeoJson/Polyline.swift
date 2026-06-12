@@ -6,6 +6,10 @@ import Foundation
 extension [Coordinate3D] {
 
     /// Encodes the coordinates to a Polyline with the given precision.
+    ///
+    /// - Parameters:
+    ///    - precision: The encoding precision (default `GISTool.defaultPolylinePrecision`)
+    /// - Returns: A Polyline-encoded string
     public func encodePolyline(
         precision: Double = GISTool.defaultPolylinePrecision
     ) -> String {
@@ -17,6 +21,10 @@ extension [Coordinate3D] {
 extension String {
 
     /// Decodes a Polyline to coordinates with the given precision (must match the encoding precision).
+    ///
+    /// - Parameters:
+    ///    - precision: The decoding precision (default `GISTool.defaultPolylinePrecision`)
+    /// - Returns: An array of coordinates, or `nil` if decoding fails
     public func decodePolyline(
         precision: Double = GISTool.defaultPolylinePrecision
     ) -> [Coordinate3D]? {
@@ -29,6 +37,11 @@ extension String {
 enum Polyline {
 
     /// Encodes the coordinates to a Polyline with the given precision.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The coordinates to encode
+    ///    - precision: The encoding precision (default `GISTool.defaultPolylinePrecision`)
+    /// - Returns: A Polyline-encoded string
     public static func encode(
         coordinates: [Coordinate3D],
         precision: Double = GISTool.defaultPolylinePrecision
@@ -53,6 +66,11 @@ enum Polyline {
     }
 
     /// Decodes a Polyline to coordinates with the given precision (must match the encoding precision).
+    ///
+    /// - Parameters:
+    ///    - polyline: The Polyline-encoded string to decode
+    ///    - precision: The decoding precision (default `GISTool.defaultPolylinePrecision`)
+    /// - Returns: An array of coordinates, or `nil` if decoding fails
     public static func decode(
         polyline: String,
         precision: Double = GISTool.defaultPolylinePrecision

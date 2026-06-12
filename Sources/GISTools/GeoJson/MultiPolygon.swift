@@ -49,6 +49,11 @@ public struct MultiPolygon:
     }
 
     /// Try to initialize a MultiPolygon with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The polygon coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A multi polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
         guard !coordinates.isEmpty,
               !coordinates[0].isEmpty,
@@ -59,6 +64,10 @@ public struct MultiPolygon:
     }
 
     /// Try to initialize a MultiPolygon with some coordinates, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The polygon coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false) {
         self.coordinates = coordinates
 
@@ -68,6 +77,11 @@ public struct MultiPolygon:
     }
 
     /// Try to initialize a MultiPolygon with some Polygons.
+    ///
+    /// - Parameters:
+    ///    - polygons: The polygons
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A multi polygon, or `nil` if the array is empty
     public init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false) {
         guard polygons.isNotEmpty else { return nil }
 
@@ -75,6 +89,10 @@ public struct MultiPolygon:
     }
 
     /// Try to initialize a MultiPolygon with some Polygons, don't check the coordinates for validity.
+    ///
+    /// - Parameters:
+    ///    - polygons: The polygons
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(unchecked polygons: [Polygon], calculateBoundingBox: Bool = false) {
         self.polygons = polygons
 
@@ -86,15 +104,20 @@ public struct MultiPolygon:
     /// Try to initialize a MultiPolygon from any GeoJSON object.
     ///
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    /// - Returns: A multi polygon, or `nil` if the input is invalid
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
     /// Try to initialize a MultiPolygon from any GeoJSON object.
     ///
-    /// - parameter json: A GeoJSON object.
-    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Returns: A multi polygon, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               MultiPolygon.isValid(geoJson: geoJson),
@@ -120,6 +143,7 @@ public struct MultiPolygon:
     /// The receiver represented as a JSON dictionary.
     ///
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
+    /// - Returns: A GeoJSON dictionary
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.multiPolygon.rawValue,
@@ -142,7 +166,8 @@ extension MultiPolygon {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameter newProjection: The target projection.
+    /// - Returns: A new multi polygon in the requested projection
     public func projected(to newProjection: Projection) -> MultiPolygon {
         guard newProjection != projection else { return self }
 
@@ -161,11 +186,21 @@ extension MultiPolygon {
 extension MultiPolygon {
 
     /// Try to initialize a MultiPolygon with some coordinates.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The polygon coordinates
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A multi polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[[CLLocationCoordinate2D]]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ $0.map({ Coordinate3D($0) }) }) }), calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Try to initialize a MultiPolygon with some locations.
+    ///
+    /// - Parameters:
+    ///    - coordinates: The polygon locations
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
+    /// - Returns: A multi polygon, or `nil` if the coordinates are invalid
     public init?(_ coordinates: [[[CLLocation]]], calculateBoundingBox: Bool = false) {
         self.init(coordinates.map({ $0.map({ $0.map({ Coordinate3D($0) }) }) }), calculateBoundingBox: calculateBoundingBox)
     }
@@ -197,13 +232,16 @@ extension MultiPolygon {
     }
 
     /// Calculate and return the receiver's bounding box.
+    ///
+    /// - Returns: The calculated bounding box, or `nil` if there are no coordinates
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: Array(coordinates.map({ $0.first ?? [] }).joined()))
     }
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameter otherBoundingBox: The bounding box to check.
+    /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)
@@ -223,7 +261,7 @@ extension MultiPolygon: Equatable {
         lhs: MultiPolygon,
         rhs: MultiPolygon
     ) -> Bool {
-        // TODO: The coordinats might be shifted (like [1, 2, 3] => [3, 1, 2])
+        // Fix: The coordinates might be shifted (like [1, 2, 3] => [3, 1, 2])
         return lhs.projection == rhs.projection
             && lhs.coordinates == rhs.coordinates
     }
@@ -237,6 +275,9 @@ extension MultiPolygon {
     /// Insert a Polygon into the receiver.
     ///
     /// - note: `polygon` must be in the same projection as the receiver.
+    /// - Parameters:
+    ///    - polygon: The polygon to insert
+    ///    - index: The index at which to insert
     public mutating func insertPolygon(
         _ polygon: Polygon,
         atIndex index: Int
@@ -258,6 +299,8 @@ extension MultiPolygon {
     /// Append a Polygon to the receiver.
     ///
     /// - note: `polygon` must be in the same projection as the receiver.
+    /// - Parameters:
+    ///    - polygon: The polygon to append
     public mutating func appendPolygon(_ polygon: Polygon) {
         guard polygons.count == 0 || projection == polygon.projection else { return }
 
@@ -269,6 +312,10 @@ extension MultiPolygon {
     }
 
     /// Remove a Polygon from the receiver.
+    ///
+    /// - Parameters:
+    ///    - index: The index of the polygon to remove
+    /// - Returns: The removed polygon, or `nil` if the index is out of bounds
     @discardableResult
     public mutating func removePolygon(at index: Int) -> Polygon? {
         guard index >= 0, index < polygons.count else { return nil }
@@ -283,16 +330,25 @@ extension MultiPolygon {
     }
 
     /// Map Polygons in-place.
+    ///
+    /// - Parameters:
+    ///    - transform: The closure to apply to each polygon
     public mutating func mapPolygons(_ transform: (Polygon) -> Polygon) {
         polygons = polygons.map(transform)
     }
 
     /// Map Polygons in-place, removing *nil* values.
+    ///
+    /// - Parameters:
+    ///    - transform: The closure to apply to each polygon
     public mutating func compactMapPolygons(_ transform: (Polygon) -> Polygon?) {
         polygons = polygons.compactMap(transform)
     }
 
     /// Filter Polygons in-place.
+    ///
+    /// - Parameters:
+    ///    - isIncluded: The closure to test each polygon
     public mutating func filterPolygons(_ isIncluded: (Polygon) -> Bool) {
         polygons = polygons.filter(isIncluded)
     }

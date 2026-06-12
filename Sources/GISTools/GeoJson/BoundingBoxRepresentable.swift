@@ -9,7 +9,9 @@ public protocol BoundingBoxRepresentable {
     /// The receiver's bounding box.
     var boundingBox: BoundingBox? { get set }
 
-    /// Calculates and returns the receiver's bounding box.
+     /// Calculates and returns the receiver's bounding box.
+     ///
+     /// - Returns: The calculated bounding box, or `nil` if there is nothing to calculate.
     func calculateBoundingBox() -> BoundingBox?
 
     /// Calculates the receiver's bounding box and updates the ``boundingBox`` property.
