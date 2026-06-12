@@ -13,7 +13,7 @@ extension GeoJson {
     ///    - decoder: The decoder to read data from
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: GeoJsonCodingKey.self)
-        let json = container.decodeGeoJsonDictionary()
+        let json = try container.decodeGeoJsonDictionary()
 
         guard let newObject = Self(json: json) else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid JSON object"))
@@ -21,6 +21,12 @@ extension GeoJson {
 
         self = newObject
     }
+
+}
+
+// MARK: -
+
+extension GeoJson {
 
     /// Write the GeoJSON object to an Encoder.
     ///
@@ -44,7 +50,7 @@ extension BoundingBox: Codable {
     ///    - decoder: The decoder to read data from
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
-        let json = container.decodeGeoJsonArray()
+        let json = try container.decodeGeoJsonArray()
 
         guard let newObject = Self(json: json) else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid JSON object"))
@@ -77,7 +83,7 @@ extension Coordinate3D: Codable {
     ///    - decoder: The decoder to read data from
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
-        let json = container.decodeGeoJsonArray()
+        let json = try container.decodeGeoJsonArray()
 
         guard let newObject = Self(json: json) else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid JSON object"))
@@ -212,7 +218,10 @@ extension KeyedEncodingContainer where Key == GeoJsonCodingKey {
                 }
 
             default:
-                print("Missing conversion for (\(key), \(type(of: value)))")
+                throw EncodingError.invalidValue(value, EncodingError.Context(
+                    codingPath: codingPath + [codingKey],
+                    debugDescription: "Unsupported value type '\(type(of: value))' for key '\(key)'",
+                    underlyingError: nil))
             }
         }
     }
@@ -222,7 +231,7 @@ extension KeyedEncodingContainer where Key == GeoJsonCodingKey {
 extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
 
     /// Decode a GeoJSON dictionary from the decoder's container.
-    fileprivate func decodeGeoJsonDictionary() -> [String: Any] {
+    fileprivate func decodeGeoJsonDictionary() throws -> [String: Any] {
         var result: [String: Any] = [:]
 
         for key in allKeys {
@@ -243,13 +252,16 @@ extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
                 result[key.stringValue] = decoded
             }
             else if var decoded = try? nestedUnkeyedContainer(forKey: key) {
-                result[key.stringValue] = decoded.decodeGeoJsonArray()
+                result[key.stringValue] = try decoded.decodeGeoJsonArray()
             }
             else if let decoded = try? nestedContainer(keyedBy: GeoJsonCodingKey.self, forKey: key) {
-                result[key.stringValue] = decoded.decodeGeoJsonDictionary()
+                result[key.stringValue] = try decoded.decodeGeoJsonDictionary()
             }
             else {
-                print("Missing conversion for \(key.stringValue)")
+                throw DecodingError.dataCorrupted(DecodingError.Context(
+                    codingPath: codingPath,
+                    debugDescription: "Missing conversion for key '\(key.stringValue)'",
+                    underlyingError: nil))
             }
         }
 
@@ -261,7 +273,7 @@ extension KeyedDecodingContainer where Key == GeoJsonCodingKey {
 extension UnkeyedDecodingContainer {
 
     /// Decode a GeoJSON array from the decoder's unkeyed container.
-    fileprivate mutating func decodeGeoJsonArray() -> [Any?] {
+    fileprivate mutating func decodeGeoJsonArray() throws -> [Any?] {
         var result: [Any?] = []
 
         while !isAtEnd {
@@ -285,13 +297,16 @@ extension UnkeyedDecodingContainer {
                 result.append(nil)
             }
             else if var decoded = try? nestedUnkeyedContainer() {
-                result.append(decoded.decodeGeoJsonArray())
+                result.append(try decoded.decodeGeoJsonArray())
             }
             else if let decoded = try? nestedContainer(keyedBy: GeoJsonCodingKey.self) {
-                result.append(decoded.decodeGeoJsonDictionary())
+                result.append(try decoded.decodeGeoJsonDictionary())
             }
             else {
-                print("Missing conversion while decoding an array")
+                throw DecodingError.dataCorrupted(DecodingError.Context(
+                    codingPath: codingPath,
+                    debugDescription: "Missing conversion while decoding an array element",
+                    underlyingError: nil))
             }
         }
 
