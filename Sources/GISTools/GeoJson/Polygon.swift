@@ -248,14 +248,22 @@ extension Polygon {
 
 extension Polygon: Equatable {
 
-    /// Check if two Polygons are equal.
+    /// Check if two Polygons are equal, accounting for shifted ring start vertices.
     public static func ==(
         lhs: Polygon,
         rhs: Polygon
     ) -> Bool {
-        // Fix: The coordinates might be shifted (like [1, 2, 3] => [3, 1, 2])
-        return lhs.projection == rhs.projection
-            && lhs.coordinates == rhs.coordinates
+        guard lhs.projection == rhs.projection,
+              lhs.coordinates.count == rhs.coordinates.count
+        else { return false }
+
+        for i in lhs.coordinates.indices {
+            guard lhs.coordinates[i] == rhs.coordinates[i]
+                || lhs.coordinates[i].compareShifted(rhs.coordinates[i])
+            else { return false }
+        }
+
+        return true
     }
 
 }

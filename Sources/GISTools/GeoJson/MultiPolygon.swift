@@ -256,14 +256,13 @@ extension MultiPolygon {
 
 extension MultiPolygon: Equatable {
 
-    /// Check if two MultiPolygons are equal.
+    /// Check if two MultiPolygons are equal, accounting for shifted ring start vertices.
     public static func ==(
         lhs: MultiPolygon,
         rhs: MultiPolygon
     ) -> Bool {
-        // Fix: The coordinates might be shifted (like [1, 2, 3] => [3, 1, 2])
-        return lhs.projection == rhs.projection
-            && lhs.coordinates == rhs.coordinates
+        lhs.projection == rhs.projection
+        && lhs.polygons == rhs.polygons
     }
 
 }

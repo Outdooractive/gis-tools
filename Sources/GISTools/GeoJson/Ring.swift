@@ -67,6 +67,55 @@ public struct Ring: Sendable {
 
 }
 
+// MARK: - Equatable
+
+extension Ring: Equatable {
+
+    /// Check if two Rings are equal, accounting for shifted start vertices.
+    ///
+    /// Two rings are equal if they contain the same vertices, regardless
+    /// of which vertex appears first.
+    public static func ==(lhs: Ring, rhs: Ring) -> Bool {
+        lhs.projection == rhs.projection
+        && (lhs.coordinates == rhs.coordinates
+            || lhs.coordinates.compareShifted(rhs.coordinates))
+    }
+
+}
+
+extension [Coordinate3D] {
+
+    /// Compare two coordinate arrays as closed rings, treating them as
+    /// equal when one is a rotation of the other.
+    func compareShifted(_ other: Self) -> Bool {
+        guard count == other.count,
+              count >= 2
+        else { return false }
+
+        let a = dropLast()
+        let b = other.dropLast()
+        guard a.count == b.count else { return false }
+
+        if a.first == b.first { return a == b }
+
+        let doubled = a + a
+        let len = b.count
+        guard len <= doubled.count else { return false }
+
+        outer: for start in 0...(doubled.count - len) {
+            for i in 0..<len {
+                if doubled[start + i] != b[i] {
+                    continue outer
+                }
+            }
+            return true
+        }
+
+        return false
+    }
+
+}
+
 // MARK: - Projection
 
 extension Ring: Projectable {
