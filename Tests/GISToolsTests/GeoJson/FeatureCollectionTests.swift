@@ -72,10 +72,40 @@ struct FeatureCollectionTests {
         #expect(featureCollection[foreignMember: "other"] == "something else")
     }
 
-    // Placeholder test for creating a FeatureCollection JSON.
+    // Validates creating a FeatureCollection from features and generating its JSON representation.
     @Test
     func createJson() async throws {
-        // TODO:
+        let point = Point(Coordinate3D(latitude: 0.5, longitude: 102.0))
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 102.0),
+            Coordinate3D(latitude: 1.0, longitude: 103.0),
+            Coordinate3D(latitude: 0.0, longitude: 104.0),
+            Coordinate3D(latitude: 1.0, longitude: 105.0),
+        ]))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+        ]]))
+
+        let feature0 = Feature(point, properties: ["prop0": "value0", "prop2": "a"])
+        let feature1 = Feature(lineString, properties: ["prop0": "value0", "prop1": 0.0, "prop2": "a"])
+        let feature2 = Feature(polygon, properties: ["prop0": "value0", "prop1": ["this": "that"], "prop2": "b"])
+
+        let featureCollection = FeatureCollection([feature0, feature1, feature2])
+        let string = featureCollection.asJsonString()!
+
+        #expect(featureCollection.projection == .epsg4326)
+        #expect(string.contains("\"type\":\"FeatureCollection\""))
+        #expect(string.contains("\"type\":\"Feature\""))
+        #expect(string.contains("\"type\":\"Point\""))
+        #expect(string.contains("\"type\":\"LineString\""))
+        #expect(string.contains("\"type\":\"Polygon\""))
+        #expect(string.contains("\"prop0\":\"value0\""))
+        #expect(string.contains("\"prop2\":\"a\""))
+        #expect(string.contains("\"prop2\":\"b\""))
     }
 
     // Validates adding features with mismatched projections filters them by projection.

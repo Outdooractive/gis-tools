@@ -1,3 +1,4 @@
+import Foundation
 @testable import GISTools
 import Testing
 
@@ -67,6 +68,79 @@ struct ProjectionTests {
         let result3 = coordinate3.projected(to: .epsg4326)
         #expect(abs(result3.latitude - 11.350796722383672) < 0.000001)
         #expect(abs(result3.longitude - -73.476562) < 0.000001)
+    }
+
+    @Test
+    func cases() async throws {
+        #expect(Projection.noSRID.srid == 0)
+        #expect(Projection.epsg3857.srid == 3857)
+        #expect(Projection.epsg4326.srid == 4326)
+    }
+
+    @Test
+    func initFromSrid() async throws {
+        #expect(Projection(srid: 0) == .noSRID)
+        #expect(Projection(srid: 4326) == .epsg4326)
+        #expect(Projection(srid: 3857) == .epsg3857)
+    }
+
+    @Test
+    func initFromSridAliases() async throws {
+        #expect(Projection(srid: 102_100) == .epsg3857)
+        #expect(Projection(srid: 102_113) == .epsg3857)
+        #expect(Projection(srid: 900_913) == .epsg3857)
+        #expect(Projection(srid: 3587) == .epsg3857)
+        #expect(Projection(srid: 3785) == .epsg3857)
+        #expect(Projection(srid: 41_001) == .epsg3857)
+        #expect(Projection(srid: 54_004) == .epsg3857)
+    }
+
+    @Test
+    func initFromUnsupportedSrid() async throws {
+        #expect(Projection(srid: 1234) == nil)
+        #expect(Projection(srid: -1) == nil)
+    }
+
+    @Test
+    func description() async throws {
+        #expect(Projection.noSRID.description == "No SRID")
+        #expect(Projection.epsg3857.description == "EPSG:3857")
+        #expect(Projection.epsg4326.description == "EPSG:4326")
+    }
+
+    @Test
+    func sridProperty() async throws {
+        #expect(Projection.noSRID.srid == 0)
+        #expect(Projection.epsg3857.srid == 3857)
+        #expect(Projection.epsg4326.srid == 4326)
+    }
+
+    @Test
+    func equatable() async throws {
+        #expect(Projection.epsg4326 == .epsg4326)
+        #expect(Projection.epsg4326 != .epsg3857)
+        #expect(Projection.noSRID != .epsg4326)
+    }
+
+    @Test
+    func codableRoundTrip() async throws {
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+
+        for projection: Projection in [.noSRID, .epsg3857, .epsg4326] {
+            let data = try encoder.encode(projection)
+            let decoded = try decoder.decode(Projection.self, from: data)
+            #expect(decoded == projection)
+        }
+    }
+
+    @Test
+    func codableRawValues() async throws {
+        let encoder = JSONEncoder()
+
+        #expect(String(data: try encoder.encode(Projection.noSRID), encoding: .utf8) == "0")
+        #expect(String(data: try encoder.encode(Projection.epsg3857), encoding: .utf8) == "3857")
+        #expect(String(data: try encoder.encode(Projection.epsg4326), encoding: .utf8) == "4326")
     }
 
 }

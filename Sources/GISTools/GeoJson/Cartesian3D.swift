@@ -1,7 +1,7 @@
 import Foundation
 
 /// A point in 3D Cartesian space on the unit sphere.
-public struct Cartesian3D {
+public struct Cartesian3D: Hashable, Equatable, Sendable, CustomStringConvertible {
 
     public let x: Double
     public let y: Double
@@ -17,6 +17,10 @@ public struct Cartesian3D {
         self.x = x
         self.y = y
         self.z = z
+    }
+
+    public var description: String {
+        "Cartesian3D(x: \(x), y: \(y), z: \(z))"
     }
 
 }
