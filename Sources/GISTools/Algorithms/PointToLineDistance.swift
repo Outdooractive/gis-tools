@@ -9,7 +9,7 @@ extension LineSegment {
 
     /// Returns the minimum distance between the coordinate and the segment.
     public func distanceFrom(coordinate: Coordinate3D) -> CLLocationDistance {
-        let foot = perpendicularFoot(coordinate: coordinate, clampToEnds: true) ?? first
+        let foot = perpendicularFoot(from: coordinate, clampToEnds: true) ?? first
         return foot.distance(from: coordinate)
     }
 

@@ -9,7 +9,7 @@ extension LineSegment {
 
     /// Returns the foot of the perpendicular of the coordinate to the segment.
     public func perpendicularFoot(
-        coordinate: Coordinate3D,
+        from coordinate: Coordinate3D,
         clampToEnds: Bool = false
     ) -> Coordinate3D? {
         let coordinate = coordinate.projected(to: projection)
@@ -58,7 +58,7 @@ extension LineSegment {
     public func nearestCoordinateOnSegment(
         from other: Coordinate3D
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance) {
-        guard let foot: Coordinate3D = perpendicularFoot(coordinate: other, clampToEnds: true) else {
+        guard let foot: Coordinate3D = perpendicularFoot(from: other, clampToEnds: true) else {
             return (coordinate: first, distance: 0.0)
         }
         let footDistance: CLLocationDistance = other.distance(from: foot)
@@ -83,7 +83,7 @@ extension LineString {
         var bestIndex: Int = -1
 
         for (index, segment) in lineSegments.enumerated() {
-            guard let foot: Coordinate3D = segment.perpendicularFoot(coordinate: other, clampToEnds: true) else {
+            guard let foot: Coordinate3D = segment.perpendicularFoot(from: other, clampToEnds: true) else {
                 continue
             }
             let footDistance: CLLocationDistance = other.distance(from: foot)
