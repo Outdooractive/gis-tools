@@ -31,4 +31,69 @@ struct RhumbDistanceTests {
         #expect(abs(coordinate7.rhumbDistance(from: coordinate8) - expectedDistance4) < 0.001)
     }
 
+    // Validates rhumb distance symmetry (A→B equals B→A).
+    @Test
+    func distanceSymmetry() async throws {
+        let a = Coordinate3D(latitude: 40.0, longitude: -75.0)
+        let b = Coordinate3D(latitude: 35.0, longitude: -80.0)
+
+        let d1 = a.rhumbDistance(from: b)
+        let d2 = b.rhumbDistance(from: a)
+
+        #expect(abs(d1 - d2) < 0.001)
+    }
+
+    // Validates rhumb distance with antimeridian crossing where compensation is active.
+    @Test
+    func distanceAntimeridian() async throws {
+        // Points straddling the antimeridian that trigger the longitude compensation
+        let east = Coordinate3D(latitude: 0.0, longitude: 179.0)
+        let west = Coordinate3D(latitude: 0.0, longitude: -179.0)
+
+        let distance = east.rhumbDistance(from: west)
+        #expect(distance > 0.0)
+        #expect(distance < 300_000.0)  // ~2 degrees at equator = ~222km
+    }
+
+    // Validates rhumb distance between two identical coordinates is zero.
+    @Test
+    func distanceZero() async throws {
+        let coordinate = Coordinate3D(latitude: 40.0, longitude: -75.0)
+        #expect(coordinate.rhumbDistance(from: coordinate) == 0.0)
+    }
+
+    // Validates rhumb distance via the Point wrapper.
+    @Test
+    func distancePoint() async throws {
+        let point1 = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
+        let point2 = Point(Coordinate3D(latitude: 39.123, longitude: -75.534))
+
+        let pointDistance = point1.rhumbDistance(from: point2)
+        let coordDistance = point1.coordinate.rhumbDistance(from: point2.coordinate)
+
+        #expect(abs(pointDistance - coordDistance) < 0.001)
+    }
+
+    // Validates rhumb distance in EPSG:3857 projection.
+    @Test
+    func distance3857() async throws {
+        let coord1 = Coordinate3D(latitude: 40.0, longitude: -75.0).projected(to: .epsg3857)
+        let coord2 = Coordinate3D(latitude: 39.0, longitude: -74.0).projected(to: .epsg3857)
+
+        let distance3857 = coord1.rhumbDistance(from: coord2)
+        #expect(distance3857 > 0.0)
+        #expect(distance3857 < 500_000.0)
+    }
+
+    // Validates north-south rhumb distance.
+    @Test
+    func distanceNorthSouth() async throws {
+        // 1 degree of latitude ≈ 111km
+        let north = Coordinate3D(latitude: 10.0, longitude: 0.0)
+        let south = Coordinate3D(latitude: 9.0, longitude: 0.0)
+
+        let distance = north.rhumbDistance(from: south)
+        #expect(abs(distance - 111_319.5) < 200.0)
+    }
+
 }

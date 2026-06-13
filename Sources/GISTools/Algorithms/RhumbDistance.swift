@@ -28,10 +28,10 @@ extension Coordinate3D {
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)
         // solution from https://github.com/mapbox/mapbox-gl-js/issues/3250#issuecomment-294887678
-        if longitude - self.longitude > 180 {
+        if otherLongitude - self.longitude > 180 {
             otherLongitude -= 360.0
         }
-        else if self.longitude - longitude > 180.0 {
+        else if self.longitude - otherLongitude > 180.0 {
             otherLongitude += 360.0
         }
 
