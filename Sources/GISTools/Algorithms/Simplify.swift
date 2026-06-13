@@ -107,16 +107,16 @@ extension Ring {
               tolerance > 0.0
         else { return self }
 
-        var simplificationtolerance = tolerance
-        var simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationtolerance, highQuality: highQuality)
+        var simplificationTolerance = tolerance
+        var simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationTolerance, highQuality: highQuality)
 
         // if this is not a valid polygon ring anymore: reduce the tolerance until we have at least a triangle
         while !Ring.validCoordinates(simplifiedCoordinates) {
             // Prevent an endless loop
-            guard simplificationtolerance >= (tolerance / 2.0) else { return self }
+            guard simplificationTolerance >= (tolerance / 2.0) else { return self }
 
-            simplificationtolerance *= 0.9
-            simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationtolerance, highQuality: highQuality)
+            simplificationTolerance *= 0.9
+            simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationTolerance, highQuality: highQuality)
         }
 
         if let first = simplifiedCoordinates.first,
