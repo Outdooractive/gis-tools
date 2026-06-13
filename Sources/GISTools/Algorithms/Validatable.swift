@@ -17,7 +17,7 @@ public protocol ValidatableGeoJson {
 
 // MARK: - Geometries etc.
 
-extension Feature {
+extension Feature: ValidatableGeoJson {
 
     /// Check if the Feature's geometry is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -31,7 +31,7 @@ extension Feature {
 
 }
 
-extension FeatureCollection {
+extension FeatureCollection: ValidatableGeoJson {
 
     /// Check if the FeatureCollection's Feature is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -45,7 +45,7 @@ extension FeatureCollection {
 
 }
 
-extension GeometryCollection {
+extension GeometryCollection: ValidatableGeoJson {
 
     /// Check if the geometries are valid, i.e. they have enough coordinates to make sense.
     public var isValid: Bool {
@@ -59,7 +59,7 @@ extension GeometryCollection {
 
 }
 
-extension LineString {
+extension LineString: ValidatableGeoJson {
 
     /// Check if the LineString is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -73,7 +73,7 @@ extension LineString {
 
 }
 
-extension MultiLineString {
+extension MultiLineString: ValidatableGeoJson {
 
     /// Check if the MultiLineString is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -88,7 +88,7 @@ extension MultiLineString {
 
 }
 
-extension Point {
+extension Point: ValidatableGeoJson {
 
     /// Check if the Point is valid. Always `true`.
     public var isValid: Bool {
@@ -102,7 +102,7 @@ extension Point {
 
 }
 
-extension MultiPoint {
+extension MultiPoint: ValidatableGeoJson {
 
     /// Check if the MultiPoint is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -116,7 +116,7 @@ extension MultiPoint {
 
 }
 
-extension Polygon {
+extension Polygon: ValidatableGeoJson {
 
     /// Check if the Polygon is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
@@ -131,7 +131,7 @@ extension Polygon {
 
 }
 
-extension MultiPolygon {
+extension MultiPolygon: ValidatableGeoJson {
 
     /// Check if the MultiPolygon is valid, i.e. it has enough coordinates to make sense.
     public var isValid: Bool {
