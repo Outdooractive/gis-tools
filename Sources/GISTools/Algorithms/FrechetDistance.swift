@@ -31,8 +31,8 @@ public enum FrechetDistanceFunction {
             first.distance(from: second)
         case .rhumbLine:
             first.rhumbDistance(from: second)
-        case let .other(distanceFuntion):
-            distanceFuntion(first, second)
+        case let .other(distanceFunction):
+            distanceFunction(first, second)
         }
     }
 
@@ -40,14 +40,14 @@ public enum FrechetDistanceFunction {
 
 extension LineString {
 
-    /// Fréchet  distance between to geometries.
+    /// Fréchet distance between two geometries.
     ///
     /// - Parameters:
     ///    - other: The other geometry of equal type.
     ///    - distanceFunction: The algorithm to use for distance calculations.
     ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters.
     ///
-    /// - Returns: The frechet distance between the two geometries.
+    /// - Returns: The Fréchet distance between the two geometries.
     public func frechetDistance(
         from other: LineString,
         distanceFunction: FrechetDistanceFunction = .haversine,
@@ -67,7 +67,7 @@ extension LineString {
         var ca: [Double] = Array(repeating: -1.0, count: p.count * q.count)
 
         func index(_ pI: Int, _ qI: Int) -> Int {
-            (pI * p.count) + qI
+            (pI * q.count) + qI
         }
 
         for i in 0 ..< p.count {
