@@ -152,7 +152,7 @@ public enum Simplify {
     ///
     /// - Parameters:
     ///    - coordinates: An array of Coordinate3D
-    ///    - tolerance: Affects the amount of simplification (in units of the coordinates coordinate system)
+    ///    - tolerance: Affects the amount of simplification (in units of the coordinate's coordinate system)
     ///    - highQuality: Skip the distance-based preprocessing step which leads to highest quality simplification but runs quite a bit times slower
     ///
     /// - Returns: Returns an array of simplified coordinates

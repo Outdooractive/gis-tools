@@ -5,6 +5,10 @@ import Foundation
 
 extension Polygon {
 
+    /// Returns the union of the receiver with another polygon geometry.
+    ///
+    /// - Parameter other: The other polygon geometry
+    /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
     public func union(with other: PolygonGeometry) -> MultiPolygon? {
         var all = self.polygons
         all.append(contentsOf: other.polygons)
@@ -15,6 +19,10 @@ extension Polygon {
 
 extension MultiPolygon {
 
+    /// Returns the union of the receiver with another polygon geometry.
+    ///
+    /// - Parameter other: The other polygon geometry
+    /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
     public func union(with other: PolygonGeometry) -> MultiPolygon? {
         var all = self.polygons
         all.append(contentsOf: other.polygons)
@@ -30,6 +38,9 @@ extension MultiPolygon {
 
 extension FeatureCollection {
 
+    /// Returns the union of all polygon features in the collection.
+    ///
+    /// - Returns: A `FeatureCollection` containing the unioned polygon, or `nil` if no polygons exist.
     public func union() -> FeatureCollection? {
         let geometries = features
             .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }

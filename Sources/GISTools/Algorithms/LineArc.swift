@@ -16,6 +16,8 @@ extension Point {
     ///    - bearing1: The angle of the first radius of the arc, in decimal degrees
     ///    - bearing2: The angle of the second radius of the arc, in decimal degrees
     ///    - steps: The number of steps (default 64)
+    ///
+    /// - Returns: A `LineString` representing the arc, or `nil` if `radius ≤ 0` or `steps ≤ 1`.
     public func lineArc(
         radius: CLLocationDistance,
         bearing1: CLLocationDegrees,

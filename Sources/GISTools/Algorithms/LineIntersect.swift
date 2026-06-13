@@ -148,7 +148,7 @@ extension GeoJson {
 
     /// Returns the intersecting point(s) with the receiver.
     ///
-    /// - note: Takes all poygon rings into account,  not just the outer ring.
+    /// - note: Takes all polygon rings into account, not just the outer ring.
     ///
     /// - Parameters:
     ///   - other: The other geometry

@@ -10,6 +10,9 @@ extension LineString {
     /// Divides a *LineString* into chunks of a specified length.
     /// If the line is shorter than the segment length then the original line is returned.
     ///
+    /// - Note: Repeated multiplication (`segmentLength * Double(index)`) accumulates floating-point
+    ///   error over many chunks, which can produce slightly uneven segment lengths.
+    ///
     /// - Parameters:
     ///     - segmentLength: How long to make each segment, in meters
     ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates

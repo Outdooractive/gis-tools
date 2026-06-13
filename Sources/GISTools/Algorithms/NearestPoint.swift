@@ -7,7 +7,7 @@ import Foundation
 
 extension BoundingBox {
 
-    /// Takes a reference coordinate and returns the coordinate from the reveiver closest to the reference.
+    /// Takes a reference coordinate and returns the coordinate from the receiver closest to the reference.
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other coordinate
@@ -17,7 +17,7 @@ extension BoundingBox {
         self.boundingBoxGeometry.nearestCoordinate(from: other)
     }
 
-    /// Takes a reference point and returns the point from the reveiver closest to the reference.
+    /// Takes a reference point and returns the point from the receiver closest to the reference.
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other point
@@ -31,7 +31,7 @@ extension BoundingBox {
 
 extension GeoJson {
 
-    /// Takes a reference coordinate and returns the coordinate from the reveiver closest to the reference.
+    /// Takes a reference coordinate and returns the coordinate from the receiver closest to the reference.
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other coordinate
@@ -40,13 +40,13 @@ extension GeoJson {
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
         let other = other.projected(to: projection)
 
-        let allCordinates = self.allCoordinates
-        guard !allCordinates.isEmpty else { return nil }
+        let allCoordinates = self.allCoordinates
+        guard !allCoordinates.isEmpty else { return nil }
 
-        var bestCoordinate: Coordinate3D = allCordinates[0]
+        var bestCoordinate: Coordinate3D = allCoordinates[0]
         var bestDistance: CLLocationDistance = bestCoordinate.distance(from: other)
 
-        for coordinate in allCordinates {
+        for coordinate in allCoordinates {
             let distance = coordinate.distance(from: other)
             if distance < bestDistance {
                 bestDistance = distance
@@ -57,7 +57,7 @@ extension GeoJson {
         return (coordinate: bestCoordinate, distance: bestDistance)
     }
 
-    /// Takes a reference point and returns the point from the reveiver closest to the reference.
+    /// Takes a reference point and returns the point from the receiver closest to the reference.
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other point

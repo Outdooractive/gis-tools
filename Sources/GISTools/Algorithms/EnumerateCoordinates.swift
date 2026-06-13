@@ -5,7 +5,7 @@ import Foundation
 
 extension FeatureCollection {
 
-    /// Enumerate all coordinates in the FeatureCollection with feature and location index..
+    /// Enumerate all coordinates in the FeatureCollection with feature and location index.
     ///
     /// - Parameter callback: The callback function
     public func enumerateCoordinates(
@@ -22,7 +22,7 @@ extension FeatureCollection {
 
 extension Feature {
 
-    /// Enumerate all coordinates in the Feature with  location index..
+    /// Enumerate all coordinates in the Feature with a location index.
     ///
     /// - Parameter callback: The callback function
     public func enumerateCoordinates(
@@ -37,7 +37,7 @@ extension Feature {
 
 extension GeometryCollection {
 
-    /// Enumerate all coordinates in the GeometryCollection with geometry and location index..
+    /// Enumerate all coordinates in the GeometryCollection with geometry and location index.
     ///
     /// - Parameter callback: The callback function
     public func enumerateCoordinates(
@@ -54,7 +54,7 @@ extension GeometryCollection {
 
 extension GeoJsonGeometry {
 
-    /// Enumerate all coordinates in the Geometry with  location index..
+    /// Enumerate all coordinates in the Geometry with a location index.
     ///
     /// - Parameter callback: The callback function
     public func enumerateCoordinates(

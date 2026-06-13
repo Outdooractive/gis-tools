@@ -80,7 +80,7 @@ extension Polygon {
     ///    - coordinate: The coordinate to check
     ///    - ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the coordinate is inside the polygon (default `false`).
     ///
-    /// - Returns: `true` if the coordinate is inside the ring, `false` otherwise.
+    /// - Returns: `true` if the coordinate is inside the polygon, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
         ignoringBoundary: Bool = false

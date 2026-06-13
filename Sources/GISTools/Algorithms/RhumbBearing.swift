@@ -8,11 +8,11 @@ import Foundation
 extension Coordinate3D {
 
     /// Finds the bearing angle between the receiver and another coordinate along a Rhumb line,
-    /// i.e. the angle measured in degrees start the north line (0 degrees).
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
     ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if `true` (default `false`)
+    ///    - final: Calculates the final bearing if `true` (default `false`)
     public func rhumbBearing(
         to other: Coordinate3D,
         final: Bool = false
@@ -72,11 +72,11 @@ extension Coordinate3D {
 extension Point {
 
     /// Finds the bearing angle between the receiver and another coordinate along a Rhumb line,
-    /// i.e. the angle measured in degrees start the north line (0 degrees).
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
     ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if `true` (default `false`)
+    ///    - final: Calculates the final bearing if `true` (default `false`)
     public func rhumbBearing(
         to other: Point,
         final: Bool = false

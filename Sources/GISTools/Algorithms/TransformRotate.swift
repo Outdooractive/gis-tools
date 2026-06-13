@@ -37,7 +37,7 @@ extension GeoJson {
     ///
     /// - Parameters:
     ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
-    ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
+    ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
     public func rotated(
         angle: CLLocationDegrees,
         pivot: Point? = nil
