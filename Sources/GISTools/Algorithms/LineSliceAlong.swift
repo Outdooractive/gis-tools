@@ -86,8 +86,8 @@ extension Feature {
     ///   - startDistance: The distance along the line to the starting point, in meters
     ///   - stopDistance: The distance along the line to the ending point, in meters
     public func sliceAlong(
-        startDistance: CLLocationDistance,
-        stopDistance: CLLocationDistance
+        startDistance: CLLocationDistance = 0.0,
+        stopDistance: CLLocationDistance = .greatestFiniteMagnitude
     ) -> Feature? {
         guard let lineString = geometry as? LineString,
               let lineSlice = lineString.sliceAlong(startDistance: startDistance, stopDistance: stopDistance)
