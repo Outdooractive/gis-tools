@@ -146,7 +146,7 @@ extension GeoJson {
         _ lineString1: LineString,
         _ lineString2: LineString
     ) -> Bool {
-        let intersectionPoints = lineString1.intersections(other: lineString2)
+        let intersectionPoints = lineString1.intersections(with: lineString2)
         guard intersectionPoints.isNotEmpty else { return false }
 
         guard let coords1 = lineString1.coordinates as [Coordinate3D]?,
@@ -176,7 +176,7 @@ extension GeoJson {
         for polygon in polygonGeometry.polygons {
             for ring in polygon.rings {
                 let ls = ring.lineString
-                if lineString.intersections(other: ls).isNotEmpty {
+                if lineString.intersections(with: ls).isNotEmpty {
                     return true
                 }
             }

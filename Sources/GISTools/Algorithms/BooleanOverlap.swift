@@ -71,7 +71,7 @@ extension LineStringGeometry {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {
-                if segment.compare(other: match, tolerance: tolerance) != .notEqual {
+                if segment.compare(match, tolerance: tolerance) != .notEqual {
                     return true
                 }
             }

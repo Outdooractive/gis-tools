@@ -25,7 +25,7 @@ extension LineSegment {
     ///    - other: The other *LineSegment*
     ///    - tolerance: The tolerance, in meters
     public func compare(
-        other: LineSegment,
+        _ other: LineSegment,
         tolerance: CLLocationDistance = 0.0
     ) -> LineSegmentComparisonResult {
         let other = other.projected(to: projection)
@@ -84,7 +84,7 @@ extension GeoJson {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {
-                let comparison = segment.compare(other: match, tolerance: tolerance)
+                let comparison = segment.compare(match, tolerance: tolerance)
 
                 if comparison == .equal {
                     result.append(segment)

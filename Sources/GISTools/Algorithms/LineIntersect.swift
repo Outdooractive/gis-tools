@@ -154,7 +154,7 @@ extension GeoJson {
     ///   - other: The other geometry
     ///   - epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
-    public func intersections(other: GeoJson, epsilon: Double = 0.0) -> [Point] {
+    public func intersections(with other: GeoJson, epsilon: Double = 0.0) -> [Point] {
         let other = other.projected(to: projection)
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
