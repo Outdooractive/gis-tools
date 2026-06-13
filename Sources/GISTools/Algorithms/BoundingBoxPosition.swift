@@ -60,7 +60,7 @@ extension BoundingBox {
     }
 
     /// Returns the relative position of a point with regards to the bounding box.
-    public func postion(of point: Point) -> CoordinatePosition {
+    public func position(of point: Point) -> CoordinatePosition {
         position(of: point.coordinate)
     }
 
@@ -69,12 +69,12 @@ extension BoundingBox {
 #if canImport(CoreLocation)
 
     /// Returns the relative position of a coordinate with regards to the bounding box.
-    public func postion(of coordinate: CLLocationCoordinate2D) -> CoordinatePosition {
+    public func position(of coordinate: CLLocationCoordinate2D) -> CoordinatePosition {
         position(of: Coordinate3D(coordinate))
     }
 
     /// Returns the relative position of a location with regards to the bounding box.
-    public func postion(of coordinate: CLLocation) -> CoordinatePosition {
+    public func position(of coordinate: CLLocation) -> CoordinatePosition {
         position(of: Coordinate3D(coordinate))
     }
 

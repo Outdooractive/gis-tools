@@ -38,7 +38,7 @@ extension GISTool {
         /// Millimetres.
         case millimetres
         /// Nautical miles.
-        case nauticalmiles
+        case nauticalMiles
         /// Radians.
         case radians
         /// Yards.
@@ -56,7 +56,7 @@ extension GISTool {
         case .meters, .metres: return earthRadius
         case .miles: return earthRadius / 1609.344
         case .millimeters, .millimetres: return earthRadius * 1000.0
-        case .nauticalmiles: return earthRadius / 1852.0
+        case .nauticalMiles: return earthRadius / 1852.0
         case .radians: return 1.0
         case .yards: return earthRadius / (1.0 / 1.0936)
         default: return nil
@@ -74,7 +74,7 @@ extension GISTool {
         case .meters, .metres: return 1.0
         case .miles: return 1.0 / 1609.344
         case .millimeters, .millimetres: return 1000.0
-        case .nauticalmiles: return 1.0 / 1852.0
+        case .nauticalMiles: return 1.0 / 1852.0
         case .radians: return 1.0 / earthRadius
         case .yards: return 1.0 / 1.0936
         default: return nil
@@ -98,7 +98,7 @@ extension GISTool {
     }
 
     /// Converts a length to the requested unit.
-    /// Valid units: miles, nauticalmiles, inches, yards, meters, metres, kilometers, centimeters, feet
+    /// Valid units: miles, nauticalMiles, inches, yards, meters, metres, kilometers, centimeters, feet
     public static func convert(
         length: Double,
         from originalUnit: Unit,
@@ -143,7 +143,7 @@ extension GISTool {
         case .feet: return value / 3.28084
         case .yards: return value / 1.0936
         case .miles: return value * 1609.344
-        case .nauticalmiles: return value * 1852.0
+        case .nauticalMiles: return value * 1852.0
         default: return value
         }
     }

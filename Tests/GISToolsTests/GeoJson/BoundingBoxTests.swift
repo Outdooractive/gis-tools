@@ -666,4 +666,32 @@ struct BoundingBoxTests {
         #expect(geometry is Polygon)
     }
 
+    // MARK: - position(of:)
+
+    // Validates position(of:) correctly identifies center, corner, and outside coordinates.
+    @Test
+    func positionOfCoordinate() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        #expect(bbox.position(of: Coordinate3D(latitude: 5.0, longitude: 5.0)).contains(.center))
+        #expect(bbox.position(of: Coordinate3D(latitude: 9.0, longitude: 9.0)).contains(.top))
+        #expect(bbox.position(of: Coordinate3D(latitude: 9.0, longitude: 9.0)).contains(.right))
+        #expect(bbox.position(of: Coordinate3D(latitude: 1.0, longitude: 1.0)).contains(.bottom))
+        #expect(bbox.position(of: Coordinate3D(latitude: 1.0, longitude: 1.0)).contains(.left))
+        #expect(bbox.position(of: Coordinate3D(latitude: 20.0, longitude: 5.0)).contains(.outside))
+    }
+
+    // Validates position(of:) for Point and CLLocation overloads.
+    @Test
+    func positionOfPoint() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        #expect(bbox.position(of: point).contains(.center))
+    }
+
 }
