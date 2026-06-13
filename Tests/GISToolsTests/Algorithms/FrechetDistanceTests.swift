@@ -32,7 +32,7 @@ struct FrechetDistanceTests {
         #expect(abs(distanceEucliden - 1000.0) < 2.0)
     }
 
-    // Validates Frechet distance with unequal-length coordinate arrays (regression for bug #1).
+    // Validates Frechet distance with unequal-length coordinate arrays.
     @Test
     func frechetDistanceUnequalLengths() async throws {
         let line1 = try #require(LineString([

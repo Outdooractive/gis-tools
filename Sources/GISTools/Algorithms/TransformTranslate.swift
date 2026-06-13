@@ -21,7 +21,6 @@ extension GeoJson {
         guard distance != 0.0 || zTranslation != 0.0 else { return self }
 
         let distance = abs(distance)
-        let direction = abs(direction)
 
         return transformedCoordinates({ (coordinate) in
             var newCoordinate = coordinate.rhumbDestination(distance: distance, bearing: direction)
