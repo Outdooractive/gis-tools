@@ -84,4 +84,32 @@ struct ReverseTests {
         #expect(reversed.features[0].allCoordinates == [Coordinate3D(latitude: 40.0, longitude: 40.0)])
     }
 
+    // Tests that GeometryCollection reverses coordinates within each geometry
+    // but preserves the order of geometries.
+    @Test
+    func geometryCollection() async throws {
+        let geometryCollection = GeometryCollection([
+            try #require(LineString([
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+            ])),
+            Point(Coordinate3D(latitude: 20.0, longitude: 20.0)),
+            try #require(MultiLineString([[
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+            ]])),
+        ])
+        let reversed = geometryCollection.reversed
+
+        // Geometry order is preserved
+        #expect(reversed.geometries[0].type == .lineString)
+        #expect(reversed.geometries[1].type == .point)
+        #expect(reversed.geometries[2].type == .multiLineString)
+
+        // Coordinates within each geometry are reversed
+        #expect(reversed.geometries[0].allCoordinates.map(\.latitude) == [1.0, 0.0])
+        #expect(reversed.geometries[1].allCoordinates.map(\.latitude) == [20.0])
+        #expect(reversed.geometries[2].allCoordinates.map(\.latitude) == [1.0, 0.0])
+    }
+
 }

@@ -63,6 +63,11 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
     }
 
     /// Create a new R-Tree from `objects`.
+    ///
+    /// - Parameters:
+    ///    - objects: The objects to index
+    ///    - nodeSize: The maximum number of items per node (default `16`, clamped to 4-65535)
+    ///    - sortOption: The sorting strategy for tree construction (default `.hilbert`)
     public init(
         _ objects: [T],
         nodeSize: Int = 16,
@@ -165,6 +170,10 @@ extension RTree {
         distance: CLLocationDistance)
 
     /// Search for objects inside a bounding box.
+    ///
+    /// - Parameters:
+    ///    - searchBoundingBox: The bounding box to search within
+    /// - Returns: An array of objects that intersect the search bounding box
     public func search(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         guard count > nodeSize,
               position == boundingBoxes.count
@@ -213,6 +222,10 @@ extension RTree {
     }
 
     /// Search for objects inside a bounding box using serial search.
+    ///
+    /// - Parameters:
+    ///    - searchBoundingBox: The bounding box to search within
+    /// - Returns: An array of objects that intersect the search bounding box
     public func searchSerial(inBoundingBox searchBoundingBox: BoundingBox) -> [T] {
         let searchBoundingBox = searchBoundingBox.projected(to: projection)
 
@@ -232,6 +245,12 @@ extension RTree {
     }
 
     /// Search for objects around a coordinate.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The center point of the search
+    ///    - maximumDistance: The maximum distance from the center in meters
+    ///    - sorted: Whether to sort results by distance (default `true`)
+    /// - Returns: An array of search results with objects and their distances
     public func search(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,
@@ -288,6 +307,12 @@ extension RTree {
     }
 
     /// Search for objects around a coordinate using serial search.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The center point of the search
+    ///    - maximumDistance: The maximum distance from the center in meters
+    ///    - sorted: Whether to sort results by distance (default `true`)
+    /// - Returns: An array of search results with objects and their distances
     public func searchSerial(
         aroundCoordinate coordinate: Coordinate3D,
         maximumDistance: CLLocationDistance,

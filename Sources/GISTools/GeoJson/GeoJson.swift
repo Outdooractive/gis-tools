@@ -177,12 +177,22 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     var polygons: [Polygon] { get }
 
     /// Check if this `(Multi)Polygon` contains *Coordinate3D*.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to test
+    ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
+    /// - Returns: `true` if the coordinate lies within the polygon
     func contains(
         _ coordinate: Coordinate3D,
         ignoringBoundary: Bool
     ) -> Bool
 
     /// Check if this `(Multi)Polygon` contains *Point*.
+    ///
+    /// - Parameters:
+    ///    - point: The point to test
+    ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
+    /// - Returns: `true` if the point lies within the polygon
     func contains(
         _ point: Point,
         ignoringBoundary: Bool

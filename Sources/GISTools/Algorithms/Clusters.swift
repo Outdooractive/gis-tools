@@ -12,15 +12,13 @@ extension FeatureCollection {
 
     /// Clusters points using the DBSCAN algorithm.
     ///
-    /// - Parameters:
-    ///   - maxDistance: Maximum distance between points in a cluster (meters).
-    ///   - minPoints: Minimum points to form a cluster (default 3).
-    ///   - mutate: If true, modifies the receiver in place (default false).
+    /// - Parameter maxDistance: Maximum distance between points in a cluster (meters).
+    /// - Parameter minPoints: Minimum points to form a cluster (default 3).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `dbscan`
     ///   ("core"|"edge"|"noise") properties on each point.
     public func dbscanClusters(
         maxDistance: CLLocationDistance,
-        minPoints: Int = 3,
+        minPoints: Int = 3
     ) -> FeatureCollection {
         var features = self.features
         let count = features.count
@@ -81,13 +79,11 @@ extension FeatureCollection {
 
     /// Clusters points using the K-means algorithm.
     ///
-    /// - Parameters:
-    ///   - numberOfClusters: Number of clusters (default `sqrt(n/2)`).
-    ///   - mutate: If true, modifies the receiver in place (default false).
+    /// - Parameter numberOfClusters: Number of clusters (default `sqrt(n/2)`).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `centroid`
     ///   ([Double]) properties on each point.
     public func kmeansClusters(
-        numberOfClusters: Int? = nil,
+        numberOfClusters: Int? = nil
     ) -> FeatureCollection {
         var features = self.features
         let count = features.count

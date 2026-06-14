@@ -9,9 +9,8 @@ extension Ring {
 
     /// Determines if *Coordinate3D* resides inside the *Ring*. The ring can be convex or concave.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the ring boundary should be ignored when determining if the coordinate is inside the ring (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the ring boundary should be ignored when determining if the coordinate is inside the ring (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside the ring, `false` otherwise.
     public func contains(
@@ -57,9 +56,8 @@ extension Ring {
 
     /// Determines if *Point* resides inside the *Ring*. The ring can be convex or concave.
     ///
-    /// - Parameters:
-    ///    - point: The point to check
-    ///    - ignoringBoundary: `true` if the ring boundary should be ignored when determining if the point is inside the ring (default `false`).
+    /// - Parameter point: The point to check
+    /// - Parameter ignoringBoundary: `true` if the ring boundary should be ignored when determining if the point is inside the ring (default `false`).
     ///
     /// - Returns: `true` if the point is inside the ring, `false` otherwise.
     public func contains(
@@ -76,11 +74,10 @@ extension Polygon {
     /// Determines if *Coordinate3D* resides inside the *Polygon*. The polygon can be convex or concave.
     /// The function accounts for holes.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the coordinate is inside the polygon (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the coordinate is inside the polygon (default `false`).
     ///
-    /// - Returns: `true` if the coordinate is inside the ring, `false` otherwise.
+    /// - Returns: `true` if the coordinate is inside the polygon, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
         ignoringBoundary: Bool = false
@@ -107,9 +104,8 @@ extension Polygon {
     /// Determines if *Point* resides inside the *Polygon*. The polygon can be convex or concave.
     /// The function accounts for holes.
     ///
-    /// - Parameters:
-    ///    - point: The point to check
-    ///    - ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the point is inside the polygon (default `false`).
+    /// - Parameter point: The point to check
+    /// - Parameter ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the point is inside the polygon (default `false`).
     ///
     /// - Returns: `true` if the point is inside the ring, `false` otherwise.
     public func contains(
@@ -126,9 +122,8 @@ extension MultiPolygon {
     /// Determines if *Coordinate3D* resides inside the *MultiPolygon*. The polygons can be convex or concave.
     /// The function accounts for holes.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the polygons, `false` otherwise.
     public func contains(
@@ -151,9 +146,8 @@ extension MultiPolygon {
     /// Determines if *Point* resides inside the *MultiPolygon*. The polygons can be convex or concave.
     /// The function accounts for holes.
     ///
-    /// - Parameters:
-    ///    - point: The coordinate to check
-    ///    - ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
+    /// - Parameter point: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the polygons, `false` otherwise.
     public func contains(
@@ -169,9 +163,8 @@ extension GeometryCollection {
 
     /// Determines if *Coordinate3D* resides inside the *GeometryCollection*.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the geometries, `false` otherwise.
     public func contains(
@@ -191,9 +184,8 @@ extension Feature {
 
     /// Determines if *Coordinate3D* resides inside the *Feature*.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of the Feature's geometry (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of the Feature's geometry (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the Feature's geometry, `false` otherwise.
     public func contains(
@@ -211,9 +203,8 @@ extension FeatureCollection {
 
     /// Determines if *Coordinate3D* resides inside the *FeatureCollection*.
     ///
-    /// - Parameters:
-    ///    - coordinate: The coordinate to check
-    ///    - ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
+    /// - Parameter coordinate: The coordinate to check
+    /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the geometries, `false` otherwise.
     public func contains(

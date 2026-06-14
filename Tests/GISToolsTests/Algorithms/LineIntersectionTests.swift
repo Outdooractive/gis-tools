@@ -17,7 +17,7 @@ struct LineIntersectionTests {
                 Coordinate3D(latitude: -14.008696, longitude: 127.22168),
             ])!)
 
-        let intersections: [Point] = feature1.intersections(other: feature2)
+        let intersections: [Point] = feature1.intersections(with: feature2)
         let results: [Point] = [Point(Coordinate3D(latitude: -14.835723, longitude: 125.583754))]
 
         #expect(intersections.count == 1)
@@ -31,7 +31,7 @@ struct LineIntersectionTests {
         let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble1")
         let lineString2 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionDouble2")
 
-        let intersections: [Point] = lineString1.intersections(other: lineString2)
+        let intersections: [Point] = lineString1.intersections(with: lineString2)
         let results: [Point] = [
             Point(Coordinate3D(latitude: -11.630938, longitude: 132.808697)),
             Point(Coordinate3D(latitude: -19.58857, longitude: 119.832884)),
@@ -57,7 +57,7 @@ struct LineIntersectionTests {
         let polygon1 = try TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles1")
         let polygon2 = try TestData.polygon(package: "LineIntersection", name: "LineIntersectionPolygonsWithHoles2")
 
-        let intersections: [Point] = polygon1.intersections(other: polygon2)
+        let intersections: [Point] = polygon1.intersections(with: polygon2)
         let results: [Point] = [
             Point(Coordinate3D(latitude: -33.654475, longitude: 120.170188)),
             Point(Coordinate3D(latitude: -19.242649, longitude: 118.465639)),
@@ -99,7 +99,7 @@ struct LineIntersectionTests {
         let multiLineString1 = try TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings1")
         let multiLineString2 = try TestData.multiLineString(package: "LineIntersection", name: "LineIntersectionMultiLineStrings2")
 
-        let intersections: [Point] = multiLineString1.intersections(other: multiLineString2)
+        let intersections: [Point] = multiLineString1.intersections(with: multiLineString2)
         let results: [Point] = [
             Point(Coordinate3D(latitude: -14.675333, longitude: 136.479474)),
             Point(Coordinate3D(latitude: -14.506578, longitude: 136.389417)),
@@ -133,7 +133,7 @@ struct LineIntersectionTests {
         let lineString1 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates1")
         let lineString2 = try TestData.lineString(package: "LineIntersection", name: "LineIntersectionSameCoordinates2")
 
-        let intersections: [Point] = lineString1.intersections(other: lineString2)
+        let intersections: [Point] = lineString1.intersections(with: lineString2)
         let results: [Point] = [
             Point(Coordinate3D(latitude: -20, longitude: 120)),
             Point(Coordinate3D(latitude: -20, longitude: 130)),

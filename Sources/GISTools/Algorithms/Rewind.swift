@@ -15,6 +15,9 @@ extension GeoJson {
 
     /// Returns the receiver with the specified winding order.
     /// `Point` and `MultiPoint` will be returned as-is.
+    ///
+    /// - Parameter order: The winding order to apply.
+    /// - Returns: A new geometry with the given winding order.
     public func withWindingOrder(_ order: PolygonWindingOrder) -> Self {
         switch self {
         case let lineString as LineString:
@@ -94,6 +97,8 @@ extension GeoJson {
 
     /// Forces the receiver to be in the specified winding order.
     /// `Point` and `MultiPoint` will be returned as-is.
+    ///
+    /// - Parameter order: The winding order to enforce.
     public mutating func forceWindingOrder(_ order: PolygonWindingOrder) {
         self = withWindingOrder(order)
     }

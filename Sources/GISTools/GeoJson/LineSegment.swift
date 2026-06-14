@@ -57,7 +57,9 @@ extension LineSegment: Projectable {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameters:
+    ///    - newProjection: The target projection
+    /// - Returns: A new `LineSegment` in the target projection
     public func projected(to newProjection: Projection) -> LineSegment {
         guard newProjection != projection else { return self }
 
@@ -76,6 +78,12 @@ extension LineSegment: Projectable {
 extension LineSegment {
 
     /// Initialize a LineSegment with two coordinates.
+    ///
+    /// - Parameters:
+    ///    - first: The segment's first coordinate
+    ///    - second: The segment's second coordinate
+    ///    - index: The index within a `LineString`, if applicable
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(
         first: CLLocationCoordinate2D,
         second: CLLocationCoordinate2D,
@@ -88,7 +96,13 @@ extension LineSegment {
                   calculateBoundingBox: calculateBoundingBox)
     }
 
-    /// Initialize a LineSegment with two locations.
+    /// Initialize a LineSegment with two coordinates.
+    ///
+    /// - Parameters:
+    ///    - first: The segment's first coordinate
+    ///    - second: The segment's second coordinate
+    ///    - index: The index within a `LineString`, if applicable
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     public init(
         first: CLLocation,
         second: CLLocation,
@@ -109,13 +123,17 @@ extension LineSegment {
 extension LineSegment: BoundingBoxRepresentable {
 
     /// Calculate and return the segment's bounding box.
+    ///
+    /// - Returns: The bounding box, or `nil` if it could not be calculated
     public func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: coordinates)
     }
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameters:
+    ///    - otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the geometries intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
            !boundingBox.intersects(otherBoundingBox)

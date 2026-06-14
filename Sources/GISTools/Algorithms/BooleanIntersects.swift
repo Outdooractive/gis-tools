@@ -9,8 +9,7 @@ extension GeoJson {
 
     /// Compares two geometries and returns true if they intersect.
     ///
-    /// - Parameters:
-    ///    - other: The other geometry
+    /// - Parameter other: The other geometry
     ///
     /// - Returns: `true` if the geometries intersect, `false` otherwise.
     public func intersects(_ other: GeoJson) -> Bool {

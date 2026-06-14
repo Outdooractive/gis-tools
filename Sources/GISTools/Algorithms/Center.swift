@@ -54,6 +54,8 @@ extension FeatureCollection {
     /// Returns the mean center of the receiver. Can be weighted.
     ///
     /// - Parameter weightAttribute: The property name used to weight the center
+    ///
+    /// - Returns: The mean center, or `nil`.
     public func centerMean(weightAttribute: String? = nil) -> Point? {
         var sumLongitude: Double = 0.0
         var sumLatitude: Double = 0.0

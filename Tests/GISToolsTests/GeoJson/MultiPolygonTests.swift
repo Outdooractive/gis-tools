@@ -118,4 +118,51 @@ struct MultiPolygonTests {
         #expect(multiPolygonData == multiPolygon.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that MultiPolygon equality handles shifted ring start vertices.
+    @Test
+    func equatable() async throws {
+        let polygonA = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+        ]]))
+        let polygonB = try #require(Polygon([[
+            Coordinate3D(latitude: 2.0, longitude: 102.0),
+            Coordinate3D(latitude: 2.0, longitude: 103.0),
+            Coordinate3D(latitude: 3.0, longitude: 103.0),
+            Coordinate3D(latitude: 3.0, longitude: 102.0),
+            Coordinate3D(latitude: 2.0, longitude: 102.0),
+        ]]))
+        let polygonBShifted = try #require(Polygon([[
+            Coordinate3D(latitude: 3.0, longitude: 103.0),
+            Coordinate3D(latitude: 3.0, longitude: 102.0),
+            Coordinate3D(latitude: 2.0, longitude: 102.0),
+            Coordinate3D(latitude: 2.0, longitude: 103.0),
+            Coordinate3D(latitude: 3.0, longitude: 103.0),
+        ]]))
+
+        let multiA = MultiPolygon([polygonA, polygonB])!
+        let multiB = MultiPolygon([polygonA, polygonB])!
+        let multiBShifted = MultiPolygon([polygonA, polygonBShifted])!
+
+        // Same polygons → equal
+        #expect(multiA == multiB)
+
+        // Shifted ring start → still equal
+        #expect(multiA == multiBShifted)
+
+        // Different polygons → not equal
+        let polygonC = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 101.0),
+            Coordinate3D(latitude: 11.0, longitude: 101.0),
+            Coordinate3D(latitude: 11.0, longitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 100.0),
+        ]]))
+        let multiC = MultiPolygon([polygonA, polygonC])!
+        #expect(multiA != multiC)
+    }
+
 }

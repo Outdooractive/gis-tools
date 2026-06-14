@@ -2,6 +2,7 @@
 import CoreLocation
 #endif
 @testable import GISTools
+import Foundation
 import Testing
 
 struct FrechetDistanceTests {
@@ -29,6 +30,90 @@ struct FrechetDistanceTests {
 
         let distanceEucliden = lineArc1.frechetDistance(from: lineArc2, distanceFunction: .euclidean)
         #expect(abs(distanceEucliden - 1000.0) < 2.0)
+    }
+
+    // Validates Frechet distance with unequal-length coordinate arrays.
+    @Test
+    func frechetDistanceUnequalLengths() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.5),
+            Coordinate3D(latitude: 2.0, longitude: 0.5),
+        ]))
+
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .haversine)
+        #expect(distance > 0.0)
+        #expect(distance < 200_000.0)
+    }
+
+    // Validates Frechet distance with a custom distance function.
+    @Test
+    func frechetDistanceCustomFunction() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let distance = line1.frechetDistance(
+            from: line2,
+            distanceFunction: .other({ a, b in
+                hypot(a.longitude - b.longitude, a.latitude - b.latitude)
+            })
+        )
+        #expect(distance == 0.0)
+    }
+
+    // Validates Frechet distance with segmentLength producing different intermediate point counts.
+    @Test
+    func frechetDistanceWithSegmentLength() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.5),
+        ]))
+
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .haversine, segmentLength: 10_000.0)
+        #expect(distance > 0.0)
+    }
+
+    // Fréchet distance of a line with itself is zero.
+    @Test
+    func frechetDistanceSelf() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let distance = line.frechetDistance(from: line, distanceFunction: .haversine)
+        #expect(distance == 0.0)
+    }
+
+    // Fréchet distance between two parallel lines equals their separation.
+    @Test
+    func frechetDistanceParallelLines() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .euclidean)
+        #expect(abs(distance - 1.0) < 0.0001)
     }
 
 }

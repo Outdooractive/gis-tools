@@ -3,6 +3,9 @@ import CoreLocation
 #endif
 import Foundation
 
+/// A map tile identified by its x/y coordinates and zoom level in the Web Mercator
+/// (EPSG:3857) tile coordinate system, commonly used by map renderers such as
+/// MapKit, Google Maps, and OpenStreetMap.
 public struct MapTile: CustomStringConvertible, Sendable {
 
     /// The x-coordinate of the tile.
@@ -50,6 +53,11 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// Creates a map tile from its coordinates and zoom level.
+    ///
+    /// - Parameters:
+    ///    - x: The x-coordinate of the tile
+    ///    - y: The y-coordinate of the tile
+    ///    - z: The zoom level
     public init(x: Int, y: Int, z: Int) {
         self.x = x
         self.y = y
@@ -57,6 +65,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// Creates a map tile from a geographic coordinate at the given zoom level.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The geographic coordinate
+    ///    - zoom: The zoom level
     public init(coordinate: Coordinate3D, atZoom zoom: Int) {
         let scale = Double(1 << zoom)
         let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate.projected(to: .epsg4326))
@@ -70,8 +82,9 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// Initialize a tile from a bounding box.
     /// The resulting tile will have a zoom level in `0...maxZoom`.
     ///
-    /// - parameter boundingBox: The bounding box that the tile should completely contain
-    /// - parameter maxZoom: The maximum zoom level of the resulting tile, 0...32
+    /// - Parameters:
+    ///    - boundingBox: The bounding box that the tile should completely contain
+    ///    - maxZoom: The maximum zoom level of the resulting tile, 0...32
     public init(
         boundingBox: BoundingBox,
         maxZoom: Int = 32
@@ -111,6 +124,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// Creates a map tile from a ``String`` in the format `"z/x/y"`.
+    ///
+    /// - Parameters:
+    ///    - string: A tile string in the format `"z/x/y"`
+    /// - Returns: A `MapTile`, or `nil` if the string format is invalid
     public init?(string: String) {
         guard let components = string.components(separatedBy: "/").nilIfEmpty,
               components.count == 3,
@@ -175,6 +192,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     // MARK: - Quadkey
 
     /// The quadkey representation of the tile.
+    ///
+    /// - Returns: A quadkey string
     public var quadkey: String {
         var quadkey = ""
 
@@ -196,6 +215,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// Creates a map tile from a quadkey string.
+    ///
+    /// - Parameters:
+    ///    - quadkey: A quadkey string
+    /// - Returns: A `MapTile`, or `nil` if the quadkey is invalid
     public init?(quadkey: String) {
         guard !quadkey.isEmpty else {
             self.x = 0
@@ -260,6 +283,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// Resolution (meters/pixel) for a given zoom level measured at the tile center.
+    ///
+    /// - Returns: The meters per pixel at the tile's center
     public var metersPerPixel: Double {
         GISTool.metersPerPixel(atZoom: z, latitude: centerCoordinate().latitude)
     }
@@ -294,6 +319,10 @@ extension MapTile: Equatable, Hashable {}
 extension Coordinate3D {
 
     /// The receiver as a ``MapTile``.
+    ///
+    /// - Parameters:
+    ///    - zoom: The zoom level
+    /// - Returns: A `MapTile` for the receiver at the given zoom
     public func mapTile(atZoom zoom: Int) -> MapTile {
         MapTile(coordinate: self, atZoom: zoom)
     }
@@ -304,6 +333,10 @@ extension Coordinate3D {
 extension CLLocation {
 
     /// The receiver as a ``MapTile``.
+    ///
+    /// - Parameters:
+    ///    - zoom: The zoom level
+    /// - Returns: A `MapTile` for the receiver at the given zoom
     public func mapTile(atZoom zoom: Int) -> MapTile {
         MapTile(coordinate: Coordinate3D(self), atZoom: zoom)
     }
@@ -313,6 +346,10 @@ extension CLLocation {
 extension CLLocationCoordinate2D {
 
     /// The receiver as a ``MapTile``.
+    ///
+    /// - Parameters:
+    ///    - zoom: The zoom level
+    /// - Returns: A `MapTile` for the receiver at the given zoom
     public func mapTile(atZoom zoom: Int) -> MapTile {
         MapTile(coordinate: Coordinate3D(self), atZoom: zoom)
     }

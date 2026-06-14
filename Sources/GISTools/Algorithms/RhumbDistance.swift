@@ -10,6 +10,8 @@ extension Coordinate3D {
     /// Calculates the distance along a rhumb line between two coordinates, in meters.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
         switch projection {
         case .epsg4326:
@@ -18,8 +20,9 @@ extension Coordinate3D {
             // TODO: This can be improved
             return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
         case .noSRID:
-            // TODO
-            return Double.infinity
+            let dx = longitude - other.longitude
+            let dy = latitude - other.latitude
+            return sqrt(dx * dx + dy * dy)
         }
     }
 
@@ -28,10 +31,10 @@ extension Coordinate3D {
 
         // compensate the crossing of the 180th meridian (https://macwright.org/2016/09/26/the-180th-meridian.html)
         // solution from https://github.com/mapbox/mapbox-gl-js/issues/3250#issuecomment-294887678
-        if longitude - self.longitude > 180 {
+        if otherLongitude - self.longitude > 180 {
             otherLongitude -= 360.0
         }
-        else if self.longitude - longitude > 180.0 {
+        else if self.longitude - otherLongitude > 180.0 {
             otherLongitude += 360.0
         }
 
@@ -79,6 +82,8 @@ extension Point {
     /// Calculates the distance between two points, in meters.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Point) -> CLLocationDistance {
         coordinate.rhumbDistance(from: other.coordinate)
     }

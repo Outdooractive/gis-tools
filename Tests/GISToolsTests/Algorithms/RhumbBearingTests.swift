@@ -19,4 +19,17 @@ struct RhumbBearingTests {
         #expect(abs(finalBearing - -104.719) < 0.01)
     }
 
+    // Tests rhumb bearing calculation with .noSRID (Cartesian coordinates).
+    @Test
+    func rhumbBearingNoSRID() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let east = Coordinate3D(x: 1.0, y: 0.0, projection: .noSRID)
+        let north = Coordinate3D(x: 0.0, y: 1.0, projection: .noSRID)
+        let northEast = Coordinate3D(x: 1.0, y: 1.0, projection: .noSRID)
+
+        #expect(abs(origin.rhumbBearing(to: east) - 90.0) < 1e-10)
+        #expect(abs(origin.rhumbBearing(to: north)) < 1e-10)
+        #expect(abs(origin.rhumbBearing(to: northEast) - 45.0) < 1e-10)
+    }
+
 }

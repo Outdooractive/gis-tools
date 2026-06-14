@@ -10,9 +10,9 @@ extension GeoJson {
     /// Rotates any geojson Feature or Geometry of a specified angle, around its centroid or a given pivot point.
     /// All rotations follow the right-hand rule: https://en.wikipedia.org/wiki/Right-hand_rule.
     ///
-    /// - Parameters:
-    ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
-    ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
+    /// - Parameter angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
+    /// - Parameter pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
+    /// - Returns: The rotated geometry.
     public func rotated(
         angle: CLLocationDegrees,
         pivot: Coordinate3D? = nil
@@ -35,9 +35,9 @@ extension GeoJson {
     /// Rotates any geojson Feature or Geometry of a specified angle, around its centroid or a given pivot point.
     /// All rotations follow the right-hand rule: https://en.wikipedia.org/wiki/Right-hand_rule.
     ///
-    /// - Parameters:
-    ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
-    ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
+    /// - Parameter angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
+    /// - Parameter pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
+    /// - Returns: The rotated geometry.
     public func rotated(
         angle: CLLocationDegrees,
         pivot: Point? = nil
@@ -48,9 +48,8 @@ extension GeoJson {
     /// Rotates the receiver with a specified angle, around its centroid or a given pivot point.
     /// All rotations follow the right-hand rule: https://en.wikipedia.org/wiki/Right-hand_rule.
     ///
-    /// - Parameters:
-    ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
-    ///    - pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
+    /// - Parameter angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
+    /// - Parameter pivot: The coordinate around which the rotation will be performed (defaults to the centroid)
     public mutating func rotate(
         angle: CLLocationDegrees,
         pivot: Coordinate3D? = nil
@@ -61,9 +60,8 @@ extension GeoJson {
     /// Rotates the receiver with a specified angle, around its centroid or a given pivot point.
     /// All rotations follow the right-hand rule: https://en.wikipedia.org/wiki/Right-hand_rule.
     ///
-    /// - Parameters:
-    ///    - angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
-    ///    - pivot: The point around which the rotation will be performed (defaults to the centroid)
+    /// - Parameter angle: The angle of the rotation (along the vertical axis), from north in decimal degrees, negative clockwise
+    /// - Parameter pivot: The point around which the rotation will be performed (defaults to the centroid)
     public mutating func rotate(
         angle: CLLocationDegrees,
         pivot: Point? = nil

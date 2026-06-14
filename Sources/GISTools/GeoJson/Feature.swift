@@ -115,6 +115,12 @@ public struct Feature:
     public var foreignMembers: [String: Sendable] = [:]
 
     /// Create a ``Feature`` from any ``GeoJsonGeometry`` object.
+    ///
+    /// - Parameters:
+    ///    - geometry: The geometry object
+    ///    - id: An optional identifier
+    ///    - properties: A dictionary of properties
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the geometry
     public init(
         _ geometry: GeoJsonGeometry,
         id: Identifier? = nil,
@@ -131,11 +137,20 @@ public struct Feature:
     }
 
     /// Try to initialize a Feature from any JSON object.
+    ///
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    /// - Returns: A feature, or `nil` if the input is invalid
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
     /// Try to initialize a Feature from JSON and calculate a bounding box if necessary.
+    ///
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the geometry
+    /// - Returns: A feature, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               Feature.isValid(geoJson: geoJson),
@@ -162,6 +177,8 @@ public struct Feature:
     }
 
     /// The receiver as a JSON object.
+    ///
+    /// - Returns: A GeoJSON dictionary
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
@@ -185,6 +202,9 @@ public struct Feature:
 extension Feature {
 
     /// Update the bounding box, optionally only if it hasn't been calculated yet.
+    ///
+    /// - Parameter onlyIfNecessary: Only update if the receiver doesn't already have one
+    /// - Returns: The updated bounding box
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -198,11 +218,16 @@ extension Feature {
     }
 
     /// Calculate the bounding box from the receiver's geometry.
+    ///
+    /// - Returns: The calculated bounding box, or `nil` if there is no geometry
     public func calculateBoundingBox() -> BoundingBox? {
         geometry.boundingBox ?? geometry.calculateBoundingBox()
     }
 
     /// Check if the receiver intersects with the given bounding box.
+    ///
+    /// - Parameter otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
             !boundingBox.intersects(otherBoundingBox)
@@ -237,6 +262,9 @@ extension Feature: Equatable {
 extension Feature {
 
     /// Reproject the receiver.
+    ///
+    /// - Parameter newProjection: The target projection
+    /// - Returns: A new feature in the requested projection
     public func projected(to newProjection: Projection) -> Feature {
         guard newProjection != projection else { return self }
 
@@ -256,6 +284,10 @@ extension Feature {
 extension Feature {
 
     /// Returns a property by key.
+    ///
+    /// - Parameters:
+    ///    - key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or types don't match
     public func property<T: Sendable>(for key: String) -> T? {
         properties[key] as? T
     }
@@ -263,6 +295,9 @@ extension Feature {
     /// Set a property key/value pair.
     ///
     /// - important: `value` must be a valid JSON object or serialization will fail.
+    /// - Parameters:
+    ///    - value: The value to set (must be JSON-compatible)
+    ///    - key: The property key
     public mutating func setProperty(_ value: Sendable?, for key: String) {
         var updatedProperties = properties
         updatedProperties[key] = value
@@ -270,6 +305,10 @@ extension Feature {
     }
 
     /// Remove a property from the Feature.
+    ///
+    /// - Parameters:
+    ///    - key: The property key to remove
+    /// - Returns: The previous value, or `nil` if the key didn't exist
     @discardableResult
     public mutating func removeProperty(for key: String) -> Sendable? {
         var updatedProperties = properties

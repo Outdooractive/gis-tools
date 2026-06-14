@@ -9,17 +9,17 @@ extension LineSegment {
 
     /// Returns the foot of the perpendicular of the coordinate to the segment.
     public func perpendicularFoot(
-        coordinate: Coordinate3D,
+        from coordinate: Coordinate3D,
         clampToEnds: Bool = false
     ) -> Coordinate3D? {
         let coordinate = coordinate.projected(to: projection)
 
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
-        // avoid inaccuracy for too short distances, as the square line distance is taken as divisor
-        if squareLineDistance == 0.0
-            || first.distance(from: second) < 1.0
-        {
+        // Numerical stability: avoid division by a near-zero squared distance.
+        // Use the geodesic distance (always in meters) for a projection-independent
+        // threshold. Segments shorter than 1 m are degenerate for perpendicular projection.
+        if squareLineDistance <= 0.0 || first.distance(from: second) < 1.0 {
             return first
         }
 
@@ -58,7 +58,7 @@ extension LineSegment {
     public func nearestCoordinateOnSegment(
         from other: Coordinate3D
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance) {
-        guard let foot: Coordinate3D = perpendicularFoot(coordinate: other, clampToEnds: true) else {
+        guard let foot: Coordinate3D = perpendicularFoot(from: other, clampToEnds: true) else {
             return (coordinate: first, distance: 0.0)
         }
         let footDistance: CLLocationDistance = other.distance(from: foot)
@@ -83,7 +83,7 @@ extension LineString {
         var bestIndex: Int = -1
 
         for (index, segment) in lineSegments.enumerated() {
-            guard let foot: Coordinate3D = segment.perpendicularFoot(coordinate: other, clampToEnds: true) else {
+            guard let foot: Coordinate3D = segment.perpendicularFoot(from: other, clampToEnds: true) else {
                 continue
             }
             let footDistance: CLLocationDistance = other.distance(from: foot)
@@ -92,11 +92,6 @@ extension LineString {
                 bestCoordinate = foot
                 bestDistance = footDistance
                 bestIndex = index
-            }
-
-            // TODO: Good enough? Might not be accurate enough for all use cases
-            if bestDistance < 1.0 {
-                break
             }
         }
 

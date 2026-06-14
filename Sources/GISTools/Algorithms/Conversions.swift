@@ -38,7 +38,7 @@ extension GISTool {
         /// Millimetres.
         case millimetres
         /// Nautical miles.
-        case nauticalmiles
+        case nauticalMiles
         /// Radians.
         case radians
         /// Yards.
@@ -56,7 +56,7 @@ extension GISTool {
         case .meters, .metres: return earthRadius
         case .miles: return earthRadius / 1609.344
         case .millimeters, .millimetres: return earthRadius * 1000.0
-        case .nauticalmiles: return earthRadius / 1852.0
+        case .nauticalMiles: return earthRadius / 1852.0
         case .radians: return 1.0
         case .yards: return earthRadius / (1.0 / 1.0936)
         default: return nil
@@ -74,7 +74,7 @@ extension GISTool {
         case .meters, .metres: return 1.0
         case .miles: return 1.0 / 1609.344
         case .millimeters, .millimetres: return 1000.0
-        case .nauticalmiles: return 1.0 / 1852.0
+        case .nauticalMiles: return 1.0 / 1852.0
         case .radians: return 1.0 / earthRadius
         case .yards: return 1.0 / 1.0936
         default: return nil
@@ -98,7 +98,7 @@ extension GISTool {
     }
 
     /// Converts a length to the requested unit.
-    /// Valid units: miles, nauticalmiles, inches, yards, meters, metres, kilometers, centimeters, feet
+    /// Valid units: miles, nauticalMiles, inches, yards, meters, metres, kilometers, centimeters, feet
     public static func convert(
         length: Double,
         from originalUnit: Unit,
@@ -129,6 +129,8 @@ extension GISTool {
     /// GISTool.convertToMeters(5, .kilometers) // 5000.0
     /// GISTool.convertToMeters(1, .miles)      // 1609.344
     /// ```
+    /// - Returns: The value converted to meters.
+    ///
     /// - note: Mainly for tests.
     public static func convertToMeters(
         _ value: Double,
@@ -143,7 +145,7 @@ extension GISTool {
         case .feet: return value / 3.28084
         case .yards: return value / 1.0936
         case .miles: return value * 1609.344
-        case .nauticalmiles: return value * 1852.0
+        case .nauticalMiles: return value * 1852.0
         default: return value
         }
     }
@@ -154,6 +156,14 @@ extension GISTool {
 
 extension GISTool {
 
+    /// Converts pixel coordinates to a coordinate at the given zoom level.
+    ///
+    /// - Parameter pixelX: The x pixel coordinate.
+    /// - Parameter pixelY: The y pixel coordinate.
+    /// - Parameter zoom: The zoom level.
+    /// - Parameter tileSideLength: The tile side length in pixels.
+    /// - Parameter projection: The projection to use.
+    /// - Returns: The coordinate for the pixel position.
     @available(*, deprecated, renamed: "coordinate(fromPixelX:pixelY:zoom:tileSideLength:projection:)")
     public static func convertToCoordinate(
         fromPixelX pixelX: Double,
@@ -170,6 +180,8 @@ extension GISTool {
     }
 
     /// Converts pixel coordinates in a given zoom level to a coordinate.
+    ///
+    /// - Returns: The coordinate for the pixel position.
     public static func coordinate(
         fromPixelX pixelX: Double,
         pixelY: Double,
@@ -191,6 +203,8 @@ extension GISTool {
     }
 
     /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
+    ///
+    /// - Returns: The resolution in meters per pixel.
     public static func metersPerPixel(
         atZoom zoom: Int,
         latitude: CLLocationDegrees = 0.0, // equator
@@ -205,6 +219,11 @@ extension GISTool {
 
 extension GISTool {
 
+    /// Converts a distance in meters to degrees at a given latitude.
+    ///
+    /// - Parameter meters: The distance in meters.
+    /// - Parameter latitude: The latitude at which to calculate the conversion.
+    /// - Returns: A tuple of latitude degrees and longitude degrees.
     @available(*, deprecated, renamed: "degrees(fromMeters:atLatitude:)")
     public static func convertToDegrees(
         fromMeters meters: Double,
@@ -215,9 +234,8 @@ extension GISTool {
 
     /// Converts a distance in meters to degrees at a given latitude.
     ///
-    /// - Parameters:
-    ///    - meters: The distance in meters
-    ///    - latitude: The latitude at which to calculate the conversion
+    /// - Parameter meters: The distance in meters
+    /// - Parameter latitude: The latitude at which to calculate the conversion
     ///
     /// - Returns: A tuple of latitude degrees and longitude degrees.
     public static func degrees(

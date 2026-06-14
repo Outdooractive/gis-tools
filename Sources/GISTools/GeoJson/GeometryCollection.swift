@@ -28,11 +28,19 @@ public struct GeometryCollection: GeoJsonGeometry {
     public var foreignMembers: [String: Sendable] = [:]
 
     /// Initialize a GeometryCollection with a geometry object.
+    ///
+    /// - Parameters:
+    ///    - geometry: The geometry object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the geometry
     public init(_ geometry: GeoJsonGeometry, calculateBoundingBox: Bool = false) {
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
     /// Initialize a GeometryCollection with some geometry objects.
+    ///
+    /// - Parameters:
+    ///    - geometries: The geometry objects
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the geometries
     public init(_ geometries: [GeoJsonGeometry], calculateBoundingBox: Bool = false) {
         self.geometries = geometries
 
@@ -44,15 +52,20 @@ public struct GeometryCollection: GeoJsonGeometry {
     /// Try to initialize a GeometryCollection from any GeoJSON object.
     ///
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    /// - Returns: A geometry collection, or `nil` if the input is invalid
     public init?(json: Any?) {
         self.init(json: json, calculateBoundingBox: false)
     }
 
     /// Try to initialize a GeometryCollection from any GeoJSON object.
     ///
-    /// - parameter json: A GeoJSON object.
-    /// - parameter calculateBoundingBox: When true, calculate the bounding box from the coordinates.
+    /// - Parameters:
+    ///    - json: A GeoJSON object
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     /// - important: The source is expected to be in EPSG:4326.
+    /// - Returns: A geometry collection, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = json as? [String: Sendable],
               GeometryCollection.isValid(geoJson: geoJson),
@@ -78,6 +91,7 @@ public struct GeometryCollection: GeoJsonGeometry {
     /// The receiver represented as a JSON dictionary.
     ///
     /// - important: Always projected to EPSG:4326, unless the receiver has no SRID.
+    /// - Returns: A GeoJSON dictionary
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.geometryCollection.rawValue,
@@ -98,7 +112,8 @@ extension GeometryCollection {
 
     /// Update the receiver's bounding box.
     ///
-    /// - parameter ifNecessary: Only update if the receiver doesn't already have one.
+    /// - Parameter onlyIfNecessary: Only update if the receiver doesn't already have one
+    /// - Returns: The updated bounding box
     @discardableResult
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
@@ -116,6 +131,8 @@ extension GeometryCollection {
     }
 
     /// Calculate and return the receiver's bounding box by combining all geometry bounding boxes.
+    ///
+    /// - Returns: The calculated bounding box, or `nil` if there are no geometries
     public func calculateBoundingBox() -> BoundingBox? {
         let geometryBoundingBoxes: [BoundingBox] = geometries.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
         guard !geometryBoundingBoxes.isEmpty else { return nil }
@@ -127,7 +144,8 @@ extension GeometryCollection {
 
     /// Check if the receiver intersects the other bounding box.
     ///
-    /// - parameter otherBoundingBox: The bounding box to check.
+    /// - Parameter otherBoundingBox: The bounding box to check
+    /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox,
            !boundingBox.intersects(otherBoundingBox)
@@ -160,7 +178,8 @@ extension GeometryCollection {
 
     /// Returns the receiver projected to a different projection.
     ///
-    /// - parameter newProjection: The target projection.
+    /// - Parameter newProjection: The target projection
+    /// - Returns: A new geometry collection in the requested projection
     public func projected(to newProjection: Projection) -> GeometryCollection {
         guard newProjection != projection else { return self }
 
@@ -180,6 +199,9 @@ extension GeometryCollection {
     /// Insert a GeoJsonGeometry into the receiver.
     ///
     /// - note: `geometry` must be in the same projection as the receiver.
+    /// - Parameters:
+    ///    - geometry: The geometry to insert
+    ///    - index: The index at which to insert
     public mutating func insertGeometry(
         _ geometry: GeoJsonGeometry,
         atIndex index: Int
@@ -201,6 +223,8 @@ extension GeometryCollection {
     /// Append a GeoJsonGeometry to the receiver.
     ///
     /// - note: `geometry` must be in the same projection as the receiver.
+    /// - Parameters:
+    ///    - geometry: The geometry to append
     public mutating func appendGeometry(_ geometry: GeoJsonGeometry) {
         guard geometries.count == 0 || projection == geometry.projection else { return }
 
@@ -212,6 +236,10 @@ extension GeometryCollection {
     }
 
     /// Remove a GeoJsonGeometry from the receiver.
+    ///
+    /// - Parameters:
+    ///    - index: The index of the geometry to remove
+    /// - Returns: The removed geometry, or `nil` if the index is out of bounds
     @discardableResult
     public mutating func removeGeometry(at index: Int) -> GeoJsonGeometry? {
         guard index >= 0, index < geometries.count else { return nil }
@@ -226,16 +254,25 @@ extension GeometryCollection {
     }
 
     /// Map Geometries in-place.
+    ///
+    /// - Parameters:
+    ///    - transform: The closure to apply to each geometry
     public mutating func mapGeometries(_ transform: (GeoJsonGeometry) -> GeoJsonGeometry) {
         geometries = geometries.map(transform)
     }
 
     /// Map Geometries in-place, removing *nil* values.
+    ///
+    /// - Parameters:
+    ///    - transform: The closure to apply to each geometry
     public mutating func compactMapGeometries(_ transform: (GeoJsonGeometry) -> GeoJsonGeometry?) {
         geometries = geometries.compactMap(transform)
     }
 
     /// Filter Geometries in-place.
+    ///
+    /// - Parameters:
+    ///    - isIncluded: The closure to test each geometry
     public mutating func filterGeometries(_ isIncluded: (GeoJsonGeometry) -> Bool) {
         geometries = geometries.filter(isIncluded)
     }

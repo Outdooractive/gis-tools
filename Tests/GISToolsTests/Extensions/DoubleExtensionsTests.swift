@@ -44,7 +44,7 @@ struct DoubleExtensionsTests {
         #expect(abs(GISTool.convertToMeters(1.0, .feet) - GISTool.convert(length: 1.0, from: .feet, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(1.0, .yards) - GISTool.convert(length: 1.0, from: .yards, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(1.0, .miles) - GISTool.convert(length: 1.0, from: .miles, to: .meters)!) < 0.001)
-        #expect(abs(GISTool.convertToMeters(1.0, .nauticalmiles) - GISTool.convert(length: 1.0, from: .nauticalmiles, to: .meters)!) < 0.001)
+        #expect(abs(GISTool.convertToMeters(1.0, .nauticalMiles) - GISTool.convert(length: 1.0, from: .nauticalMiles, to: .meters)!) < 0.001)
 
         // pi units
         #expect(abs(GISTool.convertToMeters(Double.pi, .meters) - GISTool.convert(length: Double.pi, from: .meters, to: .meters)!) < 0.001)
@@ -55,7 +55,7 @@ struct DoubleExtensionsTests {
         #expect(abs(GISTool.convertToMeters(Double.pi, .feet) - GISTool.convert(length: Double.pi, from: .feet, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(Double.pi, .yards) - GISTool.convert(length: Double.pi, from: .yards, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(Double.pi, .miles) - GISTool.convert(length: Double.pi, from: .miles, to: .meters)!) < 0.001)
-        #expect(abs(GISTool.convertToMeters(Double.pi, .nauticalmiles) - GISTool.convert(length: Double.pi, from: .nauticalmiles, to: .meters)!) < 0.001)
+        #expect(abs(GISTool.convertToMeters(Double.pi, .nauticalMiles) - GISTool.convert(length: Double.pi, from: .nauticalMiles, to: .meters)!) < 0.001)
 
         // -1 unit
         #expect(abs(GISTool.convertToMeters(-1.0, .meters) - -GISTool.convert(length: 1.0, from: .meters, to: .meters)!) < 0.001)
@@ -66,7 +66,7 @@ struct DoubleExtensionsTests {
         #expect(abs(GISTool.convertToMeters(-1.0, .feet) - -GISTool.convert(length: 1.0, from: .feet, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(-1.0, .yards) - -GISTool.convert(length: 1.0, from: .yards, to: .meters)!) < 0.001)
         #expect(abs(GISTool.convertToMeters(-1.0, .miles) - -GISTool.convert(length: 1.0, from: .miles, to: .meters)!) < 0.001)
-        #expect(abs(GISTool.convertToMeters(-1.0, .nauticalmiles) - -GISTool.convert(length: 1.0, from: .nauticalmiles, to: .meters)!) < 0.001)
+        #expect(abs(GISTool.convertToMeters(-1.0, .nauticalMiles) - -GISTool.convert(length: 1.0, from: .nauticalMiles, to: .meters)!) < 0.001)
     }
 
 }

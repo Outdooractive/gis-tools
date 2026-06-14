@@ -1,5 +1,5 @@
 
-/// Objects supporting ``Projection``s..
+/// Objects supporting ``Projection``.
 public protocol Projectable {
 
     /// The receiver's projection, which should typically be EPSG:4326.
@@ -12,7 +12,10 @@ public protocol Projectable {
 
 extension Projectable {
 
-    /// Reproject this coordinate.
+    /// Reproject this coordinate in-place.
+    ///
+    /// - Parameters:
+    ///    - newProjection: The target projection
     public mutating func project(to newProjection: Projection) {
         guard newProjection != projection else { return }
 

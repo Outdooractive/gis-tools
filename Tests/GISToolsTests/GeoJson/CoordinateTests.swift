@@ -373,6 +373,24 @@ struct CoordinateTests {
         #expect(a.latitude == 90.0)
     }
 
+    // Validates that normalization is a no-op for .noSRID coordinates.
+    @Test
+    func normalizedNoSRID() async throws {
+        let a = Coordinate3D(x: 200.0, y: 10.0, projection: .noSRID)
+        let n = a.normalized()
+        #expect(n.longitude == 200.0)
+        #expect(n.latitude == 10.0)
+    }
+
+    // Validates that clamping is a no-op for .noSRID coordinates.
+    @Test
+    func clampedNoSRID() async throws {
+        let a = Coordinate3D(x: 300.0, y: 200.0, projection: .noSRID)
+        let c = a.clamped()
+        #expect(c.longitude == 300.0)
+        #expect(c.latitude == 200.0)
+    }
+
     // MARK: - Hashable
 
     // Validates that equal coordinates have the same hash value.

@@ -15,6 +15,10 @@ public enum Projection:
     case epsg4326 = 4326
 
     /// Initialize a Projection with a SRID number.
+    ///
+    /// - Parameters:
+    ///    - srid: The SRID number (e.g. 4326, 3857)
+    /// - Returns: A `Projection`, or `nil` if the SRID is not supported
     public init?(srid: Int) {
         switch srid {
         // A placeholder for 'No SRID'

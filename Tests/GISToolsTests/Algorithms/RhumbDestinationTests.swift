@@ -67,4 +67,28 @@ struct RhumbDestinationTests {
         #expect(other == result)
     }
 
+    // Tests rhumb destination with .noSRID (Cartesian coordinates).
+    @Test
+    func rhumbDestinationNoSRID() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+
+        let north = origin.rhumbDestination(distance: 10.0, bearing: 0.0)
+        #expect(abs(north.latitude - 10.0) < 1e-10)
+        #expect(abs(north.longitude) < 1e-10)
+        #expect(north.projection == .noSRID)
+
+        let east = origin.rhumbDestination(distance: 10.0, bearing: 90.0)
+        #expect(abs(east.longitude - 10.0) < 1e-10)
+        #expect(abs(east.latitude) < 1e-10)
+
+        let south = origin.rhumbDestination(distance: 10.0, bearing: 180.0)
+        #expect(abs(south.latitude + 10.0) < 1e-10)
+        #expect(abs(south.longitude) < 1e-10)
+
+        let angle = origin.rhumbDestination(distance: 10.0, bearing: 45.0)
+        let expected = 10.0 * 0.7071067811865476
+        #expect(abs(angle.longitude - expected) < 1e-10)
+        #expect(abs(angle.latitude - expected) < 1e-10)
+    }
+
 }

@@ -398,6 +398,8 @@ extension Feature {
 extension FeatureCollection {
 
     /// Cuts each feature's geometry at the anti-meridian.
+    ///
+    /// - Returns: A new `FeatureCollection` with each feature cut at the anti-meridian.
     public func cutAtAntimeridian() -> FeatureCollection {
         var allFeatures: [Feature] = []
         for feature in features {

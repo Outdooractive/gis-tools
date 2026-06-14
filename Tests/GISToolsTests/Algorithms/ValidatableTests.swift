@@ -210,4 +210,27 @@ struct ValidatableTests {
         #expect(Feature.isValid(geoJson: ["type": "Feature"]) == false)
     }
 
+    // MARK: - validated property
+
+    @Test
+    func validatedReturnsSelfWhenValid() async throws {
+        let point = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
+        #expect(point.validated != nil)
+        #expect(point.validated?.isValid == true)
+    }
+
+    @Test
+    func validatedReturnsNilWhenInvalid() async throws {
+        let empty = MultiPoint()
+        #expect(empty.validated == nil)
+    }
+
+    @Test
+    func validatedFeatureCollection() async throws {
+        let valid = FeatureCollection([Feature(Point(Coordinate3D(latitude: 1.0, longitude: 1.0)))])
+        #expect(valid.validated != nil)
+        let invalid = FeatureCollection([Feature(LineString())])
+        #expect(invalid.validated == nil)
+    }
+
 }

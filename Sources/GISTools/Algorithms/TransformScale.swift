@@ -29,13 +29,16 @@ public enum ScaleAnchor: Sendable {
 
 extension GeoJson {
 
-    /// Scale the receiver from a given point by a factor of scaling (ex: factor=2 would make the
+    /// Scale the receiver from a given point by a factor of scaling (e.g. factor=2 would make the
     /// GeoJSON 200% larger). If the receiver is a *FeatureCollection*, the origin point will
     /// be calculated based on each individual Feature.
     ///
-    /// - Parameters:
-    ///    - factor: The scaling factor, positive or negative
-    ///    - anchor: The anchor from which the scaling will occur
+    /// - Note: When using `ScaleAnchor.coordinate(_)` as the anchor, a `FeatureCollection` is
+    ///   scaled as a single unit. With any other anchor, each `Feature` is scaled individually.
+    ///
+    /// - Parameter factor: The scaling factor, positive or negative
+    /// - Parameter anchor: The anchor from which the scaling will occur
+    /// - Returns: The scaled geometry.
     public func scaled(
         factor: Double,
         anchor: ScaleAnchor = .centroid
@@ -61,13 +64,12 @@ extension GeoJson {
         return _scaledBy(factor: factor, anchor: anchor)
     }
 
-    /// Scale the receiver from a given point by a factor of scaling (ex: factor=2 would make the
+    /// Scale the receiver from a given point by a factor of scaling (e.g. factor=2 would make the
     /// GeoJSON 200% larger). If the receiver is a *FeatureCollection*, the origin point will
     /// be calculated based on each individual Feature.
     ///
-    /// - Parameters:
-    ///    - factor: The scaling factor, positive or negative
-    ///    - anchor: The anchor from which the scaling will occur
+    /// - Parameter factor: The scaling factor, positive or negative
+    /// - Parameter anchor: The anchor from which the scaling will occur
     public mutating func scale(
         factor: Double,
         anchor: ScaleAnchor = .centroid

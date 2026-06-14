@@ -11,9 +11,10 @@ extension Coordinate3D {
     /// distance in meters and a bearing in degrees.
     /// This uses the Haversine formula to account for global curvature.
     ///
-    /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
-    ///    - bearing: The direction, ranging from -180 to 180
+    /// - Parameter distance: The distance from the receiver, in meters
+    /// - Parameter bearing: The direction, ranging from -180 to 180
+    ///
+    /// - Returns: The destination coordinate.
     public func destination(
         distance: CLLocationDistance,
         bearing: CLLocationDegrees
@@ -67,9 +68,10 @@ extension Coordinate3D {
     /// Calculates the location of a coordinate on a straight line between
     /// this and another coordinate given a distance in meters.
     ///
-    /// - Parameters:
-    ///    - target: The other coordinate
-    ///    - distance: The distance from the receiver, in meters
+    /// - Parameter target: The other coordinate
+    /// - Parameter distance: The distance from the receiver, in meters
+    ///
+    /// - Returns: The coordinate at the given distance along the line to the target.
     public func coordinate(
         inDirectionOf target: Coordinate3D,
         distance: CLLocationDistance
@@ -85,9 +87,10 @@ extension Point {
     /// in meters and a bearing in degrees.
     /// This uses the Haversine formula to account for global curvature.
     ///
-    /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
-    ///    - bearing: The direction, ranging from -180 to 180
+    /// - Parameter distance: The distance from the receiver, in meters
+    /// - Parameter bearing: The direction, ranging from -180 to 180
+    ///
+    /// - Returns: The destination point.
     public func destination(
         distance: CLLocationDistance,
         bearing: CLLocationDegrees
@@ -98,9 +101,10 @@ extension Point {
     /// Calculates the location of a point on a straight line between
     /// this and another point given a distance in meters.
     ///
-    /// - Parameters:
-    ///    - target: The other point
-    ///    - distance: The distance from the receiver, in meters
+    /// - Parameter target: The other point
+    /// - Parameter distance: The distance from the receiver, in meters
+    ///
+    /// - Returns: The point at the given distance along the line to the target.
     public func point(
         inDirectionOf target: Point,
         distance: CLLocationDistance

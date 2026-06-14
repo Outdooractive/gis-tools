@@ -8,11 +8,13 @@ import Foundation
 extension Coordinate3D {
 
     /// Finds the bearing angle between the receiver and another coordinate along a Rhumb line,
-    /// i.e. the angle measured in degrees start the north line (0 degrees).
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
-    ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if `true` (default `false`)
+    /// - Parameter other: The other coordinate
+    /// - Parameter final: Calculates the final bearing if `true` (default `false`)
+    ///
+    /// - Returns: The bearing in degrees.
     public func rhumbBearing(
         to other: Coordinate3D,
         final: Bool = false
@@ -23,8 +25,9 @@ extension Coordinate3D {
         case .epsg3857:
             return projected(to: .epsg4326)._rhumbBearing(to: other.projected(to: .epsg4326), final: final)
         case .noSRID:
-            // TODO
-            return Double.infinity
+            let dx = other.longitude - longitude
+            let dy = other.latitude - latitude
+            return atan2(dx, dy).radiansToDegrees
         }
     }
 
@@ -72,11 +75,13 @@ extension Coordinate3D {
 extension Point {
 
     /// Finds the bearing angle between the receiver and another coordinate along a Rhumb line,
-    /// i.e. the angle measured in degrees start the north line (0 degrees).
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
-    ///    - other: The other coordinate
-    ///    - final: Calculated the final bearing if `true` (default `false`)
+    /// - Parameter other: The other coordinate
+    /// - Parameter final: Calculates the final bearing if `true` (default `false`)
+    ///
+    /// - Returns: The bearing in degrees.
     public func rhumbBearing(
         to other: Point,
         final: Bool = false

@@ -557,6 +557,77 @@ struct BoundingBoxTests {
         #expect(clamped == BoundingBox.world)
     }
 
+    // MARK: - Normalize
+
+    // Validates that `normalized()` preserves an already in-range bounding box.
+    @Test
+    func normalizedInRange() async throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -45.0, longitude: 10.0),
+            northEast: Coordinate3D(latitude: 45.0, longitude: 20.0))
+        let n = box.normalized()
+        #expect(n.southWest.longitude == 10.0)
+        #expect(n.northEast.longitude == 20.0)
+    }
+
+    // Validates that `normalized()` handles a bounding box crossing the anti-meridian
+    // with longitudes that are already in the [-180, 180] range.
+    @Test
+    func normalizedCrossesAntiMeridian() async throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -45.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 45.0, longitude: -170.0))
+        let n = box.normalized()
+        #expect(n.southWest.longitude == 170.0)
+        #expect(n.northEast.longitude == -170.0)
+    }
+
+    // Validates that `normalized()` returns the full world when the original
+    // bounding box spans 360° or more of longitude.
+    @Test
+    func normalizedWidthSpansWorld() async throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -45.0, longitude: -200.0),
+            northEast: Coordinate3D(latitude: 45.0, longitude: 200.0))
+        let n = box.normalized()
+        #expect(n.southWest.longitude == -180.0)
+        #expect(n.northEast.longitude == 180.0)
+    }
+
+    // Validates that `normalized()` correctly converts out-of-range longitudes
+    // to a wrapping (anti-meridian-crossing) representation.
+    @Test
+    func normalizedOutOfRangeBecomesWrapping() async throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -45.0, longitude: 200.0),
+            northEast: Coordinate3D(latitude: 45.0, longitude: 160.0))
+        let n = box.normalized()
+        #expect(n.southWest.longitude == -160.0)
+        #expect(n.northEast.longitude == 160.0)
+    }
+
+    // Validates the mutating normalize method.
+    @Test
+    func normalizedMutating() async throws {
+        var box = BoundingBox(
+            southWest: Coordinate3D(latitude: -45.0, longitude: 200.0),
+            northEast: Coordinate3D(latitude: 45.0, longitude: 400.0))
+        box.normalize()
+        #expect(box.southWest.longitude == -160.0)
+        #expect(box.northEast.longitude == 40.0)
+    }
+
+    // Validates that `normalized()` is a no-op for .noSRID bounding boxes.
+    @Test
+    func normalizedNoSRID() async throws {
+        let sw = Coordinate3D(x: 170.0, y: -45.0, projection: .noSRID)
+        let ne = Coordinate3D(x: 200.0, y: 45.0, projection: .noSRID)
+        let box = BoundingBox(southWest: sw, northEast: ne)
+        let n = box.normalized()
+        #expect(n.southWest.longitude == 170.0)
+        #expect(n.northEast.longitude == 200.0)
+    }
+
     // MARK: - Expanding
 
     // Validates that a bounding box can be expanded by distance and by degrees in both coordinate systems.
@@ -664,6 +735,34 @@ struct BoundingBoxTests {
         #expect(BoundingBox.world.crossesAntiMeridian == false)
         let geometry = BoundingBox.world.boundingBoxGeometry
         #expect(geometry is Polygon)
+    }
+
+    // MARK: - position(of:)
+
+    // Validates position(of:) correctly identifies center, corner, and outside coordinates.
+    @Test
+    func positionOfCoordinate() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        #expect(bbox.position(of: Coordinate3D(latitude: 5.0, longitude: 5.0)).contains(.center))
+        #expect(bbox.position(of: Coordinate3D(latitude: 9.0, longitude: 9.0)).contains(.top))
+        #expect(bbox.position(of: Coordinate3D(latitude: 9.0, longitude: 9.0)).contains(.right))
+        #expect(bbox.position(of: Coordinate3D(latitude: 1.0, longitude: 1.0)).contains(.bottom))
+        #expect(bbox.position(of: Coordinate3D(latitude: 1.0, longitude: 1.0)).contains(.left))
+        #expect(bbox.position(of: Coordinate3D(latitude: 20.0, longitude: 5.0)).contains(.outside))
+    }
+
+    // Validates position(of:) for Point and CLLocation overloads.
+    @Test
+    func positionOfPoint() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        #expect(bbox.position(of: point).contains(.center))
     }
 
 }

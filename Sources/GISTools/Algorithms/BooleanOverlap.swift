@@ -10,9 +10,8 @@ extension PointGeometry {
     /// Compares two Point|MultiPoint geometries and returns true if their intersection set results in a geometry
     /// different from both but of the same dimension.
     ///
-    /// - Parameters:
-    ///    - other: The other Point or MultiPoint
-    ///    - tolerance: The tolerance, in meters.
+    /// - Parameter other: The other Point or MultiPoint
+    /// - Parameter tolerance: The tolerance, in meters.
     ///
     /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
@@ -52,11 +51,10 @@ extension LineStringGeometry {
     /// Compares two LineString|MultiLineString geometries and returns true if their intersection set results in a geometry
     /// different from both but of the same dimension.
     ///
-    /// - Parameters:
-    ///    - other: The other Point or MultiPoint
-    ///    - tolerance: The tolerance, in meters.
+    /// - Parameter other: The other LineString or MultiLineString
+    /// - Parameter tolerance: The tolerance, in meters.
     ///
-    /// - Returns: `true` if the points overlap, `false` otherwise.
+    /// - Returns: `true` if the lines overlap, `false` otherwise.
     public func isOverlapping(
         with other: LineStringGeometry,
         tolerance: CLLocationDegrees = 0.0
@@ -71,7 +69,7 @@ extension LineStringGeometry {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {
-                if segment.compare(other: match, tolerance: tolerance) != .notEqual {
+                if segment.compare(match, tolerance: tolerance) != .notEqual {
                     return true
                 }
             }
@@ -87,11 +85,10 @@ extension PolygonGeometry {
     /// Compares two Polygon|MultiPolygon geometries and returns true if their intersection set results in a geometry
     /// different from both but of the same dimension.
     ///
-    /// - Parameters:
-    ///    - other: The other Point or MultiPoint
-    ///    - tolerance: The tolerance, in meters.
+    /// - Parameter other: The other Polygon or MultiPolygon
+    /// - Parameter tolerance: The tolerance, in meters.
     ///
-    /// - Returns: `true` if the points overlap, `false` otherwise.
+    /// - Returns: `true` if the polygons overlap, `false` otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
         tolerance: CLLocationDegrees = 0.0
@@ -122,11 +119,10 @@ extension Feature {
     /// Compares two Features and returns true if their geometry's intersection set results in a geometry
     /// different from both but of the same dimension.
     ///
-    /// - Parameters:
-    ///    - other: The other Point or MultiPoint
-    ///    - tolerance: The tolerance, in meters.
+    /// - Parameter other: The other Feature
+    /// - Parameter tolerance: The tolerance, in meters.
     ///
-    /// - Returns: `true` if the points overlap, `false` otherwise.
+    /// - Returns: `true` if the features overlap, `false` otherwise.
     public func isOverlapping(
         with other: Feature,
         tolerance: CLLocationDegrees = 0.0

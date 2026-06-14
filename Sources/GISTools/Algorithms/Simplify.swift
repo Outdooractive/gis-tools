@@ -13,8 +13,8 @@ extension GeoJson {
     /// **Important**: This method expects tolerance in meters. Use the *Simplify* struct directly if your GeoJSON is not in WGS84.
     ///
     /// - Parameters:
-    ///    - tolerance: Affects the amount of simplification (in meters)
-    ///    - highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter tolerance: Affects the amount of simplification (in meters)
+    /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
     ///
     /// - Returns: A new simplified GeoJson
     public func simplified(
@@ -84,8 +84,8 @@ extension GeoJson {
     /// **Important**: This method expects tolerance in meters. Use the *Simplify* struct directly if your GeoJSON is not in WGS84.
     ///
     /// - Parameters:
-    ///    - tolerance: Affects the amount of simplification (in meters)
-    ///    - highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter tolerance: Affects the amount of simplification (in meters)
+    /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
     public mutating func simplify(
         tolerance: CLLocationDistance = 1.0,
         highQuality: Bool = false
@@ -107,16 +107,16 @@ extension Ring {
               tolerance > 0.0
         else { return self }
 
-        var simplificationtolerance = tolerance
-        var simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationtolerance, highQuality: highQuality)
+        var simplificationTolerance = tolerance
+        var simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationTolerance, highQuality: highQuality)
 
         // if this is not a valid polygon ring anymore: reduce the tolerance until we have at least a triangle
         while !Ring.validCoordinates(simplifiedCoordinates) {
             // Prevent an endless loop
-            guard simplificationtolerance >= (tolerance / 2.0) else { return self }
+            guard simplificationTolerance >= (tolerance / 2.0) else { return self }
 
-            simplificationtolerance *= 0.9
-            simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationtolerance, highQuality: highQuality)
+            simplificationTolerance *= 0.9
+            simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationTolerance, highQuality: highQuality)
         }
 
         if let first = simplifiedCoordinates.first,
@@ -151,9 +151,9 @@ public enum Simplify {
     /// Returns an array of simplified coordinates.
     ///
     /// - Parameters:
-    ///    - coordinates: An array of Coordinate3D
-    ///    - tolerance: Affects the amount of simplification (in units of the coordinates coordinate system)
-    ///    - highQuality: Skip the distance-based preprocessing step which leads to highest quality simplification but runs quite a bit times slower
+    /// - Parameter coordinates: An array of Coordinate3D
+    /// - Parameter tolerance: Affects the amount of simplification (in units of the coordinate's coordinate system)
+    /// - Parameter highQuality: Skip the distance-based preprocessing step which leads to highest quality simplification but runs quite a bit times slower
     ///
     /// - Returns: Returns an array of simplified coordinates
     public static func simplify(

@@ -110,7 +110,7 @@ struct ConversionTests {
         #expect(GISTool.convertToMeters(1.0, .miles) == 1609.344)
         #expect(GISTool.convertToMeters(100.0, .centimeters) == 1.0)
         #expect(GISTool.convertToMeters(1000.0, .millimeters) == 1.0)
-        #expect(GISTool.convertToMeters(1.0, .nauticalmiles) == 1852.0)
+        #expect(GISTool.convertToMeters(1.0, .nauticalMiles) == 1852.0)
         #expect(GISTool.convertToMeters(1.0, .meters) == 1.0)
         #expect(GISTool.convertToMeters(1.0, .inches) > 0.0)
     }

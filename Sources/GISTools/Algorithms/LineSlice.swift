@@ -12,9 +12,10 @@ extension LineString {
     ///
     /// This can be useful for extracting only the part of a route between waypoints.
     ///
-    /// - Parameters:
-    ///    - start: The starting point
-    ///    - end: The stopping point
+    /// - Parameter start: The starting point (defaults to the first coordinate if `nil`)
+    /// - Parameter end: The stopping point (defaults to the last coordinate if `nil`)
+    ///
+    /// - Returns: A `LineString` subsection, or `nil` if the line has fewer than 2 coordinates.
     public func slice(
         start: Coordinate3D? = nil,
         end: Coordinate3D? = nil
@@ -75,9 +76,10 @@ extension Feature {
     ///
     /// This can be useful for extracting only the part of a route between waypoints.
     ///
-    /// - Parameters:
-    ///    - start: The starting point
-    ///    - end: The stopping point
+    /// - Parameter start: The starting point
+    /// - Parameter end: The stopping point
+    ///
+    /// - Returns: A `Feature` subsection, or `nil`.
     public func slice(
         start: Coordinate3D? = nil,
         end: Coordinate3D? = nil

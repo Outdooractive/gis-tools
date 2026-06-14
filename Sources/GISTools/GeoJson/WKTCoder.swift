@@ -6,6 +6,12 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -19,6 +25,12 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -32,6 +44,11 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         wkt: String,
@@ -43,6 +60,11 @@ extension GeoJsonGeometry {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         wkt: String,
@@ -53,6 +75,8 @@ extension GeoJsonGeometry {
     }
 
     /// Returns the receiver as a WKT encoded string.
+    ///
+    /// - Returns: A WKT string, or `nil` if encoding fails.
     public var asWKT: String? {
         WKTCoder.encode(geometry: self)
     }
@@ -65,6 +89,14 @@ extension Feature {
 
     /// Decode a GeoJSON Feature from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded Feature, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -80,6 +112,14 @@ extension Feature {
 
     /// Decode a GeoJSON Feature from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded Feature, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -94,6 +134,8 @@ extension Feature {
     }
 
     /// Returns the receiver as a WKT encoded string.
+    ///
+    /// - Returns: A WKT string, or `nil` if encoding fails.
     public var asWKT: String? {
         WKTCoder.encode(geometry: self.geometry)
     }
@@ -106,6 +148,12 @@ extension FeatureCollection {
 
     /// Decode a GeoJSON FeatureCollection from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded FeatureCollection, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -124,6 +172,12 @@ extension FeatureCollection {
 
     /// Decode a GeoJSON FeatureCollection from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - calculateBoundingBox: Whether to calculate the bounding box. Defaults to `false`.
+    /// - Returns: A decoded FeatureCollection, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkt: String,
@@ -141,6 +195,8 @@ extension FeatureCollection {
     }
 
     /// Returns the receiver as a WKT encoded string.
+    ///
+    /// - Returns: A WKT string, or `nil` if encoding fails.
     public var asWKT: String? {
         WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
     }
@@ -153,6 +209,10 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(
         sourceSrid: Int?,
@@ -163,6 +223,10 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(
         sourceProjection: Projection,
@@ -173,6 +237,12 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    /// - Returns: A decoded Feature, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
         sourceSrid: Int?,
@@ -185,6 +255,12 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    ///    - id: An optional feature identifier. Defaults to `nil`.
+    ///    - properties: A dictionary of feature properties. Defaults to `[:]`.
+    /// - Returns: A decoded Feature, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
         sourceProjection: Projection,
@@ -197,6 +273,10 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded FeatureCollection, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(
         sourceSrid: Int?,
@@ -207,6 +287,10 @@ extension String {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - sourceProjection: The projection of the source coordinates.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded FeatureCollection, or `nil` if the WKT is invalid.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(
         sourceProjection: Projection,
@@ -260,6 +344,12 @@ extension WKTCoder {
 
     /// Decode a GeoJSON object from WKT.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceSrid: The SRID of the source coordinate system, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry.
+    /// - Throws: A `WKTCoderError` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         wkt: String,
@@ -278,6 +368,12 @@ extension WKTCoder {
 
     /// Decode a GeoJSON object from WKT using a specified source projection.
     ///
+    /// - Parameters:
+    ///    - wkt: The WKT string to decode.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to detect from the WKT.
+    ///    - targetProjection: The projection to decode into. Defaults to `.epsg4326`.
+    /// - Returns: A decoded GeoJSON geometry.
+    /// - Throws: A `WKTCoderError` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         wkt: String,
@@ -579,6 +675,11 @@ extension WKTCoder {
 extension WKTCoder {
 
     /// Returns a geometry as a WKT encoded string.
+    ///
+    /// - Parameters:
+    ///    - geometry: The GeoJSON geometry to encode.
+    ///    - targetProjection: The projection to encode into. If `nil`, the geometry's native projection is used. Defaults to `.epsg4326`.
+    /// - Returns: A WKT string, or `nil` if the geometry is empty.
     public static func encode(
         geometry: GeoJsonGeometry,
         targetProjection: Projection? = .epsg4326
@@ -613,6 +714,7 @@ extension WKTCoder {
         case .geometryCollection:
             encode(geometry as! GeometryCollection, targetProjection: targetProjection, to: &result)
         case .feature, .featureCollection, .invalid:
+            // Feature and FeatureCollection can't happen
             break
         }
     }

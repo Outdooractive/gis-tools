@@ -146,4 +146,43 @@ struct PolygonTests {
         #expect(polygonWithHolesData == polygonWithHoles.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that Polygon equality handles shifted ring start vertices.
+    @Test
+    func equatable() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 100.0)
+        ]
+        let polygonA = try #require(Polygon([coords]))
+        let polygonB = try #require(Polygon([coords]))
+
+        // Same vertices → equal
+        #expect(polygonA == polygonB)
+
+        // Shifted start vertex → still equal
+        let shiftedCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 1.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 101.0),
+            Coordinate3D(latitude: 1.0, longitude: 101.0),
+        ]
+        let polygonShifted = try #require(Polygon([shiftedCoords]))
+        #expect(polygonA == polygonShifted)
+
+        // Different coordinates → not equal
+        let otherCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 10.0, longitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 101.0),
+            Coordinate3D(latitude: 11.0, longitude: 101.0),
+            Coordinate3D(latitude: 11.0, longitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 100.0)
+        ]
+        let polygonC = try #require(Polygon([otherCoords]))
+        #expect(polygonA != polygonC)
+    }
+
 }

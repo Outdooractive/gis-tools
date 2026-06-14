@@ -10,9 +10,10 @@ extension LineString {
     /// Divides a *LineString* into chunks of a specified length.
     /// If the line is shorter than the segment length then the original line is returned.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: The chunked line segments.
     public func chunked(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false
@@ -29,8 +30,10 @@ extension LineString {
         }
 
         let numberOfSegments = Int(ceil(lineLength / segmentLength))
-        for index in 0 ..< numberOfSegments {
-            guard let chunk = sliceAlong(startDistance: segmentLength * Double(index), stopDistance: segmentLength * Double(index + 1)) else { break }
+        var startDistance: CLLocationDistance = 0.0
+        for _ in 0 ..< numberOfSegments {
+            let stopDistance = startDistance + segmentLength
+            guard let chunk = sliceAlong(startDistance: startDistance, stopDistance: stopDistance) else { break }
 
             if dropIntermediateCoordinates,
                let newChunk = LineString([chunk.firstCoordinate, chunk.lastCoordinate].compactMap({ $0 }))
@@ -40,6 +43,8 @@ extension LineString {
             else {
                 lineStrings.append(chunk)
             }
+
+            startDistance = stopDistance
         }
 
         return MultiLineString(lineStrings) ?? MultiLineString()
@@ -48,9 +53,10 @@ extension LineString {
     /// Divides a *LineString* into evenly spaced segments of a specified length.
     /// If the line is shorter than the segment length then the original line is returned.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: An evenly divided line string.
     public func evenlyDivided(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false
@@ -69,9 +75,10 @@ extension MultiLineString {
     /// Divides a *MultiLineString* into chunks of a specified length.
     /// If any line is shorter than the segment length then the original line is returned.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: The chunked multi-line segments.
     public func chunked(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false
@@ -84,9 +91,10 @@ extension MultiLineString {
     /// Divides a *MultiLineString* into evenly spaced segments of a specified length.
     /// If the line is shorter than the segment length then the original line is returned.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: An evenly divided multi-line string.
     public func evenlyDivided(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false
@@ -104,9 +112,10 @@ extension Feature {
     /// into a *FeatureCollection* of chunks of a specified length.
     /// If any line is shorter than the segment length then the original line is returned.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: A FeatureCollection of chunked line segments.
     public func chunked(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false
@@ -133,9 +142,10 @@ extension FeatureCollection {
 
     /// Returns a *FeatureCollection* containing a *LineString* or *MultiLineString* chunked into smaller parts.
     ///
-    /// - Parameters:
-    ///     - segmentLength: How long to make each segment, in meters
-    ///     - dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    /// - Parameter segmentLength: How long to make each segment, in meters
+    /// - Parameter dropIntermediateCoordinates: Simplify the result so that each chunk has exactly two coordinates
+    ///
+    /// - Returns: A FeatureCollection of chunked line segments.
     public func chunked(
         segmentLength: CLLocationDistance,
         dropIntermediateCoordinates: Bool = false

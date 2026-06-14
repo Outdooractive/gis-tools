@@ -9,15 +9,24 @@ extension BoundingBox {
     public struct CoordinatePosition: OptionSet, Sendable {
         public let rawValue: Int
 
+        /// Creates a coordinate position from its raw option-set value.
+        ///
+        /// - Parameter rawValue: The raw option-set value.
         public init(rawValue: Int) {
             self.rawValue = rawValue
         }
 
+        /// The coordinate is at the center of the bounding box.
         public static let center = CoordinatePosition(rawValue: 1 << 0)
+        /// The coordinate is in the top region of the bounding box.
         public static let top = CoordinatePosition(rawValue: 1 << 1)
+        /// The coordinate is in the right region of the bounding box.
         public static let right = CoordinatePosition(rawValue: 1 << 2)
+        /// The coordinate is in the bottom region of the bounding box.
         public static let bottom = CoordinatePosition(rawValue: 1 << 3)
+        /// The coordinate is in the left region of the bounding box.
         public static let left = CoordinatePosition(rawValue: 1 << 4)
+        /// The coordinate is outside the bounding box.
         public static let outside = CoordinatePosition(rawValue: 1 << 5)
     }
 
@@ -60,7 +69,7 @@ extension BoundingBox {
     }
 
     /// Returns the relative position of a point with regards to the bounding box.
-    public func postion(of point: Point) -> CoordinatePosition {
+    public func position(of point: Point) -> CoordinatePosition {
         position(of: point.coordinate)
     }
 
@@ -69,12 +78,12 @@ extension BoundingBox {
 #if canImport(CoreLocation)
 
     /// Returns the relative position of a coordinate with regards to the bounding box.
-    public func postion(of coordinate: CLLocationCoordinate2D) -> CoordinatePosition {
+    public func position(of coordinate: CLLocationCoordinate2D) -> CoordinatePosition {
         position(of: Coordinate3D(coordinate))
     }
 
     /// Returns the relative position of a location with regards to the bounding box.
-    public func postion(of coordinate: CLLocation) -> CoordinatePosition {
+    public func position(of coordinate: CLLocation) -> CoordinatePosition {
         position(of: Coordinate3D(coordinate))
     }
 

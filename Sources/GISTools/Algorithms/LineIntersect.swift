@@ -57,9 +57,11 @@ extension LineSegment {
     /// Checks if two line segments intersect.
     ///
     /// - Parameters:
-    ///   - other: The other *LineSegment*
-    ///   - epsilon: Tolerance for collinearity and on-segment checks
+    /// - Parameter other: The other *LineSegment*
+    /// - Parameter epsilon: Tolerance for collinearity and on-segment checks
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    ///
+    /// - Returns: `true` if the line segments intersect.
     public func intersects(_ other: LineSegment, epsilon: Double = 0.0) -> Bool {
         let other = other.projected(to: projection)
 
@@ -105,9 +107,11 @@ extension LineSegment {
     /// collinear segments produce a line segment, not a single point).
     ///
     /// - Parameters:
-    ///   - other: The other *LineSegment*
-    ///   - epsilon: Tolerance for endpoint parameter checks
+    /// - Parameter other: The other *LineSegment*
+    /// - Parameter epsilon: Tolerance for endpoint parameter checks
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    ///
+    /// - Returns: The intersection point, or `nil`.
     public func intersection(
         _ other: LineSegment,
         epsilon: Double = 0.0
@@ -148,13 +152,15 @@ extension GeoJson {
 
     /// Returns the intersecting point(s) with the receiver.
     ///
-    /// - note: Takes all poygon rings into account,  not just the outer ring.
+    /// - note: Takes all polygon rings into account, not just the outer ring.
     ///
     /// - Parameters:
-    ///   - other: The other geometry
-    ///   - epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
+    /// - Parameter other: The other geometry
+    /// - Parameter epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
-    public func intersections(other: GeoJson, epsilon: Double = 0.0) -> [Point] {
+    ///
+    /// - Returns: An array of intersecting points.
+    public func intersections(with other: GeoJson, epsilon: Double = 0.0) -> [Point] {
         let other = other.projected(to: projection)
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
