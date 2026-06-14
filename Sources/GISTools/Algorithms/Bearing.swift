@@ -24,8 +24,9 @@ extension Coordinate3D {
         case .epsg3857:
             return projected(to: .epsg4326)._bearing(to: other.projected(to: .epsg4326), final: final)
         case .noSRID:
-            // TODO
-            return Double.infinity
+            let dx = other.longitude - longitude
+            let dy = other.latitude - latitude
+            return atan2(dx, dy).radiansToDegrees
         }
     }
 
