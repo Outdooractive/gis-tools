@@ -24,8 +24,9 @@ extension Coordinate3D {
         case .epsg4326:
             return _distance(from: other.projected(to: .epsg4326))
         case .epsg3857:
-            // TODO: This can be improved
-            return projected(to: .epsg4326)._distance(from: other.projected(to: .epsg4326))
+            let dx = longitude - other.longitude
+            let dy = latitude - other.latitude
+            return sqrt(dx * dx + dy * dy)
         case .noSRID:
             // TODO
             return Double.infinity
