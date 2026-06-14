@@ -12,10 +12,9 @@ extension Coordinate3D {
     /// If the start and end are identical a single-point ``LineString``
     /// of length `npoints` is returned.
     ///
-    /// - Parameters:
-    ///   - end: End coordinate.
-    ///   - npoints: Number of points along the arc (default 100).
-    ///   - offset: Controls anti-meridian split threshold (default 10).
+    /// - Parameter end: End coordinate.
+    /// - Parameter npoints: Number of points along the arc (default 100).
+    /// - Parameter offset: Controls anti-meridian split threshold (default 10).
     /// - Returns: A ``LineString`` or ``MultiLineString`` representing the arc.
     public func greatCircle(
         to end: Coordinate3D,

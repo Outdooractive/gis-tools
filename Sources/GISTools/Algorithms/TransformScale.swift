@@ -36,9 +36,9 @@ extension GeoJson {
     /// - Note: When using `ScaleAnchor.coordinate(_)` as the anchor, a `FeatureCollection` is
     ///   scaled as a single unit. With any other anchor, each `Feature` is scaled individually.
     ///
-    /// - Parameters:
-    ///    - factor: The scaling factor, positive or negative
-    ///    - anchor: The anchor from which the scaling will occur
+    /// - Parameter factor: The scaling factor, positive or negative
+    /// - Parameter anchor: The anchor from which the scaling will occur
+    /// - Returns: The scaled geometry.
     public func scaled(
         factor: Double,
         anchor: ScaleAnchor = .centroid
@@ -68,9 +68,8 @@ extension GeoJson {
     /// GeoJSON 200% larger). If the receiver is a *FeatureCollection*, the origin point will
     /// be calculated based on each individual Feature.
     ///
-    /// - Parameters:
-    ///    - factor: The scaling factor, positive or negative
-    ///    - anchor: The anchor from which the scaling will occur
+    /// - Parameter factor: The scaling factor, positive or negative
+    /// - Parameter anchor: The anchor from which the scaling will occur
     public mutating func scale(
         factor: Double,
         anchor: ScaleAnchor = .centroid

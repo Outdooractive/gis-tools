@@ -13,8 +13,8 @@ extension GeoJson {
     /// **Important**: This method expects tolerance in meters. Use the *Simplify* struct directly if your GeoJSON is not in WGS84.
     ///
     /// - Parameters:
-    ///    - tolerance: Affects the amount of simplification (in meters)
-    ///    - highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter tolerance: Affects the amount of simplification (in meters)
+    /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
     ///
     /// - Returns: A new simplified GeoJson
     public func simplified(
@@ -84,8 +84,8 @@ extension GeoJson {
     /// **Important**: This method expects tolerance in meters. Use the *Simplify* struct directly if your GeoJSON is not in WGS84.
     ///
     /// - Parameters:
-    ///    - tolerance: Affects the amount of simplification (in meters)
-    ///    - highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter tolerance: Affects the amount of simplification (in meters)
+    /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
     public mutating func simplify(
         tolerance: CLLocationDistance = 1.0,
         highQuality: Bool = false
@@ -151,9 +151,9 @@ public enum Simplify {
     /// Returns an array of simplified coordinates.
     ///
     /// - Parameters:
-    ///    - coordinates: An array of Coordinate3D
-    ///    - tolerance: Affects the amount of simplification (in units of the coordinate's coordinate system)
-    ///    - highQuality: Skip the distance-based preprocessing step which leads to highest quality simplification but runs quite a bit times slower
+    /// - Parameter coordinates: An array of Coordinate3D
+    /// - Parameter tolerance: Affects the amount of simplification (in units of the coordinate's coordinate system)
+    /// - Parameter highQuality: Skip the distance-based preprocessing step which leads to highest quality simplification but runs quite a bit times slower
     ///
     /// - Returns: Returns an array of simplified coordinates
     public static func simplify(

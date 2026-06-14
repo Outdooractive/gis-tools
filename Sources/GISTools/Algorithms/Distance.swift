@@ -11,6 +11,8 @@ extension Coordinate3D {
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The distance in meters.
     public func distance(from other: Coordinate3D) -> CLLocationDistance {
         distance(to: other)
     }
@@ -19,6 +21,8 @@ extension Coordinate3D {
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The distance in meters.
     public func distance(to other: Coordinate3D) -> CLLocationDistance {
         switch projection {
         case .epsg4326:
@@ -53,6 +57,8 @@ extension Point {
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The distance in meters.
     public func distance(from other: Point) -> CLLocationDistance {
         distance(to: other)
     }
@@ -61,6 +67,8 @@ extension Point {
     /// This uses the Haversine formula to account for global curvature.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The distance in meters.
     public func distance(to other: Point) -> CLLocationDistance {
         coordinate.distance(to: other.coordinate)
     }

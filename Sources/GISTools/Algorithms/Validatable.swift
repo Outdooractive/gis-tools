@@ -39,6 +39,8 @@ extension Feature: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson is a valid Feature.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .feature)
     }
@@ -53,6 +55,8 @@ extension FeatureCollection: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson is a valid FeatureCollection.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .featureCollection)
     }
@@ -67,6 +71,8 @@ extension GeometryCollection: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson is a valid GeometryCollection.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .geometryCollection)
     }
@@ -81,6 +87,8 @@ extension LineString: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson has a valid LineString geometry.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .lineString)
     }
@@ -96,6 +104,8 @@ extension MultiLineString: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson has a valid MultiLineString geometry.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .multiLineString)
     }
@@ -110,6 +120,8 @@ extension Point: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson is a valid Point.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .point)
     }
@@ -124,6 +136,8 @@ extension MultiPoint: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson has a valid MultiPoint geometry.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .multiPoint)
     }
@@ -139,6 +153,8 @@ extension Polygon: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson has a valid Polygon geometry.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .polygon)
     }
@@ -155,6 +171,8 @@ extension MultiPolygon: ValidatableGeoJson {
     }
 
     /// Check if the GeoJson has a valid MultiPolygon geometry.
+    ///
+    /// - Returns: `true` if the GeoJson is valid.
     public static func isValid(geoJson: [String: Any]) -> Bool {
         checkIsValid(geoJson: geoJson, ofType: .multiPolygon)
     }
@@ -168,8 +186,8 @@ extension GeoJson {
     /// Check if the GeoJson dictionary has a valid structure for the given type.
     ///
     /// - Parameters:
-    ///   - geoJson: A dictionary representing a GeoJSON object.
-    ///   - expectedType: The expected ``GeoJsonType`` of the object (optional).
+    /// - Parameter geoJson: A dictionary representing a GeoJSON object.
+    /// - Parameter expectedType: The expected ``GeoJsonType`` of the object (optional).
     /// - Returns: `true` if the dictionary has the required keys for the given type.
     public static func checkIsValid(
         geoJson: [String: Any],

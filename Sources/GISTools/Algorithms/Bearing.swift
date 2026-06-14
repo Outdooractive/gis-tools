@@ -9,9 +9,8 @@ extension Coordinate3D {
 
     /// Finds the geographic bearing between the receiver and another coordinate, i.e. the angle measured in degrees from the north line (0 degrees).
     ///
-    /// - Parameters:
-    ///    - other: The end point
-    ///    - final: Calculates the final bearing (optional, default `false`)
+    /// - Parameter other: The end point
+    /// - Parameter final: Calculates the final bearing (optional, default `false`)
     ///
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(
@@ -60,10 +59,9 @@ extension Coordinate3D {
 
     /// Takes three coordinates and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
     ///
-    /// - Parameters:
-    ///    - first: The first point in the triangle
-    ///    - middle: The middle point in the triangle
-    ///    - last: The last point in the trianle
+    /// - Parameter first: The first point in the triangle
+    /// - Parameter middle: The middle point in the triangle
+    /// - Parameter last: The last point in the trianle
     ///
     /// - Returns: The angle between the points, between -180 and 180.
     public static func angleBetween(
@@ -78,9 +76,8 @@ extension Coordinate3D {
 
     /// Takes two azimuth values in decimal degrees and returns the angle between them.
     ///
-    /// - Parameters:
-    ///    - firstAzimuth: The first angle
-    ///    - secondAzimuth: The second angle
+    /// - Parameter firstAzimuth: The first angle
+    /// - Parameter secondAzimuth: The second angle
     ///
     /// - Returns: The angle, between -180 and 180.
     public static func angleBetween(
@@ -104,9 +101,8 @@ extension Point {
 
     /// Finds the geographic bearing between the receiver and another Point, i.e. the angle measured in degrees from the north line (0 degrees).
     ///
-    /// - Parameters:
-    ///    - other: The end point
-    ///    - final: Calculates the final bearing (optional, default `false`)
+    /// - Parameter other: The end point
+    /// - Parameter final: Calculates the final bearing (optional, default `false`)
     ///
     /// - Returns: The bearing in decimal degrees, between -180 and 180 (positive clockwise).
     public func bearing(
@@ -118,10 +114,9 @@ extension Point {
 
     /// Takes three *Point*s and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
     ///
-    /// - Parameters:
-    ///    - first: The first point in the triangle
-    ///    - middle: The middle point in the triangle
-    ///    - last: The last point in the trianle
+    /// - Parameter first: The first point in the triangle
+    /// - Parameter middle: The middle point in the triangle
+    /// - Parameter last: The last point in the trianle
     ///
     /// - Returns: The angle between the points, between -180 and 180.
     public static func angleBetween(

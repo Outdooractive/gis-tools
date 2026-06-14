@@ -9,10 +9,9 @@ extension LineSegment {
 
     /// Checks if the receiver is parallel to the other *LineSegment*.
     ///
-    /// - Parameters:
-    ///    - other: The other LineSegment
-    ///    - tolerance: The tolerance, in degrees
-    ///    - undirectedEdge: Whether the segment should be treated as an undirected edge
+    /// - Parameter other: The other LineSegment
+    /// - Parameter tolerance: The tolerance, in degrees
+    /// - Parameter undirectedEdge: Whether the segment should be treated as an undirected edge
     ///
     /// - Returns: `true` if the segments are parallel within the tolerance, `false` otherwise.
     public func isParallel(
@@ -20,18 +19,31 @@ extension LineSegment {
         tolerance: CLLocationDegrees = 0.0,
         undirectedEdge: Bool = false
     ) -> Bool {
-        var azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
+        let azimuth1 = first.rhumbBearing(to: second).bearingToAzimuth
         let azimuth2 = other.first.rhumbBearing(to: other.second).bearingToAzimuth
 
-        if abs(azimuth1 - azimuth2) <= tolerance {
+        // Normalise the angular difference to [0, 180] so the comparison
+        // correctly handles values that straddle the 0°/360° boundary.
+        var diff = abs(azimuth1 - azimuth2)
+        if diff > 180.0 {
+            diff = 360.0 - diff
+        }
+
+        if diff <= tolerance {
             return true
         }
-        else if undirectedEdge {
-            azimuth1 -= 180.0
-            if azimuth1 < 0.0 {
-                azimuth1 += 360.0
+
+        if undirectedEdge {
+            // Test the opposite direction: a line is parallel to its reversal.
+            var opposite = azimuth1 + 180.0
+            if opposite >= 360.0 {
+                opposite -= 360.0
             }
-            return abs(azimuth1 - azimuth2) <= tolerance
+            diff = abs(opposite - azimuth2)
+            if diff > 180.0 {
+                diff = 360.0 - diff
+            }
+            return diff <= tolerance
         }
 
         return false
@@ -43,9 +55,8 @@ extension LineString {
 
     /// Checks if each of the receiver's segment is parallel to the correspondent segment of the other *LineString*.
     ///
-    /// - Parameters:
-    ///    - other: The other LineString
-    ///    - tolerance: The tolerance for each pair of segments, in degrees
+    /// - Parameter other: The other LineString
+    /// - Parameter tolerance: The tolerance for each pair of segments, in degrees
     ///
     /// - Returns: `true` if the lines are parallel within the tolerance, `false` otherwise.
     public func isParallel(

@@ -12,9 +12,10 @@ extension LineString {
     ///
     /// This can be useful for extracting only the part of a route between two distances.
     ///
-    /// - Parameters:
-    ///   - startDistance: The distance along the line to the starting point, in meters
-    ///   - stopDistance: The distance along the line to the ending point, in meters
+    /// - Parameter startDistance: The distance along the line to the starting point, in meters
+    /// - Parameter stopDistance: The distance along the line to the ending point, in meters
+    ///
+    /// - Returns: A `LineString` subsection, or `nil`.
     public func sliceAlong(
         startDistance: CLLocationDistance = 0.0,
         stopDistance: CLLocationDistance = .greatestFiniteMagnitude
@@ -83,8 +84,10 @@ extension Feature {
     /// This can be useful for extracting only the part of a route between two distances.
     ///
     /// - Parameters:
-    ///   - startDistance: The distance along the line to the starting point, in meters
-    ///   - stopDistance: The distance along the line to the ending point, in meters
+    /// - Parameter startDistance: The distance along the line to the starting point, in meters
+    /// - Parameter stopDistance: The distance along the line to the ending point, in meters
+    ///
+    /// - Returns: A `Feature` subsection, or `nil`.
     public func sliceAlong(
         startDistance: CLLocationDistance = 0.0,
         stopDistance: CLLocationDistance = .greatestFiniteMagnitude

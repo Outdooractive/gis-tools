@@ -17,9 +17,10 @@ public enum FrechetDistanceFunction {
 
     /// Calculates the distance between two coordinates using the selected method.
     ///
-    /// - Parameters:
-    ///    - first: The first coordinate
-    ///    - second: The second coordinate
+    /// - Parameter first: The first coordinate
+    /// - Parameter second: The second coordinate
+    ///
+    /// - Returns: The distance between the two coordinates.
     public func distance(
         between first: Coordinate3D,
         and second: Coordinate3D
@@ -42,10 +43,9 @@ extension LineString {
 
     /// Fréchet distance between two geometries.
     ///
-    /// - Parameters:
-    ///    - other: The other geometry of equal type.
-    ///    - distanceFunction: The algorithm to use for distance calculations.
-    ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters.
+    /// - Parameter other: The other geometry of equal type.
+    /// - Parameter distanceFunction: The algorithm to use for distance calculations.
+    /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters.
     ///
     /// - Returns: The Fréchet distance between the two geometries.
     public func frechetDistance(

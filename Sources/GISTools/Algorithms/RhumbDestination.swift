@@ -11,8 +11,10 @@ extension Coordinate3D {
     /// origin with the given bearing.
     ///
     /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
-    ///    - bearing: The direction, ranging from -180 to 180 degrees from north
+    /// - Parameter distance: The distance from the receiver, in meters
+    /// - Parameter bearing: The direction, ranging from -180 to 180 degrees from north
+    ///
+    /// - Returns: The destination coordinate.
     public func rhumbDestination(
         distance: CLLocationDistance,
         bearing: CLLocationDegrees
@@ -104,8 +106,10 @@ extension Point {
     /// origin with the given bearing.
     ///
     /// - Parameters:
-    ///    - distance: The distance from the receiver, in meters
-    ///    - bearing: The direction, ranging from -180 to 180 degrees from north
+    /// - Parameter distance: The distance from the receiver, in meters
+    /// - Parameter bearing: The direction, ranging from -180 to 180 degrees from north
+    ///
+    /// - Returns: The destination point.
     public func rhumbDestination(
         distance: CLLocationDistance,
         bearing: CLLocationDegrees

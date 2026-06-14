@@ -32,13 +32,14 @@ extension GeoJson {
 
     /// Returns the receiver with a buffer.
     ///
-    /// - Parameters:
-    ///    - distance: The buffer distance, in meters. A positive value expands
-    ///                the geometry; a negative value shrinks it (only supported
-    ///                for polygons and multi-polygons).
-    ///    - lineEndStyle: Controls how line ends will be drawn (default round)
-    ///    - unionType: How to combine buffered geometries (default individual)
-    ///    - steps: The number of steps for the circles (default 64)
+    /// - Parameter distance: The buffer distance, in meters. A positive value expands
+    ///                       the geometry; a negative value shrinks it (only supported
+    ///                       for polygons and multi-polygons).
+    /// - Parameter lineEndStyle: Controls how line ends will be drawn (default round)
+    /// - Parameter unionType: How to combine buffered geometries (default individual)
+    /// - Parameter steps: The number of steps for the circles (default 64)
+    ///
+    /// - Returns: The buffered geometry as a `MultiPolygon`, or `nil` if the buffer could not be computed.
     public func buffered(
         by distance: Double,
         lineEndStyle: BufferLineEndStyle = .round,
@@ -462,11 +463,12 @@ extension LineSegment {
 
     /// Returns the line segment with a buffer.
     ///
-    /// - Parameters:
-    ///    - distance: The buffer distance, in meters
-    ///    - lineEndStyle: Controls how line ends will be drawn (default round)
-    ///    - unionType: Whether to combine all overlapping buffers into one Polygon (default true)
-    ///    - steps: The number of steps for the circles (default 64)
+    /// - Parameter distance: The buffer distance, in meters
+    /// - Parameter lineEndStyle: Controls how line ends will be drawn (default round)
+    /// - Parameter unionType: Whether to combine all overlapping buffers into one Polygon (default true)
+    /// - Parameter steps: The number of steps for the circles (default 64)
+    ///
+    /// - Returns: The buffered line segment as a `MultiPolygon`, or `nil` if the buffer could not be computed.
     public func buffered(
         by distance: Double,
         lineEndStyle: BufferLineEndStyle = .round,

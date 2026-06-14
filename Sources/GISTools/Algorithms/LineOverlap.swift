@@ -22,8 +22,10 @@ extension LineSegment {
     /// Checks how the receiver and the other *LineSegment* lie in relation to each other.
     ///
     /// - Parameters:
-    ///    - other: The other *LineSegment*
-    ///    - tolerance: The tolerance, in meters
+    /// - Parameter other: The other *LineSegment*
+    /// - Parameter tolerance: The tolerance, in meters
+    ///
+    /// - Returns: A ``LineSegmentComparisonResult`` indicating how the segments relate.
     public func compare(
         _ other: LineSegment,
         tolerance: CLLocationDistance = 0.0
@@ -67,8 +69,10 @@ extension GeoJson {
     /// Returns the overlapping segments between the receiver and the other geometry.
     ///
     /// - Parameters:
-    ///    - other: The other geometry
-    ///    - tolerance: The tolerance, in meters
+    /// - Parameter other: The other geometry
+    /// - Parameter tolerance: The tolerance, in meters
+    ///
+    /// - Returns: An array of overlapping line segments.
     public func overlappingSegments(
         with other: GeoJson,
         tolerance: CLLocationDistance = 0.0
@@ -109,9 +113,8 @@ extension GeoJson {
     ///
     /// - Note: Altitude values will be ignored.
     ///
-    /// - Parameters:
-    ///    - tolerance: The tolerance, in meters. Using `0.0` will only return segments that *exactly* overlap.
-    ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
+    /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only return segments that *exactly* overlap.
+    /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
     ///
     /// - Returns: All segments that at least overlap with one other segment. Each segment will
     ///            appear in the result only once.
@@ -218,9 +221,8 @@ extension GeoJson {
 
     /// An estimate of how much the receiver overlaps with itself.
     ///
-    /// - Parameters:
-    ///    - tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
-    ///    - segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
+    /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
+    /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
     ///
     /// - Returns: The length of all segments that overlap within `tolerance`.
     public func estimatedOverlap(

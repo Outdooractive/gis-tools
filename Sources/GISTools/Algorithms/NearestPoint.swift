@@ -11,6 +11,8 @@ extension BoundingBox {
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The nearest coordinate and distance, or `nil`.
     public func nearestCoordinate(
         from other: Coordinate3D
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
@@ -21,6 +23,8 @@ extension BoundingBox {
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The nearest point and distance, or `nil`.
     public func nearestPoint(
         from other: Point
     ) -> (point: Point, distance: CLLocationDistance)? {
@@ -35,6 +39,8 @@ extension GeoJson {
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The nearest coordinate and distance, or `nil`.
     public func nearestCoordinate(
         from other: Coordinate3D
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
@@ -61,6 +67,8 @@ extension GeoJson {
     /// This calculation is geodesic.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The nearest point and distance, or `nil`.
     public func nearestPoint(
         from other: Point
     ) -> (point: Point, distance: CLLocationDistance)? {

@@ -11,6 +11,8 @@ extension Coordinate3D {
     /// The midpoint is calculated geodesically, meaning the curvature of the earth is taken into account.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The midpoint coordinate.
     public func midpoint(to other: Coordinate3D) -> Coordinate3D {
         switch projection {
         case .epsg4326:
@@ -40,6 +42,8 @@ extension Point {
     /// The midpoint is calculated geodesically, meaning the curvature of the earth is taken into account.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The midpoint point.
     public func midpoint(to other: Point) -> Point {
         Point(self.coordinate.midpoint(to: other.coordinate))
     }

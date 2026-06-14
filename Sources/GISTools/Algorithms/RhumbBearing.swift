@@ -11,8 +11,10 @@ extension Coordinate3D {
     /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
-    ///    - other: The other coordinate
-    ///    - final: Calculates the final bearing if `true` (default `false`)
+    /// - Parameter other: The other coordinate
+    /// - Parameter final: Calculates the final bearing if `true` (default `false`)
+    ///
+    /// - Returns: The bearing in degrees.
     public func rhumbBearing(
         to other: Coordinate3D,
         final: Bool = false
@@ -76,8 +78,10 @@ extension Point {
     /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
     /// - Parameters:
-    ///    - other: The other coordinate
-    ///    - final: Calculates the final bearing if `true` (default `false`)
+    /// - Parameter other: The other coordinate
+    /// - Parameter final: Calculates the final bearing if `true` (default `false`)
+    ///
+    /// - Returns: The bearing in degrees.
     public func rhumbBearing(
         to other: Point,
         final: Bool = false

@@ -1,5 +1,5 @@
 #if canImport(CoreLocation)
-    import CoreLocation
+import CoreLocation
 #endif
 import Foundation
 

@@ -9,6 +9,9 @@ extension BoundingBox {
     public struct CoordinatePosition: OptionSet, Sendable {
         public let rawValue: Int
 
+        /// Creates a coordinate position from its raw option-set value.
+        ///
+        /// - Parameter rawValue: The raw option-set value.
         public init(rawValue: Int) {
             self.rawValue = rawValue
         }

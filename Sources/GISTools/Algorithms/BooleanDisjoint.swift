@@ -9,8 +9,7 @@ extension GeoJson {
 
     /// Compares two geometries and returns true if they are disjoint.
     ///
-    /// - Parameters:
-    ///    - other: The other geometry
+    /// - Parameter other: The other geometry
     ///
     /// - Returns: `true` if the geometries don't overlap, `false` otherwise.
     public func isDisjoint(with other: GeoJson) -> Bool {

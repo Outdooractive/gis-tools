@@ -15,9 +15,10 @@ extension FeatureCollection {
     /// The property value can be any standard JSON type (`String`, `Int`, `Double`,
     /// `Bool`, etc.) or any `Hashable & Sendable` type.
     ///
-    /// - Parameters:
-    ///    - property: The property name by which features should be grouped
-    ///    - removeUnknown: Whether to remove features without the property from the result
+    /// - Parameter property: The property name by which features should be grouped
+    /// - Parameter removeUnknown: Whether to remove features without the property from the result
+    ///
+    /// - Returns: A dissolved FeatureCollection.
     public func dissolved(
         by property: String,
         removeUnknown: Bool = false

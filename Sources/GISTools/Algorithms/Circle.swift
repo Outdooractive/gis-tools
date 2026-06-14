@@ -9,9 +9,10 @@ extension Coordinate3D {
 
     /// Calculates the circle polygon around a coordinate.
     ///
-    /// - Parameters:
-    ///    - radius: The radius of the circle, in meters
-    ///    - steps: The number of steps (default 64)
+    /// - Parameter radius: The radius of the circle, in meters
+    /// - Parameter steps: The number of steps (default 64)
+    ///
+    /// - Returns: The circle as a `Polygon`, or `nil` if the radius is zero or steps is less than 2.
     public func circle(
         radius: CLLocationDistance,
         steps: Int = 64
@@ -33,9 +34,10 @@ extension Point {
 
     /// Calculates the circle polygon around a point.
     ///
-    /// - Parameters:
-    ///    - radius: The radius of the circle, in meters
-    ///    - steps: The number of steps (default 64)
+    /// - Parameter radius: The radius of the circle, in meters
+    /// - Parameter steps: The number of steps (default 64)
+    ///
+    /// - Returns: The circle as a `Polygon`, or `nil` if the radius is zero or steps is less than 2.
     public func circle(
         radius: CLLocationDistance,
         steps: Int = 64

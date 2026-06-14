@@ -10,6 +10,8 @@ extension Coordinate3D {
     /// Calculates the distance along a rhumb line between two coordinates, in meters.
     ///
     /// - Parameter other: The other coordinate
+    ///
+    /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
         switch projection {
         case .epsg4326:
@@ -79,6 +81,8 @@ extension Point {
     /// Calculates the distance between two points, in meters.
     ///
     /// - Parameter other: The other point
+    ///
+    /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Point) -> CLLocationDistance {
         coordinate.rhumbDistance(from: other.coordinate)
     }

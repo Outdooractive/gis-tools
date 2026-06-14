@@ -9,10 +9,10 @@ extension GeoJson {
 
     /// Moves the receiver for a specified distance along a Rhumb line on the provided direction angle.
     ///
-    /// - Parameters:
-    ///    - distance: The length of the motion, in meters
-    ///    - direction: The direction of the motion, in decimal degrees from north, positive clockwise.
-    ///    - zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
+    /// - Parameter distance: The length of the motion, in meters
+    /// - Parameter direction: The direction of the motion, in decimal degrees from north, positive clockwise.
+    /// - Parameter zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
+    /// - Returns: The translated geometry.
     public func translated(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,
@@ -35,10 +35,9 @@ extension GeoJson {
 
     /// Moves the receiver for a specified distance along a Rhumb line on the provided direction angle.
     ///
-    /// - Parameters:
-    ///    - distance: The length of the motion, in meters
-    ///    - direction: The direction of the motion, in decimal degrees from north, positive clockwise.
-    ///    - zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
+    /// - Parameter distance: The length of the motion, in meters
+    /// - Parameter direction: The direction of the motion, in decimal degrees from north, positive clockwise.
+    /// - Parameter zTranslation: The length of the vertical motion, in meters (defaults to 0.0)
     public mutating func translate(
         distance: CLLocationDistance,
         direction: CLLocationDegrees,

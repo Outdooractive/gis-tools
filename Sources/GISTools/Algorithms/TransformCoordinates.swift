@@ -8,6 +8,8 @@ extension GeoJson {
     /// Returns a new geometry with all coordinates transformed by the given function.
     ///
     /// - Parameter transform: The transformation function
+    ///
+    /// - Returns: A new geometry with transformed coordinates.
     public func transformedCoordinates(
         _ transform: (Coordinate3D) -> Coordinate3D
     ) -> Self {
