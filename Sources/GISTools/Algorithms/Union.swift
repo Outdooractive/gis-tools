@@ -484,7 +484,7 @@ enum Union {
 
 }
 
-// MARK: - BoundingBoxRepresentable conformance (for future RTree use)
+// MARK: - BoundingBoxRepresentable conformance (required by RTree)
 
 extension Union.Edge: BoundingBoxRepresentable {
 
