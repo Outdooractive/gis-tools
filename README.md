@@ -879,6 +879,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
 | boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56] / [Tests][134]  |
 | boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
+| boolean-touches             | `anyGeometry.touches(other)`                                                                                                          |     | [Source][159] / [Tests][160] |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | buffer                      | `let buffered = lineString.buffered(by: 1000.meters)`                                                                                 |     | [Source][61] / [Tests][158]  |
@@ -886,6 +887,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
 | clusters-kmeans             | `let result = featureCollection.kmeansClusters(numberOfClusters: 5)`                                                                  |     | [Source][156] / [Tests][157] |
+| concave-hull                | `anyGeometry.concaveHull(maxEdgeLength: 500.0)`                                                                                     |     | [Source][161] / [Tests][162] |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
@@ -919,6 +921,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
+| tin                         | `anyGeometry.tin()`                                                                                                                  |     | [Source][163] / [Tests][164] |
 | transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                                                                          |     | [Source][114] / [Tests][115] |
 | transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`                                               |     | [Source][116] / [Tests][117] |
 | transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`                                                       |     | [Source][118] / [Tests][119] |
@@ -1098,6 +1101,12 @@ Thomas Rasch, Outdooractive
 [156]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Clusters.swift
 [157]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ClustersTests.swift
 [158]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BufferTests.swift "BufferTests"
+[159]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanTouches.swift "BooleanTouches"
+[160]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanTouchesTests.swift "BooleanTouchesTests"
+[161]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/ConcaveHull.swift "ConcaveHull"
+[162]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ConcaveHullTests.swift "ConcaveHullTests"
+[163]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Tin.swift "Tin"
+[164]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TinTests.swift "TinTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
