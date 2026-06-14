@@ -369,6 +369,16 @@ extension CLLocationCoordinate2D {
 
 extension Coordinate3D {
 
+    /// `true` when the receiver is equal to `other` within
+    /// the global equality delta.
+    ///
+    /// - Parameter other: The other coordinate
+    /// - Returns: `true` if coincident, `false` otherwise
+    public func isCoincident(to other: Coordinate3D?) -> Bool {
+        guard let other else { return false }
+        return self.equals(other: other, includingAltitude: false)
+    }
+
     /// Clamped to [-180.0, 180.0].
     public mutating func normalize() {
         self = self.normalized()

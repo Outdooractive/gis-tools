@@ -128,3 +128,4 @@ If a method has ≤3 parameters and no return value, or ≤2 parameters and a re
 ## General instructions
 - DO NOT take any shortcuts while implementing an algorithm. Correctness is the highest priority
 - DO NOT commit changes unless the user tells you to do so, ALWAYS let the user review your changes
+- DO NOT create free functions (un-namespaced top-level functions). Always use a `private enum` namespace or extensions on existing types.
