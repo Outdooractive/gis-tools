@@ -21,7 +21,7 @@ extension GeoJson {
             return newMultiLineString as! Self
 
         case let geometryCollection as GeometryCollection:
-            var newGeometryCollection = GeometryCollection(geometryCollection.geometries.reversed().map({ $0.reversed }))
+            var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({ $0.reversed }))
             newGeometryCollection.boundingBox = geometryCollection.boundingBox
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
             return newGeometryCollection as! Self
