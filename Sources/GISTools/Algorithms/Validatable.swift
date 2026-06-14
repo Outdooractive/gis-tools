@@ -10,8 +10,22 @@ public protocol ValidatableGeoJson {
 
     /// Check if the geometry is valid, i.e. it has enough coordinates to make sense.
     ///
-    /// TODO: Would this be a null geometry?
+    /// - Note: RFC 7946 §3.2 allows a Feature with `"geometry": null`, but
+    ///   this library rejects those at parse time (``Feature.init?(json:)``
+    ///   returns `nil`). Every validatable type therefore always has a
+    ///   non-nil geometry.
     var isValid: Bool { get }
+
+    /// Returns `self` when ``isValid`` is `true`, otherwise `nil`.
+    var validated: Self? { get }
+
+}
+
+extension ValidatableGeoJson {
+
+    public var validated: Self? {
+        isValid ? self : nil
+    }
 
 }
 
