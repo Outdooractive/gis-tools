@@ -34,7 +34,7 @@ extension LineString {
             if travelled > startDistance, slice.isEmpty {
                 let overshot = startDistance - travelled
                 if overshot == 0.0 {
-                    slice.append(coordinate)
+                    slice.append(contentsOf: [coordinate, coordinate])
                     return LineString(slice)
                 }
 
@@ -47,6 +47,9 @@ extension LineString {
                 let overshot = stopDistance - travelled
                 if overshot == 0.0 {
                     slice.append(coordinate)
+                    if slice.count == 1 {
+                        slice.append(coordinate)
+                    }
                     return LineString(slice)
                 }
 
@@ -71,7 +74,8 @@ extension LineString {
             return nil
         }
 
-        return LineString([coordinates[coordinates.count - 1]])
+        let last = coordinates[coordinates.count - 1]
+        return LineString([last, last])
     }
 
 }
