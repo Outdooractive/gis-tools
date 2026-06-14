@@ -340,7 +340,7 @@ extension FeatureCollection {
     /// - Parameters:
     ///    - key: A closure that returns a grouping key for each feature
     /// - Returns: A dictionary mapping keys to arrays of features
-    public func divideFeatures(by key: (Feature) -> String?) -> [String: [Feature]] {
+    public func divideFeatures<T: Hashable>(by key: (Feature) -> T?) -> [T: [Feature]] {
         return features.reduce(into: [:]) { partialResult, feature in
             guard let key = key(feature) else { return }
 

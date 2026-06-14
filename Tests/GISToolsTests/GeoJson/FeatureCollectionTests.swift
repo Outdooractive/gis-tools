@@ -184,7 +184,7 @@ struct FeatureCollectionTests {
     @Test
     func divideFeaturesByKey() async throws {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
-        let divided = featureCollection.divideFeatures { feature in
+        let divided: [String: [Feature]] = featureCollection.divideFeatures { feature in
             feature.property(for: "prop2")
         }
 
