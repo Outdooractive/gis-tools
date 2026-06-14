@@ -129,6 +129,13 @@ extension GISTool {
     /// GISTool.convertToMeters(5, .kilometers) // 5000.0
     /// GISTool.convertToMeters(1, .miles)      // 1609.344
     /// ```
+    /// - Parameter value: The value to convert.
+    /// - Parameter unit: The unit of `value`. Note that `.degrees` is supported
+    ///   as a convenience for test code, but it only approximates equatorial
+    ///   longitude — 1° of longitude at the equator ≈ 111.325 km, whereas 1°
+    ///   of latitude is constant (~111.325 km) and 1° of longitude shrinks
+    ///   toward the poles (0 km at 90°). For latitude-aware conversions use
+    ///   Haversine distance (``Coordinate3D/distance(to:)``) instead.
     /// - Returns: The value converted to meters.
     ///
     /// - note: Mainly for tests.
@@ -146,6 +153,7 @@ extension GISTool {
         case .yards: return value / 1.0936
         case .miles: return value * 1609.344
         case .nauticalMiles: return value * 1852.0
+        case .degrees: return value * 111_325.0
         default: return value
         }
     }
