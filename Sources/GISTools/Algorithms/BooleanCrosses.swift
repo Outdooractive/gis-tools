@@ -89,17 +89,11 @@ extension GeoJson {
         var foundIntPoint = false
         var foundExtPoint = false
 
+        let segments = lineString.lineSegments
         for point in multiPoint.points {
             var isInterior = false
-            let coords = lineString.coordinates
-            for i in 0..<(coords.count - 1) {
-                let incEnd = (i != 0 && i != coords.count - 2)
-                if isPointOnLineSegment(
-                    start: coords[i],
-                    end: coords[i + 1],
-                    point: point.coordinate,
-                    incEnd: incEnd)
-                {
+            for segment in segments {
+                if segment.checkIsOnSegment(point.coordinate) {
                     isInterior = true
                     break
                 }
@@ -182,49 +176,6 @@ extension GeoJson {
             }
         }
         return false
-    }
-
-    // MARK: - isPointOnLineSegment
-
-    // TODO: We also have LineSegment.checkIsOnSegment()
-
-    /// Checks whether `point` lies on the line segment from `start` to `end`.
-    ///
-    /// - parameter incEnd: If `true` the point may coincide with `start` or `end`.
-    private func isPointOnLineSegment(
-        start: Coordinate3D,
-        end: Coordinate3D,
-        point: Coordinate3D,
-        incEnd: Bool
-    ) -> Bool {
-        let dxc = point.longitude - start.longitude
-        let dyc = point.latitude - start.latitude
-        let dxl = end.longitude - start.longitude
-        let dyl = end.latitude - start.latitude
-        let cross = dxc * dyl - dyc * dxl
-
-        guard cross == 0.0 else { return false }
-
-        if incEnd {
-            if abs(dxl) >= abs(dyl) {
-                return dxl > 0
-                    ? start.longitude <= point.longitude && point.longitude <= end.longitude
-                    : end.longitude <= point.longitude && point.longitude <= start.longitude
-            }
-            return dyl > 0
-                ? start.latitude <= point.latitude && point.latitude <= end.latitude
-                : end.latitude <= point.latitude && point.latitude <= start.latitude
-        }
-        else {
-            if abs(dxl) >= abs(dyl) {
-                return dxl > 0
-                    ? start.longitude < point.longitude && point.longitude < end.longitude
-                    : end.longitude < point.longitude && point.longitude < start.longitude
-            }
-            return dyl > 0
-                ? start.latitude < point.latitude && point.latitude < end.latitude
-                : end.latitude < point.latitude && point.latitude < start.latitude
-        }
     }
 
 }
