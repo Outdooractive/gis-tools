@@ -180,15 +180,4 @@ extension GeoJson {
 
 }
 
-// MARK: - Coordinate3D helper
 
-extension Coordinate3D {
-
-    /// `true` when the receiver is equal to `other` within
-    /// the global equality delta.
-    fileprivate func isCoincident(to other: Coordinate3D?) -> Bool {
-        guard let other else { return false }
-        return self.equals(other: other, includingAltitude: false)
-    }
-
-}
