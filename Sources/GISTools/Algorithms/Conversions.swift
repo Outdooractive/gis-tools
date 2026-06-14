@@ -260,6 +260,27 @@ extension GISTool {
         return (latitudeDistance, longitudeDistance)
     }
 
+    /// Converts a distance in degrees to meters at a given latitude.
+    ///
+    /// - Parameter latitudeDegrees: The latitude distance in degrees.
+    /// - Parameter longitudeDegrees: The longitude distance in degrees.
+    /// - Parameter latitude: The latitude at which to calculate the conversion.
+    ///
+    /// - Returns: A tuple of latitude meters and longitude meters.
+    public static func meters(
+        fromDegrees latitudeDegrees: CLLocationDegrees,
+        longitudeDegrees: CLLocationDegrees,
+        atLatitude latitude: CLLocationDegrees
+    ) -> (latitudeMeters: CLLocationDistance, longitudeMeters: CLLocationDistance) {
+        let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0
+        let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
+
+        let latitudeMeters = latitudeDegrees * oneDegreeLatitudeDistance
+        let longitudeMeters = longitudeDegrees * oneDegreeLongitudeDistance
+
+        return (latitudeMeters, longitudeMeters)
+    }
+
 }
 
 extension Coordinate3D {
@@ -273,6 +294,19 @@ extension Coordinate3D {
         fromMeters meters: CLLocationDistance
     ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
         GISTool.degrees(fromMeters: meters, atLatitude: latitude)
+    }
+
+    /// Converts a distance in degrees to meters at the receiver's latitude.
+    ///
+    /// - Parameter latitudeDegrees: The latitude distance in degrees.
+    /// - Parameter longitudeDegrees: The longitude distance in degrees.
+    ///
+    /// - Returns: A tuple of latitude meters and longitude meters.
+    public func meters(
+        fromDegrees latitudeDegrees: CLLocationDegrees,
+        longitudeDegrees: CLLocationDegrees
+    ) -> (latitudeMeters: CLLocationDistance, longitudeMeters: CLLocationDistance) {
+        GISTool.meters(fromDegrees: latitudeDegrees, longitudeDegrees: longitudeDegrees, atLatitude: latitude)
     }
 
 }
