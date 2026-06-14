@@ -96,6 +96,21 @@ struct TinTests {
         }
     }
 
+    // Validates triangulation of points straddling the antimeridian.
+    @Test
+    func tinCrossingAntimeridian() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: -175.0),
+            Coordinate3D(latitude: 5.0, longitude: 180.0),
+        ]))
+
+        let fc = try #require(mp.tin())
+        #expect(fc.features.count >= 1)
+    }
+
     // Validates that the TIN covers all input points (each point is a vertex of at least one triangle).
     @Test
     func tinCoversAllPoints() async throws {
