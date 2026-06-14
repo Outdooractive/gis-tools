@@ -873,6 +873,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | area                        | `Polygon(…).area`                                                                                                                     |     | [Source][45]                 |
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
+| boolean-concave             | `anyGeometry.isConcave()`                                                                                                             |     | [Source][177] / [Tests][178] |
 | boolean-crosses             | `lineString.crosses(otherLineString)`                                                                                                  |     | [Source][50] / [Tests][133]  |
 | boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
@@ -896,6 +897,11 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
 | great-circle                | `let arc = start.greatCircle(to: end)`                                                                                                |     | [Source][144] / [Tests][145] |
 | frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
+| grid-hex                    | `bbox.hexGrid(cellSide: 1000.0)`                                                                                                      |     | [Source][165] / [Tests][166] |
+| grid-point                  | `bbox.pointGrid(cellSide: 1000.0)`                                                                                                    |     | [Source][167] / [Tests][168] |
+| grid-rectangle              | `bbox.rectangleGrid(cellWidth: 1000.0, cellHeight: 500.0)`                                                                            |     | [Source][173] / [Tests][174] |
+| grid-square                 | `bbox.squareGrid(cellSide: 1000.0)`                                                                                                   |     | [Source][169] / [Tests][170] |
+| grid-triangle               | `bbox.triangleGrid(cellSide: 1000.0)`                                                                                                 |     | [Source][171] / [Tests][172] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
@@ -921,6 +927,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`                                                       |     | [Source][106] / [Tests][107] |
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
+| snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
 | tin                         | `anyGeometry.tin()`                                                                                                                  |     | [Source][163] / [Tests][164] |
 | transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                                                                          |     | [Source][114] / [Tests][115] |
@@ -1108,6 +1115,20 @@ Thomas Rasch, Outdooractive
 [162]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ConcaveHullTests.swift "ConcaveHullTests"
 [163]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Tin.swift "Tin"
 [164]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TinTests.swift "TinTests"
+[165]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/HexGrid.swift "HexGrid"
+[166]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/HexGridTests.swift "HexGridTests"
+[167]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PointGrid.swift "PointGrid"
+[168]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PointGridTests.swift "PointGridTests"
+[169]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SquareGrid.swift "SquareGrid"
+[170]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SquareGridTests.swift "SquareGridTests"
+[171]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/TriangleGrid.swift "TriangleGrid"
+[172]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TriangleGridTests.swift "TriangleGridTests"
+[173]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/RectangleGrid.swift "RectangleGrid"
+[174]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/RectangleGridTests.swift "RectangleGridTests"
+[175]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SnapToGrid.swift "SnapToGrid"
+[176]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SnapToGridTests.swift "SnapToGridTests"
+[177]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanConcave.swift "BooleanConcave"
+[178]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanConcaveTests.swift "BooleanConcaveTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
