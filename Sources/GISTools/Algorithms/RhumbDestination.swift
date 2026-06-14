@@ -23,7 +23,11 @@ extension Coordinate3D {
         case .epsg3857:
             return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: .epsg3857)
         case .noSRID:
-            return self // Ignore
+            let theta = bearing.degreesToRadians
+            return Coordinate3D(
+                x: longitude + distance * sin(theta),
+                y: latitude + distance * cos(theta),
+                projection: .noSRID)
         }
     }
 
