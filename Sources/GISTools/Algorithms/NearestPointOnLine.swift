@@ -16,10 +16,10 @@ extension LineSegment {
 
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
-        // avoid inaccuracy for too short distances, as the square line distance is taken as divisor
-        if squareLineDistance == 0.0
-            || first.distance(from: second) < 1.0
-        {
+        // Numerical stability: avoid division by a near-zero squared distance.
+        // Use the geodesic distance (always in meters) for a projection-independent
+        // threshold. Segments shorter than 1 m are degenerate for perpendicular projection.
+        if squareLineDistance <= 0.0 || first.distance(from: second) < 1.0 {
             return first
         }
 
@@ -92,11 +92,6 @@ extension LineString {
                 bestCoordinate = foot
                 bestDistance = footDistance
                 bestIndex = index
-            }
-
-            // TODO: Good enough? Might not be accurate enough for all use cases
-            if bestDistance < 1.0 {
-                break
             }
         }
 

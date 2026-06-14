@@ -150,4 +150,46 @@ struct NearestCoordinateOnLineTests {
         #expect(nearestCoordinate == result)
     }
 
+    // MARK: - Early-exit regression tests
+
+    // Verifies that every segment is evaluated, not stopping at the first
+    // within 1 m. A later segment may be even closer.
+    @Test
+    func closestOnLaterSegmentAtRightAngle() async throws {
+        // Line: 0.0009° (≈100 m) east, then 0.0018° (≈200 m) north.
+        // Query point is 0.5 m north and 0.5 m east of the corner.
+        //   - Seg 0 clamped foot (corner) distance ≈ 0.71 m (would trigger old early exit)
+        //   - Seg 1 interpolated foot distance ≈ 0.50 m (correctly closer)
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0009),
+            Coordinate3D(latitude: 0.0018, longitude: 0.0009),
+        ]))
+        let query = Coordinate3D(latitude: 0.0000045, longitude: 0.0009045)
+        let expected = Coordinate3D(latitude: 0.0000045, longitude: 0.0009)
+
+        let result = try #require(lineString.nearestCoordinateOnLine(from: query))
+        #expect(result.index == 1)
+        #expect(result.coordinate == expected)
+    }
+
+    // Verifies that the closest point on a multi-segment line is always
+    // found, even when the early segments are far away.
+    @Test
+    func closestOnLastSegment() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.02, longitude: 0.01),
+        ]))
+        // Query near the midpoint of the last segment
+        let query = Coordinate3D(latitude: 0.015, longitude: 0.0100001)
+        let expected = Coordinate3D(latitude: 0.015, longitude: 0.01)
+
+        let result = try #require(lineString.nearestCoordinateOnLine(from: query))
+        #expect(result.index == 2)
+        #expect(result.coordinate == expected)
+    }
+
 }
