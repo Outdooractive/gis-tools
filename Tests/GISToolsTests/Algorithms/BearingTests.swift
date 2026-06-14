@@ -42,4 +42,14 @@ struct BearingTests {
         #expect(abs(origin.bearing(to: northEast) - 45.0) < 1e-10)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let start = Coordinate3D(latitude: 0.0, longitude: 170.0)
+        let end = Coordinate3D(latitude: 10.0, longitude: -170.0)
+        let bearing = start.bearing(to: end)
+        #expect(bearing > 0.0 && bearing < 180.0)
+    }
+
 }

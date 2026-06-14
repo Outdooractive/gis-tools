@@ -98,6 +98,23 @@ struct ConcaveHullTests {
         #expect(hull.polygons.isNotEmpty)
     }
 
+    // Validates concave hull of points straddling the antimeridian.
+    @Test
+    func concaveHullCrossingAntimeridian() async throws {
+        let maxEdge3000km = GISTool.convertToMeters(3000, .kilometers)
+
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: -175.0),
+            Coordinate3D(latitude: 5.0, longitude: 180.0),
+        ]))
+
+        let hull = try #require(mp.concaveHull(maxEdgeLength: maxEdge3000km))
+        #expect(hull.polygons.isNotEmpty)
+    }
+
     // Validates that the concave hull contains all input points.
     @Test
     func concaveHullContainsAllPoints() async throws {

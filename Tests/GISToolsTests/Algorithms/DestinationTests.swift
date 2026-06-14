@@ -56,4 +56,14 @@ struct DestinationTests {
         #expect(abs(destination.longitude - 1.123702522680564) < 0.000001)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let coordinate = Coordinate3D(latitude: 0.0, longitude: 170.0)
+        let destination = coordinate.destination(distance: 100_000.0, bearing: 90.0)
+        #expect(destination.latitude > -1.0 && destination.latitude < 1.0)
+        #expect(destination.longitude > 170.0 || destination.longitude < -170.0)
+    }
+
 }

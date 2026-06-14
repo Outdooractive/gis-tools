@@ -21,4 +21,14 @@ struct CircleTests {
         }
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
+        let circle = try #require(point.circle(radius: 100_000.0))
+        #expect(circle is Polygon)
+        #expect(circle.isValid)
+    }
+
 }

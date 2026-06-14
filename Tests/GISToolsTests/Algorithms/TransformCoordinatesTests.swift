@@ -147,4 +147,26 @@ struct TransformCoordinatesTests {
         #expect(featureCollectionTransformed == featureCollectionResult)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0)
+        ]]))
+        let result = polygon.transformedCoordinates { coordinate in
+            Coordinate3D(
+                latitude: coordinate.latitude + 1.0,
+                longitude: coordinate.longitude)
+        }
+        #expect(result != polygon)
+        for coord in result.allCoordinates {
+            #expect(coord.latitude > 0.0)
+        }
+    }
+
 }

@@ -130,4 +130,25 @@ struct PolygonSmoothTests {
         #expect(ring2.coordinates.count > ring1.coordinates.count)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+
+        let smoothed = polygon.smooth(iterations: 3)
+        let smoothedRing = try #require(smoothed.outerRing)
+
+        // Smoothed polygon should have more vertices than the original
+        #expect(smoothedRing.coordinates.count > polygon.outerRing?.coordinates.count ?? 0)
+        // Smoothed polygon should still cross the antimeridian
+        #expect(smoothed.crossesAntimeridian)
+    }
+
 }

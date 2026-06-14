@@ -86,6 +86,22 @@ struct ConvexHullTests {
         #expect(hull.outerRing?.coordinates.count == 5)
     }
 
+    // Validates the convex hull of points straddling the antimeridian produces a valid result.
+    @Test
+    func convexHullCrossingAntimeridian() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: -175.0),
+            Coordinate3D(latitude: 5.0, longitude: 180.0),
+        ]))
+
+        let hull = try #require(mp.convexHull())
+        #expect(hull.outerRing?.coordinates.count ?? 0 >= 4)
+        #expect(hull.isValid)
+    }
+
     // Validates the convex hull computed from a Feature wrapping a MultiPoint produces the expected result.
     @Test
     func convexHullFeature() async throws {

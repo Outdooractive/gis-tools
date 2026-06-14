@@ -18,4 +18,18 @@ struct AlongTests {
         #expect(coordinate2 == lineString.coordinates[lineString.coordinates.count - 1])
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+        ]))
+        let coordinate = lineString.coordinateAlong(distance: 500_000.0)
+        #expect(coordinate.latitude >= 0.0)
+        #expect(coordinate.latitude <= 10.0)
+        #expect(abs(coordinate.longitude) > 150.0)
+    }
+
 }

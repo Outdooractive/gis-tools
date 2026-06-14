@@ -36,4 +36,23 @@ struct SimplifyTests {
         #expect(abs(startDate.timeIntervalSinceNow) < 0.5)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 5.0, longitude: 174.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 5.0, longitude: 174.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]))
+        let simplified = try #require(lineString.simplified(tolerance: 1.0))
+        #expect(!simplified.coordinates.isEmpty)
+        for coord in simplified.coordinates {
+            #expect(coord.latitude >= 0.0 && coord.latitude <= 10.0)
+            #expect(coord.longitude >= 170.0 && coord.longitude <= 179.0)
+        }
+    }
+
 }

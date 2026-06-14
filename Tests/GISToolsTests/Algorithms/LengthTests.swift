@@ -22,4 +22,15 @@ struct LengthTests {
         #expect(lineSegment.index == 0)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        #expect(lineString.length > 2_000_000.0 && lineString.length < 2_500_000.0)
+    }
+
 }

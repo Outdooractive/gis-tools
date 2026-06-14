@@ -66,4 +66,20 @@ struct AreaTests {
         #expect(abs(polygon.area - 7200.0) < 0.1)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let area = polygon.area
+        #expect(area > 0.0)
+        #expect(area < 2_000_000_000_000.0)
+    }
+
 }

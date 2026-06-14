@@ -149,4 +149,23 @@ struct TransformTranslateTests {
         }
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        // coordinates straddling the date line
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0)
+        ]]))
+        let result = polygon.translated(distance: 1000.0, direction: 90.0)
+        #expect(result != polygon)
+        for coord in result.allCoordinates {
+            #expect(abs(coord.longitude) > 150.0)
+        }
+    }
+
 }
