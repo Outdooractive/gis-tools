@@ -53,4 +53,20 @@ struct NearestPointTests {
         #expect(ls.nearestCoordinate(from: Coordinate3D(latitude: 0.0, longitude: 0.0)) == nil)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let ref = Coordinate3D(latitude: 5.0, longitude: 180.0)
+        let result = try #require(mp.nearestCoordinate(from: ref))
+        #expect(result.distance > 0)
+        #expect(result.coordinate.latitude >= 0.0 && result.coordinate.latitude <= 10.0)
+    }
+
 }

@@ -86,4 +86,23 @@ struct PointsWithinPolygonTests {
         #expect(result.isEmpty)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let inside = Point(Coordinate3D(latitude: 5.0, longitude: 175.0))
+        let outside = Point(Coordinate3D(latitude: 5.0, longitude: 165.0))
+        let points = [inside, outside]
+        let result = polygon.pointsWithin(points)
+        #expect(result.count == 1)
+        #expect(result[0].coordinate.longitude == 175.0)
+    }
+
 }

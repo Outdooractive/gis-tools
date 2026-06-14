@@ -316,6 +316,26 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2))
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: -5.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: 174.0),
+            Coordinate3D(latitude: 5.0, longitude: 179.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: 174.0),
+            Coordinate3D(latitude: -5.0, longitude: 179.0),
+        ]))
+        let feature1 = Feature(line1)
+        let feature2 = Feature(line2)
+        let intersections: [Point] = feature1.intersections(with: feature2)
+        #expect(!intersections.isEmpty)
+    }
+
     // Tests that the boolean intersects method returns true for overlapping collinear segments.
     @Test
     func intersectsCollinearOverlap() async throws {

@@ -84,4 +84,19 @@ struct BooleanDisjointTests {
         #expect(multiPolygon1.isDisjoint(with: polygon3) == false)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 175.0))
+        #expect(!polygon.isDisjoint(with: point))
+    }
+
 }

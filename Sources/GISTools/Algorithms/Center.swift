@@ -30,17 +30,29 @@ extension GeoJson {
             return Point(allCoordinates[0])
         }
 
+        let minLon = allCoordinates.map(\.longitude).min() ?? 0
+        let maxLon = allCoordinates.map(\.longitude).max() ?? 0
+        let spansAntimeridian = (maxLon - minLon) > 180.0
+
         var sumLongitude: Double = 0.0
         var sumLatitude: Double = 0.0
 
         for coordinate in allCoordinates {
-            sumLongitude += coordinate.longitude
+            let lon = spansAntimeridian && coordinate.longitude < 0
+                ? coordinate.longitude + 360.0
+                : coordinate.longitude
+            sumLongitude += lon
             sumLatitude += coordinate.latitude
+        }
+
+        var resultLongitude = sumLongitude / Double(allCoordinates.count)
+        if spansAntimeridian && resultLongitude > 180.0 {
+            resultLongitude -= 360.0
         }
 
         return Point(
             Coordinate3D(
-                x: sumLongitude / Double(allCoordinates.count),
+                x: resultLongitude,
                 y: sumLatitude / Double(allCoordinates.count),
                 projection: projection))
     }

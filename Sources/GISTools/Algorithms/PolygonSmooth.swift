@@ -14,10 +14,37 @@ extension Polygon {
     /// - Returns: A new smoothed polygon.
     /// - Warning: May create degenerate polygons at high iteration counts.
     public func smooth(iterations: Int = 1) -> Polygon {
-        var resultCoords = coordinates
+        let spansAntimeridian = crossesAntimeridian
+
+        let normalizedCoords: [[Coordinate3D]]
+        if spansAntimeridian {
+            normalizedCoords = coordinates.map { ring in
+                ring.map { coord in
+                    Coordinate3D(
+                        latitude: coord.latitude,
+                        longitude: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude)
+                }
+            }
+        }
+        else {
+            normalizedCoords = coordinates
+        }
+
+        var resultCoords = normalizedCoords
         for _ in 0..<iterations {
             resultCoords = smoothRings(resultCoords)
         }
+
+        if spansAntimeridian {
+            resultCoords = resultCoords.map { ring in
+                ring.map { coord in
+                    Coordinate3D(
+                        latitude: coord.latitude,
+                        longitude: coord.longitude > 180.0 ? coord.longitude - 360.0 : coord.longitude)
+                }
+            }
+        }
+
         return Polygon(unchecked: resultCoords)
     }
 

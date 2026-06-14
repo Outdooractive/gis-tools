@@ -35,4 +35,14 @@ struct DistanceTests {
         #expect(abs(origin.distance(from: point) - 5.0) < 1e-12)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 170.0)
+        let coordinate2 = Coordinate3D(latitude: 0.0, longitude: -170.0)
+        let distance = coordinate1.distance(from: coordinate2)
+        #expect(abs(distance - 2_226_000.0) < 10_000.0)
+    }
+
 }

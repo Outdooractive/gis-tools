@@ -113,4 +113,20 @@ struct DissolveTests {
         #expect(g == "a")
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 175.0),
+        ]]))
+        let fc = FeatureCollection([Feature(polygon)])
+        let dissolved = fc.dissolved(by: "group")
+        #expect(dissolved.features.isNotEmpty)
+    }
+
 }

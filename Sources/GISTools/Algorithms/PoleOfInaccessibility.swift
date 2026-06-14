@@ -17,6 +17,29 @@ extension Polygon {
     public func poleOfInaccessibility(precision: Double = 1.0) -> Point? {
         guard let outerRing else { return nil }
 
+        if crossesAntimeridian {
+            // Shift negative longitudes to [0, 360) so the polygon is
+            // contiguous and the grid-search algorithm works correctly.
+            let normalizedRings = coordinates.map { ring in
+                ring.map { coord in
+                    Coordinate3D(
+                        latitude: coord.latitude,
+                        longitude: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude)
+                }
+            }
+            let normalized = Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
+            if let pole = normalized.poleOfInaccessibility(precision: precision) {
+                var result = pole
+                if result.coordinate.longitude > 180.0 {
+                    result = Point(Coordinate3D(
+                        latitude: result.coordinate.latitude,
+                        longitude: result.coordinate.longitude - 360.0))
+                }
+                return result
+            }
+            return nil
+        }
+
         let coords = outerRing.coordinates
         guard coords.count >= 4 else { return nil }
 

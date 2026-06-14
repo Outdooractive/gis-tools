@@ -21,7 +21,10 @@ extension Ring {
             previous = current ?? coordinates[0]
             current = coordinates[index]
 
-            sum += ((current!.longitude - previous!.longitude) * (current!.latitude + previous!.latitude))
+            let lon1 = previous!.longitude < 0 ? previous!.longitude + 360.0 : previous!.longitude
+            let lon2 = current!.longitude < 0 ? current!.longitude + 360.0 : current!.longitude
+
+            sum += ((lon2 - lon1) * (current!.latitude + previous!.latitude))
         }
 
         return sum > 0
