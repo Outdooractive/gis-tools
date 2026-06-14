@@ -47,7 +47,7 @@ struct SimplifyTests {
             Coordinate3D(latitude: 5.0, longitude: 174.0),
             Coordinate3D(latitude: 0.0, longitude: 170.0),
         ]))
-        let simplified = try #require(lineString.simplified(tolerance: 1.0))
+        let simplified = lineString.simplified(tolerance: 1.0)
         #expect(!simplified.coordinates.isEmpty)
         for coord in simplified.coordinates {
             #expect(coord.latitude >= 0.0 && coord.latitude <= 10.0)
