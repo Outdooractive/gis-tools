@@ -49,7 +49,7 @@ extension GeoJson {
         let na = MapTile.normalizeCoordinate(a.projected(to: .epsg4326))
         let nb = MapTile.normalizeCoordinate(b.projected(to: .epsg4326))
 
-        var x0 = na.longitude * scale
+        let x0 = na.longitude * scale
         let y0 = na.latitude * scale
         var x1 = nb.longitude * scale
         let y1 = nb.latitude * scale
