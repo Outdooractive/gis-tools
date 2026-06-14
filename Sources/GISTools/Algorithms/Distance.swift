@@ -32,8 +32,9 @@ extension Coordinate3D {
             let dy = latitude - other.latitude
             return sqrt(dx * dx + dy * dy)
         case .noSRID:
-            // TODO
-            return Double.infinity
+            let dx = longitude - other.longitude
+            let dy = latitude - other.latitude
+            return sqrt(dx * dx + dy * dy)
         }
     }
 

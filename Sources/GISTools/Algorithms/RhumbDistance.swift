@@ -20,8 +20,9 @@ extension Coordinate3D {
             // TODO: This can be improved
             return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
         case .noSRID:
-            // TODO
-            return Double.infinity
+            let dx = longitude - other.longitude
+            let dy = latitude - other.latitude
+            return sqrt(dx * dx + dy * dy)
         }
     }
 

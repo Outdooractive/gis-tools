@@ -96,4 +96,22 @@ struct RhumbDistanceTests {
         #expect(abs(distance - 111_319.5) < 200.0)
     }
 
+    // Validates rhumb distance in noSRID (Euclidean on Cartesian plane).
+    @Test
+    func distanceNoSRID() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let point = Coordinate3D(x: 3.0, y: 4.0, projection: .noSRID)
+
+        #expect(abs(origin.rhumbDistance(from: point) - 5.0) < 1e-12)
+    }
+
+    // Validates rhumb distance symmetry in noSRID.
+    @Test
+    func distanceNoSRIDSymmetry() async throws {
+        let a = Coordinate3D(x: 10.0, y: 20.0, projection: .noSRID)
+        let b = Coordinate3D(x: 30.0, y: 50.0, projection: .noSRID)
+
+        #expect(abs(a.rhumbDistance(from: b) - b.rhumbDistance(from: a)) < 1e-12)
+    }
+
 }

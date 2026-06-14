@@ -26,4 +26,13 @@ struct DistanceTests {
         #expect(abs(origin.distance(from: point) - expected) < 1e-6)
     }
 
+    // Validates Euclidean distance in noSRID (Cartesian plane).
+    @Test
+    func distanceNoSRID() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let point = Coordinate3D(x: 3.0, y: 4.0, projection: .noSRID)
+
+        #expect(abs(origin.distance(from: point) - 5.0) < 1e-12)
+    }
+
 }
