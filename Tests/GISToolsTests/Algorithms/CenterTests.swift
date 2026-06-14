@@ -307,4 +307,23 @@ struct CenterTests {
         #expect(abs(com.coordinate.longitude - 5.0) < 0.001)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let center = try #require(polygon.centroid)
+
+        // After the fix, the centroid should be near the polygon's true center
+        #expect(center.coordinate.latitude >= 0.0)
+        #expect(center.coordinate.latitude <= 10.0)
+        #expect(abs(center.coordinate.longitude) > 90.0)
+    }
+
 }

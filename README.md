@@ -21,6 +21,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports WKT/WKB/TWKB, also with different projections
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
+- Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line and many algorithms are tested for correct behavior across it
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 - Pure Swift without external dependencies

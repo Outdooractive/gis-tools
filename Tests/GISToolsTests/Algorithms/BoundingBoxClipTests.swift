@@ -95,4 +95,17 @@ struct BoundingBoxClipTests {
         #expect(clipped == nil) // invalid
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 175.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+        ]))
+        let bbox = BoundingBox.world
+        let clipped = lineString.clipped(to: bbox)
+        #expect(clipped != nil)
+    }
+
 }

@@ -43,4 +43,14 @@ struct MidPointTests {
         #expect(abs(coordinate1.distance(from: middle) - coordinate2.distance(from: middle)) < 0.000001)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 170.0)
+        let coordinate2 = Coordinate3D(latitude: 0.0, longitude: -170.0)
+        let middle = coordinate1.midpoint(to: coordinate2)
+        #expect(abs(coordinate1.distance(from: middle) - coordinate2.distance(from: middle)) < 0.000001)
+    }
+
 }

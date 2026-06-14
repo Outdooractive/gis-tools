@@ -77,4 +77,36 @@ struct PoleOfInaccessibilityTests {
         #expect(polygon.poleOfInaccessibility() == nil)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        // Asymmetric polygon crossing the antimeridian (partial wrap: 170° → -175°)
+        // so the pole clearly falls on one side of the cut boundary.
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -175.0),
+            Coordinate3D(latitude: 0.0, longitude: -175.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let pole = try #require(polygon.poleOfInaccessibility())
+
+        // Latitude should be within the polygon's bounds
+        #expect(pole.coordinate.latitude >= 0.0)
+        #expect(pole.coordinate.latitude <= 10.0)
+        // Longitude should be near the antimeridian (not at planar centroid -2.5°)
+        #expect(pole.coordinate.longitude.isFinite)
+        #expect(abs(pole.coordinate.longitude) > 90.0)
+
+        // Cut the polygon at the antimeridian and verify the pole
+        // is inside one of the non-wrapping parts
+        let parts = polygon.cutAtAntimeridian()
+        let isInsidePart = parts.features.contains { feature in
+            guard let partPolygon = feature.geometry as? Polygon else { return false }
+            return partPolygon.contains(pole.coordinate, ignoringBoundary: true)
+        }
+        #expect(isInsidePart)
+    }
+
 }

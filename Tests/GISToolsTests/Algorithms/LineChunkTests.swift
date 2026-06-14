@@ -70,4 +70,21 @@ struct LineChunkTests {
         }
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let chunks = lineString.chunked(segmentLength: 50000.0).lineStrings
+        #expect(chunks.count > 0)
+        for chunk in chunks {
+            for coord in chunk.coordinates {
+                #expect(abs(coord.longitude) > 150.0)
+            }
+        }
+    }
+
 }

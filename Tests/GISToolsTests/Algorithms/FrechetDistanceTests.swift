@@ -116,4 +116,20 @@ struct FrechetDistanceTests {
         #expect(abs(distance - 1.0) < 0.0001)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 1.0, longitude: 170.0),
+            Coordinate3D(latitude: 1.0, longitude: -170.0),
+        ]))
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .haversine)
+        #expect(distance > 0.0 && distance < 5_000_000.0)
+    }
+
 }

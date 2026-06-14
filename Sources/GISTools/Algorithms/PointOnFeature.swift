@@ -49,12 +49,52 @@ extension GeoJson {
             }
 
         case let polygon as Polygon:
-            if polygon.contains(centroidCoordinate) {
+            if polygon.crossesAntimeridian {
+                // Shift negative longitudes to [0, 360) so the polygon is
+                // contiguous and the centroid/contains check works correctly.
+                let normalizedRings = polygon.coordinates.map { ring in
+                    ring.map { coord in
+                        Coordinate3D(
+                            latitude: coord.latitude,
+                            longitude: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude)
+                    }
+                }
+                let normalized = Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
+                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true) {
+                    var result = coordinate
+                    if result.longitude > 180.0 {
+                        result.longitude -= 360.0
+                    }
+                    return result
+                }
+            }
+            else if polygon.contains(centroidCoordinate) {
                 return centroidCoordinate
             }
 
         case let multiPolygon as MultiPolygon:
-            if multiPolygon.contains(centroidCoordinate) {
+            if multiPolygon.polygons.contains(where: { $0.crossesAntimeridian }) {
+                // Normalize each polygon that crosses the antimeridian
+                let normalized = MultiPolygon(unchecked: multiPolygon.polygons.map { polygon in
+                    guard polygon.crossesAntimeridian else { return polygon }
+                    let normalizedRings = polygon.coordinates.map { ring in
+                        ring.map { coord in
+                            Coordinate3D(
+                                latitude: coord.latitude,
+                                longitude: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude)
+                        }
+                    }
+                    return Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
+                })
+                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true) {
+                    var result = coordinate
+                    if result.longitude > 180.0 {
+                        result.longitude -= 360.0
+                    }
+                    return result
+                }
+            }
+            else if multiPolygon.contains(centroidCoordinate) {
                 return centroidCoordinate
             }
 

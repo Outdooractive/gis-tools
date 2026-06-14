@@ -64,4 +64,19 @@ struct BooleanOverlapTests {
         #expect(polygon1.isOverlapping(with: polygon2))
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 170.0),
+            Coordinate3D(latitude: 5.0, longitude: -170.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 175.0),
+            Coordinate3D(latitude: 5.0, longitude: -175.0),
+        ]))
+        #expect(line1.isOverlapping(with: line2))
+    }
+
 }

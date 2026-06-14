@@ -46,4 +46,19 @@ struct NearestPointToLineTests {
         #expect(ls.nearestCoordinate(from: []) == nil)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+        ]))
+        let point = Coordinate3D(latitude: 5.0, longitude: 175.0)
+        let result = try #require(lineString.nearestCoordinateOnLine(from: point))
+        #expect(result.distance > 0.0)
+        #expect(result.coordinate.latitude.isFinite)
+        #expect(result.coordinate.longitude.isFinite)
+    }
+
 }

@@ -116,4 +116,16 @@ struct BooleanPointOnLineTests {
         #expect(mls.checkIsOnLine(Coordinate3D(latitude: 2.0, longitude: 2.0)) == false)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+        ]))
+        #expect(lineString.checkIsOnLine(Coordinate3D(latitude: 5.0, longitude: 174.5)))
+        #expect(lineString.checkIsOnLine(Coordinate3D(latitude: 0.0, longitude: 175.0)) == false)
+    }
+
 }

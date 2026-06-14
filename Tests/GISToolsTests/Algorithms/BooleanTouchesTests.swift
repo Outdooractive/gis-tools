@@ -480,4 +480,22 @@ struct BooleanTouchesTests {
         #expect(line1.touches(line2) == line2.touches(line1))
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        #expect(polygon.touches(line))
+    }
+
 }

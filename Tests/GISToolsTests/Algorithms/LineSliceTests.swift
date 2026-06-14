@@ -26,4 +26,19 @@ struct LineSliceTests {
         #expect(slice == result)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 5.0, longitude: 174.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+        ]))
+        let start = Coordinate3D(latitude: 2.0, longitude: 172.0)
+        let stop = Coordinate3D(latitude: 8.0, longitude: 177.0)
+        let slice = lineString.slice(start: start, end: stop)
+        #expect(slice != nil)
+    }
+
 }

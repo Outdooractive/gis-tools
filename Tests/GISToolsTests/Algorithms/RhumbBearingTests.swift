@@ -32,4 +32,16 @@ struct RhumbBearingTests {
         #expect(abs(origin.rhumbBearing(to: northEast) - 45.0) < 1e-10)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let start = Coordinate3D(latitude: 0.0, longitude: 170.0)
+        let end = Coordinate3D(latitude: 10.0, longitude: -170.0)
+        let bearing: CLLocationDegrees = start.rhumbBearing(to: end)
+        #expect(bearing.isFinite)
+        #expect(bearing >= -180.0)
+        #expect(bearing <= 180.0)
+    }
+
 }

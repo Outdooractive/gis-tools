@@ -102,4 +102,20 @@ struct ClustersTests {
         #expect(c0 != nil)
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func antimeridian() async throws {
+        let points: [Point] = [
+            Point(Coordinate3D(latitude: 0.0, longitude: 178.0)),
+            Point(Coordinate3D(latitude: 1.0, longitude: 178.5)),
+            Point(Coordinate3D(latitude: 0.5, longitude: 179.0)),
+            Point(Coordinate3D(latitude: 10.0, longitude: 179.0)),
+            Point(Coordinate3D(latitude: 11.0, longitude: 178.5)),
+        ]
+        let fc = FeatureCollection(points.map({ Feature($0) }))
+        let clustered = fc.dbscanClusters(maxDistance: 200_000.0, minPoints: 1)
+        #expect(clustered.features.isNotEmpty)
+    }
+
 }

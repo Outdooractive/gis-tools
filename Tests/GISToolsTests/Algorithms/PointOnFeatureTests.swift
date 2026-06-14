@@ -73,4 +73,56 @@ struct PointOnFeatureTests {
         #expect(result.coordinate == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
+    // MARK: - Antimeridian
+
+    @Test
+    func nearAntimeridian() async throws {
+        // Polygon near the antimeridian (170°–179°), NOT crossing it.
+        // Verifies the algorithm works correctly with large longitude values
+        // near ±180° without numerical issues.
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let result = try #require(polygon.coordinateOnFeature)
+
+        // The result should lie on the polygon's surface
+        #expect(polygon.contains(result, ignoringBoundary: true))
+    }
+
+    @Test
+    func crossingAntimeridian() async throws {
+        // Polygon that wraps across the antimeridian (170° → -170°).
+        // The algorithm normalizes longitudes to [0, 360) internally
+        // and should return a valid point on the polygon's surface.
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let result = try #require(polygon.coordinateOnFeature)
+
+        // Latitude should be within the polygon's bounds
+        #expect(result.latitude >= 0.0)
+        #expect(result.latitude <= 10.0)
+        // Longitude should be near the antimeridian (not at planar centroid 0°)
+        // indicating the normalization fix is working
+        #expect(result.longitude.isFinite)
+        #expect(abs(result.longitude) > 90.0)
+
+        // Cut the polygon at the antimeridian and verify the result
+        // is inside one of the non-wrapping parts
+        let parts = polygon.cutAtAntimeridian()
+        let isInsidePart = parts.features.contains { feature in
+            guard let partPolygon = feature.geometry as? Polygon else { return false }
+            return partPolygon.contains(result, ignoringBoundary: true)
+        }
+        #expect(isInsidePart)
+    }
+
 }
