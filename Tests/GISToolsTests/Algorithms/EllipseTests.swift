@@ -1,0 +1,50 @@
+@testable import GISTools
+import Testing
+
+struct EllipseTests {
+
+    @Test
+    func ellipse() async throws {
+        let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
+        let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
+        #expect(ellipse.isValid)
+        #expect(ellipse.outerRing?.coordinates.count == 65)
+    }
+
+    @Test
+    func circle() async throws {
+        let center = Coordinate3D(latitude: 39.984, longitude: -75.343)
+        let point = Point(center)
+        let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 5000.0))
+        let coordinates = ellipse.outerRing!.coordinates
+        #expect(coordinates.count == 65)
+        for coordinate in coordinates {
+            let distance = center.distance(from: coordinate)
+            #expect(abs(distance - 5000.0) < 1.0)
+        }
+    }
+
+    @Test
+    func rotated() async throws {
+        let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
+        let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0, angle: 45.0))
+        #expect(ellipse.isValid)
+        #expect(ellipse.outerRing?.coordinates.count == 65)
+    }
+
+    @Test
+    func invalid() async throws {
+        let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
+        #expect(point.ellipse(xSemiAxis: 0.0, ySemiAxis: 3000.0) == nil)
+        #expect(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 0.0) == nil)
+        #expect(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0, steps: 1) == nil)
+    }
+
+    @Test
+    func antimeridian() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
+        let ellipse = try #require(point.ellipse(xSemiAxis: 100_000.0, ySemiAxis: 50_000.0))
+        #expect(ellipse.isValid)
+    }
+
+}
