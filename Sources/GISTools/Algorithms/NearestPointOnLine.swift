@@ -55,11 +55,17 @@ extension LineSegment {
 extension LineSegment {
 
     /// Calculates the closest coordinate on the segment.
+    /// - Parameter from: The reference coordinate
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnSegment(
-        from other: Coordinate3D
+        from other: Coordinate3D,
+        gridSize: Double? = nil
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance) {
-        guard let foot: Coordinate3D = perpendicularFoot(from: other, clampToEnds: true) else {
-            return (coordinate: first, distance: 0.0)
+        let segment = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+
+        guard let foot: Coordinate3D = segment.perpendicularFoot(from: other, clampToEnds: true) else {
+            return (coordinate: segment.first, distance: 0.0)
         }
         let footDistance: CLLocationDistance = other.distance(from: foot)
 
@@ -71,22 +77,28 @@ extension LineSegment {
 extension LineString {
 
     /// Calculates the closest coordinate on the line.
+    /// - Parameter from: The reference coordinate
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnLine(
-        from other: Coordinate3D
+        from other: Coordinate3D,
+        gridSize: Double? = nil
     ) -> (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)? {
-        guard coordinates.count >= 2 else { return nil }
+        let lineString = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
 
-        let other = other.projected(to: projection)
+        guard lineString.coordinates.count >= 2 else { return nil }
 
-        var bestCoordinate: Coordinate3D = coordinates[0]
+        let otherProjected = other.projected(to: lineString.projection)
+
+        var bestCoordinate: Coordinate3D = lineString.coordinates[0]
         var bestDistance: CLLocationDistance = .greatestFiniteMagnitude
         var bestIndex: Int = -1
 
-        for (index, segment) in lineSegments.enumerated() {
-            guard let foot: Coordinate3D = segment.perpendicularFoot(from: other, clampToEnds: true) else {
+        for (index, segment) in lineString.lineSegments.enumerated() {
+            guard let foot: Coordinate3D = segment.perpendicularFoot(from: otherProjected, clampToEnds: true) else {
                 continue
             }
-            let footDistance: CLLocationDistance = other.distance(from: foot)
+            let footDistance: CLLocationDistance = otherProjected.distance(from: foot)
 
             if footDistance < bestDistance {
                 bestCoordinate = foot
@@ -95,13 +107,13 @@ extension LineString {
             }
         }
 
-        if let lastCoordinate = lastCoordinate {
-            let lastDistance = lastCoordinate.distance(from: other)
+        if let lastCoordinate = lineString.lastCoordinate {
+            let lastDistance = lastCoordinate.distance(from: otherProjected)
 
             if lastDistance <= bestDistance {
                 bestCoordinate = lastCoordinate
                 bestDistance = lastDistance
-                bestIndex = coordinates.count - 1
+                bestIndex = lineString.coordinates.count - 1
             }
         }
 
@@ -109,10 +121,13 @@ extension LineString {
     }
 
     /// Calculates the closest *Point* on the line.
+    /// - Parameter from: The reference point
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestPointOnLine(
-        from other: Point
+        from other: Point,
+        gridSize: Double? = nil
     ) -> (point: Point, index: Int, distance: CLLocationDistance)? {
-        guard let result = nearestCoordinateOnLine(from: other.coordinate) else { return nil }
+        guard let result = nearestCoordinateOnLine(from: other.coordinate, gridSize: gridSize) else { return nil }
         return (point: Point(result.coordinate), index: result.index, distance: result.distance)
     }
 
@@ -121,19 +136,27 @@ extension LineString {
 extension Feature {
 
     /// Calculates the closest coordinate on the line.
+    /// - Parameter from: The reference coordinate
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnLine(
-        from other: Coordinate3D
+        from other: Coordinate3D,
+        gridSize: Double? = nil
     ) -> (coordinate: Coordinate3D, index: Int, distance: CLLocationDistance)? {
-        guard let lineString = geometry as? LineString else { return nil }
-        return lineString.nearestCoordinateOnLine(from: other)
+        let feature = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        guard let lineString = feature.geometry as? LineString else { return nil }
+        return lineString.nearestCoordinateOnLine(from: other, gridSize: nil)
     }
 
     /// Calculates the closest *Point* on the line.
+    /// - Parameter from: The reference point
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestPointOnLine(
-        from other: Point
+        from other: Point,
+        gridSize: Double? = nil
     ) -> (point: Point, index: Int, distance: CLLocationDistance)? {
         guard let lineString = geometry as? LineString else { return nil }
-        return lineString.nearestPointOnLine(from: other)
+        return lineString.nearestPointOnLine(from: other, gridSize: gridSize)
     }
 
 }

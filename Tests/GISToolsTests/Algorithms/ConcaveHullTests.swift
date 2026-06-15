@@ -136,4 +136,26 @@ struct ConcaveHullTests {
         }
     }
 
+    // MARK: - gridSize
+
+    // Validates that `concaveHull(maxEdgeLength:gridSize:)` matches manual pre-snapping.
+    @Test
+    func concaveHullWithGridSize() async throws {
+        let maxEdge200km = GISTool.convertToMeters(200, .kilometers)
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 1.0001),
+            Coordinate3D(latitude: 1.0001, longitude: 1.0001),
+            Coordinate3D(latitude: 1.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.5001, longitude: 0.5001),
+        ]))
+        let gridSize = 0.001
+
+        let withParam = try #require(mp.concaveHull(maxEdgeLength: maxEdge200km, gridSize: gridSize))
+        let snapped = mp.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snapped.concaveHull(maxEdgeLength: maxEdge200km))
+        #expect(withParam.polygons.count == manual.polygons.count)
+        #expect(abs(withParam.area - manual.area) < 1.0)
+    }
+
 }

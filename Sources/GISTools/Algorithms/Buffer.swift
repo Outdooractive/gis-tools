@@ -38,26 +38,29 @@ extension GeoJson {
     /// - Parameter lineEndStyle: Controls how line ends will be drawn (default round)
     /// - Parameter unionType: How to combine buffered geometries (default individual)
     /// - Parameter steps: The number of steps for the circles (default 64)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before buffering (default `nil`).
     ///
     /// - Returns: The buffered geometry as a `MultiPolygon`, or `nil` if the buffer could not be computed.
     public func buffered(
         by distance: Double,
         lineEndStyle: BufferLineEndStyle = .round,
         unionType: BufferUnionType = .individual,
-        steps: Int = 64
+        steps: Int = 64,
+        gridSize: Double? = nil
     ) -> MultiPolygon? {
+        let geometry = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         guard distance != 0.0 else { return nil }
 
         if distance < 0.0 {
             return Self.inset(
-                self,
+                geometry,
                 by: -distance,
                 lineEndStyle: lineEndStyle,
                 unionType: unionType,
                 steps: steps)
         }
         return Self.buffer(
-            self,
+            geometry,
             by: distance,
             lineEndStyle: lineEndStyle,
             unionType: unionType,
@@ -467,26 +470,30 @@ extension LineSegment {
     /// - Parameter lineEndStyle: Controls how line ends will be drawn (default round)
     /// - Parameter unionType: Whether to combine all overlapping buffers into one Polygon (default true)
     /// - Parameter steps: The number of steps for the circles (default 64)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before buffering (default `nil`).
     ///
     /// - Returns: The buffered line segment as a `MultiPolygon`, or `nil` if the buffer could not be computed.
     public func buffered(
         by distance: Double,
         lineEndStyle: BufferLineEndStyle = .round,
         unionType: BufferUnionType = .individual,
-        steps: Int = 64
+        steps: Int = 64,
+        gridSize: Double? = nil
     ) -> MultiPolygon? {
         guard distance > 0.0 else { return nil }
 
-        let firstBearing = self.bearing
+        let snappedSegment = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+
+        let firstBearing = snappedSegment.bearing
         let leftBearing = (firstBearing - 90.0).truncatingRemainder(dividingBy: 360.0)
         let rightBearing = (firstBearing + 90.0).truncatingRemainder(dividingBy: 360.0)
 
         let corners = [
-            first.destination(distance: distance, bearing: leftBearing),
-            second.destination(distance: distance, bearing: leftBearing),
-            second.destination(distance: distance, bearing: rightBearing),
-            first.destination(distance: distance, bearing: rightBearing),
-            first.destination(distance: distance, bearing: leftBearing),
+            snappedSegment.first.destination(distance: distance, bearing: leftBearing),
+            snappedSegment.second.destination(distance: distance, bearing: leftBearing),
+            snappedSegment.second.destination(distance: distance, bearing: rightBearing),
+            snappedSegment.first.destination(distance: distance, bearing: rightBearing),
+            snappedSegment.first.destination(distance: distance, bearing: leftBearing),
         ]
 
         guard let rectPolygon = Polygon([corners]) else { return nil }
@@ -499,8 +506,8 @@ extension LineSegment {
         }
 
         if lineEndStyle == .round,
-           let firstCircle = first.circle(radius: distance, steps: steps),
-           let secondCircle = second.circle(radius: distance, steps: steps)
+           let firstCircle = snappedSegment.first.circle(radius: distance, steps: steps),
+           let secondCircle = snappedSegment.second.circle(radius: distance, steps: steps)
         {
             polygons.append(firstCircle)
             polygons.append(secondCircle)

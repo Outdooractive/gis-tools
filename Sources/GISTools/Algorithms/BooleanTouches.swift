@@ -14,18 +14,22 @@ extension GeoJson {
     /// but their interiors are disjoint.
     ///
     /// - Parameter other: The other geometry
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the geometries touch, `false` otherwise.
-    public func touches(_ other: GeoJson) -> Bool {
-        if let fc1 = self as? FeatureCollection {
-            return fc1.features.contains { $0.touches(other) }
+    public func touches(_ other: GeoJson, gridSize: Double? = nil) -> Bool {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+
+        if let fc1 = snappedSelf as? FeatureCollection {
+            return fc1.features.contains { $0.touches(snappedOther) }
         }
-        if let fc2 = other as? FeatureCollection {
-            return fc2.features.contains { self.touches($0) }
+        if let fc2 = snappedOther as? FeatureCollection {
+            return fc2.features.contains { snappedSelf.touches($0) }
         }
 
-        let geom1: GeoJson = (self as? Feature)?.geometry ?? self
-        let geom2: GeoJson = (other as? Feature)?.geometry ?? other
+        let geom1: GeoJson = (snappedSelf as? Feature)?.geometry ?? snappedSelf
+        let geom2: GeoJson = (snappedOther as? Feature)?.geometry ?? snappedOther
 
         guard let geometry1 = geom1 as? GeoJsonGeometry,
               let geometry2 = geom2 as? GeoJsonGeometry

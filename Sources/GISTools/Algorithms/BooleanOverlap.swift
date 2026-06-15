@@ -12,17 +12,21 @@ extension PointGeometry {
     ///
     /// - Parameter other: The other Point or MultiPoint
     /// - Parameter tolerance: The tolerance, in meters.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: PointGeometry,
-        tolerance: CLLocationDegrees = 0.0
+        tolerance: CLLocationDegrees = 0.0,
+        gridSize: Double? = nil
     ) -> Bool {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        guard !isEqualTo(other) else { return false }
+        guard !snappedSelf.isEqualTo(other) else { return false }
 
-        if let point = self as? Point {
+        if let point = snappedSelf as? Point {
             if let otherPoint = other as? Point {
                 return point == otherPoint
             }
@@ -30,7 +34,7 @@ extension PointGeometry {
                 return otherMultiPoint.coordinates.contains(point.coordinate)
             }
         }
-        else if let multiPoint = self as? MultiPoint {
+        else if let multiPoint = snappedSelf as? MultiPoint {
             if let otherPoint = other as? Point {
                 return multiPoint.coordinates.contains(otherPoint.coordinate)
             }
@@ -53,17 +57,21 @@ extension LineStringGeometry {
     ///
     /// - Parameter other: The other LineString or MultiLineString
     /// - Parameter tolerance: The tolerance, in meters.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the lines overlap, `false` otherwise.
     public func isOverlapping(
         with other: LineStringGeometry,
-        tolerance: CLLocationDegrees = 0.0
+        tolerance: CLLocationDegrees = 0.0,
+        gridSize: Double? = nil
     ) -> Bool {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        guard !isEqualTo(other) else { return false }
+        guard !snappedSelf.isEqualTo(other) else { return false }
 
-        let tree: RTree<LineSegment> = RTree(lineSegments)
+        let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
 
         for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
@@ -87,17 +95,21 @@ extension PolygonGeometry {
     ///
     /// - Parameter other: The other Polygon or MultiPolygon
     /// - Parameter tolerance: The tolerance, in meters.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the polygons overlap, `false` otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
-        tolerance: CLLocationDegrees = 0.0
+        tolerance: CLLocationDegrees = 0.0,
+        gridSize: Double? = nil
     ) -> Bool {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        guard !isEqualTo(other) else { return false }
+        guard !snappedSelf.isEqualTo(other) else { return false }
 
-        let tree: RTree<LineSegment> = RTree(lineSegments)
+        let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
 
         for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
@@ -121,28 +133,32 @@ extension Feature {
     ///
     /// - Parameter other: The other Feature
     /// - Parameter tolerance: The tolerance, in meters.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the features overlap, `false` otherwise.
     public func isOverlapping(
         with other: Feature,
-        tolerance: CLLocationDegrees = 0.0
+        tolerance: CLLocationDegrees = 0.0,
+        gridSize: Double? = nil
     ) -> Bool {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        if let first = self.geometry as? PointGeometry,
+        if let first = snappedSelf.geometry as? PointGeometry,
            let second = other.geometry as? PointGeometry
         {
-            return first.isOverlapping(with: second, tolerance: tolerance)
+            return first.isOverlapping(with: second, tolerance: tolerance, gridSize: nil)
         }
-        else if let first = self.geometry as? LineStringGeometry,
+        else if let first = snappedSelf.geometry as? LineStringGeometry,
                 let second = other.geometry as? LineStringGeometry
         {
-            return first.isOverlapping(with: second, tolerance: tolerance)
+            return first.isOverlapping(with: second, tolerance: tolerance, gridSize: nil)
         }
-        else if let first = self.geometry as? PolygonGeometry,
+        else if let first = snappedSelf.geometry as? PolygonGeometry,
                 let second = other.geometry as? PolygonGeometry
         {
-            return first.isOverlapping(with: second, tolerance: tolerance)
+            return first.isOverlapping(with: second, tolerance: tolerance, gridSize: nil)
         }
 
         return false

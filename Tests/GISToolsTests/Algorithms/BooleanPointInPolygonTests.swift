@@ -219,6 +219,70 @@ struct BooleanPointInPolygonTests {
         #expect(fc.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `contains(gridSize:)` on Polygon matches manual pre-snapping.
+    @Test
+    func polygonContainsWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let coord = Coordinate3D(latitude: 5.00005, longitude: 5.00005)
+        let gridSize = 0.001
+
+        let withParam = polygon.contains(coord, gridSize: gridSize)
+        let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
+        let snappedCoord = Point(coord).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = snappedPolygon.contains(snappedCoord)
+        #expect(withParam == manual)
+    }
+
+    // Validates that `contains(gridSize:)` on Feature matches manual pre-snapping.
+    @Test
+    func featureContainsWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let feature = Feature(polygon)
+        let coord = Coordinate3D(latitude: 5.00005, longitude: 5.00005)
+        let gridSize = 0.001
+
+        let withParam = feature.contains(coord, gridSize: gridSize)
+        let snappedFeature = feature.snappedToGrid(tolerance: gridSize)
+        let snappedCoord = Point(coord).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = snappedFeature.contains(snappedCoord)
+        #expect(withParam == manual)
+    }
+
+    // Validates that `contains(gridSize:)` on FeatureCollection matches manual pre-snapping.
+    @Test
+    func featureCollectionContainsWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let fc = FeatureCollection([Feature(polygon)])
+        let coord = Coordinate3D(latitude: 5.00005, longitude: 5.00005)
+        let gridSize = 0.001
+
+        let withParam = fc.contains(coord, gridSize: gridSize)
+        let snappedFc = fc.snappedToGrid(tolerance: gridSize)
+        let snappedCoord = Point(coord).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = snappedFc.contains(snappedCoord)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

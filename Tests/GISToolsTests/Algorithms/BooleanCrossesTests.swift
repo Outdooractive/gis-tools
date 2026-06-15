@@ -313,6 +313,28 @@ struct BooleanCrossesTests {
         #expect(line1.crosses(line2) == line2.crosses(line1))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `crosses(_:gridSize:)` matches manual pre-snapping.
+    @Test
+    func crossesWithGridSize() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 1.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 4.0001, longitude: 2.0001),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 2.0001, longitude: 1.0001),
+            Coordinate3D(latitude: 2.0001, longitude: 4.0001),
+        ]))
+        let gridSize = 0.001
+
+        let withParam = line1.crosses(line2, gridSize: gridSize)
+        let snapped1 = line1.snappedToGrid(tolerance: gridSize)
+        let snapped2 = line2.snappedToGrid(tolerance: gridSize)
+        let manual = snapped1.crosses(snapped2)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

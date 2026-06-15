@@ -36,6 +36,24 @@ struct SimplifyTests {
         #expect(abs(startDate.timeIntervalSinceNow) < 0.5)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `simplified(tolerance:highQuality:gridSize:)` matches manual pre-snapping.
+    @Test
+    func simplifyWithGridSize() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 5.0001, longitude: 5.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let gridSize = 0.001
+
+        let withParam = lineString.simplified(tolerance: 1.0, gridSize: gridSize)
+        let snapped = lineString.snappedToGrid(tolerance: gridSize)
+        let manual = snapped.simplified(tolerance: 1.0)
+        #expect(withParam.coordinates == manual.coordinates)
+    }
+
     // MARK: - Antimeridian
 
     @Test

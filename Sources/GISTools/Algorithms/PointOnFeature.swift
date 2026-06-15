@@ -20,10 +20,26 @@ extension GeoJson {
         coordinateOnFeature(failOnMiss: false)
     }
 
-    private func coordinateOnFeature(failOnMiss: Bool = false) -> Coordinate3D? {
-        guard let centroidCoordinate = centroid?.coordinate else { return nil }
+    /// Returns a *Point* guaranteed to be on the surface of the feature.
+    /// - Parameter gridSize: A grid size to snap coordinates to before computing the point on feature.
+    public func pointOnFeature(gridSize: Double? = nil) -> Point? {
+        if let coordinate = coordinateOnFeature(failOnMiss: false, gridSize: gridSize) {
+            return Point(coordinate)
+        }
+        return nil
+    }
 
-        switch self {
+    /// Returns a *Coordinate3D* guaranteed to be on the surface of the feature.
+    /// - Parameter gridSize: A grid size to snap coordinates to before computing the coordinate on feature.
+    public func coordinateOnFeature(gridSize: Double? = nil) -> Coordinate3D? {
+        coordinateOnFeature(failOnMiss: false, gridSize: gridSize)
+    }
+
+    private func coordinateOnFeature(failOnMiss: Bool = false, gridSize: Double? = nil) -> Coordinate3D? {
+        let geoJson = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        guard let centroidCoordinate = geoJson.centroid?.coordinate else { return nil }
+
+        switch geoJson {
         case let point as Point:
             return point.coordinate
 
@@ -60,7 +76,7 @@ extension GeoJson {
                     }
                 }
                 let normalized = Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
-                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true) {
+                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
                     var result = coordinate
                     if result.longitude > 180.0 {
                         result.longitude -= 360.0
@@ -86,7 +102,7 @@ extension GeoJson {
                     }
                     return Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
                 })
-                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true) {
+                if let coordinate = normalized.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
                     var result = coordinate
                     if result.longitude > 180.0 {
                         result.longitude -= 360.0
@@ -100,17 +116,17 @@ extension GeoJson {
 
         case let geometryCollection as GeometryCollection:
             for geometry in geometryCollection.geometries {
-                if let coordinate = geometry.coordinateOnFeature(failOnMiss: true) {
+                if let coordinate = geometry.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
                     return coordinate
                 }
             }
 
         case let feature as Feature:
-            return feature.geometry.coordinateOnFeature()
+            return feature.geometry.coordinateOnFeature(gridSize: nil)
 
         case let featureCollection as FeatureCollection:
             for feature in featureCollection.features {
-                if let coordinate = feature.geometry.coordinateOnFeature(failOnMiss: true) {
+                if let coordinate = feature.geometry.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
                     return coordinate
                 }
             }

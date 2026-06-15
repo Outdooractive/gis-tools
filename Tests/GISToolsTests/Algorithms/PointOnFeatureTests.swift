@@ -73,6 +73,26 @@ struct PointOnFeatureTests {
         #expect(result.coordinate == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `coordinateOnFeature(gridSize:)` matches manual pre-snapping.
+    @Test
+    func pointOnFeatureWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = try #require(polygon.coordinateOnFeature(gridSize: gridSize))
+        let snapped = polygon.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snapped.coordinateOnFeature)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

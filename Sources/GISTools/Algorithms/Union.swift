@@ -8,10 +8,16 @@ extension Polygon {
     /// Returns the union of the receiver with another polygon geometry.
     ///
     /// - Parameter other: The other polygon geometry
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
-    public func union(with other: PolygonGeometry) -> MultiPolygon? {
-        var all = self.polygons
-        all.append(contentsOf: other.polygons)
+    public func union(with other: PolygonGeometry, gridSize: Double? = nil) -> MultiPolygon? {
+        let all: [Polygon]
+        if let gridSize {
+            all = [self.snappedToGrid(tolerance: gridSize)]
+                + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+        } else {
+            all = self.polygons + other.polygons
+        }
         return Union.unionPolygons(all)
     }
 
@@ -22,15 +28,23 @@ extension MultiPolygon {
     /// Returns the union of the receiver with another polygon geometry.
     ///
     /// - Parameter other: The other polygon geometry
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
-    public func union(with other: PolygonGeometry) -> MultiPolygon? {
-        var all = self.polygons
-        all.append(contentsOf: other.polygons)
+    public func union(with other: PolygonGeometry, gridSize: Double? = nil) -> MultiPolygon? {
+        let all: [Polygon]
+        if let gridSize {
+            all = self.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+                + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+        } else {
+            all = self.polygons + other.polygons
+        }
         return Union.unionPolygons(all)
     }
 
-    public mutating func formUnion(with other: PolygonGeometry) {
-        guard let merged = union(with: other) else { return }
+    /// Forms the union of the receiver with another polygon geometry in place.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    public mutating func formUnion(with other: PolygonGeometry, gridSize: Double? = nil) {
+        guard let merged = union(with: other, gridSize: gridSize) else { return }
         self = merged
     }
 
@@ -40,9 +54,11 @@ extension FeatureCollection {
 
     /// Returns the union of all polygon features in the collection.
     ///
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `FeatureCollection` containing the unioned polygon, or `nil` if no polygons exist.
-    public func union() -> FeatureCollection? {
-        let geometries = features
+    public func union(gridSize: Double? = nil) -> FeatureCollection? {
+        let snappedFC = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let geometries = snappedFC.features
             .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }
             .flatMap { $0 }
         guard let result = Union.unionPolygons(geometries) else { return nil }

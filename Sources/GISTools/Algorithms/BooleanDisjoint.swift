@@ -10,33 +10,37 @@ extension GeoJson {
     /// Compares two geometries and returns true if they are disjoint.
     ///
     /// - Parameter other: The other geometry
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the geometries don't overlap, `false` otherwise.
-    public func isDisjoint(with other: GeoJson) -> Bool {
-        if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
-           !intersects(otherBoundingBox)
+    public func isDisjoint(with other: GeoJson, gridSize: Double? = nil) -> Bool {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+
+        if let otherBoundingBox = snappedOther.boundingBox ?? snappedOther.calculateBoundingBox(),
+           !snappedSelf.intersects(otherBoundingBox)
         {
             return true
         }
 
-        return switch self {
+        return switch snappedSelf {
         case let point as PointGeometry:
-            point.isPointDisjoint(with: other)
+            point.isPointDisjoint(with: snappedOther)
 
         case let lineString as LineStringGeometry:
-            lineString.isLineStringDisjoint(with: other)
+            lineString.isLineStringDisjoint(with: snappedOther)
 
         case let polygon as PolygonGeometry:
-            polygon.isPolygonDisjoint(with: other)
+            polygon.isPolygonDisjoint(with: snappedOther)
 
         case let geometryCollection as GeometryCollection:
-            geometryCollection.geometries.allSatisfy { $0.isDisjoint(with: other) }
+            geometryCollection.geometries.allSatisfy { $0.isDisjoint(with: snappedOther) }
 
         case let feature as Feature:
-            feature.geometry.isDisjoint(with: other)
+            feature.geometry.isDisjoint(with: snappedOther)
 
         case let featureCollection as FeatureCollection:
-            featureCollection.features.allSatisfy { $0.isDisjoint(with: other) }
+            featureCollection.features.allSatisfy { $0.isDisjoint(with: snappedOther) }
 
         default:
             true
@@ -69,7 +73,7 @@ extension PointGeometry {
 
         case let otherPolygon as PolygonGeometry:
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoringBoundary: false) {
+                if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
                     return false
                 }
             }
@@ -129,7 +133,7 @@ extension LineStringGeometry {
         case let otherPolygon as PolygonGeometry:
             // Any point inside the polygon
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoringBoundary: false) {
+                if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
                     return false
                 }
             }
@@ -189,7 +193,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if otherPolygon.contains(coordinate, ignoringBoundary: false) {
+                    if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
                         return false
                     }
                 }
@@ -201,7 +205,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if self.contains(coordinate, ignoringBoundary: false) {
+                    if self.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
                         return false
                     }
                 }

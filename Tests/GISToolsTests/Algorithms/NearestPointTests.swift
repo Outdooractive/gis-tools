@@ -53,6 +53,44 @@ struct NearestPointTests {
         #expect(ls.nearestCoordinate(from: Coordinate3D(latitude: 0.0, longitude: 0.0)) == nil)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `nearestCoordinate(from:gridSize:)` matches manual pre-snapping.
+    @Test
+    func nearestPointWithGridSize() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let ref = Coordinate3D(latitude: 0.0001, longitude: 10.0001)
+        let gridSize = 0.001
+
+        let withParam = try #require(ls.nearestCoordinate(from: ref, gridSize: gridSize))
+        let snappedLine = ls.snappedToGrid(tolerance: gridSize)
+        let snappedRef = Point(ref).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = try #require(snappedLine.nearestCoordinate(from: snappedRef))
+        #expect(withParam.coordinate == manual.coordinate)
+        #expect(withParam.distance == manual.distance)
+    }
+
+    // Validates that `nearestPoint(from:gridSize:)` on Feature matches manual pre-snapping.
+    @Test
+    func nearestPointFeatureWithGridSize() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let feature = Feature(ls)
+        let ref = Point(Coordinate3D(latitude: 0.0001, longitude: 10.0001))
+        let gridSize = 0.001
+
+        let withParam = try #require(feature.nearestPoint(from: ref, gridSize: gridSize))
+        let snappedFeature = feature.snappedToGrid(tolerance: gridSize)
+        let snappedRef = ref.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snappedFeature.nearestPoint(from: snappedRef))
+        #expect(withParam.point.coordinate == manual.point.coordinate)
+    }
+
     // MARK: - Antimeridian
 
     @Test

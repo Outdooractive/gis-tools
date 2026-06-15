@@ -13,14 +13,17 @@ extension Polygon {
     /// Uses the polylabel algorithm with a priority-queue grid search.
     ///
     /// - Parameter precision: Precision in degrees (default 1.0).
+    /// - Parameter gridSize: An optional grid size for snapping inputs
     /// - Returns: The pole point, or `nil` if no outer ring exists.
-    public func poleOfInaccessibility(precision: Double = 1.0) -> Point? {
-        guard let outerRing else { return nil }
+    public func poleOfInaccessibility(precision: Double = 1.0, gridSize: Double? = nil) -> Point? {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
-        if crossesAntimeridian {
+        guard let outerRing = snappedSelf.outerRing else { return nil }
+
+        if snappedSelf.crossesAntimeridian {
             // Shift negative longitudes to [0, 360) so the polygon is
             // contiguous and the grid-search algorithm works correctly.
-            let normalizedRings = coordinates.map { ring in
+            let normalizedRings = snappedSelf.coordinates.map { ring in
                 ring.map { coord in
                     Coordinate3D(
                         latitude: coord.latitude,
@@ -28,7 +31,7 @@ extension Polygon {
                 }
             }
             let normalized = Polygon(unchecked: normalizedRings, calculateBoundingBox: false)
-            if let pole = normalized.poleOfInaccessibility(precision: precision) {
+            if let pole = normalized.poleOfInaccessibility(precision: precision, gridSize: nil) {
                 var result = pole
                 if result.coordinate.longitude > 180.0 {
                     result = Point(Coordinate3D(
@@ -67,13 +70,13 @@ extension Polygon {
         }
 
         var queue: [PQCell] = []
-        var bestCell = centroidCell()
+        var bestCell = snappedSelf.centroidCell()
 
         let bboxCell = PQCell(
             x: minX + width / 2,
             y: minY + height / 2,
             h: 0,
-            polygon: self)
+            polygon: snappedSelf)
         if bboxCell.d > bestCell.d {
             bestCell = bboxCell
         }
@@ -88,7 +91,7 @@ extension Polygon {
                     x: x + h,
                     y: y + h,
                     h: h,
-                    polygon: self)
+                    polygon: snappedSelf)
                 if cell.max > bestCell.d + precision {
                     insertSorted(&queue, cell)
                 }
@@ -111,10 +114,10 @@ extension Polygon {
             }
 
             h = cell.h / 2
-            let c1 = PQCell(x: cell.x - h, y: cell.y - h, h: h, polygon: self)
-            let c2 = PQCell(x: cell.x + h, y: cell.y - h, h: h, polygon: self)
-            let c3 = PQCell(x: cell.x - h, y: cell.y + h, h: h, polygon: self)
-            let c4 = PQCell(x: cell.x + h, y: cell.y + h, h: h, polygon: self)
+            let c1 = PQCell(x: cell.x - h, y: cell.y - h, h: h, polygon: snappedSelf)
+            let c2 = PQCell(x: cell.x + h, y: cell.y - h, h: h, polygon: snappedSelf)
+            let c3 = PQCell(x: cell.x - h, y: cell.y + h, h: h, polygon: snappedSelf)
+            let c4 = PQCell(x: cell.x + h, y: cell.y + h, h: h, polygon: snappedSelf)
 
             for c in [c1, c2, c3, c4] {
                 if c.d > bestCell.d {

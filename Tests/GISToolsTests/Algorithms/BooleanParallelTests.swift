@@ -121,6 +121,26 @@ struct BooleanParallelTests {
         #expect(s1.isParallel(to: s2, undirectedEdge: true))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `isParallel(to:tolerance:undirectedEdge:gridSize:)` matches manual pre-snapping.
+    @Test
+    func segmentParallelWithGridSize() async throws {
+        let s1 = LineSegment(
+            first: Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            second: Coordinate3D(latitude: 10.0001, longitude: 0.0001))
+        let s2 = LineSegment(
+            first: Coordinate3D(latitude: 5.0001, longitude: 0.0001),
+            second: Coordinate3D(latitude: 15.0001, longitude: 0.0001))
+        let gridSize = 0.001
+
+        let withParam = s1.isParallel(to: s2, tolerance: 0.1, gridSize: gridSize)
+        let snapped1 = s1.snappedToGrid(tolerance: gridSize)
+        let snapped2 = s2.snappedToGrid(tolerance: gridSize)
+        let manual = snapped1.isParallel(to: snapped2, tolerance: 0.1)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Anti-meridian tests
 
     @Test func segment_antiMeridian_parallel() {

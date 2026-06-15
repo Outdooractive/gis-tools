@@ -220,4 +220,144 @@ struct SnapToGridTests {
         #expect(snapped.coordinates[1].longitude == -174.0)
     }
 
+    // MARK: - Coordinate3D
+
+    @Test
+    func coordinate3DSnappedToGrid() async throws {
+        let coord = Coordinate3D(latitude: 1.3, longitude: 2.7)
+        let snapped = coord.snappedToGrid(tolerance: 1.0)
+
+        #expect(snapped.latitude == 1.0)
+        #expect(snapped.longitude == 3.0)
+    }
+
+    @Test
+    func coordinate3DSnapToGridMutating() async throws {
+        var coord = Coordinate3D(latitude: 1.3, longitude: 2.7)
+        coord.snapToGrid(tolerance: 1.0)
+
+        #expect(coord.latitude == 1.0)
+        #expect(coord.longitude == 3.0)
+    }
+
+    @Test
+    func coordinate3DSnapToGridNoChange() async throws {
+        let coord = Coordinate3D(latitude: 2.0, longitude: 4.0)
+        let snapped = coord.snappedToGrid(tolerance: 2.0)
+
+        #expect(snapped.latitude == 2.0)
+        #expect(snapped.longitude == 4.0)
+    }
+
+    @Test
+    func coordinate3DSnapToGridPreservesAltitude() async throws {
+        let coord = Coordinate3D(latitude: 1.3, longitude: 2.7, altitude: 42.0)
+        let snapped = coord.snappedToGrid(tolerance: 1.0)
+
+        #expect(snapped.altitude == 42.0)
+    }
+
+    // MARK: - Ring
+
+    @Test
+    func ringSnappedToGrid() async throws {
+        let ring = Ring(unchecked: [
+            Coordinate3D(latitude: 0.1, longitude: 0.2),
+            Coordinate3D(latitude: 1.7, longitude: 0.3),
+            Coordinate3D(latitude: 1.8, longitude: 1.9),
+            Coordinate3D(latitude: 0.2, longitude: 1.8),
+            Coordinate3D(latitude: 0.1, longitude: 0.2),
+        ])
+        let snapped = ring.snappedToGrid(tolerance: 1.0)
+
+        let coords = snapped.coordinates
+        #expect(coords[0] == Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(coords[1] == Coordinate3D(latitude: 2.0, longitude: 0.0))
+        #expect(coords[2] == Coordinate3D(latitude: 2.0, longitude: 2.0))
+        #expect(coords[3] == Coordinate3D(latitude: 0.0, longitude: 2.0))
+        #expect(coords[4] == Coordinate3D(latitude: 0.0, longitude: 0.0))
+    }
+
+    @Test
+    func ringSnapToGridMutating() async throws {
+        var ring = Ring(unchecked: [
+            Coordinate3D(latitude: 0.1, longitude: 0.2),
+            Coordinate3D(latitude: 1.7, longitude: 0.3),
+            Coordinate3D(latitude: 0.2, longitude: 1.8),
+            Coordinate3D(latitude: 0.1, longitude: 0.2),
+        ])
+        ring.snapToGrid(tolerance: 1.0)
+
+        #expect(ring.coordinates[0] == Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(ring.coordinates[1] == Coordinate3D(latitude: 2.0, longitude: 0.0))
+        #expect(ring.coordinates[2] == Coordinate3D(latitude: 0.0, longitude: 2.0))
+    }
+
+    // MARK: - LineSegment
+
+    @Test
+    func lineSegmentSnappedToGrid() async throws {
+        let segment = LineSegment(
+            first: Coordinate3D(latitude: 0.3, longitude: 0.2),
+            second: Coordinate3D(latitude: 1.7, longitude: 1.9))
+        let snapped = segment.snappedToGrid(tolerance: 1.0)
+
+        #expect(snapped.first.latitude == 0.0)
+        #expect(snapped.first.longitude == 0.0)
+        #expect(snapped.second.latitude == 2.0)
+        #expect(snapped.second.longitude == 2.0)
+    }
+
+    @Test
+    func lineSegmentSnapToGridMutating() async throws {
+        var segment = LineSegment(
+            first: Coordinate3D(latitude: 0.3, longitude: 0.2),
+            second: Coordinate3D(latitude: 1.7, longitude: 1.9))
+        segment.snapToGrid(tolerance: 1.0)
+
+        #expect(segment.first.latitude == 0.0)
+        #expect(segment.first.longitude == 0.0)
+        #expect(segment.second.latitude == 2.0)
+        #expect(segment.second.longitude == 2.0)
+    }
+
+    @Test
+    func lineSegmentSnapPreservesIndex() async throws {
+        let segment = LineSegment(
+            first: Coordinate3D(latitude: 0.3, longitude: 0.2),
+            second: Coordinate3D(latitude: 1.7, longitude: 1.9),
+            index: 3)
+        let snapped = segment.snappedToGrid(tolerance: 1.0)
+
+        #expect(snapped.index == 3)
+    }
+
+    // MARK: - BoundingBox
+
+    @Test
+    func boundingBoxSnappedToGrid() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 1.3, longitude: 2.7),
+            northEast: Coordinate3D(latitude: 5.6, longitude: 8.4))
+        let snapped = bbox.snappedToGrid(tolerance: 1.0)
+
+        #expect(snapped.southWest.latitude == 1.0)
+        #expect(snapped.southWest.longitude == 3.0)
+        #expect(snapped.northEast.latitude == 6.0)
+        #expect(snapped.northEast.longitude == 8.0)
+    }
+
+    @Test
+    func boundingBoxSnapToGridMutating() async throws {
+        var bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 1.3, longitude: 2.7),
+            northEast: Coordinate3D(latitude: 5.6, longitude: 8.4))
+        bbox.snapToGrid(tolerance: 1.0)
+
+        #expect(bbox.southWest.latitude == 1.0)
+        #expect(bbox.southWest.longitude == 3.0)
+        #expect(bbox.northEast.latitude == 6.0)
+        #expect(bbox.northEast.longitude == 8.0)
+    }
+
 }

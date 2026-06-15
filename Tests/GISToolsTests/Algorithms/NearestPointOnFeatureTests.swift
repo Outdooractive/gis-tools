@@ -81,6 +81,29 @@ struct NearestPointOnFeatureTests {
         #expect(result.coordinate == Coordinate3D(latitude: 10.0, longitude: 0.0))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `nearestCoordinateOnFeature(from:gridSize:)` matches manual pre-snapping.
+    @Test
+    func nearestOnFeatureWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let ref = Coordinate3D(latitude: 5.00005, longitude: 5.00005)
+        let gridSize = 0.001
+
+        let withParam = try #require(polygon.nearestCoordinateOnFeature(from: ref, gridSize: gridSize))
+        let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
+        let snappedRef = Point(ref).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = try #require(snappedPolygon.nearestCoordinateOnFeature(from: snappedRef))
+        #expect(withParam.coordinate == manual.coordinate)
+        #expect(abs(withParam.distance - manual.distance) < 1e-10)
+    }
+
     // MARK: - Antimeridian
 
     @Test

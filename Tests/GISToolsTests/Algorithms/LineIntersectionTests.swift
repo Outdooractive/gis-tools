@@ -336,6 +336,26 @@ struct LineIntersectionTests {
         #expect(!intersections.isEmpty)
     }
 
+    // Validates that `intersection(_:gridSize:)` on LineSegment matches manual pre-snapping.
+    @Test
+    func intersectionWithGridSize() async throws {
+        let s1 = LineSegment(first: Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+                              second: Coordinate3D(latitude: 10.0001, longitude: 10.0001))
+        let s2 = LineSegment(first: Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+                              second: Coordinate3D(latitude: 10.0001, longitude: 0.0001))
+        let gridSize = 0.001
+
+        let withParam = try #require(s1.intersection(s2, gridSize: gridSize))
+        let snap: (Coordinate3D) -> Coordinate3D = {
+            Point($0).snappedToGrid(tolerance: gridSize).coordinate
+        }
+        let snapped1 = LineSegment(first: snap(s1.first), second: snap(s1.second))
+        let snapped2 = LineSegment(first: snap(s2.first), second: snap(s2.second))
+        let manual = try #require(snapped1.intersection(snapped2))
+        #expect(abs(withParam.latitude - manual.latitude) < 1e-10)
+        #expect(abs(withParam.longitude - manual.longitude) < 1e-10)
+    }
+
     // Tests that the boolean intersects method returns true for overlapping collinear segments.
     @Test
     func intersectsCollinearOverlap() async throws {
