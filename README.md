@@ -902,6 +902,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | buffer                      | `let buffered = lineString.buffered(by: 1000.meters)`                                                                                 |     | [Source][61] / [Tests][158]  |
+| center-median               | `let median = featureCollection.centerMedian()`                                                                                       |     | [Source][62] / [Tests][137]  |
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
