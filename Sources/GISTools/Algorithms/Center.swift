@@ -99,6 +99,136 @@ extension FeatureCollection {
 
 }
 
+// Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-center-median
+
+extension FeatureCollection {
+
+    /// Takes a ``FeatureCollection`` and calculates the median center using the
+    /// Weiszfeld algorithm. The median center is the point that requires the
+    /// least total travel distance from all points in the dataset.
+    ///
+    /// - Parameters:
+    ///   - weightAttribute: The property name used to weight the center.
+    ///   - tolerance: The convergence threshold in meters (default: `0.001`).
+    ///   - counter: Maximum number of iterations (default: `10`).
+    ///
+    /// - Returns: The median center, or `nil` if the collection is empty.
+    public func centerMedian(
+        weightAttribute: String? = nil,
+        tolerance: Double = 0.001,
+        counter: Int = 10
+    ) -> Point? {
+        guard let meanCenter = centerMean(weightAttribute: weightAttribute) else {
+            return nil
+        }
+
+        var centroids: [(coordinate: Coordinate3D, weight: Double)] = []
+        for feature in features {
+            guard let centroid = feature.centroid else { continue }
+            var weight: Double = 1.0
+            if let weightAttribute {
+                weight = feature.property(for: weightAttribute) ?? 1.0
+            }
+            if weight > 0 {
+                centroids.append((centroid.coordinate, weight))
+            }
+        }
+
+        guard centroids.isNotEmpty else { return nil }
+
+        let minLon = centroids.map(\.coordinate.longitude).min() ?? 0.0
+        let maxLon = centroids.map(\.coordinate.longitude).max() ?? 0.0
+        let spansAntimeridian = (maxLon - minLon) > 180.0
+
+        if spansAntimeridian {
+            centroids = centroids.map { (coordinate, weight) in
+                let adjustedLon = coordinate.longitude < 0
+                    ? coordinate.longitude + 360.0
+                    : coordinate.longitude
+                let adjusted = Coordinate3D(
+                    x: adjustedLon,
+                    y: coordinate.latitude,
+                    projection: projection)
+                return (adjusted, weight)
+            }
+        }
+
+        let initialLon = meanCenter.coordinate.longitude
+        let initialLat = meanCenter.coordinate.latitude
+        let initialCandidate = Coordinate3D(
+            x: spansAntimeridian && initialLon < 0 ? initialLon + 360.0 : initialLon,
+            y: initialLat,
+            projection: projection)
+
+        guard var result = findMedian(
+            candidate: initialCandidate,
+            previousCandidate: Coordinate3D(
+                x: 0.0,
+                y: 0.0,
+                projection: projection),
+            centroids: centroids,
+            tolerance: tolerance,
+            counter: counter) else { return nil }
+
+        if spansAntimeridian && result.coordinate.longitude > 180.0 {
+            result = Point(Coordinate3D(
+                x: result.coordinate.longitude - 360.0,
+                y: result.coordinate.latitude,
+                projection: projection))
+        }
+
+        return result
+    }
+
+    private func findMedian(
+        candidate: Coordinate3D,
+        previousCandidate: Coordinate3D,
+        centroids: [(coordinate: Coordinate3D, weight: Double)],
+        tolerance: Double,
+        counter: Int
+    ) -> Point? {
+        var sumX: Double = 0.0
+        var sumY: Double = 0.0
+        var sumK: Double = 0.0
+
+        for (coordinate, weight) in centroids {
+            var distance = coordinate.distance(from: candidate)
+            if distance == 0 {
+                distance = 1.0
+            }
+            let k = weight / distance
+            sumX += coordinate.longitude * k
+            sumY += coordinate.latitude * k
+            sumK += k
+        }
+
+        guard sumK > 0.0 else { return nil }
+
+        let newCandidate = Coordinate3D(
+            x: sumX / sumK,
+            y: sumY / sumK,
+            projection: projection)
+
+        if counter == 0 || centroids.count == 1 {
+            return Point(newCandidate)
+        }
+
+        let deltaX = abs(newCandidate.longitude - previousCandidate.longitude)
+        let deltaY = abs(newCandidate.latitude - previousCandidate.latitude)
+        if deltaX < tolerance && deltaY < tolerance {
+            return Point(newCandidate)
+        }
+
+        return findMedian(
+            candidate: newCandidate,
+            previousCandidate: candidate,
+            centroids: centroids,
+            tolerance: tolerance,
+            counter: counter - 1)
+    }
+
+}
+
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-center-of-mass
 
 extension GeoJson {

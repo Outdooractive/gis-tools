@@ -326,4 +326,121 @@ struct CenterTests {
         #expect(abs(center.coordinate.longitude) > 90.0)
     }
 
+    // MARK: - centerMedian
+
+    // Validates that centerMedian handles points that cross the antimeridian.
+    @Test
+    func centerMedianAntimeridian() async throws {
+        let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 170.0))
+        let p2 = Point(Coordinate3D(latitude: 0.0, longitude: -170.0))
+        let fc = FeatureCollection([Feature(p1), Feature(p2)])
+        let median = try #require(fc.centerMedian())
+
+        // Median should be near the antimeridian (lon ≈ ±180)
+        #expect(abs(median.coordinate.latitude) < 0.01)
+        #expect(abs(median.coordinate.longitude) > 170.0)
+    }
+
+    // Validates that centerMedian handles weighted points crossing the antimeridian.
+    @Test
+    func centerMedianAntimeridianWeighted() async throws {
+        let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 170.0))
+        let p2 = Point(Coordinate3D(latitude: 0.0, longitude: -160.0))
+        let p3 = Point(Coordinate3D(latitude: 0.0, longitude: -175.0))
+        var f1 = Feature(p1)
+        f1.setProperty(10.0, for: "w")
+        let f2 = Feature(p2)
+        let f3 = Feature(p3)
+        let fc = FeatureCollection([f1, f2, f3])
+        let median = try #require(fc.centerMedian(weightAttribute: "w"))
+
+        // p1 at lon=170 with weight 10 should pull median toward the east side
+        #expect(abs(median.coordinate.latitude) < 0.01)
+        #expect(median.coordinate.longitude > 170.0 || median.coordinate.longitude < -170.0)
+    }
+
+    // Validates that the algorithm converges to a valid Point for symmetric data.
+    @Test
+    func centerMedianUnweighted() async throws {
+        let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let p2 = Point(Coordinate3D(latitude: 10.0, longitude: 10.0))
+        let fc = FeatureCollection([Feature(p1), Feature(p2)])
+
+        let median = try #require(fc.centerMedian())
+        // Should converge to a point between the two inputs
+        #expect(median.coordinate.latitude > 0.0)
+        #expect(median.coordinate.latitude < 10.0)
+        #expect(median.coordinate.longitude > 0.0)
+        #expect(median.coordinate.longitude < 10.0)
+    }
+
+    // Validates that weighted median center shifts toward higher-weighted points.
+    @Test
+    func centerMedianWeighted() async throws {
+        let p1 = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let p2 = Point(Coordinate3D(latitude: 10.0, longitude: 10.0))
+        var f1 = Feature(p1)
+        f1.setProperty(1.0, for: "w")
+        var f2 = Feature(p2)
+        f2.setProperty(9.0, for: "w")
+
+        let fc = FeatureCollection([f1, f2])
+        let median = try #require(fc.centerMedian(weightAttribute: "w"))
+
+        // Heavily weighted toward (10, 10)
+        #expect(abs(median.coordinate.latitude - 10.0) < 0.5)
+        #expect(abs(median.coordinate.longitude - 10.0) < 0.5)
+    }
+
+    // Validates that the median center is less sensitive to outliers than the mean center.
+    @Test
+    func centerMedianLessSensitiveToOutliers() async throws {
+        let points = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 8.0, longitude: 5.0),
+        ]
+        let fc = FeatureCollection(points.map { Feature(Point($0)) })
+        let median = try #require(fc.centerMedian())
+        let mean = try #require(fc.centerMean())
+
+        // Median should be closer to the cluster than the mean
+        let clusterCenter = Coordinate3D(latitude: 1.0 / 3.0, longitude: 1.0 / 3.0)
+        let medianToCluster = median.coordinate.distance(from: clusterCenter)
+        let meanToCluster = mean.coordinate.distance(from: clusterCenter)
+        #expect(medianToCluster < meanToCluster)
+    }
+
+    // Validates that the median center of a single point is the point itself.
+    @Test
+    func centerMedianSinglePoint() async throws {
+        let p = Point(Coordinate3D(latitude: 45.0, longitude: 8.0))
+        let fc = FeatureCollection([Feature(p)])
+        let median = try #require(fc.centerMedian())
+        #expect(median.coordinate.latitude == 45.0)
+        #expect(median.coordinate.longitude == 8.0)
+    }
+
+    // Validates that centerMedian returns nil for an empty feature collection.
+    @Test
+    func centerMedianEmpty() async throws {
+        let fc = FeatureCollection()
+        #expect(fc.centerMedian() == nil)
+    }
+
+    // Validates that centerMedian works correctly with LineString features.
+    @Test
+    func centerMedianLineString() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ]))
+        let fc = FeatureCollection([Feature(ls)])
+        let median = try #require(fc.centerMedian())
+        // Centroid of this LineString is (5, 0)
+        #expect(abs(median.coordinate.latitude - 5.0) < 0.001)
+        #expect(abs(median.coordinate.longitude - 0.0) < 0.001)
+    }
+
 }
