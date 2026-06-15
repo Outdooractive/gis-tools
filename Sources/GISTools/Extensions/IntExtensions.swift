@@ -53,6 +53,31 @@ extension Int {
         Measurement(value: Double(self), unit: .nauticalMiles)
     }
 
+    /// The value as a measurement in megameters.
+    public var megameters: Measurement<UnitLength> {
+        Measurement(value: Double(self), unit: .megameters)
+    }
+
+    /// The value as a measurement in hectometers.
+    public var hectometers: Measurement<UnitLength> {
+        Measurement(value: Double(self), unit: .hectometers)
+    }
+
+    /// The value as a measurement in decameters.
+    public var decameters: Measurement<UnitLength> {
+        Measurement(value: Double(self), unit: .decameters)
+    }
+
+    /// The value as a measurement in decimeters.
+    public var decimeters: Measurement<UnitLength> {
+        Measurement(value: Double(self), unit: .decimeters)
+    }
+
+    /// The value as a measurement in scandinavian miles.
+    public var scandinavianMiles: Measurement<UnitLength> {
+        Measurement(value: Double(self), unit: .scandinavianMiles)
+    }
+
 }
 
 #endif
@@ -106,6 +131,31 @@ extension Int {
     /// Convert nautical miles to meters.
     public var nauticalMiles: Double {
         Double(self) * 1852.0
+    }
+
+    /// Convert megameters to meters.
+    public var megameters: Double {
+        Double(self) * 1_000_000.0
+    }
+
+    /// Convert hectometers to meters.
+    public var hectometers: Double {
+        Double(self) * 100.0
+    }
+
+    /// Convert decameters to meters.
+    public var decameters: Double {
+        Double(self) * 10.0
+    }
+
+    /// Convert decimeters to meters.
+    public var decimeters: Double {
+        Double(self) / 10.0
+    }
+
+    /// Convert scandinavian miles to meters.
+    public var scandinavianMiles: Double {
+        Double(self) * 10_000.0
     }
 
 }
