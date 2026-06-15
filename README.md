@@ -22,7 +22,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
-- Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line and many algorithms are tested for correct behavior across it
+- Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 - Pure Swift without external dependencies
@@ -37,7 +37,7 @@ with one `Feature` per cut geometry part. This makes iterating the results unifo
 
 ## Requirements
 
-This package requires Swift 6.0 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 15), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux, Android and Wasm.
+This package requires Swift 6.1 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 15), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux, Android and Wasm.
 
 ## Installation with Swift Package Manager
 
@@ -891,6 +891,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
 | boolean-concave             | `anyGeometry.isConcave()`                                                                                                             |     | [Source][177] / [Tests][178] |
+| boolean-contains/within     | `polygon.contains(lineString)` / `point.isWithin(polygon)`                                                                            |     | [Source][187] / [Tests][188] |
 | boolean-crosses             | `lineString.crosses(otherLineString)`                                                                                                  |     | [Source][50] / [Tests][133]  |
 | boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
@@ -1160,6 +1161,8 @@ Thomas Rasch, Outdooractive
 [184]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/EllipseTests.swift "EllipseTests"
 [185]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineOffset.swift "LineOffset"
 [186]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineOffsetTests.swift "LineOffsetTests"
+[187]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanContains.swift "BooleanContains"
+[188]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanContainsTests.swift "BooleanContainsTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
