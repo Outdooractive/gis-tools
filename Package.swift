@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.1
 
 import PackageDescription
 
@@ -15,8 +15,10 @@ let package = Package(
             name: "GISTools",
             targets: ["GISTools"]),
     ],
-    dependencies: [
+    traits: [
+        .trait(name: "EnableConversionExtensions"),
     ],
+    dependencies: [],
     targets: [
         .target(
             name: "GISTools"),
