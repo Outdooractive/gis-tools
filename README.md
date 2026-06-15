@@ -949,6 +949,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`                                                       |     | [Source][106] / [Tests][107] |
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
 | sample                      | `let sampled = featureCollection.sample(size: 10)`                                                                                    |     | [Source][181] / [Tests][182] |
+| sector                      | `let sector = coordinate.sector(radius: 5000.0, bearing1: 0.0, bearing2: 90.0)`                                                       |     | [Source][189] / [Tests][190] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
 | snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
@@ -1163,6 +1164,8 @@ Thomas Rasch, Outdooractive
 [186]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineOffsetTests.swift "LineOffsetTests"
 [187]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanContains.swift "BooleanContains"
 [188]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanContainsTests.swift "BooleanContainsTests"
+[189]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Sector.swift "Sector"
+[190]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SectorTests.swift "SectorTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
