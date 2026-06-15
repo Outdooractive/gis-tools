@@ -52,24 +52,6 @@ targets: [
 ]
 ```
 
-## Package Traits
-
-This package provides two mutually exclusive traits that control how the conversion properties on `Double` and `Int` behave:
-- `EnableMeasurementConversionExtensions` — conversion properties return `Measurement<UnitLength>` values, enabling unit-aware arithmetic and formatting.
-- `EnableMeterConversionExtensions` — conversion properties return raw `Double` meters, providing a lightweight alternative.
-
-```swift
-// With EnableMeasurementConversionExtensions:
-let distance: Measurement<UnitLength> = 1000.0.meters
-let total = distance + 500.0.feet  // Measurement arithmetic
-
-// With EnableMeterConversionExtensions:
-let distance: Double = 1000.0.meters  // raw meters
-let total = distance + 500.0.feet     // Double arithmetic (both in meters)
-```
-
-See also `Package.swift`[185] for the trait definitions.
-
 ## Usage
 
 Please see also the [API documentation][8] (via Swift Package Index).
@@ -1158,7 +1140,6 @@ Thomas Rasch, Outdooractive
 [182]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SampleTests.swift "SampleTests"
 [183]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Ellipse.swift "Ellipse"
 [184]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/EllipseTests.swift "EllipseTests"
-[185]:	https://github.com/Outdooractive/gis-tools/blob/main/Package.swift "Package.swift"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
