@@ -80,16 +80,6 @@ extension GeoJson {
 
 // MARK: - Unkink polygon (split self-intersecting polygon into simple polygons)
 
-private struct UnkinkIsect: Hashable {
-    let coordinate: Coordinate3D
-    let ring0: Int
-    let edge0: Int
-    let frac0: Double
-    let ring1: Int
-    let edge1: Int
-    let frac1: Double
-}
-
 extension Polygon {
 
     /// Splits a self-intersecting polygon into an array of simple (non-self-intersecting) polygons.
@@ -114,6 +104,16 @@ extension MultiPolygon {
 
 }
 
+private struct UnkinkIsect: Hashable {
+    let coordinate: Coordinate3D
+    let ring0: Int
+    let edge0: Int
+    let frac0: Double
+    let ring1: Int
+    let edge1: Int
+    let frac1: Double
+}
+
 private struct UnkinkSegment: Hashable {
     let start: Coordinate3D
     let end: Coordinate3D
@@ -122,13 +122,21 @@ private struct UnkinkSegment: Hashable {
     let segIndex: Int
 
     func reversed() -> UnkinkSegment {
-        UnkinkSegment(start: end, end: start, ringIndex: ringIndex, edgeIndex: edgeIndex, segIndex: segIndex)
+        UnkinkSegment(
+            start: end,
+            end: start,
+            ringIndex: ringIndex,
+            edgeIndex: edgeIndex,
+            segIndex: segIndex)
     }
 }
 
 extension Polygon {
 
-    fileprivate static func unkinkPolygons(from polygons: [Polygon], epsilon: Double) -> [Polygon] {
+    fileprivate static func unkinkPolygons(
+        from polygons: [Polygon],
+        epsilon: Double
+    ) -> [Polygon] {
         // 1. Collect all rings
         var allRings: [(coords: [Coordinate3D], polyIndex: Int, isOuter: Bool)] = []
         for (polyIndex, polygon) in polygons.enumerated() {
@@ -140,7 +148,7 @@ extension Polygon {
             }
         }
 
-        guard !allRings.isEmpty else { return [] }
+        guard allRings.isNotEmpty else { return [] }
 
         // 2. Ensure rings are closed
         var closedRingCoords: [[Coordinate3D]] = []
@@ -376,7 +384,7 @@ extension Polygon {
     }
 
     private static func buildSimplePolygons(rings: [[Coordinate3D]]) -> [Polygon] {
-        guard !rings.isEmpty else { return [] }
+        guard rings.isNotEmpty else { return [] }
 
         var counted: [(coords: [Coordinate3D], area: Double, parentIndex: Int)] = []
         for ring in rings {
@@ -442,7 +450,10 @@ extension Polygon {
         return sum / 2.0
     }
 
-    private static func pointInRing(_ point: Coordinate3D, ring: [Coordinate3D]) -> Bool {
+    private static func pointInRing(
+        _ point: Coordinate3D,
+        ring: [Coordinate3D]
+    ) -> Bool {
         guard ring.count >= 4 else { return false }
         var inside = false
         for i in 0 ..< (ring.count - 1) {
@@ -458,7 +469,11 @@ extension Polygon {
         return inside
     }
 
-    private static func fractionAlong(point: Coordinate3D, start: Coordinate3D, end: Coordinate3D) -> Double {
+    private static func fractionAlong(
+        point: Coordinate3D,
+        start: Coordinate3D,
+        end: Coordinate3D
+    ) -> Double {
         let dx = end.longitude - start.longitude
         let dy = end.latitude - start.latitude
         let lenSq = dx * dx + dy * dy

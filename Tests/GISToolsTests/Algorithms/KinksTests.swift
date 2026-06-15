@@ -29,7 +29,7 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
-    // Tests that a self-intersecting (bow-tie) polygon detects kinks.
+    /// Tests that a self-intersecting (bow-tie) polygon detects kinks.
     @Test
     func polygonWithKinks() async throws {
         // Bow-tie polygon: self-intersecting
@@ -132,6 +132,108 @@ struct KinksTests {
         ]]))
         let kinks = polygon.kinks()
         #expect(kinks.coordinates.isEmpty)
+    }
+
+    // MARK: - Unkink polygon
+
+    /// Tests that a simple convex polygon remains unchanged.
+    @Test
+    func simplePolygonUnkinked() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let result = polygon.unkinked()
+        #expect(result.count == 1)
+        #expect(result[0].isValid)
+    }
+
+    /// Tests that a self-intersecting (bow-tie) polygon is split into simple polygons.
+    @Test
+    func selfIntersectingPolygonUnkinked() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let result = polygon.unkinked()
+        #expect(result.count >= 1)
+        for p in result {
+            #expect(p.isValid)
+        }
+    }
+
+    /// Tests that a multi-polygon with one self-intersecting polygon is handled correctly.
+    @Test
+    func multiPolygonUnkinked() async throws {
+        let coords1: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let coords2: [Coordinate3D] = [
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 30.0, longitude: 20.0),
+            Coordinate3D(latitude: 30.0, longitude: 30.0),
+            Coordinate3D(latitude: 20.0, longitude: 30.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+        ]
+        let p1 = try #require(Polygon([coords1]))
+        let p2 = try #require(Polygon([coords2]))
+        let multi = try #require(MultiPolygon([p1, p2]))
+        let result = multi.unkinked()
+        #expect(result.count >= 2)
+        for p in result {
+            #expect(p.isValid)
+        }
+    }
+
+    /// Tests that a valid (non-self-intersecting) polygon remains unchanged.
+    @Test
+    func validPolygonUnchanged() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let result = polygon.unkinked()
+        #expect(result.count >= 1)
+    }
+
+    /// Tests that a polygon with a hole (inner ring) is handled correctly.
+    @Test
+    func polygonWithHoleUnkinked() async throws {
+        let outer: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let inner: [Coordinate3D] = [
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 15.0, longitude: 5.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: 5.0, longitude: 15.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]
+        let polygon = try #require(Polygon([outer, inner]))
+        let result = polygon.unkinked()
+        #expect(result.count >= 1)
+        for p in result {
+            #expect(p.isValid)
+        }
     }
 
 }
