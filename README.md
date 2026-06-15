@@ -925,6 +925,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
 | line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
+| line-offset                 | `let offset = lineString.offset(by: 50.0)`                                                                                            |     | [Source][185] / [Tests][186] |
 | line-intersect              | `let intersections = feature1.intersections(other: feature2)`                                                                         |     | [Source][80] / [Tests][81]   |
 | line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`                                                        |     | [Source][82] / [Tests][83]   |
 | line-segments               | `let segments = anyGeometry.lineSegments`                                                                                             |     | [Source][84] / [Tests][85]   |
@@ -1157,6 +1158,8 @@ Thomas Rasch, Outdooractive
 [182]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SampleTests.swift "SampleTests"
 [183]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Ellipse.swift "Ellipse"
 [184]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/EllipseTests.swift "EllipseTests"
+[185]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineOffset.swift "LineOffset"
+[186]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineOffsetTests.swift "LineOffsetTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
