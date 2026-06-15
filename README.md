@@ -21,6 +21,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports WKT/WKB/TWKB, also with different projections
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
+- Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
 - Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line and many algorithms are tested for correct behavior across it
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
@@ -894,6 +895,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
+| ellipse                     | `let ellipse = coordinate.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0)`                                                              |     | [Source][183] / [Tests][184] |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
 | great-circle                | `let arc = start.greatCircle(to: end)`                                                                                                |     | [Source][144] / [Tests][145] |
 | frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
@@ -922,10 +924,12 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | pole-of-inaccessibility     | `let pole = polygon.poleOfInaccessibility()`                                                                                           |     | [Source][101] / [Tests][152] |
 | polygon-smooth              | `let smoothed = polygon.smooth(iterations: 3)`                                                                                         |     | [Source][148] / [Tests][149] |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
+| random                      | `BoundingBox.randomPoints(count: 10)`                                                                                                 |     | [Source][179] / [Tests][180] |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
 | rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
 | rhumb-destination           | `let destination = coordinate.rhumbDestination(distance: 1000.0, bearing: 0.0)`                                                       |     | [Source][106] / [Tests][107] |
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
+| sample                      | `let sampled = featureCollection.sample(size: 10)`                                                                                    |     | [Source][181] / [Tests][182] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
 | snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
@@ -936,6 +940,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)`                                              |     | [Source][120] / [Tests][121] |
 | truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`                                                            |     | [Source][122] / [Tests][123] |
 | union                       | `let combined = polygon.union(with: otherPolygon)`                                                                                     |     | [Source][124] / [Tests][153] |
+| unkink-polygon              | `let simplePolygons = polygon.unkinked(gridSize: 0.001)`                                                                              |     | [Source][150] / [Tests][151] |
 
 # Related packages
 Currently only two:
@@ -1129,6 +1134,12 @@ Thomas Rasch, Outdooractive
 [176]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SnapToGridTests.swift "SnapToGridTests"
 [177]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanConcave.swift "BooleanConcave"
 [178]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanConcaveTests.swift "BooleanConcaveTests"
+[179]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Random.swift "Random"
+[180]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/RandomTests.swift "RandomTests"
+[181]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Sample.swift "Sample"
+[182]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SampleTests.swift "SampleTests"
+[183]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Ellipse.swift "Ellipse"
+[184]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/EllipseTests.swift "EllipseTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
