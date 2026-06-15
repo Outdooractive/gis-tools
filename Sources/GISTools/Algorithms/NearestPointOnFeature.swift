@@ -6,23 +6,30 @@ import Foundation
 extension BoundingBox {
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the bounding box.
+    /// - Parameter from: The reference coordinate
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnFeature(
-        from other: Coordinate3D
+        from other: Coordinate3D,
+        gridSize: Double? = nil
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
+        let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let snappedGeometry = gridSize.map { self.boundingBoxGeometry.snappedToGrid(tolerance: $0) } ?? self.boundingBoxGeometry
         if self.contains(other) {
             return (coordinate: other, distance: 0.0)
         }
-        return self.boundingBoxGeometry.nearestCoordinateOnFeature(from: other)
+        return snappedGeometry.nearestCoordinateOnFeature(from: other)
     }
 
     /// Returns a *Point* guaranteed to be on the surface of the bounding box.
+    /// - Parameter from: The reference point
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestPointOnFeature(
-        from other: Point
+        from other: Point,
+        gridSize: Double? = nil
     ) -> (point: Point, distance: CLLocationDistance)? {
-        if self.contains(other.coordinate) {
-            return (point: other, distance: 0.0)
+        self.nearestCoordinateOnFeature(from: other.coordinate, gridSize: gridSize).map {
+            (point: Point($0.coordinate), distance: $0.distance)
         }
-        return self.boundingBoxGeometry.nearestPointOnFeature(from: other)
     }
 
 }
@@ -30,54 +37,62 @@ extension BoundingBox {
 extension GeoJson {
 
     /// Returns a *Point* guaranteed to be on the surface of the feature.
+    /// - Parameter from: The reference point
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestPointOnFeature(
-        from other: Point
+        from other: Point,
+        gridSize: Double? = nil
     ) -> (point: Point, distance: CLLocationDistance)? {
-        if let nearest = nearestCoordinateOnFeature(from: other.coordinate) {
+        if let nearest = nearestCoordinateOnFeature(from: other.coordinate, gridSize: gridSize) {
             return (point: Point(nearest.coordinate), distance: nearest.distance)
         }
         return nil
     }
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the feature.
+    /// - Parameter from: The reference coordinate
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnFeature(
-        from other: Coordinate3D
+        from other: Coordinate3D,
+        gridSize: Double? = nil
     ) -> (coordinate: Coordinate3D, distance: CLLocationDistance)? {
-        let other = other.projected(to: projection)
+        let geoJson = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let otherProjected = other.projected(to: geoJson.projection)
 
-        switch self {
+        switch geoJson {
         case let point as Point:
-            return (coordinate: point.coordinate, distance: point.coordinate.distance(from: other))
+            return (coordinate: point.coordinate, distance: point.coordinate.distance(from: otherProjected))
 
         case let multiPoint as MultiPoint:
-            return multiPoint.nearestCoordinate(from: other)
+            return multiPoint.nearestCoordinate(from: otherProjected)
 
         case let lineString as LineString:
-            return nearest(onSegments: lineString.lineSegments, from: other)
+            return nearest(onSegments: lineString.lineSegments, from: otherProjected)
 
         case let multiLineString as MultiLineString:
-            return nearest(onSegments: multiLineString.lineSegments, from: other)
+            return nearest(onSegments: multiLineString.lineSegments, from: otherProjected)
 
         case let polygon as Polygon:
-            if polygon.contains(other) {
-                return (coordinate: other, distance: 0.0)
+            if polygon.contains(otherProjected) {
+                return (coordinate: otherProjected, distance: 0.0)
             }
-            return nearest(onSegments: polygon.lineSegments, from: other)
+            return nearest(onSegments: polygon.lineSegments, from: otherProjected)
 
         case let multiPolygon as MultiPolygon:
-            if multiPolygon.contains(other) {
-                return (coordinate: other, distance: 0.0)
+            if multiPolygon.contains(otherProjected) {
+                return (coordinate: otherProjected, distance: 0.0)
             }
-            return nearest(onSegments: multiPolygon.lineSegments, from: other)
+            return nearest(onSegments: multiPolygon.lineSegments, from: otherProjected)
 
         case let geometryCollection as GeometryCollection:
-            return nearest(onGeometries: geometryCollection.geometries, from: other)
+            return nearest(onGeometries: geometryCollection.geometries, from: otherProjected)
 
         case let feature as Feature:
-            return feature.geometry.nearestCoordinateOnFeature(from: other)
+            return feature.geometry.nearestCoordinateOnFeature(from: otherProjected)
 
         case let featureCollection as FeatureCollection:
-            return nearest(onGeometries: featureCollection.features.map(\.geometry), from: other)
+            return nearest(onGeometries: featureCollection.features.map(\.geometry), from: otherProjected)
 
         default:
             return nil

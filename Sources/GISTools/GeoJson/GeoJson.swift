@@ -181,10 +181,12 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     /// - Parameters:
     ///    - coordinate: The coordinate to test
     ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     /// - Returns: `true` if the coordinate lies within the polygon
     func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool
+        ignoringBoundary: Bool,
+        gridSize: Double?
     ) -> Bool
 
     /// Check if this `(Multi)Polygon` contains *Point*.
@@ -192,10 +194,12 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     /// - Parameters:
     ///    - point: The point to test
     ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     /// - Returns: `true` if the point lies within the polygon
     func contains(
         _ point: Point,
-        ignoringBoundary: Bool
+        ignoringBoundary: Bool,
+        gridSize: Double?
     ) -> Bool
 
 }

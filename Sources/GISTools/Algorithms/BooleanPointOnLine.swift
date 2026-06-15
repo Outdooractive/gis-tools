@@ -9,38 +9,45 @@ import Foundation
 extension LineSegment {
 
     /// Tests if *Coordinate3D* is on the segment.
-    public func checkIsOnSegment(_ coordinate: Coordinate3D) -> Bool {
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func checkIsOnSegment(_ coordinate: Coordinate3D, gridSize: Double? = nil) -> Bool {
         let coordinate = coordinate.projected(to: projection)
+        let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 
-        let ab = sqrt((second.longitude - first.longitude) * (second.longitude - first.longitude)
-            + (second.latitude - first.latitude) * (second.latitude - first.latitude))
-        let ap = sqrt((coordinate.longitude - first.longitude) * (coordinate.longitude - first.longitude)
-            + (coordinate.latitude - first.latitude) * (coordinate.latitude - first.latitude))
-        let pb = sqrt((second.longitude - coordinate.longitude) * (second.longitude - coordinate.longitude)
-            + (second.latitude - coordinate.latitude) * (second.latitude - coordinate.latitude))
+        let ab = sqrt((snapped.second.longitude - snapped.first.longitude) * (snapped.second.longitude - snapped.first.longitude)
+            + (snapped.second.latitude - snapped.first.latitude) * (snapped.second.latitude - snapped.first.latitude))
+        let ap = sqrt((snappedCoordinate.longitude - snapped.first.longitude) * (snappedCoordinate.longitude - snapped.first.longitude)
+            + (snappedCoordinate.latitude - snapped.first.latitude) * (snappedCoordinate.latitude - snapped.first.latitude))
+        let pb = sqrt((snapped.second.longitude - snappedCoordinate.longitude) * (snapped.second.longitude - snappedCoordinate.longitude)
+            + (snapped.second.latitude - snappedCoordinate.latitude) * (snapped.second.latitude - snappedCoordinate.latitude))
 
         return abs(ab - (ap + pb)) < GISTool.equalityDelta
     }
 
     /// Tests if *Point* is on the segment.
-    public func checkIsOnSegment(_ point: Point) -> Bool {
-        checkIsOnSegment(point.coordinate)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func checkIsOnSegment(_ point: Point, gridSize: Double? = nil) -> Bool {
+        checkIsOnSegment(point.coordinate, gridSize: gridSize)
     }
 
 }
 
 extension LineStringGeometry {
 
-    /// Tests if *Coordinate3D* is on the segment.
-    public func checkIsOnLine(_ coordinate: Coordinate3D) -> Bool {
-        lineSegments.contains { (segment) in
-            segment.checkIsOnSegment(coordinate)
+    /// Tests if *Coordinate3D* is on the line.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func checkIsOnLine(_ coordinate: Coordinate3D, gridSize: Double? = nil) -> Bool {
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+        return lineSegments.contains { (segment) in
+            segment.checkIsOnSegment(snappedCoordinate, gridSize: gridSize)
         }
     }
 
-    /// Tests if *Point* is on the segment.
-    public func checkIsOnLine(_ point: Point) -> Bool {
-        checkIsOnLine(point.coordinate)
+    /// Tests if *Point* is on the line.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func checkIsOnLine(_ point: Point, gridSize: Double? = nil) -> Bool {
+        checkIsOnLine(point.coordinate, gridSize: gridSize)
     }
 
 }

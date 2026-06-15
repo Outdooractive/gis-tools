@@ -11,18 +11,22 @@ extension Ring {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the ring boundary should be ignored when determining if the coordinate is inside the ring (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside the ring, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
         let coordinate = coordinate.projected(to: projection)
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+        let snappedCoordinates = gridSize.map { Ring(unchecked: coordinates).snappedToGrid(tolerance: $0).coordinates } ?? coordinates
 
         var isInside = false
 
-        var coordinatesCount = coordinates.count
-        if coordinates.first == coordinates.last {
+        var coordinatesCount = snappedCoordinates.count
+        if snappedCoordinates.first == snappedCoordinates.last {
             coordinatesCount -= 1
         }
 
@@ -32,20 +36,20 @@ extension Ring {
                 j = i
             }
 
-            let xi = coordinates[i].longitude
-            let yi = coordinates[i].latitude
-            let xj = coordinates[j].longitude
-            let yj = coordinates[j].latitude
+            let xi = snappedCoordinates[i].longitude
+            let yi = snappedCoordinates[i].latitude
+            let xj = snappedCoordinates[j].longitude
+            let yj = snappedCoordinates[j].latitude
 
-            let onBoundary = (coordinate.latitude * (xi - xj) + yi * (xj - coordinate.longitude) + yj * (coordinate.longitude - xi) == 0.0)
-                && ((xi - coordinate.longitude) * (xj - coordinate.longitude) <= 0.0)
-                && ((yi - coordinate.latitude) * (yj - coordinate.latitude) <= 0.0)
+            let onBoundary = (snappedCoordinate.latitude * (xi - xj) + yi * (xj - snappedCoordinate.longitude) + yj * (snappedCoordinate.longitude - xi) == 0.0)
+                && ((xi - snappedCoordinate.longitude) * (xj - snappedCoordinate.longitude) <= 0.0)
+                && ((yi - snappedCoordinate.latitude) * (yj - snappedCoordinate.latitude) <= 0.0)
             if onBoundary {
                 return !ignoringBoundary
             }
 
-            let intersect = ((yi > coordinate.latitude) != (yj > coordinate.latitude))
-                && (coordinate.longitude < (xj - xi) * (coordinate.latitude - yi) / (yj - yi) + xi)
+            let intersect = ((yi > snappedCoordinate.latitude) != (yj > snappedCoordinate.latitude))
+                && (snappedCoordinate.longitude < (xj - xi) * (snappedCoordinate.latitude - yi) / (yj - yi) + xi)
             if (intersect) {
                 isInside = !isInside
             }
@@ -58,13 +62,15 @@ extension Ring {
     ///
     /// - Parameter point: The point to check
     /// - Parameter ignoringBoundary: `true` if the ring boundary should be ignored when determining if the point is inside the ring (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the point is inside the ring, `false` otherwise.
     public func contains(
         _ point: Point,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        contains(point.coordinate, ignoringBoundary: ignoringBoundary)
+        contains(point.coordinate, ignoringBoundary: ignoringBoundary, gridSize: gridSize)
     }
 
 }
@@ -76,23 +82,28 @@ extension Polygon {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the coordinate is inside the polygon (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside the polygon, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        if let boundingBox, !boundingBox.contains(coordinate) {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+
+        if let boundingBox = snappedSelf.boundingBox, !boundingBox.contains(snappedCoordinate) {
             return false
         }
 
-        guard let outerRing = outerRing,
-              outerRing.contains(coordinate, ignoringBoundary: ignoringBoundary)
+        guard let outerRing = snappedSelf.outerRing,
+              outerRing.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary)
         else { return false }
 
-        if let innerRings {
+        if let innerRings = snappedSelf.innerRings {
             for ring in innerRings {
-                if ring.contains(coordinate, ignoringBoundary: ignoringBoundary) {
+                if ring.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary) {
                     return false
                 }
             }
@@ -106,13 +117,15 @@ extension Polygon {
     ///
     /// - Parameter point: The point to check
     /// - Parameter ignoringBoundary: `true` if the polygon boundary should be ignored when determining if the point is inside the polygon (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the point is inside the ring, `false` otherwise.
     public func contains(
         _ point: Point,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        contains(point.coordinate, ignoringBoundary: ignoringBoundary)
+        contains(point.coordinate, ignoringBoundary: ignoringBoundary, gridSize: gridSize)
     }
 
 }
@@ -124,18 +137,23 @@ extension MultiPolygon {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the polygons, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        if let boundingBox, !boundingBox.contains(coordinate) {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+
+        if let boundingBox = snappedSelf.boundingBox, !boundingBox.contains(snappedCoordinate) {
             return false
         }
 
-        for polygon in polygons {
-            if polygon.contains(coordinate, ignoringBoundary: ignoringBoundary) {
+        for polygon in snappedSelf.polygons {
+            if polygon.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary) {
                 return true
             }
         }
@@ -148,13 +166,15 @@ extension MultiPolygon {
     ///
     /// - Parameter point: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the polygon boundaries should be ignored when determining if the coordinate is inside of one of the polygons (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the polygons, `false` otherwise.
     public func contains(
         _ point: Point,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        contains(point.coordinate, ignoringBoundary: ignoringBoundary)
+        contains(point.coordinate, ignoringBoundary: ignoringBoundary, gridSize: gridSize)
     }
 
 }
@@ -165,16 +185,21 @@ extension GeometryCollection {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the geometries, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        geometries.contains { (geometry) -> Bool in
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+
+        return snappedSelf.geometries.contains { (geometry) -> Bool in
             guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
 
-            return polygonGeometry.contains(coordinate, ignoringBoundary: ignoringBoundary)
+            return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
         }
     }
 
@@ -186,15 +211,20 @@ extension Feature {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of the Feature's geometry (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the Feature's geometry, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 
-        return polygonGeometry.contains(coordinate, ignoringBoundary: ignoringBoundary)
+        guard let polygonGeometry = snappedSelf.geometry as? PolygonGeometry else { return false }
+
+        return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
     }
 
 }
@@ -205,13 +235,18 @@ extension FeatureCollection {
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter ignoringBoundary: `true` if the boundaries should be ignored when determining if the coordinate is inside of one of the geometries (default `false`).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the coordinate is inside of one of the geometries, `false` otherwise.
     public func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool = false
+        ignoringBoundary: Bool = false,
+        gridSize: Double? = nil
     ) -> Bool {
-        features.contains(where: { $0.contains(coordinate, ignoringBoundary: ignoringBoundary) })
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+
+        return snappedSelf.features.contains(where: { $0.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil) })
     }
 
 }

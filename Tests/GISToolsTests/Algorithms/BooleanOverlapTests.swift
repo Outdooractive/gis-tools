@@ -64,6 +64,28 @@ struct BooleanOverlapTests {
         #expect(polygon1.isOverlapping(with: polygon2))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `isOverlapping(with:gridSize:)` matches manual pre-snapping.
+    @Test
+    func overlapWithGridSize() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 2.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 4.0001, longitude: 4.0001),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 6.0001, longitude: 6.0001),
+        ]))
+        let gridSize = 0.001
+
+        let withParam = line1.isOverlapping(with: line2, gridSize: gridSize)
+        let snapped1 = line1.snappedToGrid(tolerance: gridSize)
+        let snapped2 = line2.snappedToGrid(tolerance: gridSize)
+        let manual = snapped1.isOverlapping(with: snapped2)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

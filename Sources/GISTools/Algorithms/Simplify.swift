@@ -15,13 +15,16 @@ extension GeoJson {
     /// - Parameters:
     /// - Parameter tolerance: Affects the amount of simplification (in meters)
     /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter gridSize: An optional grid size for snapping inputs
     ///
     /// - Returns: A new simplified GeoJson
     public func simplified(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false
+        highQuality: Bool = false,
+        gridSize: Double? = nil
     ) -> Self {
-        switch self {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        switch snappedSelf {
         case let lineString as LineString:
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
             newLineString.boundingBox = lineString.boundingBox
@@ -75,7 +78,7 @@ extension GeoJson {
             return newFeatureCollection as! Self
 
         default:
-            return self
+            return snappedSelf
         }
     }
 
@@ -86,13 +89,16 @@ extension GeoJson {
     /// - Parameters:
     /// - Parameter tolerance: Affects the amount of simplification (in meters)
     /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower
+    /// - Parameter gridSize: An optional grid size for snapping inputs
     public mutating func simplify(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false
+        highQuality: Bool = false,
+        gridSize: Double? = nil
     ) {
         self = simplified(
             tolerance: tolerance,
-            highQuality: highQuality)
+            highQuality: highQuality,
+            gridSize: gridSize)
     }
 
 }

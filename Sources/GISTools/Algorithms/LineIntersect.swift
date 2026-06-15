@@ -60,30 +60,37 @@ extension LineSegment {
     /// - Parameter other: The other *LineSegment*
     /// - Parameter epsilon: Tolerance for collinearity and on-segment checks
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the line segments intersect.
-    public func intersects(_ other: LineSegment, epsilon: Double = 0.0) -> Bool {
-        let other = other.projected(to: projection)
+    public func intersects(
+        _ other: LineSegment,
+        epsilon: Double = 0.0,
+        gridSize: Double? = nil
+    ) -> Bool {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        let o1 = orientation(p: first, q: second, r: other.first, epsilon: epsilon)
-        let o2 = orientation(p: first, q: second, r: other.second, epsilon: epsilon)
-        let o3 = orientation(p: other.first, q: other.second, r: first, epsilon: epsilon)
-        let o4 = orientation(p: other.first, q: other.second, r: second, epsilon: epsilon)
+        let o1 = orientation(p: snappedSelf.first, q: snappedSelf.second, r: other.first, epsilon: epsilon)
+        let o2 = orientation(p: snappedSelf.first, q: snappedSelf.second, r: other.second, epsilon: epsilon)
+        let o3 = orientation(p: other.first, q: other.second, r: snappedSelf.first, epsilon: epsilon)
+        let o4 = orientation(p: other.first, q: other.second, r: snappedSelf.second, epsilon: epsilon)
 
         if o1 != o2, o3 != o4 {
             return true
         }
 
-        if o1 == .colinear, onSegment(p: first, q: other.first, r: second, epsilon: epsilon) {
+        if o1 == .colinear, onSegment(p: snappedSelf.first, q: other.first, r: snappedSelf.second, epsilon: epsilon) {
             return true
         }
-        if o2 == .colinear, onSegment(p: first, q: other.second, r: second, epsilon: epsilon) {
+        if o2 == .colinear, onSegment(p: snappedSelf.first, q: other.second, r: snappedSelf.second, epsilon: epsilon) {
             return true
         }
-        if o3 == .colinear, onSegment(p: other.first, q: first, r: other.second, epsilon: epsilon) {
+        if o3 == .colinear, onSegment(p: other.first, q: snappedSelf.first, r: other.second, epsilon: epsilon) {
             return true
         }
-        if o4 == .colinear, onSegment(p: other.first, q: second, r: other.second, epsilon: epsilon) {
+        if o4 == .colinear, onSegment(p: other.first, q: snappedSelf.second, r: other.second, epsilon: epsilon) {
             return true
         }
 
@@ -110,22 +117,26 @@ extension LineSegment {
     /// - Parameter other: The other *LineSegment*
     /// - Parameter epsilon: Tolerance for endpoint parameter checks
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: The intersection point, or `nil`.
     public func intersection(
         _ other: LineSegment,
-        epsilon: Double = 0.0
+        epsilon: Double = 0.0,
+        gridSize: Double? = nil
     ) -> Coordinate3D? {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
-        let denominator: Double = ((other.second.latitude - other.first.latitude) * (self.second.longitude - self.first.longitude))
-            - ((other.second.longitude - other.first.longitude) * (self.second.latitude - self.first.latitude))
+        let denominator: Double = ((other.second.latitude - other.first.latitude) * (snappedSelf.second.longitude - snappedSelf.first.longitude))
+            - ((other.second.longitude - other.first.longitude) * (snappedSelf.second.latitude - snappedSelf.first.latitude))
 
         if abs(denominator) > 1e-15 {
-            let numeratorA: Double = ((other.second.longitude - other.first.longitude) * (self.first.latitude - other.first.latitude))
-                - ((other.second.latitude - other.first.latitude) * (self.first.longitude - other.first.longitude))
-            let numeratorB: Double = ((self.second.longitude - self.first.longitude) * (self.first.latitude - other.first.latitude))
-                - ((self.second.latitude - self.first.latitude) * (self.first.longitude - other.first.longitude))
+            let numeratorA: Double = ((other.second.longitude - other.first.longitude) * (snappedSelf.first.latitude - other.first.latitude))
+                - ((other.second.latitude - other.first.latitude) * (snappedSelf.first.longitude - other.first.longitude))
+            let numeratorB: Double = ((snappedSelf.second.longitude - snappedSelf.first.longitude) * (snappedSelf.first.latitude - other.first.latitude))
+                - ((snappedSelf.second.latitude - snappedSelf.first.latitude) * (snappedSelf.first.longitude - other.first.longitude))
 
             let uA: Double = numeratorA / denominator
             let uB: Double = numeratorB / denominator
@@ -135,10 +146,10 @@ extension LineSegment {
                uB >= -epsilon,
                uB <= 1.0 + epsilon
             {
-                let longitude = self.first.longitude + (uA * (self.second.longitude - self.first.longitude))
-                let latitude = self.first.latitude + (uA * (self.second.latitude - self.first.latitude))
+                let longitude = snappedSelf.first.longitude + (uA * (snappedSelf.second.longitude - snappedSelf.first.longitude))
+                let latitude = snappedSelf.first.latitude + (uA * (snappedSelf.second.latitude - snappedSelf.first.latitude))
 
-                return Coordinate3D(x: longitude, y: latitude, projection: projection)
+                return Coordinate3D(x: longitude, y: latitude, projection: snappedSelf.projection)
             }
             return nil
         }
@@ -158,20 +169,27 @@ extension GeoJson {
     /// - Parameter other: The other geometry
     /// - Parameter epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: An array of intersecting points.
-    public func intersections(with other: GeoJson, epsilon: Double = 0.0) -> [Point] {
-        let other = other.projected(to: projection)
+    public func intersections(
+        with other: GeoJson,
+        epsilon: Double = 0.0,
+        gridSize: Double? = nil
+    ) -> [Point] {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
 
         if let otherBoundingBox = other.boundingBox ?? other.calculateBoundingBox(),
-           !intersects(otherBoundingBox)
+           !snappedSelf.intersects(otherBoundingBox)
         {
             return []
         }
 
         var result: Set<Coordinate3D> = []
 
-        if let point = self as? PointGeometry {
+        if let point = snappedSelf as? PointGeometry {
             if let otherPoint = other as? PointGeometry {
                 for coordinate in point.allCoordinates
                     where otherPoint.allCoordinates.contains(coordinate)
@@ -190,9 +208,9 @@ extension GeoJson {
             }
         }
         else {
-            for lineSegment in lineSegments {
+            for lineSegment in snappedSelf.lineSegments {
                 for otherLineSegment in other.lineSegments {
-                    if let intersection = lineSegment.intersection(otherLineSegment, epsilon: epsilon) {
+                    if let intersection = lineSegment.intersection(otherLineSegment, epsilon: epsilon, gridSize: nil) {
                         result.insert(intersection)
                     }
                 }

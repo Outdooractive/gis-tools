@@ -8,17 +8,23 @@ import Foundation
 extension PolygonGeometry {
 
     /// Finds coordinates that fall within the receiver.
-    public func coordinatesWithin(_ coordinates: [Coordinate3D]) -> [Coordinate3D] {
-        coordinates.filter({ (coordinate) -> Bool in
-            contains(coordinate, ignoringBoundary: false)
-        })
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func coordinatesWithin(_ coordinates: [Coordinate3D], gridSize: Double? = nil) -> [Coordinate3D] {
+        guard let gridSize else {
+            return coordinates.filter { contains($0, ignoringBoundary: false, gridSize: nil) }
+        }
+        let snappedSelf = (self as! GeoJson).snappedToGrid(tolerance: gridSize) as! PolygonGeometry
+        return coordinates.filter { snappedSelf.contains($0.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
     }
 
     /// Finds *Point*s that fall within the receiver.
-    public func pointsWithin(_ points: [Point]) -> [Point] {
-        points.filter({ (point) -> Bool in
-            contains(point.coordinate, ignoringBoundary: false)
-        })
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func pointsWithin(_ points: [Point], gridSize: Double? = nil) -> [Point] {
+        guard let gridSize else {
+            return points.filter { contains($0.coordinate, ignoringBoundary: false, gridSize: nil) }
+        }
+        let snappedSelf = (self as! GeoJson).snappedToGrid(tolerance: gridSize) as! PolygonGeometry
+        return points.filter { snappedSelf.contains($0.coordinate.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
     }
 
 }

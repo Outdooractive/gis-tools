@@ -338,6 +338,26 @@ struct BufferTests {
                     steps: params.steps)))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `buffered(gridSize:)` matches manual pre-snapping.
+    @Test
+    func bufferWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = try #require(polygon.buffered(by: 100_000.0, gridSize: gridSize))
+        let snapped = polygon.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snapped.buffered(by: 100_000.0))
+        #expect(abs(withParam.area - manual.area) < 1.0)
+    }
+
     // MARK: - Antimeridian tests
 
     // Validates buffer around a point near the antimeridian stays within valid coordinate bounds.

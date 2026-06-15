@@ -281,6 +281,35 @@ struct UnionTests {
         #expect(fc.union() != nil)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `union(with:gridSize:)` matches manual pre-snapping.
+    @Test
+    func unionWithGridSize() async throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 5.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 5.0001, longitude: 5.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 5.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 2.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 7.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 7.0001, longitude: 7.0001),
+            Coordinate3D(latitude: 2.0001, longitude: 7.0001),
+            Coordinate3D(latitude: 2.0001, longitude: 2.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = try #require(p1.union(with: p2, gridSize: gridSize))
+        let snapped1 = p1.snappedToGrid(tolerance: gridSize)
+        let snapped2 = p2.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snapped1.union(with: snapped2))
+        #expect(abs(withParam.area - manual.area) < 1.0)
+        #expect(withParam.polygons.count == manual.polygons.count)
+    }
+
     // MARK: - Antimeridian
 
     @Test

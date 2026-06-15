@@ -26,6 +26,27 @@ struct LineSliceTests {
         #expect(slice == result)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `slice(start:end:gridSize:)` matches manual pre-snapping.
+    @Test
+    func sliceWithGridSize() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let start = Coordinate3D(latitude: 2.0001, longitude: 2.0001)
+        let end = Coordinate3D(latitude: 8.0001, longitude: 8.0001)
+        let gridSize = 0.001
+
+        let withParam = lineString.slice(start: start, end: end, gridSize: gridSize)
+        let snappedLine = lineString.snappedToGrid(tolerance: gridSize)
+        let snappedStart = Point(start).snappedToGrid(tolerance: gridSize).coordinate
+        let snappedEnd = Point(end).snappedToGrid(tolerance: gridSize).coordinate
+        let manual = snappedLine.slice(start: snappedStart, end: snappedEnd)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

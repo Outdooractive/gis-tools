@@ -86,6 +86,32 @@ struct PointsWithinPolygonTests {
         #expect(result.isEmpty)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `coordinatesWithin(_:gridSize:)` matches manual pre-snapping.
+    @Test
+    func coordinatesWithinWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let candidates = [
+            Coordinate3D(latitude: 5.00005, longitude: 5.00005),
+            Coordinate3D(latitude: 15.00005, longitude: 5.00005),
+        ]
+        let gridSize = 0.001
+
+        let withParam = polygon.coordinatesWithin(candidates, gridSize: gridSize)
+        let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
+        let manual = snappedPolygon.coordinatesWithin(candidates)
+        // Compare counts only — coordinatesWithin returns original (unsnapped) coordinates
+        #expect(withParam.count == manual.count)
+        #expect(withParam.count == 1)
+    }
+
     // MARK: - Antimeridian
 
     @Test

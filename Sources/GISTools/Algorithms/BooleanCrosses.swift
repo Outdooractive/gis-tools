@@ -16,18 +16,23 @@ extension GeoJson {
     ///           LineString / LineString, LineString / Polygon.
     ///
     /// MultiPolygon behaves like Polygon in these comparisons.
-    public func crosses(_ other: GeoJson) -> Bool {
+    ///
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    public func crosses(_ other: GeoJson, gridSize: Double? = nil) -> Bool {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+
         // FeatureCollection: check if any contained feature crosses.
-        if let fc1 = self as? FeatureCollection {
-            return fc1.features.contains { $0.crosses(other) }
+        if let fc1 = snappedSelf as? FeatureCollection {
+            return fc1.features.contains { $0.crosses(snappedOther, gridSize: nil) }
         }
-        if let fc2 = other as? FeatureCollection {
-            return fc2.features.contains { self.crosses($0.geometry) }
+        if let fc2 = snappedOther as? FeatureCollection {
+            return fc2.features.contains { snappedSelf.crosses($0.geometry, gridSize: nil) }
         }
 
         // Anything else
-        let geom1: GeoJson = (self as? Feature)?.geometry ?? self
-        let geom2: GeoJson = (other as? Feature)?.geometry ?? other
+        let geom1: GeoJson = (snappedSelf as? Feature)?.geometry ?? snappedSelf
+        let geom2: GeoJson = (snappedOther as? Feature)?.geometry ?? snappedOther
 
         guard let geometry1 = geom1 as? GeoJsonGeometry,
               let geometry2 = geom2 as? GeoJsonGeometry
@@ -121,7 +126,7 @@ extension GeoJson {
         var foundExtPoint = false
 
         for point in multiPoint.points {
-            if polygonGeometry.contains(point.coordinate, ignoringBoundary: false) {
+            if polygonGeometry.contains(point.coordinate, ignoringBoundary: false, gridSize: nil) {
                 foundIntPoint = true
             }
             else {

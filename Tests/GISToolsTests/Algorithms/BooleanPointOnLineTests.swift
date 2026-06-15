@@ -116,6 +116,32 @@ struct BooleanPointOnLineTests {
         #expect(mls.checkIsOnLine(Coordinate3D(latitude: 2.0, longitude: 2.0)) == false)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `checkIsOnLine(_:gridSize:)` and `checkIsOnSegment(_:gridSize:)` match manual pre-snapping.
+    @Test
+    func pointOnLineWithGridSize() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let onPoint = Coordinate3D(latitude: 0.0001, longitude: 5.0001)
+        let offPoint = Coordinate3D(latitude: 5.00005, longitude: 5.00005)
+        let gridSize = 0.001
+
+        let withParamOn = ls.checkIsOnLine(onPoint, gridSize: gridSize)
+        let snappedLine = ls.snappedToGrid(tolerance: gridSize)
+        let snappedOn = Point(onPoint).snappedToGrid(tolerance: gridSize).coordinate
+        let manualOn = snappedLine.checkIsOnLine(snappedOn)
+        #expect(withParamOn == manualOn)
+
+        let withParamOff = ls.checkIsOnLine(offPoint, gridSize: gridSize)
+        let snappedOff = Point(offPoint).snappedToGrid(tolerance: gridSize).coordinate
+        let manualOff = snappedLine.checkIsOnLine(snappedOff)
+        #expect(withParamOff == manualOff)
+    }
+
     // MARK: - Antimeridian
 
     @Test

@@ -480,6 +480,25 @@ struct BooleanTouchesTests {
         #expect(line1.touches(line2) == line2.touches(line1))
     }
 
+    // MARK: - gridSize
+
+    // Validates that `touches(_:gridSize:)` matches manual pre-snapping.
+    @Test
+    func touchesWithGridSize() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0001, longitude: 0.0001))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+        ]))
+        let gridSize = 0.001
+
+        let withParam = point.touches(line, gridSize: gridSize)
+        let snappedPoint = point.snappedToGrid(tolerance: gridSize)
+        let snappedLine = line.snappedToGrid(tolerance: gridSize)
+        let manual = snappedPoint.touches(snappedLine)
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian
 
     @Test

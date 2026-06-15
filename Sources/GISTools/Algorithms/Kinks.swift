@@ -12,10 +12,12 @@ extension GeoJson {
     /// Supports ``LineString``, ``MultiLineString``, ``Polygon``,
     /// and ``MultiPolygon``.
     ///
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``MultiPoint`` with one point for each
     ///   self-intersection.
-    public func kinks() -> MultiPoint {
-        let geometry = (self as? Feature)?.geometry ?? (self as? GeoJsonGeometry)
+    public func kinks(gridSize: Double? = nil) -> MultiPoint {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let geometry = (snappedSelf as? Feature)?.geometry ?? (snappedSelf as? GeoJsonGeometry)
 
         let coordSets: [[Coordinate3D]]
 

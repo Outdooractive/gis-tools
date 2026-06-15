@@ -84,6 +84,34 @@ struct BooleanDisjointTests {
         #expect(multiPolygon1.isDisjoint(with: polygon3) == false)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `isDisjoint(with:gridSize:)` matches manual pre-snapping.
+    @Test
+    func disjointWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let point = Point(Coordinate3D(latitude: 5.00005, longitude: 5.00005))
+        let outside = Point(Coordinate3D(latitude: 20.00005, longitude: 20.00005))
+        let gridSize = 0.001
+
+        let withParam = polygon.isDisjoint(with: point, gridSize: gridSize)
+        let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
+        let snappedPoint = point.snappedToGrid(tolerance: gridSize)
+        let manual = snappedPolygon.isDisjoint(with: snappedPoint)
+        #expect(withParam == manual)
+
+        let withParamOutside = polygon.isDisjoint(with: outside, gridSize: gridSize)
+        let snappedOutside = outside.snappedToGrid(tolerance: gridSize)
+        let manualOutside = snappedPolygon.isDisjoint(with: snappedOutside)
+        #expect(withParamOutside == manualOutside)
+    }
+
     // MARK: - Antimeridian
 
     @Test

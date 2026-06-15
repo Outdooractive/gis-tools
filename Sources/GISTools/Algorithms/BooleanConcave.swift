@@ -12,13 +12,16 @@ extension GeoJson {
     ///
     /// Non-polygon geometries return `false`.
     ///
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     /// - Returns: `true` if the geometry is a concave polygon, `false` otherwise.
-    public func isConcave() -> Bool {
-        if let fc = self as? FeatureCollection {
-            return fc.features.contains { $0.isConcave() }
+    public func isConcave(gridSize: Double? = nil) -> Bool {
+        let geoJson = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+
+        if let fc = geoJson as? FeatureCollection {
+            return fc.features.contains { $0.isConcave(gridSize: nil) }
         }
 
-        let geom: GeoJson = (self as? Feature)?.geometry ?? self
+        let geom: GeoJson = (geoJson as? Feature)?.geometry ?? geoJson
 
         guard let polygonGeometry = geom as? PolygonGeometry else { return false }
 

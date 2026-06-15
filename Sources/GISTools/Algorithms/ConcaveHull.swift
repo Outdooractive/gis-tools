@@ -16,10 +16,12 @@ extension GeoJson {
     ///
     /// - Parameter maxEdgeLength: The maximum edge length in meters for
     ///   a triangle to be included in the hull
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     ///
     /// - Returns: A `MultiPolygon` representing the concave hull
-    public func concaveHull(maxEdgeLength: CLLocationDistance) -> MultiPolygon? {
-        let coords = allCoordinates
+    public func concaveHull(maxEdgeLength: CLLocationDistance, gridSize: Double? = nil) -> MultiPolygon? {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let coords = snappedSelf.allCoordinates
         let unique = Set(coords)
         guard unique.count >= 3 else { return nil }
 

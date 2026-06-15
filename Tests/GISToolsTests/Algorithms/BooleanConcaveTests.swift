@@ -158,6 +158,27 @@ struct BooleanConcaveTests {
         #expect(!fc.isConcave())
     }
 
+    // MARK: - gridSize
+
+    // Validates that `isConcave(gridSize:)` matches manual pre-snapping.
+    @Test
+    func concaveWithGridSize() async throws {
+        let lShape = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 1.0001, longitude: 2.0001),
+            Coordinate3D(latitude: 1.0001, longitude: 1.0001),
+            Coordinate3D(latitude: 2.0001, longitude: 1.0001),
+            Coordinate3D(latitude: 2.0001, longitude: 0.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = lShape.isConcave(gridSize: gridSize)
+        let snapped = lShape.snappedToGrid(tolerance: gridSize)
+        let manual = snapped.isConcave()
+        #expect(withParam == manual)
+    }
+
     // MARK: - Antimeridian crossing
 
     @Test

@@ -24,36 +24,40 @@ extension LineSegment {
     /// - Parameters:
     /// - Parameter other: The other *LineSegment*
     /// - Parameter tolerance: The tolerance, in meters
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: A ``LineSegmentComparisonResult`` indicating how the segments relate.
     public func compare(
         _ other: LineSegment,
-        tolerance: CLLocationDistance = 0.0
+        tolerance: CLLocationDistance = 0.0,
+        gridSize: Double? = nil
     ) -> LineSegmentComparisonResult {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
         let tolerance = abs(tolerance)
 
-        if (first == other.first && second == other.second)
-            || (first == other.second && second == other.first)
+        if (snappedSelf.first == other.first && snappedSelf.second == other.second)
+            || (snappedSelf.first == other.second && snappedSelf.second == other.first)
         {
             return .equal
         }
         else if tolerance == 0.0 {
-            if other.checkIsOnSegment(first), other.checkIsOnSegment(second) {
+            if other.checkIsOnSegment(snappedSelf.first), other.checkIsOnSegment(snappedSelf.second) {
                 return .thisOnOther
             }
-            else if checkIsOnSegment(other.first), checkIsOnSegment(other.second) {
+            else if snappedSelf.checkIsOnSegment(other.first), snappedSelf.checkIsOnSegment(other.second) {
                 return .otherOnThis
             }
         }
         else if tolerance > 0.0 {
-            if other.nearestCoordinateOnSegment(from: first).distance <= tolerance,
-               other.nearestCoordinateOnSegment(from: second).distance <= tolerance
+            if other.nearestCoordinateOnSegment(from: snappedSelf.first).distance <= tolerance,
+               other.nearestCoordinateOnSegment(from: snappedSelf.second).distance <= tolerance
             {
                 return .thisOnOther
             }
-            else if nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
-                    nearestCoordinateOnSegment(from: other.second).distance <= tolerance
+            else if snappedSelf.nearestCoordinateOnSegment(from: other.first).distance <= tolerance,
+                    snappedSelf.nearestCoordinateOnSegment(from: other.second).distance <= tolerance
             {
                 return .otherOnThis
             }
@@ -71,24 +75,28 @@ extension GeoJson {
     /// - Parameters:
     /// - Parameter other: The other geometry
     /// - Parameter tolerance: The tolerance, in meters
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     ///
     /// - Returns: An array of overlapping line segments.
     public func overlappingSegments(
         with other: GeoJson,
-        tolerance: CLLocationDistance = 0.0
+        tolerance: CLLocationDistance = 0.0,
+        gridSize: Double? = nil
     ) -> [LineSegment] {
-        let other = other.projected(to: projection)
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
+        let other = snappedOther.projected(to: snappedSelf.projection)
         let tolerance = abs(tolerance)
 
         var result: [LineSegment] = []
 
-        let tree: RTree<LineSegment> = RTree(lineSegments)
+        let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
 
         for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
             for match in tree.search(inBoundingBox: boundingBox) {
-                let comparison = segment.compare(match, tolerance: tolerance)
+                let comparison = segment.compare(match, tolerance: tolerance, gridSize: nil)
 
                 if comparison == .equal {
                     result.append(segment)
@@ -115,21 +123,24 @@ extension GeoJson {
     ///
     /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only return segments that *exactly* overlap.
     /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     ///
     /// - Returns: All segments that at least overlap with one other segment. Each segment will
     ///            appear in the result only once.
     public func overlappingSegments(
         tolerance: CLLocationDistance,
-        segmentLength: Double? = nil
+        segmentLength: Double? = nil,
+        gridSize: Double? = nil
     ) -> MultiLineString? {
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let tolerance = abs(tolerance)
         let distanceFunction = FrechetDistanceFunction.haversine
 
         guard let line = if let segmentLength, segmentLength > 0.0 {
-            LineString(lineSegments)?.evenlyDivided(segmentLength: segmentLength)
+            LineString(snappedSelf.lineSegments)?.evenlyDivided(segmentLength: segmentLength)
         }
         else {
-            LineString(lineSegments)
+            LineString(snappedSelf.lineSegments)
         }
         else {
             return nil
@@ -223,13 +234,15 @@ extension GeoJson {
     ///
     /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
     /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     ///
     /// - Returns: The length of all segments that overlap within `tolerance`.
     public func estimatedOverlap(
         tolerance: CLLocationDistance,
-        segmentLength: Double? = nil
+        segmentLength: Double? = nil,
+        gridSize: Double? = nil
     ) -> Double {
-        guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength) else { return 0.0 }
+        guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength, gridSize: gridSize) else { return 0.0 }
 
         return result.length
     }

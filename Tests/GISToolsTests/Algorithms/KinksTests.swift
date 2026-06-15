@@ -99,6 +99,26 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `kinks(gridSize:)` matches manual pre-snapping.
+    @Test
+    func kinksWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = polygon.kinks(gridSize: gridSize)
+        let snapped = polygon.snappedToGrid(tolerance: gridSize)
+        let manual = snapped.kinks()
+        #expect(withParam.points.count == manual.points.count)
+    }
+
     // MARK: - Antimeridian
 
     @Test

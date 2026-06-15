@@ -77,6 +77,27 @@ struct PoleOfInaccessibilityTests {
         #expect(polygon.poleOfInaccessibility() == nil)
     }
 
+    // MARK: - gridSize
+
+    // Validates that `poleOfInaccessibility(gridSize:)` matches manual pre-snapping.
+    @Test
+    func poleWithGridSize() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let gridSize = 0.001
+
+        let withParam = try #require(polygon.poleOfInaccessibility(gridSize: gridSize))
+        let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
+        let manual = try #require(snappedPolygon.poleOfInaccessibility())
+        #expect(abs(withParam.coordinate.latitude - manual.coordinate.latitude) < 1e-10)
+        #expect(abs(withParam.coordinate.longitude - manual.coordinate.longitude) < 1e-10)
+    }
+
     // MARK: - Antimeridian
 
     @Test
