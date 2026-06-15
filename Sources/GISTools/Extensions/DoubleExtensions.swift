@@ -57,7 +57,60 @@ extension Double {
 
 }
 
-#if EnableConversionExtensions
+#if EnableMeasurementConversionExtensions
+
+extension Double {
+
+    /// The value as a measurement in millimeters.
+    public var millimeters: Measurement<UnitLength> {
+        Measurement(value: self, unit: .millimeters)
+    }
+
+    /// The value as a measurement in centimeters.
+    public var centimeters: Measurement<UnitLength> {
+        Measurement(value: self, unit: .centimeters)
+    }
+
+    /// The value as a measurement in meters.
+    public var meters: Measurement<UnitLength> {
+        Measurement(value: self, unit: .meters)
+    }
+
+    /// The value as a measurement in kilometers.
+    public var kilometers: Measurement<UnitLength> {
+        Measurement(value: self, unit: .kilometers)
+    }
+
+    /// The value as a measurement in inches.
+    public var inches: Measurement<UnitLength> {
+        Measurement(value: self, unit: .inches)
+    }
+
+    /// The value as a measurement in feet.
+    public var feet: Measurement<UnitLength> {
+        Measurement(value: self, unit: .feet)
+    }
+
+    /// The value as a measurement in yards.
+    public var yards: Measurement<UnitLength> {
+        Measurement(value: self, unit: .yards)
+    }
+
+    /// The value as a measurement in miles.
+    public var miles: Measurement<UnitLength> {
+        Measurement(value: self, unit: .miles)
+    }
+
+    /// The value as a measurement in nautical miles.
+    public var nauticalMiles: Measurement<UnitLength> {
+        Measurement(value: self, unit: .nauticalMiles)
+    }
+
+}
+
+#endif
+
+#if EnableMeterConversionExtensions
 
 extension Double {
 

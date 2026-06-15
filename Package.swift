@@ -16,7 +16,8 @@ let package = Package(
             targets: ["GISTools"]),
     ],
     traits: [
-        .trait(name: "EnableConversionExtensions"),
+        .trait(name: "EnableMeterConversionExtensions"),
+        .trait(name: "EnableMeasurementConversionExtensions"),
     ],
     dependencies: [],
     targets: [
