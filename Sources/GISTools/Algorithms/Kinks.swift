@@ -90,6 +90,18 @@ extension Polygon {
         Self.unkinkPolygons(from: [self], epsilon: epsilon)
     }
 
+    /// Splits a self-intersecting polygon in place.
+    ///
+    /// Replaces `self` with the first polygon from the unkinked result.
+    ///
+    /// - Parameter epsilon: Tolerance for intersection detection.
+    public mutating func unkink(epsilon: Double = 1e-10) {
+        let result = unkinked(epsilon: epsilon)
+        if let first = result.first {
+            self = first
+        }
+    }
+
 }
 
 extension MultiPolygon {
@@ -100,6 +112,18 @@ extension MultiPolygon {
     /// - Returns: An array of simple polygons.
     public func unkinked(epsilon: Double = 1e-10) -> [Polygon] {
         Polygon.unkinkPolygons(from: polygons, epsilon: epsilon)
+    }
+
+    /// Splits all self-intersecting polygons in place.
+    ///
+    /// Replaces `self` with a new multi-polygon built from the unkinked result.
+    ///
+    /// - Parameter epsilon: Tolerance for intersection detection.
+    public mutating func unkink(epsilon: Double = 1e-10) {
+        let result = unkinked(epsilon: epsilon)
+        if let multi = MultiPolygon(result) {
+            self = multi
+        }
     }
 
 }
