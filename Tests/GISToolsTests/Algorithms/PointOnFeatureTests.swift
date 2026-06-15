@@ -90,8 +90,7 @@ struct PointOnFeatureTests {
         let withParam = try #require(polygon.coordinateOnFeature(gridSize: gridSize))
         let snapped = polygon.snappedToGrid(tolerance: gridSize)
         let manual = try #require(snapped.coordinateOnFeature)
-        #expect(withParam.latitude.isFinite)
-        #expect(withParam.longitude.isFinite)
+        #expect(withParam == manual)
     }
 
     // MARK: - Antimeridian

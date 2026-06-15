@@ -16,7 +16,7 @@ extension Polygon {
     /// - Parameter gridSize: An optional grid size for snapping inputs
     /// - Returns: The pole point, or `nil` if no outer ring exists.
     public func poleOfInaccessibility(precision: Double = 1.0, gridSize: Double? = nil) -> Point? {
-        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) as! Polygon } ?? self
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
         guard let outerRing = snappedSelf.outerRing else { return nil }
 

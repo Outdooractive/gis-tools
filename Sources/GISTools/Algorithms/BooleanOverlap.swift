@@ -20,8 +20,8 @@ extension PointGeometry {
         tolerance: CLLocationDegrees = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
-        let snappedSelf = gridSize.map { (self as! GeoJson).snappedToGrid(tolerance: $0) as! PointGeometry } ?? self
-        let snappedOther = gridSize.map { (other as! GeoJson).snappedToGrid(tolerance: $0) as! PointGeometry } ?? other
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
         let other = snappedOther.projected(to: snappedSelf.projection)
 
         guard !snappedSelf.isEqualTo(other) else { return false }
@@ -65,8 +65,8 @@ extension LineStringGeometry {
         tolerance: CLLocationDegrees = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
-        let snappedSelf = gridSize.map { (self as! GeoJson).snappedToGrid(tolerance: $0) as! LineStringGeometry } ?? self
-        let snappedOther = gridSize.map { (other as! GeoJson).snappedToGrid(tolerance: $0) as! LineStringGeometry } ?? other
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
         let other = snappedOther.projected(to: snappedSelf.projection)
 
         guard !snappedSelf.isEqualTo(other) else { return false }
@@ -103,8 +103,8 @@ extension PolygonGeometry {
         tolerance: CLLocationDegrees = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
-        let snappedSelf = gridSize.map { (self as! GeoJson).snappedToGrid(tolerance: $0) as! PolygonGeometry } ?? self
-        let snappedOther = gridSize.map { (other as! GeoJson).snappedToGrid(tolerance: $0) as! PolygonGeometry } ?? other
+        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
         let other = snappedOther.projected(to: snappedSelf.projection)
 
         guard !snappedSelf.isEqualTo(other) else { return false }

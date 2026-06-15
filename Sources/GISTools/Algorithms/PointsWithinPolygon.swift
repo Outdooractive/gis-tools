@@ -13,7 +13,7 @@ extension PolygonGeometry {
         guard let gridSize else {
             return coordinates.filter { contains($0, ignoringBoundary: false, gridSize: nil) }
         }
-        let snappedSelf = (self as! GeoJson).snappedToGrid(tolerance: gridSize) as! PolygonGeometry
+        let snappedSelf = self.snappedToGrid(tolerance: gridSize)
         return coordinates.filter { snappedSelf.contains($0.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
     }
 
@@ -23,7 +23,7 @@ extension PolygonGeometry {
         guard let gridSize else {
             return points.filter { contains($0.coordinate, ignoringBoundary: false, gridSize: nil) }
         }
-        let snappedSelf = (self as! GeoJson).snappedToGrid(tolerance: gridSize) as! PolygonGeometry
+        let snappedSelf = self.snappedToGrid(tolerance: gridSize)
         return points.filter { snappedSelf.contains($0.coordinate.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
     }
 
