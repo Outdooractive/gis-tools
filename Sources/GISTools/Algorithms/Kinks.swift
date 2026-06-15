@@ -84,19 +84,29 @@ extension Polygon {
 
     /// Splits a self-intersecting polygon into an array of simple (non-self-intersecting) polygons.
     ///
-    /// - Parameter epsilon: Tolerance for intersection detection.
+    /// - Parameters:
+    ///    - epsilon: Tolerance for intersection detection.
+    ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: An array of simple polygons.
-    public func unkinked(epsilon: Double = 1e-10) -> [Polygon] {
-        Self.unkinkPolygons(from: [self], epsilon: epsilon)
+    public func unkinked(
+        epsilon: Double = 1e-10,
+        gridSize: Double? = nil
+    ) -> [Polygon] {
+        Self.unkinkPolygons(from: [self], epsilon: epsilon, gridSize: gridSize)
     }
 
     /// Splits a self-intersecting polygon in place.
     ///
     /// Replaces `self` with the first polygon from the unkinked result.
     ///
-    /// - Parameter epsilon: Tolerance for intersection detection.
-    public mutating func unkink(epsilon: Double = 1e-10) {
-        let result = unkinked(epsilon: epsilon)
+    /// - Parameters:
+    ///    - epsilon: Tolerance for intersection detection.
+    ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    public mutating func unkink(
+        epsilon: Double = 1e-10,
+        gridSize: Double? = nil
+    ) {
+        let result = unkinked(epsilon: epsilon, gridSize: gridSize)
         if let first = result.first {
             self = first
         }
@@ -108,19 +118,29 @@ extension MultiPolygon {
 
     /// Splits all self-intersecting polygons into an array of simple (non-self-intersecting) polygons.
     ///
-    /// - Parameter epsilon: Tolerance for intersection detection.
+    /// - Parameters:
+    ///    - epsilon: Tolerance for intersection detection.
+    ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: An array of simple polygons.
-    public func unkinked(epsilon: Double = 1e-10) -> [Polygon] {
-        Polygon.unkinkPolygons(from: polygons, epsilon: epsilon)
+    public func unkinked(
+        epsilon: Double = 1e-10,
+        gridSize: Double? = nil
+    ) -> [Polygon] {
+        Polygon.unkinkPolygons(from: polygons, epsilon: epsilon, gridSize: gridSize)
     }
 
     /// Splits all self-intersecting polygons in place.
     ///
     /// Replaces `self` with a new multi-polygon built from the unkinked result.
     ///
-    /// - Parameter epsilon: Tolerance for intersection detection.
-    public mutating func unkink(epsilon: Double = 1e-10) {
-        let result = unkinked(epsilon: epsilon)
+    /// - Parameters:
+    ///    - epsilon: Tolerance for intersection detection.
+    ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    public mutating func unkink(
+        epsilon: Double = 1e-10,
+        gridSize: Double? = nil
+    ) {
+        let result = unkinked(epsilon: epsilon, gridSize: gridSize)
         if let multi = MultiPolygon(result) {
             self = multi
         }
@@ -159,7 +179,8 @@ extension Polygon {
 
     fileprivate static func unkinkPolygons(
         from polygons: [Polygon],
-        epsilon: Double
+        epsilon: Double,
+        gridSize: Double? = nil
     ) -> [Polygon] {
         // 1. Collect all rings
         var allRings: [(coords: [Coordinate3D], polyIndex: Int, isOuter: Bool)] = []
@@ -180,6 +201,10 @@ extension Polygon {
             var coords = entry.coords
             if coords.first != coords.last {
                 coords.append(coords.first!)
+            }
+            // Snap to grid if requested
+            if let gridSize {
+                coords = coords.map { $0.snappedToGrid(tolerance: gridSize) }
             }
             closedRingCoords.append(coords)
         }
