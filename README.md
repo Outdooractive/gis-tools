@@ -19,6 +19,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports `Codable` and `SwiftData` (see below)
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
 - Supports WKT/WKB/TWKB, also with different projections
+- Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -54,7 +55,9 @@ targets: [
 
 ## Package Traits
 
-This package provides two mutually exclusive traits that control how the conversion properties on `Double` and `Int` behave:
+This package provides the following optional traits:
+
+**Unit conversion traits** (mutually exclusive):
 - `EnableMeasurementConversionExtensions` — conversion properties return `Measurement<UnitLength>` values, enabling unit-aware arithmetic and formatting.
 - `EnableMeterConversionExtensions` — conversion properties return raw `Double` meters, providing a lightweight alternative.
 
@@ -67,6 +70,9 @@ let total = distance + 500.0.feet  // Measurement arithmetic
 let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
+
+**Shapefile support trait** (enabled by default):
+- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`. Disable with `--traits \!EnableShapefileSupport`.
 
 ## Usage
 
@@ -878,6 +884,43 @@ Provides an encoder/decoder for Polylines.
 let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline()
 let coordinates = polyline.decodePolyline()
 ```
+
+# Shapefile (.shp / .dbf / .shx / .prj)
+
+Provides read/write support for the ESRI Shapefile format. `FeatureCollection` has convenience methods to read and write Shapefiles.
+
+The Shapefile reader handles Point, PolyLine, Polygon, MultiPoint, and MultiPatch geometry types, including Z (altitude) and M (measure) variants. Attributes are mapped to and from `Feature.properties` via the companion `.dbf` file. The `.prj` file is read to determine the source projection. The `.shx` index file is written for compatibility with tools that require it.
+
+> [!NOTE]
+> Shapefile support is enabled by default via the `EnableShapefileSupport` package trait. Disable it with `--traits \!EnableShapefileSupport` to reduce the library's footprint.
+
+## Reading
+
+```swift
+// Read from a base URL (looks for .shp, .dbf, .prj):
+let fc = try ShapefileCoder.read(from: url)
+
+// Or via the convenience initializer:
+let fc = FeatureCollection(shapefile: url)
+```
+
+The source projection is determined from the `.prj` file. If no `.prj` file is present, EPSG:4326 is assumed.
+
+## Writing
+
+```swift
+// Write to a base URL (creates .shp, .dbf, .shx, .prj):
+try ShapefileCoder.write(fc, to: url)
+
+// Or via the convenience method:
+try fc.writeShapefile(to: url)
+```
+
+The output projection is taken from the `FeatureCollection`'s `projection` property.
+
+## MultiPatch support
+
+MultiPatch (type 31) geometries are decomposed into individual `Polygon` parts and wrapped in a `GeometryCollection`. Triangle strips and triangle fans are converted to triangle polygons.
 
 # Algorithms
 Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.<br>
