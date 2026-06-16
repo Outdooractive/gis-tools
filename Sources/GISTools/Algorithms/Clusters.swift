@@ -12,6 +12,9 @@ extension FeatureCollection {
 
     /// Clusters points using the DBSCAN algorithm.
     ///
+    /// Uses an R-tree spatial index for O(n log n) neighbourhood queries.
+    /// Without the optimised indexing the underlying algorithm is O(n²).
+    ///
     /// - Parameter maxDistance: Maximum distance between points in a cluster (meters).
     /// - Parameter minPoints: Minimum points to form a cluster (default 3).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `dbscan`
@@ -23,6 +26,13 @@ extension FeatureCollection {
         var features = self.features
         let count = features.count
         guard count > 0 else { return self }
+
+        // Build spatial index for O(n log n) neighbourhood queries
+        let indexed: [DBSCANIndexedPoint] = features.enumerated().compactMap { (i, f) in
+            guard let p = f.geometry as? Point else { return nil }
+            return DBSCANIndexedPoint(index: i, point: p)
+        }
+        let tree = RTree(indexed, nodeSize: 16)
 
         var visited = Array(repeating: false, count: count)
         var assigned = Array(repeating: false, count: count)
@@ -37,7 +47,8 @@ extension FeatureCollection {
             let neighbors = regionQuery(
                 features: features,
                 index: i,
-                maxDistance: maxDistance)
+                maxDistance: maxDistance,
+                tree: tree)
 
             if neighbors.count >= minPoints {
                 let clusterId = nextClusterId
@@ -51,7 +62,8 @@ extension FeatureCollection {
                     clusterIds: &clusterIds,
                     isNoise: &isNoise,
                     maxDistance: maxDistance,
-                    minPoints: minPoints)
+                    minPoints: minPoints,
+                    tree: tree)
             }
             else {
                 isNoise[i] = true
@@ -79,11 +91,20 @@ extension FeatureCollection {
 
     /// Clusters points using the K-means algorithm.
     ///
+    /// Runtime is O(k·n·i) where k = number of clusters, n = point count,
+    /// and i = iterations (capped at 100, typically converges in <10).
+    ///
     /// - Parameter numberOfClusters: Number of clusters (default `sqrt(n/2)`).
+    /// - Parameter weightAttribute: Property key for point weights (optional).
+    ///   When set, centroids are computed as the weighted mean, matching
+    ///   PostGIS's `ST_ClusterKMeans` behaviour.
+    /// - Parameter seedIndex: Index used to seed the initial centroids (default `0`).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `centroid`
     ///   ([Double]) properties on each point.
     public func kmeansClusters(
-        numberOfClusters: Int? = nil
+        numberOfClusters: Int? = nil,
+        weightAttribute: String? = nil,
+        seedIndex: Int = 0
     ) -> FeatureCollection {
         var features = self.features
         let count = features.count
@@ -102,15 +123,31 @@ extension FeatureCollection {
               k <= count
         else { return self }
 
-        // Initialize centroids from first k points
-        var centroids = Array(coords.prefix(k))
+        // Read weights if weightAttribute is provided
+        let weights: [Double]
+        if let weightAttribute {
+            weights = features.map { feature in
+                let v = feature.properties[weightAttribute]
+                if let d = v as? Double { return d }
+                if let i = v as? Int { return Double(i) }
+                return 1.0
+            }
+        }
+        else {
+            weights = Array(repeating: 1.0, count: count)
+        }
+
+        // Initialize centroids from seedIndex
+        let start = min(seedIndex, count - k)
+        var centroids = (start..<(start + k)).map { coords[$0] }
 
         // K-means iterations
         let maxIter = 100
         for _ in 0..<maxIter {
-            // Assign each point to nearest centroid
-            var clusters: [[Coordinate3D]] = Array(repeating: [], count: k)
-            for coord in coords {
+            // Assign each point to nearest centroid, tracking indices
+            var clusterIndices: [[Int]] = Array(repeating: [], count: k)
+            for i in 0..<count {
+                let coord = coords[i]
                 var best = 0
                 var bestDist = Double.greatestFiniteMagnitude
                 for j in 0..<k {
@@ -120,19 +157,31 @@ extension FeatureCollection {
                         best = j
                     }
                 }
-                clusters[best].append(coord)
+                clusterIndices[best].append(i)
             }
 
-            // Recompute centroids
+            // Recompute centroids (weighted if weightAttribute is provided)
             var changed = false
             for j in 0..<k {
-                guard !clusters[j].isEmpty else { continue }
+                let indices = clusterIndices[j]
+                guard !indices.isEmpty else { continue }
 
-                let sumLat = clusters[j].reduce(0.0) { $0 + $1.latitude }
-                let sumLon = clusters[j].reduce(0.0) { $0 + $1.longitude }
+                var weightSum: Double = 0.0
+                var sumLat: Double = 0.0
+                var sumLon: Double = 0.0
+                for i in indices {
+                    let w = max(weights[i], 0.0)
+                    let coord = coords[i]
+                    weightSum += w
+                    sumLat += w * coord.latitude
+                    sumLon += w * coord.longitude
+                }
+
+                guard weightSum > 0 else { continue }
+
                 let newCentroid = Coordinate3D(
-                    latitude: sumLat / Double(clusters[j].count),
-                    longitude: sumLon / Double(clusters[j].count))
+                    latitude: sumLat / weightSum,
+                    longitude: sumLon / weightSum)
                 if centroids[j].latitude != newCentroid.latitude
                     || centroids[j].longitude != newCentroid.longitude
                 {
@@ -173,34 +222,37 @@ extension FeatureCollection {
     private func regionQuery(
         features: [Feature],
         index: Int,
-        maxDistance: CLLocationDistance
+        maxDistance: CLLocationDistance,
+        tree: RTree<DBSCANIndexedPoint>
     ) -> [Int] {
         guard let point = features[index].geometry as? Point else { return [] }
 
         let center = point.coordinate
 
-        // Approximate bounds: 1 degree ≈ 111 km at equator
-        let delta = maxDistance / 111_000.0
+        let delta: Double
+        switch center.projection {
+        case .epsg4326:
+            delta = maxDistance / 111_000.0
+        case .epsg3857, .epsg4978, .noSRID:
+            delta = maxDistance
+        }
         let bbox = BoundingBox(
             southWest: Coordinate3D(
-                latitude: center.latitude - delta,
-                longitude: center.longitude - delta),
+                x: center.longitude - delta,
+                y: center.latitude - delta,
+                projection: center.projection),
             northEast: Coordinate3D(
-                latitude: center.latitude + delta,
-                longitude: center.longitude + delta))
+                x: center.longitude + delta,
+                y: center.latitude + delta,
+                projection: center.projection))
 
         var result: [Int] = []
-        for i in 0..<features.count {
-            guard i != index,
-                  let neighbor = features[i].geometry as? Point
-            else { continue }
-
-            let neighborCoord = neighbor.coordinate
-            if bbox.contains(neighborCoord) {
-                let d = center.distance(from: neighborCoord)
-                if d <= maxDistance {
-                    result.append(i)
-                }
+        for candidate in tree.search(inBoundingBox: bbox) {
+            let i = candidate.index
+            guard i != index else { continue }
+            let d = center.distance(from: candidate.point.coordinate)
+            if d <= maxDistance {
+                result.append(i)
             }
         }
         return result
@@ -215,7 +267,8 @@ extension FeatureCollection {
         clusterIds: inout [Int],
         isNoise: inout [Bool],
         maxDistance: CLLocationDistance,
-        minPoints: Int
+        minPoints: Int,
+        tree: RTree<DBSCANIndexedPoint>
     ) {
         var queue = neighbors
         var idx = 0
@@ -228,7 +281,8 @@ extension FeatureCollection {
                 let nextNeighbors = regionQuery(
                     features: features,
                     index: neighborIndex,
-                    maxDistance: maxDistance)
+                    maxDistance: maxDistance,
+                    tree: tree)
                 if nextNeighbors.count >= minPoints,
                    isNoise[neighborIndex]
                 {
@@ -244,4 +298,30 @@ extension FeatureCollection {
         }
     }
 
+}
+
+// MARK: - R-tree helper for DBSCAN
+
+private struct DBSCANIndexedPoint: BoundingBoxRepresentable {
+    let index: Int
+    let point: Point
+
+    var projection: Projection { point.projection }
+
+    var boundingBox: BoundingBox? {
+        get { point.boundingBox ?? point.calculateBoundingBox() }
+        set {}
+    }
+
+    func calculateBoundingBox() -> BoundingBox? {
+        point.calculateBoundingBox()
+    }
+
+    mutating func updateBoundingBox(onlyIfNecessary: Bool) -> BoundingBox? {
+        point.calculateBoundingBox()
+    }
+
+    func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        point.intersects(otherBoundingBox)
+    }
 }

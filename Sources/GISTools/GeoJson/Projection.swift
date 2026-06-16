@@ -13,6 +13,8 @@ public enum Projection:
     case epsg3857 = 3857
     /// EPSG:4326 - geodetic (https://epsg.io/4326).
     case epsg4326 = 4326
+    /// EPSG:4978 - geocentric (ECEF) (https://epsg.io/4978).
+    case epsg4978 = 4978
 
     /// Initialize a Projection with a SRID number.
     ///
@@ -25,6 +27,7 @@ public enum Projection:
         case 0: self = .noSRID
         case 102_100, 102_113, 900_913, 3587, 3785, 3857, 41001, 54004: self = .epsg3857
         case 4326: self = .epsg4326
+        case 4978: self = .epsg4978
         default: return nil
         }
     }
@@ -32,14 +35,18 @@ public enum Projection:
     /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
     ///
     /// Matches common patterns for the supported projections:
-    /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
     /// - EPSG:3857 — `PROJCS["...Mercator..."...]`
+    /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
+    /// - EPSG:4978 — `GEOCCS["...WGS 84..."...]` or `GEOCCS["...WGS_1984..."...]`
     ///
     /// - Parameter wkt: A WKT projection string
     /// - Returns: A `Projection`, or `nil` if the string is not recognised
     public init?(wkt: String) {
         if wkt.contains("PROJCS") && wkt.contains("Mercator") {
             self = .epsg3857
+        }
+        else if wkt.contains("GEOCCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
+            self = .epsg4978
         }
         else if wkt.contains("GEOGCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
             self = .epsg4326
@@ -60,6 +67,7 @@ public enum Projection:
         case .noSRID: return "No SRID"
         case .epsg3857: return "EPSG:3857"
         case .epsg4326: return "EPSG:4326"
+        case .epsg4978: return "EPSG:4978"
         }
     }
 

@@ -16,7 +16,7 @@ extension Coordinate3D {
         switch projection {
         case .epsg4326:
             return _rhumbDistance(from: other.projected(to: .epsg4326))
-        case .epsg3857:
+        case .epsg3857, .epsg4978:
             // TODO: This can be improved
             return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
         case .noSRID:

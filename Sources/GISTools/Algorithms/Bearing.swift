@@ -20,7 +20,7 @@ extension Coordinate3D {
         switch projection {
         case .epsg4326:
             return _bearing(to: other.projected(to: .epsg4326), final: final)
-        case .epsg3857:
+        case .epsg3857, .epsg4978:
             return projected(to: .epsg4326)._bearing(to: other.projected(to: .epsg4326), final: final)
         case .noSRID:
             let dx = other.longitude - longitude

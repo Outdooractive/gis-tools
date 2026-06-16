@@ -346,6 +346,27 @@ extension Feature {
         set { self["fill-opacity"] = newValue }
     }
 
+    /// The marker color (hex string, e.g. `"#e6194b"`), stored under the `"marker-color"` property key.
+    /// Used by geojson.io and MapLibre for point symbol colours.
+    public var markerColor: String? {
+        get { self["marker-color"] }
+        set { self["marker-color"] = newValue }
+    }
+
+    /// The marker size (`"small"`, `"medium"`, or `"large"`), stored under the `"marker-size"` property key.
+    /// Used by geojson.io and MapLibre for point symbol sizing.
+    public var markerSize: String? {
+        get { self["marker-size"] }
+        set { self["marker-size"] = newValue }
+    }
+
+    /// The marker symbol (a [Maki](https://labs.mapbox.com/maki-icons/) icon name, e.g. `"airport"`, `"cafe"`, `"hospital"`),
+    /// stored under the `"marker-symbol"` property key. Used by geojson.io and MapLibre for point iconography.
+    public var markerSymbol: String? {
+        get { self["marker-symbol"] }
+        set { self["marker-symbol"] = newValue }
+    }
+
     /// The stroke color (hex string, e.g. `"#312E81"`), stored under the `"stroke"` property key.
     /// Used by geojson.io and MapLibre for line/polygon outlines.
     public var stroke: String? {

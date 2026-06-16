@@ -24,6 +24,8 @@ extension Coordinate3D {
             return _rhumbDestination(distance: distance, bearing: bearing)
         case .epsg3857:
             return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: .epsg3857)
+        case .epsg4978:
+            return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: .epsg4978)
         case .noSRID:
             let theta = bearing.degreesToRadians
             return Coordinate3D(

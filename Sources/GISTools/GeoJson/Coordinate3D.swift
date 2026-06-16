@@ -230,11 +230,9 @@ extension Coordinate3D {
         let isNorth = hemisphere.uppercased() == "N"
 
         // WGS84 ellipsoid constants
-        let a: Double = 6_378_137.0 // semi-major axis
-        let f: Double = 1.0 / 298.257223563 // flattening
-        let b: Double = a * (1.0 - f) // semi-minor axis
-        let e: Double = sqrt(1.0 - (b * b) / (a * a))
-        let e1sq: Double = (e * e) / (1.0 - e * e)
+        let a = GISTool.equatorialRadius
+        let e2 = GISTool.wgs84EccentricitySquared
+        let e1sq = e2 / (1.0 - e2)
         let k0: Double = 0.9996
 
         let falseEasting: Double = 500_000.0
@@ -244,9 +242,9 @@ extension Coordinate3D {
         let y = northing - falseNorthing
 
         let M = y / k0
-        let mu = M / (a * (1.0 - e * e / 4.0 - 3.0 * e * e * e * e / 64.0 - 5.0 * pow(e, 6) / 256.0))
+        let mu = M / (a * (1.0 - e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * pow(e2, 3) / 256.0))
 
-        let e1 = (1.0 - sqrt(1.0 - e * e)) / (1.0 + sqrt(1.0 - e * e))
+        let e1 = (1.0 - sqrt(1.0 - e2)) / (1.0 + sqrt(1.0 - e2))
 
         let phi1 = mu
             + (3.0 * e1 / 2.0 - 27.0 * pow(e1, 3) / 32.0) * sin(2.0 * mu)
@@ -254,10 +252,10 @@ extension Coordinate3D {
             + (151.0 * pow(e1, 3) / 96.0) * sin(6.0 * mu)
             + (1097.0 * pow(e1, 4) / 512.0) * sin(8.0 * mu)
 
-        let N1 = a / sqrt(1.0 - e * e * sin(phi1) * sin(phi1))
+        let N1 = a / sqrt(1.0 - e2 * sin(phi1) * sin(phi1))
         let T1 = tan(phi1) * tan(phi1)
         let C1 = e1sq * cos(phi1) * cos(phi1)
-        let R1 = a * (1.0 - e * e) / pow(1.0 - e * e * sin(phi1) * sin(phi1), 1.5)
+        let R1 = a * (1.0 - e2) / pow(1.0 - e2 * sin(phi1) * sin(phi1), 1.5)
         let D = x / (N1 * k0)
 
         let lat1 = N1 * tan(phi1) / R1
@@ -379,18 +377,23 @@ extension Coordinate3D {
         return self.equals(other: other, includingAltitude: false)
     }
 
-    /// Clamped to [-180.0, 180.0].
+    /// Normalize this coordinate in place (no-op for Cartesian projections).
     public mutating func normalize() {
         self = self.normalized()
     }
 
-    /// Clamped to [-180.0, 180.0].
+    /// Normalize this coordinate.
     ///
-    /// - Returns: A copy with longitude normalized to the [-180, 180] range
+    /// For EPSG:4326 and EPSG:3857, clamps the longitude to the valid range.
+    /// For EPSG:4978 (ECEF) this is a no-op.
+    ///
+    /// - Returns: A copy with longitude normalized to the valid range
     public func normalized() -> Coordinate3D {
         switch projection {
         case .epsg3857:
-            guard longitude < -GISTool.originShift || longitude > GISTool.originShift else { return self }
+            guard longitude < -GISTool.originShift
+                    || longitude > GISTool.originShift
+            else { return self }
 
             var longitude = self.longitude
             while longitude < -GISTool.originShift { longitude += (2.0 * GISTool.originShift) }
@@ -399,7 +402,9 @@ extension Coordinate3D {
             return Coordinate3D(x: longitude, y: latitude, z: altitude, m: m)
 
         case .epsg4326:
-            guard longitude < -180.0 || longitude > 180.0 else { return self }
+            guard longitude < -180.0
+                    || longitude > 180.0
+            else { return self }
 
             var longitude = self.longitude
             while longitude < -180.0 { longitude += 360.0 }
@@ -412,12 +417,15 @@ extension Coordinate3D {
         }
     }
 
-    /// Clamped to [[-180,-90], [180,90]]
+    /// Clamped to [[-180,-90], [180,90]]  (no-op for Cartesian projections).
     public mutating func clamp() {
         self = self.clamped()
     }
 
     /// Clamped to [[-180,-90], [180,90]].
+    ///
+    /// For EPSG:4326 and EPSG:3857, clamps the longitude to the valid range.
+    /// For EPSG:4978 (ECEF) this is a no-op.
     ///
     /// - Returns: A copy clamped to the valid coordinate range
     public func clamped() -> Coordinate3D {
@@ -475,6 +483,8 @@ extension Coordinate3D: Projectable {
                     z: altitude,
                     m: m,
                     projection: newProjection)
+            case .epsg4978:
+                return projected(to: .epsg4326).projected(to: .epsg3857)
             }
 
         case .epsg4326:
@@ -488,6 +498,22 @@ extension Coordinate3D: Projectable {
                     z: altitude,
                     m: m,
                     projection: newProjection)
+            case .epsg4978:
+                let (lat, lon, alt) = Coordinate3D.ecefToGeodetic(
+                    x: longitude, y: latitude, z: altitude ?? 0.0)
+                return Coordinate3D(latitude: lat, longitude: lon, altitude: alt, m: m)
+            }
+
+        case .epsg4978:
+            switch projection {
+            case .epsg4978:
+                return self
+            case .epsg4326, .noSRID:
+                let (x, y, z) = Coordinate3D.geodeticToEcef(
+                    latitude: latitude, longitude: longitude, altitude: altitude ?? 0.0)
+                return Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978)
+            case .epsg3857:
+                return projected(to: .epsg4326).projected(to: .epsg4978)
             }
 
         case .noSRID:
@@ -515,6 +541,8 @@ extension Coordinate3D: Projectable {
                 var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
                 y *= GISTool.originShift / 180.0
                 return y
+            case .epsg4978:
+                return projected(to: .epsg4326).latitudeProjected(to: .epsg3857)
             }
 
         case .epsg4326:
@@ -523,6 +551,26 @@ extension Coordinate3D: Projectable {
                 return latitude
             case .epsg3857:
                 return 180.0 / Double.pi * (2.0 * atan(exp((latitude / GISTool.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
+            case .epsg4978:
+                let (lat, _, _) = Coordinate3D.ecefToGeodetic(
+                    x: longitude,
+                    y: latitude,
+                    z: altitude ?? 0.0)
+                return lat
+            }
+
+        case .epsg4978:
+            switch projection {
+            case .epsg4978, .noSRID:
+                return latitude
+            case .epsg4326:
+                let (_, y, _) = Coordinate3D.geodeticToEcef(
+                    latitude: latitude,
+                    longitude: longitude,
+                    altitude: altitude ?? 0.0)
+                return y
+            case .epsg3857:
+                return projected(to: .epsg4326).latitudeProjected(to: .epsg4978)
             }
 
         case .noSRID:
@@ -543,6 +591,8 @@ extension Coordinate3D: Projectable {
                 return longitude
             case .epsg4326:
                 return longitude * GISTool.originShift / 180.0
+            case .epsg4978:
+                return projected(to: .epsg4326).longitudeProjected(to: .epsg3857)
             }
 
         case .epsg4326:
@@ -551,11 +601,111 @@ extension Coordinate3D: Projectable {
                 return longitude
             case .epsg3857:
                 return (longitude / GISTool.originShift) * 180.0
+            case .epsg4978:
+                let (_, lon, _) = Coordinate3D.ecefToGeodetic(
+                    x: longitude,
+                    y: latitude,
+                    z: altitude ?? 0.0)
+                return lon
+            }
+
+        case .epsg4978:
+            switch projection {
+            case .epsg4978, .noSRID:
+                return longitude
+            case .epsg4326:
+                let (x, _, _) = Coordinate3D.geodeticToEcef(
+                    latitude: latitude,
+                    longitude: longitude,
+                    altitude: altitude ?? 0.0)
+                return x
+            case .epsg3857:
+                return projected(to: .epsg4326).longitudeProjected(to: .epsg4978)
             }
 
         case .noSRID:
             return longitude
         }
+    }
+
+}
+
+// MARK: - EPSG:4978 (ECEF) Helpers
+
+extension Coordinate3D {
+
+    /// Convert geodetic (EPSG:4326) to geocentric (EPSG:4978) coordinates.
+    ///
+    /// Uses the WGS84 ellipsoid: a = 6,378,137 m, 1/f = 298.257223563.
+    ///
+    /// - Parameters:
+    ///   - latitude: Latitude in degrees
+    ///   - longitude: Longitude in degrees
+    ///   - altitude: Height above ellipsoid in meters
+    /// - Returns: ECEF X, Y, Z in meters
+    fileprivate static func geodeticToEcef(
+        latitude: Double,
+        longitude: Double,
+        altitude: Double
+    ) -> (x: Double, y: Double, z: Double) {
+        let a = GISTool.equatorialRadius
+        let e2 = GISTool.wgs84EccentricitySquared
+
+        let phi = latitude * .pi / 180.0
+        let lambda = longitude * .pi / 180.0
+        let h = altitude
+
+        let sinPhi = sin(phi)
+        let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
+
+        let x = (N + h) * cos(phi) * cos(lambda)
+        let y = (N + h) * cos(phi) * sin(lambda)
+        let z = ((1.0 - e2) * N + h) * sinPhi
+
+        return (x, y, z)
+    }
+
+    /// Convert geocentric (EPSG:4978) to geodetic (EPSG:4326) coordinates.
+    ///
+    /// Uses the iterative Bowring method (typically converges in ~3 iterations).
+    ///
+    /// - Parameters:
+    ///   - x: ECEF X in meters
+    ///   - y: ECEF Y in meters
+    ///   - z: ECEF Z in meters
+    /// - Returns: Latitude (degrees), longitude (degrees), altitude (meters)
+    fileprivate static func ecefToGeodetic(
+        x: Double,
+        y: Double,
+        z: Double
+    ) -> (latitude: Double, longitude: Double, altitude: Double) {
+        let a = GISTool.equatorialRadius
+        let e2 = GISTool.wgs84EccentricitySquared
+
+        let p = sqrt(x * x + y * y)
+
+        guard p > 1e-12 else {
+            let lat = z >= 0.0 ? 90.0 : -90.0
+            let h = abs(z) - a * (1.0 - e2)
+            return (lat, 0.0, h)
+        }
+
+        var phi = atan2(z, p * (1.0 - e2))
+        for _ in 0..<10 {
+            let sinPhi = sin(phi)
+            let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
+            let h = p / cos(phi) - N
+            phi = atan2(z * (N + h), p * ((1.0 - e2) * N + h))
+        }
+
+        let sinPhi = sin(phi)
+        let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
+        let h = p / cos(phi) - N
+
+        let lat = phi * 180.0 / .pi
+        let lon = atan2(y, x) * 180.0 / .pi
+
+        return (lat, lon, h)
     }
 
 }

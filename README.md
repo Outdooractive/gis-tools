@@ -18,6 +18,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
+- Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
 - Supports WKT/WKB/TWKB, also with different projections
 - Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - Spatial search with a R-tree
@@ -71,8 +72,8 @@ let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
 
-**Shapefile support trait** (enabled by default):
-- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`. Disable with `--traits \!EnableShapefileSupport`.
+**Shapefile support trait**:
+- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
 
 ## Usage
 
@@ -890,9 +891,6 @@ let coordinates = polyline.decodePolyline()
 Provides read/write support for the ESRI Shapefile format. `FeatureCollection` has convenience methods to read and write Shapefiles.
 
 The Shapefile reader handles Point, PolyLine, Polygon, MultiPoint, and MultiPatch geometry types, including Z (altitude) and M (measure) variants. Attributes are mapped to and from `Feature.properties` via the companion `.dbf` file. The `.prj` file is read to determine the source projection. The `.shx` index file is written for compatibility with tools that require it.
-
-> [!NOTE]
-> Shapefile support is enabled by default via the `EnableShapefileSupport` package trait. Disable it with `--traits \!EnableShapefileSupport` to reduce the library's footprint.
 
 ## Reading
 

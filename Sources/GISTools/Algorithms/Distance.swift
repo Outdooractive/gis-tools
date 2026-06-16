@@ -27,11 +27,7 @@ extension Coordinate3D {
         switch projection {
         case .epsg4326:
             return _distance(from: other.projected(to: .epsg4326))
-        case .epsg3857:
-            let dx = longitude - other.longitude
-            let dy = latitude - other.latitude
-            return sqrt(dx * dx + dy * dy)
-        case .noSRID:
+        case .epsg3857, .epsg4978, .noSRID:
             let dx = longitude - other.longitude
             let dy = latitude - other.latitude
             return sqrt(dx * dx + dy * dy)
