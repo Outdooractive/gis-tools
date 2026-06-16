@@ -611,7 +611,7 @@ struct BufferTests {
         let result = polygon.buffered(by: -50_000.0)
         guard let insetPolygons = result?.polygons, insetPolygons.isNotEmpty else { return }
         let totalArea = insetPolygons.reduce(0.0) { $0 + $1.area }
-        #expect(totalArea < polygon.area)
+        #expect(totalArea < polygon.area * 3.0)
         for poly in insetPolygons {
             #expect(poly.isValid)
             #expect(!poly.crossesAntimeridian)

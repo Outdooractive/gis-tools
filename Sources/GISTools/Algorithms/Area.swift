@@ -15,7 +15,9 @@ extension Polygon {
 
         let outerArea = abs(outerRing.area)
 
-        guard let innerRings, innerRings.isNotEmpty else { return outerArea }
+        guard let innerRings,
+              innerRings.isNotEmpty
+        else { return outerArea }
 
         let holePolygons = innerRings.map { Polygon(unchecked: [$0.coordinates]) }
         if let union = Union.unionPolygons(holePolygons) {
@@ -48,10 +50,36 @@ extension Ring {
     /// Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
     /// Laboratory, Pasadena, CA, June 2007 https://trs.jpl.nasa.gov/handle/2014/41271
     public var area: Double {
-        let coordinates = projection == .epsg4326
+        let projected = projection == .epsg4326
             ? coordinates
             : coordinates.map({ $0.projected(to: .epsg4326) })
 
+        // Normalize antimeridian crossing: detect large longitude jumps (> 180°)
+        // in the ORIGINAL coordinate sequence and shift subsequent coordinates
+        // by ±360° so the ring is contiguous.
+        var coordinates = projected
+        let n = coordinates.count
+        if n > 1 {
+            let origLons = projected.map(\.longitude)
+            var shifts = Array(repeating: 0.0, count: n)
+            for i in 1..<n {
+                shifts[i] = shifts[i - 1]
+                let origDelta = origLons[i] - origLons[i - 1]
+                if origDelta > 180.0 {
+                    shifts[i] -= 360.0
+                }
+                else if origDelta < -180.0 {
+                    shifts[i] += 360.0
+                }
+            }
+            for i in 0..<n where shifts[i] != 0.0 {
+                coordinates[i] = Coordinate3D(
+                    latitude: projected[i].latitude,
+                    longitude: origLons[i] + shifts[i],
+                    altitude: projected[i].altitude,
+                    m: projected[i].m)
+            }
+        }
         var area = 0.0
         let coordinatesCount = coordinates.count
 
@@ -79,7 +107,9 @@ extension Ring {
                     )
                 }
 
-                area += (controlPoints.2.longitude.degreesToRadians - controlPoints.0.longitude.degreesToRadians) * sin(controlPoints.1.latitude.degreesToRadians)
+                let dLon = (controlPoints.2.longitude - controlPoints.0.longitude) * .pi / 180.0
+                let sinLat = sin(controlPoints.1.latitude * .pi / 180.0)
+                area += dLon * sinLat
             }
 
             area *= GISTool.equatorialRadius * GISTool.equatorialRadius / 2.0
