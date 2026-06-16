@@ -280,6 +280,104 @@ struct ClustersTests {
         #expect(c0 != c2)
     }
 
+    // MARK: - Algorithm comparison
+
+    /// Tests a scenario where DBSCAN, K-means, and weighted K-means all produce
+    /// measurably different results on the same data.
+    ///
+    /// Data: two dense clusters (A near origin, B near (10,0)), an outlier at (20,20),
+    /// and one point in cluster A with extreme weight (1000).
+    ///
+    /// Expected behaviour:
+    /// - DBSCAN: marks the outlier as noise, forms two clusters
+    /// - K-means: assigns every point (no noise), centroid of cluster A is
+    ///   the arithmetic mean of its members
+    /// - Weighted K-means: centroid of cluster A is pulled toward the heavy point
+    @Test
+    func compareAlgorithms() async throws {
+        var points: [Feature] = []
+        // Cluster A (4 points, centroid ≈ (0.5, 0.25))
+        points.append(Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 1.0, longitude: 0.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 0.0, longitude: 1.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 1.0, longitude: 1.0))))
+        // Cluster B (4 points, centroid ≈ (10.5, 0.25))
+        points.append(Feature(Point(Coordinate3D(latitude: 10.0, longitude: 0.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 11.0, longitude: 0.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 10.0, longitude: 1.0))))
+        points.append(Feature(Point(Coordinate3D(latitude: 11.0, longitude: 1.0))))
+        // Noise — too far from any cluster for DBSCAN
+        points.append(Feature(Point(Coordinate3D(latitude: 20.0, longitude: 20.0))))
+
+        var weighted = points
+        weighted[0].properties["weight"] = 1000.0
+
+        let fc = FeatureCollection(points)
+        let wfc = FeatureCollection(weighted)
+
+        // ---- DBSCAN ----
+        // maxDistance=200km (~2° at the equator), minPts=3: each density-connected point needs ≥3 neighbors
+        let dbscan = fc.dbscanClusters(maxDistance: 200_000.0, minPoints: 3)
+        let dbscanClusters: Set<Int> = Set(dbscan.features.compactMap { $0.property(for: "cluster") })
+        let dbscanNoise: [String] = dbscan.features.compactMap { $0.property(for: "dbscan") }
+        #expect(dbscanClusters.count == 2)
+        #expect(dbscanNoise.filter { $0 == "noise" }.count == 1)
+
+        // ---- K-means ----
+        // Every point is assigned, including the outlier
+        let km = fc.kmeansClusters(numberOfClusters: 2)
+        let kmClusters: Set<Int> = Set(km.features.compactMap { $0.property(for: "cluster") })
+        #expect(kmClusters.count == 2)
+        #expect(km.features.count == 9)
+
+        // First point (0,0) is in cluster A; its centroid[ ] = [lon, lat]
+        let kmCentroid: [Double]? = km.features[0].property(for: "centroid")
+        if let centroidA = kmCentroid {
+            // Arithmetic mean of (0,0), (1,0), (0,1), (1,1) → (0.5, 0.5)
+            #expect(abs(centroidA[0] - 0.5) < 0.1)  // X / longitude
+            #expect(abs(centroidA[1] - 0.5) < 0.1)  // Y / latitude
+        }
+
+        // ---- Weighted K-means ----
+        // The heavy weight (1000) on (0,0) pulls its centroid toward the origin
+        let wkm = wfc.kmeansClusters(numberOfClusters: 2, weightAttribute: "weight")
+        let wkmCentroid: [Double]? = wkm.features[0].property(for: "centroid")
+
+        if let centroidW = wkmCentroid {
+            // Weighted centroid ≈ (0.001, 0.001) — almost exactly at (0,0)
+            #expect(abs(centroidW[0]) < 0.05)
+            #expect(abs(centroidW[1]) < 0.05)
+        }
+
+        // ---- Weighted centroid differs from unweighted ----
+        if let cA = kmCentroid, let cW = wkmCentroid {
+            let dx = cA[0] - cW[0]
+            let dy = cA[1] - cW[1]
+            #expect(sqrt(dx * dx + dy * dy) > 0.1)
+        }
+
+        // Uncomment to write per-cluster GeoJSON files for debugging:
+//        let debugDir = URL(fileURLWithPath: "/tmp/cluster_debug")
+//        try? FileManager.default.createDirectory(at: debugDir, withIntermediateDirectories: true)
+//        let palette = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4"]
+//        func colorByCluster(_ fc: FeatureCollection) -> FeatureCollection {
+//            var features = fc.features
+//            for i in features.indices {
+//                let clusterId: Int? = features[i].property(for: "cluster")
+//                let color = palette[(clusterId ?? 0) % palette.count]
+//                features[i].markerColor = color
+//            }
+//            return FeatureCollection(features)
+//        }
+//        func writeCluster(_ name: String, _ fc: FeatureCollection) {
+//            guard let data = try? JSONEncoder().encode(colorByCluster(fc)) else { return }
+//            try? data.write(to: debugDir.appendingPathComponent("\(name).geojson"))
+//        }
+//        writeCluster("dbscan_all", dbscan)
+//        writeCluster("kmeans_all", km)
+//        writeCluster("kmeans_weighted_all", wkm)
+    }
+
     // MARK: - Natural Earth clustering (disabled, requires shapefile trait)
 
     /// Reads the Natural Earth shapefile, runs K-means and DBSCAN (k=10) on each
