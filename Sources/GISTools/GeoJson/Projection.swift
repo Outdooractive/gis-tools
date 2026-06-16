@@ -35,14 +35,18 @@ public enum Projection:
     /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
     ///
     /// Matches common patterns for the supported projections:
-    /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
     /// - EPSG:3857 — `PROJCS["...Mercator..."...]`
+    /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
+    /// - EPSG:4978 — `GEOCCS["...WGS 84..."...]` or `GEOCCS["...WGS_1984..."...]`
     ///
     /// - Parameter wkt: A WKT projection string
     /// - Returns: A `Projection`, or `nil` if the string is not recognised
     public init?(wkt: String) {
         if wkt.contains("PROJCS") && wkt.contains("Mercator") {
             self = .epsg3857
+        }
+        else if wkt.contains("GEOCCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
+            self = .epsg4978
         }
         else if wkt.contains("GEOGCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
             self = .epsg4326
