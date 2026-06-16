@@ -280,4 +280,99 @@ struct ClustersTests {
         #expect(c0 != c2)
     }
 
+    // MARK: - Natural Earth clustering (disabled, requires shapefile trait)
+
+    /// Reads the Natural Earth shapefile, runs K-means and DBSCAN (k=10) on each
+    /// supported projection, colours features by cluster, and writes GeoJSONs to
+    /// `/tmp/natural_earth_clusters/`.
+    @Test(.disabled("Enable to regenerate cluster GeoJSONs"))
+    func clusterNaturalEarth() async throws {
+        #if EnableShapefileSupport
+        let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
+        let fc = try ShapefileCoder.read(from: url)
+
+        let palette = [
+            "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+            "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabed4",
+        ]
+
+        let outputDir = URL(fileURLWithPath: "/tmp/natural_earth_clusters")
+        try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
+
+        let projections: [(Projection, String)] = [
+            (.epsg4326, "4326"),
+            (.epsg3857, "3857"),
+            (.epsg4978, "4978"),
+        ]
+
+        for (projection, label) in projections {
+            let projected = projection == .epsg4326 ? fc : fc.projected(to: projection)
+
+            // K-means
+            let kc = projected.kmeansClusters(numberOfClusters: 10)
+            var kcFeatures = kc.features
+            for i in 0..<kcFeatures.count {
+                let clusterId: Int? = kcFeatures[i].property(for: "cluster")
+                let color = palette[(clusterId ?? 0) % palette.count]
+                kcFeatures[i].setProperty(color, for: "fill")
+                kcFeatures[i].setProperty(0.4, for: "fill-opacity")
+                kcFeatures[i].setProperty(color, for: "stroke")
+                kcFeatures[i].setProperty(1.0, for: "stroke-width")
+            }
+            let kcColored = FeatureCollection(kcFeatures)
+            let kmPath = outputDir.appendingPathComponent("kmeans_EPSG\(label).geojson")
+            if let kmData = try? JSONEncoder().encode(kcColored) {
+                try kmData.write(to: kmPath)
+            }
+
+            // Weighted K-means (by population)
+            let kw = projected.kmeansClusters(numberOfClusters: 10, weightAttribute: "pop_max")
+            var kwFeatures = kw.features
+            for i in 0..<kwFeatures.count {
+                let clusterId: Int? = kwFeatures[i].property(for: "cluster")
+                let color = palette[(clusterId ?? 0) % palette.count]
+                kwFeatures[i].setProperty(color, for: "fill")
+                kwFeatures[i].setProperty(0.4, for: "fill-opacity")
+                kwFeatures[i].setProperty(color, for: "stroke")
+                kwFeatures[i].setProperty(1.0, for: "stroke-width")
+            }
+            let kwColored = FeatureCollection(kwFeatures)
+            let kwPath = outputDir.appendingPathComponent("kmeans_weighted_popmax_EPSG\(label).geojson")
+            if let kwData = try? JSONEncoder().encode(kwColored) {
+                try kwData.write(to: kwPath)
+            }
+
+            // DBSCAN
+            let dc = projected.dbscanClusters(maxDistance: 100_000.0, minPoints: 3)
+            var dcFeatures = dc.features
+            for i in 0..<dcFeatures.count {
+                let clusterId: Int? = dcFeatures[i].property(for: "cluster")
+                let dbscan: String? = dcFeatures[i].property(for: "dbscan")
+                if dbscan == "noise" {
+                    dcFeatures[i].setProperty("#cccccc", for: "fill")
+                    dcFeatures[i].setProperty(0.2, for: "fill-opacity")
+                    dcFeatures[i].setProperty("#999999", for: "stroke")
+                    dcFeatures[i].setProperty(0.5, for: "stroke-width")
+                }
+                else if let clusterId {
+                    let color = palette[clusterId % palette.count]
+                    dcFeatures[i].setProperty(color, for: "fill")
+                    dcFeatures[i].setProperty(0.4, for: "fill-opacity")
+                    dcFeatures[i].setProperty(color, for: "stroke")
+                    dcFeatures[i].setProperty(1.0, for: "stroke-width")
+                }
+            }
+            let dcColored = FeatureCollection(dcFeatures)
+            let dbPath = outputDir.appendingPathComponent("dbscan_EPSG\(label).geojson")
+            if let dbData = try? JSONEncoder().encode(dcColored) {
+                try dbData.write(to: dbPath)
+            }
+
+            print("Wrote EPSG:\(label) results to \(outputDir.path)")
+        }
+        #else
+        print("Skipping — EnableShapefileSupport trait is not enabled")
+        #endif
+    }
+
 }
