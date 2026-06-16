@@ -179,15 +179,23 @@ extension FeatureCollection {
 
         let center = point.coordinate
 
-        // Approximate bounds: 1 degree ≈ 111 km at equator
-        let delta = maxDistance / 111_000.0
+        // Bounding box optimisation in the native coordinate system
+        let delta: Double
+        switch center.projection {
+        case .epsg4326:
+            delta = maxDistance / 111_000.0
+        case .epsg3857, .epsg4978, .noSRID:
+            delta = maxDistance
+        }
         let bbox = BoundingBox(
             southWest: Coordinate3D(
-                latitude: center.latitude - delta,
-                longitude: center.longitude - delta),
+                x: center.longitude - delta,
+                y: center.latitude - delta,
+                projection: center.projection),
             northEast: Coordinate3D(
-                latitude: center.latitude + delta,
-                longitude: center.longitude + delta))
+                x: center.longitude + delta,
+                y: center.latitude + delta,
+                projection: center.projection))
 
         var result: [Int] = []
         for i in 0..<features.count {

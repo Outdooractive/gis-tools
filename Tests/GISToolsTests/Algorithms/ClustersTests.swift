@@ -118,4 +118,89 @@ struct ClustersTests {
         #expect(clustered.features.isNotEmpty)
     }
 
+    // MARK: - Projection-specific
+
+    /// Validates DBSCAN clustering works with EPSG:3857 (Web Mercator).
+    @Test
+    func dbscanEpsg3857() async throws {
+        // Two clusters ~1 km apart in projected meters
+        let points: [Feature] = [
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 500.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 500.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_500.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_500.0, projection: .epsg3857))),
+        ]
+        let fc = FeatureCollection(points)
+        let result = fc.dbscanClusters(maxDistance: 1000.0, minPoints: 2)
+
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c1: Int? = result.features[3].property(for: "cluster")
+        #expect(c0 != nil)
+        #expect(c1 != nil)
+        #expect(c0 != c1)
+    }
+
+    /// Validates K-means clustering works with EPSG:3857 (Web Mercator).
+    @Test
+    func kmeansEpsg3857() async throws {
+        let points: [Feature] = [
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 101_000.0, y: 100_000.0, projection: .epsg3857))),
+        ]
+        let fc = FeatureCollection(points)
+        let result = fc.kmeansClusters(numberOfClusters: 2)
+
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c2: Int? = result.features[2].property(for: "cluster")
+        #expect(c0 != nil)
+        #expect(c2 != nil)
+        #expect(c0 != c2)
+    }
+
+    /// Validates DBSCAN clustering works with EPSG:4978 (ECEF).
+    @Test
+    func dbscanEpsg4978() async throws {
+        // Points near Null Island in ECEF space
+        let points: [Feature] = [
+            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 500.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 500.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 500.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 0.0, z: 500.0, projection: .epsg4978))),
+        ]
+        let fc = FeatureCollection(points)
+        let result = fc.dbscanClusters(maxDistance: 1000.0, minPoints: 2)
+
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c3: Int? = result.features[3].property(for: "cluster")
+        #expect(c0 != nil)
+        #expect(c3 != nil)
+        #expect(c0 != c3)
+    }
+
+    /// Validates K-means clustering works with EPSG:4978 (ECEF).
+    @Test
+    func kmeansEpsg4978() async throws {
+        // Two clusters in ECEF: one near (6.3M, 0, 0), another near (0, 6.3M, 0)
+        let points: [Feature] = [
+            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 1000.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 0.0, projection: .epsg4978))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 1000.0, projection: .epsg4978))),
+        ]
+        let fc = FeatureCollection(points)
+        let result = fc.kmeansClusters(numberOfClusters: 2)
+
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c2: Int? = result.features[2].property(for: "cluster")
+        #expect(c0 != nil)
+        #expect(c2 != nil)
+        #expect(c0 != c2)
+    }
+
 }
