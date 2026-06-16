@@ -19,7 +19,10 @@ extension GeoJson {
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     ///
     /// - Returns: A `MultiPolygon` representing the concave hull
-    public func concaveHull(maxEdgeLength: CLLocationDistance, gridSize: Double? = nil) -> MultiPolygon? {
+    public func concaveHull(
+        maxEdgeLength: CLLocationDistance,
+        gridSize: Double? = nil
+    ) -> MultiPolygon? {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let coords = snappedSelf.allCoordinates
         let unique = Set(coords)
