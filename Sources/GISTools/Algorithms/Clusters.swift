@@ -12,6 +12,9 @@ extension FeatureCollection {
 
     /// Clusters points using the DBSCAN algorithm.
     ///
+    /// Uses an R-tree spatial index for O(n log n) neighbourhood queries.
+    /// Without the optimised indexing the underlying algorithm is O(n²).
+    ///
     /// - Parameter maxDistance: Maximum distance between points in a cluster (meters).
     /// - Parameter minPoints: Minimum points to form a cluster (default 3).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `dbscan`
@@ -23,6 +26,13 @@ extension FeatureCollection {
         var features = self.features
         let count = features.count
         guard count > 0 else { return self }
+
+        // Build spatial index for O(n log n) neighbourhood queries
+        let indexed: [DBSCANIndexedPoint] = features.enumerated().compactMap { (i, f) in
+            guard let p = f.geometry as? Point else { return nil }
+            return DBSCANIndexedPoint(index: i, point: p)
+        }
+        let tree = RTree(indexed, nodeSize: 16)
 
         var visited = Array(repeating: false, count: count)
         var assigned = Array(repeating: false, count: count)
@@ -37,7 +47,8 @@ extension FeatureCollection {
             let neighbors = regionQuery(
                 features: features,
                 index: i,
-                maxDistance: maxDistance)
+                maxDistance: maxDistance,
+                tree: tree)
 
             if neighbors.count >= minPoints {
                 let clusterId = nextClusterId
@@ -51,7 +62,8 @@ extension FeatureCollection {
                     clusterIds: &clusterIds,
                     isNoise: &isNoise,
                     maxDistance: maxDistance,
-                    minPoints: minPoints)
+                    minPoints: minPoints,
+                    tree: tree)
             }
             else {
                 isNoise[i] = true
@@ -78,6 +90,9 @@ extension FeatureCollection {
     // MARK: - K-means clustering
 
     /// Clusters points using the K-means algorithm.
+    ///
+    /// Runtime is O(k·n·i) where k = number of clusters, n = point count,
+    /// and i = iterations (capped at 100, typically converges in <10).
     ///
     /// - Parameter numberOfClusters: Number of clusters (default `sqrt(n/2)`).
     /// - Parameter weightAttribute: Property key for point weights (optional).
@@ -207,13 +222,13 @@ extension FeatureCollection {
     private func regionQuery(
         features: [Feature],
         index: Int,
-        maxDistance: CLLocationDistance
+        maxDistance: CLLocationDistance,
+        tree: RTree<DBSCANIndexedPoint>
     ) -> [Int] {
         guard let point = features[index].geometry as? Point else { return [] }
 
         let center = point.coordinate
 
-        // Bounding box optimisation in the native coordinate system
         let delta: Double
         switch center.projection {
         case .epsg4326:
@@ -232,17 +247,12 @@ extension FeatureCollection {
                 projection: center.projection))
 
         var result: [Int] = []
-        for i in 0..<features.count {
-            guard i != index,
-                  let neighbor = features[i].geometry as? Point
-            else { continue }
-
-            let neighborCoord = neighbor.coordinate
-            if bbox.contains(neighborCoord) {
-                let d = center.distance(from: neighborCoord)
-                if d <= maxDistance {
-                    result.append(i)
-                }
+        for candidate in tree.search(inBoundingBox: bbox) {
+            let i = candidate.index
+            guard i != index else { continue }
+            let d = center.distance(from: candidate.point.coordinate)
+            if d <= maxDistance {
+                result.append(i)
             }
         }
         return result
@@ -257,7 +267,8 @@ extension FeatureCollection {
         clusterIds: inout [Int],
         isNoise: inout [Bool],
         maxDistance: CLLocationDistance,
-        minPoints: Int
+        minPoints: Int,
+        tree: RTree<DBSCANIndexedPoint>
     ) {
         var queue = neighbors
         var idx = 0
@@ -270,7 +281,8 @@ extension FeatureCollection {
                 let nextNeighbors = regionQuery(
                     features: features,
                     index: neighborIndex,
-                    maxDistance: maxDistance)
+                    maxDistance: maxDistance,
+                    tree: tree)
                 if nextNeighbors.count >= minPoints,
                    isNoise[neighborIndex]
                 {
@@ -286,4 +298,30 @@ extension FeatureCollection {
         }
     }
 
+}
+
+// MARK: - R-tree helper for DBSCAN
+
+private struct DBSCANIndexedPoint: BoundingBoxRepresentable {
+    let index: Int
+    let point: Point
+
+    var projection: Projection { point.projection }
+
+    var boundingBox: BoundingBox? {
+        get { point.calculateBoundingBox() }
+        set {}
+    }
+
+    func calculateBoundingBox() -> BoundingBox? {
+        point.calculateBoundingBox()
+    }
+
+    mutating func updateBoundingBox(onlyIfNecessary: Bool) -> BoundingBox? {
+        point.calculateBoundingBox()
+    }
+
+    func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
+        point.intersects(otherBoundingBox)
+    }
 }

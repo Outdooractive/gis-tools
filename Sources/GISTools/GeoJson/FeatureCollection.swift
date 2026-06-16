@@ -193,7 +193,7 @@ extension FeatureCollection {
     /// - Returns: The calculated bounding box, or `nil` if there are no features
     public func calculateBoundingBox() -> BoundingBox? {
         let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
-        guard !featureBoundingBoxes.isEmpty else { return nil}
+        guard featureBoundingBoxes.isNotEmpty else { return nil}
 
         return featureBoundingBoxes.reduce(featureBoundingBoxes[0]) { (result, boundingBox) -> BoundingBox in
             return result + boundingBox

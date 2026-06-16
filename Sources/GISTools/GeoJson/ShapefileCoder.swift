@@ -4,6 +4,36 @@ import CoreLocation
 #endif
 import Foundation
 
+// MARK: - FeatureCollection convenience extensions
+
+extension FeatureCollection {
+
+    /// Initialize a ``FeatureCollection`` by reading a Shapefile from the given base URL.
+    ///
+    /// Loads `<url>.shp` (required), `<url>.dbf` (required),
+    /// and optionally `<url>.prj` for projection.
+    ///
+    /// - Parameter url: The base URL (may include `.shp` extension)
+    /// - Parameter calculateBoundingBox: Whether to calculate a bounding box (default `false`)
+    public init?(
+        shapefile url: URL,
+        calculateBoundingBox: Bool = false
+    ) {
+        guard let collection = try? ShapefileCoder.read(from: url, calculateBoundingBox: calculateBoundingBox) else { return nil }
+        self = collection
+    }
+
+    /// Write the receiver as a Shapefile to the given base URL.
+    ///
+    /// Writes `<url>.shp`, `<url>.dbf`, and `<url>.prj`.
+    ///
+    /// - Parameter url: The base output URL (without extension)
+    public func writeShapefile(to url: URL) throws {
+        try ShapefileCoder.write(self, to: url)
+    }
+
+}
+
 // MARK: - ShapefileCoder
 
 /// The canonical "no data" value for measure (M) coordinates in Shapefiles.
@@ -166,8 +196,12 @@ extension ShapefileCoder {
     /// and optionally `<url>.prj` for projection.
     ///
     /// - Parameter url: The base URL (without extension) or the full path to the `.shp` file
+    /// - Parameter calculateBoundingBox: Whether to calculate a bounding box (default `false`)
     /// - Returns: A ``FeatureCollection`` with one ``Feature`` per record
-    public static func read(from url: URL) throws -> FeatureCollection {
+    public static func read(
+        from url: URL,
+        calculateBoundingBox: Bool = false
+    ) throws -> FeatureCollection {
         let shpURL = url.pathExtension == "shp" ? url : url.appendingPathExtension("shp")
         let dbfURL = url.pathExtension == "shp"
             ? url.deletingPathExtension().appendingPathExtension("dbf")
@@ -192,13 +226,17 @@ extension ShapefileCoder {
 
         for i in 0..<count {
             if let geometry = geometries[i] {
-                var feature = Feature(geometry)
+                var feature = Feature(geometry, calculateBoundingBox: calculateBoundingBox)
                 feature.properties = properties[i]
                 features.append(feature)
             }
         }
 
-        return FeatureCollection(features)
+        var fc = FeatureCollection(features)
+        if calculateBoundingBox {
+            fc.boundingBox = fc.calculateBoundingBox()
+        }
+        return fc
     }
 
     // MARK: - .shp reading
@@ -1505,32 +1543,6 @@ extension ShapefileCoder {
         case .noSRID:
             return nil
         }
-    }
-
-}
-
-// MARK: - FeatureCollection convenience extensions
-
-extension FeatureCollection {
-
-    /// Initialize a ``FeatureCollection`` by reading a Shapefile from the given base URL.
-    ///
-    /// Loads `<url>.shp` (required), `<url>.dbf` (required),
-    /// and optionally `<url>.prj` for projection.
-    ///
-    /// - Parameter url: The base URL (may include `.shp` extension)
-    public init?(shapefile url: URL) {
-        guard let collection = try? ShapefileCoder.read(from: url) else { return nil }
-        self = collection
-    }
-
-    /// Write the receiver as a Shapefile to the given base URL.
-    ///
-    /// Writes `<url>.shp`, `<url>.dbf`, and `<url>.prj`.
-    ///
-    /// - Parameter url: The base output URL (without extension)
-    public func writeShapefile(to url: URL) throws {
-        try ShapefileCoder.write(self, to: url)
     }
 
 }

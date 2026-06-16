@@ -559,3 +559,134 @@ struct ClustersTests {
     }
 
 }
+
+// MARK: - Performance benchmarks
+
+@Suite
+struct ClusterBenchmarks {
+
+    private static let iterations: Int = 5
+
+    private static let performanceInput100: [Feature] = {
+        BoundingBox.randomPoints(count: 100).features
+    }()
+
+    private static let performanceInput500: [Feature] = {
+        BoundingBox.randomPoints(count: 500).features
+    }()
+
+    private static let performanceInputWeighted500: [Feature] = {
+        BoundingBox.randomPoints(count: 500).features.map { f in
+            var f = f
+            f.properties["pop"] = Double.random(in: 1_000 ... 10_000_000)
+            return f
+        }
+    }()
+
+    private static func measure(_ name: String, _ block: () -> Void) {
+        let clock = ContinuousClock()
+        block() // warmup
+
+        var durations: [Duration] = []
+        durations.reserveCapacity(iterations)
+        for _ in 0..<iterations {
+            let start = clock.now
+            block()
+            durations.append(clock.now - start)
+        }
+
+        let sorted = durations.sorted()
+        let minMs = _milliseconds(sorted.first ?? .zero)
+        let medianMs = _milliseconds(sorted[sorted.count / 2])
+        let averageMs = durations.reduce(0.0) { $0 + _milliseconds($1) } / Double(iterations)
+        print("[ClusterBenchmark] \(name): min=\(_format(minMs))ms median=\(_format(medianMs))ms avg=\(_format(averageMs))ms")
+    }
+
+    private static func _milliseconds(_ duration: Duration) -> Double {
+        let components = duration.components
+        return Double(components.seconds) * 1_000.0 + Double(components.attoseconds) / 1e15
+    }
+
+    private static func _format(_ value: Double) -> String {
+        String(format: "%.3f", value)
+    }
+
+    // MARK: - K-means benchmarks
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceKmeans100() {
+        let fc = FeatureCollection(Self.performanceInput100)
+        Self.measure("K-means/100") {
+            _ = fc.kmeansClusters(numberOfClusters: 5)
+        }
+    }
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceKmeans500() {
+        let fc = FeatureCollection(Self.performanceInput500)
+        Self.measure("K-means/500") {
+            _ = fc.kmeansClusters(numberOfClusters: 10)
+        }
+    }
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceWeightedKmeans500() {
+        let fc = FeatureCollection(Self.performanceInputWeighted500)
+        Self.measure("K-means/weighted-500") {
+            _ = fc.kmeansClusters(numberOfClusters: 10, weightAttribute: "pop")
+        }
+    }
+
+    // MARK: - DBSCAN benchmarks
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceDbscan100() {
+        let fc = FeatureCollection(Self.performanceInput100)
+        Self.measure("DBSCAN/100") {
+            _ = fc.dbscanClusters(maxDistance: 200_000.0, minPoints: 3)
+        }
+    }
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceDbscan500() {
+        let fc = FeatureCollection(Self.performanceInput500)
+        Self.measure("DBSCAN/500") {
+            _ = fc.dbscanClusters(maxDistance: 200_000.0, minPoints: 3)
+        }
+    }
+
+    // MARK: - Natural Earth benchmarks (requires shapefile trait)
+
+    #if EnableShapefileSupport
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceNaturalEarthKmeans() {
+        let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
+        guard let fc = FeatureCollection(shapefile: url) else { return }
+
+        Self.measure("NE/K-means/7342") {
+            _ = fc.kmeansClusters(numberOfClusters: 10)
+        }
+    }
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceNaturalEarthWeightedKmeans() {
+        let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
+        guard let fc = FeatureCollection(shapefile: url) else { return }
+
+        Self.measure("NE/K-means-weighted/7342") {
+            _ = fc.kmeansClusters(numberOfClusters: 10, weightAttribute: "pop_max")
+        }
+    }
+
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceNaturalEarthDbscan() {
+        let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
+        guard let fc = FeatureCollection(shapefile: url) else { return }
+
+        Self.measure("NE/DBSCAN/7342") {
+            _ = fc.dbscanClusters(maxDistance: 100_000.0, minPoints: 3)
+        }
+    }
+    #endif
+
+}
