@@ -19,7 +19,6 @@ let package = Package(
         .trait(name: "EnableMeterConversionExtensions"),
         .trait(name: "EnableMeasurementConversionExtensions"),
         .trait(name: "EnableShapefileSupport"),
-        .default(enabledTraits: ["EnableShapefileSupport"])
     ],
     dependencies: [],
     targets: [

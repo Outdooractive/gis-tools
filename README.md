@@ -72,8 +72,8 @@ let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
 
-**Shapefile support trait** (enabled by default):
-- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`. Disable with `--traits \!EnableShapefileSupport`.
+**Shapefile support trait**:
+- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
 
 ## Usage
 
@@ -891,9 +891,6 @@ let coordinates = polyline.decodePolyline()
 Provides read/write support for the ESRI Shapefile format. `FeatureCollection` has convenience methods to read and write Shapefiles.
 
 The Shapefile reader handles Point, PolyLine, Polygon, MultiPoint, and MultiPatch geometry types, including Z (altitude) and M (measure) variants. Attributes are mapped to and from `Feature.properties` via the companion `.dbf` file. The `.prj` file is read to determine the source projection. The `.shx` index file is written for compatibility with tools that require it.
-
-> [!NOTE]
-> Shapefile support is enabled by default via the `EnableShapefileSupport` package trait. Disable it with `--traits \!EnableShapefileSupport` to reduce the library's footprint.
 
 ## Reading
 
