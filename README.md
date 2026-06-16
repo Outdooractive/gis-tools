@@ -956,6 +956,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
 | ellipse                     | `let ellipse = coordinate.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0)`                                                              |     | [Source][183] / [Tests][184] |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
+| flip                        | `let flipped = anyGeometry.flipped()`                                                                                                 |     | [Source][189] / [Tests][190] |
 | great-circle                | `let arc = start.greatCircle(to: end)`                                                                                                |     | [Source][144] / [Tests][145] |
 | frechetDistance             | `let distance = lineString.frechetDistance(from: other)`                                                                              |     | [Source][72] / [Tests][73]   |
 | grid-hex                    | `bbox.hexGrid(cellSide: 1000.0)`                                                                                                      |     | [Source][165] / [Tests][166] |
@@ -1207,6 +1208,8 @@ Thomas Rasch, Outdooractive
 [188]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanContainsTests.swift "BooleanContainsTests"
 [189]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Sector.swift "Sector"
 [190]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SectorTests.swift "SectorTests"
+[191]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Flip.swift "Flip"
+[192]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/FlipTests.swift "FlipTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
