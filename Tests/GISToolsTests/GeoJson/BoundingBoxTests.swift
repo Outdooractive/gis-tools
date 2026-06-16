@@ -765,4 +765,49 @@ struct BoundingBoxTests {
         #expect(bbox.position(of: point).contains(.center))
     }
 
+    // MARK: - Squared
+
+    // Validates squared() on a bbox that is wider than tall.
+    @Test
+    func squaredWide() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 30.0))
+        let square = bbox.squared()
+        #expect(abs(square.northEast.latitude - square.southWest.latitude)
+            == abs(square.northEast.longitude - square.southWest.longitude))
+        #expect(square.southWest.latitude == -10.0)
+        #expect(square.northEast.latitude == 20.0)
+        #expect(square.southWest.longitude == 0.0)
+        #expect(square.northEast.longitude == 30.0)
+    }
+
+    // Validates squared() on a bbox that is taller than wide.
+    @Test
+    func squaredTall() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 10.0))
+        let square = bbox.squared()
+        #expect(abs(square.northEast.latitude - square.southWest.latitude)
+            == abs(square.northEast.longitude - square.southWest.longitude))
+        #expect(square.southWest.latitude == 0.0)
+        #expect(square.northEast.latitude == 30.0)
+        #expect(square.southWest.longitude == -10.0)
+        #expect(square.northEast.longitude == 20.0)
+    }
+
+    // Validates squared() on a square bbox returns itself (no change).
+    @Test
+    func squaredAlreadySquare() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0))
+        let square = bbox.squared()
+        #expect(square.southWest.latitude == 0.0)
+        #expect(square.southWest.longitude == 0.0)
+        #expect(square.northEast.latitude == 20.0)
+        #expect(square.northEast.longitude == 20.0)
+    }
+
 }
