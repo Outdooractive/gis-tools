@@ -82,4 +82,104 @@ struct AreaTests {
         #expect(area < 2_000_000_000_000.0)
     }
 
+    /// A 1°×1° square that crosses the date line at the equator.
+    /// The area should match a normal 1°×1° square near the equator (~1.24e10 m²).
+    @Test
+    func antimeridianCrossing() async throws {
+        let ring = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 179.5),
+            Coordinate3D(latitude: 1.0, longitude: 179.5),
+            Coordinate3D(latitude: 1.0, longitude: -179.5),
+            Coordinate3D(latitude: 0.0, longitude: -179.5),
+            Coordinate3D(latitude: 0.0, longitude: 179.5),
+        ]))
+        let polygon = try #require(Polygon([ring]))
+        #expect(polygon.area > 1.0e10)
+        #expect(polygon.area < 1.5e10)
+    }
+
+    /// Outer ring crosses the date line, inner ring ALSO crosses the date line.
+    @Test
+    func antimeridianHoleBothCross() async throws {
+        let outer = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+        ]))
+        let inner = try #require(Ring([
+            Coordinate3D(latitude: 1.0, longitude: 179.5),
+            Coordinate3D(latitude: 3.0, longitude: 179.5),
+            Coordinate3D(latitude: 3.0, longitude: -179.5),
+            Coordinate3D(latitude: 1.0, longitude: -179.5),
+            Coordinate3D(latitude: 1.0, longitude: 179.5),
+        ]))
+        let polygon = try #require(Polygon([outer, inner]))
+        let outerArea = outer.area
+        let innerArea = inner.area
+        let netArea = polygon.area
+        #expect(outerArea > 0)
+        #expect(innerArea > 0)
+        #expect(netArea > 0)
+        #expect(netArea < outerArea)  // hole subtracted
+        #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
+    }
+
+    /// Outer ring crosses the date line, inner ring is entirely east of it.
+    @Test
+    func antimeridianHoleEastSide() async throws {
+        let outer = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+        ]))
+        let inner = try #require(Ring([
+            Coordinate3D(latitude: 1.0, longitude: 179.2),
+            Coordinate3D(latitude: 3.0, longitude: 179.2),
+            Coordinate3D(latitude: 3.0, longitude: 179.8),
+            Coordinate3D(latitude: 1.0, longitude: 179.8),
+            Coordinate3D(latitude: 1.0, longitude: 179.2),
+        ]))
+        let polygon = try #require(Polygon([outer, inner]))
+        let outerArea = outer.area
+        let innerArea = inner.area
+        let netArea = polygon.area
+        #expect(outerArea > 0)
+        #expect(innerArea > 0)
+        #expect(netArea > 0)
+        #expect(netArea < outerArea)
+        #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
+    }
+
+    /// Outer ring crosses the date line, inner ring is entirely west of it.
+    @Test
+    func antimeridianHoleWestSide() async throws {
+        let outer = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: 179.0),
+            Coordinate3D(latitude: 4.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+        ]))
+        let inner = try #require(Ring([
+            Coordinate3D(latitude: 1.0, longitude: -179.8),
+            Coordinate3D(latitude: 3.0, longitude: -179.8),
+            Coordinate3D(latitude: 3.0, longitude: -179.2),
+            Coordinate3D(latitude: 1.0, longitude: -179.2),
+            Coordinate3D(latitude: 1.0, longitude: -179.8),
+        ]))
+        let polygon = try #require(Polygon([outer, inner]))
+        let outerArea = outer.area
+        let innerArea = inner.area
+        let netArea = polygon.area
+        #expect(outerArea > 0)
+        #expect(innerArea > 0)
+        #expect(netArea > 0)
+        #expect(netArea < outerArea)
+        #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
+    }
+
 }

@@ -986,6 +986,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | polygon-smooth              | `let smoothed = polygon.smooth(iterations: 3)`                                                                                         |     | [Source][148] / [Tests][149] |
 | polygon-tangents            | `let tangents = polygon.tangentPoints(to: point)`                                                                                      |     | [Source][195] / [Tests][196] |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
+| polygonize                  | `let polygons = multiLineString.polygonized()`                                                                                        |     | [Source][197] / [Tests][198] |
 | random                      | `BoundingBox.randomPoints(count: 10)`                                                                                                 |     | [Source][179] / [Tests][180] |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
 | rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
@@ -1216,6 +1217,8 @@ Thomas Rasch, Outdooractive
 [194]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/BoundingBoxTests.swift "BoundingBoxTests"
 [195]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PolygonTangents.swift "PolygonTangents"
 [196]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonTangentsTests.swift "PolygonTangentsTests"
+[197]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Polygonize.swift "Polygonize"
+[198]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonizeTests.swift "PolygonizeTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
