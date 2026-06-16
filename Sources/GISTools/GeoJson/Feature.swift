@@ -360,6 +360,13 @@ extension Feature {
         set { self["marker-size"] = newValue }
     }
 
+    /// The marker symbol (a [Maki](https://labs.mapbox.com/maki-icons/) icon name, e.g. `"airport"`, `"cafe"`, `"hospital"`),
+    /// stored under the `"marker-symbol"` property key. Used by geojson.io and MapLibre for point iconography.
+    public var markerSymbol: String? {
+        get { self["marker-symbol"] }
+        set { self["marker-symbol"] = newValue }
+    }
+
     /// The stroke color (hex string, e.g. `"#312E81"`), stored under the `"stroke"` property key.
     /// Used by geojson.io and MapLibre for line/polygon outlines.
     public var stroke: String? {
