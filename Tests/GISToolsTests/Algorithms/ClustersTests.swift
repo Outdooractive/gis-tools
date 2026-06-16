@@ -468,6 +468,17 @@ struct ClustersTests {
             (.epsg4978, "4978"),
         ]
 
+        // Strip to only what geojson.io needs: marker colour + cluster info
+        func stripToStyling(_ features: [Feature]) -> [Feature] {
+            features.map { f in
+                var s = Feature((f.geometry as? Point)!, id: nil, properties: [:])
+                s.properties["marker-color"] = f.properties["marker-color"]
+                s.properties["cluster"] = f.properties["cluster"]
+                s.properties["dbscan"] = f.properties["dbscan"]
+                return s
+            }
+        }
+
         for (projection, label) in projections {
             let projected = projection == .epsg4326 ? fc : fc.projected(to: projection)
 
@@ -479,7 +490,7 @@ struct ClustersTests {
                 let color = palette[(clusterId ?? 0) % palette.count]
                 kcFeatures[i].markerColor = color
             }
-            let kcColored = FeatureCollection(kcFeatures)
+            let kcColored = FeatureCollection(stripToStyling(kcFeatures))
             let kmPath = outputDir.appendingPathComponent("kmeans_EPSG\(label).geojson")
             if let kmData = try? JSONEncoder().encode(kcColored) {
                 try kmData.write(to: kmPath)
@@ -493,7 +504,7 @@ struct ClustersTests {
                 let color = palette[(clusterId ?? 0) % palette.count]
                 kwFeatures[i].markerColor = color
             }
-            let kwColored = FeatureCollection(kwFeatures)
+            let kwColored = FeatureCollection(stripToStyling(kwFeatures))
             let kwPath = outputDir.appendingPathComponent("kmeans_weighted_popmax_EPSG\(label).geojson")
             if let kwData = try? JSONEncoder().encode(kwColored) {
                 try kwData.write(to: kwPath)
@@ -513,7 +524,7 @@ struct ClustersTests {
                     dcFeatures[i].markerColor = color
                 }
             }
-            let dcColored = FeatureCollection(dcFeatures)
+            let dcColored = FeatureCollection(stripToStyling(dcFeatures))
             let dbPath = outputDir.appendingPathComponent("dbscan_EPSG\(label).geojson")
             if let dbData = try? JSONEncoder().encode(dcColored) {
                 try dbData.write(to: dbPath)
