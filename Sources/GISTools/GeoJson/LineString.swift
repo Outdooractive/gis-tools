@@ -189,6 +189,19 @@ extension LineString {
         coordinates.last
     }
 
+    /// A Boolean value that indicates whether this line string forms a closed ring.
+    ///
+    /// A line string is closed when its first and last coordinates are equal
+    /// (within ``GISTool/equalityDelta``).
+    @inlinable
+    public var isClosed: Bool {
+        guard let first = coordinates.first,
+              let last = coordinates.last,
+              coordinates.count > 1
+        else { return false }
+        return first.isCoincident(to: last)
+    }
+
 }
 
 // MARK: - Projection
