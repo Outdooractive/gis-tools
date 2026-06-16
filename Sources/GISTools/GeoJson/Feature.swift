@@ -328,3 +328,41 @@ extension Feature {
     }
 
 }
+
+// MARK: - Convenience accessors
+
+extension Feature {
+
+    /// The fill color (hex string, e.g. `"#312E81"`), stored under the `"fill"` property key.
+    /// Used by geojson.io and MapLibre for polygon/area fill.
+    public var fill: String? {
+        get { self["fill"] }
+        set { self["fill"] = newValue }
+    }
+
+    /// The fill opacity (0–1), stored under the `"fill-opacity"` property key.
+    public var fillOpacity: Double? {
+        get { self["fill-opacity"] }
+        set { self["fill-opacity"] = newValue }
+    }
+
+    /// The stroke color (hex string, e.g. `"#312E81"`), stored under the `"stroke"` property key.
+    /// Used by geojson.io and MapLibre for line/polygon outlines.
+    public var stroke: String? {
+        get { self["stroke"] }
+        set { self["stroke"] = newValue }
+    }
+
+    /// The stroke opacity (0–1), stored under the `"stroke-opacity"` property key.
+    public var strokeOpacity: Double? {
+        get { self["stroke-opacity"] }
+        set { self["stroke-opacity"] = newValue }
+    }
+
+    /// The stroke width in pixels, stored under the `"stroke-width"` property key.
+    public var strokeWidth: Double? {
+        get { self["stroke-width"] }
+        set { self["stroke-width"] = newValue }
+    }
+
+}
