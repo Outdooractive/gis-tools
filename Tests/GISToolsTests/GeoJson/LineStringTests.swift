@@ -88,4 +88,25 @@ struct LineStringTests {
         #expect(lineStringData == lineString.asJsonData(prettyPrinted: true))
     }
 
+    // Validates that isClosed returns false for open line strings and true for closed rings.
+    @Test
+    func isClosed() async throws {
+        let open = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        #expect(!open.isClosed)
+
+        let closed = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        #expect(closed.isClosed)
+
+        #expect(LineString().isClosed == false)
+    }
+
 }
