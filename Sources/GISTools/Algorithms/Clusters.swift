@@ -80,10 +80,16 @@ extension FeatureCollection {
     /// Clusters points using the K-means algorithm.
     ///
     /// - Parameter numberOfClusters: Number of clusters (default `sqrt(n/2)`).
+    /// - Parameter weightAttribute: Property key for point weights (optional).
+    ///   When set, centroids are computed as the weighted mean, matching
+    ///   PostGIS's `ST_ClusterKMeans` behaviour.
+    /// - Parameter seedIndex: Index used to seed the initial centroids (default `0`).
     /// - Returns: A FeatureCollection with `cluster` (Int) and `centroid`
     ///   ([Double]) properties on each point.
     public func kmeansClusters(
-        numberOfClusters: Int? = nil
+        numberOfClusters: Int? = nil,
+        weightAttribute: String? = nil,
+        seedIndex: Int = 0
     ) -> FeatureCollection {
         var features = self.features
         let count = features.count
@@ -102,15 +108,26 @@ extension FeatureCollection {
               k <= count
         else { return self }
 
-        // Initialize centroids from first k points
-        var centroids = Array(coords.prefix(k))
+        // Read weights if weightAttribute is provided
+        let weights: [Double]
+        if let weightAttribute {
+            weights = features.map { ($0.properties[weightAttribute] as? Double) ?? 1.0 }
+        }
+        else {
+            weights = Array(repeating: 1.0, count: count)
+        }
+
+        // Initialize centroids from seedIndex
+        let start = min(seedIndex, count - k)
+        var centroids = (start..<(start + k)).map { coords[$0] }
 
         // K-means iterations
         let maxIter = 100
         for _ in 0..<maxIter {
-            // Assign each point to nearest centroid
-            var clusters: [[Coordinate3D]] = Array(repeating: [], count: k)
-            for coord in coords {
+            // Assign each point to nearest centroid, tracking indices
+            var clusterIndices: [[Int]] = Array(repeating: [], count: k)
+            for i in 0..<count {
+                let coord = coords[i]
                 var best = 0
                 var bestDist = Double.greatestFiniteMagnitude
                 for j in 0..<k {
@@ -120,19 +137,31 @@ extension FeatureCollection {
                         best = j
                     }
                 }
-                clusters[best].append(coord)
+                clusterIndices[best].append(i)
             }
 
-            // Recompute centroids
+            // Recompute centroids (weighted if weightAttribute is provided)
             var changed = false
             for j in 0..<k {
-                guard !clusters[j].isEmpty else { continue }
+                let indices = clusterIndices[j]
+                guard !indices.isEmpty else { continue }
 
-                let sumLat = clusters[j].reduce(0.0) { $0 + $1.latitude }
-                let sumLon = clusters[j].reduce(0.0) { $0 + $1.longitude }
+                var weightSum: Double = 0.0
+                var sumLat: Double = 0.0
+                var sumLon: Double = 0.0
+                for i in indices {
+                    let w = max(weights[i], 0.0)
+                    let coord = coords[i]
+                    weightSum += w
+                    sumLat += w * coord.latitude
+                    sumLon += w * coord.longitude
+                }
+
+                guard weightSum > 0 else { continue }
+
                 let newCentroid = Coordinate3D(
-                    latitude: sumLat / Double(clusters[j].count),
-                    longitude: sumLon / Double(clusters[j].count))
+                    latitude: sumLat / weightSum,
+                    longitude: sumLon / weightSum)
                 if centroids[j].latitude != newCentroid.latitude
                     || centroids[j].longitude != newCentroid.longitude
                 {

@@ -203,4 +203,81 @@ struct ClustersTests {
         #expect(c0 != c2)
     }
 
+    // MARK: - Weighted K-means
+
+    /// Validates weighted K-means shifts centroids toward higher-weight points.
+    @Test
+    func kmeansWeighted() async throws {
+        var f1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
+        f1.properties = ["weight": 100.0]
+        var f2 = Feature(Point(Coordinate3D(latitude: 0.1, longitude: 0.0)))
+        f2.properties = ["weight": 1.0]
+        var f3 = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0)))
+        f3.properties = ["weight": 100.0]
+        var f4 = Feature(Point(Coordinate3D(latitude: 10.1, longitude: 10.0)))
+        f4.properties = ["weight": 1.0]
+        let points = [f1, f2, f3, f4]
+        let fc = FeatureCollection(points)
+        let result = fc.kmeansClusters(numberOfClusters: 2, weightAttribute: "weight")
+
+        for feature in result.features {
+            let c: Int? = feature.property(for: "cluster")
+            #expect(c != nil)
+        }
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c1: Int? = result.features[1].property(for: "cluster")
+        let c2: Int? = result.features[2].property(for: "cluster")
+        #expect(c0 != nil && c1 != nil && c2 != nil)
+        #expect(c0 == c1) // both heavy points in same cluster
+        #expect(c0 != c2)
+    }
+
+    /// Validates weighted K-means with EPSG:3857.
+    @Test
+    func kmeansWeightedEpsg3857() async throws {
+        var f1 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
+        f1.properties = ["pop": 1000.0]
+        var f2 = Feature(Point(Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857)))
+        f2.properties = ["pop": 1.0]
+        var f3 = Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857)))
+        f3.properties = ["pop": 1000.0]
+        var f4 = Feature(Point(Coordinate3D(x: 100_100.0, y: 100_000.0, projection: .epsg3857)))
+        f4.properties = ["pop": 1.0]
+        let points = [f1, f2, f3, f4]
+        let fc = FeatureCollection(points)
+        let result = fc.kmeansClusters(numberOfClusters: 2, weightAttribute: "pop")
+
+        for feature in result.features {
+            let c: Int? = feature.property(for: "cluster")
+            #expect(c != nil)
+        }
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c2: Int? = result.features[2].property(for: "cluster")
+        #expect(c0 != c2)
+    }
+
+    /// Validates weighted K-means with EPSG:4978 (ECEF).
+    @Test
+    func kmeansWeightedEpsg4978() async throws {
+        var f1 = Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        f1.properties = ["pop": 1000.0]
+        var f2 = Feature(Point(Coordinate3D(x: 6_378_237.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        f2.properties = ["pop": 1.0]
+        var f3 = Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 0.0, projection: .epsg4978)))
+        f3.properties = ["pop": 1000.0]
+        var f4 = Feature(Point(Coordinate3D(x: 0.0, y: 6_378_237.0, z: 0.0, projection: .epsg4978)))
+        f4.properties = ["pop": 1.0]
+        let points = [f1, f2, f3, f4]
+        let fc = FeatureCollection(points)
+        let result = fc.kmeansClusters(numberOfClusters: 2, weightAttribute: "pop")
+
+        for feature in result.features {
+            let c: Int? = feature.property(for: "cluster")
+            #expect(c != nil)
+        }
+        let c0: Int? = result.features[0].property(for: "cluster")
+        let c2: Int? = result.features[2].property(for: "cluster")
+        #expect(c0 != c2)
+    }
+
 }
