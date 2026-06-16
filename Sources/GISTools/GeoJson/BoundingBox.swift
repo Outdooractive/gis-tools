@@ -435,6 +435,44 @@ extension BoundingBox {
         return size.width * size.height
     }
 
+    /// Returns a square bounding box that fully contains the receiver.
+    ///
+    /// The shorter dimension is extended equally on both sides to match the longer
+    /// dimension, producing a square bounding box. Works in the native units of the
+    /// coordinate system (degrees for EPSG:4326, meters for EPSG:3857/4978).
+    ///
+    /// - Returns: A square ``BoundingBox`` that contains the receiver
+    public func squared() -> BoundingBox {
+        let w = northEast.longitude - southWest.longitude
+        let h = northEast.latitude - southWest.latitude
+        let maxSide = max(w, h)
+
+        if w >= h {
+            let pad = (w - h) / 2.0
+            return BoundingBox(
+                southWest: Coordinate3D(
+                    x: southWest.longitude,
+                    y: southWest.latitude - pad,
+                    projection: projection),
+                northEast: Coordinate3D(
+                    x: northEast.longitude,
+                    y: northEast.latitude + pad,
+                    projection: projection))
+        }
+        else {
+            let pad = (h - w) / 2.0
+            return BoundingBox(
+                southWest: Coordinate3D(
+                    x: southWest.longitude - pad,
+                    y: southWest.latitude,
+                    projection: projection),
+                northEast: Coordinate3D(
+                    x: northEast.longitude + pad,
+                    y: northEast.latitude,
+                    projection: projection))
+        }
+    }
+
     /// The size of the bounding box (width, height) in meters (approximation).
     public var size: (width: Double, height: Double) {
         switch projection {
