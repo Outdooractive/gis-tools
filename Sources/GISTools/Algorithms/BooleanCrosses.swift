@@ -152,13 +152,14 @@ extension GeoJson {
               let coords2 = lineString2.coordinates as [Coordinate3D]?
         else { return false }
 
+        let boundary1 = lineString1.boundary
+        let boundary2 = lineString2.boundary
+
         for intersectPoint in intersectionPoints {
             let pt = intersectPoint.coordinate
-            if !pt.isCoincident(to: coords1.first),
-               !pt.isCoincident(to: coords1.last),
-               !pt.isCoincident(to: coords2.first),
-               !pt.isCoincident(to: coords2.last)
-            {
+            let onBoundary1 = boundary1.coordinates.contains { $0.isCoincident(to: pt) }
+            let onBoundary2 = boundary2.coordinates.contains { $0.isCoincident(to: pt) }
+            if !onBoundary1 && !onBoundary2 {
                 return true
             }
         }

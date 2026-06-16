@@ -610,8 +610,7 @@ extension BooleanTouches {
         _ lineString: LineString
     ) -> Bool {
         guard let coordinate else { return false }
-        return coordinate.isCoincident(to: lineString.firstCoordinate)
-            || coordinate.isCoincident(to: lineString.lastCoordinate)
+        return lineString.boundary.coordinates.contains { $0.isCoincident(to: coordinate) }
     }
 
     fileprivate static func isOnLineInterior(

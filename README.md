@@ -943,6 +943,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | boolean-touches             | `anyGeometry.touches(other)`                                                                                                          |     | [Source][159] / [Tests][160] |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
+| boundary                    | `let boundary = anyGeometry.boundary`                                                                                                 |     | [Source][199] / [Tests][200] |
 | buffer                      | `let buffered = lineString.buffered(by: 1000.meters)`                                                                                 |     | [Source][61] / [Tests][158]  |
 | center-median               | `let median = featureCollection.centerMedian()`                                                                                       |     | [Source][62] / [Tests][137]  |
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
@@ -1219,6 +1220,8 @@ Thomas Rasch, Outdooractive
 [196]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonTangentsTests.swift "PolygonTangentsTests"
 [197]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Polygonize.swift "Polygonize"
 [198]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PolygonizeTests.swift "PolygonizeTests"
+[199]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Boundary.swift "Boundary"
+[200]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BoundaryTests.swift "BoundaryTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
