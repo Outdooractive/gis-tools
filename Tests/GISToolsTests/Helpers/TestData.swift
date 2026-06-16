@@ -66,4 +66,13 @@ struct TestData {
         return try Data(contentsOf: path)
     }
 
+    static func shapefileUrl(package: String, name: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("TestData")
+            .appendingPathComponent(package)
+            .appendingPathComponent(name)
+    }
+
 }

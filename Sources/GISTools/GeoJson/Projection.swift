@@ -29,6 +29,26 @@ public enum Projection:
         }
     }
 
+    /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
+    ///
+    /// Matches common patterns for the supported projections:
+    /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
+    /// - EPSG:3857 — `PROJCS["...Mercator..."...]`
+    ///
+    /// - Parameter wkt: A WKT projection string
+    /// - Returns: A `Projection`, or `nil` if the string is not recognised
+    public init?(wkt: String) {
+        if wkt.contains("PROJCS") && wkt.contains("Mercator") {
+            self = .epsg3857
+        }
+        else if wkt.contains("GEOGCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
+            self = .epsg4326
+        }
+        else {
+            return nil
+        }
+    }
+
     /// The receiver's SRID number.
     public var srid: Int {
         self.rawValue
