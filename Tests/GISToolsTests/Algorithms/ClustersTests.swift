@@ -385,9 +385,9 @@ struct ClustersTests {
     @Test
     func weightedKmeansChangesAssignmentEpsg4326() async throws {
         var p0 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
-        var p1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 9.0)))
-        var p2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 10.0)))
-        var p3 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 19.0)))
+        let p1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 9.0)))
+        let p2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 10.0)))
+        let p3 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 19.0)))
         p0.properties["w"] = 10_000.0
         let points = [p0, p1, p2, p3]
         let wPoints = [p0, p1, p2, p3]
@@ -409,9 +409,9 @@ struct ClustersTests {
     @Test
     func weightedKmeansChangesAssignmentEpsg3857() async throws {
         var p0 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
-        var p1 = Feature(Point(Coordinate3D(x: 9000.0, y: 0.0, projection: .epsg3857)))
-        var p2 = Feature(Point(Coordinate3D(x: 10_000.0, y: 0.0, projection: .epsg3857)))
-        var p3 = Feature(Point(Coordinate3D(x: 19_000.0, y: 0.0, projection: .epsg3857)))
+        let p1 = Feature(Point(Coordinate3D(x: 9000.0, y: 0.0, projection: .epsg3857)))
+        let p2 = Feature(Point(Coordinate3D(x: 10_000.0, y: 0.0, projection: .epsg3857)))
+        let p3 = Feature(Point(Coordinate3D(x: 19_000.0, y: 0.0, projection: .epsg3857)))
         p0.properties["w"] = 10_000.0
         let points = [p0, p1, p2, p3]
 
@@ -428,9 +428,9 @@ struct ClustersTests {
     @Test
     func weightedKmeansChangesAssignmentEpsg4978() async throws {
         var p0 = Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        var p1 = Feature(Point(Coordinate3D(x: 6_387_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        var p2 = Feature(Point(Coordinate3D(x: 6_388_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        var p3 = Feature(Point(Coordinate3D(x: 6_397_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        let p1 = Feature(Point(Coordinate3D(x: 6_387_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        let p2 = Feature(Point(Coordinate3D(x: 6_388_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        let p3 = Feature(Point(Coordinate3D(x: 6_397_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
         p0.properties["w"] = 10_000.0
         let points = [p0, p1, p2, p3]
 
