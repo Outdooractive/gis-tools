@@ -314,10 +314,7 @@ struct ClustersTests {
             for i in 0..<kcFeatures.count {
                 let clusterId: Int? = kcFeatures[i].property(for: "cluster")
                 let color = palette[(clusterId ?? 0) % palette.count]
-                kcFeatures[i].setProperty(color, for: "fill")
-                kcFeatures[i].setProperty(0.4, for: "fill-opacity")
-                kcFeatures[i].setProperty(color, for: "stroke")
-                kcFeatures[i].setProperty(1.0, for: "stroke-width")
+                kcFeatures[i].markerColor = color
             }
             let kcColored = FeatureCollection(kcFeatures)
             let kmPath = outputDir.appendingPathComponent("kmeans_EPSG\(label).geojson")
@@ -331,10 +328,7 @@ struct ClustersTests {
             for i in 0..<kwFeatures.count {
                 let clusterId: Int? = kwFeatures[i].property(for: "cluster")
                 let color = palette[(clusterId ?? 0) % palette.count]
-                kwFeatures[i].setProperty(color, for: "fill")
-                kwFeatures[i].setProperty(0.4, for: "fill-opacity")
-                kwFeatures[i].setProperty(color, for: "stroke")
-                kwFeatures[i].setProperty(1.0, for: "stroke-width")
+                kwFeatures[i].markerColor = color
             }
             let kwColored = FeatureCollection(kwFeatures)
             let kwPath = outputDir.appendingPathComponent("kmeans_weighted_popmax_EPSG\(label).geojson")
@@ -349,17 +343,11 @@ struct ClustersTests {
                 let clusterId: Int? = dcFeatures[i].property(for: "cluster")
                 let dbscan: String? = dcFeatures[i].property(for: "dbscan")
                 if dbscan == "noise" {
-                    dcFeatures[i].setProperty("#cccccc", for: "fill")
-                    dcFeatures[i].setProperty(0.2, for: "fill-opacity")
-                    dcFeatures[i].setProperty("#999999", for: "stroke")
-                    dcFeatures[i].setProperty(0.5, for: "stroke-width")
+                    dcFeatures[i].markerColor = "#cccccc"
                 }
                 else if let clusterId {
                     let color = palette[clusterId % palette.count]
-                    dcFeatures[i].setProperty(color, for: "fill")
-                    dcFeatures[i].setProperty(0.4, for: "fill-opacity")
-                    dcFeatures[i].setProperty(color, for: "stroke")
-                    dcFeatures[i].setProperty(1.0, for: "stroke-width")
+                    dcFeatures[i].markerColor = color
                 }
             }
             let dcColored = FeatureCollection(dcFeatures)
