@@ -13,6 +13,8 @@ public enum Projection:
     case epsg3857 = 3857
     /// EPSG:4326 - geodetic (https://epsg.io/4326).
     case epsg4326 = 4326
+    /// EPSG:4978 - geocentric (ECEF) (https://epsg.io/4978).
+    case epsg4978 = 4978
 
     /// Initialize a Projection with a SRID number.
     ///
@@ -25,6 +27,7 @@ public enum Projection:
         case 0: self = .noSRID
         case 102_100, 102_113, 900_913, 3587, 3785, 3857, 41001, 54004: self = .epsg3857
         case 4326: self = .epsg4326
+        case 4978: self = .epsg4978
         default: return nil
         }
     }
@@ -60,6 +63,7 @@ public enum Projection:
         case .noSRID: return "No SRID"
         case .epsg3857: return "EPSG:3857"
         case .epsg4326: return "EPSG:4326"
+        case .epsg4978: return "EPSG:4978"
         }
     }
 

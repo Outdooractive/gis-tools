@@ -19,6 +19,8 @@ extension Coordinate3D {
             return _midpoint(to: other.projected(to: .epsg4326))
         case .epsg3857:
             return projected(to: .epsg4326)._midpoint(to: other.projected(to: .epsg4326)).projected(to: .epsg3857)
+        case .epsg4978:
+            return projected(to: .epsg4326)._midpoint(to: other.projected(to: .epsg4326)).projected(to: .epsg4978)
         case .noSRID:
             return Coordinate3D(
                 x: longitude + ((other.longitude - longitude) / 2.0),

@@ -642,7 +642,7 @@ extension WKTCoder {
             switch sourceProjection {
             case .epsg4326:
                 switch targetProjection {
-                case .epsg3857:
+                case .epsg3857, .epsg4978:
                     coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection))
                 case .epsg4326:
                     coordinates.append(Coordinate3D(latitude: y, longitude: x, altitude: z, m: m))
@@ -654,8 +654,18 @@ extension WKTCoder {
                 switch targetProjection {
                 case .epsg3857:
                     coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m))
-                case .epsg4326:
+                case .epsg4326, .epsg4978:
                     coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection))
+                case .noSRID:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection))
+                }
+
+            case .epsg4978:
+                switch targetProjection {
+                case .epsg4978:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978))
+                case .epsg4326, .epsg3857:
+                    coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978).projected(to: targetProjection))
                 case .noSRID:
                     coordinates.append(Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection))
                 }

@@ -18,6 +18,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
+- Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
 - Supports WKT/WKB/TWKB, also with different projections
 - Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - Spatial search with a R-tree

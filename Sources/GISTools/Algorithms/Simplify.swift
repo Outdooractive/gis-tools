@@ -193,7 +193,7 @@ public enum Simplify {
         else { return coordinates }
 
         switch firstCoordinate.projection {
-        case .epsg3857, .noSRID:
+        case .epsg3857, .epsg4978, .noSRID:
             return simplify(
                 coordinates: coordinates,
                 tolerance: toleranceInMeters,

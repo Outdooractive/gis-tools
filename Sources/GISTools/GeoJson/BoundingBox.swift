@@ -71,7 +71,7 @@ public struct BoundingBox:
 
         if padding > 0.0 {
             switch projection {
-            case .epsg3857:
+            case .epsg3857, .epsg4978:
                 southWest.latitude -= padding
                 northEast.latitude += padding
                 southWest.longitude -= padding
@@ -221,10 +221,10 @@ public struct BoundingBox:
         verticalDegrees dy: CLLocationDegrees
     ) -> BoundingBox {
         switch projection {
-        case .epsg3857:
+        case .epsg3857, .epsg4978:
             return projected(to: .epsg4326)
                 .expanded(byHorizontalDegrees: dx, verticalDegrees: dy)
-                .projected(to: .epsg3857)
+                .projected(to: projection)
 
         case .epsg4326:
             return BoundingBox(
@@ -438,7 +438,7 @@ extension BoundingBox {
     /// The size of the bounding box (width, height) in meters (approximation).
     public var size: (width: Double, height: Double) {
         switch projection {
-        case .epsg3857, .noSRID:
+        case .epsg3857, .epsg4978, .noSRID:
             return (width: northEast.longitude - southWest.longitude,
                     height: northEast.latitude - southWest.latitude)
 
@@ -470,7 +470,7 @@ extension BoundingBox {
         // self crosses the date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
             switch projection {
-            case .noSRID:
+            case .noSRID, .epsg4978:
                 return false
 
             case .epsg3857:
@@ -543,7 +543,7 @@ extension BoundingBox {
         // self crosses date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
             switch projection {
-            case .noSRID:
+            case .noSRID, .epsg4978:
                 return false
 
             case .epsg3857:
@@ -570,7 +570,7 @@ extension BoundingBox {
         // other crosses date line
         else if other.southWest.longitude > other.northEast.longitude {
             switch projection {
-            case .noSRID:
+            case .noSRID, .epsg4978:
                 return false
 
             case .epsg3857:
@@ -617,7 +617,7 @@ extension BoundingBox {
             let right: BoundingBox
 
             switch projection {
-            case .noSRID:
+            case .noSRID, .epsg4978:
                 return nil
 
             case .epsg3857:
@@ -660,7 +660,7 @@ extension BoundingBox {
             let right: BoundingBox
 
             switch projection {
-            case .noSRID:
+            case .noSRID, .epsg4978:
                 return nil
 
             case .epsg3857:
@@ -741,7 +741,7 @@ extension BoundingBox {
     /// - Returns: A copy of this bounding box with longitudes normalized to the [-180, 180] range
     public func normalized() -> BoundingBox {
         switch projection {
-        case .noSRID:
+        case .noSRID, .epsg4978:
             return self
 
         case .epsg3857:
