@@ -473,7 +473,7 @@ struct ClustersTests {
     func clusterNaturalEarth() async throws {
         #if EnableShapefileSupport
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
-        let fc = try ShapefileCoder.read(from: url)
+        let fc = try ShapefileCoder.read(from: url, calculateBoundingBox: true)
 
         let palette = [
             "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
@@ -661,7 +661,7 @@ struct ClusterBenchmarks {
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthKmeans() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
-        guard let fc = FeatureCollection(shapefile: url) else { return }
+        guard let fc = FeatureCollection(shapefile: url, calculateBoundingBox: true) else { return }
 
         Self.measure("NE/K-means/7342") {
             _ = fc.kmeansClusters(numberOfClusters: 10)
@@ -671,7 +671,7 @@ struct ClusterBenchmarks {
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthWeightedKmeans() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
-        guard let fc = FeatureCollection(shapefile: url) else { return }
+        guard let fc = FeatureCollection(shapefile: url, calculateBoundingBox: true) else { return }
 
         Self.measure("NE/K-means-weighted/7342") {
             _ = fc.kmeansClusters(numberOfClusters: 10, weightAttribute: "pop_max")
@@ -681,7 +681,7 @@ struct ClusterBenchmarks {
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthDbscan() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
-        guard let fc = FeatureCollection(shapefile: url) else { return }
+        guard let fc = FeatureCollection(shapefile: url, calculateBoundingBox: true) else { return }
 
         Self.measure("NE/DBSCAN/7342") {
             _ = fc.dbscanClusters(maxDistance: 100_000.0, minPoints: 3)

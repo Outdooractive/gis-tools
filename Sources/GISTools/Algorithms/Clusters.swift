@@ -309,7 +309,7 @@ private struct DBSCANIndexedPoint: BoundingBoxRepresentable {
     var projection: Projection { point.projection }
 
     var boundingBox: BoundingBox? {
-        get { point.calculateBoundingBox() }
+        get { point.boundingBox ?? point.calculateBoundingBox() }
         set {}
     }
 
