@@ -378,6 +378,71 @@ struct ClustersTests {
 //        writeCluster("kmeans_weighted_all", wkm)
     }
 
+    /// Weighted K-means changes cluster assignment (EPSG:4326).
+    /// Without weights, points {0,9} form one cluster and {10,19} the other.
+    /// A weight of 10 000 on (0,0) pulls that centroid so far left that point (9,0)
+    /// switches to the other cluster.
+    @Test
+    func weightedKmeansChangesAssignmentEpsg4326() async throws {
+        var p0 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
+        var p1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 9.0)))
+        var p2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 10.0)))
+        var p3 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 19.0)))
+        p0.properties["w"] = 10_000.0
+        let points = [p0, p1, p2, p3]
+        let wPoints = [p0, p1, p2, p3]
+
+        // seedIndex=1 so initial centroids are (9,0) and (10,0) — one per intended cluster
+        let km = FeatureCollection(points).kmeansClusters(numberOfClusters: 2, seedIndex: 1)
+        let wkm = FeatureCollection(wPoints).kmeansClusters(numberOfClusters: 2, weightAttribute: "w", seedIndex: 1)
+
+        let c0km: Int? = km.features[0].property(for: "cluster")   // (0,0)
+        let c1km: Int? = km.features[1].property(for: "cluster")   // (9,0)
+        let c0wkm: Int? = wkm.features[0].property(for: "cluster") // (0,0)
+        let c1wkm: Int? = wkm.features[1].property(for: "cluster") // (9,0)
+
+        #expect(c0km == c1km)    // unweighted: (0,0) and (9,0) in the same cluster
+        #expect(c0wkm != c1wkm)  // weighted: (9,0) flips to the other cluster
+    }
+
+    /// Weighted K-means changes cluster assignment (EPSG:3857, meters).
+    @Test
+    func weightedKmeansChangesAssignmentEpsg3857() async throws {
+        var p0 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
+        var p1 = Feature(Point(Coordinate3D(x: 9000.0, y: 0.0, projection: .epsg3857)))
+        var p2 = Feature(Point(Coordinate3D(x: 10_000.0, y: 0.0, projection: .epsg3857)))
+        var p3 = Feature(Point(Coordinate3D(x: 19_000.0, y: 0.0, projection: .epsg3857)))
+        p0.properties["w"] = 10_000.0
+        let points = [p0, p1, p2, p3]
+
+        let km = FeatureCollection(points).kmeansClusters(numberOfClusters: 2, seedIndex: 1)
+        let wkm = FeatureCollection(points).kmeansClusters(numberOfClusters: 2, weightAttribute: "w", seedIndex: 1)
+
+        let c1km: Int? = km.features[1].property(for: "cluster")
+        let c1wkm: Int? = wkm.features[1].property(for: "cluster")
+        #expect(c1km == km.features[0].property(for: "cluster"))  // (9k,0) with (0,0) → same cluster
+        #expect(c1wkm != wkm.features[0].property(for: "cluster")) // (9k,0) flips away
+    }
+
+    /// Weighted K-means changes cluster assignment (EPSG:4978, ECEF meters).
+    @Test
+    func weightedKmeansChangesAssignmentEpsg4978() async throws {
+        var p0 = Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var p1 = Feature(Point(Coordinate3D(x: 6_387_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var p2 = Feature(Point(Coordinate3D(x: 6_388_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var p3 = Feature(Point(Coordinate3D(x: 6_397_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        p0.properties["w"] = 10_000.0
+        let points = [p0, p1, p2, p3]
+
+        let km = FeatureCollection(points).kmeansClusters(numberOfClusters: 2, seedIndex: 1)
+        let wkm = FeatureCollection(points).kmeansClusters(numberOfClusters: 2, weightAttribute: "w", seedIndex: 1)
+
+        let c1km: Int? = km.features[1].property(for: "cluster")
+        let c1wkm: Int? = wkm.features[1].property(for: "cluster")
+        #expect(c1km == km.features[0].property(for: "cluster"))  // unweighted: together
+        #expect(c1wkm != wkm.features[0].property(for: "cluster")) // weighted: flips
+    }
+
     // MARK: - Natural Earth clustering (disabled, requires shapefile trait)
 
     /// Reads the Natural Earth shapefile, runs K-means and DBSCAN (k=10) on each
