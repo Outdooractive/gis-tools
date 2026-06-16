@@ -353,6 +353,13 @@ extension Feature {
         set { self["marker-color"] = newValue }
     }
 
+    /// The marker size (`"small"`, `"medium"`, or `"large"`), stored under the `"marker-size"` property key.
+    /// Used by geojson.io and MapLibre for point symbol sizing.
+    public var markerSize: String? {
+        get { self["marker-size"] }
+        set { self["marker-size"] = newValue }
+    }
+
     /// The stroke color (hex string, e.g. `"#312E81"`), stored under the `"stroke"` property key.
     /// Used by geojson.io and MapLibre for line/polygon outlines.
     public var stroke: String? {
