@@ -111,7 +111,12 @@ extension FeatureCollection {
         // Read weights if weightAttribute is provided
         let weights: [Double]
         if let weightAttribute {
-            weights = features.map { ($0.properties[weightAttribute] as? Double) ?? 1.0 }
+            weights = features.map { feature in
+                let v = feature.properties[weightAttribute]
+                if let d = v as? Double { return d }
+                if let i = v as? Int { return Double(i) }
+                return 1.0
+            }
         }
         else {
             weights = Array(repeating: 1.0, count: count)

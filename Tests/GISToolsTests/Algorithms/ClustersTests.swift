@@ -443,6 +443,27 @@ struct ClustersTests {
         #expect(c1wkm != wkm.features[0].property(for: "cluster")) // weighted: flips
     }
 
+    /// Confirms that weighted K-means accepts both `Int` and `Double` property values as weights.
+    @Test
+    func weightedKmeansMixedIntDoubleWeights() async throws {
+        // Some properties with Int values, some with Double — as happens with DBF read-back
+        var p0 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
+        var p1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 9.0)))
+        var p2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 10.0)))
+        var p3 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 19.0)))
+        p0.properties["w"] = 10_000    // Int
+        p1.properties["w"] = 1.0        // Double
+        p2.properties["w"] = 1          // Int
+        p3.properties["w"] = 1.0        // Double
+
+        let wkm = FeatureCollection([p0, p1, p2, p3]).kmeansClusters(
+            numberOfClusters: 2, weightAttribute: "w", seedIndex: 1)
+
+        let c0: Int? = wkm.features[0].property(for: "cluster")
+        let c1: Int? = wkm.features[1].property(for: "cluster")
+        #expect(c0 != c1)  // (9,0) flips away from heavy (0,0) — same as pure-Double test
+    }
+
     // MARK: - Natural Earth clustering (disabled, requires shapefile trait)
 
     /// Reads the Natural Earth shapefile, runs K-means and DBSCAN (k=10) on each
