@@ -976,6 +976,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | line-segments               | `let segments = anyGeometry.lineSegments`                                                                                             |     | [Source][84] / [Tests][85]   |
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
 | line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
+| mask                        | `let masked = polygon.mask()`                                                                                                         |     | [Source][209] / [Tests][210] |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
 | minimum-bounding-circle     | `let circle = anyGeometry.minimumBoundingCircle()`                                                                                    |     | [Source][203] / [Tests][204] |
 | minimum-bounding-radius     | `let r = anyGeometry.minimumBoundingRadius()`                                                                                         |     | [Source][203] / [Tests][204] |
@@ -1236,6 +1237,8 @@ Thomas Rasch, Outdooractive
 [206]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/OrientedEnvelopeTests.swift "OrientedEnvelopeTests"
 [207]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Clean.swift "Clean"
 [208]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CleanTests.swift "CleanTests"
+[209]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Mask.swift "Mask"
+[210]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MaskTests.swift "MaskTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
