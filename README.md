@@ -1011,6 +1011,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
 | tin                         | `anyGeometry.tin()`                                                                                                                  |     | [Source][163] / [Tests][164] |
+| tesselate                   | `let triangles = polygon.tesselated()`                                                                                               |     | [Source][221] / [Tests][222] |
 | tin-to-point-cloud          | `let cloud = tin.tinToPointCloud()`                                                                                                  |     | [Source][201] / [Tests][202] |
 | transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                                                                          |     | [Source][114] / [Tests][115] |
 | transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`                                               |     | [Source][116] / [Tests][117] |
@@ -1019,6 +1020,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`                                                            |     | [Source][122] / [Tests][123] |
 | union                       | `let combined = polygon.union(with: otherPolygon)`                                                                                     |     | [Source][124] / [Tests][153] |
 | unkink-polygon              | `let simplePolygons = polygon.unkinked(gridSize: 0.001)`                                                                              |     | [Source][150] / [Tests][151] |
+| voronoi                     | `let cells = points.voronoiDiagram(boundingBox: bbox)`                                                                                |     | [Source][223] / [Tests][224] |
 
 # Related packages
 Currently only two:
@@ -1253,6 +1255,10 @@ Thomas Rasch, Outdooractive
 [218]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BezierSplineTests.swift "BezierSplineTests"
 [219]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/IsoLines.swift "IsoLines"
 [220]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/IsoLinesTests.swift "IsoLinesTests"
+[221]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Tesselate.swift "Tesselate"
+[222]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TesselateTests.swift "TesselateTests"
+[223]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Voronoi.swift "Voronoi"
+[224]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/VoronoiTests.swift "VoronoiTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
