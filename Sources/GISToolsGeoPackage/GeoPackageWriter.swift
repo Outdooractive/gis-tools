@@ -202,13 +202,7 @@ private enum GeoPackageWriter {
         sql: String,
         values: [Any]
     ) throws {
-        var stmt: OpaquePointer?
-        let sqlCString = (sql as NSString).utf8String
-        let rc = sqlite3_prepare_v2(db.db, sqlCString, -1, &stmt, nil)
-        guard rc == 0, let stmt else {  // SQLITE_OK
-            let err = String(cString: sqlite3_errmsg(db.db))
-            throw GeoPackageError.sqliteError("Failed to prepare insert: \(err)")
-        }
+        let stmt = try db.prepare(sql)
         defer { sqlite3_finalize(stmt) }
 
         for (i, value) in values.enumerated() {
@@ -217,8 +211,7 @@ private enum GeoPackageWriter {
 
         let stepRC = sqlite3_step(stmt)
         guard stepRC == 101 else {  // SQLITE_DONE
-            let err = String(cString: sqlite3_errmsg(db.db))
-            throw GeoPackageError.sqliteError("Failed to insert row: \(err)")
+            throw GeoPackageError.sqliteError("Failed to insert row: \(db.lastErrorMessage())")
         }
     }
 

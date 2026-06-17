@@ -2,11 +2,12 @@ import Foundation
 import CSQLite
 
 /// A minimal SQLite wrapper for GeoPackage operations.
-final class SQLiteDB: @unchecked Sendable {
+/// Not Sendable — always use within a single synchronous context.
+final class SQLiteDB {
 
-    var db: OpaquePointer?
+    private var db: OpaquePointer?
 
-    let path: String
+    private let path: String
 
     init(path: String) throws {
         self.path = path
@@ -42,6 +43,19 @@ final class SQLiteDB: @unchecked Sendable {
             sqlite3_free(errMsg)
             throw GeoPackageError.sqliteError(msg)
         }
+    }
+
+    // MARK: - Prepare statement
+
+    /// Prepare an SQL statement, returning the handle.
+    /// The caller must finalize the returned handle.
+    func prepare(_ sql: String) throws -> OpaquePointer {
+        var stmt: OpaquePointer?
+        let rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
+        guard rc == 0, let stmt else {
+            throw GeoPackageError.sqliteError(lastError())
+        }
+        return stmt
     }
 
     // MARK: - Query (returns rows)
@@ -96,6 +110,13 @@ final class SQLiteDB: @unchecked Sendable {
         return results
     }
 
+    // MARK: - Error info
+
+    /// The error message from the last failed SQLite operation.
+    func lastErrorMessage() -> String {
+        lastError()
+    }
+
     // MARK: - Last insert row ID
 
     func lastInsertRowId() -> Int64 {
@@ -105,7 +126,8 @@ final class SQLiteDB: @unchecked Sendable {
     // MARK: - Private helpers
 
     private func lastError() -> String {
-        String(cString: sqlite3_errmsg(db))
+        guard let db else { return "Database is closed" }
+        return String(cString: sqlite3_errmsg(db))
     }
 
     private func columnDeclaredType(_ stmt: OpaquePointer, _ i: Int32) -> String {
