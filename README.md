@@ -956,6 +956,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | concave-hull                | `anyGeometry.concaveHull(maxEdgeLength: 500.0)`                                                                                     |     | [Source][161] / [Tests][162] |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
+| densify                     | `let dense = anyGeometry.densified(maxSegmentLength: 1.0)`                                                                             |     | [Source][233] / [Tests][234] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | difference                  | `let diff = polygon.difference(with: other)`                                                                                          |     | [Source][227] / [Tests][228] |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
@@ -1272,6 +1273,8 @@ Thomas Rasch, Outdooractive
 [230]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SymmetricDifferenceTests.swift "SymmetricDifferenceTests"
 [231]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MinkowskiSum.swift "MinkowskiSum"
 [232]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinkowskiSumTests.swift "MinkowskiSumTests"
+[233]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Densify.swift "Densify"
+[234]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DensifyTests.swift "DensifyTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
