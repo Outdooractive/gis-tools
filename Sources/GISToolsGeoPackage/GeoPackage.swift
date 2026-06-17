@@ -3,7 +3,7 @@ import GISTools
 
 // MARK: - Errors
 
-enum GeoPackageError: LocalizedError {
+public enum GeoPackageError: LocalizedError {
     case couldNotOpenDatabase(String, String)
     case sqliteError(String)
     case invalidGeoPackage(String)
@@ -11,7 +11,7 @@ enum GeoPackageError: LocalizedError {
     case invalidWKB(String)
     case unsupportedGeometryType(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .couldNotOpenDatabase(let path, let detail):
             return "Could not open GeoPackage database at \(path): \(detail)"

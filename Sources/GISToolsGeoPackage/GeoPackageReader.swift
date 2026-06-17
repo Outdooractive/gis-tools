@@ -9,7 +9,7 @@ extension FeatureCollection {
     ///   - url: The file URL of the GeoPackage database.
     ///   - table: The name of the feature table to read (default `"features"`).
     /// - Throws: A ``GeoPackageError`` if the file cannot be read or is invalid.
-    public init(geopackage url: URL, table: String) throws {
+    public init(geopackage url: URL, table: String = "features") throws {
         let db = try SQLiteDB(path: url.path)
         try GeoPackage.validateMetadata(in: db)
         let features = try GeoPackageReader.readFeatures(from: db, table: table)
