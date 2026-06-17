@@ -957,6 +957,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
+| difference                  | `let diff = polygon.difference(with: other)`                                                                                          |     | [Source][227] / [Tests][228] |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
 | distance-along              | `let dist = lineString.distanceAlong(to: coordinate)`                                                                                 |     | [Source][213] / [Tests][214] |                                                                              |     | [Source][68] / [Tests][69]   |
 | ellipse                     | `let ellipse = coordinate.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0)`                                                              |     | [Source][183] / [Tests][184] |
@@ -969,6 +970,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | grid-rectangle              | `bbox.rectangleGrid(cellWidth: 1000.0, cellHeight: 500.0)`                                                                            |     | [Source][173] / [Tests][174] |
 | grid-square                 | `bbox.squareGrid(cellSide: 1000.0)`                                                                                                   |     | [Source][169] / [Tests][170] |
 | grid-triangle               | `bbox.triangleGrid(cellSide: 1000.0)`                                                                                                 |     | [Source][171] / [Tests][172] |
+| intersect                   | `let overlap = polygon.intersection(with: other)`                                                                                     |     | [Source][225] / [Tests][226] |
 | isolines                    | `let result = grid.isolines(breaks: [0, 100, 200])`                                                                   |     | [Source][219] / [Tests][220] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
@@ -1007,6 +1009,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | sample                      | `let sampled = featureCollection.sample(size: 10)`                                                                                    |     | [Source][181] / [Tests][182] |
 | sector                      | `let sector = coordinate.sector(radius: 5000.0, bearing1: 0.0, bearing2: 90.0)`                                                       |     | [Source][189] / [Tests][190] |
 | square                      | `let squared = boundingBox.squared()`                                                                                                 |     | [Source][193] / [Tests][194] |
+| symmetric-difference        | `let xor = polygon.symmetricDifference(with: other)`                                                                                  |     | [Source][229] / [Tests][230] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
 | snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
@@ -1259,6 +1262,12 @@ Thomas Rasch, Outdooractive
 [222]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TesselateTests.swift "TesselateTests"
 [223]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Voronoi.swift "Voronoi"
 [224]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/VoronoiTests.swift "VoronoiTests"
+[225]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Intersection.swift "Intersection"
+[226]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/IntersectionTests.swift "IntersectionTests"
+[227]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Difference.swift "Difference"
+[228]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DifferenceTests.swift "DifferenceTests"
+[229]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SymmetricDifference.swift "SymmetricDifference"
+[230]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SymmetricDifferenceTests.swift "SymmetricDifferenceTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
