@@ -86,7 +86,6 @@ private enum GeoPackageWriter {
 
         for feature in features {
             let geometry = feature.geometry
-            let projection = feature.projection
 
             // Encode geometry to WKB and prepend GeoPackage header
             guard let wkb = WKBCoder.encode(geometry: geometry, byteOrder: .littleEndian, targetProjection: nil) else {
