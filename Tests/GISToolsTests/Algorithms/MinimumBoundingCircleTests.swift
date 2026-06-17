@@ -1,0 +1,103 @@
+import Foundation
+@testable import GISTools
+import Testing
+
+struct MinimumBoundingCircleTests {
+
+    // MARK: - Minimum bounding radius
+
+    /// Validates that a single ``Point`` has a minimum bounding radius of 0.
+    @Test
+    func radiusPoint() {
+        let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
+        #expect(point.minimumBoundingRadius() == 0.0)
+    }
+
+    /// Validates that two points define a circle with half their distance as radius.
+    @Test
+    func radiusTwoPoints() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ])
+        let r = line.minimumBoundingRadius()
+        #expect(r != nil)
+        if let r { #expect(abs(r - 5.0) < 0.001) }
+    }
+
+    /// Validates the MBC radius of a 10x10 square: half the diagonal (5√2 ≈ 7.07).
+    @Test
+    func radiusSquare() {
+        let square = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        let r = square.minimumBoundingRadius()
+        #expect(r != nil)
+        if let r { #expect(abs(r - 5.0 * sqrt(2.0)) < 0.01) }
+    }
+
+    /// Validates the MBC radius of a pentagon matching the shapely example (radius 5.0).
+    @Test
+    func radiusPentagon() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]])
+        let r = polygon.minimumBoundingRadius()
+        #expect(r != nil)
+        if let r { #expect(abs(r - 5.0) < 0.01) }
+    }
+
+    /// Validates that an empty geometry returns `nil` for the radius.
+    @Test
+    func radiusEmpty() {
+        let empty = MultiPoint()
+        #expect(empty.minimumBoundingRadius() == nil)
+    }
+
+    // MARK: - Minimum bounding circle
+
+    /// Validates that a single ``Point`` returns `nil` for the circle polygon.
+    @Test
+    func circlePoint() {
+        let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
+        #expect(point.minimumBoundingCircle() == nil)
+    }
+
+    /// Validates that a square produces a 65-vertex circle polygon (64 steps + close).
+    @Test
+    func circleSquare() {
+        let square = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        let circle = square.minimumBoundingCircle()
+        #expect(circle != nil)
+        if let circle { #expect(circle.outerRing?.coordinates.count == 65) }
+    }
+
+    /// Validates that the `steps` parameter controls polygon vertex count (12 steps → 13 coords).
+    @Test
+    func circleStepsCount() {
+        let circle = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]).minimumBoundingCircle(steps: 12)
+        #expect(circle != nil)
+        if let circle { #expect(circle.outerRing?.coordinates.count == 13) }
+    }
+
+}
