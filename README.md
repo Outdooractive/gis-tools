@@ -956,6 +956,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
+| distance-along              | `let dist = lineString.distanceAlong(to: coordinate)`                                                                                 |     | [Source][213] / [Tests][214] |                                                                              |     | [Source][68] / [Tests][69]   |
 | ellipse                     | `let ellipse = coordinate.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0)`                                                              |     | [Source][183] / [Tests][184] |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
 | flip                        | `let flipped = anyGeometry.flipped()`                                                                                                 |     | [Source][189] / [Tests][190] |
@@ -976,6 +977,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | line-segments               | `let segments = anyGeometry.lineSegments`                                                                                             |     | [Source][84] / [Tests][85]   |
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
 | line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
+| line-split                  | `let segments = lineString.lineSplit(with: splitter)`                                                                                 |     | [Source][211] / [Tests][212] |
 | mask                        | `let masked = polygon.mask()`                                                                                                         |     | [Source][209] / [Tests][210] |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
 | minimum-bounding-circle     | `let circle = anyGeometry.minimumBoundingCircle()`                                                                                    |     | [Source][203] / [Tests][204] |
@@ -1239,6 +1241,10 @@ Thomas Rasch, Outdooractive
 [208]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CleanTests.swift "CleanTests"
 [209]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Mask.swift "Mask"
 [210]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MaskTests.swift "MaskTests"
+[211]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineSplit.swift "LineSplit"
+[212]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineSplitTests.swift "LineSplitTests"
+[213]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Along.swift "Along"
+[214]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineSplitTests.swift "LineSplitTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms

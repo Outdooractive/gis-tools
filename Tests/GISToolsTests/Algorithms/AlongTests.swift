@@ -32,4 +32,68 @@ struct AlongTests {
         #expect(abs(coordinate.longitude) > 150.0)
     }
 
+    // MARK: - Distance along
+
+    /// Returns the full length of the line when querying the last coordinate.
+    @Test
+    func distanceAlongLast() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ])
+        let dist = line.distanceAlong(to: Coordinate3D(latitude: 10.0, longitude: 0.0))
+        #expect(dist != nil)
+        if let dist { #expect(abs(dist - line.length) < 1.0) }
+    }
+
+    /// Returns 0 when querying the first coordinate.
+    @Test
+    func distanceAlongFirst() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ])
+        let dist = line.distanceAlong(to: Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(dist != nil)
+        if let dist { #expect(dist < 1.0) }
+    }
+
+    /// Returns half the length when querying the midpoint.
+    @Test
+    func distanceAlongMidpoint() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ])
+        let mid = Coordinate3D(latitude: 5.0, longitude: 0.0)
+        let dist = line.distanceAlong(to: mid)
+        #expect(dist != nil)
+        if let dist { #expect(abs(dist - line.length / 2.0) < 1.0) }
+    }
+
+    /// Returns nil for a point far from the line (beyond tolerance).
+    @Test
+    func distanceAlongBeyondTolerance() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ])
+        let far = Coordinate3D(latitude: 5.0, longitude: 100.0)
+        #expect(line.distanceAlong(to: far) == nil)
+    }
+
+    /// Custom tolerance accepts a point at the specified distance from the line.
+    @Test
+    func distanceAlongCustomTolerance() {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ])
+        // 50 meters away from the line — fails with default 1m tolerance
+        let near = Coordinate3D(latitude: 5.0, longitude: 0.001)
+        #expect(line.distanceAlong(to: near) == nil)
+        // But passes with a generous tolerance
+        #expect(line.distanceAlong(to: near, tolerance: 200.0) != nil)
+    }
+
 }

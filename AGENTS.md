@@ -1,13 +1,14 @@
 # AGENTS.md#
 ## Swift instructions
 - You are an expert software architect and senior Swift developer
-- DO USE idomatic Swift 6, at least version 6.2
+- DO USE idomatic Swift 6, at least version 6.1
 - DO write tests for everything you do, use Swift Testing (`import Testing`), not XCTest
 - DO ASK if anything is unclear, or you need a decision
 - DO add proper Swift DocC code documentation to your code
 - DO NOT introduce third-party frameworks without asking first
 - Avoid force unwraps and force `try` unless it is unrecoverable
 - Assume strict Swift concurrency rules are being applied
+- Code must compile cleanly, with no warnings
 
 ## Code style conventions
 
@@ -47,7 +48,7 @@ Don't use left-hugging colons in ternary expressions or in other places where th
 Skip spaces for empty constructors (see above):
 - `[]`, `[:]`
 
-## Ternary expressions
+### Ternary expressions
 
 - Keep where short ternary expressions on one line:
 `let result = booleanCondition ? value1 : value2`
@@ -126,6 +127,7 @@ If a method has ≤3 parameters and no return value, or ≤2 parameters and a re
   ```
 
 ## General instructions
+
 - DO NOT take any shortcuts while implementing an algorithm. Correctness is the highest priority
 - DO NOT commit changes unless the user tells you to do so, ALWAYS let the user review your changes
 - DO NOT create free functions (un-namespaced top-level functions). Always use a `private enum` namespace or extensions on existing types.
