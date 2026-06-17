@@ -21,6 +21,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
 - Supports WKT/WKB/TWKB, also with different projections
 - Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
+- Reads and writes OGC GeoPackage (.gpkg) files
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -74,8 +75,6 @@ let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 
 **Storage format traits**:
 - `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
-
-GeoPackage support is available via the `GISToolsGeoPackage` product (no trait required).
 
 ## Usage
 
@@ -891,7 +890,6 @@ let coordinates = polyline.decodePolyline()
 # GeoPackage (.gpkg)
 
 Provides read/write support for the OGC GeoPackage format via the `GISToolsGeoPackage` target.
-Requires the `EnableGeoPackageSupport` trait.
 
 `FeatureCollection` has convenience methods:
 
