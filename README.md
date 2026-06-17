@@ -1011,6 +1011,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | rhumb-distance              | `let distance = coordinate1.rhumbDistance(from: coordinate2)`                                                                         |     | [Source][108] / [Tests][109] |
 | sample                      | `let sampled = featureCollection.sample(size: 10)`                                                                                    |     | [Source][181] / [Tests][182] |
 | sector                      | `let sector = coordinate.sector(radius: 5000.0, bearing1: 0.0, bearing2: 90.0)`                                                       |     | [Source][189] / [Tests][190] |
+| shared-paths                | `let shared = a.sharedPaths(with: b)`                                                                                                  |     | [Source][235] / [Tests][236] |
 | square                      | `let squared = boundingBox.squared()`                                                                                                 |     | [Source][193] / [Tests][194] |
 | symmetric-difference        | `let xor = polygon.symmetricDifference(with: other)`                                                                                  |     | [Source][229] / [Tests][230] |
 | simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
@@ -1275,6 +1276,8 @@ Thomas Rasch, Outdooractive
 [232]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinkowskiSumTests.swift "MinkowskiSumTests"
 [233]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Densify.swift "Densify"
 [234]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DensifyTests.swift "DensifyTests"
+[235]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SharedPaths.swift "SharedPaths"
+[236]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SharedPathsTests.swift "SharedPathsTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
