@@ -70,7 +70,6 @@ private enum GeoPackageReader {
             // Determine target projection from the table's SRS
             let projection = GeoPackage.projection(for: srsId)
             let projectedGeoJson = geoJson.projected(to: projection)
-
             let geometry = projectedGeoJson
 
             // Build properties
@@ -79,7 +78,8 @@ private enum GeoPackageReader {
                 guard let value = row[col] else { continue }
                 if let data = value as? Data {
                     properties[col] = data.base64EncodedString()
-                } else {
+                }
+                else {
                     properties[col] = value
                 }
             }
