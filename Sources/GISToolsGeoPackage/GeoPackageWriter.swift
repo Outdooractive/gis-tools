@@ -10,7 +10,10 @@ extension FeatureCollection {
     ///   - url: The file URL to write to.
     ///   - table: The name of the feature table to create (default `"features"`).
     /// - Throws: A ``GeoPackageError`` if the file cannot be written.
-    public func writeGeopackage(to url: URL, table: String = "features") throws {
+    public func writeGeopackage(
+        to url: URL,
+        table: String = "features"
+    ) throws {
         // Remove existing file to start fresh
         if FileManager.default.fileExists(atPath: url.path) {
             try FileManager.default.removeItem(at: url)
@@ -26,7 +29,11 @@ extension FeatureCollection {
 
 private enum GeoPackageWriter {
 
-    static func writeFeatures(_ fc: FeatureCollection, to db: SQLiteDB, table: String) throws {
+    static func writeFeatures(
+        _ fc: FeatureCollection,
+        to db: SQLiteDB,
+        table: String
+    ) throws {
         let features = fc.features
         guard !features.isEmpty else {
             throw GeoPackageError.invalidGeoPackage("Cannot write empty FeatureCollection")
@@ -38,7 +45,8 @@ private enum GeoPackageWriter {
         let hasMixedTypes = features.contains { $0.geometry.type != firstGeoType }
         if hasMixedTypes {
             geoTypeName = "GEOMETRY"
-        } else {
+        }
+        else {
             geoTypeName = GeoPackage.geometryTypeName(for: firstGeoType)
         }
 
@@ -49,16 +57,20 @@ private enum GeoPackageWriter {
         let propertySchema = inferPropertySchema(from: features)
 
         // Create the feature table
-        var createColumns: [String] = []
-        var geomColumnName = "geom"
+        var columnDefs: [(name: String, sqlType: String)] = []
+        let geomColumnName = "geom"
 
-        createColumns.append("\"\(geomColumnName)\" \(geoTypeName)")
+        columnDefs.append((geomColumnName, geoTypeName))
 
         for (key, colType) in propertySchema {
-            createColumns.append("\"\(key)\" \(colType)")
+            columnDefs.append((key, colType))
         }
 
-        let createSQL = "CREATE TABLE \"\(table)\" (\(createColumns.joined(separator: ", ")));"
+        let createColumnsSQL = columnDefs.map { (name, sqlType) in
+            "\(GeoPackage.sanitizeIdentifier(name)) \(sqlType)"
+        }
+        let quotedTable = GeoPackage.sanitizeIdentifier(table)
+        let createSQL = "CREATE TABLE \(quotedTable) (\(createColumnsSQL.joined(separator: ", ")));"
         try db.execute(createSQL)
 
         // Compute bounding box
@@ -68,17 +80,9 @@ private enum GeoPackageWriter {
         var maxY = -Double.infinity
 
         // Insert features
-        let colNames = createColumns.map { colDef in
-            // Extract bare column name from "\"name\" TYPE"
-            colDef.trimmingCharacters(in: .whitespaces)
-                .split(separator: " ", maxSplits: 1)
-                .first?
-                .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                ?? "geom"
-        }
-        let colNamesQuoted = colNames.map { "\"\($0)\"" }.joined(separator: ", ")
-        let placeholders = createColumns.map { _ in "?" }.joined(separator: ", ")
-        let insertSQL = "INSERT INTO \"\(table)\" (\(colNamesQuoted)) VALUES (\(placeholders));"
+        let colNamesQuoted = columnDefs.map { GeoPackage.sanitizeIdentifier($0.name) }.joined(separator: ", ")
+        let placeholders = columnDefs.map { _ in "?" }.joined(separator: ", ")
+        let insertSQL = "INSERT INTO \(quotedTable) (\(colNamesQuoted)) VALUES (\(placeholders));"
 
         for feature in features {
             let geometry = feature.geometry
@@ -101,10 +105,10 @@ private enum GeoPackageWriter {
                 maxY = max(maxY, envelope.northEast.latitude)
             }
 
-            // Build values array
+            // Build values array (skip geom at index 0)
             var values: [Any] = [headerWkb]
-            for (key, _) in propertySchema {
-                values.append(feature.properties[key] as Any)
+            for (name, _) in columnDefs.dropFirst() {
+                values.append(feature.properties[name] as Any)
             }
 
             // Insert via prepared statement
@@ -123,16 +127,18 @@ private enum GeoPackageWriter {
         minX: Double, minY: Double, maxX: Double, maxY: Double,
         projection: Projection
     ) throws {
-        let identifier = table
+        let escapedTable = GeoPackage.sanitizeStringLiteral(table)
+        let identifier = escapedTable
         try db.execute(
-            "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id, min_x, min_y, max_x, max_y) VALUES ('\(table)', 'features', '\(identifier)', \(srsId), \(minX), \(minY), \(maxX), \(maxY));")
+            "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id, min_x, min_y, max_x, max_y) VALUES (\(escapedTable), 'features', \(identifier), \(srsId), \(minX), \(minY), \(maxX), \(maxY));")
     }
 
     private static func writeGeometryColumnsMetadata(
         db: SQLiteDB, table: String, geomColumnName: String, geoTypeName: String, srsId: Int
     ) throws {
+        let escapedTable = GeoPackage.sanitizeStringLiteral(table)
         try db.execute(
-            "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('\(table)', '\(geomColumnName)', '\(geoTypeName)', \(srsId), 0, 0);")
+            "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES (\(escapedTable), 'geom', '\(geoTypeName)', \(srsId), 0, 0);")
     }
 
     // MARK: - Schema inference

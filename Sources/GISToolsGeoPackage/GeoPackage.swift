@@ -207,6 +207,20 @@ enum GeoPackage {
         }
     }
 
+    /// Sanitize a SQL identifier (table name, column name) to prevent SQL injection.
+    /// Wraps the name in double quotes and escapes embedded quotes.
+    static func sanitizeIdentifier(_ name: String) -> String {
+        let escaped = name.replacingOccurrences(of: "\"", with: "\"\"")
+        return "\"\(escaped)\""
+    }
+
+    /// Sanitize a SQL string literal value to prevent SQL injection.
+    /// Escapes single quotes by doubling them.
+    static func sanitizeStringLiteral(_ value: String) -> String {
+        let escaped = value.replacingOccurrences(of: "'", with: "''")
+        return "'\(escaped)'"
+    }
+
     /// Map a GeoJson geometry type to a GeoPackage geometry type name.
     static func geometryTypeName(for type: GeoJsonType) -> String {
         switch type {
