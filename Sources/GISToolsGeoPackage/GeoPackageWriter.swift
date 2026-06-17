@@ -88,9 +88,11 @@ private enum GeoPackageWriter {
             let geometry = feature.geometry
 
             // Encode geometry to WKB and prepend GeoPackage header
-            guard let wkb = WKBCoder.encode(geometry: geometry, byteOrder: .littleEndian, targetProjection: nil) else {
-                continue
-            }
+            guard let wkb = WKBCoder.encode(
+                geometry: geometry,
+                byteOrder: .littleEndian,
+                targetProjection: nil)
+            else { continue }
 
             // Calculate envelope from geometry
             let envelope = geometry.boundingBox ?? geometry.calculateBoundingBox()
@@ -115,15 +117,33 @@ private enum GeoPackageWriter {
         }
 
         // Write metadata
-        try writeContentsMetadata(db: db, table: table, srsId: srsId, minX: minX, minY: minY, maxX: maxX, maxY: maxY, projection: projection)
-        try writeGeometryColumnsMetadata(db: db, table: table, geomColumnName: geomColumnName, geoTypeName: geoTypeName, srsId: srsId)
+        try writeContentsMetadata(
+            db: db,
+            table: table,
+            srsId: srsId,
+            minX: minX,
+            minY: minY,
+            maxX: maxX,
+            maxY: maxY,
+            projection: projection)
+        try writeGeometryColumnsMetadata(
+            db: db,
+            table: table,
+            geomColumnName: geomColumnName,
+            geoTypeName: geoTypeName,
+            srsId: srsId)
     }
 
     // MARK: - Metadata
 
     private static func writeContentsMetadata(
-        db: SQLiteDB, table: String, srsId: Int,
-        minX: Double, minY: Double, maxX: Double, maxY: Double,
+        db: SQLiteDB,
+        table: String,
+        srsId: Int,
+        minX: Double,
+        minY: Double,
+        maxX: Double,
+        maxY: Double,
         projection: Projection
     ) throws {
         let escapedTable = GeoPackage.sanitizeStringLiteral(table)
@@ -133,7 +153,11 @@ private enum GeoPackageWriter {
     }
 
     private static func writeGeometryColumnsMetadata(
-        db: SQLiteDB, table: String, geomColumnName: String, geoTypeName: String, srsId: Int
+        db: SQLiteDB,
+        table: String,
+        geomColumnName: String,
+        geoTypeName: String,
+        srsId: Int
     ) throws {
         let escapedTable = GeoPackage.sanitizeStringLiteral(table)
         try db.execute(
@@ -173,7 +197,11 @@ private enum GeoPackageWriter {
 
     // MARK: - Row insertion
 
-    private static func insertRow(db: SQLiteDB, sql: String, values: [Any]) throws {
+    private static func insertRow(
+        db: SQLiteDB,
+        sql: String,
+        values: [Any]
+    ) throws {
         var stmt: OpaquePointer?
         let sqlCString = (sql as NSString).utf8String
         let rc = sqlite3_prepare_v2(db.db, sqlCString, -1, &stmt, nil)
@@ -195,5 +223,3 @@ private enum GeoPackageWriter {
     }
 
 }
-
-

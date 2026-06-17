@@ -88,7 +88,8 @@ final class SQLiteDB: @unchecked Sendable {
                 }
                 let length = Int(sqlite3_column_bytes(stmt, 0))
                 results.append(Data(bytes: bytes, count: length))
-            } else {
+            }
+            else {
                 results.append(nil)
             }
         }
@@ -156,7 +157,11 @@ final class SQLiteDB: @unchecked Sendable {
     // MARK: - Bind helpers for writes
 
     /// Bind a value to a prepared statement at the given 1-based index.
-    static func bind(_ stmt: OpaquePointer, index: Int32, value: Any?) throws {
+    static func bind(
+        _ stmt: OpaquePointer,
+        index: Int32,
+        value: Any?
+    ) throws {
         guard let value else {
             sqlite3_bind_null(stmt, index)
             return
@@ -188,30 +193,42 @@ final class SQLiteDB: @unchecked Sendable {
         }
     }
 
-    private static func bindText(_ stmt: OpaquePointer, index: Int32, string: String) {
+    private static func bindText(
+        _ stmt: OpaquePointer,
+        index: Int32,
+        string: String
+    ) {
         // Allocate memory via sqlite3_malloc and let SQLite free it via the destructor.
         // This avoids unsafeBitCast of -1 to a function pointer (SQLITE_TRANSIENT).
         let utf8 = Array(string.utf8)
         let buf = sqlite3_malloc(Int32(utf8.count + 1))
         guard let buf else { return }
+
         buf.assumingMemoryBound(to: UInt8.self).initialize(from: utf8, count: utf8.count)
         buf.assumingMemoryBound(to: UInt8.self).advanced(by: utf8.count).pointee = 0
         sqlite3_bind_text(stmt, index, buf.assumingMemoryBound(to: CChar.self), -1, sqlite3_free)
     }
 
-    private static func bindBlob(_ stmt: OpaquePointer, index: Int32, data: Data) {
+    private static func bindBlob(
+        _ stmt: OpaquePointer,
+        index: Int32,
+        data: Data
+    ) {
         let count = data.count
         let buf = sqlite3_malloc(Int32(count))
         guard let buf else { return }
+
         data.copyBytes(to: buf.assumingMemoryBound(to: UInt8.self), count: count)
         _ = sqlite3_bind_blob(stmt, index, buf, Int32(count), sqlite3_free)
     }
 
     private static func isBase64(_ s: String) -> Bool {
         guard s.count >= 4 else { return false }
+
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "+/="))
         guard s.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return false }
         guard Data(base64Encoded: s) != nil else { return false }
+
         return true
     }
 

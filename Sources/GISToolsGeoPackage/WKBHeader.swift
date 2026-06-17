@@ -30,9 +30,10 @@ enum WKBHeader {
         var offset = 0
 
         // Magic bytes "GP"
-        guard data[offset] == 0x47, data[offset + 1] == 0x50 else {
-            throw GeoPackageError.invalidWKB("Missing GeoPackage magic bytes")
-        }
+        guard data[offset] == 0x47,
+              data[offset + 1] == 0x50
+        else { throw GeoPackageError.invalidWKB("Missing GeoPackage magic bytes") }
+
         offset += 2
 
         // Version byte (should be 0x00)
@@ -50,13 +51,12 @@ enum WKBHeader {
         // Envelope (set of bounding boxes based on indicator)
         var envelope: BoundingBox?
         if envelopeIndicator >= 1 {
-            let requiredDoubles: Int
-            switch envelopeIndicator {
-            case 1: requiredDoubles = 4  // minx, maxx, miny, maxy
-            case 2: requiredDoubles = 6  // + minz, maxz
-            case 3: requiredDoubles = 8  // + minm, maxm
-            case 4: requiredDoubles = 8  // minx, maxx, miny, maxy, minz, maxz, minm, maxm
-            default: requiredDoubles = 4
+            let requiredDoubles = switch envelopeIndicator {
+            case 1: 4  // minx, maxx, miny, maxy
+            case 2: 6  // + minz, maxz
+            case 3: 8  // + minm, maxm
+            case 4: 8  // minx, maxx, miny, maxy, minz, maxz, minm, maxm
+            default: 4
             }
 
             guard data.count >= offset + requiredDoubles * MemoryLayout<Double>.size else {
@@ -84,11 +84,21 @@ enum WKBHeader {
         let hasZ = (wkbData.count >= 5) ? ((wkbData[4] & 0x80) != 0) : false
         let hasM = (wkbData.count >= 5) ? ((wkbData[4] & 0x40) != 0) : false
 
-        return Header(srid: srid, envelope: envelope, hasZ: hasZ, hasM: hasM, isEmpty: empty, wkbData: wkbData)
+        return Header(
+            srid: srid,
+            envelope: envelope,
+            hasZ: hasZ,
+            hasM: hasM,
+            isEmpty: empty,
+            wkbData: wkbData)
     }
 
     /// Prepend a GeoPackage header to a standard WKB payload.
-    static func prependHeader(to wkb: Data, srid: Int, envelope: BoundingBox?) -> Data {
+    static func prependHeader(
+        to wkb: Data,
+        srid: Int,
+        envelope: BoundingBox?
+    ) -> Data {
         var result = Data()
 
         // Magic "GP"
