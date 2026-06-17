@@ -155,6 +155,10 @@ final class SQLiteDB: @unchecked Sendable {
 
     // MARK: - Bind helpers for writes
 
+    /// SQLITE_TRANSIENT — tells SQLite to copy string/blob data rather than store a pointer.
+    private static let SQLITE_TRANSIENT = unsafeBitCast(
+        -1, to: sqlite3_destructor_type.self)
+
     /// Bind a value to a prepared statement at the given 1-based index.
     static func bind(_ stmt: OpaquePointer, index: Int32, value: Any?) throws {
         guard let value else {
@@ -174,24 +178,24 @@ final class SQLiteDB: @unchecked Sendable {
         case let v as String:
             if isBase64(v) {
                 guard let data = Data(base64Encoded: v) else {
-                    sqlite3_bind_text(stmt, index, v, -1, nil)
+                    sqlite3_bind_text(stmt, index, v, -1, SQLITE_TRANSIENT)
                     return
                 }
                 bindBlob(stmt, index: index, data: data)
             } else {
-                sqlite3_bind_text(stmt, index, v, -1, nil)
+                sqlite3_bind_text(stmt, index, v, -1, SQLITE_TRANSIENT)
             }
         case let v as Data:
             bindBlob(stmt, index: index, data: v)
         default:
-            sqlite3_bind_text(stmt, index, "\(value)", -1, nil)
+            sqlite3_bind_text(stmt, index, "\(value)", -1, SQLITE_TRANSIENT)
         }
     }
 
     private static func bindBlob(_ stmt: OpaquePointer, index: Int32, data: Data) {
         data.withUnsafeBytes { rawBuf in
             let buf = rawBuf.bindMemory(to: UInt8.self)
-            _ = sqlite3_bind_blob(stmt, index, buf.baseAddress, Int32(data.count), nil)
+            _ = sqlite3_bind_blob(stmt, index, buf.baseAddress, Int32(data.count), SQLITE_TRANSIENT)
         }
     }
 
