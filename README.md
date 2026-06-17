@@ -985,6 +985,8 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | line-split                  | `let segments = lineString.lineSplit(with: splitter)`                                                                                 |     | [Source][211] / [Tests][212] |
 | mask                        | `let masked = polygon.mask()`                                                                                                         |     | [Source][209] / [Tests][210] |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
+| minkowski-difference        | `let eroded = polygon.minkowskiDifference(with: pattern)`                                                                             |     | [Source][231] / [Tests][232] |
+| minkowski-sum               | `let dilated = polygon.minkowskiSum(with: pattern)`                                                                                   |     | [Source][231] / [Tests][232] |
 | minimum-bounding-circle     | `let circle = anyGeometry.minimumBoundingCircle()`                                                                                    |     | [Source][203] / [Tests][204] |
 | minimum-bounding-radius     | `let r = anyGeometry.minimumBoundingRadius()`                                                                                         |     | [Source][203] / [Tests][204] |
 | nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92] / [Tests][138]  |
@@ -1268,6 +1270,8 @@ Thomas Rasch, Outdooractive
 [228]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DifferenceTests.swift "DifferenceTests"
 [229]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SymmetricDifference.swift "SymmetricDifference"
 [230]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SymmetricDifferenceTests.swift "SymmetricDifferenceTests"
+[231]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MinkowskiSum.swift "MinkowskiSum"
+[232]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinkowskiSumTests.swift "MinkowskiSumTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
