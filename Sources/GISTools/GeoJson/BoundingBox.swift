@@ -58,6 +58,9 @@ public struct BoundingBox:
 
         var southWest = Coordinate3D(x: .infinity, y: .infinity, projection: projection)
         var northEast = Coordinate3D(x: -.infinity, y: -.infinity, projection: projection)
+        var minAltitude: Double?
+        var maxAltitude: Double?
+        var allHaveAltitude = true
 
         for currentLocation in coordinates {
             let currentLocationLatitude = currentLocation.latitude
@@ -67,6 +70,19 @@ public struct BoundingBox:
             southWest.longitude = min(southWest.longitude, currentLocationLongitude)
             northEast.latitude = max(northEast.latitude, currentLocationLatitude)
             northEast.longitude = max(northEast.longitude, currentLocationLongitude)
+
+            if let altitude = currentLocation.altitude {
+                minAltitude = minAltitude.map { min($0, altitude) } ?? altitude
+                maxAltitude = maxAltitude.map { max($0, altitude) } ?? altitude
+            }
+            else {
+                allHaveAltitude = false
+            }
+        }
+
+        if allHaveAltitude, let minAltitude, let maxAltitude {
+            southWest.altitude = minAltitude
+            northEast.altitude = maxAltitude
         }
 
         if padding > 0.0 {
@@ -228,8 +244,14 @@ public struct BoundingBox:
 
         case .epsg4326:
             return BoundingBox(
-                southWest: Coordinate3D(latitude: southWest.latitude - dy, longitude: southWest.longitude - dx),
-                northEast: Coordinate3D(latitude: northEast.latitude + dy, longitude: northEast.longitude + dx))
+                southWest: Coordinate3D(
+                    latitude: southWest.latitude - dy,
+                    longitude: southWest.longitude - dx,
+                    altitude: southWest.altitude),
+                northEast: Coordinate3D(
+                    latitude: northEast.latitude + dy,
+                    longitude: northEast.longitude + dx,
+                    altitude: northEast.altitude))
 
         case .noSRID:
             return self // Don't know what to do -> ignore
@@ -247,9 +269,11 @@ public struct BoundingBox:
     /// - Parameters:
     ///    - distance: The distance from the receiver, in meters
     public func expanded(byDistance distance: CLLocationDistance) -> BoundingBox {
-        BoundingBox(
-            southWest: southWest.destination(distance: distance, bearing: 225.0),
-            northEast: northEast.destination(distance: distance, bearing: 45.0))
+        var sw = southWest.destination(distance: distance, bearing: 225.0)
+        var ne = northEast.destination(distance: distance, bearing: 45.0)
+        sw.altitude = southWest.altitude
+        ne.altitude = northEast.altitude
+        return BoundingBox(southWest: sw, northEast: ne)
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
@@ -452,10 +476,12 @@ extension BoundingBox {
                 southWest: Coordinate3D(
                     x: southWest.longitude,
                     y: southWest.latitude - pad,
+                    z: southWest.altitude,
                     projection: projection),
                 northEast: Coordinate3D(
                     x: northEast.longitude,
                     y: northEast.latitude + pad,
+                    z: northEast.altitude,
                     projection: projection))
         }
         else {
@@ -464,10 +490,12 @@ extension BoundingBox {
                 southWest: Coordinate3D(
                     x: southWest.longitude - pad,
                     y: southWest.latitude,
+                    z: southWest.altitude,
                     projection: projection),
                 northEast: Coordinate3D(
                     x: northEast.longitude + pad,
                     y: northEast.latitude,
+                    z: northEast.altitude,
                     projection: projection))
         }
     }
@@ -838,14 +866,32 @@ extension BoundingBox {
     ) -> BoundingBox {
         let rhs = rhs.projected(to: lhs.projection)
 
+        var minAltitude = lhs.southWest.altitude
+        var maxAltitude = lhs.northEast.altitude
+        var allHaveAltitude = lhs.southWest.altitude != nil && lhs.northEast.altitude != nil
+        if let a = rhs.southWest.altitude {
+            minAltitude = minAltitude.map { min($0, a) } ?? a
+        }
+        else {
+            allHaveAltitude = false
+        }
+        if let a = rhs.northEast.altitude {
+            maxAltitude = maxAltitude.map { max($0, a) } ?? a
+        }
+        else {
+            allHaveAltitude = false
+        }
+
         return BoundingBox(
             southWest: Coordinate3D(
                 x: min(lhs.southWest.x, rhs.southWest.x),
                 y: min(lhs.southWest.y, rhs.southWest.y),
+                z: allHaveAltitude ? minAltitude : nil,
                 projection: lhs.projection),
             northEast: Coordinate3D(
                 x: max(lhs.northEast.x, rhs.northEast.x),
                 y: max(lhs.northEast.y, rhs.northEast.y),
+                z: allHaveAltitude ? maxAltitude : nil,
                 projection: lhs.projection))
     }
 
