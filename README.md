@@ -886,6 +886,27 @@ let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline(
 let coordinates = polyline.decodePolyline()
 ```
 
+# GeoPackage (.gpkg)
+
+Provides read/write support for the OGC GeoPackage format via the `GISToolsGeoPackage` target.
+Requires the `EnableGeoPackageSupport` trait.
+
+`FeatureCollection` has convenience methods:
+
+```swift
+// Read from a GeoPackage file:
+let fc = try FeatureCollection(geopackage: url, table: "features")
+
+// Write to a GeoPackage file:
+try fc.writeGeopackage(to: url, table: "features")
+```
+
+Properties are mapped per the GeoPackage spec:
+- `INTEGER` → `Int`, `REAL` → `Double`, `TEXT` → `String`, `BLOB` → `String` (Base64)
+- `BOOLEAN` → `Bool`, `DATE`/`DATETIME` → `String` (ISO 8601)
+
+Mixed geometry types are rejected with an error.
+
 # Shapefile (.shp / .dbf / .shx / .prj)
 
 Provides read/write support for the ESRI Shapefile format. `FeatureCollection` has convenience methods to read and write Shapefiles.
