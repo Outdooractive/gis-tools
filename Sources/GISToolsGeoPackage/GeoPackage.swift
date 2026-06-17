@@ -64,7 +64,8 @@ enum GeoPackage {
 
     // MARK: - SQL constants
 
-    static let applicationId: Int32 = 0x47503130  // "GP10"
+    static let applicationIdGP10: Int32 = 1196437808  // "GP10" (GeoPackage spec default)
+    static let applicationIdGPKG: Int32 = 1196444487  // "GPKG" (used by GDAL)
     static let userVersion: Int32 = 10200  // 1.2.0
 
     /// SQL to create the mandatory GeoPackage metadata tables.
@@ -128,7 +129,7 @@ enum GeoPackage {
     /// Initialize a GeoPackage database with the mandatory metadata tables.
     static func createMetadata(in db: SQLiteDB) throws {
         // Set application ID and user version for GeoPackage identification
-        try db.execute("PRAGMA application_id = \(applicationId);")
+        try db.execute("PRAGMA application_id = \(applicationIdGP10);")
         try db.execute("PRAGMA user_version = \(userVersion);")
         try db.execute(createMetadataSQL)
         try insertDefaultSRS(db)
@@ -139,7 +140,7 @@ enum GeoPackage {
         let appId = try db.query("PRAGMA application_id;")
         guard let first = appId.first,
               let raw = first["application_id"] as? Int,
-              raw == Int(applicationId)
+              raw == Int(applicationIdGP10) || raw == Int(applicationIdGPKG)
         else {
             throw GeoPackageError.invalidGeoPackage("Not a GeoPackage file (invalid application_id)")
         }

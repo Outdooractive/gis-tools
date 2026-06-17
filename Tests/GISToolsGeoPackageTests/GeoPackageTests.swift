@@ -170,4 +170,26 @@ struct GeoPackageTests {
         }
     }
 
+    // Validates reading a GeoPackage created by ogr2ogr from Natural Earth GeoJSON.
+    @Test
+    func naturalEarthFromGeoJSON() async throws {
+        let gpkgURL = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
+        let fc = try FeatureCollection(geopackage: gpkgURL, table: "ne_110m_admin_0_countries")
+        #expect(fc.features.count == 177)
+        if let name = fc.features[0].properties["NAME"] as? String {
+            #expect(!name.isEmpty)
+        }
+    }
+
+    // Validates reading a GeoPackage created by ogr2ogr from Natural Earth shapefile.
+    @Test
+    func naturalEarthFromShapefile() async throws {
+        let gpkgURL = testFixture("ne_110m_admin_0_countries_from_shp.gpkg")
+        let fc = try FeatureCollection(geopackage: gpkgURL, table: "ne_110m_admin_0_countries")
+        #expect(fc.features.count == 177)
+        if let name = fc.features[0].properties["NAME"] as? String {
+            #expect(!name.isEmpty)
+        }
+    }
+
 }
