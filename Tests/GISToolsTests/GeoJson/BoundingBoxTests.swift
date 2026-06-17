@@ -810,4 +810,236 @@ struct BoundingBoxTests {
         #expect(square.northEast.longitude == 20.0)
     }
 
+    // MARK: - 3D Bounding Box (altitude preservation)
+
+    // Validates that init(coordinates:padding:) preserves altitude.
+    @Test
+    func altitudeInitWithCoordinates() async throws {
+        let c1 = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0)
+        let c2 = Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0)
+        let c3 = Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0)
+
+        let bbox: BoundingBox = try #require(BoundingBox(coordinates: [c1, c2, c3]))
+        #expect(bbox.southWest.altitude == 100.0)
+        #expect(bbox.northEast.altitude == 500.0)
+    }
+
+    // Validates that init(coordinates:padding:) preserves altitude with padding.
+    @Test
+    func altitudeInitWithCoordinatesAndPadding() async throws {
+        let c1 = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 50.0)
+        let c2 = Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 150.0)
+
+        let bbox: BoundingBox = try #require(BoundingBox(coordinates: [c1, c2], padding: 1000.0))
+        #expect(bbox.southWest.altitude == 50.0)
+        #expect(bbox.northEast.altitude == 150.0)
+    }
+
+    // Validates that init(coordinates:) does NOT set altitude when no coordinate has one.
+    @Test
+    func altitudeInitWithoutAltitude() async throws {
+        let c1 = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let c2 = Coordinate3D(latitude: 30.0, longitude: 30.0)
+
+        let bbox: BoundingBox = try #require(BoundingBox(coordinates: [c1, c2]))
+        #expect(bbox.southWest.altitude == nil)
+        #expect(bbox.northEast.altitude == nil)
+    }
+
+    // Validates that init(coordinates:) does NOT set altitude when only some have altitude.
+    @Test
+    func altitudeInitMixedAltitude() async throws {
+        let c1 = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0)
+        let c2 = Coordinate3D(latitude: 30.0, longitude: 30.0)  // no altitude
+
+        let bbox: BoundingBox = try #require(BoundingBox(coordinates: [c1, c2]))
+        #expect(bbox.southWest.altitude == nil)
+        #expect(bbox.northEast.altitude == nil)
+    }
+
+    // Validates that expanded(byIncluding:) for a coordinate preserves altitude.
+    @Test
+    func altitudeExpandedByIncludingCoordinate() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+        let point = Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0)
+
+        let expanded = bbox.expanded(byIncluding: point)
+        #expect(expanded.southWest.altitude == 100.0)
+        #expect(expanded.northEast.altitude == 500.0)
+    }
+
+    // Validates that expanded(byIncluding:) for a coordinate with lower altitude works.
+    @Test
+    func altitudeExpandedByIncludingCoordinateLower() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+        let point = Coordinate3D(latitude: 20.0, longitude: 20.0, altitude: 50.0)
+
+        let expanded = bbox.expanded(byIncluding: point)
+        #expect(expanded.southWest.altitude == 50.0)
+        #expect(expanded.northEast.altitude == 500.0)
+    }
+
+    // Validates that expanded(byIncluding:) for a BoundingBox preserves altitude.
+    @Test
+    func altitudeExpandedByIncludingBox() async throws {
+        let bbox1 = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+        let bbox2 = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0),
+            northEast: Coordinate3D(latitude: 40.0, longitude: 40.0, altitude: 800.0))
+
+        let expanded = bbox1.expanded(byIncluding: bbox2)
+        #expect(expanded.southWest.altitude == 100.0)
+        #expect(expanded.northEast.altitude == 800.0)
+    }
+
+    // Validates that expanded(byHorizontalDegrees:verticalDegrees:) preserves altitude.
+    @Test
+    func altitudeExpandedByHorizontalVerticalDegrees() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0, altitude: 500.0))
+
+        let expanded = bbox.expanded(byHorizontalDegrees: 5.0, verticalDegrees: 5.0)
+        #expect(expanded.southWest.altitude == 100.0)
+        #expect(expanded.northEast.altitude == 500.0)
+    }
+
+    // Validates that expanded(byDistance:) preserves altitude.
+    @Test
+    func altitudeExpandedByDistance() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0, altitude: 500.0))
+
+        let expanded = bbox.expanded(byDistance: 1000.0)
+        #expect(expanded.southWest.altitude == 100.0)
+        #expect(expanded.northEast.altitude == 500.0)
+    }
+
+    // Validates that squared() preserves altitude.
+    @Test
+    func altitudeSquared() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 20.0, altitude: 500.0))
+
+        let square = bbox.squared()
+        #expect(square.southWest.altitude == 100.0)
+        #expect(square.northEast.altitude == 500.0)
+    }
+
+    // Validates that the + operator preserves altitude (taking min/max).
+    @Test
+    func altitudePlusOperator() async throws {
+        let bbox1 = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+        let bbox2 = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 50.0),
+            northEast: Coordinate3D(latitude: 40.0, longitude: 40.0, altitude: 800.0))
+
+        let combined = bbox1 + bbox2
+        #expect(combined.southWest.altitude == 50.0)
+        #expect(combined.northEast.altitude == 800.0)
+    }
+
+    // Validates that formUnion preserves altitude.
+    @Test
+    func altitudeFormUnion() async throws {
+        var bbox1 = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+        let bbox2 = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0),
+            northEast: Coordinate3D(latitude: 40.0, longitude: 40.0, altitude: 800.0))
+
+        bbox1.formUnion(bbox2)
+        #expect(bbox1.southWest.altitude == 100.0)
+        #expect(bbox1.northEast.altitude == 800.0)
+    }
+
+    // Validates that padded() preserves altitude.
+    @Test
+    func altitudePadded() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 500.0))
+
+        let padded = bbox.padded(1000.0)
+        #expect(padded.southWest.altitude == 100.0)
+        #expect(padded.northEast.altitude == 500.0)
+    }
+
+    // Validates that asJson includes altitude when both corners have it.
+    @Test
+    func altitudeAsJson() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0, altitude: 500.0))
+
+        let json = bbox.asJson
+        #expect(json.count == 6)
+        #expect(json[0] == 0.0)   // sw lon
+        #expect(json[1] == 0.0)   // sw lat
+        #expect(json[2] == 100.0) // sw alt
+        #expect(json[3] == 30.0)  // ne lon
+        #expect(json[4] == 30.0)  // ne lat
+        #expect(json[5] == 500.0) // ne alt
+    }
+
+    // Validates that asJson omits altitude when corners lack it.
+    @Test
+    func altitudeAsJsonWithoutAltitude() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0))
+
+        let json = bbox.asJson
+        #expect(json.count == 4)
+    }
+
+    // Validates that init?(json:) parses 6-element arrays with altitude.
+    @Test
+    func altitudeInitFromJson() async throws {
+        let json: [Double] = [0.0, 0.0, 100.0, 30.0, 30.0, 500.0]
+        let bbox: BoundingBox = try #require(BoundingBox(json: json))
+
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.altitude == 100.0)
+        #expect(bbox.northEast.longitude == 30.0)
+        #expect(bbox.northEast.latitude == 30.0)
+        #expect(bbox.northEast.altitude == 500.0)
+    }
+
+    // Validates that normalized() preserves altitude.
+    @Test
+    func altitudeNormalized() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 200.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 220.0, altitude: 500.0))
+
+        let normalized = bbox.normalized()
+        #expect(normalized.southWest.altitude == 100.0)
+        #expect(normalized.northEast.altitude == 500.0)
+    }
+
+    // Validates that projected() preserves altitude.
+    @Test
+    func altitudeProjected() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 100.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0, altitude: 500.0))
+
+        let projected = bbox.projected(to: .epsg3857)
+        #expect(projected.southWest.altitude == 100.0)
+        #expect(projected.northEast.altitude == 500.0)
+    }
+
 }
