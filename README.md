@@ -21,6 +21,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
 - Supports WKT/WKB/TWKB, also with different projections
 - Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
+- Reads and writes OGC GeoPackage (.gpkg) files
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -72,7 +73,7 @@ let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
 
-**Shapefile support trait**:
+**Storage format traits**:
 - `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
 
 ## Usage
@@ -885,6 +886,26 @@ Provides an encoder/decoder for Polylines.
 let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline()
 let coordinates = polyline.decodePolyline()
 ```
+
+# GeoPackage (.gpkg)
+
+Provides read/write support for the OGC GeoPackage format via the `GISToolsGeoPackage` target.
+
+`FeatureCollection` has convenience methods:
+
+```swift
+// Read from a GeoPackage file:
+let fc = try FeatureCollection(geopackage: url, table: "features")
+
+// Write to a GeoPackage file:
+try fc.writeGeopackage(to: url, table: "features")
+```
+
+Properties are mapped per the GeoPackage spec:
+- `INTEGER` → `Int`, `REAL` → `Double`, `TEXT` → `String`, `BLOB` → `String` (Base64)
+- `BOOLEAN` → `Bool`, `DATE`/`DATETIME` → `String` (ISO 8601)
+
+Mixed geometry types are rejected with an error.
 
 # Shapefile (.shp / .dbf / .shx / .prj)
 
