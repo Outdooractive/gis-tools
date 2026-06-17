@@ -17,12 +17,11 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for lat in stride(from: minLat, through: maxLat, by: 1.0) {
             for lon in stride(from: minLon, through: maxLon, by: 1.0) {
-                let coord = Coordinate3D(x: lon, y: lat, projection: projection)
                 let dx = lon - cx
                 let dy = lat - cy
                 let z = sqrt(dx * dx + dy * dy)  // distance from center
-                var feature = Feature(Point(coord))
-                feature.properties["z"] = z
+                let coord = Coordinate3D(x: lon, y: lat, z: z, projection: projection)
+                let feature = Feature(Point(coord))
                 features.append(feature)
             }
         }
@@ -60,9 +59,8 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for lat in stride(from: 0.0, through: 4.0, by: 1.0) {
             for lon in stride(from: 0.0, through: 4.0, by: 1.0) {
-                let coord = Coordinate3D(x: lon, y: lat)
-                var feature = Feature(Point(coord))
-                feature.properties["z"] = 42.0  // all same value
+                let coord = Coordinate3D(x: lon, y: lat, z: 42.0)  // all same value
+                let feature = Feature(Point(coord))
                 features.append(feature)
             }
         }
@@ -92,8 +90,8 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for (lon, lat, z) in [(0.0, 0.0, 0.0), (1.0, 0.0, 1.0),
                                (0.0, 1.0, 1.0), (1.0, 1.0, 2.0)] {
-            var feature = Feature(Point(Coordinate3D(x: lon, y: lat)))
-            feature.properties["z"] = z
+            let coord = Coordinate3D(x: lon, y: lat, z: z)
+            let feature = Feature(Point(coord))
             features.append(feature)
         }
         let grid = FeatureCollection(features)
@@ -115,26 +113,17 @@ struct IsoLinesTests {
     }
 
     @Test
-    func testCustomZProperty() {
-        let grid = makeGrid()
-        // Features don't have "elevation" key — expect empty
-        let result = grid.isolines(breaks: [1.0], zProperty: "elevation")
-        #expect(result.features.isEmpty)
-    }
-
-    @Test
     func testIsoLinesWithGridSize() {
         // Slightly irregular spacing — gridSize snaps to a regular grid
         var features: [Feature] = []
         for lat in stride(from: 0.0, through: 4.0, by: 1.0) {
             for lon in stride(from: 0.0, through: 4.0, by: 1.0) {
                 // Add small sub-integer offset
-                let coord = Coordinate3D(x: lon + 0.3, y: lat + 0.3)
-                let dx = coord.longitude - 2.0
-                let dy = coord.latitude - 2.0
+                let dx = (lon + 0.3) - 2.0
+                let dy = (lat + 0.3) - 2.0
                 let z = sqrt(dx * dx + dy * dy)
-                var feature = Feature(Point(coord))
-                feature.properties["z"] = z
+                let coord = Coordinate3D(x: lon + 0.3, y: lat + 0.3, z: z)
+                let feature = Feature(Point(coord))
                 features.append(feature)
             }
         }
@@ -150,6 +139,22 @@ struct IsoLinesTests {
         #expect(result.features.count == 3)
         let breakValues = result.features.compactMap { $0.properties["break"] as? Double }
         #expect(breakValues == breakValues.sorted())
+    }
+
+    @Test
+    func testMissingAltitudeReturnsEmpty() {
+        // Points without altitude should be skipped
+        var features: [Feature] = []
+        for lat in stride(from: 0.0, through: 4.0, by: 1.0) {
+            for lon in stride(from: 0.0, through: 4.0, by: 1.0) {
+                let coord = Coordinate3D(x: lon, y: lat)  // no z
+                let feature = Feature(Point(coord))
+                features.append(feature)
+            }
+        }
+        let grid = FeatureCollection(features)
+        let result = grid.isolines(breaks: [1.0])
+        #expect(result.features.isEmpty)
     }
 
 }

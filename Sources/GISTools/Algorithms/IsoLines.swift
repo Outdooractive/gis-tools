@@ -7,28 +7,25 @@ extension FeatureCollection {
     /// Generates contour lines (isolines) from a grid of points with z-values.
     ///
     /// The input must be a ``FeatureCollection`` of ``Point`` features arranged in a
-    /// regular rectangular grid, each point having a numeric property for the
-    /// z-value (elevation). The result is a ``FeatureCollection`` of
-    /// ``MultiLineString`` features, one per break value.
+    /// regular rectangular grid, each point having an altitude (z) value. The result
+    /// is a ``FeatureCollection`` of ``MultiLineString`` features, one per break value.
     ///
     /// - Parameter breaks: The contour values to generate (e.g. `[0, 100, 200]`).
-    /// - Parameter zProperty: The property key for the z-value on each point (default `"z"`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``FeatureCollection`` of ``MultiLineString`` features, or an empty
     ///   collection if the input is invalid.
     public func isolines(
         breaks: [Double],
-        zProperty: String = "z",
         gridSize: Double? = nil
     ) -> FeatureCollection {
         guard features.count >= 4 else { return FeatureCollection() }
 
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
-        // Extract grid dimensions and z-values
+        // Extract grid dimensions and z-values from point altitudes
         let pts: [(coordinate: Coordinate3D, z: Double)] = snapped.features.compactMap { f in
             guard let point = f.geometry as? Point,
-                  let z = f.properties[zProperty] as? Double
+                  let z = point.coordinate.z
             else { return nil }
             return (point.coordinate, z)
         }
@@ -92,7 +89,12 @@ private enum IsoLines {
             }
         }
 
-        return Grid(nrows: lats.count, ncols: lons.count, data: data, lons: gridLons, lats: gridLats)
+        return Grid(
+            nrows: lats.count,
+            ncols: lons.count,
+            data: data,
+            lons: gridLons,
+            lats: gridLats)
     }
 
     static func traceIsoline(grid: Grid, breakValue: Double) -> MultiLineString? {
@@ -136,11 +138,17 @@ private enum IsoLines {
 
                 for edgePair in cases[code] {
                     let p1 = edgeIntersection(
-                        grid: grid, row: j, col: i,
-                        edge: edgePair.0, breakValue: breakValue)
+                        grid: grid,
+                        row: j,
+                        col: i,
+                        edge: edgePair.0,
+                        breakValue: breakValue)
                     let p2 = edgeIntersection(
-                        grid: grid, row: j, col: i,
-                        edge: edgePair.1, breakValue: breakValue)
+                        grid: grid,
+                        row: j,
+                        col: i,
+                        edge: edgePair.1,
+                        breakValue: breakValue)
                     if let p1, let p2 {
                         segments.append((p1, p2))
                     }
@@ -148,11 +156,11 @@ private enum IsoLines {
             }
         }
 
-        guard !segments.isEmpty else { return nil }
+        guard segments.isNotEmpty else { return nil }
 
         // Connect segments into continuous linestrings
         let lines = connectSegments(segments)
-        guard !lines.isEmpty else { return nil }
+        guard lines.isNotEmpty else { return nil }
         return MultiLineString(unchecked: lines)
     }
 
@@ -174,42 +182,58 @@ private enum IsoLines {
         case 0: // bottom (left to right)
             let z1 = grid.data[j][i]
             let z2 = grid.data[j][i + 1]
-            guard z1 != z2 else { return Coordinate3D(
-                x: (grid.lons[j][i] + grid.lons[j][i + 1]) / 2.0,
-                y: grid.lats[j][i], projection: .epsg4326) }
+            guard z1 != z2 else {
+                return Coordinate3D(
+                    latitude: grid.lats[j][i],
+                    longitude: (grid.lons[j][i] + grid.lons[j][i + 1]) / 2.0)
+            }
             let t = (breakValue - z1) / (z2 - z1)
             let lon = grid.lons[j][i] + t * (grid.lons[j][i + 1] - grid.lons[j][i])
-            return Coordinate3D(x: lon, y: grid.lats[j][i], projection: .epsg4326)
+            return Coordinate3D(
+                latitude: grid.lats[j][i],
+                longitude: lon)
 
         case 1: // right (bottom to top)
             let z1 = grid.data[j][i + 1]
             let z2 = grid.data[j + 1][i + 1]
-            guard z1 != z2 else { return Coordinate3D(
-                x: grid.lons[j][i + 1],
-                y: (grid.lats[j][i + 1] + grid.lats[j + 1][i + 1]) / 2.0, projection: .epsg4326) }
+            guard z1 != z2 else {
+                return Coordinate3D(
+                    latitude: (grid.lats[j][i + 1] + grid.lats[j + 1][i + 1]) / 2.0,
+                    longitude: grid.lons[j][i + 1])
+            }
             let t = (breakValue - z1) / (z2 - z1)
             let lat = grid.lats[j][i + 1] + t * (grid.lats[j + 1][i + 1] - grid.lats[j][i + 1])
-            return Coordinate3D(x: grid.lons[j][i + 1], y: lat, projection: .epsg4326)
+            return Coordinate3D(
+                latitude: lat,
+                longitude: grid.lons[j][i + 1])
 
         case 2: // top (right to left)
             let z1 = grid.data[j + 1][i + 1]
             let z2 = grid.data[j + 1][i]
-            guard z1 != z2 else { return Coordinate3D(
-                x: (grid.lons[j + 1][i] + grid.lons[j + 1][i + 1]) / 2.0,
-                y: grid.lats[j + 1][i], projection: .epsg4326) }
+            guard z1 != z2 else {
+                return Coordinate3D(
+                    latitude: grid.lats[j + 1][i],
+                    longitude: (grid.lons[j + 1][i] + grid.lons[j + 1][i + 1]) / 2.0)
+            }
             let t = (breakValue - z1) / (z2 - z1)
             let lon = grid.lons[j + 1][i + 1] + t * (grid.lons[j + 1][i] - grid.lons[j + 1][i + 1])
-            return Coordinate3D(x: lon, y: grid.lats[j + 1][i], projection: .epsg4326)
+            return Coordinate3D(
+                latitude: grid.lats[j + 1][i],
+                longitude: lon)
 
         case 3: // left (top to bottom)
             let z1 = grid.data[j + 1][i]
             let z2 = grid.data[j][i]
-            guard z1 != z2 else { return Coordinate3D(
-                x: grid.lons[j][i],
-                y: (grid.lats[j][i] + grid.lats[j + 1][i]) / 2.0, projection: .epsg4326) }
+            guard z1 != z2 else {
+                return Coordinate3D(
+                    latitude: (grid.lats[j][i] + grid.lats[j + 1][i]) / 2.0,
+                    longitude: grid.lons[j][i])
+            }
             let t = (breakValue - z1) / (z2 - z1)
             let lat = grid.lats[j + 1][i] + t * (grid.lats[j][i] - grid.lats[j + 1][i])
-            return Coordinate3D(x: grid.lons[j][i], y: lat, projection: .epsg4326)
+            return Coordinate3D(
+                latitude: lat,
+                longitude: grid.lons[j][i])
 
         default:
             return nil
@@ -224,7 +248,7 @@ private enum IsoLines {
         var remaining = segments
         var lines: [LineString] = []
 
-        while !remaining.isEmpty {
+        while remaining.isNotEmpty {
             var coords: [Coordinate3D] = [remaining[0].start, remaining[0].end]
             remaining.removeFirst()
 
