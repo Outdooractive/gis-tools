@@ -91,7 +91,7 @@ struct GeoPackageTests {
     @Test
     func emptyCollectionThrows() async throws {
         let fc = FeatureCollection()
-        #expect(throws: (any Error).self) {
+        #expect(throws: GeoPackageError.self) {
             try fc.writeGeopackage(to: testUrl())
         }
     }
@@ -116,7 +116,7 @@ struct GeoPackageTests {
     // Validates reading from a non-existent file throws.
     @Test
     func nonExistentFileThrows() async throws {
-        #expect(throws: (any Error).self) {
+        #expect(throws: GeoPackageError.self) {
             let _ = try FeatureCollection(geopackage: URL(fileURLWithPath: "/tmp/nonexistent.gpkg"), table: "features")
         }
     }
@@ -141,12 +141,7 @@ struct GeoPackageTests {
     @Test
     func naturalEarthCountries() async throws {
         let geojsonURL = testFixture("ne_110m_admin_0_countries.geojson")
-        let geojsonData = try Data(contentsOf: geojsonURL)
-        guard let geojsonString = String(data: geojsonData, encoding: .utf8) else {
-            Issue.record("Could not read GeoJSON fixture")
-            return
-        }
-        guard let fc = FeatureCollection(jsonString: geojsonString) else {
+        guard let fc = FeatureCollection(contentsOf: geojsonURL) else {
             Issue.record("Could not parse GeoJSON fixture")
             return
         }
