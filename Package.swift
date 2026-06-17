@@ -28,9 +28,6 @@ let package = Package(
         .trait(
             name: "EnableShapefileSupport",
             description: "Adds Shapefile (.shp/.dbf/.shx/.prj) read and write support."),
-        .trait(
-            name: "EnableGeoPackageSupport",
-            description: "Adds GeoPackage (.gpkg) read and write support."),
     ],
     dependencies: [],
     targets: [
