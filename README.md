@@ -951,6 +951,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | clean                       | `let cleaned = lineString.cleaned()`                                                                                                  |     | [Source][207] / [Tests][208] |
 | clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
 | clusters-kmeans             | `let result = featureCollection.kmeansClusters(numberOfClusters: 5)`                                                                  |     | [Source][156] / [Tests][157] |
+| collect                     | `let result = polygons.collect(from: points, inProperty: "p", outProperty: "vals")`                                                  |     | [Source][215] / [Tests][216] |
 | concave-hull                | `anyGeometry.concaveHull(maxEdgeLength: 500.0)`                                                                                     |     | [Source][161] / [Tests][162] |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
@@ -1245,6 +1246,8 @@ Thomas Rasch, Outdooractive
 [212]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineSplitTests.swift "LineSplitTests"
 [213]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Along.swift "Along"
 [214]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineSplitTests.swift "LineSplitTests"
+[215]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Collect.swift "Collect"
+[216]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CollectTests.swift "CollectTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
