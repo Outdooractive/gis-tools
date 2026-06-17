@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-mask
