@@ -930,6 +930,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | antimeridian-cutting        | `let result = lineString.cutAtAntimeridian()`                                                                                         |     | [Source][131] / [Tests][132] |
 | area                        | `Polygon(…).area`                                                                                                                     |     | [Source][45]                 |
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
+| bezier-spline               | `let spline = lineString.bezierSpline()`                                                                                              |     | [Source][217] / [Tests][218] |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
 | boolean-concave             | `anyGeometry.isConcave()`                                                                                                             |     | [Source][177] / [Tests][178] |
 | boolean-contains/within     | `polygon.contains(lineString)` / `point.isWithin(polygon)`                                                                            |     | [Source][187] / [Tests][188] |
@@ -1248,6 +1249,8 @@ Thomas Rasch, Outdooractive
 [214]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineSplitTests.swift "LineSplitTests"
 [215]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Collect.swift "Collect"
 [216]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CollectTests.swift "CollectTests"
+[217]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BezierSpline.swift "BezierSpline"
+[218]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BezierSplineTests.swift "BezierSplineTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
