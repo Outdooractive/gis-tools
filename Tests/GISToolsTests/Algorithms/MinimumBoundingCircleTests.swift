@@ -100,4 +100,22 @@ struct MinimumBoundingCircleTests {
         if let circle { #expect(circle.outerRing?.coordinates.count == 13) }
     }
 
+    // MARK: - Antimeridian
+
+    /// A square crossing the antimeridian: MBC radius should be half the diagonal (~7.07 deg).
+    @Test
+    func radiusAntimeridian() {
+        let square = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+        ]])
+        let r = square.minimumBoundingRadius()
+        #expect(r != nil)
+        // Diagonal = sqrt(10^2 + 2^2) ≈ 10.2, half = ~5.1
+        if let r { #expect(abs(r - 5.1) < 0.5) }
+    }
+
 }

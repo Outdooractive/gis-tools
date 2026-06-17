@@ -982,6 +982,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93] / [Tests][139]  |
 | nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
 | nearest-point-to-line       | `let nearest = lineString. nearestCoordinate(outOf: coordinates)`                                                                     |     | [Source][96] / [Tests][140]  |
+| oriented-envelope           | `let envelope = anyGeometry.orientedEnvelope()`                                                                                       |     | [Source][205] / [Tests][206] |
 | planepoint                  | `let z = triangle.planepoint(point)`                                                                                                  |     | [Source][201] / [Tests][202] |
 | point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97] / [Tests][141]  |
 | points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98] / [Tests][142]  |
@@ -1230,6 +1231,8 @@ Thomas Rasch, Outdooractive
 [202]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PlanepointTests.swift "PlanepointTests"
 [203]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MinimumBoundingCircle.swift "MinimumBoundingCircle"
 [204]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinimumBoundingCircleTests.swift "MinimumBoundingCircleTests"
+[205]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/OrientedEnvelope.swift "OrientedEnvelope"
+[206]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/OrientedEnvelopeTests.swift "OrientedEnvelopeTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms

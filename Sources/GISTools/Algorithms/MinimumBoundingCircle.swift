@@ -83,12 +83,44 @@ private enum MinimumBoundingCircle {
     }
 
     static func compute(points: [Coordinate3D]) -> (center: Coordinate3D, radius: Double)? {
-        guard let hull = hull(points: points) else { return nil }
-        guard hull.count > 1 else {
-            return hull.first.map { ($0, 0.0) }
+        var hullCoords: [Coordinate3D]
+
+        if points.count >= 3 {
+            let multiPoint = MultiPoint(unchecked: points as [Coordinate3D])
+            guard let hullPolygon = multiPoint.convexHull(),
+                  let ring = hullPolygon.outerRing
+            else { return nil }
+
+            var coords = ring.coordinates
+            if coords.count > 1, coords.first == coords.last {
+                coords = Array(coords.dropLast())
+            }
+            hullCoords = coords
+        }
+        else {
+            hullCoords = points
         }
 
-        let result = welzl(pts: hull.shuffled(), boundary: [])
+        guard hullCoords.count > 1 else {
+            return hullCoords.first.map { ($0, 0.0) }
+        }
+
+        // Antimeridian normalization: if the hull spans >180° of longitude,
+        // shift negative values by +360° so Euclidean distances reflect the
+        // short path across the date line.
+        let minLon = hullCoords.map(\.longitude).min() ?? 0
+        let maxLon = hullCoords.map(\.longitude).max() ?? 0
+        if (maxLon - minLon) > 180.0 {
+            hullCoords = hullCoords.map { coord in
+                Coordinate3D(
+                    latitude: coord.latitude,
+                    longitude: coord.longitude < 0 ? coord.longitude + 360.0 : coord.longitude,
+                    altitude: coord.altitude,
+                    m: coord.m)
+            }
+        }
+
+        let result = welzl(pts: hullCoords.shuffled(), boundary: [])
         return result.map { ($0.center, $0.radius) }
     }
 
@@ -164,50 +196,6 @@ private enum MinimumBoundingCircle {
 
     private static func isInside(_ p: Coordinate3D, center: Coordinate3D, radius: Double) -> Bool {
         distance(p, center) <= radius + 1e-12
-    }
-
-    // MARK: - Convex hull (Andrew's monotone chain)
-
-    private static func hull(points: [Coordinate3D]) -> [Coordinate3D]? {
-        guard points.count >= 3 else { return points }
-
-        let sorted = points.sorted { a, b in
-            a.longitude == b.longitude ? a.latitude < b.latitude : a.longitude < b.longitude
-        }
-
-        var lower: [Coordinate3D] = []
-        for p in sorted {
-            while lower.count >= 2 {
-                let a = lower[lower.count - 2]
-                let b = lower[lower.count - 1]
-                if cross(a, b, p) <= 0 { lower.removeLast() } else { break }
-            }
-            lower.append(p)
-        }
-
-        var upper: [Coordinate3D] = []
-        for p in sorted.reversed() {
-            while upper.count >= 2 {
-                let a = upper[upper.count - 2]
-                let b = upper[upper.count - 1]
-                if cross(a, b, p) <= 0 { upper.removeLast() } else { break }
-            }
-            upper.append(p)
-        }
-
-        _ = lower.removeLast()
-        _ = upper.removeLast()
-
-        return lower + upper
-    }
-
-    private static func cross(
-        _ o: Coordinate3D,
-        _ a: Coordinate3D,
-        _ b: Coordinate3D
-    ) -> Double {
-        (a.longitude - o.longitude) * (b.latitude - o.latitude)
-            - (a.latitude - o.latitude) * (b.longitude - o.longitude)
     }
 
 }
