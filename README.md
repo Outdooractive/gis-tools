@@ -948,6 +948,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | center-median               | `let median = featureCollection.centerMedian()`                                                                                       |     | [Source][62] / [Tests][137]  |
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
+| clean                       | `let cleaned = lineString.cleaned()`                                                                                                  |     | [Source][207] / [Tests][208] |
 | clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
 | clusters-kmeans             | `let result = featureCollection.kmeansClusters(numberOfClusters: 5)`                                                                  |     | [Source][156] / [Tests][157] |
 | concave-hull                | `anyGeometry.concaveHull(maxEdgeLength: 500.0)`                                                                                     |     | [Source][161] / [Tests][162] |
@@ -1233,6 +1234,8 @@ Thomas Rasch, Outdooractive
 [204]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinimumBoundingCircleTests.swift "MinimumBoundingCircleTests"
 [205]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/OrientedEnvelope.swift "OrientedEnvelope"
 [206]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/OrientedEnvelopeTests.swift "OrientedEnvelopeTests"
+[207]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Clean.swift "Clean"
+[208]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CleanTests.swift "CleanTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms

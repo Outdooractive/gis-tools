@@ -184,18 +184,6 @@ extension SnapToGrid {
         return c
     }
 
-    private static func dedup(_ coordinates: [Coordinate3D]) -> [Coordinate3D] {
-        guard coordinates.count > 1 else { return coordinates }
-
-        var result: [Coordinate3D] = [coordinates[0]]
-        for coord in coordinates.dropFirst() {
-            if coord != result.last! {
-                result.append(coord)
-            }
-        }
-        return result
-    }
-
 }
 
 // MARK: - Geometry dispatch
@@ -220,7 +208,7 @@ extension SnapToGrid {
 
     private static func snap(lineString: LineString, tolerance: Double) -> LineString {
         let snapped = lineString.coordinates.map({ snapCoordinate($0, tolerance: tolerance) })
-        let cleaned = dedup(snapped)
+        let cleaned = snapped.cleaned(removeDuplicates: true)
         guard var result = LineString(cleaned, calculateBoundingBox: (lineString.boundingBox != nil))
         else { return lineString }
         result.foreignMembers = lineString.foreignMembers
@@ -229,7 +217,7 @@ extension SnapToGrid {
 
     private static func snap(multiLineString: MultiLineString, tolerance: Double) -> MultiLineString {
         let snapped = multiLineString.coordinates.map({ line in
-            dedup(line.map({ snapCoordinate($0, tolerance: tolerance) }))
+            line.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
         })
         guard var result = MultiLineString(snapped, calculateBoundingBox: (multiLineString.boundingBox != nil))
         else { return multiLineString }
@@ -239,7 +227,7 @@ extension SnapToGrid {
 
     private static func snap(polygon: Polygon, tolerance: Double) -> Polygon {
         let snapped = polygon.coordinates.map({ ring in
-            dedup(ring.map({ snapCoordinate($0, tolerance: tolerance) }))
+            ring.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
         })
         guard var result = Polygon(snapped, calculateBoundingBox: (polygon.boundingBox != nil))
         else { return polygon }
@@ -250,7 +238,7 @@ extension SnapToGrid {
     private static func snap(multiPolygon: MultiPolygon, tolerance: Double) -> MultiPolygon {
         let snapped = multiPolygon.coordinates.map({ polygon in
             polygon.map({ ring in
-                dedup(ring.map({ snapCoordinate($0, tolerance: tolerance) }))
+                ring.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
             })
         })
         guard var result = MultiPolygon(snapped, calculateBoundingBox: (multiPolygon.boundingBox != nil))
