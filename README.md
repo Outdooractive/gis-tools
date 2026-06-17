@@ -976,6 +976,8 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
 | line-slice-along            | `let sliced = lineString.sliceAlong(startDistance: 50.0, stopDistance: 2000.0)`                                                       |     | [Source][88] / [Tests][89]   |
 | midpoint                    | `let middle = coordinate1.midpoint(to: coordinate2)`                                                                                  |     | [Source][90] / [Tests][91]   |
+| minimum-bounding-circle     | `let circle = anyGeometry.minimumBoundingCircle()`                                                                                    |     | [Source][203] / [Tests][204] |
+| minimum-bounding-radius     | `let r = anyGeometry.minimumBoundingRadius()`                                                                                         |     | [Source][203] / [Tests][204] |
 | nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92] / [Tests][138]  |
 | nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93] / [Tests][139]  |
 | nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
@@ -1226,6 +1228,8 @@ Thomas Rasch, Outdooractive
 [200]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BoundaryTests.swift "BoundaryTests"
 [201]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Planepoint.swift "Planepoint"
 [202]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PlanepointTests.swift "PlanepointTests"
+[203]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MinimumBoundingCircle.swift "MinimumBoundingCircle"
+[204]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MinimumBoundingCircleTests.swift "MinimumBoundingCircleTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
