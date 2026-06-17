@@ -3,6 +3,12 @@ import Foundation
 @testable import GISTools
 @testable import GISToolsGeoPackage
 
+private func testFixture(_ name: String) -> URL {
+    URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appendingPathComponent("TestData/\(name)")
+}
+
 struct GeoPackageTests {
 
     private let tmpDir = URL(fileURLWithPath: "/tmp")
@@ -90,9 +96,9 @@ struct GeoPackageTests {
         }
     }
 
-    // Validates that mixed geometry types throw an error.
+    // Validates that mixed geometry types are accepted (use GEOMETRY type).
     @Test
-    func mixedGeometryTypesThrow() async throws {
+    func mixedGeometryTypesAccepted() async throws {
         let p1 = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
         let p2 = Feature(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -102,9 +108,9 @@ struct GeoPackageTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]])!)
         let fc = FeatureCollection([p1, p2])
-        #expect(throws: (any Error).self) {
-            try fc.writeGeopackage(to: testUrl())
-        }
+        try fc.writeGeopackage(to: testUrl())
+        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        #expect(read.features.count == 2)
     }
 
     // Validates reading from a non-existent file throws.
@@ -129,6 +135,39 @@ struct GeoPackageTests {
         let read = try FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is MultiPoint)
+    }
+
+    // Validates round-trip with Natural Earth 110m countries data.
+    @Test
+    func naturalEarthCountries() async throws {
+        let geojsonURL = testFixture("ne_110m_admin_0_countries.geojson")
+        let geojsonData = try Data(contentsOf: geojsonURL)
+        guard let geojsonString = String(data: geojsonData, encoding: .utf8) else {
+            Issue.record("Could not read GeoJSON fixture")
+            return
+        }
+        guard let fc = FeatureCollection(jsonString: geojsonString) else {
+            Issue.record("Could not parse GeoJSON fixture")
+            return
+        }
+
+        let originalCount = fc.features.count
+        #expect(originalCount > 0)
+
+        // Write to GeoPackage
+        let gpkgURL = testUrl()
+        try fc.writeGeopackage(to: gpkgURL)
+
+        // Read back and verify
+        let read = try FeatureCollection(geopackage: gpkgURL, table: "features")
+        #expect(read.features.count == originalCount)
+
+        // Verify a few properties survived
+        let firstOriginal = fc.features[0]
+        let firstRead = read.features[0]
+        if let name = firstOriginal.properties["NAME"] as? String {
+            #expect(firstRead.properties["NAME"] as? String == name)
+        }
     }
 
 }

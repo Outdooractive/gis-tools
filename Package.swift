@@ -55,6 +55,7 @@ let package = Package(
             exclude: ["TestData"]),
         .testTarget(
             name: "GISToolsGeoPackageTests",
-            dependencies: ["GISToolsGeoPackage"]),
+            dependencies: ["GISToolsGeoPackage"],
+            exclude: ["TestData"]),
     ]
 )

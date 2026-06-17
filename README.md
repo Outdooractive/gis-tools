@@ -72,8 +72,9 @@ let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
 
-**Shapefile support trait**:
+**Storage format traits**:
 - `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
+- `EnableGeoPackageSupport` — adds GeoPackage (.gpkg) read/write support via `GISToolsGeoPackage` target. Provides `FeatureCollection(geopackage:table:)` and `writeGeopackage(to:table:)`.
 
 ## Usage
 

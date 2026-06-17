@@ -34,14 +34,12 @@ private enum GeoPackageWriter {
 
         // Determine geometry type from the first feature
         let firstGeoType = features[0].geometry.type
-        let geoTypeName = GeoPackage.geometryTypeName(for: firstGeoType)
-
-        // Check for mixed geometry types
-        for feature in features {
-            guard feature.geometry.type == firstGeoType else {
-                throw GeoPackageError.mixedGeometryTypes(
-                    "FeatureCollection has mixed geometry types ('\(firstGeoType.rawValue)' vs '\(feature.geometry.type.rawValue)')")
-            }
+        let geoTypeName: String
+        let hasMixedTypes = features.contains { $0.geometry.type != firstGeoType }
+        if hasMixedTypes {
+            geoTypeName = "GEOMETRY"
+        } else {
+            geoTypeName = GeoPackage.geometryTypeName(for: firstGeoType)
         }
 
         let projection = features[0].projection
