@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import CSQLite
+import CSQLite
 
 /// A minimal SQLite wrapper for GeoPackage operations.
 final class SQLiteDB: @unchecked Sendable {

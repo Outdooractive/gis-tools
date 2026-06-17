@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import GISTools
+import GISTools
 import CSQLite
 
 extension FeatureCollection {
