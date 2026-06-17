@@ -445,7 +445,6 @@ extension BoundingBox {
     public func squared() -> BoundingBox {
         let w = northEast.longitude - southWest.longitude
         let h = northEast.latitude - southWest.latitude
-        let maxSide = max(w, h)
 
         if w >= h {
             let pad = (w - h) / 2.0

@@ -148,10 +148,6 @@ extension GeoJson {
         let intersectionPoints = lineString1.intersections(with: lineString2)
         guard intersectionPoints.isNotEmpty else { return false }
 
-        guard let coords1 = lineString1.coordinates as [Coordinate3D]?,
-              let coords2 = lineString2.coordinates as [Coordinate3D]?
-        else { return false }
-
         let boundary1 = lineString1.boundary
         let boundary2 = lineString2.boundary
 

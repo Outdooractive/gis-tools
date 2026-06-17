@@ -27,7 +27,7 @@ extension Polygon {
         let projectedCoords = coords.map { $0.projected(to: projection) }
 
         // Skip the closing coordinate (last == first)
-        var vertices = Array(projectedCoords.dropLast())
+        let vertices = Array(projectedCoords.dropLast())
         guard vertices.count >= 3 else { return nil }
 
         // Determine whether to shift longitudes for antimeridian handling.
