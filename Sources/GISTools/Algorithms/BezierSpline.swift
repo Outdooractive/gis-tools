@@ -73,6 +73,9 @@ private enum BezierSpline {
         let totalLength = chordLengths[n - 1]
         guard totalLength > 0 else { return LineString(unchecked: points) }
 
+        // Normalised parameters t in [0, 1]
+        let t = chordLengths.map { $0 / totalLength }
+
         // Tangents at each control point
         var tangents: [(Double, Double)] = []
         tangents.reserveCapacity(n)

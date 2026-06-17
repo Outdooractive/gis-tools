@@ -969,7 +969,6 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | grid-rectangle              | `bbox.rectangleGrid(cellWidth: 1000.0, cellHeight: 500.0)`                                                                            |     | [Source][173] / [Tests][174] |
 | grid-square                 | `bbox.squareGrid(cellSide: 1000.0)`                                                                                                   |     | [Source][169] / [Tests][170] |
 | grid-triangle               | `bbox.triangleGrid(cellSide: 1000.0)`                                                                                                 |     | [Source][171] / [Tests][172] |
-| isolines                    | `let result = grid.isolines(breaks: [0, 100, 200], zProperty: "z")`                                                                   |     | [Source][219] / [Tests][220] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
@@ -1252,8 +1251,6 @@ Thomas Rasch, Outdooractive
 [216]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/CollectTests.swift "CollectTests"
 [217]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BezierSpline.swift "BezierSpline"
 [218]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BezierSplineTests.swift "BezierSplineTests"
-[219]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/IsoLines.swift "IsoLines"
-[220]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/IsoLinesTests.swift "IsoLinesTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
