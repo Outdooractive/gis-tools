@@ -1000,6 +1000,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
 | line-offset                 | `let offset = lineString.offset(by: 50.0)`                                                                                            |     | [Source][185] / [Tests][186] |
 | line-intersect              | `let intersections = feature1.intersections(other: feature2)`                                                                         |     | [Source][80] / [Tests][81]   |
+| line-merge                  | `let merged = fc.lineMerged()`                                                                                                        |     | [Source][237] / [Tests][238] |
 | line-overlap                | `let overlappingSegments = lineString1.overlappingSegments(with: lineString2)`                                                        |     | [Source][82] / [Tests][83]   |
 | line-segments               | `let segments = anyGeometry.lineSegments`                                                                                             |     | [Source][84] / [Tests][85]   |
 | line-slice                  | `let slice = lineString.slice(start: Coordinate3D(…), end: Coordinate3D(…))`                                                          |     | [Source][86] / [Tests][87]   |
@@ -1299,6 +1300,8 @@ Thomas Rasch, Outdooractive
 [234]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DensifyTests.swift "DensifyTests"
 [235]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/SharedPaths.swift "SharedPaths"
 [236]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SharedPathsTests.swift "SharedPathsTests"
+[237]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineMerge.swift "LineMerge"
+[238]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineMergeTests.swift "LineMergeTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
