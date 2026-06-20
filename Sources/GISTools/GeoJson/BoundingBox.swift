@@ -806,8 +806,30 @@ extension BoundingBox {
     /// - Returns: A copy of this bounding box with longitudes normalized to the [-180, 180] range
     public func normalized() -> BoundingBox {
         switch projection {
-        case .noSRID, .epsg4978:
+        case .noSRID:
             return self
+
+        case .epsg4978:
+            // EPSG:4978 is geocentric (ECEF); there is no date line. An inverted box
+            // (south-west > north-east) is treated as a min/max axis-aligned box.
+            let minX = min(southWest.longitude, northEast.longitude)
+            let maxX = max(southWest.longitude, northEast.longitude)
+            let minY = min(southWest.latitude, northEast.latitude)
+            let maxY = max(southWest.latitude, northEast.latitude)
+
+            return BoundingBox(
+                southWest: Coordinate3D(
+                    x: minX,
+                    y: minY,
+                    z: southWest.altitude,
+                    m: southWest.m,
+                    projection: projection),
+                northEast: Coordinate3D(
+                    x: maxX,
+                    y: maxY,
+                    z: northEast.altitude,
+                    m: northEast.m,
+                    projection: projection))
 
         case .epsg3857:
             guard northEast.longitude - southWest.longitude < (2 * GISTool.originShift) else {

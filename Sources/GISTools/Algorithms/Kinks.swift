@@ -391,9 +391,14 @@ extension Polygon {
                         fromRing: currentSeg.ringIndex,
                         fromEdge: currentSeg.edgeIndex,
                         arrivingForward: currentForward)
-                    if let first = otherCandidates.first {
-                        nextSegIndex = first.segIndex
-                        nextForward = first.forward
+                    // Prefer the sub-segment that starts at the node (forward=true),
+                    // so we traverse away from the intersection rather than back
+                    // toward the origin of the intersecting edge.
+                    if let best = otherCandidates.first(where: { $0.forward })
+                        ?? otherCandidates.first
+                    {
+                        nextSegIndex = best.segIndex
+                        nextForward = best.forward
                     }
                 }
 

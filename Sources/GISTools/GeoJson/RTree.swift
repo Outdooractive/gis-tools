@@ -139,16 +139,16 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         while n != 1
 
         boundingBoxes.reserveCapacity(numberOfNodes)
-        indices = Array(repeating: 0, count: numberOfNodes)
+        indices = Array(0 ..< numberOfNodes)
 
         // Add objects to the tree
         for object in self.objects {
             guard let boundingBox = object.boundingBox?.projected(to: projection) else { return }
 
-            indices[position] = position
             boundingBoxes.append(boundingBox)
-            position = boundingBoxes.count
         }
+
+        position = boundingBoxes.count
 
         if sortOption == .hilbert {
             sortByHilbertValue()
@@ -189,17 +189,19 @@ extension RTree {
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
+        queue.reserveCapacity(boundingBoxes.count)
 
         while let lowerBound = nodeIndex {
             // Find the end index of the node
             let upperBound = min(lowerBound + nodeSize,
                                  RTree.upperBound(of: lowerBound, in: levelBounds))
+            let isLeafNode = lowerBound < count
 
             // Search through child nodes
             for currentPosition in lowerBound ..< upperBound {
                 let index = indices[currentPosition]
 
-                if lowerBound < count {
+                if isLeafNode {
                     // Check if the object intersects with the query bbox
                     let object = objects[index]
                     if object.intersects(searchBoundingBox) {
@@ -268,17 +270,19 @@ extension RTree {
 
         var nodeIndex: Int? = boundingBoxes.count - 1
         var queue: [Int] = []
+        queue.reserveCapacity(boundingBoxes.count)
 
         while let lowerBound = nodeIndex {
             // Find the end index of the node
             let upperBound = min(lowerBound + nodeSize,
                                  RTree.upperBound(of: lowerBound, in: levelBounds))
+            let isLeafNode = lowerBound < count
 
             // Search through child nodes
             for currentPosition in lowerBound ..< upperBound {
                 let index = indices[currentPosition]
 
-                if lowerBound < count {
+                if isLeafNode {
                     let object = objects[index]
                     if let nearest = object.nearestCoordinateOnFeature(from: coordinate),
                        nearest.distance <= maximumDistance
@@ -394,16 +398,20 @@ extension RTree {
 
         var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
         let hilbertMax = Double((1 << 16) - 1)
+        let scaleX = hilbertMax / width
+        let scaleY = hilbertMax / height
 
         // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
         for i in 0 ..< count {
             let boundingBox = boundingBoxes[i]
-            let x = UInt32(floor(hilbertMax * ((boundingBox.southWest.x + boundingBox.northEast.x) / 2.0 - minX) / width))
-            let y = UInt32(floor(hilbertMax * ((boundingBox.southWest.y + boundingBox.northEast.y) / 2.0 - minY) / height))
+            let centerX = (boundingBox.southWest.x + boundingBox.northEast.x) * 0.5
+            let centerY = (boundingBox.southWest.y + boundingBox.northEast.y) * 0.5
+            let x = UInt32(min(max((centerX - minX) * scaleX, 0.0), hilbertMax))
+            let y = UInt32(min(max((centerY - minY) * scaleY, 0.0), hilbertMax))
             hilbertValues[i] = RTree.hilbert(x: x, y: y)
         }
 
-        // Sort items by their Hilbert value (for packing later)
+        // Sort items by their Hilbert value (for packing later).
         RTree.sort(
             hilbertValues: &hilbertValues,
             boundingBoxes: &boundingBoxes,
@@ -413,7 +421,9 @@ extension RTree {
             nodeSize: nodeSize)
     }
 
-    // Custom quicksort that partially sorts bbox data alongside the hilbert values
+    // Custom quicksort that partially sorts bbox data alongside the hilbert values.
+    // Sorting stops at node boundaries because the order inside a leaf node does not
+    // affect the packed R-tree structure.
     private static func sort(
         hilbertValues: inout [UInt32],
         boundingBoxes: inout [BoundingBox],
@@ -422,8 +432,9 @@ extension RTree {
         high: Int,
         nodeSize: Int
     ) {
-        guard low < high else { return }
-//        guard floor(Double(low) / Double(nodeSize)) < floor(Double(high) / Double(nodeSize)) else { return }
+        guard low < high,
+              low / nodeSize < high / nodeSize
+        else { return }
 
         let pivot = hilbertValues[(low + high) >> 1]
         var i = low - 1
