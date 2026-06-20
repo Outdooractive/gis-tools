@@ -73,19 +73,22 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         nodeSize: Int = 16,
         sortOption: RTreeSortOption = .hilbert
     ) {
-        var objectsWithBoundingBox: [T] = []
-        objectsWithBoundingBox.reserveCapacity(objects.count)
+        var validObjects: [T] = []
+        var projectedBboxes: [BoundingBox] = []
+        validObjects.reserveCapacity(objects.count)
+        projectedBboxes.reserveCapacity(objects.count)
 
         projection = objects.first?.projection ?? .noSRID
 
-        // Set bounding boxes on all objects
-        // Calculate the RTree bounding box
+        // Set bounding boxes on all objects, collect valid ones,
+        // and calculate the RTree bounding box in one pass
         for var object in objects {
             object.updateBoundingBox(onlyIfNecessary: true)
 
             guard let boundingBox = object.boundingBox?.projected(to: projection) else { continue }
 
-            objectsWithBoundingBox.append(object)
+            validObjects.append(object)
+            projectedBboxes.append(boundingBox)
 
             if boundingBox.southWest.x < minX {
                 minX = boundingBox.southWest.x
@@ -101,26 +104,24 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
             }
         }
 
-        // Sort input by latitude or longitude
+        // Sort input by latitude or longitude (keeping projectedBboxes in sync)
         if sortOption == .byLatitude {
-            objectsWithBoundingBox.sort(by: { a, b in
-                guard let aLat = a.boundingBox?.southWest.latitude,
-                      let bLat = b.boundingBox?.southWest.latitude
-                else { return false }
-                return aLat < bLat
-            })
+            let sortedIndices = projectedBboxes.indices.sorted {
+                projectedBboxes[$0].southWest.latitude < projectedBboxes[$1].southWest.latitude
+            }
+            validObjects = sortedIndices.map { validObjects[$0] }
+            projectedBboxes = sortedIndices.map { projectedBboxes[$0] }
         }
         else if sortOption == .byLongitude {
-            objectsWithBoundingBox.sort(by: { a, b in
-                guard let aLong = a.boundingBox?.southWest.longitude,
-                      let bLong = b.boundingBox?.southWest.longitude
-                else { return false }
-                return aLong < bLong
-            })
+            let sortedIndices = projectedBboxes.indices.sorted {
+                projectedBboxes[$0].southWest.longitude < projectedBboxes[$1].southWest.longitude
+            }
+            validObjects = sortedIndices.map { validObjects[$0] }
+            projectedBboxes = sortedIndices.map { projectedBboxes[$0] }
         }
 
-        self.objects = objectsWithBoundingBox
-        self.count = objectsWithBoundingBox.count
+        self.objects = validObjects
+        self.count = validObjects.count
         self.nodeSize = Int(min(max(nodeSize, 4), 65535))
 
         // Don't build a tree if serial search would be faster
@@ -138,15 +139,9 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         }
         while n != 1
 
+        boundingBoxes = projectedBboxes
         boundingBoxes.reserveCapacity(numberOfNodes)
         indices = Array(0 ..< numberOfNodes)
-
-        // Add objects to the tree
-        for object in self.objects {
-            guard let boundingBox = object.boundingBox?.projected(to: projection) else { return }
-
-            boundingBoxes.append(boundingBox)
-        }
 
         position = boundingBoxes.count
 

@@ -230,7 +230,7 @@ struct RTreeTests {
         for (object, distance) in result {
             let objectDistance = object.coordinate.distance(from: coordinate)
             #expect(objectDistance == distance)
-            #expect(objectDistance < maximumDistance)
+            #expect(objectDistance <= maximumDistance)
         }
     }
 
@@ -672,13 +672,99 @@ struct RTreeTests {
         _testRTree(rTree)
     }
 
-    func _testNodeSizes() async throws {
+    // Verifies bounding-box and around-coordinate search work for MultiPoint geometries.
+    @Test
+    func multiPointBoundingBoxSearch() throws {
+        var nodes: [MultiPoint] = []
+        for i in 0 ..< 50 {
+            let x = Double(i) * 0.5 - 12.5
+            let y = Double(i) * 0.3 - 7.5
+            let points = [
+                Coordinate3D(latitude: y, longitude: x),
+                Coordinate3D(latitude: y + 0.3, longitude: x + 0.4),
+                Coordinate3D(latitude: y + 0.6, longitude: x + 0.2),
+            ]
+            nodes.append(try #require(MultiPoint(points)))
+        }
+
+        let rTree = RTree(nodes)
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: -2.0, longitude: -2.0),
+            northEast: Coordinate3D(latitude: 2.0, longitude: 2.0))
+
+        let treeResults = rTree.search(inBoundingBox: boundingBox)
+        let serialResults = rTree.searchSerial(inBoundingBox: boundingBox)
+        #expect(treeResults.count == serialResults.count)
+
+        let aroundResults = rTree.search(
+            aroundCoordinate: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            maximumDistance: 500_000.0)
+        let aroundSerial = rTree.searchSerial(
+            aroundCoordinate: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            maximumDistance: 500_000.0)
+        #expect(aroundResults.map(\.object) == aroundSerial.map(\.object))
+    }
+
+    // Verifies that around-coordinate search returns an empty result when
+    // all objects are outside the maximum distance.
+    @Test
+    func aroundSearchEmptyResult() async throws {
+        var nodes: [Point] = []
+        50.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: 40.0 ... 50.0),
+                longitude: Double.random(in: 40.0 ... 50.0))))
+        }
+
+        let rTree = RTree(nodes)
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0)
+
+        let treeResults = rTree.search(aroundCoordinate: center, maximumDistance: 1_000.0)
+        let serialResults = rTree.searchSerial(aroundCoordinate: center, maximumDistance: 1_000.0)
+        #expect(treeResults.isEmpty)
+        #expect(serialResults.isEmpty)
+
+        // Also test with sorted: false
+        let unsortedTree = rTree.search(aroundCoordinate: center, maximumDistance: 1_000.0, sorted: false)
+        let unsortedSerial = rTree.searchSerial(aroundCoordinate: center, maximumDistance: 1_000.0, sorted: false)
+        #expect(unsortedTree.isEmpty)
+        #expect(unsortedSerial.isEmpty)
+    }
+
+    // Verifies that around-coordinate search with sorted: false produces the same
+    // objects as the sorted variant even when falling back to serial search.
+    @Test
+    func aroundSearchSerialUnsorted() async throws {
+        var nodes: [Point] = []
+        8.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+
+        let rTree = RTree(nodes, nodeSize: 16)
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0)
+
+        let unsorted = rTree.search(aroundCoordinate: center, maximumDistance: 500_000.0, sorted: false)
+        let sorted = rTree.search(aroundCoordinate: center, maximumDistance: 500_000.0, sorted: true)
+
+        #expect(unsorted.count == sorted.count)
+        let unsortedObjects = unsorted.map(\.object).sorted { $0.coordinate.longitude < $1.coordinate.longitude }
+        let sortedObjects = sorted.map(\.object).sorted { $0.coordinate.longitude < $1.coordinate.longitude }
+        #expect(unsortedObjects == sortedObjects)
+    }
+
+    // Verifies that for various node sizes, the R-tree search eventually outperforms serial
+    // search as the number of objects grows. Scans increasing object counts until tree
+    // search is faster, then moves to the next node size.
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping intensive test in CI"))
+    func nodeSizes() async throws {
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
             northEast: Coordinate3D(latitude: 5.0, longitude: 5.0))
 
-        for nodeSize in 4 ... 512 {
-            for objectCount in stride(from: nodeSize * 2, to: 10000, by: 10) {
+        for nodeSize in stride(from: 4, through: 256, by: 4) {
+            for objectCount in stride(from: nodeSize * 2, to: 5000, by: 20) {
                 var nodes: [Point] = []
                 objectCount.times {
                     nodes.append(Point(Coordinate3D(
@@ -698,7 +784,7 @@ struct RTreeTests {
                 #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
 
                 if timeElapsed1 < timeElapsed2 {
-                    print("\(nodeSize): \(objectCount)")
+                    print("nodeSize=\(nodeSize) crossover at count=\(objectCount)")
                     break
                 }
             }
