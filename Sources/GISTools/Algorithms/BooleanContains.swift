@@ -49,7 +49,7 @@ extension GeoJson {
 
 // MARK: - BooleanContains namespace
 
-private enum BooleanContains {
+enum BooleanContains {
 
 }
 
