@@ -234,7 +234,443 @@ struct RTreeTests {
         }
     }
 
+    // Verifies R-tree construction and search in EPSG:4978 matches serial search results.
+    @Test
+    func rTree4978() async throws {
+        20.times {
+            var nodes: [Point] = []
+            Int.random(in: 50 ... 500).times {
+                let coordinate = Coordinate3D(
+                    latitude: Double.random(in: -10.0 ... 10.0),
+                    longitude: Double.random(in: -10.0 ... 10.0))
+                    .projected(to: .epsg4978)
+                nodes.append(Point(coordinate))
+            }
+            let rTree = RTree(nodes)
+            #expect(rTree.projection == .epsg4978)
+
+            var minLat = Double.random(in: -10.0 ... 10.0)
+            var maxLat = Double.random(in: -10.0 ... 10.0)
+            var minLon = Double.random(in: -10.0 ... 10.0)
+            var maxLon = Double.random(in: -10.0 ... 10.0)
+
+            if minLat > maxLat {
+                (minLat, maxLat) = (maxLat, minLat)
+            }
+            if minLon > maxLon {
+                (minLon, maxLon) = (maxLon, minLon)
+            }
+
+            let geodeticBox = BoundingBox(
+                southWest: Coordinate3D(latitude: minLat, longitude: minLon),
+                northEast: Coordinate3D(latitude: maxLat, longitude: maxLon))
+            let searchBox = geodeticBox.projected(to: .epsg4978)
+
+            let objects1 = rTree.search(inBoundingBox: searchBox)
+            let objects2 = rTree.searchSerial(inBoundingBox: searchBox)
+
+            #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+        }
+    }
+
+    // Verifies R-tree construction and search with noSRID points.
+    @Test
+    func rTreeNoSRID() async throws {
+        20.times {
+            var nodes: [Point] = []
+            Int.random(in: 50 ... 500).times {
+                nodes.append(Point(Coordinate3D(
+                    x: Double.random(in: -10.0 ... 10.0),
+                    y: Double.random(in: -10.0 ... 10.0),
+                    projection: .noSRID)))
+            }
+            let rTree = RTree(nodes, nodeSize: 16, sortOption: .unsorted)
+            #expect(rTree.projection == .noSRID)
+            _testRTree(rTree)
+        }
+    }
+
+    // Verifies bounding-box search across the antimeridian in EPSG:4326.
+    @Test
+    func antimeridian4326() async throws {
+        20.times {
+            var nodes: [Point] = []
+            Int.random(in: 50 ... 250).times {
+                let rawLongitude = Double.random(in: 170.0 ... 190.0)
+                let longitude = rawLongitude > 180.0 ? rawLongitude - 360.0 : rawLongitude
+                nodes.append(Point(Coordinate3D(
+                    latitude: Double.random(in: -10.0 ... 10.0),
+                    longitude: longitude)))
+            }
+            Int.random(in: 50 ... 250).times {
+                let rawLongitude = Double.random(in: -190.0 ... -170.0)
+                let longitude = rawLongitude < -180.0 ? rawLongitude + 360.0 : rawLongitude
+                nodes.append(Point(Coordinate3D(
+                    latitude: Double.random(in: -10.0 ... 10.0),
+                    longitude: longitude)))
+            }
+
+            let rTree = RTree(nodes)
+            #expect(rTree.projection == .epsg4326)
+
+            let westLongitude = Double.random(in: 170.0 ... 180.0)
+            let eastLongitude = Double.random(in: -180.0 ... -170.0)
+            let searchBox = BoundingBox(
+                southWest: Coordinate3D(latitude: -10.0, longitude: westLongitude),
+                northEast: Coordinate3D(latitude: 10.0, longitude: eastLongitude))
+
+            let objects1 = rTree.search(inBoundingBox: searchBox)
+            let objects2 = rTree.searchSerial(inBoundingBox: searchBox)
+
+            #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+        }
+    }
+
+    // Verifies bounding-box search across the antimeridian in EPSG:3857.
+    @Test
+    func antimeridian3857() async throws {
+        20.times {
+            let margin = 1_000_000.0
+            var nodes: [Point] = []
+            Int.random(in: 50 ... 250).times {
+                nodes.append(Point(Coordinate3D(
+                    x: Double.random(in: GISTool.originShift - margin ... GISTool.originShift),
+                    y: Double.random(in: -1_000_000.0 ... 1_000_000.0),
+                    projection: .epsg3857)))
+            }
+            Int.random(in: 50 ... 250).times {
+                nodes.append(Point(Coordinate3D(
+                    x: Double.random(in: -GISTool.originShift ... -GISTool.originShift + margin),
+                    y: Double.random(in: -1_000_000.0 ... 1_000_000.0),
+                    projection: .epsg3857)))
+            }
+
+            let rTree = RTree(nodes)
+            #expect(rTree.projection == .epsg3857)
+
+            let westX = Double.random(in: GISTool.originShift - margin ... GISTool.originShift)
+            let eastX = Double.random(in: -GISTool.originShift ... -GISTool.originShift + margin)
+            let searchBox = BoundingBox(
+                southWest: Coordinate3D(x: westX, y: -1_000_000.0, projection: .epsg3857),
+                northEast: Coordinate3D(x: eastX, y: 1_000_000.0, projection: .epsg3857))
+
+            let objects1 = rTree.search(inBoundingBox: searchBox)
+            let objects2 = rTree.searchSerial(inBoundingBox: searchBox)
+
+            #expect(objects1.sorted { $0.coordinate.longitude < $1.coordinate.longitude } == objects2.sorted { $0.coordinate.longitude < $1.coordinate.longitude })
+        }
+    }
+
+    // Verifies that antimeridian-crossing queries are rejected consistently for noSRID.
+    @Test
+    func antimeridianNoSRIDReturnsEmpty() async throws {
+        var nodes: [Point] = []
+        100.times {
+            nodes.append(Point(Coordinate3D(
+                x: Double.random(in: -10.0 ... 10.0),
+                y: Double.random(in: -10.0 ... 10.0),
+                projection: .noSRID)))
+        }
+
+        let rTree = RTree(nodes)
+        let crossingBox = BoundingBox(
+            southWest: Coordinate3D(x: 5.0, y: -5.0, projection: .noSRID),
+            northEast: Coordinate3D(x: -5.0, y: 5.0, projection: .noSRID))
+
+        #expect(rTree.search(inBoundingBox: crossingBox).isEmpty)
+        #expect(rTree.searchSerial(inBoundingBox: crossingBox).isEmpty)
+    }
+
+    // Verifies that inverted EPSG:4978 bounding boxes are normalized to min/max
+    // axis-aligned boxes and produce the same results as their non-inverted form.
+    @Test
+    func invertedBoundingBox4978() async throws {
+        var nodes: [Point] = []
+        100.times {
+            let coordinate = Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))
+                .projected(to: .epsg4978)
+            nodes.append(Point(coordinate))
+        }
+
+        let rTree = RTree(nodes)
+
+        var minX = Double.infinity
+        var maxX = -Double.infinity
+        var minY = Double.infinity
+        var maxY = -Double.infinity
+        for point in nodes {
+            minX = min(minX, point.coordinate.longitude)
+            maxX = max(maxX, point.coordinate.longitude)
+            minY = min(minY, point.coordinate.latitude)
+            maxY = max(maxY, point.coordinate.latitude)
+        }
+
+        let normalBox = BoundingBox(
+            southWest: Coordinate3D(x: minX, y: minY, projection: .epsg4978),
+            northEast: Coordinate3D(x: maxX, y: maxY, projection: .epsg4978))
+        let invertedBox = BoundingBox(
+            southWest: Coordinate3D(x: maxX, y: maxY, projection: .epsg4978),
+            northEast: Coordinate3D(x: minX, y: minY, projection: .epsg4978))
+
+        let normalTree = rTree.search(inBoundingBox: normalBox)
+        let normalSerial = rTree.searchSerial(inBoundingBox: normalBox)
+        let invertedTree = rTree.search(inBoundingBox: invertedBox)
+        let invertedSerial = rTree.searchSerial(inBoundingBox: invertedBox)
+
+        #expect(normalTree.count == normalSerial.count)
+        #expect(invertedTree.count == invertedSerial.count)
+        #expect(normalTree.count == invertedTree.count)
+    }
+
     // MARK: -
+
+    // MARK: - Edge cases
+
+    // Verifies that small collections, including counts around the tree-build threshold, return correct results.
+    @Test
+    func smallCollections() async throws {
+        for sortOption in [RTreeSortOption.hilbert, .byLatitude, .byLongitude, .unsorted] {
+            for objectCount in [1, 2, 15, 16, 17, 31, 32, 33, 100] {
+                var nodes: [Point] = []
+                for i in 0 ..< objectCount {
+                    nodes.append(Point(Coordinate3D(
+                        latitude: Double(i) * 0.1,
+                        longitude: Double(i) * 0.2)))
+                }
+
+                let rTree = RTree(nodes, nodeSize: 16, sortOption: sortOption)
+                _testRTree(rTree)
+            }
+        }
+    }
+
+    // Verifies that all objects sharing the same coordinate are found correctly.
+    @Test
+    func identicalCoordinates() async throws {
+        let coordinate = Coordinate3D(latitude: 1.0, longitude: 2.0)
+        var nodes: [Point] = []
+        50.times { nodes.append(Point(coordinate)) }
+
+        for sortOption in [RTreeSortOption.hilbert, .byLatitude, .byLongitude, .unsorted] {
+            let rTree = RTree(nodes, nodeSize: 16, sortOption: sortOption)
+
+            let containingBox = BoundingBox(
+                southWest: Coordinate3D(latitude: 0.0, longitude: 1.0),
+                northEast: Coordinate3D(latitude: 2.0, longitude: 3.0))
+            #expect(rTree.search(inBoundingBox: containingBox).count == 50)
+            #expect(rTree.searchSerial(inBoundingBox: containingBox).count == 50)
+
+            let outsideBox = BoundingBox(
+                southWest: Coordinate3D(latitude: 10.0, longitude: 10.0),
+                northEast: Coordinate3D(latitude: 11.0, longitude: 11.0))
+            #expect(rTree.search(inBoundingBox: outsideBox).isEmpty)
+            #expect(rTree.searchSerial(inBoundingBox: outsideBox).isEmpty)
+
+            let zeroDistance = rTree.search(aroundCoordinate: coordinate, maximumDistance: 0.0)
+            #expect(zeroDistance.count == 50)
+
+            let unsortedZero = rTree.search(aroundCoordinate: coordinate, maximumDistance: 0.0, sorted: false)
+            #expect(unsortedZero.count == 50)
+        }
+    }
+
+    // Verifies that a query bounding box completely outside the tree returns no results.
+    @Test
+    func outsideBoundingBox() async throws {
+        var nodes: [Point] = []
+        100.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+        let rTree = RTree(nodes)
+
+        let outsideBox = BoundingBox(
+            southWest: Coordinate3D(latitude: 20.0, longitude: 20.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0))
+        #expect(rTree.search(inBoundingBox: outsideBox).isEmpty)
+        #expect(rTree.searchSerial(inBoundingBox: outsideBox).isEmpty)
+    }
+
+    // Verifies that a point lying exactly on a query-bbox edge is included in the result.
+    @Test
+    func boundaryTouches() async throws {
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        let rTree = RTree([point], nodeSize: 16)
+
+        let touchingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: 5.0, longitude: 5.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        #expect(rTree.search(inBoundingBox: touchingBox).count == 1)
+        #expect(rTree.searchSerial(inBoundingBox: touchingBox).count == 1)
+    }
+
+    // Verifies the byLongitude sort option produces the same results as serial search.
+    @Test
+    func byLongitudeSortOption() async throws {
+        20.times {
+            var nodes: [Point] = []
+            Int.random(in: 50 ... 500).times {
+                nodes.append(Point(Coordinate3D(
+                    latitude: Double.random(in: -10.0 ... 10.0),
+                    longitude: Double.random(in: -10.0 ... 10.0))))
+            }
+            let rTree = RTree(nodes, nodeSize: 16, sortOption: .byLongitude)
+            _testRTree(rTree)
+        }
+    }
+
+    // Verifies around-coordinate search with sorted=false returns the same objects as the sorted variant.
+    @Test
+    func aroundSearchUnsorted() async throws {
+        var nodes: [Point] = []
+        500.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+        let rTree = RTree(nodes)
+
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let unsorted = rTree.search(aroundCoordinate: center, maximumDistance: 100_000.0, sorted: false)
+        let sorted = rTree.search(aroundCoordinate: center, maximumDistance: 100_000.0, sorted: true)
+
+        #expect(unsorted.count == sorted.count)
+
+        let unsortedObjects = unsorted.map(\.object).sorted { $0.coordinate.longitude < $1.coordinate.longitude }
+        let sortedObjects = sorted.map(\.object).sorted { $0.coordinate.longitude < $1.coordinate.longitude }
+        #expect(unsortedObjects == sortedObjects)
+    }
+
+    // Verifies extreme and invalid node sizes are clamped and still produce correct results.
+    @Test
+    func extremeNodeSizes() async throws {
+        var nodes: [Point] = []
+        100.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+
+        let tiny = RTree(nodes, nodeSize: -100, sortOption: .hilbert)
+        #expect(tiny.nodeSize == 4)
+        _testRTree(tiny)
+
+        let huge = RTree(nodes, nodeSize: 1_000_000, sortOption: .hilbert)
+        #expect(huge.nodeSize == 65_535)
+        _testRTree(huge)
+
+        let largerThanCount = RTree(nodes, nodeSize: 1_000, sortOption: .hilbert)
+        #expect(largerThanCount.nodeSize == 1_000)
+        _testRTree(largerThanCount)
+    }
+
+    // Verifies that a world-spanning query bounding box returns every indexed object.
+    @Test
+    func worldBoundingBoxSearch() async throws {
+        var nodes: [Point] = []
+        100.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -80.0 ... 80.0),
+                longitude: Double.random(in: -170.0 ... 170.0))))
+        }
+        let rTree = RTree(nodes)
+
+        #expect(rTree.search(inBoundingBox: .world).count == 100)
+        #expect(rTree.searchSerial(inBoundingBox: .world).count == 100)
+    }
+
+    // Verifies bounding-box search works for non-point geometries (LineString).
+    @Test
+    func lineStringBoundingBoxSearch() async throws {
+        var nodes: [LineString] = []
+        for i in 0 ..< 100 {
+            let start = Coordinate3D(
+                latitude: Double(i) * 0.1 - 5.0,
+                longitude: Double(i) * 0.2 - 10.0)
+            let end = Coordinate3D(
+                latitude: Double(i) * 0.15 - 5.0,
+                longitude: Double(i) * 0.25 - 10.0)
+            let lineString = try #require(LineString([start, end]))
+            nodes.append(lineString)
+        }
+
+        let rTree = RTree(nodes)
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: -2.0, longitude: -2.0),
+            northEast: Coordinate3D(latitude: 2.0, longitude: 2.0))
+
+        let treeResults = rTree.search(inBoundingBox: boundingBox)
+        let serialResults = rTree.searchSerial(inBoundingBox: boundingBox)
+
+        let sortedTree = treeResults.sorted { $0.coordinates[0].longitude < $1.coordinates[0].longitude }
+        let sortedSerial = serialResults.sorted { $0.coordinates[0].longitude < $1.coordinates[0].longitude }
+        #expect(sortedTree == sortedSerial)
+    }
+
+    // Verifies bounding-box search works for non-point geometries (Polygon).
+    @Test
+    func polygonBoundingBoxSearch() async throws {
+        var nodes: [Polygon] = []
+        for i in 0 ..< 100 {
+            let x = Double(i) * 0.2 - 10.0
+            let y = Double(i) * 0.1 - 5.0
+            let ring = [
+                Coordinate3D(latitude: y, longitude: x),
+                Coordinate3D(latitude: y, longitude: x + 0.5),
+                Coordinate3D(latitude: y + 0.5, longitude: x + 0.5),
+                Coordinate3D(latitude: y + 0.5, longitude: x),
+                Coordinate3D(latitude: y, longitude: x),
+            ]
+            let polygon = try #require(Polygon([ring]))
+            nodes.append(polygon)
+        }
+
+        let rTree = RTree(nodes)
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: -2.0, longitude: -2.0),
+            northEast: Coordinate3D(latitude: 2.0, longitude: 2.0))
+
+        let treeResults = rTree.search(inBoundingBox: boundingBox)
+        let serialResults = rTree.searchSerial(inBoundingBox: boundingBox)
+
+        let sortedTree = treeResults.sorted { $0.coordinates[0][0].longitude < $1.coordinates[0][0].longitude }
+        let sortedSerial = serialResults.sorted { $0.coordinates[0][0].longitude < $1.coordinates[0][0].longitude }
+        #expect(sortedTree == sortedSerial)
+    }
+
+    // Verifies that the R-tree falls back to serial search for small inputs.
+    @Test
+    func serialFallback() async throws {
+        var nodes: [Point] = []
+        8.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+
+        // nodeSize 16 means 8 objects stay below the tree-build threshold.
+        let rTree = RTree(nodes, nodeSize: 16)
+        _testRTree(rTree)
+    }
+
+    // Verifies that an R-tree initialized with objects that have no bounding box initially still indexes them.
+    @Test
+    func lazyBoundingBoxes() async throws {
+        var nodes: [Point] = []
+        100.times {
+            nodes.append(Point(Coordinate3D(
+                latitude: Double.random(in: -10.0 ... 10.0),
+                longitude: Double.random(in: -10.0 ... 10.0))))
+        }
+
+        // Points are created without calculateBoundingBox, so updateBoundingBox is exercised by RTree.
+        let rTree = RTree(nodes)
+        #expect(rTree.count == 100)
+        _testRTree(rTree)
+    }
 
     func _testNodeSizes() async throws {
         let boundingBox = BoundingBox(
@@ -271,6 +707,24 @@ struct RTreeTests {
 
 }
 
+// MARK: - Deterministic RNG
+
+/// A simple linear-congruential generator so the benchmarks use reproducible data.
+private struct SeededRandomNumberGenerator: RandomNumberGenerator {
+
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state = 6_364_136_223_846_793_005 &* state &+ 1_442_695_040_888_963_407
+        return state
+    }
+
+}
+
 // MARK: - Benchmarks
 
 @Suite
@@ -282,19 +736,21 @@ struct RTreeBenchmarks {
         let count = 100_000
         var nodes: [Point] = []
         nodes.reserveCapacity(count)
+        var rng = SeededRandomNumberGenerator(seed: 12_345)
         count.times {
             nodes.append(Point(Coordinate3D(
-                latitude: Double.random(in: -10.0 ... 10.0),
-                longitude: Double.random(in: -10.0 ... 10.0))))
+                latitude: Double.random(in: -10.0 ... 10.0, using: &rng),
+                longitude: Double.random(in: -10.0 ... 10.0, using: &rng))))
         }
         return nodes
     }()
 
     private static let performanceSearchBoundingBox: BoundingBox = {
-        var minX = Double.random(in: -10.0 ... 10.0)
-        var maxX = Double.random(in: -10.0 ... 10.0)
-        var minY = Double.random(in: -10.0 ... 10.0)
-        var maxY = Double.random(in: -10.0 ... 10.0)
+        var rng = SeededRandomNumberGenerator(seed: 67_890)
+        var minX = Double.random(in: -10.0 ... 10.0, using: &rng)
+        var maxX = Double.random(in: -10.0 ... 10.0, using: &rng)
+        var minY = Double.random(in: -10.0 ... 10.0, using: &rng)
+        var maxY = Double.random(in: -10.0 ... 10.0, using: &rng)
 
         if minX > maxX {
             (minX, maxX) = (maxX, minX)
@@ -308,9 +764,12 @@ struct RTreeBenchmarks {
             northEast: Coordinate3D(latitude: maxY, longitude: maxX))
     }()
 
-    private static let performanceAroundSearchCenter: Coordinate3D = Coordinate3D(
-        latitude: Double.random(in: -10.0 ... 10.0),
-        longitude: Double.random(in: -10.0 ... 10.0))
+    private static let performanceAroundSearchCenter: Coordinate3D = {
+        var rng = SeededRandomNumberGenerator(seed: 111_213)
+        return Coordinate3D(
+            latitude: Double.random(in: -10.0 ... 10.0, using: &rng),
+            longitude: Double.random(in: -10.0 ... 10.0, using: &rng))
+    }()
 
     private static func measure(_ name: String, _ block: () -> Void) {
         let clock = ContinuousClock()
