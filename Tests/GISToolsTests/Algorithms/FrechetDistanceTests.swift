@@ -118,6 +118,26 @@ struct FrechetDistanceTests {
 
     // MARK: - Antimeridian
 
+    // Validates Frechet distance for lines 1° apart across the dateline.
+    @Test
+    func antimeridianOneDegreeApart() async throws {
+        // Line A: lon 179.5°E (just east of the dateline)
+        let a = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.5),
+            Coordinate3D(latitude: 10.0, longitude: 179.5),
+        ]))
+        // Line B: lon 179.5°W (just west of the dateline, 1° away)
+        let b = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: -179.5),
+            Coordinate3D(latitude: 10.0, longitude: -179.5),
+        ]))
+
+        let dist = a.frechetDistance(from: b, distanceFunction: .haversine)
+        // 1° of longitude at the equator ≈ 111 km
+        #expect(dist > 100_000.0)
+        #expect(dist < 120_000.0)
+    }
+
     @Test
     func antimeridian() async throws {
         let line1 = try #require(LineString([
