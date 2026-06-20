@@ -12,7 +12,9 @@ extension Polygon {
     ///
     /// Uses the polylabel algorithm with a priority-queue grid search.
     ///
-    /// - Parameter precision: Precision in degrees (default 1.0).
+    /// - Parameter precision: Precision in the projection's native coordinate units
+    ///   (degrees for ``Projection/epsg4326``, meters for ``Projection/epsg3857``
+    ///   and ``Projection/epsg4978``). Default `1.0`.
     /// - Parameter gridSize: An optional grid size for snapping inputs
     /// - Returns: The pole point, or `nil` if no outer ring exists.
     public func poleOfInaccessibility(precision: Double = 1.0, gridSize: Double? = nil) -> Point? {
@@ -20,7 +22,10 @@ extension Polygon {
 
         guard let outerRing = snappedSelf.outerRing else { return nil }
 
-        if snappedSelf.crossesAntimeridian {
+        // The antimeridian cross check only makes sense for EPSG:4326.
+        // For other projections the longitude values are not in degrees,
+        // so a span > 180° does not indicate a date-line crossing.
+        if projection == .epsg4326, snappedSelf.crossesAntimeridian {
             // Shift negative longitudes to [0, 360) so the polygon is
             // contiguous and the grid-search algorithm works correctly.
             let normalizedRings = snappedSelf.coordinates.map { ring in
@@ -107,13 +112,14 @@ extension Polygon {
             let cell = queue.removeLast()
 
             if cell.max - bestCell.d <= precision {
-                break
+                continue
             }
             if cell.d > bestCell.d {
                 bestCell = cell
             }
 
             h = cell.h / 2
+
             let c1 = PQCell(x: cell.x - h, y: cell.y - h, h: h, polygon: snappedSelf)
             let c2 = PQCell(x: cell.x + h, y: cell.y - h, h: h, polygon: snappedSelf)
             let c3 = PQCell(x: cell.x - h, y: cell.y + h, h: h, polygon: snappedSelf)
@@ -123,7 +129,13 @@ extension Polygon {
                 if c.d > bestCell.d {
                     bestCell = c
                 }
-                if c.max > bestCell.d + precision {
+                // Only insert if the child could meaningfully improve bestD.
+                // The child's maximum reachable d is cell.d + cell.h/2 (moving
+                // at most cell.h/2 toward the true optimum). If even that bound
+                // is within precision of bestD, skip the insertion.
+                if c.max > bestCell.d + precision,
+                   cell.d + cell.h / 2.0 > bestCell.d - precision
+                {
                     insertSorted(&queue, c)
                 }
             }

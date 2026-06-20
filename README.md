@@ -996,6 +996,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | intersect                   | `let overlap = polygon.intersection(with: other)`                                                                                     |     | [Source][225] / [Tests][226] |
 | isolines                    | `let result = grid.isolines(breaks: [0, 100, 200])`                                                                   |     | [Source][219] / [Tests][220] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
+| make-valid                  | `let valid = anyGeometry.madeValid()`                                                                                                 |     | [Source][243] / [Tests][244] |
 | length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
 | line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
@@ -1013,6 +1014,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | minkowski-sum               | `let dilated = polygon.minkowskiSum(with: pattern)`                                                                                   |     | [Source][231] / [Tests][232] |
 | minimum-bounding-circle     | `let circle = anyGeometry.minimumBoundingCircle()`                                                                                    |     | [Source][203] / [Tests][204] |
 | minimum-bounding-radius     | `let r = anyGeometry.minimumBoundingRadius()`                                                                                         |     | [Source][203] / [Tests][204] |
+| maximum-inscribed-circle    | `let circle = polygon.maximumInscribedCircle()` / `let r = polygon.maximumInscribedRadius()`                                          |     | [Source][241] / [Tests][242] |
 | nearest-point               | `let nearest = anyGeometry.nearestCoordinate(from: Coordinate3D(…))`                                                                  |     | [Source][92] / [Tests][138]  |
 | nearest-point-on-feature    | `let nearest = anyGeometry. nearestCoordinateOnFeature(from: Coordinate3D(…))`                                                        |     | [Source][93] / [Tests][139]  |
 | nearest-point-on-line       | `let nearest = lineString.nearestCoordinateOnLine(from: Coordinate3D(…))?.coordinate`                                                 |     | [Source][94] / [Tests][95]   |
@@ -1305,6 +1307,10 @@ Thomas Rasch, Outdooractive
 [238]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineMergeTests.swift "LineMergeTests"
 [239]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/HausdorffDistance.swift "HausdorffDistance"
 [240]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/HausdorffDistanceTests.swift "HausdorffDistanceTests"
+[241]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MaximumInscribedCircle.swift "MaximumInscribedCircle"
+[242]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MaximumInscribedCircleTests.swift "MaximumInscribedCircleTests"
+[243]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MakeValid.swift "MakeValid"
+[244]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MakeValidTests.swift "MakeValidTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
