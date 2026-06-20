@@ -134,3 +134,4 @@ If a method has ≤3 parameters and no return value, or ≤2 parameters and a re
 - DO NOT commit changes unless the user tells you to do so, ALWAYS let the user review your changes
 - DO NOT create free functions (un-namespaced top-level functions). Always use a `private enum` namespace or extensions on existing types.
 - Code MUST compile cleanly, with no warnings
+- New algorithms and bug fixes MUST include tests for all projections (EPSG:4326, EPSG:3857, EPSG:4978, noSRID) and for geometries crossing the antimeridian, where it makes sense
