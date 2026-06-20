@@ -30,26 +30,55 @@ extension Ring {
             coordinatesCount -= 1
         }
 
+        // Detect antimeridian crossing (EPSG:4326 only): check if any edge
+        // jumps more than 180° in longitude, which indicates the ring wraps
+        // across ±180°. For projected systems (3857, 4978) the X values are
+        // in meters where a >180 jump is just a long edge.
+        var crossesAntimeridian = false
+        if projection == .epsg4326 {
+            for i in 0 ..< coordinatesCount {
+                let j = (i + coordinatesCount - 1) % coordinatesCount
+                let dLon = snappedCoordinates[i].longitude - snappedCoordinates[j].longitude
+                // Edge jumps between 180° and 360° indicate antimeridian crossing.
+                // An edge with exactly 360° (e.g. world polygon from -180 to 180)
+                // spans the full globe and does NOT cross.
+                if abs(dLon) > 180.0, abs(dLon) < 360.0 {
+                    crossesAntimeridian = true
+                    break
+                }
+            }
+        }
+
+        var testLon = snappedCoordinate.longitude
+        if crossesAntimeridian {
+            testLon = testLon < 0 ? testLon + 360.0 : testLon
+        }
+
         var j = coordinatesCount - 1
         for i in 0 ..< coordinatesCount {
             defer {
                 j = i
             }
 
-            let xi = snappedCoordinates[i].longitude
+            var xi = snappedCoordinates[i].longitude
             let yi = snappedCoordinates[i].latitude
-            let xj = snappedCoordinates[j].longitude
+            var xj = snappedCoordinates[j].longitude
             let yj = snappedCoordinates[j].latitude
 
-            let onBoundary = (snappedCoordinate.latitude * (xi - xj) + yi * (xj - snappedCoordinate.longitude) + yj * (snappedCoordinate.longitude - xi) == 0.0)
-                && ((xi - snappedCoordinate.longitude) * (xj - snappedCoordinate.longitude) <= 0.0)
+            if crossesAntimeridian {
+                xi = xi < 0 ? xi + 360.0 : xi
+                xj = xj < 0 ? xj + 360.0 : xj
+            }
+
+            let onBoundary = (snappedCoordinate.latitude * (xi - xj) + yi * (xj - testLon) + yj * (testLon - xi) == 0.0)
+                && ((xi - testLon) * (xj - testLon) <= 0.0)
                 && ((yi - snappedCoordinate.latitude) * (yj - snappedCoordinate.latitude) <= 0.0)
             if onBoundary {
                 return !ignoringBoundary
             }
 
             let intersect = ((yi > snappedCoordinate.latitude) != (yj > snappedCoordinate.latitude))
-                && (snappedCoordinate.longitude < (xj - xi) * (snappedCoordinate.latitude - yi) / (yj - yi) + xi)
+                && (testLon < (xj - xi) * (snappedCoordinate.latitude - yi) / (yj - yi) + xi)
             if (intersect) {
                 isInside = !isInside
             }
@@ -93,8 +122,29 @@ extension Polygon {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 
-        if let boundingBox = snappedSelf.boundingBox, !boundingBox.contains(snappedCoordinate) {
-            return false
+        if let boundingBox = snappedSelf.boundingBox,
+           !boundingBox.contains(snappedCoordinate)
+        {
+            // Bounding box doesn't contain the point. If the polygon crosses the
+            // antimeridian, the point may still be inside the wrapped side.
+            if let outerRing = snappedSelf.outerRing,
+               projection == .epsg4326
+            {
+                let coords = outerRing.coordinates
+                var crossesAM = false
+                for i in 1..<coords.count {
+                    let dLon = coords[i].longitude - coords[i-1].longitude
+                    if abs(dLon) > 180.0, abs(dLon) < 360.0 {
+                        crossesAM = true
+                        break
+                    }
+                }
+                if !crossesAM {
+                    return false
+                }
+            } else {
+                return false
+            }
         }
 
         guard let outerRing = snappedSelf.outerRing,

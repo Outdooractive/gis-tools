@@ -29,10 +29,14 @@
 - Trailing whitespace: Never. Ever.
 - Last file line: End each file with a single new line.
 
+### General
+
+- Multiple `if` conditions should be separated by `,`, not `&&`. Example: `if a==1, b==2 {}`.
+- Use `x.isNotEmpty` (defined in a local extension) instead of `!x.isEmpty`.
+
 ### Colon style
 
 Use left-hugging colons, with a space after the colon:
-
 - `let dict = ["a": 1, "b": 2]`
 - `let x: [String: String] = ["key": "value"]`
 - `let y = foo(param1: value1, param2: value2)`
