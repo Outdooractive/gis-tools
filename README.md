@@ -992,6 +992,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | grid-rectangle              | `bbox.rectangleGrid(cellWidth: 1000.0, cellHeight: 500.0)`                                                                            |     | [Source][173] / [Tests][174] |
 | grid-square                 | `bbox.squareGrid(cellSide: 1000.0)`                                                                                                   |     | [Source][169] / [Tests][170] |
 | grid-triangle               | `bbox.triangleGrid(cellSide: 1000.0)`                                                                                                 |     | [Source][171] / [Tests][172] |
+| hausdorffDistance           | `let dist = a.hausdorffDistance(from: b)`                                                                                             |     | [Source][239] / [Tests][240] |
 | intersect                   | `let overlap = polygon.intersection(with: other)`                                                                                     |     | [Source][225] / [Tests][226] |
 | isolines                    | `let result = grid.isolines(breaks: [0, 100, 200])`                                                                   |     | [Source][219] / [Tests][220] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
@@ -1302,6 +1303,8 @@ Thomas Rasch, Outdooractive
 [236]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SharedPathsTests.swift "SharedPathsTests"
 [237]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineMerge.swift "LineMerge"
 [238]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineMergeTests.swift "LineMergeTests"
+[239]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/HausdorffDistance.swift "HausdorffDistance"
+[240]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/HausdorffDistanceTests.swift "HausdorffDistanceTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
