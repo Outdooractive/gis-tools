@@ -14,12 +14,12 @@ extension Polygon {
     /// the polygon boundary). The radius is the geodesic distance from that
     /// point to the nearest boundary segment.
     ///
-    /// - Parameter precision: Precision in degrees for the pole-of-inaccessibility search (default `1.0`).
+    /// - Parameter precision: Precision in meters for the pole-of-inaccessibility search (default `1.0`).
     /// - Parameter steps: The number of steps to approximate the circle (default `64`, minimum `3`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``Polygon`` approximating the maximum inscribed circle, or `nil`.
     public func maximumInscribedCircle(
-        precision: Double = 1.0,
+        precision: CLLocationDistance = 1.0,
         steps: Int = 64,
         gridSize: Double? = nil
     ) -> Polygon? {
@@ -42,11 +42,11 @@ extension Polygon {
 
     /// Returns the radius of the maximum inscribed circle in meters.
     ///
-    /// - Parameter precision: Precision in degrees for the pole-of-inaccessibility search (default `1.0`).
+    /// - Parameter precision: Precision in meters for the pole-of-inaccessibility search (default `1.0`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: The radius in meters, or `nil` if the polygon has no outer ring.
     public func maximumInscribedRadius(
-        precision: Double = 1.0,
+        precision: CLLocationDistance = 1.0,
         gridSize: Double? = nil
     ) -> CLLocationDistance? {
         guard let pole = poleOfInaccessibility(precision: precision, gridSize: gridSize) else { return nil }
@@ -67,12 +67,12 @@ extension MultiPolygon {
 
     /// Returns the maximum inscribed circle across all constituent polygons.
     ///
-    /// - Parameter precision: Precision in degrees for the pole-of-inaccessibility search (default `1.0`).
+    /// - Parameter precision: Precision in meters for the pole-of-inaccessibility search (default `1.0`).
     /// - Parameter steps: The number of steps to approximate the circle (default `64`, minimum `3`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``Polygon`` approximating the largest maximum inscribed circle, or `nil`.
     public func maximumInscribedCircle(
-        precision: Double = 1.0,
+        precision: CLLocationDistance = 1.0,
         steps: Int = 64,
         gridSize: Double? = nil
     ) -> Polygon? {
@@ -83,11 +83,11 @@ extension MultiPolygon {
 
     /// Returns the largest maximum inscribed radius across all constituent polygons.
     ///
-    /// - Parameter precision: Precision in degrees for the pole-of-inaccessibility search (default `1.0`).
+    /// - Parameter precision: Precision in meters for the pole-of-inaccessibility search (default `1.0`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: The radius in meters, or `nil` if the multi-polygon is empty.
     public func maximumInscribedRadius(
-        precision: Double = 1.0,
+        precision: CLLocationDistance = 1.0,
         gridSize: Double? = nil
     ) -> CLLocationDistance? {
         polygons

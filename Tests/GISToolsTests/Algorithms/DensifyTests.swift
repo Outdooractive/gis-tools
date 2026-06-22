@@ -11,7 +11,7 @@ struct DensifyTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 0.0),
         ])!
-        let densified = ls.densified(maxSegmentLength: 5.0)
+        let densified = ls.densified(maxSegmentLength: 600_000.0)
         #expect(densified.coordinates.count == 2)
     }
 
@@ -22,8 +22,8 @@ struct DensifyTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
         ])!
-        let densified = ls.densified(maxSegmentLength: 3.0)
-        // 10/3 = 3.33 → ceil = 4 steps → 5 vertices
+        let densified = ls.densified(maxSegmentLength: 340_000.0)
+        // 10°≈1.1M meters / 340K ≈ 3.33 → ceil = 4 steps → 5 vertices
         #expect(densified.coordinates.count == 5)
     }
 
@@ -34,7 +34,7 @@ struct DensifyTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ])!
-        let densified = ls.densified(maxSegmentLength: 2.0)
+        let densified = ls.densified(maxSegmentLength: 220_000.0)
         #expect(densified.coordinates.first?.latitude == 0.0)
         #expect(densified.coordinates.first?.longitude == 0.0)
         #expect(densified.coordinates.last?.latitude == 10.0)
@@ -54,7 +54,7 @@ struct DensifyTests {
                 Coordinate3D(latitude: 0.0, longitude: 10.0),
             ],
         ])!
-        let densified = mls.densified(maxSegmentLength: 3.0)
+        let densified = mls.densified(maxSegmentLength: 340_000.0)
         #expect(densified.lineStrings.count == 2)
         for ls in densified.lineStrings {
             #expect(ls.coordinates.count > 2)
@@ -73,8 +73,8 @@ struct DensifyTests {
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
         ])!
-        let densified = poly.densified(maxSegmentLength: 3.0)
-        // Each edge is 10°, split by 3° → 4 segments → 5 vertices per edge
+        let densified = poly.densified(maxSegmentLength: 340_000.0)
+        // Each edge is 10°≈1.1M meters, split by 340K → 4 segments
         // But vertices are shared at corners, so total is 4 edges × 4 segments = 16 + 1 close
         let coords = densified.coordinates[0]
         #expect(coords.count > 5)
@@ -94,7 +94,7 @@ struct DensifyTests {
                 ],
             ])!,
         ])!
-        let densified = mp.densified(maxSegmentLength: 2.0)
+        let densified = mp.densified(maxSegmentLength: 220_000.0)
         #expect(densified.polygons.count == 1)
     }
 
@@ -133,8 +133,8 @@ struct DensifyTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
         ])!
-        let densified = ls.densified(maxSegmentLength: 5.0)
-        // 10/5 = 2 steps → 3 vertices at t=0, 0.5, 1.0
+        let densified = ls.densified(maxSegmentLength: 600_000.0)
+        // 10°≈1.1M meters / 600K ≈ 1.86 → ceil = 2 steps → 3 vertices
         #expect(densified.coordinates.count == 3)
         #expect(densified.coordinates[0].altitude == 100.0)
         #expect(densified.coordinates[1].altitude == 150.0)
@@ -148,8 +148,8 @@ struct DensifyTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 10.0, longitude: -170.0),
         ])!
-        let densified = ls.densified(maxSegmentLength: 10.0)
-        // Spans 340° of longitude, splits into segments of ≤10°
+        let densified = ls.densified(maxSegmentLength: 1_113_250.0)
+        // Spans 340° of longitude, splits into segments of ≤10° (≈1.1M m)
         #expect(densified.coordinates.count > 2)
         #expect(densified.coordinates.first?.latitude == 0.0)
         #expect(densified.coordinates.first?.longitude == 170.0)
@@ -169,7 +169,7 @@ struct DensifyTests {
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
             ],
         ])!
-        let densified = poly.densified(maxSegmentLength: 5.0)
+        let densified = poly.densified(maxSegmentLength: 600_000.0)
         let ring = densified.coordinates[0]
         #expect(ring.count > 5)
         #expect(ring.first?.latitude == 0.0)
@@ -201,7 +201,7 @@ struct DensifyTests {
                 Coordinate3D(latitude: 15.0, longitude: 175.0),
             ],
         ])!
-        let densified = mls.densified(maxSegmentLength: 10.0)
+        let densified = mls.densified(maxSegmentLength: 1_113_250.0)
         #expect(densified.lineStrings.count == 2)
         for ls in densified.lineStrings {
             #expect(ls.coordinates.count > 2)

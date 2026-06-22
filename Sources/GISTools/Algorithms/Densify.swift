@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-polygon-smooth
@@ -7,10 +10,10 @@ extension GeoJson {
     /// Returns a copy of the receiver with additional interpolated vertices
     /// added along line segments longer than the given interval.
     ///
-    /// - Parameter maxSegmentLength: The maximum allowed segment length in the
-    ///   coordinate system's units (degrees for EPSG:4326, meters for EPSG:3857/4978).
+    /// - Parameter maxSegmentLength: The maximum allowed segment length in meters.
+    ///   For EPSG:4326, internally converted to degrees. For EPSG:3857/noSRID, used as-is.
     /// - Returns: A densified copy of the receiver.
-    public func densified(maxSegmentLength: Double) -> Self {
+    public func densified(maxSegmentLength: CLLocationDistance) -> Self {
         guard let geoJson = Densify.densify(geoJson: self, maxSegmentLength: maxSegmentLength) else {
             return self
         }
@@ -23,7 +26,17 @@ extension GeoJson {
 
 private enum Densify {
 
-    static func densify(geoJson: GeoJson, maxSegmentLength: Double) -> GeoJson? {
+    /// Converts meter tolerance to CRS units based on coordinate projection.
+    static func crsTolerance(from meters: CLLocationDistance, projection: Projection) -> Double {
+        switch projection {
+        case .epsg4326, .epsg4978:
+            return meters / 111_325.0
+        case .epsg3857, .noSRID:
+            return meters
+        }
+    }
+
+    static func densify(geoJson: GeoJson, maxSegmentLength: CLLocationDistance) -> GeoJson? {
         switch geoJson.type {
         case .point, .multiPoint:
             return geoJson
@@ -84,10 +97,14 @@ private enum Densify {
 
     static func densifyCoordinates(
         _ coords: [Coordinate3D],
-        maxSegmentLength: Double
+        maxSegmentLength: CLLocationDistance
     ) -> [Coordinate3D] {
         guard coords.count >= 2 else { return coords }
         guard maxSegmentLength > 0 else { return coords }
+
+        // Convert meter tolerance to CRS units
+        let projection = coords.first?.projection ?? .noSRID
+        let segmentLength = crsTolerance(from: maxSegmentLength, projection: projection)
 
         var result: [Coordinate3D] = []
         for i in 0..<(coords.count - 1) {
@@ -97,11 +114,11 @@ private enum Densify {
             let dy = end.y - start.y
             let len = sqrt(dx * dx + dy * dy)
 
-            if len <= maxSegmentLength {
+            if len <= segmentLength {
                 result.append(start)
             }
             else {
-                let steps = Int(ceil(len / maxSegmentLength))
+                let steps = Int(ceil(len / segmentLength))
                 for j in 0..<steps {
                     let t = Double(j) / Double(steps)
                     let x = start.x + t * dx
