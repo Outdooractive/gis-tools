@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 @testable import GISTools
 import Testing
@@ -107,7 +110,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("LineRoundResult"))
     }
 
@@ -118,7 +121,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("LineFlatResult"))
     }
 
@@ -132,7 +135,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.15)
     }
 
@@ -146,7 +149,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
     }
 
@@ -164,7 +167,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.25)
     }
 
@@ -182,7 +185,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("MultiLineFlatResult"))
     }
 
@@ -319,6 +322,7 @@ struct BufferTests {
             name: fixture.name,
             result: try #require(geoJson.buffered(
                 by: params.distance,
+                endType: .round,
                 unionType: fixture.unionType,
                 steps: params.steps)))
     }
@@ -335,6 +339,7 @@ struct BufferTests {
                 name: "issue-#900")
                 .buffered(
                     by: params.distance,
+                    endType: .round,
                     steps: params.steps)))
     }
 
@@ -388,7 +393,7 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
         ]))
-        let result = try #require(lineString.buffered(by: 100_000.0))
+        let result = try #require(lineString.buffered(by: 100_000.0, endType: .round))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
         #expect(result.polygons.count >= 2)
     }
@@ -400,7 +405,7 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 178.0),
             Coordinate3D(latitude: 1.0, longitude: 179.0),
         ]))
-        let result = try #require(lineString.buffered(by: 50_000.0))
+        let result = try #require(lineString.buffered(by: 50_000.0, endType: .round))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
     }
 
@@ -651,6 +656,606 @@ struct BufferTests {
                 #expect(coord.latitude >= -90.0 && coord.latitude <= 90.0)
             }
         }
+    }
+
+    // MARK: - Square end type
+
+    // Validates that square end buffer produces a larger area than flat end.
+    @Test
+    func squareEndLargerThanButt() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+        ]))
+        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
+        let square = try #require(line.buffered(by: 5_000.0, endType: .square))
+        let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
+        let squareArea = square.polygons.reduce(0) { $0 + $1.area }
+        #expect(squareArea > buttArea)
+        #expect(square.isValid)
+    }
+
+    // Validates that square end buffer on a polygon falls back to polygon behavior.
+    @Test
+    func squareEndPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+            Coordinate3D(latitude: 48.1, longitude: 2.1),
+            Coordinate3D(latitude: 48.1, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+        ]]))
+        let result = try #require(poly.buffered(by: 1_000.0, endType: .square))
+        #expect(result.polygons.isNotEmpty)
+        #expect(result.polygons[0].isValid)
+    }
+
+    // Validates square end on a multi-line string.
+    @Test
+    func squareEndMultiLine() throws {
+        let mls = MultiLineString([
+            [
+                Coordinate3D(latitude: 48.0, longitude: 2.0),
+                Coordinate3D(latitude: 48.0, longitude: 2.1),
+            ],
+            [
+                Coordinate3D(latitude: 48.1, longitude: 2.0),
+                Coordinate3D(latitude: 48.1, longitude: 2.1),
+            ],
+        ])!
+        let result = try #require(mls.buffered(by: 2_000.0, endType: .square))
+        #expect(result.polygons.isNotEmpty)
+    }
+
+    // MARK: - Polygon end type
+
+    @Test
+    func polygonEndBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+        ]))
+        let polygon = try #require(line.buffered(by: 5_000.0, endType: .polygon))
+        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
+        let polyArea = polygon.polygons.reduce(0) { $0 + $1.area }
+        let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
+        // Polygon end should bridge the gap, making area visibly larger
+        #expect(polyArea > buttArea)
+        #expect(polygon.isValid)
+    }
+
+    // MARK: - Bevel join tests
+
+    @Test
+    func bevelJoinBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+        let round = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        // Bevel should have less area than round (no arc filling the corner)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoin3857() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+        ]))
+        let bevel = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .bevel))
+        let round = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinOnPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let bevel = try #require(poly.buffered(
+            by: 10_000.0, joinType: .bevel))
+        let round = try #require(poly.buffered(
+            by: 10_000.0, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinOnPolygon3857() throws {
+        let poly = Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])!
+        let bevel = try #require(poly.buffered(
+            by: 1.0, joinType: .bevel))
+        let round = try #require(poly.buffered(
+            by: 1.0, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinMultiLine() throws {
+        let mls = MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 1.0),
+            ],
+        ])!
+        let bevel = try #require(mls.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+        let round = try #require(mls.buffered(
+            by: 10_000.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    // MARK: - Miter join tests
+
+    @Test
+    func miterJoinBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .miter()))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
+    @Test
+    func miterJoinLimitClamp() throws {
+        // Sharp turn forces miter to exceed the limit; should fall back to bevel
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.2, longitude: 0.0),
+            Coordinate3D(latitude: 0.1, longitude: 0.05),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .miter(limit: 1.5)))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        // With a tight limit the miter falls back to bevel — areas should match
+        let ratio = miterArea / bevelArea
+        #expect(ratio > 0.95 && ratio < 1.05,
+                "miter=\(miterArea), bevel=\(bevelArea), ratio=\(ratio)")
+    }
+
+    @Test
+    func miterJoin3857() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .miter()))
+        let bevel = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
+    @Test
+    func miterJoinOnPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let miter = try #require(poly.buffered(
+            by: 10_000.0, joinType: .miter()))
+        let bevel = try #require(poly.buffered(
+            by: 10_000.0, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
+    // MARK: - Showcase (disabled)
+
+    // Dumps a GeoJSON FeatureCollection to the console showing all buffer
+    // join and end type combinations. Run locally to visually inspect the
+    // results at https://geojson.io.
+    @Test//(.disabled("Enable locally to dump GeoJSON to console"))
+    func bufferShowcase() async throws {
+        let distance: CLLocationDistance = 5_000.0
+        var allFeatures: [Feature] = []
+
+        func addFeature<T: GeoJsonGeometry>(_ geometry: T, _ props: [String: String]) {
+            var f = Feature(geometry)
+            for (k, v) in props { f.setProperty(v, for: k) }
+            allFeatures.append(f)
+        }
+
+        // ── Row 1: join types (miter / bevel / round) ──
+        let baseLine = try #require(LineString([
+            Coordinate3D(latitude: 49.0, longitude: 2.0),
+            Coordinate3D(latitude: 49.0, longitude: 2.5),
+            Coordinate3D(latitude: 49.3, longitude: 2.0),
+            Coordinate3D(latitude: 49.3, longitude: 2.5),
+        ]))
+        let joinTypes: [(label: String, join: BufferJoinType)] = [
+            ("miter", .miter()),
+            ("bevel", .bevel),
+            ("round_join", .round),
+        ]
+        var lonOffset = 0.0
+        for (joinLabel, joinType) in joinTypes {
+            let line = baseLine.translated(
+                distance: lonOffset * 111_325.0 * cos(49.0 * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(line.buffered(
+                by: distance, endType: .butt, joinType: joinType))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "joinType": joinLabel,
+                    "endType": "butt",
+                    "section": "join types",
+                ])
+            }
+            addFeature(line, [
+                "joinType": joinLabel,
+                "endType": "butt",
+                "section": "join types",
+                "kind": "input",
+            ])
+            lonOffset += 1.0
+        }
+
+        // ── Row 2: end types (butt / square / round / polygon / joined) ──
+        lonOffset = 0.0
+        let endTypes: [(label: String, end: BufferEndType)] = [
+            ("butt", .butt),
+            ("square_end", .square),
+            ("round_end", .round),
+            ("polygon", .polygon),
+        ]
+        for (endLabel, endType) in endTypes {
+            let line = baseLine.translated(
+                distance: -0.5 * 111_325.0,
+                direction: 0.0)
+            let line2 = line.translated(
+                distance: lonOffset * 111_325.0 * cos(48.5 * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(line2.buffered(
+                by: distance, endType: endType, joinType: .miter()))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "joinType": "miter",
+                    "endType": endLabel,
+                    "section": "end types",
+                ])
+            }
+            addFeature(line2, [
+                "joinType": "miter",
+                "endType": endLabel,
+                "section": "end types",
+                "kind": "input",
+            ])
+            lonOffset += 1.0
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // Bevel stress‑test section (separated spatially from above)
+        // ════════════════════════════════════════════════════════════════
+        let bevelLat = 47.5
+
+        /// Helper: buffer a line with bevel at the given longitude offset
+        /// and also emit the original input line.
+        func addBevelLine(
+            _ coords: [Coordinate3D],
+            offset: Double,
+            label: String
+        ) throws {
+            let line = try #require(LineString(coords))
+            let shifted = line.translated(
+                distance: offset * 111_325.0 * cos(bevelLat * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(shifted.buffered(
+                by: distance, endType: .butt, joinType: .bevel))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "bevelTest": label,
+                    "section": "bevel stress",
+                ])
+            }
+            addFeature(shifted, [
+                "bevelTest": label,
+                "section": "bevel stress",
+                "kind": "input",
+            ])
+        }
+
+        var bevelOffset = 0.0
+
+        // Sharp left turn (~30°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: -0.15),
+        ], offset: bevelOffset, label: "sharp left ~30°")
+        bevelOffset += 0.8
+
+        // Sharp right turn (~30°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: 0.15),
+        ], offset: bevelOffset, label: "sharp right ~30°")
+        bevelOffset += 0.8
+
+        // Obtuse turn (~135°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.8, longitude: -0.15),
+        ], offset: bevelOffset, label: "obtuse ~135°")
+        bevelOffset += 0.8
+
+        // Near‑collinear (~175°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.98, longitude: 0.02),
+        ], offset: bevelOffset, label: "near-collinear ~175°")
+        bevelOffset += 0.8
+
+        // V‑shape (left then right turn)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: bevelLat + 0.6, longitude: 0.0),
+        ], offset: bevelOffset, label: "V-shape L→R")
+        bevelOffset += 0.8
+
+        // Zigzag (right then left)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: -0.15),
+            Coordinate3D(latitude: bevelLat + 0.6, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.9, longitude: -0.15),
+        ], offset: bevelOffset, label: "zigzag R→L→R")
+        bevelOffset += 1.0
+
+        // Next row: 90°‑turn square (4 vertices)
+        bevelOffset = 0.0
+        let row2Lat = bevelLat - 0.8
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: row2Lat, longitude: 0.3),
+        ], offset: 0.0, label: "90°-turn path")
+        bevelOffset += 0.8
+
+        // Very short middle segment
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.01, longitude: 0.2),
+            Coordinate3D(latitude: row2Lat + 0.4, longitude: 0.0),
+        ], offset: bevelOffset, label: "short middle seg")
+        bevelOffset += 0.8
+
+        // Sharp spike (back‑and‑forth)
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.15, longitude: -0.15),
+            Coordinate3D(latitude: row2Lat + 0.5, longitude: 0.0),
+        ], offset: bevelOffset, label: "spike")
+        bevelOffset += 0.8
+
+        // Next row: polygons with bevel
+        let polyLat = row2Lat - 0.8
+
+        /// Helper: buffer a polygon with bevel, emitting both the buffer
+        /// and the original polygon boundary.
+        func addBevelPolygon(
+            _ ring: [Coordinate3D],
+            offset: Double,
+            label: String
+        ) {
+            guard let poly = Polygon([ring]) else { return }
+            let shifted = poly.translated(
+                distance: offset * 111_325.0 * cos(polyLat * .pi / 180.0),
+                direction: 90.0)
+            guard let mp = shifted.buffered(by: distance, joinType: .bevel) else { return }
+            for p in mp.polygons {
+                addFeature(p, [
+                    "bevelTest": label,
+                    "section": "bevel polys",
+                ])
+            }
+            addFeature(shifted, [
+                "bevelTest": label,
+                "section": "bevel polys",
+                "kind": "input",
+            ])
+        }
+
+        // Simple rectangle polygon
+        addBevelPolygon([
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+        ], offset: 0.0, label: "rect poly")
+
+        // Concave polygon (arrow‑head shape)
+        addBevelPolygon([
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.15, longitude: 0.15),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+        ], offset: 0.8, label: "concave poly")
+
+        // ════════════════════════════════════════════════════════════════
+        // Miter stress‑test section
+        // ════════════════════════════════════════════════════════════════
+        let miterLat = polyLat - 0.8
+
+        func addMiterLine(
+            _ coords: [Coordinate3D],
+            offset: Double,
+            limit: Double = 2.0,
+            label: String
+        ) throws {
+            let line = try #require(LineString(coords))
+            let shifted = line.translated(
+                distance: offset * 111_325.0 * cos(miterLat * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(shifted.buffered(
+                by: distance, endType: .butt, joinType: .miter(limit: limit)))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "miterTest": label,
+                    "section": "miter stress",
+                ])
+            }
+            addFeature(shifted, [
+                "miterTest": label,
+                "section": "miter stress",
+                "kind": "input",
+            ])
+        }
+
+        var miterOffset = 0.0
+
+        // 90° right turn — limit 2.0 shows clear miter
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, label: "90° miter limit 2.0")
+        miterOffset += 0.8
+
+        // Same turn, limit 1.2 falls back to bevel
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, limit: 1.2, label: "90° limit 1.2 → bevel")
+        miterOffset += 0.8
+
+        // Same turn, limit 5.0 allows long miter
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, limit: 5.0, label: "90° miter limit 5.0")
+        miterOffset += 0.8
+
+        // Sharp acute (~30°) — miter vs bevel side‑by‑side
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.1, longitude: -0.15),
+        ], offset: miterOffset, limit: 5.0, label: "sharp ~30° miter")
+        miterOffset += 0.8
+
+        // Next row: miter polygon
+        miterOffset = 0.0
+        let miterPolyLat = miterLat - 0.8
+        let miterPoly = try #require(Polygon([[
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.0),
+            Coordinate3D(latitude: miterPolyLat + 0.25, longitude: 0.0),
+            Coordinate3D(latitude: miterPolyLat + 0.25, longitude: 0.25),
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.25),
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.0),
+        ]]))
+        if let mp = miterPoly.buffered(by: distance, joinType: .miter()) {
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "miterTest": "rect poly miter",
+                    "section": "miter stress",
+                ])
+            }
+            addFeature(miterPoly, [
+                "miterTest": "rect poly miter",
+                "section": "miter stress",
+                "kind": "input",
+            ])
+        }
+
+        let fc = FeatureCollection(allFeatures)
+        fc.dump()
     }
 
 }
