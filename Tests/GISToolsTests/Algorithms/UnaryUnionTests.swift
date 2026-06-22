@@ -149,6 +149,101 @@ struct UnaryUnionTests {
 
     // MARK: - gridSize
 
+    // MARK: - coverageIsValid
+
+    @Test
+    func validCoverageAdjacentTiles() throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]]))
+        let mp = MultiPolygon([p1, p2])!
+        #expect(mp.coverageIsValid())
+    }
+
+    @Test
+    func invalidCoverageOverlapping() throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]]))
+        let mp = MultiPolygon([p1, p2])!
+        #expect(mp.coverageIsValid() == false)
+    }
+
+    @Test
+    func invalidCoverageGap() throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 30.0),
+            Coordinate3D(latitude: 10.0, longitude: 30.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+        ]]))
+        let mp = MultiPolygon([p1, p2])!
+        #expect(mp.coverageIsValid() == false)
+    }
+
+    @Test
+    func singlePolygonCoverageIsValid() throws {
+        let p = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let mp = MultiPolygon([p])!
+        #expect(mp.coverageIsValid())
+    }
+
+    @Test
+    func coverageIsValid3857() throws {
+        let p1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let p2 = Polygon(unchecked: [[
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 2_000.0, y: 0.0),
+            Coordinate3D(x: 2_000.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+        ]])
+        let mp = MultiPolygon(unchecked: [p1, p2])
+        #expect(mp.coverageIsValid())
+    }
+
     @Test
     func unaryUnionWithGridSize() throws {
         let p1 = try #require(Polygon([[
