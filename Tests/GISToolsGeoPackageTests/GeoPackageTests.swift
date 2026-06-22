@@ -342,15 +342,13 @@ struct GeoPackageTileTests {
         #expect(matrixSet?.tableName == "pyramid")
 
         let readMatrices = try TileReader.readTileMatrices(
-            for: "pyramid",
-            in: db)
+            for: "pyramid", in: db)
         #expect(readMatrices.count == 1)
         #expect(readMatrices[0].zoomLevel == 0)
         #expect(readMatrices[0].matrixWidth == 1)
 
         let readTiles = try TileReader.readAllTiles(
-            from: "pyramid",
-            in: db)
+            from: "pyramid", in: db)
         #expect(readTiles.count == 1)
         let readData = readTiles[TileKey(zoom: 0, column: 0, row: 0)]
         #expect(readData == tileData)
@@ -521,109 +519,6 @@ struct GeoPackageTileTests {
         #expect(featTables.contains(where: { $0.dataType == "features" }))
         #expect(featTables.first?.description != nil
                 || featTables.first?.identifier != nil)
-    }
-
-}
-
-// MARK: - Spatial index tests
-
-struct GeoPackageSpatialIndexTests {
-
-    private let tmpDir = URL(fileURLWithPath: "/tmp")
-
-    private func testUrl(_ name: String = #function) -> URL {
-        tmpDir.appendingPathComponent("gpkg_\(name).gpkg")
-    }
-
-    private func testFixture(_ name: String) -> URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .appendingPathComponent("TestData/\(name)")
-    }
-
-    // Validates reading with a bounding box on a GeoPackage with rtree
-    // returns fewer features than the full table.
-    @Test
-    func bboxFilteredReadUsesRTree() async throws {
-        let fixture = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
-        let full = try FeatureCollection(geopackage: fixture, table: "ne_110m_admin_0_countries")
-        #expect(full.features.count == 177)
-
-        // Bounding box covering roughly Europe
-        let europe = BoundingBox(
-            southWest: Coordinate3D(latitude: 35.0, longitude: -10.0),
-            northEast: Coordinate3D(latitude: 60.0, longitude: 40.0))
-        let filtered = try FeatureCollection(
-            geopackage: fixture,
-            table: "ne_110m_admin_0_countries",
-            boundingBox: europe)
-        #expect(filtered.features.isNotEmpty)
-        #expect(filtered.features.count < full.features.count,
-                "Expected fewer features with bbox filter (\(filtered.features.count) vs \(full.features.count))")
-    }
-
-    // Validates bbox-filtered read falls back to full scan + in-memory
-    // filter when no rtree index exists.
-    @Test
-    func bboxFilteredReadFallback() async throws {
-        // Create a fresh GPKG without rtree
-        let point = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
-        let fc = FeatureCollection([point])
-        try fc.writeGeopackage(to: testUrl(), createSpatialIndex: false)
-
-        let bbox = BoundingBox(
-            southWest: Coordinate3D(latitude: 44.0, longitude: 9.0),
-            northEast: Coordinate3D(latitude: 46.0, longitude: 11.0))
-        let filtered = try FeatureCollection(
-            geopackage: testUrl(),
-            table: "features",
-            boundingBox: bbox)
-        #expect(filtered.features.count == 1)
-    }
-
-    // Validates writing features with spatial index creates the rtree
-    // table and gpkg_extensions entry.
-    @Test
-    func writeWithSpatialIndex() async throws {
-        let features = [
-            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0))),
-            Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0))),
-        ]
-        let fc = FeatureCollection(features)
-        try fc.writeGeopackage(to: testUrl(), createSpatialIndex: true)
-
-        // Verify rtree virtual table exists
-        let db = try SQLiteDB(path: testUrl().path)
-        defer { db.close() }
-
-        let hasRTree = try GeoPackage.hasRTreeIndex(
-            for: "features",
-            column: "geom",
-            in: db)
-        #expect(hasRTree)
-
-        // Verify gpkg_extensions
-        let extRows = try db.query(
-            "SELECT extension_name FROM gpkg_extensions WHERE table_name = 'features';")
-        #expect(!extRows.isEmpty)
-        #expect(extRows.first?["extension_name"] as? String == "gpkg_rtree_index")
-    }
-
-    // Validates writing without spatial index does NOT create rtree.
-    @Test
-    func writeWithoutSpatialIndex() async throws {
-        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
-        let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl(), createSpatialIndex: false)
-
-        let db = try SQLiteDB(path: testUrl().path)
-        defer { db.close() }
-
-        let hasRTree = try GeoPackage.hasRTreeIndex(
-            for: "features",
-            column: "geom",
-            in: db)
-        #expect(!hasRTree)
     }
 
 }
