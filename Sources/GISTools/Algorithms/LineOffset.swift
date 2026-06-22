@@ -18,14 +18,24 @@ extension LineString {
     public func offset(
         by distance: CLLocationDistance
     ) -> LineString? {
-        guard let offsetDegrees = distance.lengthToDegrees(unit: .meters),
-              offsetDegrees.isNormal
-        else { return self }
+        let coordinatesAreInMeters = projection == .epsg3857
 
-        let projection = self.projection
-        let workingCoords = projection == .epsg4326
+        let offsetInCRS: Double
+        if coordinatesAreInMeters {
+            offsetInCRS = distance
+        }
+        else if let deg = distance.lengthToDegrees(unit: .meters), deg.isNormal {
+            offsetInCRS = deg
+        }
+        else {
+            return self
+        }
+
+        let workingCoords: [Coordinate3D] = coordinatesAreInMeters
             ? self.coordinates
-            : self.coordinates.map { $0.projected(to: .epsg4326) }
+            : projection == .epsg4326
+                ? self.coordinates
+                : self.coordinates.map { $0.projected(to: .epsg4326) }
 
         guard workingCoords.count >= 2 else { return nil }
 
@@ -36,13 +46,15 @@ extension LineString {
             let segment = LineOffsetHelper.offsetSegment(
                 workingCoords[i],
                 workingCoords[i + 1],
-                offsetDegrees)
+                offsetInCRS,
+                coordinatesAreInMeters: coordinatesAreInMeters)
             segments.append(segment)
 
             if i > 0 {
                 if let intersection = LineOffsetHelper.intersectSegments(
                     segments[i - 1],
-                    segment)
+                    segment,
+                    coordinatesAreInMeters: coordinatesAreInMeters)
                 {
                     segments[i - 1].end = intersection
                     segments[i].start = intersection
@@ -63,10 +75,9 @@ extension LineString {
 
         guard let result = LineString(finalCoords) else { return nil }
 
-        if projection == .epsg4326 {
+        if coordinatesAreInMeters || projection == .epsg4326 {
             return result
         }
-
         return result.projected(to: projection)
     }
 
@@ -94,16 +105,19 @@ private enum LineOffsetHelper {
     static func offsetSegment(
         _ p1: Coordinate3D,
         _ p2: Coordinate3D,
-        _ offset: Double
+        _ offset: Double,
+        coordinatesAreInMeters: Bool
     ) -> (start: Coordinate3D, end: Coordinate3D) {
         let dx = p2.x - p1.x
         let dy = p2.y - p1.y
         let len = sqrt(dx * dx + dy * dy)
 
+        let outputProj: Projection = coordinatesAreInMeters ? .epsg3857 : .epsg4326
+
         guard len > .ulpOfOne else {
             return (
-                Coordinate3D(x: p1.x + offset, y: p1.y, projection: .epsg4326),
-                Coordinate3D(x: p2.x + offset, y: p2.y, projection: .epsg4326)
+                Coordinate3D(x: p1.x + offset, y: p1.y, projection: outputProj),
+                Coordinate3D(x: p2.x + offset, y: p2.y, projection: outputProj)
             )
         }
 
@@ -111,8 +125,8 @@ private enum LineOffsetHelper {
         let ny = -offset * dx / len
 
         return (
-            Coordinate3D(x: p1.x + nx, y: p1.y + ny, projection: .epsg4326),
-            Coordinate3D(x: p2.x + nx, y: p2.y + ny, projection: .epsg4326)
+            Coordinate3D(x: p1.x + nx, y: p1.y + ny, projection: outputProj),
+            Coordinate3D(x: p2.x + nx, y: p2.y + ny, projection: outputProj)
         )
     }
 
@@ -120,7 +134,8 @@ private enum LineOffsetHelper {
     /// Returns `nil` if the lines are parallel (or collinear).
     static func intersectSegments(
         _ a: (start: Coordinate3D, end: Coordinate3D),
-        _ b: (start: Coordinate3D, end: Coordinate3D)
+        _ b: (start: Coordinate3D, end: Coordinate3D),
+        coordinatesAreInMeters: Bool
     ) -> Coordinate3D? {
         let ax = a.end.x - a.start.x
         let ay = a.end.y - a.start.y
@@ -141,7 +156,7 @@ private enum LineOffsetHelper {
         return Coordinate3D(
             x: a.start.x + t * ax,
             y: a.start.y + t * ay,
-            projection: .epsg4326)
+            projection: coordinatesAreInMeters ? .epsg3857 : .epsg4326)
     }
 
 }
