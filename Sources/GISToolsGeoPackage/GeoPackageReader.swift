@@ -8,14 +8,21 @@ extension FeatureCollection {
     /// - Parameters:
     ///   - url: The file URL of the GeoPackage database.
     ///   - table: The name of the feature table to read (default `"features"`).
+    ///   - boundingBox: An optional bounding box to filter features. When
+    ///     set and the GeoPackage has a spatial (rtree) index, only
+    ///     features within or intersecting the bounding box are returned.
     /// - Throws: A ``GeoPackageError`` if the file cannot be read or is invalid.
     public init(
         geopackage url: URL,
-        table: String = "features"
+        table: String = "features",
+        boundingBox: BoundingBox? = nil
     ) throws {
         let db = try SQLiteDB(path: url.path)
         try GeoPackage.validateMetadata(in: db)
-        let features = try GeoPackageReader.readFeatures(from: db, table: table)
+        let features = try GeoPackageReader.readFeatures(
+            from: db,
+            table: table,
+            boundingBox: boundingBox)
         self.init(features)
     }
 
@@ -27,7 +34,8 @@ private enum GeoPackageReader {
 
     static func readFeatures(
         from db: SQLiteDB,
-        table: String
+        table: String,
+        boundingBox: BoundingBox? = nil
     ) throws -> [Feature] {
         // Get geometry column metadata
         let escapedTable = GeoPackage.sanitizeStringLiteral(table)
@@ -54,8 +62,37 @@ private enum GeoPackageReader {
             throw GeoPackageError.invalidGeoPackage("Table '\(table)' has no columns")
         }
 
-        // Read all rows
-        let rows: [[String: Sendable]] = try db.query("SELECT * FROM \(quotedTable);")
+        // Resolve row IDs — use rtree index when available
+        let rowIds: [Int]?
+        if let bbox = boundingBox {
+            if try GeoPackage.hasRTreeIndex(for: table, column: geomColumnName, in: db) {
+                rowIds = try Self.readRowIdsFromRTree(
+                    db: db,
+                    table: table,
+                    column: geomColumnName,
+                    boundingBox: bbox)
+            }
+            else {
+                // No rtree — nil signals in-memory filter below
+                rowIds = nil
+            }
+        }
+        else {
+            rowIds = nil
+        }
+
+        // Build the SQL query
+        let rows: [[String: Sendable]]
+        if let rowIds,
+           !rowIds.isEmpty,
+           boundingBox != nil
+        {
+            let idList = rowIds.map(String.init).joined(separator: ", ")
+            rows = try db.query("SELECT * FROM \(quotedTable) WHERE rowid IN (\(idList));")
+        }
+        else {
+            rows = try db.query("SELECT * FROM \(quotedTable);")
+        }
 
         var features: [Feature] = []
         for row in rows {
@@ -63,16 +100,13 @@ private enum GeoPackageReader {
                 continue
             }
 
-            // Parse the geometry
             let header = try WKBHeader.parse(wkbData)
             let geoJson = try WKBCoder.decode(wkb: header.wkbData, sourceSrid: header.srid)
 
-            // Determine target projection from the table's SRS
             let projection = GeoPackage.projection(for: srsId)
             let projectedGeoJson = geoJson.projected(to: projection)
             let geometry = projectedGeoJson
 
-            // Build properties
             var properties: [String: Sendable] = [:]
             for col in columnNames where col != geomColumnName {
                 guard let value = row[col] else { continue }
@@ -88,7 +122,38 @@ private enum GeoPackageReader {
             features.append(feature)
         }
 
+        // If we couldn't use rtree but a bounding box was requested,
+        // filter in memory as a fallback
+        if let bbox = boundingBox,
+           rowIds == nil
+        {
+            features = features.filter { $0.intersects(bbox) }
+        }
+
         return features
+    }
+
+    /// Queries the rtree virtual table for rowids intersecting a bounding box.
+    private static func readRowIdsFromRTree(
+        db: SQLiteDB,
+        table: String,
+        column: String,
+        boundingBox: BoundingBox
+    ) throws -> [Int]? {
+        let rtreeName = GeoPackage.rTreeTableName(for: table, column: column)
+        let minX = boundingBox.southWest.longitude
+        let minY = boundingBox.southWest.latitude
+        let maxX = boundingBox.northEast.longitude
+        let maxY = boundingBox.northEast.latitude
+
+        let rows = try db.query("""
+            SELECT id FROM \(rtreeName)
+            WHERE minx <= \(maxX)
+              AND maxx >= \(minX)
+              AND miny <= \(maxY)
+              AND maxy >= \(minY);
+            """)
+        return rows.compactMap { $0["id"] as? Int }
     }
 
     private static func extractGeometryBlob(

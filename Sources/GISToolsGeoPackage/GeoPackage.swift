@@ -313,4 +313,48 @@ enum GeoPackage {
         return try GeoPackage.readContents(from: db)
     }
 
+    // MARK: - Spatial index helpers
+
+    /// Returns the SQL identifier of the rtree virtual table for a given
+    /// feature table and geometry column.
+    static func rTreeTableName(for table: String, column: String) -> String {
+        GeoPackage.sanitizeIdentifier("rtree_\(table)_\(column)")
+    }
+
+    /// Checks whether a spatial (rtree) index exists for the given feature
+    /// table and geometry column.
+    ///
+    /// Returns `true` if either `gpkg_extensions` registers a
+    /// `gpkg_rtree_index` extension for the table/column pair, or the
+    /// rtree virtual table exists in `sqlite_master`.
+    static func hasRTreeIndex(
+        for table: String,
+        column: String,
+        in db: SQLiteDB
+    ) throws -> Bool {
+        // Check gpkg_extensions
+        let escapedTable = GeoPackage.sanitizeStringLiteral(table)
+        let escapedCol = GeoPackage.sanitizeStringLiteral(column)
+        let extRows = try db.query("""
+            SELECT 1 FROM gpkg_extensions
+            WHERE table_name = \(escapedTable)
+              AND column_name = \(escapedCol)
+              AND extension_name = 'gpkg_rtree_index'
+            LIMIT 1;
+            """)
+        if !extRows.isEmpty {
+            return true
+        }
+
+        // Fallback: check if the rtree virtual table exists
+        let rtreeName = GeoPackage.sanitizeStringLiteral("rtree_\(table)_\(column)")
+        let tableRows = try db.query("""
+            SELECT 1 FROM sqlite_master
+            WHERE type = 'table'
+              AND name = \(rtreeName)
+            LIMIT 1;
+            """)
+        return tableRows.isEmpty == false
+    }
+
 }
