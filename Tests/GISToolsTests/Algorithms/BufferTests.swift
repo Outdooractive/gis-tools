@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 @testable import GISTools
 import Testing
@@ -107,7 +110,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("LineRoundResult"))
     }
 
@@ -118,7 +121,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("LineFlatResult"))
     }
 
@@ -132,7 +135,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.15)
     }
 
@@ -146,7 +149,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.65, longitude: 10.25),
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
-        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
     }
 
@@ -164,7 +167,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
         checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.25)
     }
 
@@ -182,7 +185,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 47.70, longitude: 10.2),
             ],
         ]))
-        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), lineEndStyle: .flat))
+        let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
         checkArea(result, try loadExpected("MultiLineFlatResult"))
     }
 
@@ -319,6 +322,7 @@ struct BufferTests {
             name: fixture.name,
             result: try #require(geoJson.buffered(
                 by: params.distance,
+                endType: .round,
                 unionType: fixture.unionType,
                 steps: params.steps)))
     }
@@ -335,6 +339,7 @@ struct BufferTests {
                 name: "issue-#900")
                 .buffered(
                     by: params.distance,
+                    endType: .round,
                     steps: params.steps)))
     }
 
@@ -388,7 +393,7 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
         ]))
-        let result = try #require(lineString.buffered(by: 100_000.0))
+        let result = try #require(lineString.buffered(by: 100_000.0, endType: .round))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
         #expect(result.polygons.count >= 2)
     }
@@ -400,7 +405,7 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 178.0),
             Coordinate3D(latitude: 1.0, longitude: 179.0),
         ]))
-        let result = try #require(lineString.buffered(by: 50_000.0))
+        let result = try #require(lineString.buffered(by: 50_000.0, endType: .round))
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
     }
 
@@ -651,6 +656,158 @@ struct BufferTests {
                 #expect(coord.latitude >= -90.0 && coord.latitude <= 90.0)
             }
         }
+    }
+
+    // MARK: - Square end type
+
+    // Validates that square end buffer produces a larger area than flat end.
+    @Test
+    func squareEndLargerThanButt() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+        ]))
+        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
+        let square = try #require(line.buffered(by: 5_000.0, endType: .square))
+        let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
+        let squareArea = square.polygons.reduce(0) { $0 + $1.area }
+        #expect(squareArea > buttArea)
+        #expect(square.isValid)
+    }
+
+    // Validates that square end buffer on a polygon falls back to polygon behavior.
+    @Test
+    func squareEndPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+            Coordinate3D(latitude: 48.1, longitude: 2.1),
+            Coordinate3D(latitude: 48.1, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+        ]]))
+        let result = try #require(poly.buffered(by: 1_000.0, endType: .square))
+        #expect(result.polygons.isNotEmpty)
+        #expect(result.polygons[0].isValid)
+    }
+
+    // Validates square end on a multi-line string.
+    @Test
+    func squareEndMultiLine() throws {
+        let mls = MultiLineString([
+            [
+                Coordinate3D(latitude: 48.0, longitude: 2.0),
+                Coordinate3D(latitude: 48.0, longitude: 2.1),
+            ],
+            [
+                Coordinate3D(latitude: 48.1, longitude: 2.0),
+                Coordinate3D(latitude: 48.1, longitude: 2.1),
+            ],
+        ])!
+        let result = try #require(mls.buffered(by: 2_000.0, endType: .square))
+        #expect(result.polygons.isNotEmpty)
+    }
+
+    // MARK: - Joined end type
+
+    @Test
+    func joinedEndBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+        ]))
+        let joined = try #require(line.buffered(by: 5_000.0, endType: .joined))
+        let square = try #require(line.buffered(by: 5_000.0, endType: .square))
+        let joinedArea = joined.polygons.reduce(0) { $0 + $1.area }
+        let squareArea = square.polygons.reduce(0) { $0 + $1.area }
+        #expect(joinedArea > squareArea)
+        #expect(joined.isValid)
+    }
+
+    // MARK: - Polygon end type
+
+    @Test
+    func polygonEndBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.1),
+        ]))
+        let polygon = try #require(line.buffered(by: 5_000.0, endType: .polygon))
+        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
+        let polyArea = polygon.polygons.reduce(0) { $0 + $1.area }
+        let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
+        // Polygon end should bridge the gap, making area visibly larger
+        #expect(polyArea > buttArea)
+        #expect(polygon.isValid)
+    }
+
+    // MARK: - Showcase (disabled)
+
+    // Dumps a GeoJSON FeatureCollection to the console showing all buffer
+    // join and end type combinations. Run locally to visually inspect the
+    // results at https://geojson.io.
+    @Test//(.disabled("Enable locally to dump GeoJSON to console"))
+    func bufferShowcase() async throws {
+        let baseLine = try #require(LineString([
+            Coordinate3D(latitude: 48.0, longitude: 2.0),
+            Coordinate3D(latitude: 48.0, longitude: 2.5),
+            Coordinate3D(latitude: 48.3, longitude: 2.0),
+            Coordinate3D(latitude: 48.3, longitude: 2.5),
+        ]))
+        let distance: CLLocationDistance = 5_000.0
+        var allFeatures: [Feature] = []
+
+        let joinTypes: [(label: String, join: BufferJoinType)] = [
+            ("miter", .miter()),
+            ("bevel", .bevel),
+            ("square_join", .square),
+            ("round_join", .round),
+        ]
+
+        let endTypes: [(label: String, end: BufferEndType)] = [
+            ("butt", .butt),
+            ("square_end", .square),
+            ("round_end", .round),
+            ("polygon", .polygon),
+            ("joined", .joined),
+        ]
+
+        // Row: different join types on the same line
+        var lonOffset = 0.0
+        for (joinLabel, joinType) in joinTypes {
+            let line = baseLine.translated(
+                distance: lonOffset * 111_325.0 * cos(48.0 * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(line.buffered(by: distance, endType: .butt, joinType: joinType))
+            for poly in mp.polygons {
+                var feature = Feature(poly)
+                feature.setProperty(joinLabel, for: "joinType")
+                feature.setProperty("butt", for: "endType")
+                allFeatures.append(feature)
+            }
+            lonOffset += 1.0
+        }
+
+        // Next row: different end types
+        lonOffset = 0.0
+        for (endLabel, endType) in endTypes {
+            let line = baseLine.translated(
+                distance: -0.5 * 111_325.0,
+                direction: 0.0)
+            let line2 = line.translated(
+                distance: lonOffset * 111_325.0 * cos(48.0 * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(line2.buffered(by: distance, endType: endType, joinType: .miter()))
+            for poly in mp.polygons {
+                var feature = Feature(poly)
+                feature.setProperty("miter", for: "joinType")
+                feature.setProperty(endLabel, for: "endType")
+                allFeatures.append(feature)
+            }
+            lonOffset += 1.0
+        }
+
+        let fc = FeatureCollection(allFeatures)
+        fc.dump()
     }
 
 }
