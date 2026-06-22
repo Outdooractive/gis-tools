@@ -7,12 +7,12 @@ import Foundation
 /// The fidelity of rounded joins is controlled by the ``steps`` parameter.
 public enum BufferJoinType: Sendable {
 
+    /// Cut off mitered corners with a straight line at the buffer distance.
+    case bevel
+
     /// Extend offset edges until they intersect, clamped by a miter limit.
     /// - Parameter limit: Maximum ratio of miter length to buffer distance (default `2.0`).
     case miter(limit: Double = 2.0)
-
-    /// Cut off mitered corners with a straight line at the buffer distance.
-    case bevel
 
     /// Round corners (fidelity controlled by ``steps``).
     case round
@@ -23,31 +23,28 @@ public enum BufferJoinType: Sendable {
 /// Fidelity of round ends is controlled by the ``steps`` parameter.
 public enum BufferEndType: Sendable {
 
-    /// Closed polygon: the path forms a closed ring (no end caps).
-    case polygon
-
-    /// Extend both ends of an open path and join them together.
-    case joined
-
     /// Flat end at the last vertex, perpendicular to the line direction.
     case butt
 
-    /// Extended by half the buffer width beyond the last vertex.
-    case square
+    /// Closed polygon: the path forms a closed ring (no end caps).
+    case polygon
 
     /// Rounded end cap (fidelity controlled by ``steps``).
     case round
+
+    /// Extended by half the buffer width beyond the last vertex.
+    case square
 
 }
 
 /// Options for how buffered parts are combined into the result.
 public enum BufferUnionType: Sendable {
 
-    /// Return each buffered part as a separate polygon (no union).
-    case none
-
     /// Combine the buffered parts of each input geometry.
     case individual
+
+    /// Return each buffered part as a separate polygon (no union).
+    case none
 
     /// Combine all overlapping buffered parts across all input geometries.
     case overlapping
@@ -130,17 +127,8 @@ extension GeoJson {
                 let coords = lineString.coordinates
                 let startBearing = coords[0].bearing(to: coords[1])
                 let endBearing = coords[coords.count - 2].bearing(to: coords[coords.count - 1])
-                Self.addSquareEndCap(at: coords[0], bearing: startBearing, distance: distance, forward: false, to: &polygons)
-                Self.addSquareEndCap(at: coords[coords.count - 1], bearing: endBearing, distance: distance, forward: true, to: &polygons)
-            }
-            else if case .joined = endType {
-                bufferCoordinates.removeFirst()
-                bufferCoordinates.removeLast()
-                let coords = lineString.coordinates
-                let startBearing = coords[0].bearing(to: coords[1])
-                let endBearing = coords[coords.count - 2].bearing(to: coords[coords.count - 1])
-                Self.addSquareEndCap(at: coords[0], bearing: startBearing, distance: distance * 2.0, forward: false, to: &polygons)
-                Self.addSquareEndCap(at: coords[coords.count - 1], bearing: endBearing, distance: distance * 2.0, forward: true, to: &polygons)
+                Self.addSquareEndCap(at: coords[0], bearing: startBearing, tipDistance: distance * 0.5, width: distance, forward: false, to: &polygons)
+                Self.addSquareEndCap(at: coords[coords.count - 1], bearing: endBearing, tipDistance: distance * 0.5, width: distance, forward: true, to: &polygons)
             }
             else if case .polygon = endType {
                 // Bridge the gap between end and start to form a closed ring.
@@ -403,26 +391,32 @@ extension GeoJson {
         return insetPolygon.projected(to: polygon.projection)
     }
 
-    /// Appends a square end‑cap rectangle extending `distance × 0.5` past the endpoint.
+    /// Appends a square end‑cap rectangle extending past the endpoint.
+    /// - Parameter bearing: Direction in which the tip is placed and from
+    ///   which the left / right normals are derived.
+    /// - Parameter tipDistance: How far past the endpoint the tip extends,
+    ///   in meters (e.g. `distance × 0.5` for ``BufferEndType/square``).
+    /// - Parameter width: The buffer / left‑right width, in meters.
     /// - Parameter forward: `true` for the end of the line, `false` for the start.
     private static func addSquareEndCap(
         at coordinate: Coordinate3D,
         bearing: CLLocationDegrees,
-        distance: Double,
+        tipDistance: Double,
+        width: Double,
         forward: Bool,
         to polygons: inout [Polygon]
     ) {
-        let tip = coordinate.destination(distance: distance * 0.5, bearing: bearing)
+        let tip = coordinate.destination(distance: tipDistance, bearing: bearing)
         let p = forward ? coordinate : tip
         let q = forward ? tip : coordinate
         let left = (bearing - 90.0).truncatingRemainder(dividingBy: 360.0)
         let right = (bearing + 90.0).truncatingRemainder(dividingBy: 360.0)
         if let rect = Polygon([[
-            q.destination(distance: distance, bearing: left),
-            p.destination(distance: distance, bearing: left),
-            p.destination(distance: distance, bearing: right),
-            q.destination(distance: distance, bearing: right),
-            q.destination(distance: distance, bearing: left),
+            q.destination(distance: width, bearing: left),
+            p.destination(distance: width, bearing: left),
+            p.destination(distance: width, bearing: right),
+            q.destination(distance: width, bearing: right),
+            q.destination(distance: width, bearing: left),
         ]]) {
             polygons.append(rect)
         }

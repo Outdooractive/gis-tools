@@ -707,22 +707,6 @@ struct BufferTests {
         #expect(result.polygons.isNotEmpty)
     }
 
-    // MARK: - Joined end type
-
-    @Test
-    func joinedEndBasic() throws {
-        let line = try #require(LineString([
-            Coordinate3D(latitude: 48.0, longitude: 2.0),
-            Coordinate3D(latitude: 48.0, longitude: 2.1),
-        ]))
-        let joined = try #require(line.buffered(by: 5_000.0, endType: .joined))
-        let square = try #require(line.buffered(by: 5_000.0, endType: .square))
-        let joinedArea = joined.polygons.reduce(0) { $0 + $1.area }
-        let squareArea = square.polygons.reduce(0) { $0 + $1.area }
-        #expect(joinedArea > squareArea)
-        #expect(joined.isValid)
-    }
-
     // MARK: - Polygon end type
 
     @Test
@@ -912,7 +896,6 @@ struct BufferTests {
             ("square_end", .square),
             ("round_end", .round),
             ("polygon", .polygon),
-            ("joined", .joined),
         ]
         for (endLabel, endType) in endTypes {
             let line = baseLine.translated(
