@@ -838,6 +838,93 @@ struct BufferTests {
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
 
+    // MARK: - Miter join tests
+
+    @Test
+    func miterJoinBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .miter()))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
+    @Test
+    func miterJoinLimitClamp() throws {
+        // Sharp turn forces miter to exceed the limit; should fall back to bevel
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.2, longitude: 0.0),
+            Coordinate3D(latitude: 0.1, longitude: 0.05),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .miter(limit: 1.5)))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        // With a tight limit the miter falls back to bevel — areas should match
+        let ratio = miterArea / bevelArea
+        #expect(ratio > 0.95 && ratio < 1.05,
+                "miter=\(miterArea), bevel=\(bevelArea), ratio=\(ratio)")
+    }
+
+    @Test
+    func miterJoin3857() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+        ]))
+        let miter = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .miter()))
+        let bevel = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
+    @Test
+    func miterJoinOnPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let miter = try #require(poly.buffered(
+            by: 10_000.0, joinType: .miter()))
+        let bevel = try #require(poly.buffered(
+            by: 10_000.0, joinType: .bevel))
+
+        let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(miter.isValid)
+        #expect(miterArea > bevelArea,
+                "miter=\(miterArea), bevel=\(bevelArea)")
+    }
+
     // MARK: - Showcase (disabled)
 
     // Dumps a GeoJSON FeatureCollection to the console showing all buffer
@@ -925,7 +1012,7 @@ struct BufferTests {
         // ════════════════════════════════════════════════════════════════
         // Bevel stress‑test section (separated spatially from above)
         // ════════════════════════════════════════════════════════════════
-        let bevelLat = 44.0
+        let bevelLat = 47.5
 
         /// Helper: buffer a line with bevel at the given longitude offset
         /// and also emit the original input line.
@@ -1078,6 +1165,94 @@ struct BufferTests {
             Coordinate3D(latitude: polyLat, longitude: 0.3),
             Coordinate3D(latitude: polyLat, longitude: 0.0),
         ], offset: 0.8, label: "concave poly")
+
+        // ════════════════════════════════════════════════════════════════
+        // Miter stress‑test section
+        // ════════════════════════════════════════════════════════════════
+        let miterLat = polyLat - 0.8
+
+        func addMiterLine(
+            _ coords: [Coordinate3D],
+            offset: Double,
+            limit: Double = 2.0,
+            label: String
+        ) throws {
+            let line = try #require(LineString(coords))
+            let shifted = line.translated(
+                distance: offset * 111_325.0 * cos(miterLat * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(shifted.buffered(
+                by: distance, endType: .butt, joinType: .miter(limit: limit)))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "miterTest": label,
+                    "section": "miter stress",
+                ])
+            }
+            addFeature(shifted, [
+                "miterTest": label,
+                "section": "miter stress",
+                "kind": "input",
+            ])
+        }
+
+        var miterOffset = 0.0
+
+        // 90° right turn — limit 2.0 shows clear miter
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, label: "90° miter limit 2.0")
+        miterOffset += 0.8
+
+        // Same turn, limit 1.2 falls back to bevel
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, limit: 1.2, label: "90° limit 1.2 → bevel")
+        miterOffset += 0.8
+
+        // Same turn, limit 5.0 allows long miter
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.3),
+        ], offset: miterOffset, limit: 5.0, label: "90° miter limit 5.0")
+        miterOffset += 0.8
+
+        // Sharp acute (~30°) — miter vs bevel side‑by‑side
+        try addMiterLine([
+            Coordinate3D(latitude: miterLat, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: miterLat + 0.1, longitude: -0.15),
+        ], offset: miterOffset, limit: 5.0, label: "sharp ~30° miter")
+        miterOffset += 0.8
+
+        // Next row: miter polygon
+        miterOffset = 0.0
+        let miterPolyLat = miterLat - 0.8
+        let miterPoly = try #require(Polygon([[
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.0),
+            Coordinate3D(latitude: miterPolyLat + 0.25, longitude: 0.0),
+            Coordinate3D(latitude: miterPolyLat + 0.25, longitude: 0.25),
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.25),
+            Coordinate3D(latitude: miterPolyLat, longitude: 0.0),
+        ]]))
+        if let mp = miterPoly.buffered(by: distance, joinType: .miter()) {
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "miterTest": "rect poly miter",
+                    "section": "miter stress",
+                ])
+            }
+            addFeature(miterPoly, [
+                "miterTest": "rect poly miter",
+                "section": "miter stress",
+                "kind": "input",
+            ])
+        }
 
         let fc = FeatureCollection(allFeatures)
         fc.dump()

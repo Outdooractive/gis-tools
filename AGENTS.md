@@ -149,6 +149,27 @@ If a method has ≤3 parameters and no return value, or ≤2 parameters and a re
   ) -> Bool {
   ```
 
+When a function **call** is split across multiple lines, place each argument on its own line:
+
+  ```swift
+  // One line (fits ≤80 chars)
+  let pt = Coordinate3D(x: a.x + d * nx, y: a.y + d * ny, projection: .epsg3857)
+
+  // Multi-line → one argument per line
+  let pt = Coordinate3D(
+      x: a.x + d * nx,
+      y: a.y + d * ny,
+      projection: .epsg3857)
+
+  Self.addMiterJoin(
+      at: prev,
+      curr,
+      next,
+      distance: distance,
+      limit: limit,
+      to: &polygons)
+  ```
+
 ## General instructions
 
 - DO NOT take any shortcuts while implementing an algorithm. Correctness is the highest priority

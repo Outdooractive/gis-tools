@@ -142,17 +142,20 @@ extension GeoJson {
 
             let allCoords = lineString.coordinates
             for coordinate in bufferCoordinates {
-                if case .bevel = joinType {
+                switch joinType {
+                case .bevel, .miter:
                     if case .round = endType {
                         if coordinate != allCoords.first, coordinate != allCoords.last { continue }
                     }
                     else { continue }
+                default: break
                 }
                 guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
                 polygons.append(circle)
             }
 
-            if case .bevel = joinType {
+            switch joinType {
+            case .bevel:
                 if endType == .polygon {
                     let n = allCoords.count
                     for i in 0 ..< n {
@@ -167,6 +170,25 @@ extension GeoJson {
                         Self.addBevelJoin(at: allCoords[i - 1], allCoords[i], allCoords[i + 1], distance: distance, to: &polygons)
                     }
                 }
+
+            case .miter(let limit):
+                if endType == .polygon {
+                    let n = allCoords.count
+                    for i in 0 ..< n {
+                        let prev = allCoords[(i + n - 1) % n]
+                        let curr = allCoords[i]
+                        let next = allCoords[(i + 1) % n]
+                        Self.addMiterJoin(at: prev, curr, next, distance: distance, limit: limit, to: &polygons)
+                    }
+                }
+                else {
+                    for i in 1 ..< allCoords.count - 1 {
+                        Self.addMiterJoin(at: allCoords[i - 1], allCoords[i], allCoords[i + 1], distance: distance, limit: limit, to: &polygons)
+                    }
+                }
+
+            default:
+                break
             }
             result = unionType.isIn([.individual, .overlapping])
                 ? Union.unionPolygons(polygons)
@@ -187,7 +209,8 @@ extension GeoJson {
             var polygons = polygon.lineSegments.flatMap { segment in
                 segment.buffered(by: distance, endType: .butt, unionType: .none)?.polygons ?? []
             }
-            if case .bevel = joinType {
+            switch joinType {
+            case .bevel:
                 if let outerRing = polygon.outerRing {
                     Self.addRingBevels(for: outerRing.coordinates, distance: distance, to: &polygons)
                 }
@@ -196,13 +219,24 @@ extension GeoJson {
                         Self.addRingBevels(for: ring.coordinates, distance: distance, to: &polygons)
                     }
                 }
-            }
-            else {
+
+            case .miter(let limit):
+                if let outerRing = polygon.outerRing {
+                    Self.addRingMiters(for: outerRing.coordinates, distance: distance, limit: limit, to: &polygons)
+                }
+                if let innerRings = polygon.innerRings {
+                    for ring in innerRings {
+                        Self.addRingMiters(for: ring.coordinates, distance: distance, limit: limit, to: &polygons)
+                    }
+                }
+
+            default:
                 for coordinate in bufferCoordinates {
                     guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
                     polygons.append(circle)
                 }
             }
+
             polygons.append(polygon)
             result = unionType.isIn([.individual, .overlapping])
                 ? Union.unionPolygons(polygons)
@@ -436,6 +470,20 @@ extension GeoJson {
         polygons.append(bevel)
     }
 
+    /// Adds a miter polygon at an interior vertex of a LineString,
+    /// falling back to a bevel when the miter exceeds the limit.
+    private static func addMiterJoin(
+        at prev: Coordinate3D,
+        _ curr: Coordinate3D,
+        _ next: Coordinate3D,
+        distance: Double,
+        limit: Double,
+        to polygons: inout [Polygon]
+    ) {
+        guard let miter = Self.miterFill(from: prev, over: curr, to: next, distance: distance, limit: limit) else { return }
+        polygons.append(miter)
+    }
+
     /// Adds bevel triangles for every vertex in a ring (polygon exterior or hole).
     private static func addRingBevels(
         for coordinates: [Coordinate3D],
@@ -449,6 +497,23 @@ extension GeoJson {
             let curr = coordinates[i]
             let next = coordinates[(i + 1) % n]
             Self.addBevelJoin(at: prev, curr, next, distance: distance, to: &polygons)
+        }
+    }
+
+    /// Adds miter polygons for every vertex in a ring (polygon exterior or hole).
+    private static func addRingMiters(
+        for coordinates: [Coordinate3D],
+        distance: Double,
+        limit: Double,
+        to polygons: inout [Polygon]
+    ) {
+        let n = coordinates.count - 1
+        guard n >= 3 else { return }
+        for i in 0 ..< n {
+            let prev = coordinates[(i + n - 1) % n]
+            let curr = coordinates[i]
+            let next = coordinates[(i + 1) % n]
+            Self.addMiterJoin(at: prev, curr, next, distance: distance, limit: limit, to: &polygons)
         }
     }
 
@@ -544,16 +609,20 @@ extension GeoJson {
             if cross > 0 {
                 // Left turn: gap on right side, overlap on left
                 let p1 = Coordinate3D(
-                    x: curr.x + distance * e1y, y: curr.y - distance * e1x,
+                    x: curr.x + distance * e1y,
+                    y: curr.y - distance * e1x,
                     projection: proj)
                 let p2 = Coordinate3D(
-                    x: curr.x + distance * e2y, y: curr.y - distance * e2x,
+                    x: curr.x + distance * e2y,
+                    y: curr.y - distance * e2x,
                     projection: proj)
                 let opp1 = Coordinate3D(
-                    x: curr.x - distance * e1y, y: curr.y + distance * e1x,
+                    x: curr.x - distance * e1y,
+                    y: curr.y + distance * e1x,
                     projection: proj)
                 let opp2 = Coordinate3D(
-                    x: curr.x - distance * e2y, y: curr.y + distance * e2x,
+                    x: curr.x - distance * e2y,
+                    y: curr.y + distance * e2x,
                     projection: proj)
                 let inner = Coordinate3D(
                     x: (opp1.x + opp2.x) / 2.0,
@@ -564,16 +633,20 @@ extension GeoJson {
             else {
                 // Right turn: gap on left side, overlap on right
                 let p1 = Coordinate3D(
-                    x: curr.x - distance * e1y, y: curr.y + distance * e1x,
+                    x: curr.x - distance * e1y,
+                    y: curr.y + distance * e1x,
                     projection: proj)
                 let p2 = Coordinate3D(
-                    x: curr.x - distance * e2y, y: curr.y + distance * e2x,
+                    x: curr.x - distance * e2y,
+                    y: curr.y + distance * e2x,
                     projection: proj)
                 let opp1 = Coordinate3D(
-                    x: curr.x + distance * e1y, y: curr.y - distance * e1x,
+                    x: curr.x + distance * e1y,
+                    y: curr.y - distance * e1x,
                     projection: proj)
                 let opp2 = Coordinate3D(
-                    x: curr.x + distance * e2y, y: curr.y - distance * e2x,
+                    x: curr.x + distance * e2y,
+                    y: curr.y - distance * e2x,
                     projection: proj)
                 let inner = Coordinate3D(
                     x: (opp1.x + opp2.x) / 2.0,
@@ -582,6 +655,129 @@ extension GeoJson {
                 return Polygon([[p1, inner, p2, p1]])
             }
         }
+    }
+
+    /// Intersection point of two lines (in CRS units).
+    /// Lines are defined by point pairs (a1, a2) and (b1, b2).
+    private static func lineIntersect(
+        _ a1: Coordinate3D,
+        _ a2: Coordinate3D,
+        _ b1: Coordinate3D,
+        _ b2: Coordinate3D
+    ) -> Coordinate3D? {
+        let x1 = a1.x, y1 = a1.y, x2 = a2.x, y2 = a2.y
+        let x3 = b1.x, y3 = b1.y, x4 = b2.x, y4 = b2.y
+        let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
+        let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
+        return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1))
+    }
+
+    /// Creates a miter polygon at a vertex, extending the offset edges
+    /// to their intersection point (the miter point).  Falls back to a
+    /// bevel if the miter length exceeds `limit × distance`.
+    private static func miterFill(
+        from prev: Coordinate3D,
+        over curr: Coordinate3D,
+        to next: Coordinate3D,
+        distance: Double,
+        limit: Double
+    ) -> Polygon? {
+        let proj = curr.projection
+
+        // Project to 3857 for Euclidean offset‑edge intersection
+        let p = prev.projected(to: .epsg3857)
+        let c = curr.projected(to: .epsg3857)
+        let n = next.projected(to: .epsg3857)
+
+        let dx1 = c.x - p.x; let dy1 = c.y - p.y
+        let dx2 = n.x - c.x; let dy2 = n.y - c.y
+        let len1 = sqrt(dx1 * dx1 + dy1 * dy1)
+        let len2 = sqrt(dx2 * dx2 + dy2 * dy2)
+        guard len1 > GISTool.intersectionEpsilon,
+              len2 > GISTool.intersectionEpsilon else { return nil }
+
+        let e1x = dx1 / len1; let e1y = dy1 / len1
+        let e2x = dx2 / len2; let e2y = dy2 / len2
+
+        let cross = dx1 * dy2 - dy1 * dx2
+        guard abs(cross) > GISTool.determinantEpsilon * len1 * len2
+        else { return nil }
+
+        let d = distance
+
+        // Outer side normals and opposite (inner) normals
+        let onx1: Double, ony1: Double, onx2: Double, ony2: Double
+        let inx1: Double, iny1: Double, inx2: Double, iny2: Double
+
+        if cross > 0 {
+            onx1 = e1y;  ony1 = -e1x
+            onx2 = e2y;  ony2 = -e2x
+            inx1 = -e1y; iny1 = e1x
+            inx2 = -e2y; iny2 = e2x
+        }
+        else {
+            onx1 = -e1y; ony1 = e1x
+            onx2 = -e2y; ony2 = e2x
+            inx1 = e1y;  iny1 = -e1x
+            inx2 = e2y;  iny2 = -e2x
+        }
+
+        // Miter point = intersection of the two offset‑edge lines
+        let oa1 = Coordinate3D(
+            x: p.x + d * onx1,
+            y: p.y + d * ony1,
+            projection: .epsg3857)
+        let oa2 = Coordinate3D(
+            x: c.x + d * onx1,
+            y: c.y + d * ony1,
+            projection: .epsg3857)
+        let ob1 = Coordinate3D(
+            x: c.x + d * onx2,
+            y: c.y + d * ony2,
+            projection: .epsg3857)
+        let ob2 = Coordinate3D(
+            x: n.x + d * onx2,
+            y: n.y + d * ony2,
+            projection: .epsg3857)
+
+        guard let miter3857 = Self.lineIntersect(oa1, oa2, ob1, ob2)
+        else {
+            return Self.bevelTriangle(
+                from: prev,
+                over: curr,
+                to: next,
+                distance: distance)
+        }
+
+        let mdx = miter3857.x - c.x
+        let mdy = miter3857.y - c.y
+        let miterLen = sqrt(mdx * mdx + mdy * mdy)
+
+        if miterLen > limit * d {
+            return Self.bevelTriangle(
+                from: prev,
+                over: curr,
+                to: next,
+                distance: distance)
+        }
+
+        let miterPt = miter3857.projected(to: proj)
+
+        let p1 = Coordinate3D(
+            x: c.x + d * onx1,
+            y: c.y + d * ony1,
+            projection: .epsg3857).projected(to: proj)
+        let p2 = Coordinate3D(
+            x: c.x + d * onx2,
+            y: c.y + d * ony2,
+            projection: .epsg3857).projected(to: proj)
+        let inner = Coordinate3D(
+            x: (c.x + d * inx1 + c.x + d * inx2) / 2.0,
+            y: (c.y + d * iny1 + c.y + d * iny2) / 2.0,
+            projection: .epsg3857).projected(to: proj)
+
+        return Polygon([[p1, miterPt, p2, inner, p1]])
     }
 
     private static func cutAtAntimeridianIfNeeded(_ result: MultiPolygon?) -> MultiPolygon? {
