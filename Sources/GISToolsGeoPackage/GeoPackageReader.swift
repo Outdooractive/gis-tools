@@ -81,17 +81,18 @@ private enum GeoPackageReader {
             rowIds = nil
         }
 
-        // Build the SQL query
+        // Build the SQL query (include rowid for foreign key references)
+        let selectSQL = "SELECT rowid, *"
         let rows: [[String: Sendable]]
         if let rowIds,
            !rowIds.isEmpty,
            boundingBox != nil
         {
             let idList = rowIds.map(String.init).joined(separator: ", ")
-            rows = try db.query("SELECT * FROM \(quotedTable) WHERE rowid IN (\(idList));")
+            rows = try db.query("\(selectSQL) FROM \(quotedTable) WHERE rowid IN (\(idList));")
         }
         else {
-            rows = try db.query("SELECT * FROM \(quotedTable);")
+            rows = try db.query("\(selectSQL) FROM \(quotedTable);")
         }
 
         var features: [Feature] = []
@@ -107,6 +108,9 @@ private enum GeoPackageReader {
             let projectedGeoJson = geoJson.projected(to: projection)
             let geometry = projectedGeoJson
 
+            // Extract row ID for feature
+            let gpkgRowId = row["rowid"] as? Int ?? row["id"] as? Int
+
             var properties: [String: Sendable] = [:]
             for col in columnNames where col != geomColumnName {
                 guard let value = row[col] else { continue }
@@ -118,7 +122,10 @@ private enum GeoPackageReader {
                 }
             }
 
-            let feature = Feature(geometry, properties: properties)
+            var feature = Feature(geometry, properties: properties)
+            if let rowId = gpkgRowId {
+                feature.id = .int(rowId)
+            }
             features.append(feature)
         }
 

@@ -138,6 +138,40 @@ enum GeoPackage {
             CONSTRAINT pk_ttm PRIMARY KEY (table_name, zoom_level),
             CONSTRAINT fk_ttm_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
         );
+
+        CREATE TABLE IF NOT EXISTS gpkg_data_columns (
+            table_name TEXT NOT NULL,
+            column_name TEXT NOT NULL,
+            name TEXT,
+            title TEXT,
+            description TEXT,
+            mime_type TEXT,
+            constraint_name TEXT,
+            CONSTRAINT pk_data_columns PRIMARY KEY (table_name, column_name),
+            CONSTRAINT fk_dc_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+        );
+
+        CREATE TABLE IF NOT EXISTS gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min_value DOUBLE,
+            min_value_inclusive BOOLEAN,
+            max_value DOUBLE,
+            max_value_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT pk_data_col_constr PRIMARY KEY (constraint_name, constraint_type, value)
+        );
+
+        CREATE TABLE IF NOT EXISTS gpkgext_relations (
+            id TEXT PRIMARY KEY,
+            table_name TEXT NOT NULL,
+            column_name TEXT NOT NULL,
+            related_table_name TEXT NOT NULL,
+            related_column_name TEXT NOT NULL,
+            relation_name TEXT NOT NULL,
+            mapping_table_name TEXT
+        );
         """
 
     /// SQL to drop metadata tables (for cleanup).
@@ -148,6 +182,9 @@ enum GeoPackage {
         DROP TABLE IF EXISTS gpkg_extensions;
         DROP TABLE IF EXISTS gpkg_tile_matrix;
         DROP TABLE IF EXISTS gpkg_tile_matrix_set;
+        DROP TABLE IF EXISTS gpkg_data_columns;
+        DROP TABLE IF EXISTS gpkg_data_column_constraints;
+        DROP TABLE IF EXISTS gpkgext_relations;
         """
 
     // MARK: - Schema setup
