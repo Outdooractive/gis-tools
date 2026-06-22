@@ -14,9 +14,6 @@ public enum BufferJoinType: Sendable {
     /// Cut off mitered corners with a straight line at the buffer distance.
     case bevel
 
-    /// Extend corners by the buffer distance.
-    case square
-
     /// Round corners (fidelity controlled by ``steps``).
     case round
 

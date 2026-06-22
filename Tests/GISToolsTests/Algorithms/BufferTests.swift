@@ -745,7 +745,7 @@ struct BufferTests {
     // Dumps a GeoJSON FeatureCollection to the console showing all buffer
     // join and end type combinations. Run locally to visually inspect the
     // results at https://geojson.io.
-    @Test//(.disabled("Enable locally to dump GeoJSON to console"))
+    @Test(.disabled("Enable locally to dump GeoJSON to console"))
     func bufferShowcase() async throws {
         let baseLine = try #require(LineString([
             Coordinate3D(latitude: 48.0, longitude: 2.0),
@@ -759,7 +759,6 @@ struct BufferTests {
         let joinTypes: [(label: String, join: BufferJoinType)] = [
             ("miter", .miter()),
             ("bevel", .bevel),
-            ("square_join", .square),
             ("round_join", .round),
         ]
 
