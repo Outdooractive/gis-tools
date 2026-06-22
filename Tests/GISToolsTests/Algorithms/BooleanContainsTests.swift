@@ -301,6 +301,23 @@ struct BooleanContainsTests {
         #expect(featureCollection.contains(point) == false)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func polygonContainsPoint3857() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let inside = Point(Coordinate3D(x: 500.0, y: 500.0))
+        let outside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
+        #expect(polygon.contains(inside))
+        #expect(polygon.contains(outside) == false)
+    }
+
     // MARK: - Bounding box fast-fail
 
     @Test

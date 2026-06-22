@@ -35,8 +35,10 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 This package makes some assumptions about what is equal, i.e. coordinates that are inside of `1e-10` degrees are regarded as equal (that's μm precision and is probably overkill). See [GISTool.equalityDelta][5].
 
 Per [RFC 7946 §3.1.9](https://tools.ietf.org/html/rfc7946#section-3.1.9), geometries crossing the anti-meridian (±180°) should be cut into parts.
-Contrary to the standard—which calls for returning `MultiLineString` / `MultiPolygon`—the `cutAtAntimeridian()` functions return a `FeatureCollection`
+The `cutAtAntimeridian()` functions return a `FeatureCollection`
 with one `Feature` per cut geometry part. This makes iterating the results uniform regardless of the input type.
+Works natively for EPSG:4326 and EPSG:3857 (splits at ±180° and ±originShift respectively).
+For EPSG:4978 and noSRID, returns the original geometry unchanged (the antimeridian concept does not apply).
 
 ## Requirements
 

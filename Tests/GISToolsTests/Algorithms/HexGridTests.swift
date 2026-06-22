@@ -83,6 +83,17 @@ struct HexGridTests {
         #expect(gridMiles.features.count < gridKm.features.count)
         #expect(gridKm.features.count > 0)
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func hexGrid3857() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+        let grid = bbox.hexGrid(cellSide: 500_000.0)
+        #expect(grid.features.count > 0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

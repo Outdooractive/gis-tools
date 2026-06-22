@@ -239,6 +239,17 @@ struct TileCoverTests {
         #expect(multiPoint == nil)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func tileCover3857() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+        let tiles = bbox.tileCover(atZoom: 2)
+        #expect(!tiles.isEmpty)
+    }
+
     // MARK: - Anti-meridian
 
     @Test

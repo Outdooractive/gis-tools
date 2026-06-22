@@ -54,6 +54,21 @@ struct TransformScaleTests {
         #expect(scaled4 == result4)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func transformScale3857() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let result = polygon.scaled(factor: 2.0)
+        #expect(result.allCoordinates.count == 5)
+    }
+
     // MARK: - Antimeridian
 
     @Test

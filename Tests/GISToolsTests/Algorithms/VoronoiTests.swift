@@ -165,6 +165,29 @@ struct VoronoiTests {
         }
     }
 
+    // Validates that points in EPSG:3857 produce a valid Voronoi diagram.
+    @Test
+    func voronoi3857() {
+        let points = [
+            Feature(Point(Coordinate3D(x: 500.0, y: 500.0))),
+            Feature(Point(Coordinate3D(x: 1500.0, y: 500.0))),
+            Feature(Point(Coordinate3D(x: 1000.0, y: 1500.0))),
+        ]
+        let fc = FeatureCollection(points)
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 2000.0, y: 2000.0))
+
+        let result = fc.voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == 3)
+
+        for feature in result.features {
+            let poly = feature.geometry as? Polygon
+            #expect(poly != nil)
+            #expect(poly?.coordinates[0].count ?? 0 >= 4)
+        }
+    }
+
     // Validates a Voronoi diagram with points near the antimeridian and a
     // non-crossing bounding box covering longitudes 150 to 200 (normalized).
     @Test

@@ -310,6 +310,30 @@ struct UnionTests {
         #expect(withParam.polygons.count == manual.polygons.count)
     }
 
+    // MARK: - EPSG:3857
+
+    // Validates union of two overlapping polygons in EPSG:3857.
+    @Test
+    func union3857() async throws {
+        let p1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let p2 = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 1500.0, y: 500.0),
+            Coordinate3D(x: 1500.0, y: 1500.0),
+            Coordinate3D(x: 500.0, y: 1500.0),
+            Coordinate3D(x: 500.0, y: 500.0),
+        ]])
+
+        let result = try #require(p1.union(with: p2))
+        #expect(result.polygons.count >= 1)
+    }
+
     // MARK: - Antimeridian
 
     @Test

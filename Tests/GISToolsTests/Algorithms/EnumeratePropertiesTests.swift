@@ -42,4 +42,20 @@ struct EnumeratePropertiesTests {
         #expect(summary["extra"]?.contains(true) == true)
     }
 
+    @Test func enumerateProperties3857() async throws {
+        let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0))
+        let feature1 = Feature(point, properties: ["name": "Alpha", "value": 1])
+        let feature2 = Feature(point, properties: ["name": "Beta", "value": 2])
+        let collection = FeatureCollection([feature1, feature2])
+
+        var visited: [(Int, [String: Sendable])] = []
+        collection.enumerateProperties { index, properties in
+            visited.append((index, properties))
+        }
+
+        #expect(visited.count == 2)
+        #expect(visited[0].1["name"] as? String == "Alpha")
+        #expect(visited[1].1["name"] as? String == "Beta")
+    }
+
 }

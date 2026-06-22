@@ -316,4 +316,318 @@ struct AntimeridianCuttingTests {
         #expect(fc.features[0].geometry is Point)
     }
 
+    // MARK: - EPSG:3857
+
+    // Tests that crossesAntimeridian detects crossing in EPSG:3857 via projection to 4326.
+    @Test
+    func lineStringCrossesAntimeridian3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 45.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 45.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        #expect(ls.crossesAntimeridian == true)
+    }
+
+    // Tests that cutAtAntimeridian on an EPSG:3857 LineString produces correct results.
+    @Test
+    func lineStringCut3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 45.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 45.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        let fc = ls.cutAtAntimeridian()
+        #expect(fc.features.count == 2)
+        for feature in fc.features {
+            #expect(feature.geometry is LineString)
+        }
+    }
+
+    // Tests that crossesAntimeridian detects crossing in an EPSG:3857 polygon.
+    @Test
+    func polygonCrossesAntimeridian3857() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]
+        let polygon = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg3857) }])
+        #expect(polygon.crossesAntimeridian == true)
+    }
+
+    // Tests that cutAtAntimeridian on an EPSG:3857 polygon produces correct results.
+    @Test
+    func polygonCut3857() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]
+        let polygon = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg3857) }])
+        let fc = polygon.cutAtAntimeridian()
+        #expect(fc.features.count >= 2)
+        for feature in fc.features {
+            #expect(feature.geometry is Polygon)
+        }
+    }
+
+    // MARK: - EPSG:4978 and noSRID (always false/self)
+
+    // Tests that crossesAntimeridian returns false for EPSG:4978.
+    @Test
+    func crossesAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 45.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 45.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        #expect(ls.crossesAntimeridian == false)
+    }
+
+    // Tests that cutAtAntimeridian returns the original for EPSG:4978.
+    @Test
+    func cutAtAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 45.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 45.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        let fc = ls.cutAtAntimeridian()
+        #expect(fc.features.count == 1)
+        #expect(fc.features[0].geometry is LineString)
+    }
+
+    // Tests that crossesAntimeridian returns false for noSRID.
+    @Test
+    func crossesAntimeridianNoSRID() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+        ])
+        #expect(ls.crossesAntimeridian == false)
+    }
+
+    // Tests that cutAtAntimeridian returns the original for noSRID.
+    @Test
+    func cutAtAntimeridianNoSRID() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+        ])
+        let fc = ls.cutAtAntimeridian()
+        #expect(fc.features.count == 1)
+        #expect(fc.features[0].geometry is LineString)
+    }
+
+    // MARK: - crossesAntimeridian for all types
+
+    // Tests crossesAntimeridian on MultiLineString across projections.
+    @Test
+    func multiLineStringCrossesAntimeridian() throws {
+        let ls1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let ls2 = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+        ]))
+        let mls = MultiLineString([ls1, ls2])!
+        #expect(mls.crossesAntimeridian == true)
+
+        let mlsNoCross = MultiLineString([ls2, ls2])!
+        #expect(mlsNoCross.crossesAntimeridian == false)
+    }
+
+    @Test
+    func multiLineStringCrossesAntimeridian3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        let mls = MultiLineString(unchecked: [ls])
+        #expect(mls.crossesAntimeridian == true)
+    }
+
+    @Test
+    func multiLineStringCrossesAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        let mls = MultiLineString(unchecked: [ls])
+        #expect(mls.crossesAntimeridian == false)
+    }
+
+    // Tests crossesAntimeridian on MultiPolygon across projections.
+    @Test
+    func multiPolygonCrossesAntimeridian() throws {
+        let p1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+            Coordinate3D(latitude: 30.0, longitude: 0.0),
+            Coordinate3D(latitude: 30.0, longitude: 10.0),
+            Coordinate3D(latitude: 20.0, longitude: 10.0),
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+        ]]))
+        let mp = MultiPolygon([p1, p2])!
+        #expect(mp.crossesAntimeridian == true)
+
+        let mpNoCross = MultiPolygon([p2, p2])!
+        #expect(mpNoCross.crossesAntimeridian == false)
+    }
+
+    @Test
+    func multiPolygonCrossesAntimeridian3857() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]
+        let polygon = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg3857) }])
+        let mp = MultiPolygon(unchecked: [polygon])
+        #expect(mp.crossesAntimeridian == true)
+    }
+
+    @Test
+    func multiPolygonCrossesAntimeridian4978() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]
+        let polygon = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg4978) }])
+        let mp = MultiPolygon(unchecked: [polygon])
+        #expect(mp.crossesAntimeridian == false)
+    }
+
+    // Tests crossesAntimeridian on GeometryCollection across projections.
+    @Test
+    func geometryCollectionCrossesAntimeridian() throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        let gc = GeometryCollection([ls, point])
+        #expect(gc.crossesAntimeridian == true)
+
+        let gcNoCross = GeometryCollection([point, point])
+        #expect(gcNoCross.crossesAntimeridian == false)
+    }
+
+    @Test
+    func geometryCollectionCrossesAntimeridian3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        let gc = GeometryCollection([ls])
+        #expect(gc.crossesAntimeridian == true)
+    }
+
+    @Test
+    func geometryCollectionCrossesAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        let gc = GeometryCollection([ls])
+        #expect(gc.crossesAntimeridian == false)
+    }
+
+    // Tests crossesAntimeridian on Feature across projections.
+    @Test
+    func featureCrossesAntimeridian() throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let feature = Feature(ls)
+        #expect(feature.crossesAntimeridian == true)
+
+        let noCrossFeature = Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        #expect(noCrossFeature.crossesAntimeridian == false)
+    }
+
+    @Test
+    func featureCrossesAntimeridian3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        let feature = Feature(ls)
+        #expect(feature.crossesAntimeridian == true)
+    }
+
+    @Test
+    func featureCrossesAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        let feature = Feature(ls)
+        #expect(feature.crossesAntimeridian == false)
+    }
+
+    // Tests crossesAntimeridian on FeatureCollection across projections.
+    @Test
+    func featureCollectionCrossesAntimeridian() throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]))
+        let f1 = Feature(ls)
+        let f2 = Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        let fc = FeatureCollection([f1, f2])
+        #expect(fc.crossesAntimeridian == true)
+
+        let fcNoCross = FeatureCollection([f2, f2])
+        #expect(fcNoCross.crossesAntimeridian == false)
+    }
+
+    @Test
+    func featureCollectionCrossesAntimeridian3857() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857),
+        ])
+        let fc = FeatureCollection([Feature(ls)])
+        #expect(fc.crossesAntimeridian == true)
+    }
+
+    @Test
+    func featureCollectionCrossesAntimeridian4978() throws {
+        let ls = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg4978),
+        ])
+        let fc = FeatureCollection([Feature(ls)])
+        #expect(fc.crossesAntimeridian == false)
+    }
+
+    // Tests crossesAntimeridian for Polygon with noSRID (always false).
+    @Test
+    func polygonCrossesAntimeridianNoSRID() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        #expect(polygon.crossesAntimeridian == false)
+    }
+
 }

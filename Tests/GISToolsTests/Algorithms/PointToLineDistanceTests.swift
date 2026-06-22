@@ -31,6 +31,21 @@ struct PointToLineDistanceTests {
         #expect(withParam == manual)
     }
 
+    // MARK: - Projection tests
+
+    // Verifies distance from point to line string in EPSG:3857.
+    @Test
+    func pointToLineDistance3857() throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+        ]))
+        let coordinate = Coordinate3D(x: 500.0, y: 500.0)
+        let distance = lineString.distanceFrom(coordinate: coordinate)
+        #expect(distance > 0.0)
+        #expect(abs(distance - 500.0) < 1.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

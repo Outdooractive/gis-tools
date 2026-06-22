@@ -40,6 +40,15 @@ struct EllipseTests {
         #expect(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0, steps: 1) == nil)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func ellipse3857() async throws {
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
+        #expect(ellipse.isValid)
+    }
+
     @Test
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))

@@ -39,6 +39,10 @@ private enum HexGrid {
         triangles: Bool,
         mask: (any GeoJson)?
     ) -> FeatureCollection {
+        let projection = bbox.projection
+        guard projection != .noSRID else { return FeatureCollection() }
+        let coordinatesAreInMeters = projection == .epsg3857
+
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
         let east = bbox.northEast.longitude
@@ -49,13 +53,21 @@ private enum HexGrid {
 
         let doubleCellMeters = cellSide * 2.0
 
-        let xDistance = Coordinate3D(latitude: centerY, longitude: west)
-            .distance(to: Coordinate3D(latitude: centerY, longitude: east))
-        let cellWidth = xDistance > 0.0 ? (doubleCellMeters / xDistance) * (east - west) : (east - west)
+        let cellWidth: Double
+        let cellHeight: Double
+        if coordinatesAreInMeters {
+            cellWidth = doubleCellMeters
+            cellHeight = doubleCellMeters
+        }
+        else {
+            let xDistance = Coordinate3D(latitude: centerY, longitude: west)
+                .distance(to: Coordinate3D(latitude: centerY, longitude: east))
+            cellWidth = xDistance > 0.0 ? (doubleCellMeters / xDistance) * (east - west) : (east - west)
 
-        let yDistance = Coordinate3D(latitude: south, longitude: centerX)
-            .distance(to: Coordinate3D(latitude: north, longitude: centerX))
-        let cellHeight = yDistance > 0.0 ? (doubleCellMeters / yDistance) * (north - south) : (north - south)
+            let yDistance = Coordinate3D(latitude: south, longitude: centerX)
+                .distance(to: Coordinate3D(latitude: north, longitude: centerX))
+            cellHeight = yDistance > 0.0 ? (doubleCellMeters / yDistance) * (north - south) : (north - south)
+        }
 
         let radius = cellWidth / 2.0
 
@@ -112,7 +124,8 @@ private enum HexGrid {
                         centerY: centerYPos,
                         rx: radius,
                         ry: cellHeight / 2.0,
-                        angles: angles)
+                        angles: angles,
+                        coordinatesAreInMeters: coordinatesAreInMeters)
                     for tri in triFeatures {
                         if let mask {
                             if mask.intersects(tri) {
@@ -130,7 +143,8 @@ private enum HexGrid {
                         centerY: centerYPos,
                         rx: radius,
                         ry: cellHeight / 2.0,
-                        angles: angles)
+                        angles: angles,
+                        coordinatesAreInMeters: coordinatesAreInMeters)
                     if let mask {
                         if mask.intersects(hex) {
                             results.append(Feature(hex))
@@ -153,12 +167,18 @@ private enum HexGrid {
         centerY: Double,
         rx: Double,
         ry: Double,
-        angles: [(cos: Double, sin: Double)]
+        angles: [(cos: Double, sin: Double)],
+        coordinatesAreInMeters: Bool
     ) -> Polygon {
         let vertices = angles.map { angle in
-            Coordinate3D(
-                latitude: centerY + ry * angle.sin,
-                longitude: centerX + rx * angle.cos)
+            if coordinatesAreInMeters {
+                Coordinate3D(x: centerX + rx * angle.cos, y: centerY + ry * angle.sin)
+            }
+            else {
+                Coordinate3D(
+                    latitude: centerY + ry * angle.sin,
+                    longitude: centerX + rx * angle.cos)
+            }
         }
         return Polygon(unchecked: [vertices + [vertices[0]]])
     }
@@ -168,19 +188,34 @@ private enum HexGrid {
         centerY: Double,
         rx: Double,
         ry: Double,
-        angles: [(cos: Double, sin: Double)]
+        angles: [(cos: Double, sin: Double)],
+        coordinatesAreInMeters: Bool
     ) -> [Polygon] {
-        let center = Coordinate3D(latitude: centerY, longitude: centerX)
+        let center: Coordinate3D
+        if coordinatesAreInMeters {
+            center = Coordinate3D(x: centerX, y: centerY)
+        }
+        else {
+            center = Coordinate3D(latitude: centerY, longitude: centerX)
+        }
         let count = angles.count
 
         return (0 ..< count).map { i in
             let nextI = (i + 1) % count
-            let p1 = Coordinate3D(
-                latitude: centerY + ry * angles[i].sin,
-                longitude: centerX + rx * angles[i].cos)
-            let p2 = Coordinate3D(
-                latitude: centerY + ry * angles[nextI].sin,
-                longitude: centerX + rx * angles[nextI].cos)
+            let p1: Coordinate3D
+            let p2: Coordinate3D
+            if coordinatesAreInMeters {
+                p1 = Coordinate3D(x: centerX + rx * angles[i].cos, y: centerY + ry * angles[i].sin)
+                p2 = Coordinate3D(x: centerX + rx * angles[nextI].cos, y: centerY + ry * angles[nextI].sin)
+            }
+            else {
+                p1 = Coordinate3D(
+                    latitude: centerY + ry * angles[i].sin,
+                    longitude: centerX + rx * angles[i].cos)
+                p2 = Coordinate3D(
+                    latitude: centerY + ry * angles[nextI].sin,
+                    longitude: centerX + rx * angles[nextI].cos)
+            }
             return Polygon(unchecked: [[center, p1, p2, center]])
         }
     }

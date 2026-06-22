@@ -19,8 +19,8 @@ struct DistanceTests {
     // Validates Euclidean distance in EPSG:3857 (projected meters).
     @Test
     func distanceEPSG3857() async throws {
-        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
-        let point = Coordinate3D(x: 300_000.0, y: 400_000.0, projection: .epsg3857)
+        let origin = Coordinate3D(x: 0.0, y: 0.0)
+        let point = Coordinate3D(x: 300_000.0, y: 400_000.0)
         let expected = 500_000.0 // 3-4-5 triangle
 
         #expect(abs(origin.distance(from: point) - expected) < 1e-6)

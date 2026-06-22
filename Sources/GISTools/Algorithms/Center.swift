@@ -30,30 +30,39 @@ extension GeoJson {
             return Point(allCoordinates[0])
         }
 
-        let minLon = allCoordinates.map(\.longitude).min() ?? 0
-        let maxLon = allCoordinates.map(\.longitude).max() ?? 0
-        let spansAntimeridian = (maxLon - minLon) > 180.0
-
-        var sumLongitude: Double = 0.0
-        var sumLatitude: Double = 0.0
-
-        for coordinate in allCoordinates {
-            let lon = spansAntimeridian && coordinate.longitude < 0
-                ? coordinate.longitude + 360.0
-                : coordinate.longitude
-            sumLongitude += lon
-            sumLatitude += coordinate.latitude
+        // Antimeridian normalization only applies to EPSG:4326 where longitude is
+        // in degrees. For other projections (3857, 4978, noSRID), longitude values
+        // are in projection units and should not be wrapped.
+        let spansAntimeridian: Bool
+        if projection == .epsg4326 {
+            let minLon = allCoordinates.map(\.longitude).min() ?? 0
+            let maxLon = allCoordinates.map(\.longitude).max() ?? 0
+            spansAntimeridian = (maxLon - minLon) > 180.0
+        }
+        else {
+            spansAntimeridian = false
         }
 
-        var resultLongitude = sumLongitude / Double(allCoordinates.count)
-        if spansAntimeridian && resultLongitude > 180.0 {
-            resultLongitude -= 360.0
+        var sumX: Double = 0.0
+        var sumY: Double = 0.0
+
+        for coordinate in allCoordinates {
+            let x = spansAntimeridian && coordinate.longitude < 0
+                ? coordinate.longitude + 360.0
+                : coordinate.longitude
+            sumX += x
+            sumY += coordinate.latitude
+        }
+
+        var resultX = sumX / Double(allCoordinates.count)
+        if spansAntimeridian && resultX > 180.0 {
+            resultX -= 360.0
         }
 
         return Point(
             Coordinate3D(
-                x: resultLongitude,
-                y: sumLatitude / Double(allCoordinates.count),
+                x: resultX,
+                y: sumY / Double(allCoordinates.count),
                 projection: projection))
     }
 

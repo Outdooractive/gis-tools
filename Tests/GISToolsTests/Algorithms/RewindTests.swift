@@ -117,6 +117,21 @@ struct RewindTests {
         #expect(geometryCollectionRewinded == result)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func rewind3857() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let rewinded = polygon.rewinded
+        #expect(rewinded.outerRing?.coordinates.count == 5)
+    }
+
     // MARK: - Antimeridian
 
     @Test

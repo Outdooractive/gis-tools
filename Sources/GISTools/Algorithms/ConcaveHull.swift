@@ -34,9 +34,9 @@ extension GeoJson {
         guard triangles.isNotEmpty else { return nil }
 
         let polygons: [Polygon] = triangles.compactMap { triangle in
-            let p1 = Coordinate3D(latitude: triangle.a.y, longitude: triangle.a.x)
-            let p2 = Coordinate3D(latitude: triangle.b.y, longitude: triangle.b.x)
-            let p3 = Coordinate3D(latitude: triangle.c.y, longitude: triangle.c.x)
+            let p1 = Coordinate3D(x: triangle.a.x, y: triangle.a.y, projection: projection)
+            let p2 = Coordinate3D(x: triangle.b.x, y: triangle.b.y, projection: projection)
+            let p3 = Coordinate3D(x: triangle.c.x, y: triangle.c.y, projection: projection)
 
             let d1 = p1.distance(to: p2)
             let d2 = p2.distance(to: p3)

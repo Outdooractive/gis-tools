@@ -104,6 +104,38 @@ struct NearestPointOnFeatureTests {
         #expect(abs(withParam.distance - manual.distance) < 1e-10)
     }
 
+    // MARK: - Projection tests
+
+    // Verifies nearest coordinate on a line string in EPSG:3857.
+    @Test
+    func nearestOnLineString3857() throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+        ]))
+        let ref = Coordinate3D(x: 500.0, y: 500.0)
+        let result = try #require(ls.nearestCoordinateOnFeature(from: ref))
+        #expect(result.distance > 0.0)
+        #expect(result.coordinate.x == 0.0)
+        #expect(result.coordinate.y == 500.0)
+    }
+
+    // Verifies a point inside a polygon in EPSG:3857 returns itself.
+    @Test
+    func nearestOnPolygonInside3857() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let ref = Coordinate3D(x: 500.0, y: 500.0)
+        let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
+        #expect(result.coordinate == ref)
+        #expect(result.distance == 0.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

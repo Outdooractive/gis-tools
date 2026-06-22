@@ -65,5 +65,16 @@ struct BoundingBoxPositionTests {
         let position = bbox.position(of: center)
         #expect(position.contains(.center))
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func boundingBoxPosition3857() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 100_000.0, y: 100_000.0))
+        let center = Coordinate3D(x: 50_000.0, y: 50_000.0)
+        let position = bbox.position(of: center)
+        #expect(position.contains(.center))
+    }
 
 }

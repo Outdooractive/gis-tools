@@ -156,8 +156,8 @@ struct LineOffsetTests {
     @Test
     func lineOffset3857() async throws {
         let line3857 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0),
         ]))
         let offset3857 = try #require(line3857.offset(by: 50_000))
         #expect(offset3857.projection == .epsg3857)

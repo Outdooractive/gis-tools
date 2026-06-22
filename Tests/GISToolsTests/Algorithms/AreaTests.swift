@@ -154,6 +154,86 @@ struct AreaTests {
         #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
     }
 
+    // MARK: - Projection tests
+
+    // Verifies polygon area for the same physical polygon in EPSG:3857.
+    @Test
+    func area3857() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon3857 = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg3857) }])
+        let area = polygon3857.area
+        // 10°×10° near equator ≈ 1.24e12 m²
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies polygon area for the same physical polygon in EPSG:4978.
+    @Test
+    func area4978() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon4978 = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg4978) }])
+        let area = polygon4978.area
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies polygon area for the same physical polygon in noSRID.
+    @Test
+    func areaNoSRID() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygonNoSRID = Polygon(unchecked: [coords4326.map {
+            Coordinate3D(x: $0.longitude, y: $0.latitude, projection: .noSRID)
+        }])
+        let area = polygonNoSRID.area
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies polygon area with holes in EPSG:3857.
+    @Test
+    func areaWithHole3857() throws {
+        let coords4326Outer: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let coords4326Hole: [Coordinate3D] = [
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]
+        let polygon = Polygon(unchecked: [
+            coords4326Outer.map { $0.projected(to: .epsg3857) },
+            coords4326Hole.map { $0.projected(to: .epsg3857) },
+        ])
+        let area = polygon.area
+        // Outer 10°×10° minus hole 6°×6° ≈ 1.24e12 - 4.46e11 ≈ 7.94e11
+        #expect(area > 5.0e11)
+        #expect(area < 1.0e12)
+    }
+
     /// Outer ring crosses the date line, inner ring is entirely west of it.
     @Test
     func antimeridianHoleWestSide() async throws {

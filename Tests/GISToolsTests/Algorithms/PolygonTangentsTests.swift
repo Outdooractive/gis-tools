@@ -133,6 +133,24 @@ struct PolygonTangentsTests {
         }
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func polygonTangents3857() async throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0),
+                Coordinate3D(x: 50_000.0, y: 0.0),
+                Coordinate3D(x: 50_000.0, y: 50_000.0),
+                Coordinate3D(x: 0.0, y: 50_000.0),
+                Coordinate3D(x: 0.0, y: 0.0),
+            ],
+        ]))
+        let point = Coordinate3D(x: 100_000.0, y: 25_000.0)
+        let tangentPoints = try #require(polygon.tangentPoints(to: point))
+        #expect(tangentPoints.coordinates.count == 2)
+    }
+
     /// Tests a polygon entirely east of the date line (near Guam) with the
     /// external point west of the date line. The shortest tangents cross the
     /// date line; the algorithm must shift the point's longitude so the

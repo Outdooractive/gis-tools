@@ -58,6 +58,19 @@ struct LineSplitTests {
         #expect(result.features.count == 2)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func lineSplit3857() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ]))
+        let splitter = Point(Coordinate3D(x: 500_000.0, y: 0.0))
+        let result = line.lineSplit(with: splitter)
+        #expect(result.features.count == 2)
+    }
+
     /// Grid-size snapping for noise reduction.
     @Test
     func withGridSize() {

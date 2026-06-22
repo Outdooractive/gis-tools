@@ -154,4 +154,18 @@ struct ConversionTests {
         #expect(abs(result.longitudeDegrees - 1.0) < 0.01)
     }
 
+    // Validates projecting a coordinate from EPSG:4326 to EPSG:3857 and back.
+    @Test
+    func conversion3857() async throws {
+        let original = Coordinate3D(latitude: 48.8566, longitude: 2.3522)
+        let projected = original.projected(to: .epsg3857)
+        #expect(projected.projection == .epsg3857)
+        #expect(abs(projected.x) > 0)
+        #expect(abs(projected.y) > 0)
+
+        let roundtrip = projected.projected(to: .epsg4326)
+        #expect(abs(roundtrip.latitude - original.latitude) < 0.0001)
+        #expect(abs(roundtrip.longitude - original.longitude) < 0.0001)
+    }
+
 }

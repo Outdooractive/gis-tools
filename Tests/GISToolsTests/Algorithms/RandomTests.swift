@@ -146,5 +146,19 @@ struct RandomTests {
         let ls = try #require(lines.features[0].geometry as? LineString)
         #expect(ls.coordinates.count == 3)
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func random3857() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+        let points = bbox.randomPoints(count: 5)
+        #expect(points.features.count == 5)
+        for feature in points.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.isValid)
+        }
+    }
 
 }

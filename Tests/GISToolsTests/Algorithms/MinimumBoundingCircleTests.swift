@@ -118,4 +118,20 @@ struct MinimumBoundingCircleTests {
         if let r { #expect(abs(r - 5.1) < 0.5) }
     }
 
+    // MARK: - EPSG:3857
+
+    /// Validates that a multi-point in EPSG:3857 produces a valid minimum bounding circle.
+    @Test
+    func minimumBoundingCircle3857() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+        ]))
+        let circle = mp.minimumBoundingCircle()
+        #expect(circle != nil)
+        #expect(circle?.isValid == true)
+    }
+
 }

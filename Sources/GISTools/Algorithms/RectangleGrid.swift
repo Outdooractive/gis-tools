@@ -38,6 +38,34 @@ private enum RectangleGrid {
         cellHeight: CLLocationDistance,
         mask: (any GeoJson)?
     ) -> FeatureCollection {
+        let projection = bbox.projection
+
+        // For EPSG:3857 coordinates are in meters (cell dimensions too — use directly).
+        // For EPSG:4326 and EPSG:4978 coordinates are in degrees
+        // (geodetic for 4978, converted from ECEF) — convert cell from meters to degrees.
+        // noSRID has no meaningful coordinate space for a grid.
+        guard projection != .noSRID else { return FeatureCollection() }
+        return gridProjected(
+            bbox: bbox,
+            cellWidth: cellWidth,
+            cellHeight: cellHeight,
+            mask: mask)
+    }
+
+    private static func gridProjected(
+        bbox: BoundingBox,
+        cellWidth: CLLocationDistance,
+        cellHeight: CLLocationDistance,
+        mask: (any GeoJson)?
+    ) -> FeatureCollection {
+        let projection = bbox.projection
+        // For 3857: coordinates are in meters, cell dimensions are too — use directly.
+        // For 4326/4978: coordinates are in degrees, convert cell from meters to degrees.
+        let coordinatesAreInMeters = projection == .epsg3857
+
+        let cellStepX: Double = coordinatesAreInMeters ? cellWidth : cellWidth / 111_325.0
+        let cellStepY: Double = coordinatesAreInMeters ? cellHeight : cellHeight / 111_325.0
+
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
         let east = bbox.northEast.longitude
@@ -46,16 +74,13 @@ private enum RectangleGrid {
         let bboxWidth = east - west
         let bboxHeight = north - south
 
-        let cellWidthDeg = cellWidth / 111_325.0
-        let cellHeightDeg = cellHeight / 111_325.0
-
-        let columns = Int(floor(abs(bboxWidth) / cellWidthDeg))
-        let rows = Int(floor(abs(bboxHeight) / cellHeightDeg))
+        let columns = Int(floor(abs(bboxWidth) / cellStepX))
+        let rows = Int(floor(abs(bboxHeight) / cellStepY))
 
         guard columns > 0, rows > 0 else { return FeatureCollection() }
 
-        let deltaX = (bboxWidth - Double(columns) * cellWidthDeg) / 2.0
-        let deltaY = (bboxHeight - Double(rows) * cellHeightDeg) / 2.0
+        let deltaX = (bboxWidth - Double(columns) * cellStepX) / 2.0
+        let deltaY = (bboxHeight - Double(rows) * cellStepY) / 2.0
 
         var results: [Feature] = []
 
@@ -63,13 +88,25 @@ private enum RectangleGrid {
         for _ in 0 ..< columns {
             var currentY = south + deltaY
             for _ in 0 ..< rows {
-                let cellPoly = Polygon(unchecked: [[
-                    Coordinate3D(latitude: currentY, longitude: currentX),
-                    Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                    Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                    Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                    Coordinate3D(latitude: currentY, longitude: currentX),
-                ]])
+                let cellPoly: Polygon
+                if coordinatesAreInMeters {
+                    cellPoly = Polygon(unchecked: [[
+                        Coordinate3D(x: currentX, y: currentY),
+                        Coordinate3D(x: currentX, y: currentY + cellStepY),
+                        Coordinate3D(x: currentX + cellStepX, y: currentY + cellStepY),
+                        Coordinate3D(x: currentX + cellStepX, y: currentY),
+                        Coordinate3D(x: currentX, y: currentY),
+                    ]])
+                }
+                else {
+                    cellPoly = Polygon(unchecked: [[
+                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        Coordinate3D(latitude: currentY + cellStepY, longitude: currentX),
+                        Coordinate3D(latitude: currentY + cellStepY, longitude: currentX + cellStepX),
+                        Coordinate3D(latitude: currentY, longitude: currentX + cellStepX),
+                        Coordinate3D(latitude: currentY, longitude: currentX),
+                    ]])
+                }
 
                 if let mask {
                     if mask.intersects(cellPoly) {
@@ -80,9 +117,9 @@ private enum RectangleGrid {
                     results.append(Feature(cellPoly))
                 }
 
-                currentY += cellHeightDeg
+                currentY += cellStepY
             }
-            currentX += cellWidthDeg
+            currentX += cellStepX
         }
 
         return FeatureCollection(results)

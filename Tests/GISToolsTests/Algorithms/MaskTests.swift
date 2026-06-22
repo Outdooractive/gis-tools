@@ -91,6 +91,21 @@ struct MaskTests {
         }
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func mask3857() {
+        let maskPolygon = Polygon(unchecked: [[
+            Coordinate3D(x: -50_000.0, y: -50_000.0),
+            Coordinate3D(x: 50_000.0, y: -50_000.0),
+            Coordinate3D(x: 50_000.0, y: 50_000.0),
+            Coordinate3D(x: -50_000.0, y: 50_000.0),
+            Coordinate3D(x: -50_000.0, y: -50_000.0),
+        ]])
+        let result = maskPolygon.mask()
+        #expect(result != nil)
+    }
+
     // MARK: - Antimeridian
 
     /// A mask crossing the antimeridian (lon 179 to -179) punched into the world polygon.

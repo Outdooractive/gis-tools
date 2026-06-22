@@ -111,5 +111,17 @@ struct ReverseTests {
         #expect(reversed.geometries[1].allCoordinates.map(\.latitude) == [20.0])
         #expect(reversed.geometries[2].allCoordinates.map(\.latitude) == [1.0, 0.0])
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func reverse3857() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 200_000.0, y: 0.0),
+        ]))
+        let reversed = lineString.reversed
+        #expect(reversed.coordinates.count == 3)
+    }
 
 }

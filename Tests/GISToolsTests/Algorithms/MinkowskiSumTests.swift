@@ -288,6 +288,28 @@ struct MinkowskiSumTests {
         #expect(result != nil)
     }
 
+    // Validates Minkowski sum of polygons in EPSG:3857.
+    @Test
+    func minkowskiSum3857() async throws {
+        let a = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let b = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 200.0, y: 0.0),
+            Coordinate3D(x: 200.0, y: 200.0),
+            Coordinate3D(x: 0.0, y: 200.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+
+        let result = a.minkowskiSum(with: b)
+        #expect(result != nil)
+    }
+
     // Validates Minkowski sum where both inputs cross the antimeridian.
     @Test
     func sumAntimeridianBoth() async throws {

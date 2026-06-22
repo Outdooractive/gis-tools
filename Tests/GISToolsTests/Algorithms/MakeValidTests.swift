@@ -234,11 +234,11 @@ extension MakeValidTests {
     @Test
     func validPolygon3857() {
         let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: -500_000.0, y: -500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: -500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: -500_000.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: -500_000.0, y: -500_000.0, projection: .epsg3857),
+            Coordinate3D(x: -500_000.0, y: -500_000.0),
+            Coordinate3D(x: 500_000.0, y: -500_000.0),
+            Coordinate3D(x: 500_000.0, y: 500_000.0),
+            Coordinate3D(x: -500_000.0, y: 500_000.0),
+            Coordinate3D(x: -500_000.0, y: -500_000.0),
         ]])
         let valid = polygon.madeValid()
         #expect(valid != nil)
@@ -276,11 +276,11 @@ extension MakeValidTests {
     @Test
     func bowtie3857() {
         let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: -500_000.0, y: -500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: -500_000.0, projection: .epsg3857),
-            Coordinate3D(x: -500_000.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: -500_000.0, y: -500_000.0, projection: .epsg3857),
+            Coordinate3D(x: -500_000.0, y: -500_000.0),
+            Coordinate3D(x: 500_000.0, y: 500_000.0),
+            Coordinate3D(x: 500_000.0, y: -500_000.0),
+            Coordinate3D(x: -500_000.0, y: 500_000.0),
+            Coordinate3D(x: -500_000.0, y: -500_000.0),
         ]])
         let valid = polygon.madeValid()
         #expect(valid != nil)
@@ -306,10 +306,10 @@ extension MakeValidTests {
     @Test
     func wrongWindingOrder3857() {
         let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 500_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 500_000.0),
+            Coordinate3D(x: 0.0, y: 500_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
         ]])
         let valid = polygon.madeValid()
         #expect(valid != nil)

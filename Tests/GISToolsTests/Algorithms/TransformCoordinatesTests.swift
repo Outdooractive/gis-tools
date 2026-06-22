@@ -147,6 +147,23 @@ struct TransformCoordinatesTests {
         #expect(featureCollectionTransformed == featureCollectionResult)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func transformCoordinates3857() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 500_000.0),
+        ]))
+        let result = lineString.transformedCoordinates { coordinate in
+            Coordinate3D(
+                x: coordinate.x + 100_000.0,
+                y: coordinate.y + 100_000.0,
+                projection: coordinate.projection)
+        }
+        #expect(result.coordinates.count == 2)
+    }
+
     // MARK: - Antimeridian
 
     @Test

@@ -35,6 +35,10 @@ private enum TriangleGrid {
         cellSide: CLLocationDistance,
         mask: (any GeoJson)?
     ) -> FeatureCollection {
+        let projection = bbox.projection
+        guard projection != .noSRID else { return FeatureCollection() }
+        let coordinatesAreInMeters = projection == .epsg3857
+
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
         let east = bbox.northEast.longitude
@@ -46,13 +50,21 @@ private enum TriangleGrid {
         let centerY = (south + north) / 2.0
         let centerX = (west + east) / 2.0
 
-        let xDistance = Coordinate3D(latitude: centerY, longitude: west)
-            .distance(to: Coordinate3D(latitude: centerY, longitude: east))
-        let cellWidthDeg = xDistance > 0.0 ? (cellSide / xDistance) * bboxWidth : bboxWidth
+        let cellWidthDeg: Double
+        let cellHeightDeg: Double
+        if coordinatesAreInMeters {
+            cellWidthDeg = cellSide
+            cellHeightDeg = cellSide
+        }
+        else {
+            let xDistance = Coordinate3D(latitude: centerY, longitude: west)
+                .distance(to: Coordinate3D(latitude: centerY, longitude: east))
+            cellWidthDeg = xDistance > 0.0 ? (cellSide / xDistance) * bboxWidth : bboxWidth
 
-        let yDistance = Coordinate3D(latitude: south, longitude: centerX)
-            .distance(to: Coordinate3D(latitude: north, longitude: centerX))
-        let cellHeightDeg = yDistance > 0.0 ? (cellSide / yDistance) * bboxHeight : bboxHeight
+            let yDistance = Coordinate3D(latitude: south, longitude: centerX)
+                .distance(to: Coordinate3D(latitude: north, longitude: centerX))
+            cellHeightDeg = yDistance > 0.0 ? (cellSide / yDistance) * bboxHeight : bboxHeight
+        }
 
         guard cellWidthDeg > 0.0, cellHeightDeg > 0.0 else { return FeatureCollection() }
 
@@ -63,6 +75,15 @@ private enum TriangleGrid {
 
         let deltaX = (bboxWidth - Double(columns) * cellWidthDeg) / 2.0
         let deltaY = (bboxHeight - Double(rows) * cellHeightDeg) / 2.0
+
+        func coord(x: Double, y: Double) -> Coordinate3D {
+            if coordinatesAreInMeters {
+                Coordinate3D(x: x, y: y)
+            }
+            else {
+                Coordinate3D(latitude: y, longitude: x)
+            }
+        }
 
         var results: [Feature] = []
 
@@ -78,58 +99,58 @@ private enum TriangleGrid {
 
                 if isEvenX, isEvenY {
                     cellTriangle1 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY),
                     ]])
                     cellTriangle2 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
                     ]])
                 }
                 else if isEvenX, !isEvenY {
                     cellTriangle1 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY),
                     ]])
                     cellTriangle2 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX, y: currentY),
                     ]])
                 }
                 else if !isEvenX, isEvenY {
                     cellTriangle1 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX, y: currentY),
                     ]])
                     cellTriangle2 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY),
                     ]])
                 }
                 else {
                     cellTriangle1 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX),
+                        coord(x: currentX, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY),
                     ]])
                     cellTriangle2 = Polygon(unchecked: [[
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY, longitude: currentX + cellWidthDeg),
-                        Coordinate3D(latitude: currentY + cellHeightDeg, longitude: currentX),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY + cellHeightDeg),
+                        coord(x: currentX + cellWidthDeg, y: currentY),
+                        coord(x: currentX, y: currentY + cellHeightDeg),
                     ]])
                 }
 

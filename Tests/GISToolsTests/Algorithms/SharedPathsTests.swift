@@ -216,6 +216,24 @@ struct SharedPathsTests {
         #expect(result!.lineStrings.count == 2)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func sharedPaths3857() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ])!
+        let result = a.sharedPaths(with: b)
+        #expect(result != nil)
+        #expect(result!.lineStrings.count == 1)
+    }
+
     // Validates shared paths across the antimeridian with reversed segment.
     @Test
     func antimeridianReversed() async throws {

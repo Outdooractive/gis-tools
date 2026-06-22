@@ -138,6 +138,22 @@ struct ConcaveHullTests {
 
     // MARK: - gridSize
 
+    // Verifies concave hull of points in EPSG:3857.
+    @Test
+    func concaveHull3857() throws {
+        let mp = MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 500.0, y: 500.0),
+        ])!
+        let hull = mp.concaveHull(maxEdgeLength: 10_000.0)
+        #expect(hull != nil)
+        #expect(hull!.polygons.count >= 1)
+        #expect(hull!.polygons[0].isValid)
+    }
+
     // Validates that `concaveHull(maxEdgeLength:gridSize:)` matches manual pre-snapping.
     @Test
     func concaveHullWithGridSize() async throws {

@@ -106,13 +106,13 @@ enum Overlay {
     ) -> (left: Coordinate3D, right: Coordinate3D) {
         let len = sqrt(dx * dx + dy * dy)
         guard len > 0 else {
-            let p = Coordinate3D(x: midLongitude, y: midLatitude, projection: .epsg3857)
+            let p = Coordinate3D(x: midLongitude, y: midLatitude)
             return (p, p)
         }
         let offsetX = -dy / len * distance
         let offsetY = dx / len * distance
-        let left = Coordinate3D(x: midLongitude + offsetX, y: midLatitude + offsetY, projection: .epsg3857)
-        let right = Coordinate3D(x: midLongitude - offsetX, y: midLatitude - offsetY, projection: .epsg3857)
+        let left = Coordinate3D(x: midLongitude + offsetX, y: midLatitude + offsetY)
+        let right = Coordinate3D(x: midLongitude - offsetX, y: midLatitude - offsetY)
         return (left, right)
     }
 }
