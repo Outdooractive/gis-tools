@@ -1,5 +1,26 @@
-# AGENTS.md#
+# AGENTS.md
+
+# GISTools — Swift geospatial library
+
+A Swift package for GIS operations on GeoJSON geometries.
+Supports EPSG:4326 (WGS84), EPSG:3857 (Web Mercator), EPSG:4978 (ECEF),
+and "noSRID". All coordinates use `Coordinate3D` which stores
+latitude/longitude directly and provides `x`/`y` aliases. Distances default to
+Haversine (4326) or Euclidean (3857/4978/noSRID).
+
+Key areas:
+- **Boolean predicates**: contains, covers, intersects, crosses, touches, etc.
+- **Overlay operations**: union, intersection, difference, symmetric difference
+- **Simplification**: Douglas-Peucker, Visvalingam-Whyatt, topology-preserving
+- **Grid generation**: hex, rectangle, triangle, square, point
+- **Geodesic**: distance, bearing, destination, rhumb line, midpoint
+- **Polygon ops**: buffer, convex/concave hull, Voronoi, tesselate, Minkowski
+- **Cleanup**: clean, makeValid, kinks, unkink, truncate, snapToGrid
+- **Coverage**: unaryUnion, coverageUnion, coverageIsValid, coverageSimplify
+- **Antimeridian crossing**: cutAtAntimeridian, crossesAntimeridian on all types
+
 ## Swift instructions
+
 - DO USE idomatic Swift 6, at least version 6.1
 - DO write tests for everything you do, use Swift Testing (`import Testing`), not XCTest
 - DO ASK if anything is unclear, or you need a decision
