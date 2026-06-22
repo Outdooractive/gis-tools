@@ -39,4 +39,10 @@ extension String {
         self.data(using: .utf8)
     }
 
+    /// Returns `true` when the string is not empty.
+    @inlinable
+    var isNotEmpty: Bool {
+        !isEmpty
+    }
+
 }

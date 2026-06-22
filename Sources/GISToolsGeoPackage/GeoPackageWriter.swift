@@ -9,10 +9,13 @@ extension FeatureCollection {
     /// - Parameters:
     ///   - url: The file URL to write to.
     ///   - table: The name of the feature table to create (default `"features"`).
+    ///   - createSpatialIndex: If `true`, creates a `gpkg_rtree_index` spatial
+    ///     index for faster bounding-box queries (default `false`).
     /// - Throws: A ``GeoPackageError`` if the file cannot be written.
     public func writeGeopackage(
         to url: URL,
-        table: String = "features"
+        table: String = "features",
+        createSpatialIndex: Bool = false
     ) throws {
         // Remove existing file to start fresh
         if FileManager.default.fileExists(atPath: url.path) {
@@ -20,7 +23,11 @@ extension FeatureCollection {
         }
         let db = try SQLiteDB(path: url.path)
         try GeoPackage.createMetadata(in: db)
-        try GeoPackageWriter.writeFeatures(self, to: db, table: table)
+        try GeoPackageWriter.writeFeatures(
+            self,
+            to: db,
+            table: table,
+            createSpatialIndex: createSpatialIndex)
     }
 
 }
@@ -32,7 +39,8 @@ private enum GeoPackageWriter {
     static func writeFeatures(
         _ fc: FeatureCollection,
         to db: SQLiteDB,
-        table: String
+        table: String,
+        createSpatialIndex: Bool = false
     ) throws {
         let features = fc.features
         guard !features.isEmpty else {
@@ -80,7 +88,9 @@ private enum GeoPackageWriter {
         var maxY = -Double.infinity
 
         // Insert features
-        let colNamesQuoted = columnDefs.map { GeoPackage.sanitizeIdentifier($0.name) }.joined(separator: ", ")
+        let colNamesQuoted = columnDefs
+            .map { GeoPackage.sanitizeIdentifier($0.name) }
+            .joined(separator: ", ")
         let placeholders = columnDefs.map { _ in "?" }.joined(separator: ", ")
         let insertSQL = "INSERT INTO \(quotedTable) (\(colNamesQuoted)) VALUES (\(placeholders));"
 
@@ -132,6 +142,64 @@ private enum GeoPackageWriter {
             geomColumnName: geomColumnName,
             geoTypeName: geoTypeName,
             srsId: srsId)
+
+        // Create spatial index (rtree) if requested
+        if createSpatialIndex {
+            try createSpatialIndexOnTable(
+                table: table,
+                geomColumnName: geomColumnName,
+                srsId: srsId,
+                for: features,
+                db: db)
+        }
+    }
+
+    // MARK: - Spatial index
+
+    /// Creates a `gpkg_rtree_index` spatial index on the feature table.
+    private static func createSpatialIndexOnTable(
+        table: String,
+        geomColumnName: String,
+        srsId: Int,
+        for features: [Feature],
+        db: SQLiteDB
+    ) throws {
+        let rtreeName = GeoPackage.rTreeTableName(for: table, column: geomColumnName)
+
+        // Create rtree virtual table
+        try db.execute("""
+            CREATE VIRTUAL TABLE \(rtreeName)
+            USING rtree("id", "minx", "maxx", "miny", "maxy");
+            """)
+
+        // Insert bounding boxes for each feature
+        var rowId: Int64 = 1
+        for feature in features {
+            if let envelope = feature.boundingBox ?? feature.calculateBoundingBox() {
+                let minX = envelope.southWest.longitude
+                let minY = envelope.southWest.latitude
+                let maxX = envelope.northEast.longitude
+                let maxY = envelope.northEast.latitude
+                let sql = """
+                    INSERT INTO \(rtreeName) (id, minx, maxx, miny, maxy)
+                    VALUES (\(rowId), \(minX), \(maxX), \(minY), \(maxY));
+                    """
+                try db.execute(sql)
+            }
+            rowId += 1
+        }
+
+        // Register in gpkg_extensions
+        let escapedTable = GeoPackage.sanitizeStringLiteral(table)
+        let escapedCol = GeoPackage.sanitizeStringLiteral(geomColumnName)
+        try db.execute("""
+            INSERT INTO gpkg_extensions
+            (table_name, column_name, extension_name, definition, scope)
+            VALUES (\(escapedTable), \(escapedCol),
+            'gpkg_rtree_index',
+            'http://www.geopackage.org/spec120/#extension_rtree',
+            'write-only');
+            """)
     }
 
     // MARK: - Metadata
