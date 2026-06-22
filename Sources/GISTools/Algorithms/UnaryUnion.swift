@@ -84,7 +84,8 @@ extension MultiPolygon {
         let maxArea = max(sumAreas, unionArea)
         guard maxArea > 0 else { return sumAreas == 0 }
         let relativeDiff = abs(sumAreas - unionArea) / maxArea
-        guard relativeDiff <= 0.000001 else { return false }
+        let coverageTolerance = 0.000001 // relative (0.0001 %)
+        guard relativeDiff <= coverageTolerance else { return false }
 
         // 2. No gaps: adjacent polygons share edges, so union merges them
         //    into fewer parts. If the part count didn't drop, nothing is
