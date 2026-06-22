@@ -6,6 +6,8 @@ import Foundation
 // Ported from https://github.com/Turfjs/turf/blob/master/packages/turf-simplify
 // and https://github.com/Turfjs/turf/blob/master/packages/turf-simplify/lib/simplify.js
 
+// MARK: - simplified / simplify
+
 extension GeoJson {
 
     /// Returns a simplified GeoJson.
@@ -103,6 +105,169 @@ extension GeoJson {
 
 }
 
+// MARK: - topologyPreserveSimplify
+
+extension GeoJson {
+
+    /// Returns a simplified copy that guarantees topological correctness.
+    ///
+    /// Uses the Douglas-Peucker algorithm followed by a validity repair
+    /// pass (``madeValid(gridSize:)``) to fix any self-intersections or
+    /// degenerate rings that the simplification may have introduced.
+    ///
+    /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
+    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
+    /// - Returns: A topologically valid simplified copy.
+    public func topologyPreservedSimplified(
+        tolerance: CLLocationDistance = 1.0,
+        highQuality: Bool = false,
+        gridSize: Double? = nil
+    ) -> Self? {
+        let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        let s = snapped.simplified(tolerance: tolerance, highQuality: highQuality)
+        guard let valid = s.madeValid() else { return nil }
+        return valid
+    }
+
+}
+
+// MARK: - polygonHullSimplify (Visvalingam-Whyatt)
+
+extension Polygon {
+
+    /// Returns a simplified copy of the polygon using Visvalingam-Whyatt
+    /// (area-based) simplification. The result stays within a given distance
+    /// of the original boundary and preserves topological validity.
+    ///
+    /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
+    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
+    /// - Returns: A simplified topologically valid polygon, or `nil` if the polygon cannot be simplified.
+    public func polygonHullSimplified(
+        tolerance: CLLocationDistance = 1.0,
+        highQuality: Bool = false,
+        gridSize: Double? = nil
+    ) -> Polygon? {
+        let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        guard let ring = snapped.outerRing else { return nil }
+
+        let simplified = Simplify.simplifyVisvalingamWhyatt(
+            coordinates: ring.coordinates,
+            toleranceInMeters: tolerance)
+        guard simplified.count >= 3 else { return nil }
+
+        var closed = simplified
+        if closed.first != closed.last {
+            closed.append(closed[0])
+        }
+
+        guard let result = Polygon([closed]) else { return nil }
+        guard let valid = result.madeValid() else { return nil }
+        return valid
+    }
+
+}
+
+extension MultiPolygon {
+
+    /// Returns a simplified copy of each constituent polygon using
+    /// Visvalingam-Whyatt (area-based) simplification.
+    ///
+    /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
+    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
+    /// - Returns: A simplified topologically valid multi-polygon, or `nil` if empty.
+    public func polygonHullSimplified(
+        tolerance: CLLocationDistance = 1.0,
+        highQuality: Bool = false,
+        gridSize: Double? = nil
+    ) -> MultiPolygon? {
+        let valid = polygons.compactMap {
+            $0.polygonHullSimplified(tolerance: tolerance, highQuality: highQuality, gridSize: gridSize)
+        }
+        guard valid.isNotEmpty else { return nil }
+        return MultiPolygon(unchecked: valid)
+    }
+
+}
+
+// MARK: - Public API: coverageSimplify
+
+extension MultiPolygon {
+
+    /// Returns a simplified copy of a polygon coverage while keeping
+    /// shared edges between adjacent polygons aligned.
+    ///
+    /// Each polygon is simplified individually. Edges that were originally
+    /// shared between adjacent polygons are then restored from the original
+    /// (pre-simplification) coordinates so that they remain identical
+    /// after simplification.
+    ///
+    /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
+    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
+    /// - Returns: A simplified coverage with aligned shared edges, or `nil` if empty.
+    public func coverageSimplified(
+        tolerance: CLLocationDistance = 1.0,
+        highQuality: Bool = false,
+        gridSize: Double? = nil
+    ) -> MultiPolygon? {
+        let polys: [Polygon]
+        if let gridSize {
+            polys = polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+        }
+        else {
+            polys = polygons
+        }
+
+        guard polys.count > 1 else {
+            return polys.first.map { MultiPolygon(unchecked: [$0]) }
+        }
+
+        var sharedEdges: [EdgeKey: [Coordinate3D]] = [:]
+        var edgeCount: [EdgeKey: Int] = [:]
+
+        for polygon in polys {
+            for ring in polygon.rings {
+                let coords = ring.coordinates
+                for i in 0 ..< coords.count - 1 {
+                    let key = EdgeKey(coords[i], coords[i + 1])
+                    edgeCount[key, default: 0] += 1
+                    if sharedEdges[key] == nil {
+                        sharedEdges[key] = [coords[i], coords[i + 1]]
+                    }
+                }
+            }
+        }
+
+        let sharedKeys = Set(edgeCount.filter { $0.value > 1 }.keys)
+        let simplified = polys.map { $0.simplified(tolerance: tolerance, highQuality: highQuality) }
+
+        let result = simplified.map { poly -> Polygon in
+            var newRings: [[Coordinate3D]] = []
+            for ring in poly.rings {
+                var coords = ring.coordinates
+                guard coords.count >= 2 else { continue }
+                for i in 0 ..< coords.count - 1 {
+                    let key = EdgeKey(coords[i], coords[i + 1])
+                    if sharedKeys.contains(key), let original = sharedEdges[key] {
+                        coords[i] = original[0]
+                        coords[i + 1] = original[1]
+                    }
+                }
+                newRings.append(coords)
+            }
+            return Polygon(unchecked: newRings)
+        }
+
+        return MultiPolygon(unchecked: result)
+    }
+
+}
+
+// MARK: - Implementation: Ring simplification
+
 extension Ring {
 
     fileprivate func simplified(
@@ -116,9 +281,7 @@ extension Ring {
         var simplificationTolerance = tolerance
         var simplifiedCoordinates = Simplify.simplify(coordinates: coordinates, toleranceInMeters: simplificationTolerance, highQuality: highQuality)
 
-        // if this is not a valid polygon ring anymore: reduce the tolerance until we have at least a triangle
         while !Ring.validCoordinates(simplifiedCoordinates) {
-            // Prevent an endless loop
             guard simplificationTolerance >= (tolerance / 2.0) else { return self }
 
             simplificationTolerance *= 0.9
@@ -149,7 +312,7 @@ extension Ring {
 
 }
 
-// MARK: - Simplify
+// MARK: - Implementation: Simplify algorithm
 
 /// Static methods for simplifiying geometries.
 public enum Simplify {
@@ -342,6 +505,121 @@ public enum Simplify {
         let dx = p1.longitude - p2.longitude
         let dy = p1.latitude - p2.latitude
         return (dx * dx) + (dy * dy)
+    }
+
+    /// Visvalingam-Whyatt simplification (area-based).
+    /// Removes vertices whose triangular effective area is below the
+    /// threshold derived from `toleranceInMeters`. Better at preserving
+    /// overall polygon shape than Douglas-Peucker.
+    fileprivate static func simplifyVisvalingamWhyatt(
+        coordinates: [Coordinate3D],
+        toleranceInMeters: CLLocationDistance
+    ) -> [Coordinate3D] {
+        guard coordinates.count > 3 else { return coordinates }
+        guard let first = coordinates.first else { return coordinates }
+
+        let crsTolerance: Double
+        switch first.projection {
+        case .epsg4326:
+            let metersPerDegree = 111_325.0
+            crsTolerance = toleranceInMeters / metersPerDegree
+        case .epsg3857, .epsg4978, .noSRID:
+            crsTolerance = toleranceInMeters
+        }
+
+        let closeIfNeeded = coordinates.count >= 2 && coordinates.first == coordinates.last
+        let coords = closeIfNeeded ? Array(coordinates.dropLast()) : coordinates
+        guard coords.count >= 3 else { return coordinates }
+
+        let n = coords.count
+        var prev = Array(repeating: 0, count: n)
+        var next = Array(repeating: 0, count: n)
+        var area = Array(repeating: 0.0, count: n)
+        var removed = Array(repeating: false, count: n)
+
+        for i in 0 ..< n {
+            prev[i] = (i + n - 1) % n
+            next[i] = (i + 1) % n
+        }
+
+        for i in 0 ..< n {
+            area[i] = triangleArea(coords[prev[i]], coords[i], coords[next[i]])
+        }
+
+        var remaining = n
+        while remaining > 3 {
+            var minIdx = -1
+            var minArea = Double.infinity
+            for i in 0 ..< n where !removed[i] {
+                if area[i] >= 0, area[i] < minArea {
+                    minArea = area[i]
+                    minIdx = i
+                }
+            }
+            if minIdx < 0 { break }
+
+            let areaThreshold = abs(crsTolerance) * 2.0
+            if minArea > areaThreshold { break }
+
+            removed[minIdx] = true
+            let p = prev[minIdx]
+            let nxt = next[minIdx]
+            next[p] = nxt
+            prev[nxt] = p
+
+            let pp = prev[p]
+            if !removed[pp] {
+                area[p] = triangleArea(coords[pp], coords[p], coords[nxt])
+            }
+            let nn = next[nxt]
+            if !removed[nn] {
+                area[nxt] = triangleArea(coords[p], coords[nxt], coords[nn])
+            }
+            area[minIdx] = -1.0
+
+            remaining -= 1
+        }
+
+        var result: [Coordinate3D] = []
+        for i in 0 ..< n where !removed[i] {
+            result.append(coords[i])
+        }
+        return result
+    }
+
+    /// Triangle area (2D cross product magnitude).
+    private static func triangleArea(
+        _ a: Coordinate3D,
+        _ b: Coordinate3D,
+        _ c: Coordinate3D
+    ) -> Double {
+        let ax = b.longitude - a.longitude
+        let ay = b.latitude - a.latitude
+        let bx = c.longitude - a.longitude
+        let by = c.latitude - a.latitude
+        return abs(ax * by - ay * bx) / 2.0
+    }
+
+}
+
+// MARK: - Implementation: Edge key for shared edge detection
+
+private struct EdgeKey: Hashable {
+
+    let a: Double
+    let b: Double
+
+    init(_ p1: Coordinate3D, _ p2: Coordinate3D) {
+        if p1.longitude < p2.longitude
+            || (p1.longitude == p2.longitude && p1.latitude < p2.latitude)
+        {
+            a = p1.longitude * 1_000_000 + p1.latitude
+            b = p2.longitude * 1_000_000 + p2.latitude
+        }
+        else {
+            a = p2.longitude * 1_000_000 + p2.latitude
+            b = p1.longitude * 1_000_000 + p1.latitude
+        }
     }
 
 }
