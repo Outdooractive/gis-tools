@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 
 // MARK: - Coordinate array cleaning
@@ -11,29 +14,41 @@ extension Array where Element == Coordinate3D {
     ///   - removeCollinear: Remove the middle point of three consecutive collinear points (default `false`).
     ///   - closeRing: If `true`, ensure the last coordinate equals the first (for polygon rings).
     ///   - openRing: If `true`, remove the closing duplicate when `last == first`.
-    ///   - tolerance: Epsilon for coordinate equality and collinearity checks (default `GISTool.equalityDelta`).
+    ///   - tolerance: Epsilon for coordinate equality and collinearity checks in meters (default `GISTool.equalityDelta`).
     /// - Returns: A cleaned copy of the array.
     public func cleaned(
         removeDuplicates: Bool = true,
         removeCollinear: Bool = false,
         closeRing: Bool = false,
         openRing: Bool = false,
-        tolerance: Double = GISTool.equalityDelta
+        tolerance: CLLocationDistance = GISTool.equalityDelta
     ) -> [Coordinate3D] {
+        // Convert meter tolerance to CRS units if coordinates are in degrees.
+        // For 3857 and noSRID the coordinates are in meters already.
+        let crsTolerance: Double = {
+            guard let projection = first?.projection else { return tolerance }
+            switch projection {
+            case .epsg4326, .epsg4978:
+                return tolerance / 111_325.0
+            case .epsg3857, .noSRID:
+                return tolerance
+            }
+        }()
+
         var result = self
 
         if removeDuplicates {
-            result = CleanHelpers.deduplicate(result, tolerance: tolerance)
+            result = CleanHelpers.deduplicate(result, tolerance: crsTolerance)
         }
 
         if removeCollinear {
-            result = CleanHelpers.removeCollinearPoints(result, tolerance: tolerance)
+            result = CleanHelpers.removeCollinearPoints(result, tolerance: crsTolerance)
         }
 
         if openRing, result.count >= 2 {
             if let first = result.first, let last = result.last,
-               abs(first.longitude - last.longitude) <= tolerance,
-               abs(first.latitude - last.latitude) <= tolerance
+               abs(first.longitude - last.longitude) <= crsTolerance,
+               abs(first.latitude - last.latitude) <= crsTolerance
             {
                 result.removeLast()
             }
@@ -41,8 +56,8 @@ extension Array where Element == Coordinate3D {
 
         if closeRing, result.count >= 2 {
             if let first = result.first, let last = result.last,
-               abs(first.longitude - last.longitude) > tolerance
-                || abs(first.latitude - last.latitude) > tolerance
+               abs(first.longitude - last.longitude) > crsTolerance
+                || abs(first.latitude - last.latitude) > crsTolerance
             {
                 result.append(first)
             }

@@ -17,8 +17,9 @@ public enum GISTool {
     /// WGS84 equatorial radius as specified by the International Union of Geodesy and Geophysics.
     public static let equatorialRadius: CLLocationDistance = 6_378_137
 
-    /// The accuracy for testing what is equal (μm precision, mainly to counter small rounding errors).
-    public static let equalityDelta: Double = 1e-10
+    /// The accuracy for testing what is equal (0.1nm precision for projected coords,
+    /// ~0.011mm at the equator for EPSG:4326, mainly to counter small rounding errors).
+    public static let equalityDelta: CLLocationDistance = 1e-10
 
     /// Mercator projection origin shift.
     public static let originShift = 2.0 * Double.pi * GISTool.equatorialRadius / 2.0 // 20037508.342789244

@@ -118,13 +118,15 @@ extension FeatureCollection {
     ///
     /// - Parameters:
     ///   - weightAttribute: The property name used to weight the center.
-    ///   - tolerance: The convergence threshold in meters (default: `0.001`).
+    ///   - tolerance: The convergence threshold in meters. Internally converted to
+    ///     CRS units (degrees for ``Projection/epsg4326``, meters for ``Projection/epsg3857``).
+    ///     Default `1.0`.
     ///   - counter: Maximum number of iterations (default: `10`).
     ///
     /// - Returns: The median center, or `nil` if the collection is empty.
     public func centerMedian(
         weightAttribute: String? = nil,
-        tolerance: Double = 0.001,
+        tolerance: CLLocationDistance = 1.0,
         counter: Int = 10
     ) -> Point? {
         guard let meanCenter = centerMean(weightAttribute: weightAttribute) else {
@@ -169,6 +171,16 @@ extension FeatureCollection {
             y: initialLat,
             projection: projection)
 
+        // Convert meter tolerance to CRS units
+        let crsTolerance: Double = {
+            switch projection {
+            case .epsg4326, .epsg4978:
+                return tolerance / 111_325.0
+            case .epsg3857, .noSRID:
+                return tolerance
+            }
+        }()
+
         guard var result = findMedian(
             candidate: initialCandidate,
             previousCandidate: Coordinate3D(
@@ -176,7 +188,7 @@ extension FeatureCollection {
                 y: 0.0,
                 projection: projection),
             centroids: centroids,
-            tolerance: tolerance,
+            tolerance: crsTolerance,
             counter: counter) else { return nil }
 
         if spansAntimeridian && result.coordinate.longitude > 180.0 {
@@ -189,6 +201,7 @@ extension FeatureCollection {
         return result
     }
 
+    /// - Parameter tolerance: Convergence threshold in CRS units (already converted from meters).
     private func findMedian(
         candidate: Coordinate3D,
         previousCandidate: Coordinate3D,

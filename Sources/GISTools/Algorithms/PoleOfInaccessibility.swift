@@ -12,12 +12,22 @@ extension Polygon {
     ///
     /// Uses the polylabel algorithm with a priority-queue grid search.
     ///
-    /// - Parameter precision: Precision in the projection's native coordinate units
-    ///   (degrees for ``Projection/epsg4326``, meters for ``Projection/epsg3857``
-    ///   and ``Projection/epsg4978``). Default `1.0`.
+    /// - Parameter precision: Precision in meters. Internally converted to CRS units
+    ///   (degrees for ``Projection/epsg4326``, meters for ``Projection/epsg3857``).
+    ///   Default `1.0`.
     /// - Parameter gridSize: An optional grid size for snapping inputs
     /// - Returns: The pole point, or `nil` if no outer ring exists.
-    public func poleOfInaccessibility(precision: Double = 1.0, gridSize: Double? = nil) -> Point? {
+    public func poleOfInaccessibility(precision: CLLocationDistance = 1.0, gridSize: Double? = nil) -> Point? {
+        // Convert meter precision to CRS units
+        let crsPrecision: Double = {
+            switch projection {
+            case .epsg4326, .epsg4978:
+                return precision / 111_325.0
+            case .epsg3857, .noSRID:
+                return precision
+            }
+        }()
+
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
         guard let outerRing = snappedSelf.outerRing else { return nil }
@@ -68,9 +78,9 @@ extension Polygon {
 
         let width = maxX - minX
         let height = maxY - minY
-        let cellSize = max(precision, min(width, height))
+        let cellSize = max(crsPrecision, min(width, height))
 
-        if cellSize == precision {
+        if cellSize == crsPrecision {
             return Point(Coordinate3D(latitude: minY, longitude: minX))
         }
 
@@ -97,7 +107,7 @@ extension Polygon {
                     y: y + h,
                     h: h,
                     polygon: snappedSelf)
-                if cell.max > bestCell.d + precision {
+                if cell.max > bestCell.d + crsPrecision {
                     insertSorted(&queue, cell)
                 }
                 if cell.d > bestCell.d {
@@ -111,7 +121,7 @@ extension Polygon {
         while queue.isNotEmpty {
             let cell = queue.removeLast()
 
-            if cell.max - bestCell.d <= precision {
+            if cell.max - bestCell.d <= crsPrecision {
                 continue
             }
             if cell.d > bestCell.d {
@@ -133,8 +143,8 @@ extension Polygon {
                 // The child's maximum reachable d is cell.d + cell.h/2 (moving
                 // at most cell.h/2 toward the true optimum). If even that bound
                 // is within precision of bestD, skip the insertion.
-                if c.max > bestCell.d + precision,
-                   cell.d + cell.h / 2.0 > bestCell.d - precision
+                if c.max > bestCell.d + crsPrecision,
+                   cell.d + cell.h / 2.0 > bestCell.d - crsPrecision
                 {
                     insertSorted(&queue, c)
                 }
