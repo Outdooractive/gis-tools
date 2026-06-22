@@ -89,7 +89,7 @@ extension Polygon {
     ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: An array of simple polygons.
     public func unkinked(
-        epsilon: Double = 1e-10,
+        epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) -> [Polygon] {
         Self.unkinkPolygons(from: [self], epsilon: epsilon, gridSize: gridSize)
@@ -103,7 +103,7 @@ extension Polygon {
     ///    - epsilon: Tolerance for intersection detection.
     ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public mutating func unkink(
-        epsilon: Double = 1e-10,
+        epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) {
         let result = unkinked(epsilon: epsilon, gridSize: gridSize)
@@ -123,7 +123,7 @@ extension MultiPolygon {
     ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: An array of simple polygons.
     public func unkinked(
-        epsilon: Double = 1e-10,
+        epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) -> [Polygon] {
         Polygon.unkinkPolygons(from: polygons, epsilon: epsilon, gridSize: gridSize)
@@ -137,7 +137,7 @@ extension MultiPolygon {
     ///    - epsilon: Tolerance for intersection detection.
     ///    - gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public mutating func unkink(
-        epsilon: Double = 1e-10,
+        epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) {
         let result = unkinked(epsilon: epsilon, gridSize: gridSize)

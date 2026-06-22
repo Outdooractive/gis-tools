@@ -88,7 +88,7 @@ extension Coordinate3D {
         for i in 0..<npoints {
             let t = Double(i) / Double(npoints - 1)
             let pt: Cartesian3D
-            if angle < 1e-10 {
+            if angle < GISTool.equalityDelta {
                 // Start ≈ end; just use start
                 pt = startCart
             }

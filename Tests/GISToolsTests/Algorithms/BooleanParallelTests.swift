@@ -177,7 +177,7 @@ struct BooleanParallelTests {
         let s1 = LineSegment(first: a, second: b)
         let s2 = LineSegment(first: b, second: a)
         #expect(!s1.isParallel(to: s2))
-        #expect(s1.isParallel(to: s2, tolerance: 1e-10, undirectedEdge: true))
+        #expect(s1.isParallel(to: s2, tolerance: GISTool.equalityDelta, undirectedEdge: true))
     }
 
     // MARK: - LineString tests

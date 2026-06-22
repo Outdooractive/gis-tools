@@ -180,7 +180,7 @@ private enum MinimumBoundingCircle {
         let cx = c.longitude, cy = c.latitude
 
         let d = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
-        guard abs(d) > 1e-15 else { return nil }
+        guard abs(d) > GISTool.determinantEpsilon else { return nil }
 
         let ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d
         let uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
@@ -198,7 +198,7 @@ private enum MinimumBoundingCircle {
     }
 
     private static func isInside(_ p: Coordinate3D, center: Coordinate3D, radius: Double) -> Bool {
-        distance(p, center) <= radius + 1e-12
+        distance(p, center) <= radius + GISTool.intersectionEpsilon
     }
 
 }

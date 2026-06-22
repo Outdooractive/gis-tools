@@ -137,3 +137,5 @@ If a method has ≤3 parameters and no return value, or ≤2 parameters and a re
 - New algorithms and bug fixes MUST include tests for all projections (EPSG:4326, EPSG:3857, EPSG:4978, noSRID)
 - Antimeridian-crossing geometries MUST be tested in all projections where the concept applies (EPSG:4326 natively, EPSG:3857 and EPSG:4978 via projected coordinates)
 - The result of an algorithm MUST be in the same projection as the input, where it makes sense
+- Use written-out decimal numbers (e.g., `0.0000000001`) instead of scientific notation (`1e-10`)
+- Use ``GISTool`` constants (``equalityDelta``, ``intersectionEpsilon``, ``determinantEpsilon``) instead of hardcoded epsilon values

@@ -4,7 +4,7 @@ import Testing
 
 struct Cartesian3DTests {
 
-    private let accuracy: Double = 1e-12
+    private let accuracy: Double = 0.000000000001
 
     @Test
     func description() async throws {

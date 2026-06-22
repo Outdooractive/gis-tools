@@ -87,7 +87,7 @@ extension Coordinate3D {
         let deltaPsi: Double = log(tan(phi2 / 2.0 + .pi / 4.0) / tan(phi1 / 2.0 + .pi / 4.0))
 
         // E-W course becomes ill-conditioned with 0/0
-        let q: Double = (abs(deltaPsi) > 10e-12
+        let q: Double = (abs(deltaPsi) > GISTool.intersectionEpsilon
             ? deltaPhi / deltaPsi
             : cos(phi1))
 

@@ -29,8 +29,8 @@ struct GeoPackageTests {
         let readGeo = read.features[0].geometry
         #expect(readGeo is Point)
         let point = readGeo as! Point
-        #expect(abs(point.coordinate.latitude - 45.0) < 1e-6)
-        #expect(abs(point.coordinate.longitude - 10.0) < 1e-6)
+        #expect(abs(point.coordinate.latitude - 45.0) < 0.000001)
+        #expect(abs(point.coordinate.longitude - 10.0) < 0.000001)
     }
 
     // Validates round-trip with a LineString.

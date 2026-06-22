@@ -17,7 +17,10 @@ extension Polygon {
     ///   Default `1.0`.
     /// - Parameter gridSize: An optional grid size for snapping inputs
     /// - Returns: The pole point, or `nil` if no outer ring exists.
-    public func poleOfInaccessibility(precision: CLLocationDistance = 1.0, gridSize: Double? = nil) -> Point? {
+    public func poleOfInaccessibility(
+        precision: CLLocationDistance = 1.0,
+        gridSize: Double? = nil
+    ) -> Point? {
         // Convert meter precision to CRS units
         let crsPrecision: Double = {
             switch projection {
@@ -159,8 +162,8 @@ extension Polygon {
     /// Insert into a max-sorted array (largest .max at end)
     private func insertSorted(
         _ queue: inout [PQCell],
-        _ cell: PQCell)
-    {
+        _ cell: PQCell
+    ) {
         var lo = 0
         var hi = queue.count
         while lo < hi {
