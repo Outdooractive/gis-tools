@@ -930,7 +930,7 @@ struct BufferTests {
     // Dumps a GeoJSON FeatureCollection to the console showing all buffer
     // join and end type combinations. Run locally to visually inspect the
     // results at https://geojson.io.
-    @Test//(.disabled("Enable locally to dump GeoJSON to console"))
+    @Test(.disabled("Enable locally to dump GeoJSON to console"))
     func bufferShowcase() async throws {
         let distance: CLLocationDistance = 5_000.0
         var allFeatures: [Feature] = []

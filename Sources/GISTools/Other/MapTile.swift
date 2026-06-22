@@ -314,6 +314,47 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
 extension MapTile: Equatable, Hashable {}
 
+// MARK: - TMS coordinate conversion
+
+extension MapTile {
+
+    /// Converts the MapTile (XYZ convention: y=0 at top) to a TMS row
+    /// index (TMS convention: row 0 at bottom).
+    ///
+    /// GeoPackage tile tables use the TMS convention where row 0 is the
+    /// bottom row of the tile pyramid.
+    ///
+    /// - Parameter matrixHeight: The total number of tile rows at this
+    ///   zoom level.
+    /// - Returns: The TMS row index.
+    public func tmsRow(matrixHeight: Int) -> Int {
+        matrixHeight - 1 - y
+    }
+
+    /// Creates a MapTile from a TMS tile key.
+    ///
+    /// GeoPackage tile tables use the TMS convention where row 0 is the
+    /// bottom row of the tile pyramid.  This initializer converts back
+    /// to the XYZ convention used by MapTile.
+    ///
+    /// - Parameters:
+    ///   - column: The tile column index (same in both conventions).
+    ///   - tmsRow: The TMS row index (0 = bottom).
+    ///   - zoom: The zoom level.
+    ///   - matrixHeight: The total number of tile rows at this zoom level.
+    public init(
+        column: Int,
+        tmsRow: Int,
+        zoom: Int,
+        matrixHeight: Int
+    ) {
+        self.x = column
+        self.y = matrixHeight - 1 - tmsRow
+        self.z = zoom
+    }
+
+}
+
 // MARK: - Coordinate shortcuts
 
 extension Coordinate3D {
@@ -355,4 +396,5 @@ extension CLLocationCoordinate2D {
     }
 
 }
+
 #endif

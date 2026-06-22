@@ -114,6 +114,30 @@ enum GeoPackage {
             scope TEXT NOT NULL,
             CONSTRAINT ge_tce UNIQUE (table_name, column_name, extension_name)
         );
+
+        CREATE TABLE IF NOT EXISTS gpkg_tile_matrix_set (
+            table_name TEXT NOT NULL PRIMARY KEY,
+            srs_id INTEGER NOT NULL,
+            min_x DOUBLE NOT NULL,
+            min_y DOUBLE NOT NULL,
+            max_x DOUBLE NOT NULL,
+            max_y DOUBLE NOT NULL,
+            CONSTRAINT fk_gtms_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),
+            CONSTRAINT fk_gtms_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS gpkg_tile_matrix (
+            table_name TEXT NOT NULL,
+            zoom_level INTEGER NOT NULL,
+            matrix_width INTEGER NOT NULL,
+            matrix_height INTEGER NOT NULL,
+            tile_width INTEGER NOT NULL,
+            tile_height INTEGER NOT NULL,
+            pixel_x_size DOUBLE NOT NULL,
+            pixel_y_size DOUBLE NOT NULL,
+            CONSTRAINT pk_ttm PRIMARY KEY (table_name, zoom_level),
+            CONSTRAINT fk_ttm_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+        );
         """
 
     /// SQL to drop metadata tables (for cleanup).
@@ -122,6 +146,8 @@ enum GeoPackage {
         DROP TABLE IF EXISTS gpkg_contents;
         DROP TABLE IF EXISTS gpkg_geometry_columns;
         DROP TABLE IF EXISTS gpkg_extensions;
+        DROP TABLE IF EXISTS gpkg_tile_matrix;
+        DROP TABLE IF EXISTS gpkg_tile_matrix_set;
         """
 
     // MARK: - Schema setup
@@ -233,6 +259,58 @@ enum GeoPackage {
         case .geometryCollection: return "GEOMETRYCOLLECTION"
         default: return "GEOMETRY"
         }
+    }
+
+    /// Reads the `gpkg_contents` table and returns a list of available
+    /// tables with their type and metadata.
+    ///
+    /// - Parameter db: An open SQLite database handle.
+    /// - Returns: An array of ``GeoPackageTable`` entries.
+    static func readContents(from db: SQLiteDB) throws -> [GeoPackageTable] {
+        try db.query(
+            "SELECT table_name, data_type, identifier, description,"
+            + " min_x, min_y, max_x, max_y, srs_id"
+            + " FROM gpkg_contents ORDER BY table_name;"
+        ).compactMap { row in
+            guard let tableName = row["table_name"] as? String,
+                  let dataType = row["data_type"] as? String
+            else { return nil }
+
+            let identifier = row["identifier"] as? String
+            let description = row["description"] as? String
+            let srsId = row["srs_id"] as? Int
+            let bounds: BoundingBox?
+            if let minX = row["min_x"] as? Double,
+               let minY = row["min_y"] as? Double,
+               let maxX = row["max_x"] as? Double,
+               let maxY = row["max_y"] as? Double
+            {
+                bounds = BoundingBox(
+                    southWest: Coordinate3D(latitude: minY, longitude: minX),
+                    northEast: Coordinate3D(latitude: maxY, longitude: maxX))
+            }
+            else {
+                bounds = nil
+            }
+
+            return GeoPackageTable(
+                tableName: tableName,
+                dataType: dataType,
+                identifier: identifier,
+                description: description,
+                srsId: srsId,
+                bounds: bounds)
+        }
+    }
+
+    /// Opens a GeoPackage file and reads the `gpkg_contents` table.
+    ///
+    /// - Parameter url: The file URL of a GeoPackage database.
+    /// - Returns: An array of ``GeoPackageTable`` entries.
+    static func readContents(from url: URL) throws -> [GeoPackageTable] {
+        let db = try SQLiteDB(path: url.path)
+        defer { db.close() }
+        return try GeoPackage.readContents(from: db)
     }
 
 }
