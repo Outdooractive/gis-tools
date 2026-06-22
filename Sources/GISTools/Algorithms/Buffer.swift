@@ -358,7 +358,7 @@ extension GeoJson {
             let x1 = a1.x, y1 = a1.y, x2 = a2.x, y2 = a2.y
             let x3 = b1.x, y3 = b1.y, x4 = b2.x, y4 = b2.y
             let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            guard abs(denom) > 1e-12 else { return nil }
+            guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
 
             let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
             let x = x1 + t * (x2 - x1)

@@ -132,7 +132,7 @@ extension LineSegment {
         let denominator: Double = ((other.second.latitude - other.first.latitude) * (snappedSelf.second.longitude - snappedSelf.first.longitude))
             - ((other.second.longitude - other.first.longitude) * (snappedSelf.second.latitude - snappedSelf.first.latitude))
 
-        if abs(denominator) > 1e-15 {
+        if abs(denominator) > GISTool.determinantEpsilon {
             let numeratorA: Double = ((other.second.longitude - other.first.longitude) * (snappedSelf.first.latitude - other.first.latitude))
                 - ((other.second.latitude - other.first.latitude) * (snappedSelf.first.longitude - other.first.longitude))
             let numeratorB: Double = ((snappedSelf.second.longitude - snappedSelf.first.longitude) * (snappedSelf.first.latitude - other.first.latitude))

@@ -94,8 +94,8 @@ struct PoleOfInaccessibilityTests {
         let withParam = try #require(polygon.poleOfInaccessibility(gridSize: gridSize))
         let snappedPolygon = polygon.snappedToGrid(tolerance: gridSize)
         let manual = try #require(snappedPolygon.poleOfInaccessibility())
-        #expect(abs(withParam.coordinate.latitude - manual.coordinate.latitude) < 1e-10)
-        #expect(abs(withParam.coordinate.longitude - manual.coordinate.longitude) < 1e-10)
+        #expect(abs(withParam.coordinate.latitude - manual.coordinate.latitude) < 0.0000000001)
+        #expect(abs(withParam.coordinate.longitude - manual.coordinate.longitude) < 0.0000000001)
     }
 
     // MARK: - Antimeridian

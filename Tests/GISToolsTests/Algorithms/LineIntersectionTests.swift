@@ -185,8 +185,8 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 0, longitude: 10),
                              second: Coordinate3D(latitude: 10, longitude: 0))
         let result = try #require(s1.intersection(s2))
-        #expect(abs(result.latitude - 5) < 1e-10)
-        #expect(abs(result.longitude - 5) < 1e-10)
+        #expect(abs(result.latitude - 5) < 0.0000000001)
+        #expect(abs(result.longitude - 5) < 0.0000000001)
     }
 
     // Tests that two line segments meeting at an endpoint return that endpoint as the intersection.
@@ -197,8 +197,8 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 5, longitude: 5),
                              second: Coordinate3D(latitude: 10, longitude: 0))
         let result = try #require(s1.intersection(s2))
-        #expect(abs(result.latitude - 5) < 1e-10)
-        #expect(abs(result.longitude - 5) < 1e-10)
+        #expect(abs(result.latitude - 5) < 0.0000000001)
+        #expect(abs(result.longitude - 5) < 0.0000000001)
     }
 
     // Tests that near-miss segments touching at endpoints are detected as intersecting with an epsilon tolerance.
@@ -209,7 +209,7 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.000000001, longitude: 10.000000001),
                              second: Coordinate3D(latitude: 20, longitude: 0))
         #expect(s1.intersection(s2) == nil)
-        #expect(s1.intersection(s2, epsilon: 1e-6) != nil)
+        #expect(s1.intersection(s2, epsilon: 0.000001) != nil)
     }
 
     // Tests that non-crossing, non-overlapping line segments return no intersection.
@@ -290,8 +290,8 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 2, longitude: 3),
                              second: Coordinate3D(latitude: 2, longitude: 7))
         let result = try #require(s1.intersection(s2))
-        #expect(abs(result.latitude - 2) < 1e-10)
-        #expect(abs(result.longitude - 5) < 1e-10)
+        #expect(abs(result.latitude - 2) < 0.0000000001)
+        #expect(abs(result.longitude - 5) < 0.0000000001)
     }
 
     // MARK: - Edge case tests for intersects()
@@ -370,8 +370,8 @@ struct LineIntersectionTests {
         let snapped1 = LineSegment(first: snap(s1.first), second: snap(s1.second))
         let snapped2 = LineSegment(first: snap(s2.first), second: snap(s2.second))
         let manual = try #require(snapped1.intersection(snapped2))
-        #expect(abs(withParam.latitude - manual.latitude) < 1e-10)
-        #expect(abs(withParam.longitude - manual.longitude) < 1e-10)
+        #expect(abs(withParam.latitude - manual.latitude) < 0.0000000001)
+        #expect(abs(withParam.longitude - manual.longitude) < 0.0000000001)
     }
 
     // Tests that the boolean intersects method returns true for overlapping collinear segments.
@@ -402,7 +402,7 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.0000001, longitude: 0),
                              second: Coordinate3D(latitude: 20, longitude: 0))
         #expect(s1.intersects(s2) == false)
-        #expect(s1.intersects(s2, epsilon: 1e-6))
+        #expect(s1.intersects(s2, epsilon: 0.000001))
     }
 
     // Tests that segments nearly meeting at endpoints are detected as intersecting only with an epsilon tolerance.
@@ -413,7 +413,7 @@ struct LineIntersectionTests {
         let s2 = LineSegment(first: Coordinate3D(latitude: 10.000000001, longitude: 10.000000001),
                              second: Coordinate3D(latitude: 20, longitude: 0))
         #expect(s1.intersects(s2) == false)
-        #expect(s1.intersects(s2, epsilon: 1e-6))
+        #expect(s1.intersects(s2, epsilon: 0.000001))
     }
 
 }

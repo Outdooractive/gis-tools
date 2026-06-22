@@ -101,7 +101,7 @@ struct NearestPointOnFeatureTests {
         let snappedRef = Point(ref).snappedToGrid(tolerance: gridSize).coordinate
         let manual = try #require(snappedPolygon.nearestCoordinateOnFeature(from: snappedRef))
         #expect(withParam.coordinate == manual.coordinate)
-        #expect(abs(withParam.distance - manual.distance) < 1e-10)
+        #expect(abs(withParam.distance - manual.distance) < 0.0000000001)
     }
 
     // MARK: - Projection tests

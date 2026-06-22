@@ -37,9 +37,9 @@ struct BearingTests {
         let north = Coordinate3D(x: 0.0, y: 1.0, projection: .noSRID)
         let northEast = Coordinate3D(x: 1.0, y: 1.0, projection: .noSRID)
 
-        #expect(abs(origin.bearing(to: east) - 90.0) < 1e-10)
-        #expect(abs(origin.bearing(to: north)) < 1e-10)
-        #expect(abs(origin.bearing(to: northEast) - 45.0) < 1e-10)
+        #expect(abs(origin.bearing(to: east) - 90.0) < 0.0000000001)
+        #expect(abs(origin.bearing(to: north)) < 0.0000000001)
+        #expect(abs(origin.bearing(to: northEast) - 45.0) < 0.0000000001)
     }
 
     // MARK: - Antimeridian

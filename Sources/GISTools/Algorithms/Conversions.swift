@@ -90,7 +90,7 @@ extension GISTool {
         case .inches: return 1550.003100006
         case .kilometers, .kilometres: return 0.000001
         case .meters, .metres: return 1.0
-        case .miles: return 3.86e-7
+        case .miles: return 0.000000386
         case .millimeters, .millimetres: return 1_000_000.0
         case .yards: return 1.195990046
         default: return nil

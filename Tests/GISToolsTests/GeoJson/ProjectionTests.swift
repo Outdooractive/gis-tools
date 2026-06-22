@@ -76,23 +76,23 @@ struct ProjectionTests {
         let coord1 = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 0.0)
         let ecef1 = coord1.projected(to: .epsg4978)
         let back1 = ecef1.projected(to: .epsg4326)
-        #expect(abs(back1.latitude - coord1.latitude) < 1e-8)
-        #expect(abs(back1.longitude - coord1.longitude) < 1e-8)
+        #expect(abs(back1.latitude - coord1.latitude) < 0.00000001)
+        #expect(abs(back1.longitude - coord1.longitude) < 0.00000001)
         #expect(abs((back1.altitude ?? 0.0)) < 0.001)
 
         let coord2 = Coordinate3D(latitude: 35.522895, longitude: -97.552175, altitude: 0.0)
         let ecef2 = coord2.projected(to: .epsg4978)
         let back2 = ecef2.projected(to: .epsg4326)
-        #expect(abs(back2.latitude - coord2.latitude) < 1e-8)
-        #expect(abs(back2.longitude - coord2.longitude) < 1e-8)
+        #expect(abs(back2.latitude - coord2.latitude) < 0.00000001)
+        #expect(abs(back2.longitude - coord2.longitude) < 0.00000001)
         #expect(abs((back2.altitude ?? 0.0)) < 0.001)
 
         // Round-trip with altitude preserved
         let coord3 = Coordinate3D(latitude: -33.86, longitude: 151.21, altitude: 500.0)
         let ecef3 = coord3.projected(to: .epsg4978)
         let back3 = ecef3.projected(to: .epsg4326)
-        #expect(abs(back3.latitude - coord3.latitude) < 1e-8)
-        #expect(abs(back3.longitude - coord3.longitude) < 1e-8)
+        #expect(abs(back3.latitude - coord3.latitude) < 0.00000001)
+        #expect(abs(back3.longitude - coord3.longitude) < 0.00000001)
         #expect(abs((back3.altitude ?? 0.0) - 500.0) < 0.001)
 
         // EPSG:3857 → EPSG:4978 via chaining matches 4326 → 4978
@@ -111,8 +111,8 @@ struct ProjectionTests {
         // ECEF Null Island (a, 0, 0) → lat=0, lon=0
         let ecefNull = Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)
         let geoNull = ecefNull.projected(to: .epsg4326)
-        #expect(abs(geoNull.latitude) < 1e-10)
-        #expect(abs(geoNull.longitude) < 1e-10)
+        #expect(abs(geoNull.latitude) < 0.0000000001)
+        #expect(abs(geoNull.longitude) < 0.0000000001)
 
         // Round-trip: 4978 → 4326 → 4978
         let ecef1 = Coordinate3D(x: 4_000_000.0, y: 5_000_000.0, z: 3_000_000.0, projection: .epsg4978)

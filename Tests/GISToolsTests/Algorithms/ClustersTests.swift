@@ -604,7 +604,7 @@ struct ClusterBenchmarks {
 
     private static func _milliseconds(_ duration: Duration) -> Double {
         let components = duration.components
-        return Double(components.seconds) * 1_000.0 + Double(components.attoseconds) / 1e15
+        return Double(components.seconds) * 1_000.0 + Double(components.attoseconds) / 1_000_000_000_000_000
     }
 
     private static func _format(_ value: Double) -> String {

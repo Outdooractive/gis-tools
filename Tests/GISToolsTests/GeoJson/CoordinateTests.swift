@@ -268,7 +268,7 @@ struct CoordinateTests {
         let shift = GISTool.originShift
         let a = Coordinate3D(x: shift * 3.0, y: 10.0)
         let n = a.normalized()
-        #expect(abs(n.x - shift) < 1e-6)
+        #expect(abs(n.x - shift) < 0.000001)
     }
 
     /// Validates that normalization preserves altitude and m values.
@@ -412,7 +412,7 @@ struct CoordinateTests {
     /// Validates coordinates within the hash bucket threshold are equal.
     @Test
     func hashableWithinSameBucket() async throws {
-        let a = Coordinate3D(latitude: 10.0 + 0.4e-10, longitude: 20.0)
+        let a = Coordinate3D(latitude: 10.0 + 0.00000000004, longitude: 20.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 20.0)
         #expect(a == b)
         #expect(a.hashValue == b.hashValue)
@@ -421,7 +421,7 @@ struct CoordinateTests {
     /// Validates coordinates just outside the hash bucket threshold are not equal.
     @Test
     func hashableEdgeDelta() async throws {
-        let a = Coordinate3D(latitude: 10.0 + 1.1e-10, longitude: 20.0)
+        let a = Coordinate3D(latitude: 10.0 + 0.00000000011, longitude: 20.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 20.0)
         #expect(a != b)
     }
@@ -463,7 +463,7 @@ struct CoordinateTests {
         let a = Coordinate3D(x: 1000.0, y: 2000.0)
         let b = Coordinate3D(x: 1000.000_001, y: 2000.0)
         #expect(a.equals(other: b, equalityDelta: 0.001))
-        #expect(a.equals(other: b, equalityDelta: 1e-10) == false)
+        #expect(a.equals(other: b, equalityDelta: GISTool.equalityDelta) == false)
     }
 
     /// Validates equality between EPSG:4326 and projected EPSG:3857 coordinates.
@@ -496,8 +496,8 @@ struct CoordinateTests {
         #expect(abs(ecef.altitude ?? 0.0) < 0.001)
 
         let back = ecef.projected(to: .epsg4326)
-        #expect(abs(back.latitude) < 1e-10)
-        #expect(abs(back.longitude) < 1e-10)
+        #expect(abs(back.latitude) < 0.0000000001)
+        #expect(abs(back.longitude) < 0.0000000001)
         #expect(abs(back.altitude ?? 0.0) < 0.001)
     }
 
@@ -511,8 +511,8 @@ struct CoordinateTests {
         #expect(abs(ecef.altitude ?? 0.0) < 0.001)
 
         let back = ecef.projected(to: .epsg4326)
-        #expect(abs(back.latitude) < 1e-10)
-        #expect(abs(back.longitude - 90.0) < 1e-10)
+        #expect(abs(back.latitude) < 0.0000000001)
+        #expect(abs(back.longitude - 90.0) < 0.0000000001)
     }
 
     /// Validates the ECEF conversion for the North Pole (90°N, 0°, 0m) → (0, 0, b) and round-trip.
@@ -525,8 +525,8 @@ struct CoordinateTests {
         #expect(abs((ecef.altitude ?? 0.0) - 6_356_752.314) < 0.1)
 
         let back = ecef.projected(to: .epsg4326)
-        #expect(abs(back.latitude - 90.0) < 1e-10)
-        #expect(abs(back.longitude) < 1e-10)
+        #expect(abs(back.latitude - 90.0) < 0.0000000001)
+        #expect(abs(back.longitude) < 0.0000000001)
     }
 
     /// Validates round-trip conversion: EPSG:4326 → EPSG:4978 → EPSG:4326 with altitude preserved.
@@ -535,8 +535,8 @@ struct CoordinateTests {
         let original = Coordinate3D(latitude: 45.0, longitude: -45.0, altitude: 100.0)
         let ecef = original.projected(to: .epsg4978)
         let back = ecef.projected(to: .epsg4326)
-        #expect(abs(back.latitude - 45.0) < 1e-8)
-        #expect(abs(back.longitude - -45.0) < 1e-8)
+        #expect(abs(back.latitude - 45.0) < 0.00000001)
+        #expect(abs(back.longitude - -45.0) < 0.00000001)
         #expect(abs((back.altitude ?? 0.0) - 100.0) < 0.001)
     }
 
@@ -564,8 +564,8 @@ struct CoordinateTests {
         let ecef = Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)
         let json = ecef.asJson
         #expect(json.count >= 2)
-        #expect(abs(json[0]! - 0.0) < 1e-10)
-        #expect(abs(json[1]! - 0.0) < 1e-10)
+        #expect(abs(json[0]! - 0.0) < 0.0000000001)
+        #expect(abs(json[1]! - 0.0) < 0.0000000001)
     }
 
     /// Validates that ``normalized()`` is a no-op for EPSG:4978 coordinates.

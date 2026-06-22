@@ -684,7 +684,7 @@ extension Coordinate3D {
 
         let p = sqrt(x * x + y * y)
 
-        guard p > 1e-12 else {
+        guard p > GISTool.intersectionEpsilon else {
             let lat = z >= 0.0 ? 90.0 : -90.0
             let h = abs(z) - a * (1.0 - e2)
             return (lat, 0.0, h)

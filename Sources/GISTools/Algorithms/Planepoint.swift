@@ -71,7 +71,7 @@ extension Polygon {
         // Barycentric coordinates using area ratios (cross products)
         let denom = (nb.longitude - na.longitude) * (nc.latitude - na.latitude)
             - (nc.longitude - na.longitude) * (nb.latitude - na.latitude)
-        guard abs(denom) > 1e-15 else { return nil }
+        guard abs(denom) > GISTool.determinantEpsilon else { return nil }
 
         let vb = ((np.longitude - na.longitude) * (nc.latitude - na.latitude)
             - (nc.longitude - na.longitude) * (np.latitude - na.latitude)) / denom

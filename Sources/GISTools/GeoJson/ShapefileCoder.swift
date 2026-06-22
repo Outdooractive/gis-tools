@@ -36,8 +36,8 @@ extension FeatureCollection {
 
 // MARK: - ShapefileCoder
 
-/// The canonical "no data" value for measure (M) coordinates in Shapefiles.
-private let shapefileNoData: Double = -1e38
+/// The canonical "no data" value for measure (M) coordinates in Shapefiles (-1e38).
+private let shapefileNoData: Double = -1_000_000_000_000_000_000_000_000_000_000_000_000_000.0
 
 /// Reads and writes ESRI Shapefiles (.shp / .dbf / .prj).
 ///

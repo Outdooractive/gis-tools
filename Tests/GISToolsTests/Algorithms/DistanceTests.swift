@@ -23,7 +23,7 @@ struct DistanceTests {
         let point = Coordinate3D(x: 300_000.0, y: 400_000.0)
         let expected = 500_000.0 // 3-4-5 triangle
 
-        #expect(abs(origin.distance(from: point) - expected) < 1e-6)
+        #expect(abs(origin.distance(from: point) - expected) < 0.000001)
     }
 
     // Validates Euclidean distance in noSRID (Cartesian plane).
@@ -32,7 +32,7 @@ struct DistanceTests {
         let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let point = Coordinate3D(x: 3.0, y: 4.0, projection: .noSRID)
 
-        #expect(abs(origin.distance(from: point) - 5.0) < 1e-12)
+        #expect(abs(origin.distance(from: point) - 5.0) < 0.000000000001)
     }
 
     // MARK: - Antimeridian

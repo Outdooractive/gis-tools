@@ -102,7 +102,7 @@ struct RhumbDistanceTests {
         let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let point = Coordinate3D(x: 3.0, y: 4.0, projection: .noSRID)
 
-        #expect(abs(origin.rhumbDistance(from: point) - 5.0) < 1e-12)
+        #expect(abs(origin.rhumbDistance(from: point) - 5.0) < 0.000000000001)
     }
 
     // Validates rhumb distance symmetry in noSRID.
@@ -111,7 +111,7 @@ struct RhumbDistanceTests {
         let a = Coordinate3D(x: 10.0, y: 20.0, projection: .noSRID)
         let b = Coordinate3D(x: 30.0, y: 50.0, projection: .noSRID)
 
-        #expect(abs(a.rhumbDistance(from: b) - b.rhumbDistance(from: a)) < 1e-12)
+        #expect(abs(a.rhumbDistance(from: b) - b.rhumbDistance(from: a)) < 0.000000000001)
     }
 
 }

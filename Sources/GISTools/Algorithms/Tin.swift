@@ -81,7 +81,7 @@ struct Pt: Hashable, Sendable {
 private enum TinConstants {
 
     /// Epsilon for collinearity detection in circumcircle calculation.
-    static let collinearEpsilon = 1e-12
+    // Uses GISTool.intersectionEpsilon
 
 }
 
@@ -109,7 +109,7 @@ final class Triangle: Sendable {
         let F = C * (a.x + c.x) + D * (a.y + c.y)
         let G = 2.0 * (A * (c.y - b.y) - B * (c.x - b.x))
 
-        if abs(G) < TinConstants.collinearEpsilon {
+        if abs(G) < GISTool.intersectionEpsilon {
             // Collinear — use midpoint as circumcenter
             let minX = min(a.x, b.x, c.x)
             let maxX = max(a.x, b.x, c.x)
@@ -204,7 +204,7 @@ enum Triangulator {
                 let A = b.x - a.x
                 let B = b.y - a.y
                 let G = 2.0 * (A * (c.y - b.y) - B * (c.x - b.x))
-                if abs(G) > TinConstants.collinearEpsilon {
+                if abs(G) > GISTool.intersectionEpsilon {
                     open.append(Triangle(a, b, c))
                 }
             }

@@ -116,8 +116,8 @@ struct ShapefileCoderTests {
 
         let loaded = try roundTrip([feature])
         let loadedPoint = loaded.features[0].geometry as! Point
-        #expect(abs(loadedPoint.coordinate.latitude - 48.1) < 1e-6)
-        #expect(abs(loadedPoint.coordinate.longitude - 16.3) < 1e-6)
+        #expect(abs(loadedPoint.coordinate.latitude - 48.1) < 0.000001)
+        #expect(abs(loadedPoint.coordinate.longitude - 16.3) < 0.000001)
     }
 
     /// Validates round-trip of a Point with altitude (PointZ).
@@ -128,8 +128,8 @@ struct ShapefileCoderTests {
 
         let loaded = try roundTrip([feature])
         let loadedPoint = loaded.features[0].geometry as! Point
-        #expect(abs(loadedPoint.coordinate.latitude - 48.1) < 1e-6)
-        #expect(abs(loadedPoint.coordinate.longitude - 16.3) < 1e-6)
+        #expect(abs(loadedPoint.coordinate.latitude - 48.1) < 0.000001)
+        #expect(abs(loadedPoint.coordinate.longitude - 16.3) < 0.000001)
         #expect(abs((loadedPoint.coordinate.altitude ?? 0) - 200.0) < 0.01)
     }
 

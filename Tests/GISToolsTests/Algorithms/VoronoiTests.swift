@@ -111,10 +111,10 @@ struct VoronoiTests {
                 continue
             }
             for coord in poly.allCoordinates {
-                #expect(coord.latitude >= 0.0 - 1e-10)
-                #expect(coord.latitude <= 20.0 + 1e-10)
-                #expect(coord.longitude >= 0.0 - 1e-10)
-                #expect(coord.longitude <= 20.0 + 1e-10)
+                #expect(coord.latitude >= 0.0 - 0.0000000001)
+                #expect(coord.latitude <= 20.0 + 0.0000000001)
+                #expect(coord.longitude >= 0.0 - 0.0000000001)
+                #expect(coord.longitude <= 20.0 + 0.0000000001)
             }
         }
     }

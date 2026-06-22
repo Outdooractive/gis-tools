@@ -177,7 +177,7 @@ private extension Overlay {
 
     static func findIntersections(between edges: [Edge]) -> [SplitPoint] {
         var result: [SplitPoint] = []
-        let splitEps = 1.0e-10
+        let splitEps = GISTool.equalityDelta
 
         let indexedEdges = edges.enumerated().map { (i, e) in
             IndexedEdge(edge: e, index: i, boundingBox: e.boundingBox)
@@ -197,11 +197,11 @@ private extension Overlay {
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
 
-                guard segI.intersects(segJ, epsilon: 1.0e-12) else {
+                guard segI.intersects(segJ, epsilon: 0.000000000001) else {
                     continue
                 }
 
-                guard let raw = segI.intersection(segJ, epsilon: 1.0e-12) else {
+                guard let raw = segI.intersection(segJ, epsilon: 0.000000000001) else {
                     continue
                 }
 

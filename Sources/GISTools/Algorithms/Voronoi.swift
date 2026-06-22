@@ -192,7 +192,7 @@ private enum Voronoi {
         let x2 = p2.longitude, y2 = p2.latitude
 
         let denom = a * (x2 - x1) + b * (y2 - y1)
-        guard abs(denom) > 1e-15 else { return nil }
+        guard abs(denom) > GISTool.determinantEpsilon else { return nil }
 
         let t = (c - a * x1 - b * y1) / denom
         guard t >= 0, t <= 1 else { return nil }
