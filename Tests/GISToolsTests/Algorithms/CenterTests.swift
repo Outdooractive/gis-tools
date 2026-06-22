@@ -330,13 +330,13 @@ struct CenterTests {
     // Verifies center of mass of a polygon in EPSG:3857.
     @Test
     func polygonCenterOfMass3857() throws {
-        let polygon = try #require(Polygon(unchecked: [[
+        let polygon = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]]))
+        ]])
         let com = try #require(polygon.centerOfMass)
         #expect(abs(com.coordinate.x - 500.0) < 1.0)
         #expect(abs(com.coordinate.y - 500.0) < 1.0)

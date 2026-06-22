@@ -596,13 +596,13 @@ struct BufferTests {
     // Verifies buffer around a polygon in EPSG:3857 produces a valid result.
     @Test
     func bufferedPolygon3857() throws {
-        let polygon = try #require(Polygon(unchecked: [[
+        let polygon = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]]))
+        ]])
         let result = try #require(polygon.buffered(by: 1.0))
         #expect(result.polygons.count >= 1)
         let totalArea = result.polygons.reduce(0) { $0 + $1.area }

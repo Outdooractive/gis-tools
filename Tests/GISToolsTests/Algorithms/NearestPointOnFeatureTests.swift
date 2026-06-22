@@ -123,13 +123,13 @@ struct NearestPointOnFeatureTests {
     // Verifies a point inside a polygon in EPSG:3857 returns itself.
     @Test
     func nearestOnPolygonInside3857() throws {
-        let polygon = try #require(Polygon(unchecked: [[
+        let polygon = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]]))
+        ]])
         let ref = Coordinate3D(x: 500.0, y: 500.0)
         let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
         #expect(result.coordinate == ref)

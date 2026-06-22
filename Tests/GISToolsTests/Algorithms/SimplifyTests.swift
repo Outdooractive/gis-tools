@@ -56,14 +56,14 @@ struct SimplifyTests {
 
     // Validates simplification of a multi-segment line string in EPSG:3857.
     @Test
-    func simplify3857() async throws {
-        let lineString = try #require(LineString(unchecked: [
+    func simplify3857() async {
+        let lineString = LineString(unchecked: [
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 250.0, y: 250.0),
             Coordinate3D(x: 500.0, y: 0.0),
             Coordinate3D(x: 750.0, y: 250.0),
             Coordinate3D(x: 1000.0, y: 0.0),
-        ]))
+        ])
         let simplified = lineString.simplified(tolerance: 100.0)
         #expect(simplified.coordinates.count <= lineString.coordinates.count)
         #expect(simplified.coordinates.count >= 2)

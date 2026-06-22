@@ -98,13 +98,13 @@ struct PolygonizeTests {
     /// A closed LineString in EPSG:3857 forms one polygon.
     @Test
     func polygonize3857() async throws {
-        let square = try #require(LineString(unchecked: [
+        let square = LineString(unchecked: [
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]))
+        ])
         let multiLine = try #require(MultiLineString([square]))
         let result = multiLine.polygonized()
 
