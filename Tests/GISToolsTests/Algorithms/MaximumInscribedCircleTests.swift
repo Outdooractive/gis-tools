@@ -180,11 +180,11 @@ struct MaximumInscribedCircleTests {
     @Test
     func circle3857() throws {
         let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
         ]])
 
         let pole = try #require(polygon.poleOfInaccessibility())

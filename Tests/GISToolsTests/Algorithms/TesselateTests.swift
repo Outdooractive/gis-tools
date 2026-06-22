@@ -177,6 +177,26 @@ struct TesselateTests {
         }
     }
 
+    // Validates that a square in EPSG:3857 tessellates into 2 triangles.
+    @Test
+    func tesselate3857() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+
+        let result = polygon.tesselated()
+        #expect(result.features.count == 2)
+
+        for feature in result.features {
+            let tri = feature.geometry as! Polygon
+            #expect(tri.coordinates[0].count == 4)
+        }
+    }
+
     // Validates tessellation of a polygon that crosses the antimeridian
     // (date line), spanning from longitude 170° to −170°.
     @Test

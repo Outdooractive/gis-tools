@@ -591,6 +591,37 @@ struct BufferTests {
         #expect(inset.area < polygon.area)
     }
 
+    // MARK: - Projection tests
+
+    // Verifies buffer around a polygon in EPSG:3857 produces a valid result.
+    @Test
+    func bufferedPolygon3857() throws {
+        let polygon = try #require(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let result = try #require(polygon.buffered(by: 1.0))
+        #expect(result.polygons.count >= 1)
+        let totalArea = result.polygons.reduce(0) { $0 + $1.area }
+        #expect(totalArea > polygon.area)
+        for poly in result.polygons {
+            #expect(poly.isValid)
+        }
+    }
+
+    // Verifies buffer around a point in EPSG:3857 produces a valid polygon.
+    @Test
+    func bufferedPoint3857() throws {
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let result = try #require(point.buffered(by: 100.0))
+        #expect(result.polygons.count == 1)
+        #expect(result.polygons[0].area > 0.0)
+        #expect(result.polygons[0].isValid)
+    }
+
     // Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
     @Test
     func insetDonutAcrossAntimeridian() async throws {

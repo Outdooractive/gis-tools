@@ -95,6 +95,21 @@ struct BoundingBoxClipTests {
         #expect(clipped == nil) // invalid
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func boundingBoxClip3857() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+        ]))
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(x: -100_000.0, y: -100_000.0),
+            northEast: Coordinate3D(x: 500_000.0, y: 500_000.0))
+        let clipped = lineString.clipped(to: boundingBox)
+        #expect(clipped != nil)
+    }
+
     // MARK: - Antimeridian
 
     @Test

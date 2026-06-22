@@ -139,4 +139,17 @@ struct TinTests {
         }
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func tin3857() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 50_000.0, y: 100_000.0),
+        ]))
+        let fc = try #require(mp.tin())
+        #expect(fc.features.count == 1)
+    }
+
 }

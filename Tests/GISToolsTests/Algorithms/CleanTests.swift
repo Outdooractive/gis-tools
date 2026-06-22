@@ -92,4 +92,18 @@ struct CleanTests {
         #expect(cleaned.coordinates[0].count == 5)
     }
 
+    /// Cleaning a LineString with duplicates in EPSG:3857 removes duplicate points.
+    @Test
+    func clean3857() {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 200_000.0, y: 0.0),
+        ])
+        let cleaned = line.cleaned(removeDuplicates: true, removeCollinear: true)
+        #expect(cleaned.coordinates.count == 2)
+    }
+
 }

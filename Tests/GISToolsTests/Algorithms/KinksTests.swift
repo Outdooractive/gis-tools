@@ -119,6 +119,32 @@ struct KinksTests {
         #expect(withParam.points.count == manual.points.count)
     }
 
+    // MARK: - EPSG:3857
+
+    // Tests kink detection on simple and self-intersecting polygons in EPSG:3857.
+    @Test
+    func kinks3857() async throws {
+        let simple = try #require(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let simpleResult = simple.kinks()
+        #expect(simpleResult.points.isEmpty)
+
+        let bowtie = try #require(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let bowtieResult = bowtie.kinks()
+        #expect(bowtieResult.points.isNotEmpty)
+    }
+
     // MARK: - Antimeridian
 
     @Test

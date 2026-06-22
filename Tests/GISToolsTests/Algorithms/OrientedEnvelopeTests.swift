@@ -100,6 +100,26 @@ struct OrientedEnvelopeTests {
         #expect(pt.orientedEnvelope() == nil)
     }
 
+    // MARK: - EPSG:3857
+
+    /// A polygon in EPSG:3857 produces a valid oriented envelope.
+    @Test
+    func orientedEnvelope3857() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let envelope = polygon.orientedEnvelope()
+        #expect(envelope != nil)
+        if let envelope {
+            let coords = envelope.allCoordinates
+            #expect(coords.count >= 4)
+        }
+    }
+
     // MARK: - Antimeridian
 
     /// A square crossing the antimeridian should still produce a valid envelope.

@@ -87,4 +87,33 @@ struct CollectTests {
         #expect(result.features[0].properties["y"] == nil)
     }
 
+    /// Collects points in EPSG:3857 into a multi-point result.
+    @Test
+    func collect3857() {
+        let poly = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 200_000.0, y: 0.0),
+            Coordinate3D(x: 200_000.0, y: 200_000.0),
+            Coordinate3D(x: 0.0, y: 200_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        var point1 = Feature(Point(Coordinate3D(x: 50_000.0, y: 50_000.0)))
+        point1.properties = ["pop": 100]
+        var point2 = Feature(Point(Coordinate3D(x: 150_000.0, y: 150_000.0)))
+        point2.properties = ["pop": 200]
+
+        let polys = FeatureCollection([Feature(poly)])
+        let points = FeatureCollection([point1, point2])
+
+        let result = polys.collect(from: points, inProperty: "pop", outProperty: "collected_pop")
+
+        #expect(result.features.count == 1)
+
+        let collected = result.features[0].properties["collected_pop"] as? [Int]
+        #expect(collected != nil)
+        if let collected {
+            #expect(collected.count == 2)
+        }
+    }
+
 }

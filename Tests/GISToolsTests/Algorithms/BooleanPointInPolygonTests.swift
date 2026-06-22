@@ -283,6 +283,21 @@ struct BooleanPointInPolygonTests {
         #expect(withParam == manual)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func pointInPolygon3857() throws {
+        let polygon = try #require(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
+        #expect(polygon.contains(point))
+    }
+
     // MARK: - Antimeridian
 
     @Test

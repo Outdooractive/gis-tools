@@ -176,6 +176,18 @@ struct DensifyTests {
         #expect(ring.first?.longitude == 170.0)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func densify3857() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+        ]))
+        let densified = ls.densified(maxSegmentLength: 200_000.0)
+        #expect(densified.coordinates.count > 2)
+    }
+
     // Validates that densify works on a MultiLineString crossing the antimeridian.
     @Test
     func antimeridianMultiLineString() async throws {

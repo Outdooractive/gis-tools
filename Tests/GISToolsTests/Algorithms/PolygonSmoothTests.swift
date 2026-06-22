@@ -130,6 +130,22 @@ struct PolygonSmoothTests {
         #expect(ring2.coordinates.count > ring1.coordinates.count)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func polygonSmooth3857() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let smoothed = polygon.smooth()
+        let outerRing = try #require(smoothed.outerRing)
+        #expect(outerRing.coordinates.count > 5)
+    }
+
     // MARK: - Antimeridian
 
     @Test

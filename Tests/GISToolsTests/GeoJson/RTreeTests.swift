@@ -351,8 +351,8 @@ struct RTreeTests {
             let westX = Double.random(in: GISTool.originShift - margin ... GISTool.originShift)
             let eastX = Double.random(in: -GISTool.originShift ... -GISTool.originShift + margin)
             let searchBox = BoundingBox(
-                southWest: Coordinate3D(x: westX, y: -1_000_000.0, projection: .epsg3857),
-                northEast: Coordinate3D(x: eastX, y: 1_000_000.0, projection: .epsg3857))
+                southWest: Coordinate3D(x: westX, y: -1_000_000.0),
+                northEast: Coordinate3D(x: eastX, y: 1_000_000.0))
 
             let objects1 = rTree.search(inBoundingBox: searchBox)
             let objects2 = rTree.searchSerial(inBoundingBox: searchBox)

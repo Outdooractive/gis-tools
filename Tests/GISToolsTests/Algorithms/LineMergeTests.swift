@@ -151,6 +151,26 @@ struct LineMergeTests {
         #expect(result.features.count == 1)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func lineMerge3857() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ])!
+        let fc = FeatureCollection([Feature(a), Feature(b)])
+
+        let result = fc.lineMerged()
+        #expect(result.features.count == 1)
+        let ls = result.features[0].geometry as! LineString
+        #expect(ls.coordinates.count == 3)
+    }
+
     // Validates merging two LineStrings that cross the antimeridian.
     @Test
     func antimeridianConnected() async throws {

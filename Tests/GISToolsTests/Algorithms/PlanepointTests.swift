@@ -81,6 +81,24 @@ struct PlanepointTests {
         #expect(polygon.planepoint(Coordinate3D(latitude: 5.0, longitude: 5.0)) == nil)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func planepoint3857() async throws {
+        let triangle = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0),
+                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 10.0),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 10.0),
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0),
+            ],
+        ]))
+        let point = Coordinate3D(x: 30_000.0, y: 50_000.0)
+        let z = triangle.planepoint(point)
+        #expect(z != nil)
+        #expect(z!.isFinite)
+    }
+
     // MARK: - Antimeridian
 
     /// A triangle crossing the date line: vertices at lon=179 and lon=-179.

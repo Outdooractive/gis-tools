@@ -95,6 +95,24 @@ struct PolygonizeTests {
         #expect(result.features.isEmpty)
     }
 
+    /// A closed LineString in EPSG:3857 forms one polygon.
+    @Test
+    func polygonize3857() async throws {
+        let square = try #require(LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]))
+        let multiLine = try #require(MultiLineString([square]))
+        let result = multiLine.polygonized()
+
+        #expect(result.features.count == 1)
+        let polygon = try #require(result.features[0].geometry as? Polygon)
+        #expect(polygon.area > 0.0)
+    }
+
     /// A square crossing the antimeridian formed by four connected LineStrings.
     /// The square spans lon=179 to -179 across the date line near the equator.
     @Test

@@ -73,4 +73,19 @@ struct EnumerateCoordinatesTests {
         #expect(visited[1] == (1, b))
     }
 
+    @Test func enumerateCoordinates3857() {
+        let a = Coordinate3D(x: 0.0, y: 0.0)
+        let b = Coordinate3D(x: 100_000.0, y: 0.0)
+        let c = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let d = Coordinate3D(x: 0.0, y: 100_000.0)
+        let polygon = Polygon(unchecked: [[a, b, c, d, a]])
+
+        var visited: [(Int, Coordinate3D)] = []
+        polygon.enumerateCoordinates { index, coord in
+            visited.append((index, coord))
+        }
+
+        #expect(visited.count == 5)
+    }
+
 }

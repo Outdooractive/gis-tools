@@ -21,6 +21,15 @@ struct LineArcTests {
         }
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func lineArc3857() async throws {
+        let point = Point(Coordinate3D(x: 5_000_000.0, y: 5_000_000.0))
+        let lineArc = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
+        #expect(lineArc.coordinates.count > 2)
+    }
+
     // MARK: - Antimeridian
 
     @Test

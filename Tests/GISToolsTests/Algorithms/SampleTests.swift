@@ -60,5 +60,18 @@ struct SampleTests {
             #expect(feature.properties["id"] != nil)
         }
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func sample3857() async throws {
+        let features = [
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 0.0))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 100_000.0))),
+        ]
+        let fc = FeatureCollection(features)
+        let result = fc.sample(size: 2)
+        #expect(result.features.count == 2)
+    }
 
 }

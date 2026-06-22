@@ -26,7 +26,7 @@ struct SnapToGridTests {
 
     @Test
     func pointEPSG3857() async throws {
-        let point = Point(Coordinate3D(x: 1500.0, y: 2700.0, projection: .epsg3857))
+        let point = Point(Coordinate3D(x: 1500.0, y: 2700.0))
         let snapped = point.snappedToGrid(tolerance: 1000.0)
 
         #expect(snapped.coordinate.x == 2000.0)

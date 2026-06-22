@@ -363,7 +363,7 @@ extension GeoJson {
             let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
             let x = x1 + t * (x2 - x1)
             let y = y1 + t * (y2 - y1)
-            return Coordinate3D(x: x, y: y, projection: .epsg3857)
+            return Coordinate3D(x: x, y: y)
         }
 
         var newOuter: [Coordinate3D] = []

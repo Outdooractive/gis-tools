@@ -233,4 +233,17 @@ struct ValidatableTests {
         #expect(invalid.validated == nil)
     }
 
+    // Validates that a valid Polygon in EPSG:3857 is recognized as valid.
+    @Test
+    func validatable3857() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        #expect(polygon.isValid)
+    }
+
 }

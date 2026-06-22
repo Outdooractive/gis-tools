@@ -113,6 +113,29 @@ struct DissolveTests {
         #expect(g == "a")
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func dissolve3857() async throws {
+        let p1 = Feature(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]), properties: ["group": "a"])
+        let p2 = Feature(Polygon(unchecked: [[
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 2000.0, y: 0.0),
+            Coordinate3D(x: 2000.0, y: 1000.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+        ]]), properties: ["group": "a"])
+
+        let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")
+        #expect(dissolved.features.isNotEmpty)
+    }
+
     // MARK: - Antimeridian
 
     @Test

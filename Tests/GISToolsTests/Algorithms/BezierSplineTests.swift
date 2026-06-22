@@ -109,5 +109,20 @@ struct BezierSplineTests {
             #expect(spline.coordinates.count == 6)
         }
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func bezierSpline3857() async throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 500_000.0),
+            Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ])
+        let spline = line.bezierSpline()
+        #expect(spline != nil)
+        if let spline {
+            #expect(spline.coordinates.count > 3)
+        }
+    }
 
 }

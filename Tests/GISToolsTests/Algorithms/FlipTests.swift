@@ -75,4 +75,16 @@ struct FlipTests {
         #expect(flipped.properties["name"] as? String == "test")
     }
 
+    // Validates flipping a LineString in EPSG:3857 returns a valid result.
+    @Test
+    func flip3857() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 200_000.0, y: 0.0),
+        ]))
+        let flipped = line.flipped()
+        #expect(flipped.coordinates.count == 3)
+    }
+
 }

@@ -307,6 +307,41 @@ struct CenterTests {
         #expect(abs(com.coordinate.longitude - 5.0) < 0.001)
     }
 
+    // MARK: - Projection tests
+
+    // Verifies centroid of a polygon in EPSG:3857.
+    @Test
+    func polygonCentroid3857() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let centroid = polygon.centroid
+        #expect(centroid != nil)
+        // Centroid includes closing point: mean of [0,1000,1000,0,0] = 400
+        #expect(abs(centroid!.coordinate.x - 400.0) < 1.0)
+        #expect(abs(centroid!.coordinate.y - 400.0) < 1.0)
+        #expect(centroid!.coordinate.projection == .epsg3857)
+    }
+
+    // Verifies center of mass of a polygon in EPSG:3857.
+    @Test
+    func polygonCenterOfMass3857() throws {
+        let polygon = try #require(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let com = try #require(polygon.centerOfMass)
+        #expect(abs(com.coordinate.x - 500.0) < 1.0)
+        #expect(abs(com.coordinate.y - 500.0) < 1.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

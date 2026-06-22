@@ -101,5 +101,14 @@ struct GreatCircleTests {
         let ls = result as! LineString
         #expect(ls.coordinates.count == 2)
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func greatCircle3857() async throws {
+        let start = Coordinate3D(x: 0.0, y: 0.0)
+        let end = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+    }
 
 }

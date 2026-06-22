@@ -23,7 +23,7 @@ enum AntimeridianCutting {
         var left: [[Coordinate3D]] = []
     }
 
-    // MARK: - Detection
+    // MARK: - Detection (EPSG:4326)
 
     /// Returns `true` when the shortest path between `p1` and `p2`
     /// crosses the anti-meridian.
@@ -47,7 +47,31 @@ enum AntimeridianCutting {
         return false
     }
 
-    // MARK: - Intersection
+    // MARK: - Detection (EPSG:3857)
+
+    /// Returns `true` when the shortest path between `p1` and `p2`
+    /// crosses the anti-meridian in EPSG:3857 coordinates.
+    static func segmentCrossesMeridian3857(
+        _ p1: Coordinate3D,
+        _ p2: Coordinate3D
+    ) -> Bool {
+        abs(p1.x - p2.x) > GISTool.originShift
+    }
+
+    /// Returns `true` when any consecutive coordinate pair
+    /// crosses the anti-meridian in EPSG:3857 coordinates.
+    static func coordinatesCrossMeridian3857(_ coordinates: [Coordinate3D]) -> Bool {
+        guard coordinates.count >= 2 else { return false }
+
+        for i in 1..<coordinates.count {
+            if segmentCrossesMeridian3857(coordinates[i - 1], coordinates[i]) {
+                return true
+            }
+        }
+        return false
+    }
+
+    // MARK: - Intersection (EPSG:4326)
 
     /// Computes the two intersection points at ±180° for a segment
     /// that crosses the anti-meridian.
@@ -88,7 +112,44 @@ enum AntimeridianCutting {
         return (first, second)
     }
 
-    // MARK: - Ring cutting
+    // MARK: - Intersection (EPSG:3857)
+
+    /// Computes the two intersection points at ±originShift for a segment
+    /// that crosses the anti-meridian in EPSG:3857 coordinates.
+    static func intersection3857(
+        _ p1: Coordinate3D,
+        _ p2: Coordinate3D
+    ) -> (first: Coordinate3D, second: Coordinate3D)? {
+        let dx = abs(p1.x - p2.x)
+        guard dx > GISTool.originShift else { return nil }
+
+        var unwrapped = p2.x
+        if p2.x - p1.x > GISTool.originShift {
+            unwrapped = p2.x - (2.0 * GISTool.originShift)
+        }
+        else if p1.x - p2.x > GISTool.originShift {
+            unwrapped = p2.x + (2.0 * GISTool.originShift)
+        }
+
+        let target = p1.x >= 0.0 ? GISTool.originShift : -GISTool.originShift
+        let fraction = (target - p1.x) / (unwrapped - p1.x)
+        let intersectionY = p1.y + fraction * (p2.y - p1.y)
+
+        let first: Coordinate3D
+        let second: Coordinate3D
+        if p1.x >= 0.0 {
+            first = Coordinate3D(x: GISTool.originShift, y: intersectionY)
+            second = Coordinate3D(x: -GISTool.originShift, y: intersectionY)
+        }
+        else {
+            first = Coordinate3D(x: -GISTool.originShift, y: intersectionY)
+            second = Coordinate3D(x: GISTool.originShift, y: intersectionY)
+        }
+
+        return (first, second)
+    }
+
+    // MARK: - Ring cutting (EPSG:4326)
 
     /// Splits a ring's coordinate array at anti-meridian crossings.
     static func cutRing(_ ring: Ring) -> RingCutResult {
@@ -125,6 +186,46 @@ enum AntimeridianCutting {
 
         return result
     }
+
+    // MARK: - Ring cutting (EPSG:3857)
+
+    /// Splits a ring's coordinate array at anti-meridian crossings in EPSG:3857.
+    static func cutRing3857(_ ring: Ring) -> RingCutResult {
+        let coords = ring.coordinates
+        var result = RingCutResult()
+        guard coords.count >= 4 else { return result }
+
+        var currentPart: [Coordinate3D] = []
+        var currentSide: Side!
+
+        for i in 1..<coords.count {
+            let prev = coords[i - 1]
+            let curr = coords[i]
+
+            if currentSide == nil {
+                currentSide = prev.x >= 0 ? .right : .left
+                currentPart = [prev]
+            }
+
+            if let intersection = AntimeridianCutting.intersection3857(prev, curr) {
+                currentPart.append(intersection.first)
+                appendPart(&result, currentPart, side: currentSide)
+                currentSide = (currentSide == .right) ? .left : .right
+                currentPart = [intersection.second, curr]
+            }
+            else {
+                currentPart.append(curr)
+            }
+        }
+
+        if let side = currentSide, currentPart.isNotEmpty {
+            appendPart(&result, currentPart, side: side)
+        }
+
+        return result
+    }
+
+    // MARK: - Build polygons (EPSG:4326)
 
     /// Builds one or more polygons from ring parts on one side of the anti-meridian,
     /// closing them along ±180°.
@@ -199,6 +300,81 @@ enum AntimeridianCutting {
         return result
     }
 
+    // MARK: - Build polygons (EPSG:3857)
+
+    /// Builds one or more polygons from ring parts on one side of the anti-meridian
+    /// in EPSG:3857, closing them along ±originShift.
+    static func buildPolygons3857(
+        outerParts: [[Coordinate3D]],
+        innerParts: [[Coordinate3D]],
+        side: Side
+    ) -> [Polygon] {
+        guard outerParts.isNotEmpty else { return [] }
+
+        let antimeridianX = (side == .right) ? GISTool.originShift : -GISTool.originShift
+        let outerRing = connectRingParts3857(outerParts, alongX: antimeridianX)
+
+        var polygonInnerRings: [Ring] = []
+        for innerCoords in innerParts {
+            if let ring = Ring(innerCoords) {
+                polygonInnerRings.append(ring)
+            }
+        }
+
+        var rings: [Ring] = [Ring(unchecked: outerRing)]
+        rings.append(contentsOf: polygonInnerRings)
+
+        if let polygon = Polygon(rings) {
+            return [polygon]
+        }
+        return []
+    }
+
+    /// Connects disjoint ring parts on one side of the anti-meridian
+    /// in EPSG:3857, joining their endpoints along ±originShift.
+    static func connectRingParts3857(
+        _ parts: [[Coordinate3D]],
+        alongX x: Double
+    ) -> [Coordinate3D] {
+        guard parts.isNotEmpty else { return [] }
+        guard parts.count > 1 else {
+            var result = parts[0]
+            if result.first != result.last {
+                result.append(result[0])
+            }
+            return result
+        }
+
+        var result: [Coordinate3D] = []
+        for part in parts {
+            if result.isNotEmpty {
+                let prevEnd = result.last!
+                let thisStart = part.first!
+                if prevEnd.x != thisStart.x
+                    || prevEnd.y != thisStart.y
+                {
+                    result.append(Coordinate3D(x: x, y: prevEnd.y))
+                    result.append(Coordinate3D(x: x, y: thisStart.y))
+                }
+            }
+            result.append(contentsOf: part)
+        }
+
+        if result.first != result.last {
+            let first = result.first!
+            let last = result.last!
+            if last.x != first.x
+                || last.y != first.y
+            {
+                result.append(Coordinate3D(x: x, y: last.y))
+                result.append(Coordinate3D(x: x, y: first.y))
+            }
+        }
+        result.append(result.first!)
+
+        return result
+    }
+
     // MARK: - Private helpers
 
     private static func appendPart(
@@ -221,8 +397,21 @@ enum AntimeridianCutting {
 extension LineString {
 
     /// Whether the line string crosses the anti-meridian.
+    ///
+    /// For ``Projection/epsg4326``, checks if any consecutive segment spans
+    /// more than 180° of longitude. For ``Projection/epsg3857``, checks if
+    /// any consecutive segment spans more than `originShift` meters in x.
+    /// Returns `false` for ``Projection/epsg4978`` and ``Projection/noSRID``
+    /// where the antimeridian concept does not apply.
     public var crossesAntimeridian: Bool {
-        AntimeridianCutting.coordinatesCrossMeridian(coordinates)
+        switch projection {
+        case .epsg4326:
+            AntimeridianCutting.coordinatesCrossMeridian(coordinates)
+        case .epsg3857:
+            AntimeridianCutting.coordinatesCrossMeridian3857(coordinates)
+        case .epsg4978, .noSRID:
+            false
+        }
     }
 
     /// Cuts the line string at the anti-meridian.
@@ -231,17 +420,30 @@ extension LineString {
     /// If the line does not cross the anti-meridian the collection
     /// contains a single feature.
     ///
+    /// For ``Projection/epsg4326``, operates directly on geographic coordinates.
+    /// For ``Projection/epsg3857``, operates natively on projected coordinates
+    /// (splits at ±`originShift` meters). For ``Projection/epsg4978`` and
+    /// ``Projection/noSRID``, returns the original geometry unchanged.
+    ///
     /// Per RFC 7946 §3.1.9, a line from 45°N,170°E to 45°N,170°W
     /// becomes two features with parts `[170,45]→[180,45]`
     /// and `[-180,45]→[-170,45]`.
     public func cutAtAntimeridian() -> FeatureCollection {
-        FeatureCollection(_cutParts().map { Feature($0) })
+        switch projection {
+        case .epsg4326:
+            FeatureCollection(_cutParts().map { Feature($0) })
+        case .epsg3857:
+            FeatureCollection(_cutParts3857().map { Feature($0) })
+        case .epsg4978, .noSRID:
+            FeatureCollection([Feature(self)])
+        }
     }
 
     /// Internal: returns each cut part as a separate `LineString`.
     fileprivate func _cutParts() -> [LineString] {
-        guard coordinates.count >= 2 else { return [self] }
-        guard crossesAntimeridian else { return [self] }
+        guard coordinates.count >= 2,
+              AntimeridianCutting.coordinatesCrossMeridian(coordinates)
+        else { return [self] }
 
         var resultParts: [[Coordinate3D]] = []
         var currentPart: [Coordinate3D] = [coordinates[0]]
@@ -268,6 +470,37 @@ extension LineString {
         return resultParts.map { LineString(unchecked: $0) }
     }
 
+    /// Internal: cut at antimeridian for EPSG:3857.
+    fileprivate func _cutParts3857() -> [LineString] {
+        guard coordinates.count >= 2,
+              AntimeridianCutting.coordinatesCrossMeridian3857(coordinates)
+        else { return [self] }
+
+        var resultParts: [[Coordinate3D]] = []
+        var currentPart: [Coordinate3D] = [coordinates[0]]
+
+        for i in 1..<coordinates.count {
+            let prev = currentPart.last!
+            let curr = coordinates[i]
+
+            if let intersection = AntimeridianCutting.intersection3857(prev, curr) {
+                currentPart.append(intersection.first)
+                resultParts.append(currentPart)
+                currentPart = [intersection.second, curr]
+            }
+            else {
+                currentPart.append(curr)
+            }
+        }
+
+        if currentPart.isNotEmpty {
+            resultParts.append(currentPart)
+        }
+
+        guard resultParts.count > 1 else { return [self] }
+        return resultParts.map { LineString(unchecked: $0) }
+    }
+
 }
 
 // MARK: - Polygon cutting
@@ -275,8 +508,21 @@ extension LineString {
 extension Polygon {
 
     /// Whether any ring of the polygon crosses the anti-meridian.
+    ///
+    /// For ``Projection/epsg4326``, checks if any ring has a longitude
+    /// jump greater than 180°. For ``Projection/epsg3857``, checks if
+    /// any ring has an x jump greater than `originShift` meters.
+    /// Returns `false` for ``Projection/epsg4978`` and ``Projection/noSRID``
+    /// where the antimeridian concept does not apply.
     public var crossesAntimeridian: Bool {
-        rings.contains { AntimeridianCutting.coordinatesCrossMeridian($0.coordinates) }
+        switch projection {
+        case .epsg4326:
+            rings.contains { AntimeridianCutting.coordinatesCrossMeridian($0.coordinates) }
+        case .epsg3857:
+            rings.contains { AntimeridianCutting.coordinatesCrossMeridian3857($0.coordinates) }
+        case .epsg4978, .noSRID:
+            false
+        }
     }
 
     /// Cuts the polygon at the anti-meridian.
@@ -284,8 +530,20 @@ extension Polygon {
     /// Returns a ``FeatureCollection`` with one feature per resulting
     /// polygon. If the polygon does not cross the anti-meridian the
     /// collection contains a single feature.
+    ///
+    /// For ``Projection/epsg4326``, operates directly on geographic coordinates.
+    /// For ``Projection/epsg3857``, operates natively on projected coordinates
+    /// (splits at ±`originShift` meters). For ``Projection/epsg4978`` and
+    /// ``Projection/noSRID``, returns the original geometry unchanged.
     public func cutAtAntimeridian() -> FeatureCollection {
-        FeatureCollection(_cutParts().map { Feature($0) })
+        switch projection {
+        case .epsg4326:
+            FeatureCollection(_cutParts().map { Feature($0) })
+        case .epsg3857:
+            FeatureCollection(_cutParts3857().map { Feature($0) })
+        case .epsg4978, .noSRID:
+            FeatureCollection([Feature(self)])
+        }
     }
 
     /// Internal: returns each cut part as a separate `Polygon`.
@@ -338,21 +596,96 @@ extension Polygon {
         return polygons.isEmpty ? [self] : polygons
     }
 
+    /// Internal: cut at antimeridian for EPSG:3857.
+    fileprivate func _cutParts3857() -> [Polygon] {
+        guard crossesAntimeridian else { return [self] }
+
+        let outerResult = AntimeridianCutting.cutRing3857(outerRing!)
+
+        var rightInnerRings: [[Coordinate3D]] = []
+        var leftInnerRings: [[Coordinate3D]] = []
+
+        if let innerRings {
+            for hole in innerRings {
+                if AntimeridianCutting.coordinatesCrossMeridian3857(hole.coordinates) {
+                    let holeResult = AntimeridianCutting.cutRing3857(hole)
+                    if holeResult.right.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts3857(holeResult.right, alongX: GISTool.originShift)
+                        rightInnerRings.append(connected)
+                    }
+                    if holeResult.left.isNotEmpty {
+                        let connected = AntimeridianCutting.connectRingParts3857(holeResult.left, alongX: -GISTool.originShift)
+                        leftInnerRings.append(connected)
+                    }
+                }
+                else {
+                    if hole.coordinates.first?.x ?? 0 >= 0 {
+                        rightInnerRings.append(hole.coordinates)
+                    }
+                    else {
+                        leftInnerRings.append(hole.coordinates)
+                    }
+                }
+            }
+        }
+
+        var polygons: [Polygon] = []
+
+        let rightPolygons = AntimeridianCutting.buildPolygons3857(
+            outerParts: outerResult.right,
+            innerParts: rightInnerRings,
+            side: .right)
+        polygons.append(contentsOf: rightPolygons)
+
+        let leftPolygons = AntimeridianCutting.buildPolygons3857(
+            outerParts: outerResult.left,
+            innerParts: leftInnerRings,
+            side: .left)
+        polygons.append(contentsOf: leftPolygons)
+
+        return polygons.isEmpty ? [self] : polygons
+    }
+
 }
 
 // MARK: - MultiLineString cutting
 
 extension MultiLineString {
 
+    /// Whether any line string in the multi-line-string crosses the anti-meridian.
+    public var crossesAntimeridian: Bool {
+        lineStrings.contains { $0.crossesAntimeridian }
+    }
+
     /// Cuts each line string at the anti-meridian and returns the combined result.
+    ///
+    /// For ``Projection/epsg4326``, operates directly on geographic coordinates.
+    /// For ``Projection/epsg3857``, operates natively on projected coordinates.
+    /// For ``Projection/epsg4978`` and ``Projection/noSRID``, returns the
+    /// original geometry unchanged.
     public func cutAtAntimeridian() -> FeatureCollection {
-        var allFeatures: [Feature] = []
-        for ls in lineStrings {
-            for part in ls._cutParts() {
-                allFeatures.append(Feature(part))
+        switch projection {
+        case .epsg4326:
+            var allFeatures: [Feature] = []
+            for ls in lineStrings {
+                for part in ls._cutParts() {
+                    allFeatures.append(Feature(part))
+                }
             }
+            return FeatureCollection(allFeatures)
+
+        case .epsg3857:
+            var allFeatures: [Feature] = []
+            for ls in lineStrings {
+                for part in ls._cutParts3857() {
+                    allFeatures.append(Feature(part))
+                }
+            }
+            return FeatureCollection(allFeatures)
+
+        case .epsg4978, .noSRID:
+            return FeatureCollection([Feature(self)])
         }
-        return FeatureCollection(allFeatures)
     }
 
 }
@@ -361,15 +694,40 @@ extension MultiLineString {
 
 extension MultiPolygon {
 
+    /// Whether any polygon in the multi-polygon crosses the anti-meridian.
+    public var crossesAntimeridian: Bool {
+        polygons.contains { $0.crossesAntimeridian }
+    }
+
     /// Cuts each polygon at the anti-meridian and returns the combined result.
+    ///
+    /// For ``Projection/epsg4326``, operates directly on geographic coordinates.
+    /// For ``Projection/epsg3857``, operates natively on projected coordinates.
+    /// For ``Projection/epsg4978`` and ``Projection/noSRID``, returns the
+    /// original geometry unchanged.
     public func cutAtAntimeridian() -> FeatureCollection {
-        var allFeatures: [Feature] = []
-        for polygon in polygons {
-            for part in polygon._cutParts() {
-                allFeatures.append(Feature(part))
+        switch projection {
+        case .epsg4326:
+            var allFeatures: [Feature] = []
+            for polygon in polygons {
+                for part in polygon._cutParts() {
+                    allFeatures.append(Feature(part))
+                }
             }
+            return FeatureCollection(allFeatures)
+
+        case .epsg3857:
+            var allFeatures: [Feature] = []
+            for polygon in polygons {
+                for part in polygon._cutParts3857() {
+                    allFeatures.append(Feature(part))
+                }
+            }
+            return FeatureCollection(allFeatures)
+
+        case .epsg4978, .noSRID:
+            return FeatureCollection([Feature(self)])
         }
-        return FeatureCollection(allFeatures)
     }
 
 }
@@ -377,6 +735,11 @@ extension MultiPolygon {
 // MARK: - Feature & FeatureCollection
 
 extension Feature {
+
+    /// Whether the feature's geometry crosses the anti-meridian.
+    public var crossesAntimeridian: Bool {
+        geometry.crossesAntimeridian
+    }
 
     /// Cuts the feature's geometry at the anti-meridian.
     ///
@@ -396,6 +759,11 @@ extension Feature {
 }
 
 extension FeatureCollection {
+
+    /// Whether any feature's geometry in the collection crosses the anti-meridian.
+    public var crossesAntimeridian: Bool {
+        features.contains { $0.crossesAntimeridian }
+    }
 
     /// Cuts each feature's geometry at the anti-meridian.
     ///
@@ -419,6 +787,11 @@ extension FeatureCollection {
 
 extension GeometryCollection {
 
+    /// Whether any sub-geometry in the collection crosses the anti-meridian.
+    public var crossesAntimeridian: Bool {
+        geometries.contains { $0.crossesAntimeridian }
+    }
+
     /// Cuts each sub-geometry at the anti-meridian and returns the
     /// combined result as a ``FeatureCollection``.
     public func cutAtAntimeridian() -> FeatureCollection {
@@ -435,6 +808,28 @@ extension GeometryCollection {
 // MARK: - GeoJsonGeometry extension
 
 extension GeoJsonGeometry {
+
+    /// Whether the geometry crosses the anti-meridian.
+    ///
+    /// For ``Projection/epsg4326`` and ``Projection/epsg3857``, checks if any
+    /// consecutive segment spans more than the antimeridian threshold.
+    /// Returns `false` for ``Projection/epsg4978`` and ``Projection/noSRID``.
+    public var crossesAntimeridian: Bool {
+        switch self {
+        case let ls as LineString:
+            return ls.crossesAntimeridian
+        case let mls as MultiLineString:
+            return mls.crossesAntimeridian
+        case let p as Polygon:
+            return p.crossesAntimeridian
+        case let mp as MultiPolygon:
+            return mp.crossesAntimeridian
+        case let gc as GeometryCollection:
+            return gc.crossesAntimeridian
+        default:
+            return false
+        }
+    }
 
     /// Cuts the geometry at the anti-meridian.
     ///

@@ -186,6 +186,28 @@ struct SymmetricDifferenceTests {
         #expect(result != nil)
     }
 
+    // Validates symmetric difference of two overlapping polygons in EPSG:3857.
+    @Test
+    func symmetricDifference3857() async throws {
+        let a = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 1000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let b = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 1500.0, y: 500.0),
+            Coordinate3D(x: 1500.0, y: 1500.0),
+            Coordinate3D(x: 500.0, y: 1500.0),
+            Coordinate3D(x: 500.0, y: 500.0),
+        ]])
+
+        let result = a.symmetricDifference(with: b)
+        #expect(result != nil)
+    }
+
     // Validates symmetric difference where neither crosses but both are near the antimeridian.
     @Test
     func antimeridianNear() async throws {

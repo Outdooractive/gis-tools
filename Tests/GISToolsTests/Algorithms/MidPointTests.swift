@@ -43,6 +43,16 @@ struct MidPointTests {
         #expect(abs(coordinate1.distance(from: middle) - coordinate2.distance(from: middle)) < 0.000001)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func midPoint3857() async throws {
+        let coord1 = Coordinate3D(x: 0.0, y: 0.0)
+        let coord2 = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let mid = coord1.midpoint(to: coord2)
+        #expect(mid.projection == .epsg3857)
+    }
+
     // MARK: - Antimeridian
 
     @Test

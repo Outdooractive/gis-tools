@@ -729,6 +729,38 @@ struct BoundingBoxTests {
         #expect(multiPolygon.polygons.count == 2)
     }
 
+    // Tests crossesAntiMeridian for an EPSG:3857 bounding box crossing the antimeridian.
+    @Test
+    func crossesAntimeridian3857() throws {
+        let crossing = BoundingBox(
+            southWest: Coordinate3D(latitude: 40.0, longitude: 170.0).projected(to: .epsg3857),
+            northEast: Coordinate3D(latitude: 50.0, longitude: -170.0).projected(to: .epsg3857))
+        #expect(crossing.crossesAntiMeridian == true)
+
+        let notCrossing = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg3857),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0).projected(to: .epsg3857))
+        #expect(notCrossing.crossesAntiMeridian == false)
+    }
+
+    // Tests crossesAntiMeridian for an EPSG:4978 bounding box (always false).
+    @Test
+    func crossesAntimeridian4978() throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 40.0, longitude: 170.0).projected(to: .epsg4978),
+            northEast: Coordinate3D(latitude: 50.0, longitude: -170.0).projected(to: .epsg4978))
+        #expect(bbox.crossesAntiMeridian == false)
+    }
+
+    // Tests crossesAntiMeridian for a noSRID bounding box (always false).
+    @Test
+    func crossesAntimeridianNoSRID() throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID))
+        #expect(bbox.crossesAntiMeridian == false)
+    }
+
     // Validates that the world bounding box produces a single Polygon and does not cross the anti-meridian.
     @Test
     func boundingBoxGeometryWorld() async throws {

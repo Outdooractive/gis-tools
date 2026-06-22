@@ -66,5 +66,19 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
         #expect(result[0].lineStrings.count == 2)
     }
+    // MARK: - EPSG:3857
+
+    @Test
+    func polygonToLine3857() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let result = polygon.lineStrings
+        #expect(result.count == 1)
+    }
 
 }

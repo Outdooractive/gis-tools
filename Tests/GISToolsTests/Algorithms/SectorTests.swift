@@ -79,6 +79,15 @@ struct SectorTests {
         #expect(sector.isValid)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func sector3857() async throws {
+        let center = Coordinate3D(x: 0.0, y: 0.0)
+        let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
+        #expect(sector.isValid)
+    }
+
     // MARK: - Antimeridian
 
     @Test

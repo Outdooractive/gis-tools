@@ -58,6 +58,17 @@ struct PointGridTests {
         #expect(maskedGrid.features.count > 0)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func pointGrid3857() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+        let grid = bbox.pointGrid(cellSide: 500_000.0)
+        #expect(grid.features.count > 0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

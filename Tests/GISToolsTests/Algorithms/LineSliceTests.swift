@@ -26,6 +26,20 @@ struct LineSliceTests {
         #expect(slice == result)
     }
 
+    // MARK: - EPSG:3857
+
+    @Test
+    func lineSlice3857() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+        ]))
+        let start = Coordinate3D(x: 250_000.0, y: 250_000.0)
+        let end = Coordinate3D(x: 750_000.0, y: 750_000.0)
+        let slice = lineString.slice(start: start, end: end)
+        #expect(slice != nil)
+    }
+
     // MARK: - gridSize
 
     // Validates that `slice(start:end:gridSize:)` matches manual pre-snapping.
