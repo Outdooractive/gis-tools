@@ -979,6 +979,9 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | concave-hull                | `anyGeometry.concaveHull(maxEdgeLength: 500.0)`                                                                                     |     | [Source][161] / [Tests][162] |
 | conversions/helpers         | `let distance = GISTool.convert(length: 1.0, from: .miles, to: .meters)`                                                              |     | [Source][65] / [Tests][143]  |
 | convex-hull                 | `let hull = anyGeometry.convexHull()`                                                                                                   |     | [Source][146] / [Tests][147] |
+| coverage-is-valid           | `let valid = multiPolygon.coverageIsValid()`                                                                                           |     | [Source][245] / [Tests][246] |
+| coverage-simplify           | `let simplified = multiPolygon.coverageSimplified(tolerance: 5.0)`                                                                     |     | [Source][110] / [Tests][111] |
+| coverage-union              | `let merged = multiPolygon.coverageUnion()`                                                                                            |     | [Source][245] / [Tests][246] |
 | densify                     | `let dense = anyGeometry.densified(maxSegmentLength: 1.0)`                                                                             |     | [Source][233] / [Tests][234] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | difference                  | `let diff = polygon.difference(with: other)`                                                                                          |     | [Source][227] / [Tests][228] |
@@ -1031,6 +1034,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | polygon-tangents            | `let tangents = polygon.tangentPoints(to: point)`                                                                                      |     | [Source][195] / [Tests][196] |
 | polygon-to-line             | `var lineStrings = polygon.lineStrings`                                                                                               |     | [Source][129]                |
 | polygonize                  | `let polygons = multiLineString.polygonized()`                                                                                        |     | [Source][197] / [Tests][198] |
+| polygon-hull-simplify       | `let hull = polygon.polygonHullSimplified(tolerance: 5.0)`                                                                            |     | [Source][110] / [Tests][111] |
 | random                      | `BoundingBox.randomPoints(count: 10)`                                                                                                 |     | [Source][179] / [Tests][180] |
 | reverse                     | `let lineStringReversed = lineString.reversed`                                                                                        |     | [Source][102] / [Tests][103] |
 | rhumb-bearing               | `let bearing = start.rhumbBearing(to: end)`                                                                                           |     | [Source][104] / [Tests][105] |
@@ -1041,7 +1045,8 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | shared-paths                | `let shared = a.sharedPaths(with: b)`                                                                                                  |     | [Source][235] / [Tests][236] |
 | square                      | `let squared = boundingBox.squared()`                                                                                                 |     | [Source][193] / [Tests][194] |
 | symmetric-difference        | `let xor = polygon.symmetricDifference(with: other)`                                                                                  |     | [Source][229] / [Tests][230] |
-| simplify                    | `let simplified = lineString. simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
+| simplify                    | `let simplified = lineString.simplified(tolerance: 5.0, highQuality: false)`                                                         |     | [Source][110] / [Tests][111] |
+| topology-preserve-simplify | `let valid = lineString.topologyPreservedSimplified(tolerance: 5.0)`                                                                  |     | [Source][110] / [Tests][111] |
 | snap-to-grid                | `anyGeometry.snappedToGrid(tolerance: 0.5)`                                                                                           |     | [Source][175] / [Tests][176] |
 | tile-cover                  | `let tileCover = anyGeometry.tileCover(atZoom: 14)`                                                                                   |     | [Source][112] / [Tests][113] |
 | tin                         | `anyGeometry.tin()`                                                                                                                  |     | [Source][163] / [Tests][164] |
@@ -1053,6 +1058,7 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)`                                              |     | [Source][120] / [Tests][121] |
 | truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`                                                            |     | [Source][122] / [Tests][123] |
 | union                       | `let combined = polygon.union(with: otherPolygon)`                                                                                     |     | [Source][124] / [Tests][153] |
+| unary-union                 | `let unioned = multiPolygon.unaryUnion()`                                                                                              |     | [Source][245] / [Tests][246] |
 | unkink-polygon              | `let simplePolygons = polygon.unkinked(gridSize: 0.001)`                                                                              |     | [Source][150] / [Tests][151] |
 | voronoi                     | `let cells = points.voronoiDiagram(boundingBox: bbox)`                                                                                |     | [Source][223] / [Tests][224] |
 
@@ -1313,6 +1319,8 @@ Thomas Rasch, Outdooractive
 [242]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MaximumInscribedCircleTests.swift "MaximumInscribedCircleTests"
 [243]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/MakeValid.swift "MakeValid"
 [244]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MakeValidTests.swift "MakeValidTests"
+[245]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/UnaryUnion.swift "UnaryUnion"
+[246]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/UnaryUnionTests.swift "UnaryUnionTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
