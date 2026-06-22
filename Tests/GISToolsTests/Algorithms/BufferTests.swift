@@ -740,28 +740,173 @@ struct BufferTests {
         #expect(polygon.isValid)
     }
 
+    // MARK: - Bevel join tests
+
+    @Test
+    func bevelJoinBasic() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let bevel = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+        let round = try #require(line.buffered(
+            by: 10_000.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        // Bevel should have less area than round (no arc filling the corner)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoin3857() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+        ]))
+        let bevel = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .bevel))
+        let round = try #require(line.buffered(
+            by: 1.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinOnPolygon() throws {
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let bevel = try #require(poly.buffered(
+            by: 10_000.0, joinType: .bevel))
+        let round = try #require(poly.buffered(
+            by: 10_000.0, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinOnPolygon3857() throws {
+        let poly = Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])!
+        let bevel = try #require(poly.buffered(
+            by: 1.0, joinType: .bevel))
+        let round = try #require(poly.buffered(
+            by: 1.0, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
+    @Test
+    func bevelJoinMultiLine() throws {
+        let mls = MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 1.0),
+            ],
+        ])!
+        let bevel = try #require(mls.buffered(
+            by: 10_000.0, endType: .butt, joinType: .bevel))
+        let round = try #require(mls.buffered(
+            by: 10_000.0, endType: .butt, joinType: .round))
+
+        let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
+        let roundArea = round.polygons.reduce(0) { $0 + $1.area }
+
+        #expect(bevel.isValid)
+        #expect(round.isValid)
+        #expect(bevelArea < roundArea,
+                "bevel=\(bevelArea), round=\(roundArea)")
+    }
+
     // MARK: - Showcase (disabled)
 
     // Dumps a GeoJSON FeatureCollection to the console showing all buffer
     // join and end type combinations. Run locally to visually inspect the
     // results at https://geojson.io.
-    @Test(.disabled("Enable locally to dump GeoJSON to console"))
+    @Test//(.disabled("Enable locally to dump GeoJSON to console"))
     func bufferShowcase() async throws {
-        let baseLine = try #require(LineString([
-            Coordinate3D(latitude: 48.0, longitude: 2.0),
-            Coordinate3D(latitude: 48.0, longitude: 2.5),
-            Coordinate3D(latitude: 48.3, longitude: 2.0),
-            Coordinate3D(latitude: 48.3, longitude: 2.5),
-        ]))
         let distance: CLLocationDistance = 5_000.0
         var allFeatures: [Feature] = []
 
+        func addFeature<T: GeoJsonGeometry>(_ geometry: T, _ props: [String: String]) {
+            var f = Feature(geometry)
+            for (k, v) in props { f.setProperty(v, for: k) }
+            allFeatures.append(f)
+        }
+
+        // ── Row 1: join types (miter / bevel / round) ──
+        let baseLine = try #require(LineString([
+            Coordinate3D(latitude: 49.0, longitude: 2.0),
+            Coordinate3D(latitude: 49.0, longitude: 2.5),
+            Coordinate3D(latitude: 49.3, longitude: 2.0),
+            Coordinate3D(latitude: 49.3, longitude: 2.5),
+        ]))
         let joinTypes: [(label: String, join: BufferJoinType)] = [
             ("miter", .miter()),
             ("bevel", .bevel),
             ("round_join", .round),
         ]
+        var lonOffset = 0.0
+        for (joinLabel, joinType) in joinTypes {
+            let line = baseLine.translated(
+                distance: lonOffset * 111_325.0 * cos(49.0 * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(line.buffered(
+                by: distance, endType: .butt, joinType: joinType))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "joinType": joinLabel,
+                    "endType": "butt",
+                    "section": "join types",
+                ])
+            }
+            addFeature(line, [
+                "joinType": joinLabel,
+                "endType": "butt",
+                "section": "join types",
+                "kind": "input",
+            ])
+            lonOffset += 1.0
+        }
 
+        // ── Row 2: end types (butt / square / round / polygon / joined) ──
+        lonOffset = 0.0
         let endTypes: [(label: String, end: BufferEndType)] = [
             ("butt", .butt),
             ("square_end", .square),
@@ -769,41 +914,187 @@ struct BufferTests {
             ("polygon", .polygon),
             ("joined", .joined),
         ]
-
-        // Row: different join types on the same line
-        var lonOffset = 0.0
-        for (joinLabel, joinType) in joinTypes {
-            let line = baseLine.translated(
-                distance: lonOffset * 111_325.0 * cos(48.0 * .pi / 180.0),
-                direction: 90.0)
-            let mp = try #require(line.buffered(by: distance, endType: .butt, joinType: joinType))
-            for poly in mp.polygons {
-                var feature = Feature(poly)
-                feature.setProperty(joinLabel, for: "joinType")
-                feature.setProperty("butt", for: "endType")
-                allFeatures.append(feature)
-            }
-            lonOffset += 1.0
-        }
-
-        // Next row: different end types
-        lonOffset = 0.0
         for (endLabel, endType) in endTypes {
             let line = baseLine.translated(
                 distance: -0.5 * 111_325.0,
                 direction: 0.0)
             let line2 = line.translated(
-                distance: lonOffset * 111_325.0 * cos(48.0 * .pi / 180.0),
+                distance: lonOffset * 111_325.0 * cos(48.5 * .pi / 180.0),
                 direction: 90.0)
-            let mp = try #require(line2.buffered(by: distance, endType: endType, joinType: .miter()))
+            let mp = try #require(line2.buffered(
+                by: distance, endType: endType, joinType: .miter()))
             for poly in mp.polygons {
-                var feature = Feature(poly)
-                feature.setProperty("miter", for: "joinType")
-                feature.setProperty(endLabel, for: "endType")
-                allFeatures.append(feature)
+                addFeature(poly, [
+                    "joinType": "miter",
+                    "endType": endLabel,
+                    "section": "end types",
+                ])
             }
+            addFeature(line2, [
+                "joinType": "miter",
+                "endType": endLabel,
+                "section": "end types",
+                "kind": "input",
+            ])
             lonOffset += 1.0
         }
+
+        // ════════════════════════════════════════════════════════════════
+        // Bevel stress‑test section (separated spatially from above)
+        // ════════════════════════════════════════════════════════════════
+        let bevelLat = 44.0
+
+        /// Helper: buffer a line with bevel at the given longitude offset
+        /// and also emit the original input line.
+        func addBevelLine(
+            _ coords: [Coordinate3D],
+            offset: Double,
+            label: String
+        ) throws {
+            let line = try #require(LineString(coords))
+            let shifted = line.translated(
+                distance: offset * 111_325.0 * cos(bevelLat * .pi / 180.0),
+                direction: 90.0)
+            let mp = try #require(shifted.buffered(
+                by: distance, endType: .butt, joinType: .bevel))
+            for poly in mp.polygons {
+                addFeature(poly, [
+                    "bevelTest": label,
+                    "section": "bevel stress",
+                ])
+            }
+            addFeature(shifted, [
+                "bevelTest": label,
+                "section": "bevel stress",
+                "kind": "input",
+            ])
+        }
+
+        var bevelOffset = 0.0
+
+        // Sharp left turn (~30°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: -0.15),
+        ], offset: bevelOffset, label: "sharp left ~30°")
+        bevelOffset += 0.8
+
+        // Sharp right turn (~30°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: 0.15),
+        ], offset: bevelOffset, label: "sharp right ~30°")
+        bevelOffset += 0.8
+
+        // Obtuse turn (~135°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.8, longitude: -0.15),
+        ], offset: bevelOffset, label: "obtuse ~135°")
+        bevelOffset += 0.8
+
+        // Near‑collinear (~175°)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.5, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.98, longitude: 0.02),
+        ], offset: bevelOffset, label: "near-collinear ~175°")
+        bevelOffset += 0.8
+
+        // V‑shape (left then right turn)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: bevelLat + 0.6, longitude: 0.0),
+        ], offset: bevelOffset, label: "V-shape L→R")
+        bevelOffset += 0.8
+
+        // Zigzag (right then left)
+        try addBevelLine([
+            Coordinate3D(latitude: bevelLat, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.3, longitude: -0.15),
+            Coordinate3D(latitude: bevelLat + 0.6, longitude: 0.0),
+            Coordinate3D(latitude: bevelLat + 0.9, longitude: -0.15),
+        ], offset: bevelOffset, label: "zigzag R→L→R")
+        bevelOffset += 1.0
+
+        // Next row: 90°‑turn square (4 vertices)
+        bevelOffset = 0.0
+        let row2Lat = bevelLat - 0.8
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: row2Lat, longitude: 0.3),
+        ], offset: 0.0, label: "90°-turn path")
+        bevelOffset += 0.8
+
+        // Very short middle segment
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.01, longitude: 0.2),
+            Coordinate3D(latitude: row2Lat + 0.4, longitude: 0.0),
+        ], offset: bevelOffset, label: "short middle seg")
+        bevelOffset += 0.8
+
+        // Sharp spike (back‑and‑forth)
+        try addBevelLine([
+            Coordinate3D(latitude: row2Lat, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: row2Lat + 0.15, longitude: -0.15),
+            Coordinate3D(latitude: row2Lat + 0.5, longitude: 0.0),
+        ], offset: bevelOffset, label: "spike")
+        bevelOffset += 0.8
+
+        // Next row: polygons with bevel
+        let polyLat = row2Lat - 0.8
+
+        /// Helper: buffer a polygon with bevel, emitting both the buffer
+        /// and the original polygon boundary.
+        func addBevelPolygon(
+            _ ring: [Coordinate3D],
+            offset: Double,
+            label: String
+        ) {
+            guard let poly = Polygon([ring]) else { return }
+            let shifted = poly.translated(
+                distance: offset * 111_325.0 * cos(polyLat * .pi / 180.0),
+                direction: 90.0)
+            guard let mp = shifted.buffered(by: distance, joinType: .bevel) else { return }
+            for p in mp.polygons {
+                addFeature(p, [
+                    "bevelTest": label,
+                    "section": "bevel polys",
+                ])
+            }
+            addFeature(shifted, [
+                "bevelTest": label,
+                "section": "bevel polys",
+                "kind": "input",
+            ])
+        }
+
+        // Simple rectangle polygon
+        addBevelPolygon([
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+        ], offset: 0.0, label: "rect poly")
+
+        // Concave polygon (arrow‑head shape)
+        addBevelPolygon([
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.0),
+            Coordinate3D(latitude: polyLat + 0.15, longitude: 0.15),
+            Coordinate3D(latitude: polyLat + 0.3, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.3),
+            Coordinate3D(latitude: polyLat, longitude: 0.0),
+        ], offset: 0.8, label: "concave poly")
 
         let fc = FeatureCollection(allFeatures)
         fc.dump()
