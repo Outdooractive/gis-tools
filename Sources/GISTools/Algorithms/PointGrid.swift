@@ -34,6 +34,10 @@ private enum PointGrid {
         cellSide: CLLocationDistance,
         mask: (any GeoJson)?
     ) -> FeatureCollection {
+        let projection = bbox.projection
+        guard projection != .noSRID else { return FeatureCollection() }
+        let coordinatesAreInMeters = projection == .epsg3857
+
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
         let east = bbox.northEast.longitude
@@ -45,13 +49,21 @@ private enum PointGrid {
         let centerY = (south + north) / 2.0
         let centerX = (west + east) / 2.0
 
-        let xDistance = Coordinate3D(latitude: centerY, longitude: west)
-            .distance(to: Coordinate3D(latitude: centerY, longitude: east))
-        let cellWidthDeg = xDistance > 0.0 ? (cellSide / xDistance) * bboxWidth : bboxWidth
+        let cellWidthDeg: Double
+        let cellHeightDeg: Double
+        if coordinatesAreInMeters {
+            cellWidthDeg = cellSide
+            cellHeightDeg = cellSide
+        }
+        else {
+            let xDistance = Coordinate3D(latitude: centerY, longitude: west)
+                .distance(to: Coordinate3D(latitude: centerY, longitude: east))
+            cellWidthDeg = xDistance > 0.0 ? (cellSide / xDistance) * bboxWidth : bboxWidth
 
-        let yDistance = Coordinate3D(latitude: south, longitude: centerX)
-            .distance(to: Coordinate3D(latitude: north, longitude: centerX))
-        let cellHeightDeg = yDistance > 0.0 ? (cellSide / yDistance) * bboxHeight : bboxHeight
+            let yDistance = Coordinate3D(latitude: south, longitude: centerX)
+                .distance(to: Coordinate3D(latitude: north, longitude: centerX))
+            cellHeightDeg = yDistance > 0.0 ? (cellSide / yDistance) * bboxHeight : bboxHeight
+        }
 
         guard cellWidthDeg > 0.0, cellHeightDeg > 0.0 else { return FeatureCollection() }
 
@@ -69,7 +81,14 @@ private enum PointGrid {
         for _ in 0 ..< columns {
             var currentY = south + deltaY
             for _ in 0 ..< rows {
-                let point = Point(Coordinate3D(latitude: currentY, longitude: currentX))
+                let coord: Coordinate3D
+                if coordinatesAreInMeters {
+                    coord = Coordinate3D(x: currentX, y: currentY)
+                }
+                else {
+                    coord = Coordinate3D(latitude: currentY, longitude: currentX)
+                }
+                let point = Point(coord)
                 let feature = Feature(point)
 
                 if let mask {
