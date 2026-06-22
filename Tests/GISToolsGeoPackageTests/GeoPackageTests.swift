@@ -627,3 +627,91 @@ struct GeoPackageSpatialIndexTests {
     }
 
 }
+
+// MARK: - Validation tests
+
+struct GeoPackageValidationTests {
+
+    private func testFixture(_ name: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("TestData/\(name)")
+    }
+
+    // Validates a well-formed feature GeoPackage passes all checks.
+    @Test
+    func validFeaturePackage() async throws {
+        let url = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
+        let result = try GeoPackage.validate(url: url)
+        // The ne fixture has extra tables (nga_*, st_*, etc.) but
+        // should still pass core validation
+        #expect(result.isValid,
+                "Expected valid: errors=\(result.errors), warnings=\(result.warnings)")
+    }
+
+    // Validates a well-formed tile GeoPackage passes all checks.
+    @Test
+    func validTilePackage() async throws {
+        let url = testFixture("rivers.gpkg")
+        let result = try GeoPackage.validate(url: url)
+        #expect(result.isValid,
+                "Expected valid: errors=\(result.errors), warnings=\(result.warnings)")
+    }
+
+    // Validates a freshly created GPKG passes all checks.
+    @Test
+    func validFreshlyCreated() async throws {
+        let url = URL(fileURLWithPath: "/tmp/gpkg_validate_created.gpkg")
+        let point = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
+        let fc = FeatureCollection([point])
+        try fc.writeGeopackage(to: url)
+
+        let result = try GeoPackage.validate(url: url)
+        #expect(result.isValid,
+                "Expected valid: errors=\(result.errors), warnings=\(result.warnings)")
+    }
+
+    // Validates a freshly created tile GPKG passes all checks.
+    @Test
+    func validFreshlyCreatedTiles() async throws {
+        let url = URL(fileURLWithPath: "/tmp/gpkg_validate_tiles.gpkg")
+        let db = try SQLiteDB(path: url.path)
+        try GeoPackage.createMetadata(in: db)
+
+        let bounds = BoundingBox(
+            southWest: Coordinate3D(latitude: -85.0, longitude: -180.0),
+            northEast: Coordinate3D(latitude: 85.0, longitude: 180.0))
+        let matrices = [
+            TileMatrix(
+                tableName: "tiles",
+                zoomLevel: 0,
+                matrixWidth: 1,
+                matrixHeight: 1,
+                pixelXSize: 156_543.0,
+                pixelYSize: 156_543.0),
+        ]
+        try TileWriter.writeTilePyramid(
+            tiles: [TileKey(zoom: 0, column: 0, row: 0): Data(repeating: 0, count: 16)],
+            to: "tiles",
+            matrixSetBounds: bounds,
+            matrices: matrices,
+            in: db)
+
+        let result = try GeoPackage.validate(url: url)
+        #expect(result.isValid,
+                "Expected valid: errors=\(result.errors), warnings=\(result.warnings)")
+    }
+
+    // Validates that a non-GeoPackage file reports errors.
+    @Test
+    func invalidFile() async throws {
+        // Create a plain SQLite file without any GeoPackage metadata
+        let url = URL(fileURLWithPath: "/tmp/gpkg_invalid.sqlite")
+        let _ = try SQLiteDB(path: url.path)
+
+        let result = try GeoPackage.validate(url: url)
+        #expect(!result.isValid)
+        #expect(!result.errors.isEmpty)
+    }
+
+}
