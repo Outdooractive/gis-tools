@@ -16,6 +16,9 @@ public struct GeoPackageValidation: Sendable {
     public let warnings: [GeoPackageValidationIssue]
 
     /// Creates a validation result.
+    /// - Parameters:
+    ///   - errors: Fatal spec violations.
+    ///   - warnings: Non-fatal issues.
     public init(
         errors: [GeoPackageValidationIssue] = [],
         warnings: [GeoPackageValidationIssue] = []
@@ -31,64 +34,108 @@ public struct GeoPackageValidation: Sendable {
 /// and can produce a human-readable ``message``.
 public enum GeoPackageValidationIssue: Sendable {
 
+    /// The `application_id` PRAGMA is not `GP10` or `GPKG`.
     case invalidApplicationId
+
+    /// The `user_version` PRAGMA is below 10200 (1.2.0).
     case invalidUserVersion
+
+    /// A table required by the GeoPackage specification is missing.
     case missingMandatoryTable(_ table: String)
+
+    /// A recommended but not mandatory table is missing.
     case missingRecommendedTable(_ table: String)
+
+    /// A required column is missing from a metadata table.
     case missingRequiredColumn(_ table: String, _ column: String)
+
+    /// `gpkg_spatial_ref_sys` exists but contains no entries.
     case emptySrsTable
+
+    /// A `gpkg_contents` entry has a `data_type` value that is not one
+    /// of the recognised types: `"features"`, `"tiles"`,
+    /// `"2d-gridded-coverage"`, or `"attributes"`.
     case unknownDataType(_ table: String, _ type: String)
+
+    /// A table referenced in `gpkg_contents` does not exist in the database.
     case missingReferencedTable(_ table: String)
+
+    /// An SRS identifier referenced by a table does not exist in
+    /// `gpkg_spatial_ref_sys`.
     case invalidSrsReference(_ context: String, _ srsId: Int)
+
+    /// A `geometry_type_name` in `gpkg_geometry_columns` is not a
+    /// recognised GeoPackage geometry type.
     case invalidGeometryType(_ table: String, _ type: String)
+
+    /// The `z` column in `gpkg_geometry_columns` is not 0, 1, or 2.
     case invalidZValue(_ table: String, _ value: Int)
+
+    /// The `m` column in `gpkg_geometry_columns` is not 0, 1, or 2.
     case invalidMValue(_ table: String, _ value: Int)
+
+    /// A metadata table has an unexpected column structure.
     case invalidStructure(_ detail: String)
+
+    /// `gpkg_tile_matrix_set` is missing while tile tables are registered
+    /// in `gpkg_contents`.
     case missingTileMatrixSet
+
+    /// `gpkg_tile_matrix` is missing while tile tables are registered
+    /// in `gpkg_contents`.
     case missingTileMatrix
+
+    /// A tile table listed in `gpkg_contents` has no corresponding
+    /// entry in `gpkg_tile_matrix_set`.
     case missingTileMatrixEntry(_ table: String)
+
+    /// An extension in `gpkg_extensions` has a `scope` other than
+    /// `"read-write"` or `"write-only"`.
     case invalidExtensionScope(_ name: String, _ scope: String)
+
+    /// Feature tables exist in `gpkg_contents` but
+    /// `gpkg_geometry_columns` is empty.
     case missingGeometryColumnsForFeatures
 
     /// A human-readable message describing the issue.
     public var message: String {
         switch self {
         case .invalidApplicationId:
-            return "Invalid application_id — expected GP10 or GPKG"
+            "Invalid application_id — expected GP10 or GPKG"
         case .invalidUserVersion:
-            return "Invalid or missing user_version — expected >= 10200 (1.2.0)"
+            "Invalid or missing user_version — expected >= 10200 (1.2.0)"
         case .missingMandatoryTable(let name):
-            return "Missing mandatory table: \(name)"
+            "Missing mandatory table: \(name)"
         case .missingRecommendedTable(let name):
-            return "Missing recommended table: \(name)"
+            "Missing recommended table: \(name)"
         case .missingRequiredColumn(let table, let column):
-            return "\(table) missing required column: \(column)"
+            "\(table) missing required column: \(column)"
         case .emptySrsTable:
-            return "gpkg_spatial_ref_sys is empty — no SRS entries"
+            "gpkg_spatial_ref_sys is empty — no SRS entries"
         case .unknownDataType(let table, let type):
-            return "gpkg_contents: '\(table)' has unknown data_type '\(type)'"
+            "gpkg_contents: '\(table)' has unknown data_type '\(type)'"
         case .missingReferencedTable(let table):
-            return "gpkg_contents: table '\(table)' does not exist"
+            "gpkg_contents: table '\(table)' does not exist"
         case .invalidSrsReference(let context, let id):
-            return "'\(context)' references non-existent srs_id \(id)"
+            "'\(context)' references non-existent srs_id \(id)"
         case .invalidGeometryType(let table, let type):
-            return "gpkg_geometry_columns: '\(table)' has invalid geometry_type '\(type)'"
+            "gpkg_geometry_columns: '\(table)' has invalid geometry_type '\(type)'"
         case .invalidZValue(let table, let value):
-            return "gpkg_geometry_columns: '\(table)' has invalid z value \(value)"
+            "gpkg_geometry_columns: '\(table)' has invalid z value \(value)"
         case .invalidMValue(let table, let value):
-            return "gpkg_geometry_columns: '\(table)' has invalid m value \(value)"
+            "gpkg_geometry_columns: '\(table)' has invalid m value \(value)"
         case .invalidStructure(let detail):
-            return "Invalid table structure: \(detail)"
+            "Invalid table structure: \(detail)"
         case .missingTileMatrixSet:
-            return "Missing gpkg_tile_matrix_set — required when tile tables exist"
+            "Missing gpkg_tile_matrix_set — required when tile tables exist"
         case .missingTileMatrix:
-            return "Missing gpkg_tile_matrix — required when tile tables exist"
+            "Missing gpkg_tile_matrix — required when tile tables exist"
         case .missingTileMatrixEntry(let table):
-            return "gpkg_tile_matrix_set: missing entry for tile table '\(table)'"
+            "gpkg_tile_matrix_set: missing entry for tile table '\(table)'"
         case .invalidExtensionScope(let name, let scope):
-            return "gpkg_extensions: '\(name)' has invalid scope '\(scope)'"
+            "gpkg_extensions: '\(name)' has invalid scope '\(scope)'"
         case .missingGeometryColumnsForFeatures:
-            return "gpkg_contents has feature tables but gpkg_geometry_columns is empty"
+            "gpkg_contents has feature tables but gpkg_geometry_columns is empty"
         }
     }
 
@@ -105,7 +152,10 @@ extension GeoPackage {
     public static func validate(url: URL) throws -> GeoPackageValidation {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
+        return try validate(in: db)
+    }
 
+    static func validate(in db: SQLiteDB) throws -> GeoPackageValidation {
         var errors: [GeoPackageValidationIssue] = []
         var warnings: [GeoPackageValidationIssue] = []
 

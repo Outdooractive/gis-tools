@@ -24,7 +24,7 @@ enum WKBHeader {
     /// Parse a GeoPackage WKB blob into its header and inner WKB payload.
     static func parse(_ data: Data) throws -> Header {
         guard data.count >= 12 else {
-            throw GeoPackageError.invalidWKB("Data too short for header")
+            throw GeoPackageError.invalidWKB(detail: "Data too short for header")
         }
 
         var offset = 0
@@ -32,7 +32,7 @@ enum WKBHeader {
         // Magic bytes "GP"
         guard data[offset] == 0x47,
               data[offset + 1] == 0x50
-        else { throw GeoPackageError.invalidWKB("Missing GeoPackage magic bytes") }
+        else { throw GeoPackageError.invalidWKB(detail: "Missing GeoPackage magic bytes") }
 
         offset += 2
 
@@ -60,7 +60,7 @@ enum WKBHeader {
             }
 
             guard data.count >= offset + requiredDoubles * MemoryLayout<Double>.size else {
-                throw GeoPackageError.invalidWKB("Data too short for envelope")
+                throw GeoPackageError.invalidWKB(detail: "Data too short for envelope")
             }
 
             let doubles = data.withUnsafeBytes { rawBuf in
@@ -77,7 +77,7 @@ enum WKBHeader {
         // Remaining data is the Extended WKB geometry
         let wkbData = data.subdata(in: offset..<data.count)
         guard !wkbData.isEmpty else {
-            throw GeoPackageError.invalidWKB("Missing WKB geometry data")
+            throw GeoPackageError.invalidWKB(detail: "Missing WKB geometry data")
         }
 
         // Determine Z/M from WKB geometry type

@@ -16,25 +16,41 @@ extension FeatureCollection {
         to url: URL,
         table: String = "features",
         createSpatialIndex: Bool = false
-    ) throws {
-        // Remove existing file to start fresh
-        if FileManager.default.fileExists(atPath: url.path) {
-            try FileManager.default.removeItem(at: url)
-        }
-        let db = try SQLiteDB(path: url.path)
-        try GeoPackage.createMetadata(in: db)
-        try GeoPackageWriter.writeFeatures(
-            self,
-            to: db,
-            table: table,
-            createSpatialIndex: createSpatialIndex)
+    ) async throws {
+        let conn = try GeoPackageConnection(url: url, skipValidation: true)
+        try await writeGeopackage(into: conn, table: table, createSpatialIndex: createSpatialIndex)
+        await conn.close()
+    }
+
+    /// Writes the FeatureCollection into an existing GeoPackage
+    /// connection so the same connection can be reused for reads.
+    ///
+    /// ```swift
+    /// let gpkg = try await GeoPackageConnection(url: url, skipValidation: true)
+    /// try await fc.writeGeopackage(into: gpkg)
+    /// let features = try await gpkg.readFeatures(table: "features")
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - conn: An open GeoPackage connection.
+    ///   - table: The name of the feature table to create (default `"features"`).
+    ///   - createSpatialIndex: If `true`, creates a `gpkg_rtree_index` spatial
+    ///     index for faster bounding-box queries (default `false`).
+    /// - Throws: A ``GeoPackageError`` if the file cannot be written.
+    public func writeGeopackage(
+        into conn: GeoPackageConnection,
+        table: String = "features",
+        createSpatialIndex: Bool = false
+    ) async throws {
+        try await conn.createMetadata()
+        try await conn.write(features: self, to: table, createSpatialIndex: createSpatialIndex)
     }
 
 }
 
 // MARK: - Writer
 
-private enum GeoPackageWriter {
+enum GeoPackageWriter {
 
     static func writeFeatures(
         _ fc: FeatureCollection,
@@ -44,7 +60,7 @@ private enum GeoPackageWriter {
     ) throws {
         let features = fc.features
         guard !features.isEmpty else {
-            throw GeoPackageError.invalidGeoPackage("Cannot write empty FeatureCollection")
+            throw GeoPackageError.invalidGeoPackage(detail: "Cannot write empty FeatureCollection")
         }
 
         // Determine geometry type from the first feature
@@ -279,7 +295,7 @@ private enum GeoPackageWriter {
 
         let stepRC = sqlite3_step(stmt)
         guard stepRC == 101 else {  // SQLITE_DONE
-            throw GeoPackageError.sqliteError("Failed to insert row: \(db.lastErrorMessage())")
+            throw GeoPackageError.sqliteError(detail: "Failed to insert row: \(db.lastErrorMessage())")
         }
     }
 

@@ -3,28 +3,54 @@ import GISTools
 
 // MARK: - Errors
 
+/// Errors related to GeoPackage file operations.
+///
+/// These errors are thrown by the GeoPackage reader, writer, tile
+/// reader/writer, and validation APIs when the file cannot be opened,
+/// the data violates the GeoPackage specification, or an unexpected
+/// SQLite error occurs.
 public enum GeoPackageError: LocalizedError {
-    case couldNotOpenDatabase(String, String)
-    case sqliteError(String)
-    case invalidGeoPackage(String)
-    case mixedGeometryTypes(String)
-    case invalidWKB(String)
-    case unsupportedGeometryType(String)
 
+    /// The GeoPackage database file could not be opened.
+    /// - Parameter path: The file path.
+    /// - Parameter detail: The underlying SQLite error message.
+    case couldNotOpenDatabase(path: String, detail: String)
+
+    /// An SQLite operation returned an unexpected error.
+    /// - Parameter detail: The error message from SQLite.
+    case sqliteError(detail: String)
+
+    /// The file is not a valid GeoPackage or violates the spec.
+    /// - Parameter detail: A description of the violation.
+    case invalidGeoPackage(detail: String)
+
+    /// A feature table has more than one geometry column, which is not supported.
+    /// - Parameter detail: A description of the conflict.
+    case mixedGeometryTypes(detail: String)
+
+    /// The stored WKB geometry data could not be parsed.
+    /// - Parameter detail: A description of the parsing failure.
+    case invalidWKB(detail: String)
+
+    /// A geometry type used in the file is not supported by this library.
+    /// - Parameter type: The unsupported type name.
+    case unsupportedGeometryType(type: String)
+
+    /// A human-readable description of the error.
     public var errorDescription: String? {
         switch self {
         case .couldNotOpenDatabase(let path, let detail):
-            return "Could not open GeoPackage database at \(path): \(detail)"
+            "Could not open GeoPackage database at \(path): \(detail)"
         case .sqliteError(let detail):
-            return "SQLite error: \(detail)"
+            "SQLite error: \(detail)"
         case .invalidGeoPackage(let detail):
-            return "Invalid GeoPackage: \(detail)"
+            "Invalid GeoPackage: \(detail)"
         case .mixedGeometryTypes(let detail):
-            return "Mixed geometry types: \(detail)"
+            "Mixed geometry types: \(detail)"
         case .invalidWKB(let detail):
-            return "Invalid WKB geometry: \(detail)"
+            "Invalid WKB geometry: \(detail)"
         case .unsupportedGeometryType(let detail):
-            return "Unsupported geometry type: \(detail)"
+            "Unsupported geometry type: \(detail)"
         }
     }
 }
@@ -138,6 +164,40 @@ enum GeoPackage {
             CONSTRAINT pk_ttm PRIMARY KEY (table_name, zoom_level),
             CONSTRAINT fk_ttm_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
         );
+
+        CREATE TABLE IF NOT EXISTS gpkg_data_columns (
+            table_name TEXT NOT NULL,
+            column_name TEXT NOT NULL,
+            name TEXT,
+            title TEXT,
+            description TEXT,
+            mime_type TEXT,
+            constraint_name TEXT,
+            CONSTRAINT pk_data_columns PRIMARY KEY (table_name, column_name),
+            CONSTRAINT fk_dc_table FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+        );
+
+        CREATE TABLE IF NOT EXISTS gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min_value DOUBLE,
+            min_value_inclusive BOOLEAN,
+            max_value DOUBLE,
+            max_value_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT pk_data_col_constr PRIMARY KEY (constraint_name, constraint_type, value)
+        );
+
+        CREATE TABLE IF NOT EXISTS gpkgext_relations (
+            id TEXT PRIMARY KEY,
+            table_name TEXT NOT NULL,
+            column_name TEXT NOT NULL,
+            related_table_name TEXT NOT NULL,
+            related_column_name TEXT NOT NULL,
+            relation_name TEXT NOT NULL,
+            mapping_table_name TEXT
+        );
         """
 
     /// SQL to drop metadata tables (for cleanup).
@@ -148,6 +208,9 @@ enum GeoPackage {
         DROP TABLE IF EXISTS gpkg_extensions;
         DROP TABLE IF EXISTS gpkg_tile_matrix;
         DROP TABLE IF EXISTS gpkg_tile_matrix_set;
+        DROP TABLE IF EXISTS gpkg_data_columns;
+        DROP TABLE IF EXISTS gpkg_data_column_constraints;
+        DROP TABLE IF EXISTS gpkgext_relations;
         """
 
     // MARK: - Schema setup
@@ -168,7 +231,7 @@ enum GeoPackage {
               let raw = first["application_id"] as? Int,
               raw == Int(applicationIdGP10) || raw == Int(applicationIdGPKG)
         else {
-            throw GeoPackageError.invalidGeoPackage("Not a GeoPackage file (invalid application_id)")
+            throw GeoPackageError.invalidGeoPackage(detail: "Not a GeoPackage file (invalid application_id)")
         }
 
         // Verify mandatory tables exist
@@ -178,7 +241,7 @@ enum GeoPackage {
         let tableNames = tables.compactMap { $0["name"] as? String }
         for required in ["gpkg_spatial_ref_sys", "gpkg_contents", "gpkg_geometry_columns"] {
             guard tableNames.contains(required) else {
-                throw GeoPackageError.invalidGeoPackage("Missing mandatory table: \(required)")
+                throw GeoPackageError.invalidGeoPackage(detail: "Missing mandatory table: \(required)")
             }
         }
     }
