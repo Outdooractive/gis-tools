@@ -20,8 +20,8 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
 - Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
 - Supports WKT/WKB/TWKB, also with different projections
-- Reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
-- Reads and writes OGC GeoPackage (.gpkg) files
+- [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
+- [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -74,9 +74,6 @@ let total = distance + 500.0.feet  // Measurement arithmetic
 let distance: Double = 1000.0.meters  // raw meters
 let total = distance + 500.0.feet     // Double arithmetic (both in meters)
 ```
-
-**Storage format traits**:
-- `EnableShapefileSupport` — adds Shapefile (.shp/.dbf/.shx/.prj) read/write support via `ShapefileCoder` and convenience extensions on `FeatureCollection`.
 
 ## Usage
 
@@ -891,57 +888,23 @@ let coordinates = polyline.decodePolyline()
 
 # GeoPackage (.gpkg)
 
-Provides read/write support for the OGC GeoPackage format via the `GISToolsGeoPackage` target.
-
-`FeatureCollection` has convenience methods:
+GeoPackage support has been extracted into its own package: [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage).
 
 ```swift
-// Read from a GeoPackage file:
-let fc = try FeatureCollection(geopackage: url, table: "features")
-
-// Write to a GeoPackage file:
-try fc.writeGeopackage(to: url, table: "features")
+dependencies: [
+    .package(url: "https://github.com/Outdooractive/gis-tools-geopackage", from: "1.0.0"),
+]
 ```
-
-Properties are mapped per the GeoPackage spec:
-- `INTEGER` → `Int`, `REAL` → `Double`, `TEXT` → `String`, `BLOB` → `String` (Base64)
-- `BOOLEAN` → `Bool`, `DATE`/`DATETIME` → `String` (ISO 8601)
-
-Mixed geometry types are rejected with an error.
 
 # Shapefile (.shp / .dbf / .shx / .prj)
 
-Provides read/write support for the ESRI Shapefile format. `FeatureCollection` has convenience methods to read and write Shapefiles.
-
-The Shapefile reader handles Point, PolyLine, Polygon, MultiPoint, and MultiPatch geometry types, including Z (altitude) and M (measure) variants. Attributes are mapped to and from `Feature.properties` via the companion `.dbf` file. The `.prj` file is read to determine the source projection. The `.shx` index file is written for compatibility with tools that require it.
-
-## Reading
+Shapefile support has been extracted into its own package: [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile).
 
 ```swift
-// Read from a base URL (looks for .shp, .dbf, .prj):
-let fc = try ShapefileCoder.read(from: url)
-
-// Or via the convenience initializer:
-let fc = FeatureCollection(shapefile: url)
+dependencies: [
+    .package(url: "https://github.com/Outdooractive/gis-tools-shapefile", from: "1.0.0"),
+]
 ```
-
-The source projection is determined from the `.prj` file. If no `.prj` file is present, EPSG:4326 is assumed.
-
-## Writing
-
-```swift
-// Write to a base URL (creates .shp, .dbf, .shx, .prj):
-try ShapefileCoder.write(fc, to: url)
-
-// Or via the convenience method:
-try fc.writeShapefile(to: url)
-```
-
-The output projection is taken from the `FeatureCollection`'s `projection` property.
-
-## MultiPatch support
-
-MultiPatch (type 31) geometries are decomposed into individual `Polygon` parts and wrapped in a `GeometryCollection`. Triangle strips and triangle fans are converted to triangle polygons.
 
 # Algorithms
 Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.<br>
