@@ -14,6 +14,10 @@ public struct TileTable: Sendable {
     public let tiles: [TileKey: Data]
 
     /// Creates a tile table descriptor.
+    /// - Parameters:
+    ///   - matrixSet: The tile matrix set metadata.
+    ///   - matrices: One entry per zoom level.
+    ///   - tiles: Raw tile blobs keyed by (zoom, column, row).
     public init(
         matrixSet: TileMatrixSet,
         matrices: [TileMatrix],
@@ -39,6 +43,10 @@ public struct TileKey: Hashable, Sendable {
     public let row: Int
 
     /// Creates a tile key.
+    /// - Parameters:
+    ///   - zoom: The zoom level.
+    ///   - column: The tile column (0 at left).
+    ///   - row: The tile row (0 at bottom, TMS convention).
     public init(zoom: Int, column: Int, row: Int) {
         self.zoom = zoom
         self.column = column

@@ -136,20 +136,19 @@ struct GeoPackageRelatedTablesTests {
             rowIds: [1])
         try GeoPackage.writeAttributeTable(attributes, to: testUrl())
 
-        let db = try SQLiteDB(path: testUrl().path)
-        defer { db.close() }
-
-        try GeoPackage.registerRelatedTablesExtension(in: db)
-        try GeoPackage.writeRelation(RelationRow(
+        let gpkg = try await GeoPackageConnection(url: testUrl())
+        try await gpkg.registerRelatedTablesExtension()
+        try await gpkg.write(relation: RelationRow(
             id: "r1",
             tableName: "features",
             relatedTableName: "info",
-            relationName: .attributes), in: db)
+            relationName: .attributes))
 
-        let attrs = try FeatureCollection.loadRelatedAttributes(for: "features", from: testUrl())
-        #expect(attrs != nil)
-        #expect(attrs?.tableName == "info")
-        #expect(attrs?.rows.count == 1)
+        let rels = try await gpkg.readRelations()
+        let rel = try #require(rels.first)
+        let attrs = try await gpkg.readAttributeTable(table: rel.relatedTableName)
+        #expect(attrs.tableName == "info")
+        #expect(attrs.rows.count == 1)
     }
 
     @Test
@@ -165,16 +164,13 @@ struct GeoPackageRelatedTablesTests {
             rowIds: [1, 2])
         try GeoPackage.writeAttributeTable(attributes, to: testUrl())
 
-        let db = try SQLiteDB(path: testUrl().path)
-        defer { db.close() }
-
-        try GeoPackage.registerRelatedTablesExtension(in: db)
-        let rel = RelationRow(
+        let gpkg = try await GeoPackageConnection(url: testUrl())
+        try await gpkg.registerRelatedTablesExtension()
+        try await gpkg.write(relation: RelationRow(
             id: "r1",
             tableName: "features",
             relatedTableName: "info",
-            relationName: .attributes)
-        try GeoPackage.writeRelation(rel, in: db)
+            relationName: .attributes))
 
         let fc = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(fc.features.count == 1)
@@ -184,8 +180,9 @@ struct GeoPackageRelatedTablesTests {
         else { return }
 
         #expect(rowId == 1)
+        #expect(feature.gpkgTableName == "features")
 
-        let related = try feature.relatedAttributes(from: testUrl(), using: rel)
+        let related = try await feature.relatedAttributes(in: gpkg)
         #expect(related.count == 1)
         #expect(related[0]["value"] as? String == "row1")
     }

@@ -14,6 +14,10 @@ public struct TileMatrixSet: Sendable {
     public let bounds: BoundingBox
 
     /// Creates a tile matrix set.
+    /// - Parameters:
+    ///   - tableName: The tile table name.
+    ///   - srsId: The spatial reference system identifier.
+    ///   - bounds: The spatial extent in CRS units.
     public init(
         tableName: String,
         srsId: Int,

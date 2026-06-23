@@ -21,6 +21,11 @@ public struct AttributeTable: Sendable {
     public let rowIds: [Int64]
 
     /// Creates an attribute table descriptor.
+    /// - Parameters:
+    ///   - tableName: The table name in the GeoPackage.
+    ///   - columns: The user-defined column names (excluding `"id"`).
+    ///   - rows: The row data, one dictionary per row.
+    ///   - rowIds: The primary key values for each row.
     public init(
         tableName: String,
         columns: [String],

@@ -9,7 +9,7 @@ extension FeatureCollection {
     /// Creates a FeatureCollection from a GeoPackage (.gpkg) file.
     ///
     /// - Parameters:
-    ///   - url: The file URL of the GeoPackage database.
+    ///   - geopackage: The file URL of a GeoPackage database.
     ///   - table: The name of the feature table to read (default `"features"`).
     ///   - boundingBox: An optional bounding box to filter features. When
     ///     set and the GeoPackage has a spatial (rtree) index, only
@@ -48,10 +48,13 @@ public struct FeatureStream: AsyncSequence {
         self.boundingBox = boundingBox
     }
 
+    /// Creates the async iterator for the feature stream.
     public func makeAsyncIterator() -> AsyncIterator {
         AsyncIterator(db: db, table: table, boundingBox: boundingBox)
     }
 
+    /// An async iterator that yields features one at a time.
+    /// Created by ``FeatureStream.makeAsyncIterator()``.
     public struct AsyncIterator: AsyncIteratorProtocol {
 
         private let db: SQLiteDB
@@ -185,6 +188,7 @@ public struct FeatureStream: AsyncSequence {
                 if let rowId = gpkgRowId {
                     feature.id = .int(rowId)
                 }
+                feature.gpkgTableName = table
 
                 // In-memory bbox filter fallback for when rtree is unavailable
                 if let bbox = boundingBox, !feature.intersects(bbox) {
@@ -306,6 +310,7 @@ enum GeoPackageReader {
             if let rowId = gpkgRowId {
                 feature.id = .int(rowId)
             }
+            feature.gpkgTableName = table
             features.append(feature)
         }
 

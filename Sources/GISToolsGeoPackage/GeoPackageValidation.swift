@@ -16,6 +16,9 @@ public struct GeoPackageValidation: Sendable {
     public let warnings: [GeoPackageValidationIssue]
 
     /// Creates a validation result.
+    /// - Parameters:
+    ///   - errors: Fatal spec violations.
+    ///   - warnings: Non-fatal issues.
     public init(
         errors: [GeoPackageValidationIssue] = [],
         warnings: [GeoPackageValidationIssue] = []

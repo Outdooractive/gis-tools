@@ -23,6 +23,12 @@ public struct MediaTable: Sendable {
     public let properties: [[String: Sendable]]
 
     /// Creates a media table descriptor.
+    /// - Parameters:
+    ///   - tableName: The table name in the GeoPackage.
+    ///   - rowIds: The primary key values.
+    ///   - data: The raw media data for each row.
+    ///   - contentTypes: The MIME content type for each row.
+    ///   - properties: Optional user-defined column values per row.
     public init(
         tableName: String,
         rowIds: [Int64],
@@ -53,8 +59,18 @@ extension GeoPackage {
     ) throws -> MediaTable {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
-
         return try readMediaTable(from: db, table: table)
+    }
+
+    /// Reads media rows filtered by a specific row ID.
+    public static func readMediaRows(
+        from url: URL,
+        table: String,
+        rowId: Int
+    ) throws -> [MediaRow] {
+        let db = try SQLiteDB(path: url.path)
+        defer { db.close() }
+        return try readMediaRows(from: db, table: table, rowId: rowId)
     }
 
     /// Writes a media table to a GeoPackage and optionally creates a
@@ -79,6 +95,14 @@ extension GeoPackage {
         from db: SQLiteDB,
         table: String
     ) throws -> MediaTable {
+        try readMediaTable(from: db, table: table, rowId: nil)
+    }
+
+    static func readMediaTable(
+        from db: SQLiteDB,
+        table: String,
+        rowId: Int?
+    ) throws -> MediaTable {
         let quotedTable = GeoPackage.sanitizeIdentifier(table)
         let tableInfo = try db.query("PRAGMA table_info(\(quotedTable));")
         let allColumns: [String] = tableInfo.compactMap { $0["name"] as? String }
@@ -86,8 +110,9 @@ extension GeoPackage {
             $0 != "id" && $0 != "data" && $0 != "content_type"
         }
 
+        let whereClause = rowId.map { " WHERE id = \($0)" } ?? ""
         let rows: [[String: Sendable]] = try db.query(
-            "SELECT * FROM \(quotedTable) ORDER BY id;")
+            "SELECT * FROM \(quotedTable)\(whereClause) ORDER BY id;")
 
         var rowIds: [Int64] = []
         var data: [Data] = []
@@ -124,6 +149,42 @@ extension GeoPackage {
             data: data,
             contentTypes: contentTypes,
             properties: properties)
+    }
+
+    static func readMediaRows(
+        from db: SQLiteDB,
+        table: String,
+        rowId: Int
+    ) throws -> [MediaRow] {
+        let quotedTable = GeoPackage.sanitizeIdentifier(table)
+        let tableInfo = try db.query("PRAGMA table_info(\(quotedTable));")
+        let allColumns: [String] = tableInfo.compactMap { $0["name"] as? String }
+        let userColumns = allColumns.filter {
+            $0 != "id" && $0 != "data" && $0 != "content_type"
+        }
+
+        let rows: [[String: Sendable]] = try db.query(
+            "SELECT * FROM \(quotedTable) WHERE id = \(rowId) ORDER BY id;")
+
+        return rows.compactMap { row in
+            guard let rid = row["id"] as? Int,
+                  let blob = row["data"] as? Data,
+                  let ct = row["content_type"] as? String
+            else { return nil }
+
+            var props: [String: Sendable] = [:]
+            for col in userColumns {
+                if let value = row[col] {
+                    if let d = value as? Data {
+                        props[col] = d.base64EncodedString()
+                    }
+                    else {
+                        props[col] = value
+                    }
+                }
+            }
+            return MediaRow(id: rid, data: blob, contentType: ct, properties: props)
+        }
     }
 
     static func writeMediaTable(

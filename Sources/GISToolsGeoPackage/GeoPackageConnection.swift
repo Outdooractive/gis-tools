@@ -72,6 +72,9 @@ extension GeoPackageConnection {
 
     /// Checks whether a spatial (rtree) index exists for the given
     /// feature table and geometry column.
+    /// - Parameters:
+    ///   - table: The feature table name.
+    ///   - column: The geometry column name.
     public func hasRTreeIndex(for table: String, column: String) throws -> Bool {
         try GeoPackage.hasRTreeIndex(for: table, column: column, in: db)
     }
@@ -125,10 +128,18 @@ extension GeoPackageConnection {
 
 extension GeoPackageConnection {
 
+    /// Reads a non-spatial attribute table.
+    /// - Parameters:
+    ///   - table: The attribute table name.
+    ///   - rowId: Optional row ID to filter by (SQL-level `WHERE id = ?`).
     public func readAttributeTable(table: String, rowId: Int? = nil) throws -> AttributeTable {
         try GeoPackage.readAttributeTable(from: db, table: table, rowId: rowId)
     }
 
+    /// Writes an attribute table and optionally creates a relationship.
+    /// - Parameters:
+    ///   - table: The attribute table to write.
+    ///   - relationship: Optional relationship to link to a feature table.
     public func write(attributeTable table: AttributeTable, relationship: RelationRow? = nil) throws {
         try GeoPackage.writeAttributeTable(table, in: db)
         if let rel = relationship {
@@ -143,10 +154,24 @@ extension GeoPackageConnection {
 
 extension GeoPackageConnection {
 
+    /// Reads a media table.
+    /// - Parameter table: The media table name.
     public func readMediaTable(table: String) throws -> MediaTable {
         try GeoPackage.readMediaTable(from: db, table: table)
     }
 
+    /// Reads media rows filtered by a specific row ID.
+    /// - Parameters:
+    ///   - table: The media table name.
+    ///   - rowId: The primary key value to filter by.
+    public func readMediaRows(table: String, rowId: Int) throws -> [MediaRow] {
+        try GeoPackage.readMediaRows(from: db, table: table, rowId: rowId)
+    }
+
+    /// Writes a media table and optionally creates a relationship.
+    /// - Parameters:
+    ///   - table: The media table to write.
+    ///   - relationship: Optional relationship to link to a feature table.
     public func write(mediaTable table: MediaTable, relationship: RelationRow? = nil) throws {
         try GeoPackage.writeMediaTable(table, in: db)
         if let rel = relationship {
@@ -161,34 +186,55 @@ extension GeoPackageConnection {
 
 extension GeoPackageConnection {
 
+    /// Reads a single tile blob from a tile table.
+    /// - Parameters:
+    ///   - key: The tile identifier (zoom, column, row).
+    ///   - table: The tile table name.
+    /// - Returns: The tile data, or `nil` if not found.
     public func readTile(for key: TileKey, from table: String) throws -> Data? {
         try TileReader.readTile(for: key, from: table, in: db)
     }
 
+    /// Reads all tiles from a tile table.
+    /// - Parameter table: The tile table name.
     public func readAllTiles(from table: String) throws -> [TileKey: Data] {
         try TileReader.readAllTiles(from: table, in: db)
     }
 
+    /// Reads the tile matrix set metadata for a tile table.
+    /// - Parameter table: The tile table name.
     public func readTileMatrixSet(for table: String) throws -> TileMatrixSet? {
         try TileReader.readTileMatrixSet(for: table, in: db)
     }
 
+    /// Reads the tile matrix metadata for all zoom levels.
+    /// - Parameter table: The tile table name.
     public func readTileMatrices(for table: String) throws -> [TileMatrix] {
         try TileReader.readTileMatrices(for: table, in: db)
     }
 
+    /// Reads a complete tile table including metadata and tile data.
+    /// - Parameter table: The tile table name.
     public func readTileTable(_ table: String) throws -> TileTable? {
         try TileReader.readTileTable(table, in: db)
     }
 
+    /// Creates a tile table with the standard GeoPackage schema.
+    /// - Parameter name: The tile table name.
     public func createTileTable(_ name: String) throws {
         try TileWriter.createTileTable(name, in: db)
     }
 
+    /// Writes a single tile blob to a tile table.
+    /// - Parameters:
+    ///   - tileData: The raw tile image data.
+    ///   - key: The tile identifier (zoom, column, row).
+    ///   - table: The tile table name.
     public func write(tileData: Data, for key: TileKey, to table: String) throws {
         try TileWriter.write(tileData: tileData, for: key, to: table, in: db)
     }
 
+    /// Writes a complete tile pyramid including metadata tables.
     public func writeTilePyramid(
         tiles: [TileKey: Data],
         to tableName: String,
@@ -212,14 +258,18 @@ extension GeoPackageConnection {
 
 extension GeoPackageConnection {
 
+    /// Reads all relationship rows from `gpkgext_relations`.
     public func readRelations() throws -> [RelationRow] {
         try GeoPackage.readRelations(in: db)
     }
 
+    /// Inserts a relationship row into `gpkgext_relations`.
+    /// - Parameter relation: The relationship descriptor.
     public func write(relation: RelationRow) throws {
         try GeoPackage.writeRelation(relation, in: db)
     }
 
+    /// Registers the Related Tables Extension in `gpkg_extensions`.
     public func registerRelatedTablesExtension() throws {
         try GeoPackage.registerRelatedTablesExtension(in: db)
     }

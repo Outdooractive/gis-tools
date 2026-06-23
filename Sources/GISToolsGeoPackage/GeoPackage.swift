@@ -3,6 +3,12 @@ import GISTools
 
 // MARK: - Errors
 
+/// Errors related to GeoPackage file operations.
+///
+/// These errors are thrown by the GeoPackage reader, writer, tile
+/// reader/writer, and validation APIs when the file cannot be opened,
+/// the data violates the GeoPackage specification, or an unexpected
+/// SQLite error occurs.
 public enum GeoPackageError: LocalizedError {
 
     /// The GeoPackage database file could not be opened.
@@ -30,6 +36,7 @@ public enum GeoPackageError: LocalizedError {
     /// - Parameter type: The unsupported type name.
     case unsupportedGeometryType(type: String)
 
+    /// A human-readable description of the error.
     public var errorDescription: String? {
         switch self {
         case .couldNotOpenDatabase(let path, let detail):

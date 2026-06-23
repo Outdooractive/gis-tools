@@ -3,9 +3,17 @@ import GISTools
 
 /// Relationship types defined by the GeoPackage Related Tables Extension.
 public enum RelationshipType: String, Sendable {
+
+    /// Media relationship: binary blob content linked to a feature.
     case media = "media"
+
+    /// Simple media relationship: media content without metadata.
     case simpleMedia = "simple_media"
+
+    /// Attribute relationship: non-spatial attribute data.
     case attributes = "attributes"
+
+    /// Features relationship: relationship between feature tables.
     case features = "features"
 }
 
@@ -34,6 +42,14 @@ public struct RelationRow: Sendable {
     public let mappingTableName: String?
 
     /// Creates a relation row.
+    /// - Parameters:
+    ///   - id: A unique identifier (auto-generated if omitted).
+    ///   - tableName: The base feature table name.
+    ///   - columnName: The base table geometry column (default `"geom"`).
+    ///   - relatedTableName: The target related table name.
+    ///   - relatedColumnName: The target table primary key column (default `"id"`).
+    ///   - relationName: The relationship type.
+    ///   - mappingTableName: Optional mapping table name for many-to-many.
     public init(
         id: String = UUID().uuidString,
         tableName: String,
@@ -124,106 +140,94 @@ extension GeoPackage {
 
 }
 
-// MARK: - Feature convenience
+// MARK: - Feature convenience (table name)
 
 extension Feature {
 
-    /// Reads the related attribute rows for this feature from a GeoPackage.
-    ///
-    /// Uses the feature's ``id`` (set by the GeoPackage reader) to match
-    /// against the related table's primary key.
-    ///
-    /// - Parameters:
-    ///   - geopackage: The file URL of a GeoPackage database.
-    ///   - relation: The relationship descriptor (from `gpkgext_relations`).
-    /// - Returns: Filtered rows matching this feature's ID, or empty.
-    public func relatedAttributes(
-        from geopackage: URL,
-        using relation: RelationRow
-    ) throws -> [[String: Sendable]] {
-        guard case .int(let rowId) = id else { return [] }
+    /// Key used inside ``foreignMembers`` to store the GeoPackage table name.
+    private static let gpkgTableKey = "_gpkg_table"
 
-        let table = try GeoPackage.readAttributeTable(
-            from: geopackage,
-            table: relation.relatedTableName,
-            rowId: rowId)
-        return table.rows
-    }
-
-    /// Reads the related media rows for this feature from a GeoPackage.
-    public func relatedMedia(
-        from geopackage: URL,
-        using relation: RelationRow
-    ) throws -> [MediaTable] {
-        guard case .int(let rowId) = id else { return [] }
-
-        let table = try GeoPackage.readMediaTable(
-            from: geopackage,
-            table: relation.relatedTableName)
-
-        // For media tables, we return entries matching the feature ID
-        let matching = table.rowIds
-            .enumerated()
-            .filter { $1 == Int64(rowId) }
-            .map { $0.offset }
-        guard !matching.isEmpty else { return [] }
-        return [table]  // Return full table; user can index via rowIds
+    /// The GeoPackage table name this feature belongs to, if known.
+    /// Set automatically by the GeoPackage reader.
+    public var gpkgTableName: String? {
+        get { foreignMembers[Self.gpkgTableKey] as? String }
+        set { foreignMembers[Self.gpkgTableKey] = newValue }
     }
 
 }
 
-// MARK: - FeatureCollection convenience
+// MARK: - MediaRow
 
-extension FeatureCollection {
+/// A single row from a GeoPackage media (Related Tables Extension) table.
+public struct MediaRow: Sendable, Identifiable {
 
-    /// Reads all relationship entries from a GeoPackage that reference
-    /// the given table name.
-    public static func relationships(
-        for tableName: String,
-        in geopackage: URL
-    ) throws -> [RelationRow] {
-        let db = try SQLiteDB(path: geopackage.path)
-        defer { db.close() }
+    /// The primary key value.
+    public let id: Int
 
-        return try GeoPackage.readRelations(in: db)
-            .filter {
-                $0.tableName == tableName || $0.relatedTableName == tableName
-            }
-    }
+    /// The raw media blob (PNG / JPEG / WebP).
+    public let data: Data
 
-    /// Loads an attribute table related to this feature collection
-    /// from a GeoPackage file.
+    /// The MIME content type (e.g. `"image/png"`).
+    public let contentType: String
+
+    /// Optional user-defined column values.
+    public let properties: [String: Sendable]
+
+}
+
+// MARK: - Feature convenience (connection-based)
+
+extension Feature {
+
+    /// Reads related attribute rows for this feature from a GeoPackage
+    /// connection.
     ///
-    /// Uses the first ``RelationRow`` in `gpkgext_relations` where
-    /// `table_name` matches the given table name and
-    /// `relation_name` is `"attributes"`.
-    public static func loadRelatedAttributes(
-        for tableName: String,
-        from geopackage: URL
-    ) throws -> AttributeTable? {
-        let db = try SQLiteDB(path: geopackage.path)
-        defer { db.close() }
+    /// Uses ``id`` and ``gpkgTableName`` (both set by the reader) to
+    /// auto-resolve the relationship via `gpkgext_relations` and fetch
+    /// only the matching rows.
+    ///
+    /// - Parameter gpkg: An open GeoPackage connection.
+    /// - Returns: Attribute rows matching this feature's ID.
+    public func relatedAttributes(
+        in gpkg: GeoPackageConnection
+    ) async throws -> [[String: Sendable]] {
+        guard case .int(let rowId) = id,
+              let tableName = gpkgTableName
+        else { return [] }
 
-        let rels = try GeoPackage.readRelations(in: db)
+        let rels = try await gpkg.readRelations()
         guard let rel = rels.first(where: {
             $0.tableName == tableName && $0.relationName == .attributes
-        }) else { return nil }
+        }) else { return [] }
 
-        return try GeoPackage.readAttributeTable(from: geopackage, table: rel.relatedTableName)
+        let table = try await gpkg.readAttributeTable(
+            table: rel.relatedTableName,
+            rowId: rowId)
+        return table.rows
     }
 
-    /// Loads a media table related to this feature collection
-    /// from a GeoPackage file.
-    public static func loadRelatedMedia(
-        for tableName: String,
-        from geopackage: URL
-    ) throws -> MediaTable? {
-        let rels = try Self.relationships(for: tableName, in: geopackage)
+    /// Reads related media rows for this feature from a GeoPackage
+    /// connection.
+    ///
+    /// Uses ``id`` and ``gpkgTableName`` (both set by the reader) to
+    /// auto-resolve the relationship via `gpkgext_relations` and fetch
+    /// only the matching rows.
+    ///
+    /// - Parameter gpkg: An open GeoPackage connection.
+    /// - Returns: Media rows matching this feature's ID.
+    public func relatedMedia(
+        in gpkg: GeoPackageConnection
+    ) async throws -> [MediaRow] {
+        guard case .int(let rowId) = id,
+              let tableName = gpkgTableName
+        else { return [] }
+
+        let rels = try await gpkg.readRelations()
         guard let rel = rels.first(where: {
             $0.tableName == tableName && $0.relationName == .media
-        }) else { return nil }
+        }) else { return [] }
 
-        return try GeoPackage.readMediaTable(from: geopackage, table: rel.relatedTableName)
+        return try await gpkg.readMediaRows(table: rel.relatedTableName, rowId: rowId)
     }
 
 }

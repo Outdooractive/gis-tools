@@ -23,6 +23,13 @@ public struct GeoPackageTable: Sendable {
     public let bounds: BoundingBox?
 
     /// Creates a GeoPackage table descriptor.
+    /// - Parameters:
+    ///   - tableName: The table name in the GeoPackage.
+    ///   - dataType: The data type (e.g. `"features"` or `"tiles"`).
+    ///   - identifier: An optional human-readable identifier.
+    ///   - description: An optional description.
+    ///   - srsId: The spatial reference system identifier.
+    ///   - bounds: The spatial extent.
     public init(
         tableName: String,
         dataType: String,

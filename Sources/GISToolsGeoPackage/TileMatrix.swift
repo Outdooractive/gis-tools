@@ -29,6 +29,15 @@ public struct TileMatrix: Sendable {
     public let pixelYSize: Double
 
     /// Creates a tile matrix for a single zoom level.
+    /// - Parameters:
+    ///   - tableName: The tile table name.
+    ///   - zoomLevel: The zoom level (0 = whole world).
+    ///   - matrixWidth: Number of tile columns.
+    ///   - matrixHeight: Number of tile rows.
+    ///   - tileWidth: Tile width in pixels (default 256).
+    ///   - tileHeight: Tile height in pixels (default 256).
+    ///   - pixelXSize: Horizontal pixel size in CRS units per pixel.
+    ///   - pixelYSize: Vertical pixel size in CRS units per pixel.
     public init(
         tableName: String,
         zoomLevel: Int,
