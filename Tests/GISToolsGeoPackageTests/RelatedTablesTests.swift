@@ -195,7 +195,7 @@ struct GeoPackageRelatedTablesTests {
         #expect(fc.features.count == 1)
 
         guard let feature = fc.features.first,
-              case .int(let rowId) = feature.id
+              let rowId = feature.gpkgRowId
         else { return }
 
         #expect(rowId == 1)

@@ -140,7 +140,7 @@ extension GeoPackage {
 
 }
 
-// MARK: - Feature convenience (table name)
+// MARK: - Feature convenience (table name and row ID)
 
 extension Feature {
 
@@ -152,6 +152,17 @@ extension Feature {
     public var gpkgTableName: String? {
         get { foreignMembers[Self.gpkgTableKey] as? String }
         set { foreignMembers[Self.gpkgTableKey] = newValue }
+    }
+
+    /// Key used inside ``foreignMembers`` to store the GeoPackage row ID.
+    private static let gpkgRowIdKey = "_gpkg_rowid"
+
+    /// The SQLite `rowid` of this feature within its GeoPackage table.
+    /// Set automatically by the geoPackage reader.  Unlike ``Feature/id``,
+    /// this value is never overwritten by GeoJSON data.
+    public var gpkgRowId: Int? {
+        get { foreignMembers[Self.gpkgRowIdKey] as? Int }
+        set { foreignMembers[Self.gpkgRowIdKey] = newValue }
     }
 
 }
@@ -182,16 +193,16 @@ extension Feature {
     /// Reads related attribute rows for this feature from a GeoPackage
     /// connection.
     ///
-    /// Uses ``id`` and ``gpkgTableName`` (both set by the reader) to
-    /// auto-resolve the relationship via `gpkgext_relations` and fetch
+    /// Uses ``gpkgRowId`` and ``gpkgTableName`` (both set by the reader)
+    /// to auto-resolve the relationship via `gpkgext_relations` and fetch
     /// only the matching rows.
     ///
     /// - Parameter gpkg: An open GeoPackage connection.
-    /// - Returns: Attribute rows matching this feature's ID.
+    /// - Returns: Attribute rows matching this feature's row ID.
     public func relatedAttributes(
         in gpkg: GeoPackageConnection
     ) async throws -> [[String: Sendable]] {
-        guard case .int(let rowId) = id,
+        guard let rowId = gpkgRowId,
               let tableName = gpkgTableName
         else { return [] }
 
@@ -209,16 +220,16 @@ extension Feature {
     /// Reads related media rows for this feature from a GeoPackage
     /// connection.
     ///
-    /// Uses ``id`` and ``gpkgTableName`` (both set by the reader) to
-    /// auto-resolve the relationship via `gpkgext_relations` and fetch
+    /// Uses ``gpkgRowId`` and ``gpkgTableName`` (both set by the reader)
+    /// to auto-resolve the relationship via `gpkgext_relations` and fetch
     /// only the matching rows.
     ///
     /// - Parameter gpkg: An open GeoPackage connection.
-    /// - Returns: Media rows matching this feature's ID.
+    /// - Returns: Media rows matching this feature's row ID.
     public func relatedMedia(
         in gpkg: GeoPackageConnection
     ) async throws -> [MediaRow] {
-        guard case .int(let rowId) = id,
+        guard let rowId = gpkgRowId,
               let tableName = gpkgTableName
         else { return [] }
 

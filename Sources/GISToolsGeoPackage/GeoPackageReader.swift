@@ -185,10 +185,8 @@ public struct FeatureStream: AsyncSequence {
                 }
 
                 var feature = Feature(projectedGeoJson, properties: properties)
-                if let rowId = gpkgRowId {
-                    feature.id = .int(rowId)
-                }
                 feature.gpkgTableName = table
+                feature.gpkgRowId = gpkgRowId
 
                 // In-memory bbox filter fallback for when rtree is unavailable
                 if let bbox = boundingBox, !feature.intersects(bbox) {
@@ -307,10 +305,8 @@ enum GeoPackageReader {
             }
 
             var feature = Feature(geometry, properties: properties)
-            if let rowId = gpkgRowId {
-                feature.id = .int(rowId)
-            }
             feature.gpkgTableName = table
+            feature.gpkgRowId = gpkgRowId
             features.append(feature)
         }
 
