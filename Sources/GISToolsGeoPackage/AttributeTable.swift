@@ -47,7 +47,11 @@ extension GeoPackage {
     ) throws -> AttributeTable {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
-        return try readAttributeTable(from: db, table: table, rowId: rowId)
+
+        return try readAttributeTable(
+            from: db,
+            table: table,
+            rowId: rowId)
     }
 
     /// Writes an attribute table to a GeoPackage.
@@ -61,7 +65,9 @@ extension GeoPackage {
     ) throws {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
+
         try writeAttributeTable(table, in: db)
+
         if let rel = relationship {
             try GeoPackage.registerRelatedTablesExtension(in: db)
             try GeoPackage.writeRelation(rel, in: db)
@@ -88,7 +94,9 @@ extension GeoPackage {
 
         for row in rows {
             guard let rid = row["id"] as? Int else { continue }
+
             rowIds.append(Int64(rid))
+
             var dataRow: [String: Sendable] = [:]
             for col in columnNames {
                 if let value = row[col] {
@@ -162,7 +170,9 @@ extension GeoPackage {
             }
 
             // Determine if columns exist (might be empty)
-            let colList = table.columns.map { GeoPackage.sanitizeIdentifier($0) }.joined(separator: ", ")
+            let colList = table.columns
+                .map { GeoPackage.sanitizeIdentifier($0) }
+                .joined(separator: ", ")
             let colPart = colList.isEmpty ? "" : ", \(colList)"
             let valPart = values.joined(separator: ", ")
             try db.execute("""
@@ -173,11 +183,12 @@ extension GeoPackage {
 
     private static func sqliteType(for value: Any?) -> String {
         guard let value else { return "TEXT" }
-        switch value {
-        case is Bool: return "BOOLEAN"
-        case is Int, is Int64: return "INTEGER"
-        case is Double, is Float: return "REAL"
-        default: return "TEXT"
+
+        return switch value {
+        case is Bool: "BOOLEAN"
+        case is Int, is Int64: "INTEGER"
+        case is Double, is Float: "REAL"
+        default: "TEXT"
         }
     }
 

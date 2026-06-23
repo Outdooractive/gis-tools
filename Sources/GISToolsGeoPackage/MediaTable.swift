@@ -53,6 +53,7 @@ extension GeoPackage {
     ) throws -> MediaTable {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
+
         return try readMediaTable(from: db, table: table)
     }
 
@@ -65,7 +66,9 @@ extension GeoPackage {
     ) throws {
         let db = try SQLiteDB(path: url.path)
         defer { db.close() }
+
         try writeMediaTable(mediaTable, in: db)
+
         if let rel = relationship {
             try GeoPackage.registerRelatedTablesExtension(in: db)
             try GeoPackage.writeRelation(rel, in: db)

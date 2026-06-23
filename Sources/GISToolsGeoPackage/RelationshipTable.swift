@@ -142,8 +142,11 @@ extension Feature {
         using relation: RelationRow
     ) throws -> [[String: Sendable]] {
         guard case .int(let rowId) = id else { return [] }
+
         let table = try GeoPackage.readAttributeTable(
-            from: geopackage, table: relation.relatedTableName, rowId: rowId)
+            from: geopackage,
+            table: relation.relatedTableName,
+            rowId: rowId)
         return table.rows
     }
 
@@ -153,9 +156,16 @@ extension Feature {
         using relation: RelationRow
     ) throws -> [MediaTable] {
         guard case .int(let rowId) = id else { return [] }
-        let table = try GeoPackage.readMediaTable(from: geopackage, table: relation.relatedTableName)
+
+        let table = try GeoPackage.readMediaTable(
+            from: geopackage,
+            table: relation.relatedTableName)
+
         // For media tables, we return entries matching the feature ID
-        let matching = table.rowIds.enumerated().filter { $1 == Int64(rowId) }.map { $0.offset }
+        let matching = table.rowIds
+            .enumerated()
+            .filter { $1 == Int64(rowId) }
+            .map { $0.offset }
         guard !matching.isEmpty else { return [] }
         return [table]  // Return full table; user can index via rowIds
     }
@@ -174,9 +184,11 @@ extension FeatureCollection {
     ) throws -> [RelationRow] {
         let db = try SQLiteDB(path: geopackage.path)
         defer { db.close() }
-        return try GeoPackage.readRelations(in: db).filter {
-            $0.tableName == tableName || $0.relatedTableName == tableName
-        }
+
+        return try GeoPackage.readRelations(in: db)
+            .filter {
+                $0.tableName == tableName || $0.relatedTableName == tableName
+            }
     }
 
     /// Loads an attribute table related to this feature collection
@@ -191,10 +203,12 @@ extension FeatureCollection {
     ) throws -> AttributeTable? {
         let db = try SQLiteDB(path: geopackage.path)
         defer { db.close() }
+
         let rels = try GeoPackage.readRelations(in: db)
         guard let rel = rels.first(where: {
             $0.tableName == tableName && $0.relationName == .attributes
         }) else { return nil }
+
         return try GeoPackage.readAttributeTable(from: geopackage, table: rel.relatedTableName)
     }
 
@@ -208,6 +222,7 @@ extension FeatureCollection {
         guard let rel = rels.first(where: {
             $0.tableName == tableName && $0.relationName == .media
         }) else { return nil }
+
         return try GeoPackage.readMediaTable(from: geopackage, table: rel.relatedTableName)
     }
 
