@@ -20,7 +20,7 @@ extension FeatureCollection {
         table: String = "features",
         boundingBox: BoundingBox? = nil
     ) async throws {
-        let conn = try GeoPackageConnection(url: url)
+        let conn = try GeoPackageConnection(url: url, skipValidation: true)
         try await conn.validate()
         let features = try await conn.readFeatures(table: table, boundingBox: boundingBox)
         self.init(features)

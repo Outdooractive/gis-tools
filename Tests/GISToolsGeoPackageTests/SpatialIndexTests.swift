@@ -8,13 +8,14 @@ struct GeoPackageSpatialIndexTests {
     private let tmpDir = URL(fileURLWithPath: "/tmp")
 
     private func testUrl(_ name: String = #function) -> URL {
-        tmpDir.appendingPathComponent("gpkg_\(name).gpkg")
+        let cleanName = name.hasSuffix("()") ? String(name.dropLast(2)) : name
+        return tmpDir.appendingPathComponent("gpkg_\(cleanName).gpkg")
     }
 
     @Test
     func bboxFilteredReadUsesRTree() async throws {
         let fixture = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
-        let full = try await try await FeatureCollection(geopackage: fixture, table: "ne_110m_admin_0_countries")
+        let full = try await FeatureCollection(geopackage: fixture, table: "ne_110m_admin_0_countries")
         #expect(full.features.count == 177)
 
         let europe = BoundingBox(
@@ -29,14 +30,17 @@ struct GeoPackageSpatialIndexTests {
 
     @Test
     func bboxFilteredReadFallback() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let point = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
-        try await FeatureCollection([point]).writeGeopackage(to: testUrl(), createSpatialIndex: false)
+        try await FeatureCollection([point]).writeGeopackage(to: dbUrl, createSpatialIndex: false)
 
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 44.0, longitude: 9.0),
             northEast: Coordinate3D(latitude: 46.0, longitude: 11.0))
         let filtered = try await FeatureCollection(
-            geopackage: testUrl(),
+            geopackage: dbUrl,
             table: "features",
             boundingBox: bbox)
         #expect(filtered.features.count == 1)
@@ -44,13 +48,16 @@ struct GeoPackageSpatialIndexTests {
 
     @Test
     func writeWithSpatialIndex() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let features = [
             Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0))),
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0))),
         ]
-        try await FeatureCollection(features).writeGeopackage(to: testUrl(), createSpatialIndex: true)
+        try await FeatureCollection(features).writeGeopackage(to: dbUrl, createSpatialIndex: true)
 
-        let db = try SQLiteDB(path: testUrl().path)
+        let db = try SQLiteDB(path: dbUrl.path)
         defer { db.close() }
 
         let hasRTree = try GeoPackage.hasRTreeIndex(for: "features", column: "geom", in: db)
@@ -64,11 +71,14 @@ struct GeoPackageSpatialIndexTests {
 
     @Test
     func writeWithoutSpatialIndex() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
-        ]).writeGeopackage(to: testUrl(), createSpatialIndex: false)
+        ]).writeGeopackage(to: dbUrl, createSpatialIndex: false)
 
-        let db = try SQLiteDB(path: testUrl().path)
+        let db = try SQLiteDB(path: dbUrl.path)
         defer { db.close() }
 
         let hasRTree = try GeoPackage.hasRTreeIndex(for: "features", column: "geom", in: db)

@@ -8,7 +8,8 @@ struct GeoPackageTileTests {
     private let tmpDir = URL(fileURLWithPath: "/tmp")
 
     private func testUrl(_ name: String = #function) -> URL {
-        tmpDir.appendingPathComponent("gpkg_\(name).gpkg")
+        let cleanName = name.hasSuffix("()") ? String(name.dropLast(2)) : name
+        return tmpDir.appendingPathComponent("gpkg_\(cleanName).gpkg")
     }
 
     /// Make a small fake tile blob.

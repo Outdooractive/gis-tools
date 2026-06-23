@@ -24,15 +24,29 @@ public actor GeoPackageConnection {
     private let db: SQLiteDB
 
     /// Opens a connection to a GeoPackage file.
+    ///
     /// - Parameter url: The file URL of a `.gpkg` database.
-    public init(url: URL) throws {
+    /// - Parameter skipValidation: If `true`, skips the initial metadata
+    ///   validation (useful when creating a new GeoPackage).
+    /// - Throws: A ``GeoPackageError`` if validation fails.
+    public init(url: URL, skipValidation: Bool = false) throws {
         db = try SQLiteDB(path: url.path)
+        if !skipValidation {
+            try GeoPackage.validateMetadata(in: db)
+        }
     }
 
     /// Opens a connection to a GeoPackage file.
+    ///
     /// - Parameter path: The file system path of a `.gpkg` database.
-    public init(path: String) throws {
+    /// - Parameter skipValidation: If `true`, skips the initial metadata
+    ///   validation (useful when creating a new GeoPackage).
+    /// - Throws: A ``GeoPackageError`` if validation fails.
+    public init(path: String, skipValidation: Bool = false) throws {
         db = try SQLiteDB(path: path)
+        if !skipValidation {
+            try GeoPackage.validateMetadata(in: db)
+        }
     }
 
     /// Closes the connection.  The instance should not be used after

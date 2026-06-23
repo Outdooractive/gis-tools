@@ -16,18 +16,11 @@ extension FeatureCollection {
         to url: URL,
         table: String = "features",
         createSpatialIndex: Bool = false
-    ) throws {
-        // Remove existing file to start fresh
-        if FileManager.default.fileExists(atPath: url.path) {
-            try FileManager.default.removeItem(at: url)
-        }
-        let db = try SQLiteDB(path: url.path)
-        try GeoPackage.createMetadata(in: db)
-        try GeoPackageWriter.writeFeatures(
-            self,
-            to: db,
-            table: table,
-            createSpatialIndex: createSpatialIndex)
+    ) async throws {
+        let conn = try GeoPackageConnection(url: url, skipValidation: true)
+        try await conn.createMetadata()
+        try await conn.write(features: self, to: table, createSpatialIndex: createSpatialIndex)
+        await conn.close()
     }
 
 }

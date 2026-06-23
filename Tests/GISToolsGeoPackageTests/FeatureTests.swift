@@ -8,16 +8,20 @@ struct GeoPackageFeatureTests {
     private let tmpDir = URL(fileURLWithPath: "/tmp")
 
     private func testUrl(_ name: String = #function) -> URL {
-        tmpDir.appendingPathComponent("gpkg_\(name).gpkg")
+        let cleanName = name.hasSuffix("()") ? String(name.dropLast(2)) : name
+        return tmpDir.appendingPathComponent("gpkg_\(cleanName).gpkg")
     }
 
     @Test
     func roundTripPoint() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let feature = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
         let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 1)
         let readGeo = read.features[0].geometry
         #expect(readGeo is Point)
@@ -28,21 +32,27 @@ struct GeoPackageFeatureTests {
 
     @Test
     func roundTripLineString() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let ls = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]))
         let feature = Feature(ls)
         let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is LineString)
     }
 
     @Test
     func roundTripPolygon() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let poly = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -52,22 +62,25 @@ struct GeoPackageFeatureTests {
         ]]))
         let feature = Feature(poly)
         let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is Polygon)
     }
 
     @Test
     func roundTripWithProperties() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let feature = Feature(
             Point(Coordinate3D(latitude: 45.0, longitude: 10.0)),
             properties: ["name": "Test", "value": 42, "ratio": 3.14])
         let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 1)
         let props = read.features[0].properties
         #expect(props["name"] as? String == "Test")
@@ -77,14 +90,24 @@ struct GeoPackageFeatureTests {
 
     @Test
     func emptyCollectionThrows() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let fc = FeatureCollection([Feature]())
-        #expect(throws: GeoPackageError.self) {
-            try fc.writeGeopackage(to: testUrl())
+        do {
+            try await fc.writeGeopackage(to: dbUrl)
+            Issue.record("Expected GeoPackageError to be thrown")
+        }
+        catch is GeoPackageError {
+            // Expected
         }
     }
 
     @Test
     func mixedGeometryTypesAccepted() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let point = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
         let poly = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -94,9 +117,9 @@ struct GeoPackageFeatureTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let fc = FeatureCollection([point, Feature(poly)])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 2)
     }
 
@@ -113,15 +136,18 @@ struct GeoPackageFeatureTests {
 
     @Test
     func roundTripMultiPoint() async throws {
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
         let multiPoint = try #require(MultiPoint([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]))
         let feature = Feature(multiPoint)
         let fc = FeatureCollection([feature])
-        try fc.writeGeopackage(to: testUrl())
+        try await fc.writeGeopackage(to: dbUrl)
 
-        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is MultiPoint)
     }

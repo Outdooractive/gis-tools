@@ -8,14 +8,18 @@ struct GeoPackageRelatedTablesTests {
     private let tmpDir = URL(fileURLWithPath: "/tmp")
 
     private func testUrl(_ name: String = #function) -> URL {
-        tmpDir.appendingPathComponent("gpkg_\(name).gpkg")
+        let cleanName = name.hasSuffix("()") ? String(name.dropLast(2)) : name
+        return tmpDir.appendingPathComponent("gpkg_\(cleanName).gpkg")
     }
 
     @Test
     func attributeTableRoundTrip() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let attributes = AttributeTable(
             tableName: "station_info",
@@ -26,16 +30,16 @@ struct GeoPackageRelatedTablesTests {
             ],
             rowIds: [1, 2])
 
-        try GeoPackage.writeAttributeTable(attributes, to: testUrl())
+        try GeoPackage.writeAttributeTable(attributes, to: dbUrl)
 
-        let db = try SQLiteDB(path: testUrl().path)
+        let db = try SQLiteDB(path: dbUrl.path)
         defer { db.close() }
 
         let sqlRows = try db.query("SELECT * FROM \"station_info\";")
         #expect(sqlRows.count == 2)
         guard sqlRows.count == 2 else { return }
 
-        let read = try GeoPackage.readAttributeTable(from: testUrl(), table: "station_info")
+        let read = try GeoPackage.readAttributeTable(from: dbUrl, table: "station_info")
         #expect(read.rows.count == 2)
         #expect(read.rowIds == [1, 2])
 
@@ -47,9 +51,12 @@ struct GeoPackageRelatedTablesTests {
 
     @Test
     func mediaTableRoundTrip() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let imageData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00])
         let media = MediaTable(
@@ -59,8 +66,8 @@ struct GeoPackageRelatedTablesTests {
             contentTypes: ["image/png"],
             properties: [["caption": "Summit photo"]])
 
-        try GeoPackage.writeMediaTable(media, to: testUrl())
-        let read = try GeoPackage.readMediaTable(from: testUrl(), table: "photos")
+        try GeoPackage.writeMediaTable(media, to: dbUrl)
+        let read = try GeoPackage.readMediaTable(from: dbUrl, table: "photos")
 
         #expect(read.count == 1)
         #expect(read.rowIds == [1])
@@ -71,18 +78,21 @@ struct GeoPackageRelatedTablesTests {
 
     @Test
     func relationshipsRoundTrip() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let attributes = AttributeTable(
             tableName: "info",
             columns: ["value"],
             rows: [["value": "test"]],
             rowIds: [1])
-        try GeoPackage.writeAttributeTable(attributes, to: testUrl())
+        try GeoPackage.writeAttributeTable(attributes, to: dbUrl)
 
-        let db = try SQLiteDB(path: testUrl().path)
+        let db = try SQLiteDB(path: dbUrl.path)
         defer { db.close() }
 
         let relation = RelationRow(
@@ -107,36 +117,42 @@ struct GeoPackageRelatedTablesTests {
 
     @Test
     func attributeTableValidation() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let attributes = AttributeTable(
             tableName: "data",
             columns: ["value"],
             rows: [["value": 42]],
             rowIds: [1])
-        try GeoPackage.writeAttributeTable(attributes, to: testUrl())
+        try GeoPackage.writeAttributeTable(attributes, to: dbUrl)
 
-        let result = try GeoPackage.validate(url: testUrl())
+        let result = try GeoPackage.validate(url: dbUrl)
         #expect(result.isValid,
                 "Expected valid: errors=\(result.errors.map(\.message))")
     }
 
     @Test
     func loadRelatedAttributesViaFeatureCollection() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let attributes = AttributeTable(
             tableName: "info",
             columns: ["value"],
             rows: [["value": "hello"]],
             rowIds: [1])
-        try GeoPackage.writeAttributeTable(attributes, to: testUrl())
+        try GeoPackage.writeAttributeTable(attributes, to: dbUrl)
 
-        let gpkg = try await GeoPackageConnection(url: testUrl())
+        let gpkg = try GeoPackageConnection(url: dbUrl)
         try await gpkg.registerRelatedTablesExtension()
         try await gpkg.write(relation: RelationRow(
             id: "r1",
@@ -153,18 +169,21 @@ struct GeoPackageRelatedTablesTests {
 
     @Test
     func featureRelatedAttributes() async throws {
-        try FeatureCollection([
+        let dbUrl = testUrl()
+        try? FileManager.default.removeItem(at: dbUrl)
+
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
-        ]).writeGeopackage(to: testUrl())
+        ]).writeGeopackage(to: dbUrl)
 
         let attributes = AttributeTable(
             tableName: "info",
             columns: ["value"],
             rows: [["value": "row1"], ["value": "row2"]],
             rowIds: [1, 2])
-        try GeoPackage.writeAttributeTable(attributes, to: testUrl())
+        try GeoPackage.writeAttributeTable(attributes, to: dbUrl)
 
-        let gpkg = try await GeoPackageConnection(url: testUrl())
+        let gpkg = try GeoPackageConnection(url: dbUrl)
         try await gpkg.registerRelatedTablesExtension()
         try await gpkg.write(relation: RelationRow(
             id: "r1",
@@ -172,7 +191,7 @@ struct GeoPackageRelatedTablesTests {
             relatedTableName: "info",
             relationName: .attributes))
 
-        let fc = try await FeatureCollection(geopackage: testUrl(), table: "features")
+        let fc = try await FeatureCollection(geopackage: dbUrl, table: "features")
         #expect(fc.features.count == 1)
 
         guard let feature = fc.features.first,

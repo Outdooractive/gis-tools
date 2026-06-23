@@ -181,7 +181,7 @@ extension GeoPackage {
             let colPart = colList.isEmpty ? "" : ", \(colList)"
             let valPart = values.joined(separator: ", ")
             try db.execute("""
-                INSERT INTO \(quotedTable) (id\(colPart)) VALUES (\(valPart));
+                INSERT OR REPLACE INTO \(quotedTable) (id\(colPart)) VALUES (\(valPart));
                 """)
         }
     }
