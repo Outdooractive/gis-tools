@@ -34,7 +34,7 @@ extension FeatureCollection {
 
 // MARK: - Writer
 
-private enum GeoPackageWriter {
+enum GeoPackageWriter {
 
     static func writeFeatures(
         _ fc: FeatureCollection,
@@ -44,7 +44,7 @@ private enum GeoPackageWriter {
     ) throws {
         let features = fc.features
         guard !features.isEmpty else {
-            throw GeoPackageError.invalidGeoPackage("Cannot write empty FeatureCollection")
+            throw GeoPackageError.invalidGeoPackage(detail: "Cannot write empty FeatureCollection")
         }
 
         // Determine geometry type from the first feature
@@ -279,7 +279,7 @@ private enum GeoPackageWriter {
 
         let stepRC = sqlite3_step(stmt)
         guard stepRC == 101 else {  // SQLITE_DONE
-            throw GeoPackageError.sqliteError("Failed to insert row: \(db.lastErrorMessage())")
+            throw GeoPackageError.sqliteError(detail: "Failed to insert row: \(db.lastErrorMessage())")
         }
     }
 

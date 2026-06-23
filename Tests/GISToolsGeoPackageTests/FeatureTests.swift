@@ -17,7 +17,7 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([feature])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         let readGeo = read.features[0].geometry
         #expect(readGeo is Point)
@@ -36,7 +36,7 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([feature])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is LineString)
     }
@@ -54,7 +54,7 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([feature])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is Polygon)
     }
@@ -67,7 +67,7 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([feature])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         let props = read.features[0].properties
         #expect(props["name"] as? String == "Test")
@@ -96,14 +96,18 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([point, Feature(poly)])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 2)
     }
 
     @Test
     func nonExistentFileThrows() async throws {
-        #expect(throws: GeoPackageError.self) {
-            let _ = try FeatureCollection(geopackage: URL(fileURLWithPath: "/tmp/does_not_exist.gpkg"))
+        do {
+            let _ = try await FeatureCollection(geopackage: URL(fileURLWithPath: "/tmp/does_not_exist.gpkg"))
+            Issue.record("Expected GeoPackageError to be thrown")
+        }
+        catch is GeoPackageError {
+            // Expected
         }
     }
 
@@ -117,7 +121,7 @@ struct GeoPackageFeatureTests {
         let fc = FeatureCollection([feature])
         try fc.writeGeopackage(to: testUrl())
 
-        let read = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let read = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(read.features.count == 1)
         #expect(read.features[0].geometry is MultiPoint)
     }
@@ -125,7 +129,7 @@ struct GeoPackageFeatureTests {
     @Test
     func naturalEarthCountries() async throws {
         let url = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
-        let fc = try FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
+        let fc = try await FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
         #expect(fc.features.count == 177)
         #expect(fc.features.first?.properties["name"] as? String == "Afghanistan")
     }
@@ -133,14 +137,14 @@ struct GeoPackageFeatureTests {
     @Test
     func naturalEarthFromGeoJSON() async throws {
         let url = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
-        let fc = try FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
+        let fc = try await FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
         #expect(fc.features.count == 177)
     }
 
     @Test
     func naturalEarthFromShapefile() async throws {
         let url = testFixture("ne_110m_admin_0_countries_from_shp.gpkg")
-        let fc = try FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
+        let fc = try await FeatureCollection(geopackage: url, table: "ne_110m_admin_0_countries")
         #expect(fc.features.count == 177)
     }
 

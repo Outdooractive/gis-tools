@@ -75,7 +75,7 @@ extension GeoPackage {
         }
     }
 
-    private static func readMediaTable(
+    static func readMediaTable(
         from db: SQLiteDB,
         table: String
     ) throws -> MediaTable {
@@ -126,7 +126,7 @@ extension GeoPackage {
             properties: properties)
     }
 
-    private static func writeMediaTable(
+    static func writeMediaTable(
         _ table: MediaTable,
         in db: SQLiteDB
     ) throws {

@@ -56,7 +56,7 @@ enum TileWriter {
 
         let rc = sqlite3_step(stmt)
         guard rc == SQLITE_DONE else {
-            throw GeoPackageError.sqliteError("Failed to insert tile: rc \(rc)")
+            throw GeoPackageError.sqliteError(detail: "Failed to insert tile: rc \(rc)")
         }
     }
 
@@ -109,7 +109,7 @@ enum TileWriter {
         in db: SQLiteDB
     ) throws {
         guard !tiles.isEmpty else {
-            throw GeoPackageError.invalidGeoPackage(
+            throw GeoPackageError.invalidGeoPackage(detail: 
                 "Tile pyramid must contain at least one tile")
         }
 

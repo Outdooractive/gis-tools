@@ -14,13 +14,13 @@ struct GeoPackageSpatialIndexTests {
     @Test
     func bboxFilteredReadUsesRTree() async throws {
         let fixture = testFixture("ne_110m_admin_0_countries_from_geojson.gpkg")
-        let full = try FeatureCollection(geopackage: fixture, table: "ne_110m_admin_0_countries")
+        let full = try await try await FeatureCollection(geopackage: fixture, table: "ne_110m_admin_0_countries")
         #expect(full.features.count == 177)
 
         let europe = BoundingBox(
             southWest: Coordinate3D(latitude: 35.0, longitude: -10.0),
             northEast: Coordinate3D(latitude: 60.0, longitude: 40.0))
-        let filtered = try FeatureCollection(
+        let filtered = try await FeatureCollection(
             geopackage: fixture, table: "ne_110m_admin_0_countries",
             boundingBox: europe)
         #expect(filtered.features.isNotEmpty)
@@ -30,12 +30,12 @@ struct GeoPackageSpatialIndexTests {
     @Test
     func bboxFilteredReadFallback() async throws {
         let point = Feature(Point(Coordinate3D(latitude: 45.0, longitude: 10.0)))
-        try FeatureCollection([point]).writeGeopackage(to: testUrl(), createSpatialIndex: false)
+        try await FeatureCollection([point]).writeGeopackage(to: testUrl(), createSpatialIndex: false)
 
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 44.0, longitude: 9.0),
             northEast: Coordinate3D(latitude: 46.0, longitude: 11.0))
-        let filtered = try FeatureCollection(
+        let filtered = try await FeatureCollection(
             geopackage: testUrl(),
             table: "features",
             boundingBox: bbox)
@@ -48,7 +48,7 @@ struct GeoPackageSpatialIndexTests {
             Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0))),
             Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0))),
         ]
-        try FeatureCollection(features).writeGeopackage(to: testUrl(), createSpatialIndex: true)
+        try await FeatureCollection(features).writeGeopackage(to: testUrl(), createSpatialIndex: true)
 
         let db = try SQLiteDB(path: testUrl().path)
         defer { db.close() }
@@ -64,7 +64,7 @@ struct GeoPackageSpatialIndexTests {
 
     @Test
     func writeWithoutSpatialIndex() async throws {
-        try FeatureCollection([
+        try await FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)))
         ]).writeGeopackage(to: testUrl(), createSpatialIndex: false)
 

@@ -176,7 +176,7 @@ struct GeoPackageRelatedTablesTests {
             relationName: .attributes)
         try GeoPackage.writeRelation(rel, in: db)
 
-        let fc = try FeatureCollection(geopackage: testUrl(), table: "features")
+        let fc = try await FeatureCollection(geopackage: testUrl(), table: "features")
         #expect(fc.features.count == 1)
 
         guard let feature = fc.features.first,

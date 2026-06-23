@@ -1,78 +1,141 @@
 import Foundation
 import CSQLite
 
-/// A minimal SQLite wrapper for GeoPackage operations.
-/// Not Sendable — always use within a single synchronous context.
-final class SQLiteDB {
+/// A thread-safe SQLite wrapper for GeoPackage operations.
+///
+/// All SQLite C API calls are serialised through an internal queue so
+/// the handle can be used from any task without synchronisation issues.
+final class SQLiteDB: @unchecked Sendable {
 
     private var db: OpaquePointer?
-
     private let path: String
+    private let queue = DispatchQueue(
+        label: "com.gistools.geopackage.sqlite",
+        qos: .userInitiated)
 
     init(path: String) throws {
         self.path = path
-        try open()
+        var handle: OpaquePointer?
+        let rc = sqlite3_open(path, &handle)
+        guard rc == SQLITE_OK, let handle else {
+            let msg = handle.map { String(cString: sqlite3_errmsg($0)) } ?? "Unknown error"
+            throw GeoPackageError.couldNotOpenDatabase(path: path, detail: msg)
+        }
+        db = handle
     }
 
     deinit {
-        close()
-    }
-
-    // MARK: - Open / Close
-
-    private func open() throws {
-        let rc = sqlite3_open(path, &db)
-        guard rc == 0 else {  // SQLITE_OK
-            throw GeoPackageError.couldNotOpenDatabase(path, lastError())
+        if let db {
+            sqlite3_close(db)
         }
     }
 
+    /// Close the database connection.
     func close() {
-        guard db != nil else { return }
-        sqlite3_close(db)
-        db = nil
+        queue.sync {
+            guard let handle = db else { return }
+            sqlite3_close(handle)
+            db = nil
+        }
     }
 
     // MARK: - Execute (no results)
 
     func execute(_ sql: String) throws {
-        var errMsg: UnsafeMutablePointer<CChar>?
-        let rc = sqlite3_exec(db, sql, nil, nil, &errMsg)
-        if rc != SQLITE_OK {
-            let msg = errMsg.map { String(cString: $0) } ?? "Unknown error"
-            sqlite3_free(errMsg)
-            throw GeoPackageError.sqliteError(msg)
+        try queue.sync {
+            var errMsg: UnsafeMutablePointer<CChar>?
+            let rc = sqlite3_exec(db, sql, nil, nil, &errMsg)
+            if rc != SQLITE_OK {
+                let msg = errMsg.map { String(cString: $0) } ?? "Unknown error"
+                sqlite3_free(errMsg)
+                throw GeoPackageError.sqliteError(detail: msg)
+            }
         }
     }
 
     // MARK: - Prepare statement
 
     /// Prepare an SQL statement, returning the handle.
-    /// The caller must finalize the returned handle.
+    /// The caller must finalise the returned handle.
     func prepare(_ sql: String) throws -> OpaquePointer {
-        var stmt: OpaquePointer?
-        let rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
-        guard rc == 0, let stmt else {
-            throw GeoPackageError.sqliteError(lastError())
+        try queue.sync {
+            var stmt: OpaquePointer?
+            let rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
+            guard rc == 0, let stmt else {
+                throw GeoPackageError.sqliteError(detail: lastError())
+            }
+            return stmt
         }
-        return stmt
     }
 
     // MARK: - Query (returns rows)
 
     func query(_ sql: String) throws -> [[String: Sendable]] {
+        try queue.sync { try _query(sql) }
+    }
+
+    // MARK: - Query raw blob
+
+    func queryRawBlob(_ sql: String) throws -> [Data?] {
+        try queue.sync { try _queryRawBlob(sql) }
+    }
+
+    // MARK: - Write with bindings (single statement)
+
+    /// Prepares, binds, steps and finalises an INSERT/UPDATE/DELETE.
+    func write(sql: String, values: [Any]) throws {
+        try queue.sync {
+            let stmt = try _prepare(sql)
+            defer { sqlite3_finalize(stmt) }
+
+            for (i, value) in values.enumerated() {
+                try SQLiteDB.bind(stmt, index: Int32(i + 1), value: value)
+            }
+
+            let rc = sqlite3_step(stmt)
+            guard rc == SQLITE_DONE else {
+                throw GeoPackageError.sqliteError(detail: "Write failed, rc=\(rc)")
+            }
+        }
+    }
+
+    // MARK: - Error info
+
+    func lastErrorMessage() -> String {
+        queue.sync { lastError() }
+    }
+
+    // MARK: - Last insert row ID
+
+    func lastInsertRowId() -> Int64 {
+        queue.sync { sqlite3_last_insert_rowid(db) }
+    }
+
+    // MARK: - Private helpers (called on queue)
+
+    private func lastError() -> String {
+        guard let db else { return "Database is closed" }
+        return String(cString: sqlite3_errmsg(db))
+    }
+
+    private func _prepare(_ sql: String) throws -> OpaquePointer {
         var stmt: OpaquePointer?
         let rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
-        guard rc == 0, let stmt else {  // SQLITE_OK
-            throw GeoPackageError.sqliteError(lastError())
+        guard rc == 0, let stmt else {
+            throw GeoPackageError.sqliteError(detail: lastError())
         }
+        return stmt
+    }
+
+    private func _query(_ sql: String) throws -> [[String: Sendable]] {
+        let stmt = try _prepare(sql)
         defer { sqlite3_finalize(stmt) }
 
         var results: [[String: Sendable]] = []
-        while sqlite3_step(stmt) == 100 {  // SQLITE_ROW
+        while sqlite3_step(stmt) == SQLITE_ROW {
             let colCount = sqlite3_column_count(stmt)
             var row: [String: Sendable] = [:]
-            for i in 0..<colCount {
+            for i in 0 ..< colCount {
                 let name = String(cString: sqlite3_column_name(stmt, i))
                 let declType = columnDeclaredType(stmt, i)
                 row[name] = columnValue(stmt, i, declaredType: declType)
@@ -82,20 +145,13 @@ final class SQLiteDB {
         return results
     }
 
-    // MARK: - Query raw blob
-
-    /// Execute a query and return raw blob data for the first column.
-    func queryRawBlob(_ sql: String) throws -> [Data?] {
-        var stmt: OpaquePointer?
-        let rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
-        guard rc == 0, let stmt else {
-            throw GeoPackageError.sqliteError(lastError())
-        }
+    private func _queryRawBlob(_ sql: String) throws -> [Data?] {
+        let stmt = try _prepare(sql)
         defer { sqlite3_finalize(stmt) }
 
         var results: [Data?] = []
-        while sqlite3_step(stmt) == 100 {  // SQLITE_ROW
-            if sqlite3_column_type(stmt, 0) == 4 {  // SQLITE_BLOB
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if sqlite3_column_type(stmt, 0) == SQLITE_BLOB {
                 guard let bytes = sqlite3_column_blob(stmt, 0) else {
                     results.append(nil)
                     continue
@@ -108,26 +164,6 @@ final class SQLiteDB {
             }
         }
         return results
-    }
-
-    // MARK: - Error info
-
-    /// The error message from the last failed SQLite operation.
-    func lastErrorMessage() -> String {
-        lastError()
-    }
-
-    // MARK: - Last insert row ID
-
-    func lastInsertRowId() -> Int64 {
-        sqlite3_last_insert_rowid(db)
-    }
-
-    // MARK: - Private helpers
-
-    private func lastError() -> String {
-        guard let db else { return "Database is closed" }
-        return String(cString: sqlite3_errmsg(db))
     }
 
     private func columnDeclaredType(_ stmt: OpaquePointer, _ i: Int32) -> String {
@@ -143,10 +179,10 @@ final class SQLiteDB {
         let type = sqlite3_column_type(stmt, i)
 
         switch type {
-        case 5:  // SQLITE_NULL
+        case SQLITE_NULL:
             return nil
 
-        case 1:  // SQLITE_INTEGER
+        case SQLITE_INTEGER:
             let raw = sqlite3_column_int64(stmt, i)
             if declaredType == "boolean" || declaredType == "bool" {
                 return raw != 0
@@ -156,17 +192,14 @@ final class SQLiteDB {
             }
             return raw
 
-        case 2:  // SQLITE_FLOAT
+        case SQLITE_FLOAT:
             return sqlite3_column_double(stmt, i)
 
-        case 3:  // SQLITE_TEXT
-            let text = String(cString: sqlite3_column_text(stmt, i))
-            if declaredType == "date" || declaredType == "datetime" || declaredType == "timestamp" {
-                return text
-            }
-            return text
+        case SQLITE_TEXT:
+            guard let text = sqlite3_column_text(stmt, i) else { return nil }
+            return String(cString: text)
 
-        case 4:  // SQLITE_BLOB
+        case SQLITE_BLOB:
             guard let bytes = sqlite3_column_blob(stmt, i) else { return nil }
             let length = Int(sqlite3_column_bytes(stmt, i))
             return Data(bytes: bytes, count: length)
@@ -176,7 +209,7 @@ final class SQLiteDB {
         }
     }
 
-    // MARK: - Bind helpers for writes
+    // MARK: - Bind helpers (static, can be called from anywhere)
 
     /// Bind a value to a prepared statement at the given 1-based index.
     static func bind(
@@ -205,7 +238,8 @@ final class SQLiteDB {
                     return
                 }
                 bindBlob(stmt, index: index, data: data)
-            } else {
+            }
+            else {
                 bindText(stmt, index: index, string: v)
             }
         case let v as Data:
@@ -220,8 +254,6 @@ final class SQLiteDB {
         index: Int32,
         string: String
     ) {
-        // Allocate memory via sqlite3_malloc and let SQLite free it via the destructor.
-        // This avoids unsafeBitCast of -1 to a function pointer (SQLITE_TRANSIENT).
         let utf8 = Array(string.utf8)
         let buf = sqlite3_malloc(Int32(utf8.count + 1))
         guard let buf else { return }

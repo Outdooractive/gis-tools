@@ -74,7 +74,7 @@ extension GeoPackage {
         }
     }
 
-    private static func readAttributeTable(
+    static func readAttributeTable(
         from db: SQLiteDB,
         table: String,
         rowId: Int? = nil
@@ -118,7 +118,7 @@ extension GeoPackage {
             rowIds: rowIds)
     }
 
-    private static func writeAttributeTable(
+    static func writeAttributeTable(
         _ table: AttributeTable,
         in db: SQLiteDB
     ) throws {
