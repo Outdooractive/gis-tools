@@ -13,7 +13,8 @@ let package = Package(
     products: [
         .library(
             name: "GISTools",
-            targets: ["GISTools"]),
+            targets: ["GISTools"]
+        ),
     ],
     traits: [
         .trait(
