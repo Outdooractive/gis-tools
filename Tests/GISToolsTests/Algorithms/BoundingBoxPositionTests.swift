@@ -65,7 +65,7 @@ struct BoundingBoxPositionTests {
         let position = bbox.position(of: center)
         #expect(position.contains(.center))
     }
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func boundingBoxPosition3857() async throws {
@@ -73,6 +73,26 @@ struct BoundingBoxPositionTests {
             southWest: Coordinate3D(x: 0.0, y: 0.0),
             northEast: Coordinate3D(x: 100_000.0, y: 100_000.0))
         let center = Coordinate3D(x: 50_000.0, y: 50_000.0)
+        let position = bbox.position(of: center)
+        #expect(position.contains(.center))
+    }
+
+    @Test
+    func boundingBoxPosition4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 100_000.0, y: 100_000.0, z: 0.0, projection: .epsg4978))
+        let center = Coordinate3D(x: 50_000.0, y: 50_000.0, z: 0.0, projection: .epsg4978)
+        let position = bbox.position(of: center)
+        #expect(position.contains(.center))
+    }
+
+    @Test
+    func boundingBoxPositionNoSRID() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID))
+        let center = Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID)
         let position = bbox.position(of: center)
         #expect(position.contains(.center))
     }

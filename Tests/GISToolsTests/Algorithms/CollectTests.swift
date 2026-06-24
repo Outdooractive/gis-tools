@@ -87,6 +87,8 @@ struct CollectTests {
         #expect(result.features[0].properties["y"] == nil)
     }
 
+    // MARK: - Projection tests
+
     /// Collects points in EPSG:3857 into a multi-point result.
     @Test
     func collect3857() {
@@ -114,6 +116,55 @@ struct CollectTests {
         if let collected {
             #expect(collected.count == 2)
         }
+    }
+
+    /// Collects points in EPSG:4978.
+    @Test
+    func collect4978() async throws {
+        let poly4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let poly = poly4326.projected(to: .epsg4978)
+        var point = Feature(Point(
+            Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978)))
+        point.properties = ["val": 42]
+
+        let polys = FeatureCollection([Feature(poly)])
+        let result = polys.collect(
+            from: FeatureCollection([point]),
+            inProperty: "val",
+            outProperty: "vals")
+
+        let vals = result.features[0].properties["vals"] as? [Int]
+        #expect(vals == [42])
+    }
+
+    /// Collects points in noSRID.
+    @Test
+    func collectNoSRID() {
+        let poly = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        var point = Feature(Point(Coordinate3D(
+            x: 50.0, y: 50.0, projection: .noSRID)))
+        point.properties = ["val": 42]
+
+        let polys = FeatureCollection([Feature(poly)])
+        let result = polys.collect(
+            from: FeatureCollection([point]),
+            inProperty: "val",
+            outProperty: "vals")
+
+        let vals = result.features[0].properties["vals"] as? [Int]
+        #expect(vals == [42])
     }
 
 }

@@ -32,6 +32,74 @@ struct DoubleExtensionsTests {
         #expect(number.rounded(precision: -5) == number)
     }
 
+    // MARK: - Degrees / Radians
+
+    // Verifies degreesToRadians for common angles.
+    @Test
+    func degreesToRadians() async throws {
+        #expect(abs(0.0.degreesToRadians - 0.0) < 0.0000001)
+        #expect(abs(180.0.degreesToRadians - .pi) < 0.0000001)
+        #expect(abs(360.0.degreesToRadians - 0.0) < 0.0000001)
+        #expect(abs(90.0.degreesToRadians - (.pi / 2.0)) < 0.0000001)
+        #expect(abs(45.0.degreesToRadians - (.pi / 4.0)) < 0.0000001)
+        #expect(abs((-90.0).degreesToRadians - (-.pi / 2.0)) < 0.0000001)
+    }
+
+    // Verifies radiansToDegrees for common angles.
+    @Test
+    func radiansToDegrees() async throws {
+        #expect(abs(0.0.radiansToDegrees - 0.0) < 0.0000001)
+        #expect(abs(Double.pi.radiansToDegrees - 180.0) < 0.0000001)
+        #expect(abs((2.0 * .pi).radiansToDegrees - 0.0) < 0.0000001)
+        #expect(abs((.pi / 2.0).radiansToDegrees - 90.0) < 0.0000001)
+        #expect(abs((.pi / 4.0).radiansToDegrees - 45.0) < 0.0000001)
+        // Angles equivalent to 270° after remainder normalization.
+        #expect(abs((-0.5 * .pi).radiansToDegrees - (-90.0)) < 0.0000001)
+    }
+
+    // MARK: - Length conversions
+
+    // Verifies lengthToRadians for all supported units.
+    @Test
+    func lengthToRadians() async throws {
+        // 1 meter ≈ 1 / earthRadius radians
+        let oneMeter = 1.0.lengthToRadians(unit: .meters)
+        #expect(oneMeter != nil)
+        #expect(abs(oneMeter! - (1.0 / GISTool.earthRadius)) < 0.0000001)
+
+        let oneKilometer = 1.0.lengthToRadians(unit: .kilometers)
+        #expect(oneKilometer != nil)
+        #expect(abs(oneKilometer! - (1000.0 / GISTool.earthRadius)) < 0.0000001)
+
+        let zeroMeters = 0.0.lengthToRadians(unit: .meters)
+        #expect(zeroMeters == 0.0)
+    }
+
+    // Verifies radiansToLength converts back correctly for meters.
+    @Test
+    func radiansToLength() async throws {
+        let radians = 1.0 / GISTool.earthRadius
+        let meters = radians.radiansToLength(unit: .meters)
+        #expect(meters != nil)
+        #expect(abs(meters! - 1.0) < 0.0000001)
+
+        let zeroRadians = 0.0.radiansToLength(unit: .meters)
+        #expect(zeroRadians == 0.0)
+    }
+
+    // Verifies lengthToDegrees for common units.
+    @Test
+    func lengthToDegrees() async throws {
+        let oneMeter = 1.0.lengthToDegrees(unit: .meters)
+        #expect(oneMeter != nil)
+        #expect(oneMeter! > 0.0)
+
+        let zeroMeters = 0.0.lengthToDegrees(unit: .meters)
+        #expect(zeroMeters == 0.0)
+    }
+
+    // MARK: - Conversions
+
     // Verifies GISTool.convertToMeters for all supported length units with positive and negative values.
     @Test
     func conversions() async throws {

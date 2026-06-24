@@ -235,6 +235,52 @@ struct DifferenceTests {
         #expect(result != nil)
     }
 
+    // Validates difference of two overlapping polygons in noSRID.
+    @Test
+    func differenceNoSRID() async throws {
+        let a = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let b = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
+            Coordinate3D(x: 1500.0, y: 500.0, projection: .noSRID),
+            Coordinate3D(x: 1500.0, y: 1500.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 1500.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
+        ]])
+
+        let result = a.difference(with: b)
+        #expect(result != nil)
+    }
+
+    // Validates difference of two overlapping polygons in EPSG:4978 (ECEF).
+    @Test
+    func difference4978() async throws {
+        let a4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let b4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.5, longitude: 0.5),
+            Coordinate3D(latitude: 1.5, longitude: 0.5),
+            Coordinate3D(latitude: 1.5, longitude: 1.5),
+            Coordinate3D(latitude: 0.5, longitude: 1.5),
+            Coordinate3D(latitude: 0.5, longitude: 0.5),
+        ]]))
+        let a = a4326.projected(to: .epsg4978)
+        let b = b4326.projected(to: .epsg4978)
+
+        let result = a.difference(with: b)
+        #expect(result != nil)
+    }
+
     // Validates difference where both inputs cross the antimeridian.
     @Test
     func antimeridianBoth() async throws {

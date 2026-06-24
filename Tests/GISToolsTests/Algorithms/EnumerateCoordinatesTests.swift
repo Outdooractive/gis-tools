@@ -88,4 +88,19 @@ struct EnumerateCoordinatesTests {
         #expect(visited.count == 5)
     }
 
+    @Test func enumerateCoordinates4978() {
+        let a = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let b = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let c = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let d = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
+        let polygon = Polygon(unchecked: [[a, b, c, d, a]])
+
+        var visited: [(Int, Coordinate3D)] = []
+        polygon.enumerateCoordinates { index, coord in
+            visited.append((index, coord))
+        }
+
+        #expect(visited.count == 5)
+    }
+
 }

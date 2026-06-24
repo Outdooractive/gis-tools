@@ -76,8 +76,6 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
-    // MARK: - EPSG:3857
-
     @Test
     func lineSliceAlong3857() async throws {
         let lineString = try #require(LineString([
@@ -86,6 +84,39 @@ struct LineSliceAlongTests {
         ]))
         let sliced = try #require(lineString.sliceAlong(startDistance: 100_000.0, stopDistance: 500_000.0))
         #expect(sliced.coordinates.count >= 2)
+    }
+
+    @Test
+    func lineSliceAlong4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 9.0).projected(to: .epsg4978),
+        ]))
+        let sliced = try #require(lineString.sliceAlong(startDistance: 100_000.0, stopDistance: 500_000.0))
+        #expect(sliced.coordinates.count >= 2)
+    }
+
+    @Test
+    func lineSliceAlongNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+        ]))
+        let sliced = try #require(lineString.sliceAlong(startDistance: 10.0, stopDistance: 50.0))
+        #expect(sliced.coordinates.count >= 2)
+    }
+
+    @Test
+    func lineSliceAlongPreservesAltitude() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0, altitude: 500.0),
+        ]))
+        let sliced = try #require(lineString.sliceAlong(startDistance: 0.0, stopDistance: lineString.length / 2.0))
+        #expect(sliced.coordinates.allSatisfy({ $0.altitude != nil }))
+        if let mid = sliced.coordinates.last?.altitude {
+            #expect(abs(mid - 300.0) < 5.0)
+        }
     }
 
     // MARK: - Antimeridian

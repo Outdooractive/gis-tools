@@ -11,9 +11,14 @@ extension GeoJson {
     /// rather than only tiles at vertex positions. This provides proper coverage along the
     /// edges of line strings and polygon rings.
     ///
+    /// All projections with a defined geographic meaning (EPSG:4326, EPSG:3857, EPSG:4978)
+    /// are supported — coordinates are projected to EPSG:4326 before computing tile positions.
+    /// noSRID returns an empty array because there is no defined geographic reference.
+    ///
     /// - Parameter zoom: The zoom level of the map.
     /// - Returns: An array of ``MapTile`` instances.
     public func tileCover(atZoom zoom: Int) -> [MapTile] {
+        guard projection != .noSRID else { return [] }
         let segments = lineSegments
         let scale = Double(1 << zoom)
 

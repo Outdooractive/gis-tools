@@ -67,6 +67,40 @@ struct SimplifyTests {
         let simplified = lineString.simplified(tolerance: 100.0)
         #expect(simplified.coordinates.count <= lineString.coordinates.count)
         #expect(simplified.coordinates.count >= 2)
+        #expect(simplified.projection == .epsg3857)
+    }
+
+    // Validates simplification of a multi-segment line string in EPSG:4978.
+    @Test
+    func simplify4978() async {
+        let lineString = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 250.0, y: 250.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 750.0, y: 250.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])
+        let simplified = lineString.simplified(tolerance: 100.0)
+        #expect(simplified.coordinates.count <= lineString.coordinates.count)
+        #expect(simplified.coordinates.count >= 2)
+        #expect(simplified.projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func simplifyNoSRID() async {
+        let lineString = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 25.0, y: 25.0, projection: .noSRID),
+            Coordinate3D(x: 50.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 75.0, y: 25.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ])
+        let simplified = lineString.simplified(tolerance: 10.0)
+        #expect(simplified.coordinates.count <= lineString.coordinates.count)
+        #expect(simplified.coordinates.count >= 2)
+        #expect(simplified.projection == .noSRID)
     }
 
     // MARK: - Antimeridian
@@ -144,6 +178,7 @@ struct SimplifyTests {
         ])
         let result = try #require(ls.topologyPreservedSimplified(tolerance: 50.0))
         #expect(result.coordinates.count < ls.coordinates.count)
+        #expect(result.projection == .epsg3857)
     }
 
     // MARK: - polygonHullSimplify
@@ -288,6 +323,7 @@ struct SimplifyTests {
         ]))
         let result = try #require(ls.topologyPreservedSimplified(tolerance: 1.0))
         #expect(result.isValid)
+        #expect(result.projection == .epsg4326)
     }
 
 }

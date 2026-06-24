@@ -121,6 +121,18 @@ struct NearestPointTests {
         #expect(result.point.coordinate.y == 0.0)
     }
 
+    // Verifies nearest coordinate on a line string in EPSG:4978.
+    @Test
+    func nearestPointLineString4978() throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978),
+        ]))
+        let ref = Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)
+        let result = try #require(ls.nearestCoordinate(from: ref))
+        #expect(result.distance > 0.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

@@ -12,8 +12,6 @@ extension GeoJson {
 
     /// Returns a simplified GeoJson.
     ///
-    /// **Important**: This method expects tolerance in meters. Use the *Simplify* struct directly if your GeoJSON is not in WGS84.
-    ///
     /// - Parameters:
     /// - Parameter tolerance: Affects the amount of simplification (in meters)
     /// - Parameter highQuality: Excludes distance-based preprocessing step which leads to highest quality simplification but runs ~10-20 times slower

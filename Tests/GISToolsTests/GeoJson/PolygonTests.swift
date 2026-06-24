@@ -185,4 +185,213 @@ struct PolygonTests {
         #expect(polygonA != polygonC)
     }
 
+    // MARK: - Projection
+
+    // Validates projecting a Polygon from EPSG:4326 to EPSG:3857.
+    @Test
+    func projected() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let projected = polygon.projected(to: .epsg3857)
+
+        #expect(projected.projection == .epsg3857)
+        #expect(projected.coordinates.count == 1)
+        #expect(projected.coordinates[0].count == 5)
+        for coord in projected.coordinates[0] {
+            #expect(coord.projection == .epsg3857)
+            #expect(coord.x.isFinite)
+            #expect(coord.y.isFinite)
+        }
+    }
+
+    // Validates projecting a Polygon from EPSG:4326 to EPSG:4978.
+    @Test
+    func projectedTo4978() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let projected = polygon.projected(to: .epsg4978)
+
+        #expect(projected.projection == .epsg4978)
+        for coord in projected.coordinates[0] {
+            #expect(coord.projection == .epsg4978)
+        }
+    }
+
+    // Validates projecting a Polygon from EPSG:4326 to noSRID.
+    @Test
+    func projectedToNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let projected = polygon.projected(to: .noSRID)
+
+        #expect(projected.projection == .noSRID)
+        for coord in projected.coordinates[0] {
+            #expect(coord.projection == .noSRID)
+            #expect(coord.x.isFinite)
+            #expect(coord.y.isFinite)
+        }
+    }
+
+    // Validates that projecting to the same projection returns self.
+    @Test
+    func projectedSameProjection() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let projected = polygon.projected(to: .epsg4326)
+        #expect(projected.coordinates == polygon.coordinates)
+    }
+
+    // Validates creating a Polygon in EPSG:3857 using unchecked init.
+    @Test
+    func init3857() {
+        let coords: [[Coordinate3D]] = [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]
+        let polygon = Polygon(unchecked: coords)
+
+        #expect(polygon.projection == .epsg3857)
+        #expect(polygon.coordinates == coords)
+    }
+
+    // Validates creating a Polygon in EPSG:4978 using unchecked init.
+    @Test
+    func init4978() {
+        let coords: [[Coordinate3D]] = [[
+            Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 10.0, y: 0.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 10.0, y: 10.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 10.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
+        ]]
+        let polygon = Polygon(unchecked: coords)
+
+        #expect(polygon.projection == .epsg4978)
+        #expect(polygon.coordinates == coords)
+    }
+
+    // Validates creating a Polygon in noSRID using unchecked init.
+    @Test
+    func initNoSRID() {
+        let coords: [[Coordinate3D]] = [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]
+        let polygon = Polygon(unchecked: coords)
+
+        #expect(polygon.projection == .noSRID)
+        #expect(polygon.coordinates == coords)
+    }
+
+    // MARK: - Bounding box
+
+    // Validates the bounding box of a Polygon in EPSG:4326.
+    @Test
+    func boundingBox() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let bbox = try #require(polygon.calculateBoundingBox())
+
+        #expect(bbox.projection == .epsg4326)
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 10.0)
+        #expect(bbox.northEast.longitude == 10.0)
+    }
+
+    // Validates the bounding box of a Polygon in EPSG:3857.
+    @Test
+    func boundingBox3857() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+
+        let bbox = try #require(polygon.calculateBoundingBox())
+
+        #expect(bbox.projection == .epsg3857)
+        #expect(bbox.southWest.x == 0.0)
+        #expect(bbox.southWest.y == 0.0)
+        #expect(bbox.northEast.x == 10.0)
+        #expect(bbox.northEast.y == 10.0)
+    }
+
+    // Validates that we can detect intersection with a bounding box.
+    @Test
+    func intersectsBoundingBox() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let overlapping = BoundingBox(
+            southWest: Coordinate3D(latitude: 5.0, longitude: 5.0),
+            northEast: Coordinate3D(latitude: 15.0, longitude: 15.0))
+        #expect(polygon.intersects(overlapping))
+
+        let farAway = BoundingBox(
+            southWest: Coordinate3D(latitude: 20.0, longitude: 20.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0))
+        #expect(!polygon.intersects(farAway))
+    }
+
+    // Validates bounding box is stored and returned from the property.
+    @Test
+    func boundingBoxProperty() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]], calculateBoundingBox: true))
+
+        let bbox = try #require(polygon.boundingBox)
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 1.0)
+        #expect(bbox.northEast.longitude == 1.0)
+    }
+
 }

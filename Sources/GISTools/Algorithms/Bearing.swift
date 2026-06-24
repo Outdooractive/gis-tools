@@ -7,7 +7,13 @@ import Foundation
 
 extension Coordinate3D {
 
-    /// Finds the geographic bearing between the receiver and another coordinate, i.e. the angle measured in degrees from the north line (0 degrees).
+    /// Finds the geographic bearing between the receiver and another coordinate,
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting both points to ``Projection/epsg4326`` first.
+    /// This produces a correct geographic bearing for Earth-surface points.
+    /// Any altitude difference between the coordinates is ignored.
     ///
     /// - Parameter other: The end point
     /// - Parameter final: Calculates the final bearing (optional, default `false`)
@@ -57,7 +63,12 @@ extension Coordinate3D {
         return (bearing + 180.0).truncatingRemainder(dividingBy: 360.0)
     }
 
-    /// Takes three coordinates and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
+    /// Takes three coordinates and returns the angle between them, i.e. from
+    /// the triangle *first* - *middle* - *last*.
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting all three points to ``Projection/epsg4326`` first.
+    /// Altitude differences are ignored.
     ///
     /// - Parameter first: The first point in the triangle
     /// - Parameter middle: The middle point in the triangle
@@ -99,7 +110,12 @@ extension Coordinate3D {
 
 extension Point {
 
-    /// Finds the geographic bearing between the receiver and another Point, i.e. the angle measured in degrees from the north line (0 degrees).
+    /// Finds the geographic bearing between the receiver and another Point,
+    /// i.e. the angle measured in degrees from the north line (0 degrees).
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting both points to ``Projection/epsg4326`` first.
+    /// Altitude differences are ignored.
     ///
     /// - Parameter other: The end point
     /// - Parameter final: Calculates the final bearing (optional, default `false`)
@@ -112,7 +128,12 @@ extension Point {
         self.coordinate.bearing(to: other.coordinate, final: final)
     }
 
-    /// Takes three *Point*s and returns the angle between them, i.e. from the triangle *first* - *middle* - *last*.
+    /// Takes three *Point*s and returns the angle between them, i.e. from the
+    /// triangle *first* - *middle* - *last*.
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting all three points to ``Projection/epsg4326`` first.
+    /// Altitude differences are ignored.
     ///
     /// - Parameter first: The first point in the triangle
     /// - Parameter middle: The middle point in the triangle
@@ -135,6 +156,10 @@ extension Point {
 extension LineSegment {
 
     /// The geographic bearing between the first and second coordinate.
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting both endpoints to ``Projection/epsg4326`` first.
+    /// Altitude differences are ignored.
     public var bearing: CLLocationDegrees {
         first.bearing(to: second)
     }

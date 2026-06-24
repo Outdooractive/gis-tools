@@ -87,4 +87,34 @@ struct FlipTests {
         #expect(flipped.coordinates.count == 3)
     }
 
+    // Validates flipping a LineString in EPSG:4978 returns a valid result.
+    @Test
+    func flip4978() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 2.0, longitude: 0.0).projected(to: .epsg4978),
+        ]))
+        let flipped = line.flipped()
+        #expect(flipped.coordinates.count == 3)
+    }
+
+    @Test
+    func flipNoSRID() throws {
+        let point = Point(Coordinate3D(x: 10.0, y: 20.0, projection: .noSRID))
+        let flipped = point.flipped()
+        #expect(flipped.coordinate.projection == .noSRID)
+        #expect(flipped.coordinate.x == 20.0)
+        #expect(flipped.coordinate.y == 10.0)
+    }
+
+    @Test
+    func flipPointPreservesProjection() throws {
+        let point3857 = Point(Coordinate3D(x: 10.0, y: 20.0))
+        #expect(point3857.flipped().coordinate.projection == .epsg3857)
+
+        let point4978 = Point(Coordinate3D(x: 10.0, y: 20.0, z: 0.0, projection: .epsg4978))
+        #expect(point4978.flipped().coordinate.projection == .epsg4978)
+    }
+
 }

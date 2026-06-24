@@ -17,8 +17,17 @@ extension GeoJson {
     ///
     /// MultiPolygon behaves like Polygon in these comparisons.
     ///
+    /// All projections are supported — the 2‑D checks operate on raw
+    /// ``longitude``/``latitude`` values regardless of CRS. For
+    /// ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
+    /// altitude/Z is ignored.
+    ///
+    /// - Parameter other: The other geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    public func crosses(_ other: GeoJson, gridSize: Double? = nil) -> Bool {
+    public func crosses(
+        _ other: GeoJson,
+        gridSize: Double? = nil
+    ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
 
@@ -155,7 +164,7 @@ extension GeoJson {
             let pt = intersectPoint.coordinate
             let onBoundary1 = boundary1.coordinates.contains { $0.isCoincident(to: pt) }
             let onBoundary2 = boundary2.coordinates.contains { $0.isCoincident(to: pt) }
-            if !onBoundary1 && !onBoundary2 {
+            if !onBoundary1, !onBoundary2 {
                 return true
             }
         }

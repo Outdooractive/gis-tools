@@ -110,6 +110,32 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
+    @Test
+    func boundingBoxClipNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID),
+        ]))
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(x: -100_000.0, y: -100_000.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .noSRID))
+        let clipped = lineString.clipped(to: boundingBox)
+        #expect(clipped != nil)
+    }
+
+    @Test
+    func boundingBoxClip4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(x: -100_000.0, y: -100_000.0, z: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 500_000.0, y: 500_000.0, z: 0.0, projection: .epsg4978))
+        let clipped = lineString.clipped(to: boundingBox)
+        #expect(clipped != nil)
+    }
+
     // MARK: - Antimeridian
 
     @Test

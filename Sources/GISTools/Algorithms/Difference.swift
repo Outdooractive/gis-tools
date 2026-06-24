@@ -6,6 +6,10 @@ extension Polygon {
     ///
     /// The result is the part of the receiver that is not covered by the other polygon (A − B).
     ///
+    /// All projections are supported. For non-3857 projections the geometries
+    /// are projected to EPSG:3857, the overlay is computed, and the result is
+    /// projected back to the original CRS.
+    ///
     /// - Parameter other: The other polygon geometry to subtract
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `PolygonGeometry` representing the difference, or `nil` if the result is empty.
@@ -29,6 +33,10 @@ extension Polygon {
 extension MultiPolygon {
 
     /// Returns the geometric difference of the receiver minus another polygon geometry.
+    ///
+    /// All projections are supported. For non-3857 projections the geometries
+    /// are projected to EPSG:3857, the overlay is computed, and the result is
+    /// projected back to the original CRS.
     ///
     /// - Parameter other: The other polygon geometry to subtract
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).

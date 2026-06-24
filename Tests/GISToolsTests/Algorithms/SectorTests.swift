@@ -9,6 +9,7 @@ struct SectorTests {
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(sector.isValid)
         #expect(sector.outerRing?.coordinates.count == 18) // center + 16 arc steps + center
+        #expect(sector.projection == .epsg4326)
     }
 
     @Test
@@ -86,6 +87,25 @@ struct SectorTests {
         let center = Coordinate3D(x: 0.0, y: 0.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(sector.isValid)
+        #expect(sector.projection == .epsg3857)
+    }
+
+    @Test
+    func sectorNoSRID() async throws {
+        let center = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
+        #expect(sector.isValid)
+        #expect(sector.projection == .noSRID)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func sector4978() async throws {
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
+        #expect(sector.isValid)
+        #expect(sector.projection == .epsg4978)
     }
 
     // MARK: - Antimeridian
@@ -95,6 +115,7 @@ struct SectorTests {
         let center = Coordinate3D(latitude: 0.0, longitude: 180.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(sector.isValid)
+        #expect(sector.projection == .epsg4326)
     }
 
     @Test
@@ -102,6 +123,7 @@ struct SectorTests {
         let center = Coordinate3D(latitude: 0.0, longitude: -180.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 180.0, bearing2: 270.0))
         #expect(sector.isValid)
+        #expect(sector.projection == .epsg4326)
     }
 
 }

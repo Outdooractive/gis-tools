@@ -9,6 +9,11 @@ extension GeoJson {
 
     /// Compares two geometries and returns true if they are disjoint.
     ///
+    /// All projections are supported. The 2‑D checks operate on raw
+    /// ``longitude``/``latitude`` values regardless of CRS.
+    /// For ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
+    /// altitude/Z is ignored.
+    ///
     /// - Parameter other: The other geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
@@ -54,6 +59,13 @@ extension GeoJson {
 extension PointGeometry {
 
     fileprivate func isPointDisjoint(with other: GeoJson) -> Bool {
+        switch projection {
+        case .epsg4326, .epsg3857, .noSRID:
+            break
+        case .epsg4978:
+            return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
+        }
+
         let other = other.projected(to: projection)
 
         switch other {
@@ -113,6 +125,13 @@ extension LineStringGeometry {
     }
 
     fileprivate func isLineStringDisjoint(with other: GeoJson) -> Bool {
+        switch projection {
+        case .epsg4326, .epsg3857, .noSRID:
+            break
+        case .epsg4978:
+            return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
+        }
+
         let other = other.projected(to: projection)
 
         switch other {
@@ -168,6 +187,13 @@ extension LineStringGeometry {
 extension PolygonGeometry {
 
     fileprivate func isPolygonDisjoint(with other: GeoJson) -> Bool {
+        switch projection {
+        case .epsg4326, .epsg3857, .noSRID:
+            break
+        case .epsg4978:
+            return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
+        }
+
         let other = other.projected(to: projection)
 
         switch other {

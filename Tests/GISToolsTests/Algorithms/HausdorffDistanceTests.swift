@@ -164,4 +164,30 @@ struct HausdorffDistanceTests {
         #expect(abs(dAB - dBA) < 0.001)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func hausdorff4978() async throws {
+        let a = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
+        let b = Point(Coordinate3D(latitude: 0.0, longitude: 0.01).projected(to: .epsg4978))
+        let dist = a.hausdorffDistance(from: b)
+        #expect(dist > 0.0)
+    }
+
+    @Test
+    func hausdorff3857() async throws {
+        let a = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let b = Point(Coordinate3D(x: 0.0, y: 1000.0))
+        let dist = a.hausdorffDistance(from: b)
+        #expect(abs(dist - 1000.0) < 0.001)
+    }
+
+    @Test
+    func hausdorffNoSRID() async throws {
+        let a = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))
+        let b = Point(Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID))
+        let dist = a.hausdorffDistance(from: b)
+        #expect(abs(dist - 10.0) < 0.001)
+    }
+
 }

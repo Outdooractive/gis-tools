@@ -77,7 +77,7 @@ struct CenterTests {
         #expect(centroid.coordinate.longitude == 5.0)
     }
 
-    // Validates that the centroid of a `Polygon` is the mean of all its coordinates (including the closing point).
+    // Validates that the centroid of a `Polygon` is the mean of all its unique vertices.
     @Test
     func polygonCentroid() async throws {
         let polygon = try #require(Polygon([[
@@ -88,11 +88,9 @@ struct CenterTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let centroid = try #require(polygon.centroid)
-        // Mean of all 5 coordinates (including the closing point)
-        let expectedLat = (0.0 + 0.0 + 10.0 + 10.0 + 0.0) / 5.0
-        let expectedLon = (0.0 + 10.0 + 10.0 + 0.0 + 0.0) / 5.0
-        #expect(centroid.coordinate.latitude == expectedLat)
-        #expect(centroid.coordinate.longitude == expectedLon)
+        // Mean of 4 unique vertices (closing duplicate excluded)
+        #expect(abs(centroid.coordinate.latitude - 5.0) < 0.0001)
+        #expect(abs(centroid.coordinate.longitude - 5.0) < 0.0001)
     }
 
     // Validates that the centroid of a `MultiPoint` is the mean of all its points.
@@ -321,9 +319,8 @@ struct CenterTests {
         ]])
         let centroid = polygon.centroid
         #expect(centroid != nil)
-        // Centroid includes closing point: mean of [0,1000,1000,0,0] = 400
-        #expect(abs(centroid!.coordinate.x - 400.0) < 1.0)
-        #expect(abs(centroid!.coordinate.y - 400.0) < 1.0)
+        #expect(abs(centroid!.coordinate.x - 500.0) < 1.0)
+        #expect(abs(centroid!.coordinate.y - 500.0) < 1.0)
         #expect(centroid!.coordinate.projection == .epsg3857)
     }
 
@@ -476,6 +473,137 @@ struct CenterTests {
         // Centroid of this LineString is (5, 0)
         #expect(abs(median.coordinate.latitude - 5.0) < 0.001)
         #expect(abs(median.coordinate.longitude - 0.0) < 0.001)
+    }
+
+    // MARK: - Altitude preservation
+
+    @Test
+    func centroidPreservesAltitude() async throws {
+        let coords = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 300.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0, altitude: 400.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let centroid = try #require(polygon.centroid)
+        #expect(centroid.coordinate.altitude != nil)
+        #expect(abs(centroid.coordinate.altitude! - 250.0) < 0.001) // (100+200+300+400)/4
+    }
+
+    @Test
+    func centerOfMassPreservesAltitude() async throws {
+        let coords = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 300.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0, altitude: 400.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let com = try #require(polygon.centerOfMass)
+        #expect(com.coordinate.altitude != nil)
+    }
+
+    @Test
+    func centerMeanWeightedAltitude() async throws {
+        let coords = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
+        ]
+        let ls = LineString(unchecked: coords)
+        let fc = FeatureCollection([Feature(ls)])
+        let mean = try #require(fc.centerMean())
+        #expect(mean.coordinate.altitude != nil)
+        #expect(abs(mean.coordinate.altitude! - 150.0) < 0.001)
+    }
+
+    @Test
+    func centroidOmitsAltitudeWhenMixed() async throws {
+        let coords = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 300.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let centroid = try #require(polygon.centroid)
+        #expect(centroid.coordinate.altitude == nil)
+    }
+
+    // MARK: - Projection tests
+
+    @Test
+    func centroidEPSG3857() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let c = try #require(polygon.centroid)
+        #expect(c.coordinate.projection == .epsg3857)
+        #expect(abs(c.coordinate.x - 500.0) < 0.001)
+        #expect(abs(c.coordinate.y - 500.0) < 0.001)
+    }
+
+    @Test
+    func centroidEPSG4978() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]])
+        let c = try #require(polygon.centroid)
+        #expect(c.coordinate.projection == .epsg4978)
+        #expect(c.coordinate.altitude != nil) // all coords have z: 0.0
+        #expect(abs(c.coordinate.altitude!) < 0.001)
+    }
+
+    @Test
+    func centroidNoSRID() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let c = try #require(polygon.centroid)
+        #expect(c.coordinate.projection == .noSRID)
+        #expect(abs(c.coordinate.x - 5.0) < 0.001)
+        #expect(abs(c.coordinate.y - 5.0) < 0.001)
+    }
+
+    @Test
+    func centerPreservesAltitude() async throws {
+        let coords = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0, altitude: 300.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 400.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+        ]
+        let polygon = try #require(Polygon([coords]))
+        let center = try #require(polygon.center)
+        // center delegates to boundingBox.center → midpoint, preserving altitude
+        #expect(center.coordinate.altitude != nil)
+    }
+
+    @Test
+    func centerMedianPreservesAltitude() async throws {
+        let fc = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0))),
+            Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 200.0))),
+        ])
+        let median = try #require(fc.centerMedian())
+        #expect(median.coordinate.altitude != nil)
+        #expect(abs(median.coordinate.altitude! - 150.0) < 5.0)
     }
 
 }

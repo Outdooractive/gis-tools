@@ -15,6 +15,8 @@ struct TinTests {
 
         let fc = try #require(mp.tin())
         #expect(fc.features.count == 1)
+        let tri = try #require(fc.features[0].geometry as? Polygon)
+        #expect(tri.projection == .epsg4326)
     }
 
     // Validates that 4 points in a square produce 2 triangles.
@@ -29,6 +31,8 @@ struct TinTests {
 
         let fc = try #require(mp.tin())
         #expect(fc.features.count == 2)
+        let tri = try #require(fc.features[0].geometry as? Polygon)
+        #expect(tri.projection == .epsg4326)
     }
 
     // Validates that fewer than 3 distinct points returns nil.
@@ -150,6 +154,37 @@ struct TinTests {
         ]))
         let fc = try #require(mp.tin())
         #expect(fc.features.count == 1)
+        let tri = try #require(fc.features[0].geometry as? Polygon)
+        #expect(tri.projection == .epsg3857)
+    }
+
+    @Test
+    func tinNoSRID() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 50_000.0, y: 100_000.0, projection: .noSRID),
+        ]))
+        let fc = try #require(mp.tin())
+        #expect(fc.features.count == 1)
+        let tri = try #require(fc.features[0].geometry as? Polygon)
+        #expect(tri.projection == .noSRID)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func tin4978() async throws {
+        // Small triangle in ECEF space near the equatorial XY plane.
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(x: 6_378_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 6_378_100.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 6_378_050.0, y: 100.0, z: 0.0, projection: .epsg4978),
+        ])
+        let fc = try #require(mp.tin())
+        #expect(fc.features.count == 1)
+        let tri = try #require(fc.features[0].geometry as? Polygon)
+        #expect(tri.projection == .epsg4978)
     }
 
 }

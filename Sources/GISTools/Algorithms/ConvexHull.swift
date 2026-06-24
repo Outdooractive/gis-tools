@@ -19,20 +19,29 @@ extension GeoJson {
         let unique = Array(Set(coords))
         guard unique.count >= 3 else { return nil }
 
-        // Handle anti-meridian: if the bounding box crosses the date line,
-        // shift negative longitudes to [0, 360] range.
-        let minLon = unique.map(\.longitude).min() ?? 0
-        let maxLon = unique.map(\.longitude).max() ?? 0
-        let spansAntimeridian = (maxLon - minLon) > 180.0
+        // Handle anti-meridian: only applies to EPSG:4326 where longitude
+        // is in degrees. For other projections the values are in projection
+        // units (meters for 3857/4978) and a span > 180° does not indicate
+        // a date-line crossing.
+        let spansAntimeridian: Bool
+        if projection == .epsg4326 {
+            let minLon = unique.map(\.longitude).min() ?? 0
+            let maxLon = unique.map(\.longitude).max() ?? 0
+            spansAntimeridian = (maxLon - minLon) > 180.0
+        }
+        else {
+            spansAntimeridian = false
+        }
 
         let normalized: [Coordinate3D]
         if spansAntimeridian {
             normalized = unique.map { coord in
-                var c = coord
-                c = Coordinate3D(
-                    latitude: c.latitude,
-                    longitude: c.longitude < 0 ? c.longitude + 360.0 : c.longitude)
-                return c
+                Coordinate3D(
+                    x: coord.longitude < 0 ? coord.longitude + 360.0 : coord.longitude,
+                    y: coord.latitude,
+                    z: coord.altitude,
+                    m: coord.m,
+                    projection: projection)
             }
         }
         else {
@@ -85,7 +94,7 @@ extension GeoJson {
         if spansAntimeridian {
             hull = hull.map { coord in
                 let lon = coord.longitude > 180.0 ? coord.longitude - 360.0 : coord.longitude
-                return Coordinate3D(latitude: coord.latitude, longitude: lon)
+                return Coordinate3D(x: lon, y: coord.latitude, z: coord.altitude, projection: projection)
             }
         }
 

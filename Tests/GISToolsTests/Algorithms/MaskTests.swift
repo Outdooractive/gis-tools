@@ -15,6 +15,7 @@ struct MaskTests {
         ]])
         let result = maskPolygon.mask()
         #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection)
         if let result {
             #expect(result.rings.count == 2)
         }
@@ -26,6 +27,7 @@ struct MaskTests {
         let world = Polygon.world
         let result = world.mask()
         #expect(result != nil)
+        #expect(result?.projection == world.projection)
         if let result {
             #expect(result.rings.count == 1)
         }
@@ -51,6 +53,7 @@ struct MaskTests {
         let multiPolygon = MultiPolygon([poly1, poly2])!
         let result = multiPolygon.mask()
         #expect(result != nil)
+        #expect(result?.projection == multiPolygon.projection)
         if let result {
             #expect(result.rings.count == 3) // outer + 2 holes
         }
@@ -75,6 +78,7 @@ struct MaskTests {
         ]])
         let result = maskPolygon.mask(outerPolygon: outer)
         #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection) // masks projection is the input's
         if let result {
             #expect(result.rings.count == 2)
             #expect(result.outerRing?.coordinates.count == 5)
@@ -86,6 +90,7 @@ struct MaskTests {
     func emptyMask() {
         let result = Polygon.world.mask()
         #expect(result != nil)
+        #expect(result?.projection == .epsg4326)
         if let result {
             #expect(result.rings.count == 1)
         }
@@ -104,6 +109,36 @@ struct MaskTests {
         ]])
         let result = maskPolygon.mask()
         #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection)
+    }
+
+    @Test
+    func maskNoSRID() {
+        let maskPolygon = Polygon(unchecked: [[
+            Coordinate3D(x: -50_000.0, y: -50_000.0, projection: .noSRID),
+            Coordinate3D(x: 50_000.0, y: -50_000.0, projection: .noSRID),
+            Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .noSRID),
+            Coordinate3D(x: -50_000.0, y: 50_000.0, projection: .noSRID),
+            Coordinate3D(x: -50_000.0, y: -50_000.0, projection: .noSRID),
+        ]])
+        let result = maskPolygon.mask()
+        #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection)
+    }
+
+    @Test
+    func mask4978() async throws {
+        let mask4326 = try #require(Polygon([[
+            Coordinate3D(latitude: -5.0, longitude: -5.0),
+            Coordinate3D(latitude: 5.0, longitude: -5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: -5.0, longitude: 5.0),
+            Coordinate3D(latitude: -5.0, longitude: -5.0),
+        ]]))
+        let maskPolygon = mask4326.projected(to: .epsg4978)
+        let result = maskPolygon.mask()
+        #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection)
     }
 
     // MARK: - Antimeridian
@@ -120,6 +155,7 @@ struct MaskTests {
         ]])
         let result = maskPolygon.mask()
         #expect(result != nil)
+        #expect(result?.projection == .epsg4326)
         if let result {
             #expect(result.rings.count == 2)
         }
@@ -144,6 +180,7 @@ struct MaskTests {
         ]])
         let result = maskPolygon.mask(outerPolygon: outer)
         #expect(result != nil)
+        #expect(result?.projection == maskPolygon.projection)
         if let result {
             #expect(result.rings.count == 2)
         }
@@ -169,6 +206,7 @@ struct MaskTests {
         let multiPolygon = MultiPolygon([poly1, poly2])!
         let result = multiPolygon.mask()
         #expect(result != nil)
+        #expect(result?.projection == multiPolygon.projection)
         if let result {
             #expect(result.rings.count == 3) // outer + 2 holes
         }

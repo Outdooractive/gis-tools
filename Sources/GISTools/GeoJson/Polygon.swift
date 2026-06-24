@@ -9,6 +9,15 @@ public struct Polygon:
     EmptyCreatable
 {
 
+    /// A polygon representing the world bounding box `(-180, -90, 180, 90)`.
+    public static let world: Polygon = Polygon(unchecked: [[
+        Coordinate3D(latitude: -90.0, longitude: -180.0),
+        Coordinate3D(latitude: -90.0, longitude: 180.0),
+        Coordinate3D(latitude: 90.0, longitude: 180.0),
+        Coordinate3D(latitude: 90.0, longitude: -180.0),
+        Coordinate3D(latitude: -90.0, longitude: -180.0),
+    ]])
+
     /// The GeoJSON object type.
     public var type: GeoJsonType {
         .polygon

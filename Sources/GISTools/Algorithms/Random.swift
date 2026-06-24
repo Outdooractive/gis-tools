@@ -12,8 +12,9 @@ extension BoundingBox {
     /// - Returns: A random coordinate.
     public func randomCoordinate() -> Coordinate3D {
         Coordinate3D(
-            latitude: Double.random(in: southWest.latitude ... northEast.latitude),
-            longitude: Double.random(in: southWest.longitude ... northEast.longitude))
+            x: Double.random(in: southWest.longitude ... northEast.longitude),
+            y: Double.random(in: southWest.latitude ... northEast.latitude),
+            projection: projection)
     }
 
     /// Generates random points within this bounding box.
@@ -28,9 +29,12 @@ extension BoundingBox {
 
     /// Generates random polygons within this bounding box.
     ///
+    /// The coordinate values (bbox extents, ``maxRadialLength``) are in degrees
+    /// for EPSG:4326 and in projection units (meters for 3857/4978) for others.
+    ///
     /// - Parameter count: Number of polygons to generate (default `1`).
     /// - Parameter numVertices: Number of vertices per polygon (default `10`).
-    /// - Parameter maxRadialLength: Maximum radial distance from center in degrees (default `10.0`).
+    /// - Parameter maxRadialLength: Maximum radial distance from center (default `10.0`).
     /// - Returns: A feature collection of polygon features.
     public func randomPolygons(
         count: Int = 1,
@@ -43,12 +47,12 @@ extension BoundingBox {
         let radialLength = min(maxRadialLength, maxRadius)
 
         let paddedBbox = BoundingBox(
-            southWest: Coordinate3D(
-                latitude: southWest.latitude + radialLength,
-                longitude: southWest.longitude + radialLength),
-            northEast: Coordinate3D(
-                latitude: northEast.latitude - radialLength,
-                longitude: northEast.longitude - radialLength))
+            southWest: Coordinate3D(x: southWest.longitude + radialLength,
+                                    y: southWest.latitude + radialLength,
+                                    projection: projection),
+            northEast: Coordinate3D(x: northEast.longitude - radialLength,
+                                    y: northEast.latitude - radialLength,
+                                    projection: projection))
 
         return FeatureCollection((0 ..< count).map { _ in
             let center = paddedBbox.randomCoordinate()
@@ -62,9 +66,9 @@ extension BoundingBox {
                 let scale = Double.random(in: 0 ... 1)
                 let dx = scale * radialLength * sin(angle)
                 let dy = scale * radialLength * cos(angle)
-                return Coordinate3D(
-                    latitude: center.latitude + dy,
-                    longitude: center.longitude + dx)
+                return Coordinate3D(x: center.longitude + dx,
+                                    y: center.latitude + dy,
+                                    projection: projection)
             }
             let ring = vertices.reversed() + [vertices.reversed()[0]]
             return Feature(Polygon(unchecked: [ring]))
@@ -73,9 +77,12 @@ extension BoundingBox {
 
     /// Generates random line strings within this bounding box.
     ///
+    /// The coordinate values (bbox extents, ``maxLength``) are in degrees
+    /// for EPSG:4326 and in projection units (meters for 3857/4978) for others.
+    ///
     /// - Parameter count: Number of line strings to generate (default `1`).
     /// - Parameter numVertices: Number of vertices per line string (default `10`).
-    /// - Parameter maxLength: Maximum segment length in degrees (default `0.0001`).
+    /// - Parameter maxLength: Maximum segment length (default `0.0001`).
     /// - Parameter maxRotation: Maximum turn angle in radians (default `π / 8`).
     /// - Returns: A feature collection of line string features.
     public func randomLineStrings(
@@ -97,8 +104,9 @@ extension BoundingBox {
                 let angle = priorAngle + Double.random(in: -maxRotation ... maxRotation)
                 let distance = Double.random(in: 0 ... maxLength)
                 vertices.append(Coordinate3D(
-                    latitude: previous.latitude + distance * sin(angle),
-                    longitude: previous.longitude + distance * cos(angle)))
+                    x: previous.longitude + distance * cos(angle),
+                    y: previous.latitude + distance * sin(angle),
+                    projection: projection))
             }
             return Feature(LineString(unchecked: vertices))
         })
@@ -108,33 +116,65 @@ extension BoundingBox {
 
 extension BoundingBox {
 
+    /// The world bounding box projected to the given CRS.
+    private static func worldBox(projection: Projection) -> BoundingBox {
+        switch projection {
+        case .epsg4326:
+            return BoundingBox.world
+        case .epsg3857:
+            let s = GISTool.originShift
+            return BoundingBox(
+                southWest: Coordinate3D(x: -s, y: -s, projection: .epsg3857),
+                northEast: Coordinate3D(x: s, y: s, projection: .epsg3857))
+        case .epsg4978:
+            let r = GISTool.equatorialRadius
+            return BoundingBox(
+                southWest: Coordinate3D(x: -r, y: -r, z: -r, projection: .epsg4978),
+                northEast: Coordinate3D(x: r, y: r, z: r, projection: .epsg4978))
+        case .noSRID:
+            return BoundingBox(
+                southWest: Coordinate3D(x: -180.0, y: -90.0, projection: .noSRID),
+                northEast: Coordinate3D(x: 180.0, y: 90.0, projection: .noSRID))
+        }
+    }
+
     /// A random position within the world bounding box.
     ///
+    /// - Parameter projection: The target projection (default `.epsg4326`).
     /// - Returns: A random coordinate.
-    public static func randomCoordinate() -> Coordinate3D {
-        world.randomCoordinate()
+    public static func randomCoordinate(projection: Projection = .epsg4326) -> Coordinate3D {
+        worldBox(projection: projection).randomCoordinate()
     }
 
     /// Generates random points within the world bounding box.
     ///
     /// - Parameter count: Number of points to generate (default `1`).
+    /// - Parameter projection: The target projection (default `.epsg4326`).
     /// - Returns: A feature collection of point features.
-    public static func randomPoints(count: Int = 1) -> FeatureCollection {
-        world.randomPoints(count: count)
+    public static func randomPoints(
+        count: Int = 1,
+        projection: Projection = .epsg4326
+    ) -> FeatureCollection {
+        worldBox(projection: projection).randomPoints(count: count)
     }
 
     /// Generates random polygons within the world bounding box.
     ///
+    /// The coordinate values (``maxRadialLength``) are in degrees for EPSG:4326
+    /// and in projection units (meters for 3857/4978) for others.
+    ///
     /// - Parameter count: Number of polygons to generate (default `1`).
     /// - Parameter numVertices: Number of vertices per polygon (default `10`).
-    /// - Parameter maxRadialLength: Maximum radial distance from center in degrees (default `10.0`).
+    /// - Parameter maxRadialLength: Maximum radial distance from center (default `10.0`).
+    /// - Parameter projection: The target projection (default `.epsg4326`).
     /// - Returns: A feature collection of polygon features.
     public static func randomPolygons(
         count: Int = 1,
         numVertices: Int = 10,
-        maxRadialLength: CLLocationDegrees = 10.0
+        maxRadialLength: CLLocationDegrees = 10.0,
+        projection: Projection = .epsg4326
     ) -> FeatureCollection {
-        world.randomPolygons(
+        worldBox(projection: projection).randomPolygons(
             count: count,
             numVertices: numVertices,
             maxRadialLength: maxRadialLength)
@@ -142,18 +182,23 @@ extension BoundingBox {
 
     /// Generates random line strings within the world bounding box.
     ///
+    /// The coordinate values (``maxLength``) are in degrees for EPSG:4326
+    /// and in projection units (meters for 3857/4978) for others.
+    ///
     /// - Parameter count: Number of line strings to generate (default `1`).
     /// - Parameter numVertices: Number of vertices per line string (default `10`).
-    /// - Parameter maxLength: Maximum segment length in degrees (default `0.0001`).
+    /// - Parameter maxLength: Maximum segment length (default `0.0001`).
     /// - Parameter maxRotation: Maximum turn angle in radians (default `π / 8`).
+    /// - Parameter projection: The target projection (default `.epsg4326`).
     /// - Returns: A feature collection of line string features.
     public static func randomLineStrings(
         count: Int = 1,
         numVertices: Int = 10,
         maxLength: CLLocationDegrees = 0.0001,
-        maxRotation: CLLocationDegrees = .pi / 8.0
+        maxRotation: CLLocationDegrees = .pi / 8.0,
+        projection: Projection = .epsg4326
     ) -> FeatureCollection {
-        world.randomLineStrings(
+        worldBox(projection: projection).randomLineStrings(
             count: count,
             numVertices: numVertices,
             maxLength: maxLength,

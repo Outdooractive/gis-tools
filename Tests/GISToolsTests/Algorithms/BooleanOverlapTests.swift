@@ -21,8 +21,8 @@ struct BooleanOverlapTests {
         let multiPoint3 = try TestData.multiPoint(package: "BooleanOverlap", name: "OverlapFalse6_1")
         let multiPoint4 = try TestData.multiPoint(package: "BooleanOverlap", name: "OverlapFalse6_2")
 
-//        let polygon1 = TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse5_1")
-//        let polygon2 = TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse5_2")
+//        let polygon1 = try TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse5_1")
+//        let polygon2 = try TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse5_2")
 
         let polygon3 = try TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse7_1")
         let polygon4 = try TestData.polygon(package: "BooleanOverlap", name: "OverlapFalse7_2")
@@ -89,16 +89,128 @@ struct BooleanOverlapTests {
     // MARK: - Projection tests
 
     @Test
-    func polygonOverlapsPolygon3857() {
-        let polygon = Polygon(unchecked: [[
+    func isOverlappingEPSG3857() {
+        // Two squares that partially overlap in EPSG:3857.
+        let poly1 = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
         ]])
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
-        #expect(polygon.contains(point))
+        let poly2 = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 1_500.0, y: 500.0),
+            Coordinate3D(x: 1_500.0, y: 1_500.0),
+            Coordinate3D(x: 500.0, y: 1_500.0),
+            Coordinate3D(x: 500.0, y: 500.0),
+        ]])
+        #expect(poly1.isOverlapping(with: poly2))
+        #expect(poly2.isOverlapping(with: poly1))
+    }
+
+    @Test
+    func isOverlappingEPSG4978() {
+        let poly1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]])
+        let poly2 = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_500.0, y: 500.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_500.0, y: 1_500.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500.0, y: 1_500.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
+        ]])
+        #expect(poly1.isOverlapping(with: poly2))
+    }
+
+    @Test
+    func isOverlappingNoSRID() {
+        let poly1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let poly2 = Polygon(unchecked: [[
+            Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
+            Coordinate3D(x: 1_500.0, y: 500.0, projection: .noSRID),
+            Coordinate3D(x: 1_500.0, y: 1_500.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 1_500.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
+        ]])
+        #expect(poly1.isOverlapping(with: poly2))
+    }
+
+    // MARK: - Point / MultiPoint projection tests
+
+    @Test
+    func isOverlappingPointEPSG3857() {
+        let a = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let b = Point(Coordinate3D(x: 0.0, y: 0.0))
+        // Identical points do not overlap per DE-9IM
+        #expect(!a.isOverlapping(with: b))
+    }
+
+    @Test
+    func isOverlappingPointEPSG4978() {
+        let a = Point(Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978))
+        let b = Point(Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978))
+        #expect(!a.isOverlapping(with: b))
+    }
+
+    @Test
+    func isOverlappingMultiPointEPSG3857() {
+        let mp = MultiPoint(unchecked: [Coordinate3D(x: 0.0, y: 0.0), Coordinate3D(x: 10.0, y: 10.0)])
+        let other = MultiPoint(unchecked: [Coordinate3D(x: 10.0, y: 10.0), Coordinate3D(x: 20.0, y: 20.0)])
+        #expect(mp.isOverlapping(with: other))
+    }
+
+    @Test
+    func isOverlappingMultiPointEPSG4978() {
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 10.0, y: 10.0, z: 0.0, projection: .epsg4978)])
+        let other = MultiPoint(unchecked: [
+            Coordinate3D(x: 10.0, y: 10.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 20.0, y: 20.0, z: 0.0, projection: .epsg4978)])
+        #expect(mp.isOverlapping(with: other))
+    }
+
+    // MARK: - LineString projection tests
+
+    @Test
+    func isOverlappingLineStringEPSG3857() {
+        let l1 = LineString(unchecked: [Coordinate3D(x: 0.0, y: 0.0), Coordinate3D(x: 20.0, y: 20.0)])
+        let l2 = LineString(unchecked: [Coordinate3D(x: 5.0, y: 5.0), Coordinate3D(x: 15.0, y: 15.0)])
+        #expect(l1.isOverlapping(with: l2))
+    }
+
+    @Test
+    func isOverlappingLineStringEPSG4978() {
+        let l1 = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 200.0, y: 200.0, z: 0.0, projection: .epsg4978)])
+        let l2 = LineString(unchecked: [
+            Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 150.0, y: 150.0, z: 0.0, projection: .epsg4978)])
+        #expect(l1.isOverlapping(with: l2))
+    }
+
+    @Test
+    func isOverlappingLineStringNoSRID() {
+        let l1 = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 20.0, projection: .noSRID)])
+        let l2 = LineString(unchecked: [
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 15.0, y: 15.0, projection: .noSRID)])
+        #expect(l1.isOverlapping(with: l2))
     }
 
     // MARK: - Antimeridian
@@ -114,6 +226,23 @@ struct BooleanOverlapTests {
             Coordinate3D(latitude: 5.0, longitude: -175.0),
         ]))
         #expect(line1.isOverlapping(with: line2))
+    }
+
+    // MARK: - Empty / degenerate
+
+    @Test
+    func emptyGeometriesDoNotOverlap() async throws {
+        let emptyPolygon = Polygon()
+        let nonEmptyPolygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        #expect(emptyPolygon.isOverlapping(with: nonEmptyPolygon) == false)
+        #expect(nonEmptyPolygon.isOverlapping(with: emptyPolygon) == false)
+        #expect(emptyPolygon.isOverlapping(with: emptyPolygon) == false)
     }
 
 }

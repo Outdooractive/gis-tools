@@ -147,7 +147,7 @@ struct TransformCoordinatesTests {
         #expect(featureCollectionTransformed == featureCollectionResult)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func transformCoordinates3857() async throws {
@@ -162,6 +162,41 @@ struct TransformCoordinatesTests {
                 projection: coordinate.projection)
         }
         #expect(result.coordinates.count == 2)
+    }
+
+    @Test
+    func transformCoordinates4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+        ]))
+        let result = lineString.transformedCoordinates { coordinate in
+            Coordinate3D(
+                x: coordinate.x + 1_000.0,
+                y: coordinate.y + 1_000.0,
+                z: coordinate.z,
+                projection: coordinate.projection)
+        }
+        #expect(result.coordinates.count == 2)
+        #expect(result.coordinates[0].projection == .epsg4978)
+    }
+
+    @Test
+    func transformCoordinatesNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let result = polygon.transformedCoordinates { coordinate in
+            Coordinate3D(
+                x: coordinate.x * 2.0,
+                y: coordinate.y * 2.0,
+                projection: coordinate.projection)
+        }
+        #expect(result.allCoordinates.count == 5)
     }
 
     // MARK: - Antimeridian

@@ -15,6 +15,10 @@ extension GeoJson {
     /// Supports ``LineString``, ``MultiLineString``, ``Polygon``,
     /// and ``MultiPolygon``.
     ///
+    /// All projections are supported — the 2‑D segment‑intersection check
+    /// operates on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// for EPSG:4978).
+    ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``MultiPoint`` with one point for each
     ///   self-intersection.

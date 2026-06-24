@@ -10,8 +10,13 @@ extension GeoJson {
     /// Returns a copy of the receiver with additional interpolated vertices
     /// added along line segments longer than the given interval.
     ///
+    /// When both endpoints of a segment have an ``altitude`` value, the
+    /// interpolated vertices carry a linearly interpolated altitude.
+    /// Otherwise the new vertices have no altitude.
+    ///
     /// - Parameter maxSegmentLength: The maximum allowed segment length in meters.
-    ///   For EPSG:4326, internally converted to degrees. For EPSG:3857/noSRID, used as-is.
+    ///   For EPSG:4326, internally converted to degrees.
+    ///   For EPSG:3857, EPSG:4978 and noSRID, used as-is.
     /// - Returns: A densified copy of the receiver.
     public func densified(maxSegmentLength: CLLocationDistance) -> Self {
         guard let geoJson = Densify.densify(geoJson: self, maxSegmentLength: maxSegmentLength) else {
@@ -29,9 +34,9 @@ private enum Densify {
     /// Converts meter tolerance to CRS units based on coordinate projection.
     static func crsTolerance(from meters: CLLocationDistance, projection: Projection) -> Double {
         switch projection {
-        case .epsg4326, .epsg4978:
+        case .epsg4326:
             return meters / 111_325.0
-        case .epsg3857, .noSRID:
+        case .epsg3857, .epsg4978, .noSRID:
             return meters
         }
     }

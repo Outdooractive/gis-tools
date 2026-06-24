@@ -158,6 +158,57 @@ struct RandomTests {
         for feature in points.features {
             let point = try #require(feature.geometry as? Point)
             #expect(point.isValid)
+            #expect(point.coordinate.projection == .epsg3857)
+        }
+    }
+
+    @Test
+    func random4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, z: 0.0, projection: .epsg4978))
+        let points = bbox.randomPoints(count: 5)
+        #expect(points.features.count == 5)
+        for feature in points.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.coordinate.projection == .epsg4978)
+        }
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func randomNoSRID() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID))
+        let points = bbox.randomPoints(count: 5)
+        #expect(points.features.count == 5)
+        for feature in points.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.coordinate.projection == .noSRID)
+        }
+    }
+
+    // MARK: - Static methods with projection
+
+    @Test
+    func randomStatic3857() async throws {
+        let points = BoundingBox.randomPoints(count: 3, projection: .epsg3857)
+        #expect(points.features.count == 3)
+        for feature in points.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.coordinate.projection == .epsg3857)
+        }
+    }
+
+    @Test
+    func randomStatic4978() async throws {
+        let points = BoundingBox.randomPoints(count: 3, projection: .epsg4978)
+        #expect(points.features.count == 3)
+        for feature in points.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.coordinate.projection == .epsg4978)
         }
     }
 

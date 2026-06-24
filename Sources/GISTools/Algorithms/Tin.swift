@@ -24,19 +24,23 @@ extension GeoJson {
         guard unique.count >= 3 else { return nil }
 
         let hasZ = coords.allSatisfy { $0.altitude != nil }
+        let projection = coords.first?.projection ?? .epsg4326
         let points = unique.map { Pt(x: $0.longitude, y: $0.latitude, z: hasZ ? $0.altitude : nil) }
         let triangles = Triangulator.triangulate(points)
 
         let features: [Feature] = triangles.map { triangle in
             let a = Coordinate3D(
-                latitude: triangle.a.y, longitude: triangle.a.x,
-                altitude: hasZ ? (triangle.a.z ?? 0.0) : nil)
+                x: triangle.a.x, y: triangle.a.y,
+                z: hasZ ? (triangle.a.z ?? 0.0) : nil,
+                projection: projection)
             let b = Coordinate3D(
-                latitude: triangle.b.y, longitude: triangle.b.x,
-                altitude: hasZ ? (triangle.b.z ?? 0.0) : nil)
+                x: triangle.b.x, y: triangle.b.y,
+                z: hasZ ? (triangle.b.z ?? 0.0) : nil,
+                projection: projection)
             let c = Coordinate3D(
-                latitude: triangle.c.y, longitude: triangle.c.x,
-                altitude: hasZ ? (triangle.c.z ?? 0.0) : nil)
+                x: triangle.c.x, y: triangle.c.y,
+                z: hasZ ? (triangle.c.z ?? 0.0) : nil,
+                projection: projection)
 
             let polygon = Polygon(unchecked: [[a, b, c, a]])
             return Feature(polygon)

@@ -145,6 +145,42 @@ struct KinksTests {
         #expect(bowtieResult.points.isNotEmpty)
     }
 
+    // Tests kink detection on simple and self-intersecting polygons in EPSG:4978.
+    @Test
+    func kinks4978() async {
+        let simple = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]])
+        let simpleResult = simple.kinks()
+        #expect(simpleResult.points.isEmpty)
+
+        let bowtie = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]])
+        let bowtieResult = bowtie.kinks()
+        #expect(bowtieResult.points.isNotEmpty) // self-intersection detected
+    }
+
+    @Test
+    func kinksNoSRID() async {
+        let simple = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        #expect(simple.kinks().points.isEmpty)
+    }
+
     // MARK: - Antimeridian
 
     @Test

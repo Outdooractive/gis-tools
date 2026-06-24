@@ -71,6 +71,28 @@ struct LineSplitTests {
         #expect(result.features.count == 2)
     }
 
+    @Test
+    func lineSplit4978() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let splitter = Point(Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978))
+        let result = line.lineSplit(with: splitter)
+        #expect(result.features.count == 2)
+    }
+
+    @Test
+    func lineSplitNoSRID() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ]))
+        let splitter = Point(Coordinate3D(x: 50.0, y: 0.0, projection: .noSRID))
+        let result = line.lineSplit(with: splitter)
+        #expect(result.features.count == 2)
+    }
+
     /// Grid-size snapping for noise reduction.
     @Test
     func withGridSize() {

@@ -66,4 +66,23 @@ struct DestinationTests {
         #expect(destination.longitude > 170.0 || destination.longitude < -170.0)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func destination4978() async throws {
+        let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let destination = coordinate.destination(distance: 100_000.0, bearing: 90.0)
+        #expect(destination.x.isFinite)
+        #expect(destination.y.isFinite)
+    }
+
+    // Tests that altitude and m values are preserved through destination computation.
+    @Test
+    func destinationPreservesAltitudeAndM() async throws {
+        let coordinate = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 1234.0)
+        let result = coordinate.destination(distance: 10_000.0, bearing: 90.0)
+        #expect(result.altitude == 500.0)
+        #expect(result.m == 1234.0)
+    }
+
 }

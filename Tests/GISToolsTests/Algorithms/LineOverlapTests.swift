@@ -160,6 +160,34 @@ struct LineOverlapTests {
         #expect(overlappingSegments.count == 1)
     }
 
+    @Test
+    func lineOverlap4978() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 200.0, y: 200.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 150.0, y: 150.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let overlappingSegments = line1.overlappingSegments(with: line2)
+        #expect(!overlappingSegments.isEmpty)
+    }
+
+    @Test
+    func lineOverlapNoSRID() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 20.0, projection: .noSRID),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 15.0, y: 15.0, projection: .noSRID),
+        ]))
+        let overlappingSegments = line1.overlappingSegments(with: line2)
+        #expect(!overlappingSegments.isEmpty)
+    }
+
     // MARK: - Antimeridian
 
     @Test

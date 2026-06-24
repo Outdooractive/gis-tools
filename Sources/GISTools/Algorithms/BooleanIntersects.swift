@@ -9,6 +9,8 @@ extension GeoJson {
 
     /// Compares two geometries and returns true if they intersect.
     ///
+    /// All projections are supported. Delegates to ``isDisjoint(with:)``.
+    ///
     /// - Parameter other: The other geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///

@@ -246,4 +246,17 @@ struct ValidatableTests {
         #expect(polygon.isValid)
     }
 
+    // Validates that a valid Polygon in EPSG:4978 is recognized as valid.
+    @Test
+    func validatable4978() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]]))
+        #expect(polygon.isValid)
+    }
+
 }

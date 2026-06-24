@@ -40,6 +40,21 @@ struct PolygonizeTests {
         #expect(result.features.count == 1)
     }
 
+    /// A closed LineString via the `polygonize()` shortcut.
+    @Test
+    func polygonizeShortcut() async throws {
+        let square = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ])
+        var fc = FeatureCollection([Feature(square)])
+        fc.polygonize()
+        #expect(fc.features.count == 1)
+    }
+
     /// A triangle formed by three connected LineStrings produces one Polygon.
     @Test
     func triangle() async throws {
@@ -111,6 +126,40 @@ struct PolygonizeTests {
         #expect(result.features.count == 1)
         let polygon = try #require(result.features[0].geometry as? Polygon)
         #expect(polygon.area > 0.0)
+        #expect(polygon.projection == .epsg3857)
+    }
+
+    /// A closed LineString in EPSG:4978 forms one polygon.
+    @Test
+    func polygonize4978() async throws {
+        let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c10 = Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978)
+        let c11 = Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978)
+        let c01 = Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)
+        let square = LineString(unchecked: [c00, c10, c11, c01, c00])
+        let multiLine = try #require(MultiLineString([square]))
+        let result = multiLine.polygonized()
+
+        #expect(result.features.count == 1)
+        let polygon = try #require(result.features[0].geometry as? Polygon)
+        #expect(polygon.projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func polygonizeNoSRID() async throws {
+        let square = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ])
+        let result = square.polygonized()
+        #expect(result.features.count == 1)
+        let polygon = try #require(result.features[0].geometry as? Polygon)
+        #expect(polygon.projection == .noSRID)
     }
 
     /// A square crossing the antimeridian formed by four connected LineStrings.

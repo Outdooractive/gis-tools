@@ -1,11 +1,12 @@
-import Foundation
-
 // MARK: - unaryUnion
 
 extension MultiPolygon {
 
     /// Returns the union of all constituent polygons, dissolving overlaps
     /// into the minimal set of non-overlapping parts.
+    ///
+    /// All projections are supported. The internal union operates in
+    /// EPSG:3857 for uniform Cartesian tolerances and projects the result back.
     ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``MultiPolygon`` with no overlapping regions, or `nil` if the result is empty.
@@ -34,6 +35,9 @@ extension MultiPolygon {
     ///
     /// This is useful for merging map sheets, raster tiles, or other
     /// geographic partitions where each point belongs to exactly one tile.
+    ///
+    /// All projections are supported. The internal union operates in
+    /// EPSG:3857 for uniform Cartesian tolerances and projects the result back.
     ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``MultiPolygon`` with shared edges dissolved, or `nil` if the result is empty.

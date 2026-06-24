@@ -1,11 +1,12 @@
-import Foundation
-
 extension Polygon {
 
     /// Returns the symmetric difference (geometric XOR) of the receiver with another
     /// polygon geometry.
     ///
     /// The result is the parts of each polygon that do not overlap — i.e. (A ∪ B) − (A ∩ B).
+    ///
+    /// All projections are supported. The internal overlay operates in EPSG:3857
+    /// for uniform Cartesian tolerances and projects the result back.
     ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
@@ -31,6 +32,9 @@ extension MultiPolygon {
 
     /// Returns the symmetric difference (geometric XOR) of the receiver with another
     /// polygon geometry.
+    ///
+    /// All projections are supported. The internal overlay operates in EPSG:3857
+    /// for uniform Cartesian tolerances and projects the result back.
     ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).

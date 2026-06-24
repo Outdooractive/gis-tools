@@ -56,6 +56,11 @@ extension LineSegment {
 
     /// Checks if two line segments intersect.
     ///
+    /// All projections are supported — the 2‑D orientation-based check
+    /// operates on raw ``longitude``/``latitude`` values.
+    /// For ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
+    /// altitude/Z is ignored.
+    ///
     /// - Parameters:
     /// - Parameter other: The other *LineSegment*
     /// - Parameter epsilon: Tolerance for collinearity and on-segment checks
@@ -113,6 +118,9 @@ extension LineSegment {
     /// Returns `nil` when the segments are parallel or collinear (overlapping
     /// collinear segments produce a line segment, not a single point).
     ///
+    /// When both endpoints of the receiver's segment have an ``altitude`` value,
+    /// the result's altitude is linearly interpolated at the intersection point.
+    ///
     /// - Parameters:
     /// - Parameter other: The other *LineSegment*
     /// - Parameter epsilon: Tolerance for endpoint parameter checks
@@ -148,8 +156,14 @@ extension LineSegment {
             {
                 let longitude = snappedSelf.first.longitude + (uA * (snappedSelf.second.longitude - snappedSelf.first.longitude))
                 let latitude = snappedSelf.first.latitude + (uA * (snappedSelf.second.latitude - snappedSelf.first.latitude))
-
-                return Coordinate3D(x: longitude, y: latitude, projection: snappedSelf.projection)
+                let altitude: CLLocationDistance?
+                if let za = snappedSelf.first.altitude, let zb = snappedSelf.second.altitude {
+                    altitude = za + uA * (zb - za)
+                }
+                else {
+                    altitude = nil
+                }
+                return Coordinate3D(x: longitude, y: latitude, z: altitude, projection: snappedSelf.projection)
             }
             return nil
         }
@@ -164,6 +178,11 @@ extension GeoJson {
     /// Returns the intersecting point(s) with the receiver.
     ///
     /// - note: Takes all polygon rings into account, not just the outer ring.
+    ///
+    /// All projections are supported — the 2‑D segment‑intersection check
+    /// operates on raw ``longitude``/``latitude`` values.
+    /// For ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
+    /// altitude/Z is ignored.
     ///
     /// - Parameters:
     /// - Parameter other: The other geometry

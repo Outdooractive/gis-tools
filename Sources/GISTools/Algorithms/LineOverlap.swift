@@ -72,6 +72,10 @@ extension GeoJson {
 
     /// Returns the overlapping segments between the receiver and the other geometry.
     ///
+    /// All projections are supported — the 2‑D segment comparison
+    /// operates on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// for EPSG:4978).
+    ///
     /// - Parameters:
     /// - Parameter other: The other geometry
     /// - Parameter tolerance: The tolerance, in meters
@@ -118,6 +122,9 @@ extension GeoJson {
     /// Returns the overlapping segments with the receiver itself.
     ///
     /// This implementation has been optimized for finding self-overlaps.
+    ///
+    /// All projections are supported — the coordinate comparison uses
+    /// ``Coordinate3D/distance(to:)`` which handles all CRS.
     ///
     /// - Note: Altitude values will be ignored.
     ///
@@ -231,6 +238,8 @@ extension GeoJson {
     }
 
     /// An estimate of how much the receiver overlaps with itself.
+    ///
+    /// All projections are supported — delegates to ``overlappingSegments(tolerance:segmentLength:gridSize:)``.
     ///
     /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
     /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.

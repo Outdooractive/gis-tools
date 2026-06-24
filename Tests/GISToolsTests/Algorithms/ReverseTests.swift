@@ -111,7 +111,7 @@ struct ReverseTests {
         #expect(reversed.geometries[1].allCoordinates.map(\.latitude) == [20.0])
         #expect(reversed.geometries[2].allCoordinates.map(\.latitude) == [1.0, 0.0])
     }
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func reverse3857() async throws {
@@ -122,6 +122,29 @@ struct ReverseTests {
         ]))
         let reversed = lineString.reversed
         #expect(reversed.coordinates.count == 3)
+    }
+
+    @Test
+    func reverse4978() async throws {
+        let c0 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c1 = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let c2 = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let lineString = try #require(LineString([c0, c1, c2]))
+        let reversed = lineString.reversed
+        #expect(reversed.coordinates.count == 3)
+    }
+
+    @Test
+    func reverseNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+        ]))
+        let reversed = lineString.reversed
+        #expect(reversed.coordinates.count == 3)
+        #expect(reversed.coordinates.first == Coordinate3D(
+            x: 100.0, y: 100.0, projection: .noSRID))
     }
 
 }

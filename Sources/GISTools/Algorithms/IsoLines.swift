@@ -10,6 +10,10 @@ extension FeatureCollection {
     /// regular rectangular grid, each point having an altitude (z) value. The result
     /// is a ``FeatureCollection`` of ``MultiLineString`` features, one per break value.
     ///
+    /// All projections are supported — the marching‑squares algorithm operates on
+    /// raw ``longitude``/``latitude`` values (ECEF X/Y for EPSG:4978). The result
+    /// uses the same projection as the input.
+    ///
     /// - Parameter breaks: The contour values to generate (e.g. `[0, 100, 200]`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``FeatureCollection`` of ``MultiLineString`` features, or an empty
@@ -36,7 +40,7 @@ extension FeatureCollection {
 
         var result: [Feature] = []
         for breakValue in breaks.sorted() {
-            if let multiLine = IsoLines.traceIsoline(grid: grid, breakValue: breakValue) {
+            if let multiLine = IsoLines.traceIsoline(grid: grid, breakValue: breakValue, projection: projection) {
                 var feature = Feature(multiLine)
                 feature.properties["break"] = breakValue
                 result.append(feature)
@@ -97,7 +101,7 @@ private enum IsoLines {
             lats: gridLats)
     }
 
-    static func traceIsoline(grid: Grid, breakValue: Double) -> MultiLineString? {
+    static func traceIsoline(grid: Grid, breakValue: Double, projection: Projection) -> MultiLineString? {
         let nrows = grid.nrows - 1
         let ncols = grid.ncols - 1
         guard nrows >= 1, ncols >= 1 else { return nil }
@@ -129,10 +133,10 @@ private enum IsoLines {
 
         for j in 0..<nrows {
             for i in 0..<ncols {
-                let bl = grid.data[j][i] >= breakValue ? 1 : 0       // bottom-left
-                let br = grid.data[j][i + 1] >= breakValue ? 1 : 0    // bottom-right
-                let tr = grid.data[j + 1][i + 1] >= breakValue ? 1 : 0 // top-right
-                let tl = grid.data[j + 1][i] >= breakValue ? 1 : 0    // top-left
+                let bl = grid.data[j][i] >= breakValue ? 1 : 0
+                let br = grid.data[j][i + 1] >= breakValue ? 1 : 0
+                let tr = grid.data[j + 1][i + 1] >= breakValue ? 1 : 0
+                let tl = grid.data[j + 1][i] >= breakValue ? 1 : 0
 
                 let code = bl | (br << 1) | (tr << 2) | (tl << 3)
 
@@ -142,13 +146,15 @@ private enum IsoLines {
                         row: j,
                         col: i,
                         edge: edgePair.0,
-                        breakValue: breakValue)
+                        breakValue: breakValue,
+                        projection: projection)
                     let p2 = edgeIntersection(
                         grid: grid,
                         row: j,
                         col: i,
                         edge: edgePair.1,
-                        breakValue: breakValue)
+                        breakValue: breakValue,
+                        projection: projection)
                     if let p1, let p2 {
                         segments.append((p1, p2))
                     }
@@ -173,7 +179,8 @@ private enum IsoLines {
         row: Int,
         col: Int,
         edge: Int,
-        breakValue: Double
+        breakValue: Double,
+        projection: Projection
     ) -> Coordinate3D? {
         let i = col
         let j = row
@@ -184,56 +191,64 @@ private enum IsoLines {
             let z2 = grid.data[j][i + 1]
             guard z1 != z2 else {
                 return Coordinate3D(
-                    latitude: grid.lats[j][i],
-                    longitude: (grid.lons[j][i] + grid.lons[j][i + 1]) / 2.0)
+                    x: (grid.lons[j][i] + grid.lons[j][i + 1]) / 2.0,
+                    y: grid.lats[j][i],
+                    projection: projection)
             }
             let t = (breakValue - z1) / (z2 - z1)
-            let lon = grid.lons[j][i] + t * (grid.lons[j][i + 1] - grid.lons[j][i])
+            let x = grid.lons[j][i] + t * (grid.lons[j][i + 1] - grid.lons[j][i])
             return Coordinate3D(
-                latitude: grid.lats[j][i],
-                longitude: lon)
+                x: x,
+                y: grid.lats[j][i],
+                projection: projection)
 
         case 1: // right (bottom to top)
             let z1 = grid.data[j][i + 1]
             let z2 = grid.data[j + 1][i + 1]
             guard z1 != z2 else {
                 return Coordinate3D(
-                    latitude: (grid.lats[j][i + 1] + grid.lats[j + 1][i + 1]) / 2.0,
-                    longitude: grid.lons[j][i + 1])
+                    x: grid.lons[j][i + 1],
+                    y: (grid.lats[j][i + 1] + grid.lats[j + 1][i + 1]) / 2.0,
+                    projection: projection)
             }
             let t = (breakValue - z1) / (z2 - z1)
-            let lat = grid.lats[j][i + 1] + t * (grid.lats[j + 1][i + 1] - grid.lats[j][i + 1])
+            let y = grid.lats[j][i + 1] + t * (grid.lats[j + 1][i + 1] - grid.lats[j][i + 1])
             return Coordinate3D(
-                latitude: lat,
-                longitude: grid.lons[j][i + 1])
+                x: grid.lons[j][i + 1],
+                y: y,
+                projection: projection)
 
         case 2: // top (right to left)
             let z1 = grid.data[j + 1][i + 1]
             let z2 = grid.data[j + 1][i]
             guard z1 != z2 else {
                 return Coordinate3D(
-                    latitude: grid.lats[j + 1][i],
-                    longitude: (grid.lons[j + 1][i] + grid.lons[j + 1][i + 1]) / 2.0)
+                    x: (grid.lons[j + 1][i] + grid.lons[j + 1][i + 1]) / 2.0,
+                    y: grid.lats[j + 1][i],
+                    projection: projection)
             }
             let t = (breakValue - z1) / (z2 - z1)
-            let lon = grid.lons[j + 1][i + 1] + t * (grid.lons[j + 1][i] - grid.lons[j + 1][i + 1])
+            let x = grid.lons[j + 1][i + 1] + t * (grid.lons[j + 1][i] - grid.lons[j + 1][i + 1])
             return Coordinate3D(
-                latitude: grid.lats[j + 1][i],
-                longitude: lon)
+                x: x,
+                y: grid.lats[j + 1][i],
+                projection: projection)
 
         case 3: // left (top to bottom)
             let z1 = grid.data[j + 1][i]
             let z2 = grid.data[j][i]
             guard z1 != z2 else {
                 return Coordinate3D(
-                    latitude: (grid.lats[j][i] + grid.lats[j + 1][i]) / 2.0,
-                    longitude: grid.lons[j][i])
+                    x: grid.lons[j][i],
+                    y: (grid.lats[j][i] + grid.lats[j + 1][i]) / 2.0,
+                    projection: projection)
             }
             let t = (breakValue - z1) / (z2 - z1)
-            let lat = grid.lats[j + 1][i] + t * (grid.lats[j][i] - grid.lats[j + 1][i])
+            let y = grid.lats[j + 1][i] + t * (grid.lats[j][i] - grid.lats[j + 1][i])
             return Coordinate3D(
-                latitude: lat,
-                longitude: grid.lons[j][i])
+                x: grid.lons[j][i],
+                y: y,
+                projection: projection)
 
         default:
             return nil

@@ -7,10 +7,16 @@ extension Polygon {
 
     /// Returns the union of the receiver with another polygon geometry.
     ///
+    /// All projections are supported. The internal union operates in
+    /// EPSG:3857 for uniform Cartesian tolerances and projects the result back.
+    ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
-    public func union(with other: PolygonGeometry, gridSize: Double? = nil) -> MultiPolygon? {
+    public func union(
+        with other: PolygonGeometry,
+        gridSize: Double? = nil
+    ) -> MultiPolygon? {
         let all: [Polygon]
         if let gridSize {
             all = [self.snappedToGrid(tolerance: gridSize)]
@@ -27,10 +33,16 @@ extension MultiPolygon {
 
     /// Returns the union of the receiver with another polygon geometry.
     ///
+    /// All projections are supported. The internal union operates in
+    /// EPSG:3857 for uniform Cartesian tolerances and projects the result back.
+    ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `MultiPolygon` representing the union, or `nil` if the union is empty.
-    public func union(with other: PolygonGeometry, gridSize: Double? = nil) -> MultiPolygon? {
+    public func union(
+        with other: PolygonGeometry,
+        gridSize: Double? = nil
+    ) -> MultiPolygon? {
         let all: [Polygon]
         if let gridSize {
             all = self.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
@@ -43,7 +55,10 @@ extension MultiPolygon {
 
     /// Forms the union of the receiver with another polygon geometry in place.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
-    public mutating func formUnion(with other: PolygonGeometry, gridSize: Double? = nil) {
+    public mutating func formUnion(
+        with other: PolygonGeometry,
+        gridSize: Double? = nil
+    ) {
         guard let merged = union(with: other, gridSize: gridSize) else { return }
         self = merged
     }

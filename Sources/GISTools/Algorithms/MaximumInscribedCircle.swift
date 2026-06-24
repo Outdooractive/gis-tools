@@ -28,8 +28,9 @@ extension Polygon {
               let center = poleOfInaccessibility(precision: precision, gridSize: gridSize)
         else { return nil }
 
-        guard var circle = center.coordinate.circle(radius: radius, steps: max(3, steps))
-        else { return nil }
+        guard var circle = center.coordinate.circle(radius: radius, steps: max(3, steps)) else {
+            return nil
+        }
 
         // Ensure the result has the same projection as the input
         if circle.projection != projection {

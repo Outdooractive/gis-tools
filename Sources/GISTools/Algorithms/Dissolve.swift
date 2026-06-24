@@ -15,6 +15,9 @@ extension FeatureCollection {
     /// The property value can be any standard JSON type (`String`, `Int`, `Double`,
     /// `Bool`, etc.) or any `Hashable & Sendable` type.
     ///
+    /// All projections are supported. Non-3857 geometries are projected to EPSG:3857
+    /// for the union and projected back to the original CRS.
+    ///
     /// - Parameter property: The property name by which features should be grouped
     /// - Parameter removeUnknown: Whether to remove features without the property from the result
     ///

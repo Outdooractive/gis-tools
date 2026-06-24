@@ -24,9 +24,9 @@ extension Polygon {
         // Convert meter precision to CRS units
         let crsPrecision: Double = {
             switch projection {
-            case .epsg4326, .epsg4978:
+            case .epsg4326:
                 return precision / 111_325.0
-            case .epsg3857, .noSRID:
+            case .epsg3857, .epsg4978, .noSRID:
                 return precision
             }
         }()
@@ -84,7 +84,7 @@ extension Polygon {
         let cellSize = max(crsPrecision, min(width, height))
 
         if cellSize == crsPrecision {
-            return Point(Coordinate3D(latitude: minY, longitude: minX))
+            return Point(Coordinate3D(x: minX, y: minY, projection: projection))
         }
 
         var queue: [PQCell] = []
@@ -154,7 +154,7 @@ extension Polygon {
             }
         }
 
-        return Point(Coordinate3D(latitude: bestCell.y, longitude: bestCell.x))
+        return Point(Coordinate3D(x: bestCell.x, y: bestCell.y, projection: projection))
     }
 
     // MARK: - Private

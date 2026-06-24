@@ -39,6 +39,7 @@ struct TesselateTests {
         for feature in result.features {
             let tri = feature.geometry as! Polygon
             #expect(tri.coordinates[0].count == 4)
+            #expect(tri.projection == .epsg4326)
         }
     }
 
@@ -194,6 +195,48 @@ struct TesselateTests {
         for feature in result.features {
             let tri = feature.geometry as! Polygon
             #expect(tri.coordinates[0].count == 4)
+            #expect(tri.projection == .epsg3857)
+        }
+    }
+
+    // Validates that a square in noSRID tessellates into 2 triangles.
+    @Test
+    func tesselateNoSRID() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+
+        let result = polygon.tesselated()
+        #expect(result.features.count == 2)
+
+        for feature in result.features {
+            let tri = feature.geometry as! Polygon
+            #expect(tri.coordinates[0].count == 4)
+            #expect(tri.projection == .noSRID)
+        }
+    }
+
+    // Validates that a square in EPSG:4978 tessellates into 2 triangles.
+    @Test
+    func tesselate4978() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+        ]])
+
+        let result = polygon.tesselated()
+        #expect(result.features.count == 2)
+
+        for feature in result.features {
+            let tri = try #require(feature.geometry as? Polygon)
+            #expect(tri.projection == .epsg4978)
         }
     }
 

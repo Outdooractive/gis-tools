@@ -114,4 +114,15 @@ struct RhumbDistanceTests {
         #expect(abs(a.rhumbDistance(from: b) - b.rhumbDistance(from: a)) < 0.000000000001)
     }
 
+    // Validates rhumb distance in EPSG:4978.
+    @Test
+    func distance4978() async throws {
+        let coord1 = Coordinate3D(latitude: 40.0, longitude: -75.0).projected(to: .epsg4978)
+        let coord2 = Coordinate3D(latitude: 39.0, longitude: -74.0).projected(to: .epsg4978)
+
+        let distance = coord1.rhumbDistance(from: coord2)
+        #expect(distance > 0.0)
+        #expect(distance.isFinite)
+    }
+
 }

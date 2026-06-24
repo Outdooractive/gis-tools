@@ -117,6 +117,34 @@ struct ConvexHullTests {
         #expect(hull.area > 0.0)
     }
 
+    // Validates the convex hull of points in EPSG:4978 (XY plane).
+    @Test
+    func convexHull4978() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1000.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 1000.0, z: 0.0, projection: .epsg4978),
+        ]))
+
+        let hull = try #require(mp.convexHull())
+        #expect(hull.outerRing?.coordinates.count == 5)
+    }
+
+    // Validates the convex hull of points in noSRID.
+    @Test
+    func convexHullNoSRID() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+        ]))
+
+        let hull = try #require(mp.convexHull())
+        #expect(hull.outerRing?.coordinates.count == 5)
+    }
+
     // Validates the convex hull computed from a Feature wrapping a MultiPoint produces the expected result.
     @Test
     func convexHullFeature() async throws {

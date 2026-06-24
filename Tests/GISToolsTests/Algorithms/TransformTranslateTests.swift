@@ -159,9 +159,34 @@ struct TransformTranslateTests {
         ]))
         let result = line.translated(distance: 500.0, direction: 90.0)
         #expect(result.allCoordinates.count == 2)
+        #expect(result.projection == .epsg3857)
     }
 
-    // MARK: - Antimeridian
+    // MARK: - EPSG:4978
+
+    @Test
+    func transformTranslate4978() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978),
+        ]))
+        let result = line.translated(distance: 500.0, direction: 90.0)
+        #expect(result.allCoordinates.count == 2)
+        #expect(result.projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func transformTranslateNoSRID() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ]))
+        let result = line.translated(distance: 500.0, direction: 90.0)
+        #expect(result.allCoordinates.count == 2)
+        #expect(result.projection == .noSRID)
+    }
 
     @Test
     func antimeridian() async throws {

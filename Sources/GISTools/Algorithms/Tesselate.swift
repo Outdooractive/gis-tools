@@ -11,9 +11,12 @@ extension Polygon {
     /// representing a single triangle. Polygons with holes are handled by
     /// bridging each hole to the outer ring before triangulation.
     ///
+    /// All projections are supported. The ear-clipping algorithm uses
+    /// Cartesian math on native XY values.
+    ///
     /// - Returns: A ``FeatureCollection`` of triangle polygons.
     public func tesselated() -> FeatureCollection {
-        Tesselate.tesselate(polygon: self)
+        return Tesselate.tesselate(polygon: self)
     }
 
 }

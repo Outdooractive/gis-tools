@@ -10,6 +10,10 @@ extension BoundingBox {
     /// Creates a grid of hexagonal (or triangular) polygons within the bounding box.
     /// Hexagons are flat-topped and aligned in an "odd-q" vertical grid.
     ///
+    /// EPSG:4978 (ECEF) coordinates are in meters like EPSG:3857 and are handled
+    /// in the same way (meter-space grid). ``Projection/noSRID`` is not supported
+    /// because the coordinate units are unknown.
+    ///
     /// - Parameter cellSide: Length of the side of each hexagon in meters.
     /// - Parameter triangles: If `true`, returns triangles instead of hexagons (default `false`).
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
@@ -41,7 +45,7 @@ private enum HexGrid {
     ) -> FeatureCollection {
         let projection = bbox.projection
         guard projection != .noSRID else { return FeatureCollection() }
-        let coordinatesAreInMeters = projection == .epsg3857
+        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude

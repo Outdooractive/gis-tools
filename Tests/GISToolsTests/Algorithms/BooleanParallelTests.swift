@@ -212,4 +212,40 @@ struct BooleanParallelTests {
         #expect(!lineString3.isParallel(to: lineString4))
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func parallelEPSG3857() {
+        let a = Coordinate3D(x: 0.0, y: 0.0)
+        let b = Coordinate3D(x: 0.0, y: 10.0)
+        let c = Coordinate3D(x: 5.0, y: 0.0)
+        let d = Coordinate3D(x: 5.0, y: 10.0)
+        let s1 = LineSegment(first: a, second: b)
+        let s2 = LineSegment(first: c, second: d)
+        #expect(s1.isParallel(to: s2))
+    }
+
+    @Test
+    func parallelEPSG4978() async throws {
+        // Two north–south segments 0.01° apart at the equator in 4978 (ECEF).
+        let s1 = LineSegment(
+            first: Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            second: Coordinate3D(latitude: 0.01, longitude: 0.0).projected(to: .epsg4978))
+        let s2 = LineSegment(
+            first: Coordinate3D(latitude: 0.0, longitude: 0.01).projected(to: .epsg4978),
+            second: Coordinate3D(latitude: 0.01, longitude: 0.01).projected(to: .epsg4978))
+        #expect(s1.isParallel(to: s2, tolerance: 0.01))
+    }
+
+    @Test
+    func parallelNoSRID() {
+        let a = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let b = Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID)
+        let c = Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID)
+        let d = Coordinate3D(x: 5.0, y: 10.0, projection: .noSRID)
+        let s1 = LineSegment(first: a, second: b)
+        let s2 = LineSegment(first: c, second: d)
+        #expect(s1.isParallel(to: s2))
+    }
+
 }

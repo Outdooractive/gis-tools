@@ -76,4 +76,17 @@ struct FlattenTests {
         #expect(flattened.features.count == 2)
     }
 
+    // Validates flattening a GeometryCollection in noSRID produces a FeatureCollection.
+    @Test
+    func flattenNoSRID() async throws {
+        let a = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let b = Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .noSRID)
+        let line = LineString(unchecked: [a, b])
+        let point = Point(Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .noSRID))
+        let collection = GeometryCollection([line, point])
+
+        let flattened = try #require(collection.flattened)
+        #expect(flattened.features.count == 2)
+    }
+
 }

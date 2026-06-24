@@ -250,6 +250,26 @@ struct TileCoverTests {
         #expect(!tiles.isEmpty)
     }
 
+    @Test
+    func tileCoverNoSRID() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID))
+        let tiles = bbox.tileCover(atZoom: 2)
+        #expect(tiles.isEmpty)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func tileCover4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0).projected(to: .epsg4978))
+        let tiles = bbox.tileCover(atZoom: 2)
+        #expect(!tiles.isEmpty)
+    }
+
     // MARK: - Anti-meridian
 
     @Test

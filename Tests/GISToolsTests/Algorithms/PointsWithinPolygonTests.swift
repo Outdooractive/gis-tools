@@ -131,6 +131,42 @@ struct PointsWithinPolygonTests {
         #expect(result.count == 1)
     }
 
+    @Test
+    func pointsWithinPolygon4978() async throws {
+        let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c10 = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let c11 = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let c01 = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
+        let polygon = try #require(Polygon([[c00, c10, c11, c01, c00]]))
+        let candidates = [
+            Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978),
+            Coordinate3D(latitude: 2.0, longitude: 2.0).projected(to: .epsg4978),
+        ]
+        let result = polygon.coordinatesWithin(candidates)
+        #expect(result.count == 1)
+        #expect(result[0].projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func pointsWithinPolygonNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let candidates = [
+            Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID),
+            Coordinate3D(x: 200.0, y: 200.0, projection: .noSRID),
+        ]
+        let result = polygon.coordinatesWithin(candidates)
+        #expect(result.count == 1)
+        #expect(result[0].projection == .noSRID)
+    }
+
     // MARK: - Antimeridian
 
     @Test

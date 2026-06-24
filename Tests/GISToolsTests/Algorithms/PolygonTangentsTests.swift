@@ -149,6 +149,43 @@ struct PolygonTangentsTests {
         let point = Coordinate3D(x: 100_000.0, y: 25_000.0)
         let tangentPoints = try #require(polygon.tangentPoints(to: point))
         #expect(tangentPoints.coordinates.count == 2)
+        #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .epsg3857 }))
+    }
+
+    @Test
+    func polygonTangents4978() async throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+                Coordinate3D(x: 50_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+                Coordinate3D(x: 50_000.0, y: 50_000.0, z: 0.0, projection: .epsg4978),
+                Coordinate3D(x: 0.0, y: 50_000.0, z: 0.0, projection: .epsg4978),
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            ],
+        ]))
+        let point = Coordinate3D(x: 100_000.0, y: 25_000.0, z: 0.0, projection: .epsg4978)
+        let tangentPoints = try #require(polygon.tangentPoints(to: point))
+        #expect(tangentPoints.coordinates.count == 2)
+        #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .epsg4978 }))
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func polygonTangentsNoSRID() async throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 50.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 50.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ],
+        ]))
+        let point = Coordinate3D(x: 100.0, y: 25.0, projection: .noSRID)
+        let tangentPoints = try #require(polygon.tangentPoints(to: point))
+        #expect(tangentPoints.coordinates.count == 2)
+        #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .noSRID }))
     }
 
     /// Tests a polygon entirely east of the date line (near Guam) with the

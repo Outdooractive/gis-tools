@@ -21,12 +21,30 @@ struct LineArcTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func lineArc3857() async throws {
         let point = Point(Coordinate3D(x: 5_000_000.0, y: 5_000_000.0))
         let lineArc = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
+        #expect(lineArc.coordinates.count > 2)
+    }
+
+    @Test
+    func lineArc4978() async throws {
+        let point = Point(Coordinate3D(
+            latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
+        let lineArc = try #require(point.lineArc(
+            radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
+        #expect(lineArc.coordinates.count > 2)
+    }
+
+    @Test
+    func lineArcNoSRID() async throws {
+        let point = Point(Coordinate3D(
+            x: 100.0, y: 100.0, projection: .noSRID))
+        let lineArc = try #require(point.lineArc(
+            radius: 100.0, bearing1: 20.0, bearing2: 60.0))
         #expect(lineArc.coordinates.count > 2)
     }
 

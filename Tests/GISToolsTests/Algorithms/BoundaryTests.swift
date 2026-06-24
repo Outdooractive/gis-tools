@@ -222,6 +222,19 @@ struct BoundaryTests {
         #expect(boundary.isClosed)
     }
 
+    @Test
+    func boundary4978() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]]))
+        let boundary = try #require(polygon.boundary)
+        #expect(boundary.isClosed)
+    }
+
     // MARK: - Antimeridian
 
     /// A LineString crossing the antimeridian: boundary is still its two endpoints.

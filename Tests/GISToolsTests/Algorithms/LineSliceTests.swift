@@ -26,7 +26,7 @@ struct LineSliceTests {
         #expect(slice == result)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func lineSlice3857() async throws {
@@ -36,6 +36,30 @@ struct LineSliceTests {
         ]))
         let start = Coordinate3D(x: 250_000.0, y: 250_000.0)
         let end = Coordinate3D(x: 750_000.0, y: 750_000.0)
+        let slice = lineString.slice(start: start, end: end)
+        #expect(slice != nil)
+    }
+
+    @Test
+    func lineSlice4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+        ]))
+        let start = Coordinate3D(latitude: 0.25, longitude: 0.25).projected(to: .epsg4978)
+        let end = Coordinate3D(latitude: 0.75, longitude: 0.75).projected(to: .epsg4978)
+        let slice = lineString.slice(start: start, end: end)
+        #expect(slice != nil)
+    }
+
+    @Test
+    func lineSliceNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+        ]))
+        let start = Coordinate3D(x: 25.0, y: 25.0, projection: .noSRID)
+        let end = Coordinate3D(x: 75.0, y: 75.0, projection: .noSRID)
         let slice = lineString.slice(start: start, end: end)
         #expect(slice != nil)
     }
@@ -74,6 +98,24 @@ struct LineSliceTests {
         let stop = Coordinate3D(latitude: 8.0, longitude: 177.0)
         let slice = lineString.slice(start: start, end: stop)
         #expect(slice != nil)
+    }
+
+    @Test
+    func slicePreservesAltitude() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 500.0),
+        ]))
+        let start = Coordinate3D(latitude: 2.0, longitude: 2.0)
+        let end = Coordinate3D(latitude: 8.0, longitude: 8.0)
+        let slice = try #require(lineString.slice(start: start, end: end))
+        #expect(slice.coordinates.allSatisfy({ $0.altitude != nil }))
+        // Start altitude ≈ 100 + 0.2 * (500-100) = 180
+        // End altitude   ≈ 100 + 0.8 * (500-100) = 420
+        let startAlt = try #require(slice.coordinates.first?.altitude)
+        let endAlt = try #require(slice.coordinates.last?.altitude)
+        #expect(abs(startAlt - 180.0) < 5.0)
+        #expect(abs(endAlt - 420.0) < 5.0)
     }
 
 }

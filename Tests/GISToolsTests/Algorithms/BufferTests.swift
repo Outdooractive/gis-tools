@@ -627,6 +627,32 @@ struct BufferTests {
         #expect(result.polygons[0].isValid)
     }
 
+    // Verifies buffer around a polygon in noSRID produces a valid result.
+    @Test
+    func bufferedNoSRID() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let result = try #require(polygon.buffered(by: 1.0))
+        #expect(result.polygons.count >= 1)
+        for poly in result.polygons {
+            #expect(poly.isValid)
+        }
+    }
+
+    // Validates buffer around a point in EPSG:4978 (ECEF).
+    @Test
+    func bufferedPoint4978() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
+        let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
+        #expect(result.polygons.count >= 1)
+        #expect(result.polygons[0].isValid)
+    }
+
     // Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
     @Test
     func insetDonutAcrossAntimeridian() async throws {

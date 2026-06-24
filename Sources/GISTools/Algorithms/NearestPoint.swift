@@ -59,7 +59,7 @@ extension GeoJson {
         let otherProjected = other.projected(to: geoJson.projection)
 
         let allCoordinates = geoJson.allCoordinates
-        guard !allCoordinates.isEmpty else { return nil }
+        guard allCoordinates.isNotEmpty else { return nil }
 
         var bestCoordinate: Coordinate3D = allCoordinates[0]
         var bestDistance: CLLocationDistance = bestCoordinate.distance(from: otherProjected)

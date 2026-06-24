@@ -31,12 +31,22 @@ struct SnapToGridTests {
 
         #expect(snapped.coordinate.x == 2000.0)
         #expect(snapped.coordinate.y == 3000.0)
+        #expect(snapped.coordinate.projection == .epsg3857)
+    }
+
+    @Test
+    func pointEPSG4978() async throws {
+        let point = Point(Coordinate3D(
+            latitude: 0.0135, longitude: 0.0243).projected(to: .epsg4978))
+        let snapped = point.snappedToGrid(tolerance: 0.009)
+        #expect(snapped.coordinate.projection == .epsg4978)
     }
 
     @Test
     func pointNoSRID() async throws {
         let point = Point(Coordinate3D(x: 7.7, y: 3.3, projection: .noSRID))
         let snapped = point.snappedToGrid(tolerance: 5.0)
+        #expect(snapped.coordinate.projection == .noSRID)
 
         #expect(snapped.coordinate.x == 10.0)
         #expect(snapped.coordinate.y == 5.0)

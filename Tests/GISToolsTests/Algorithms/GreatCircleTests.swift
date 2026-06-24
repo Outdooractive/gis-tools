@@ -106,9 +106,32 @@ struct GreatCircleTests {
     @Test
     func greatCircle3857() async throws {
         let start = Coordinate3D(x: 0.0, y: 0.0)
-        let end = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let end = Coordinate3D(x: 111_319.5, y: 111_319.5)
         let result = start.greatCircle(to: end)
         #expect(result is LineString)
+        // Result is in EPSG:4326 (great circle is inherently geographic).
+        if let line = result as? LineString {
+            #expect(line.coordinates[0].projection == .epsg4326)
+        }
+    }
+
+    @Test
+    func greatCircle4978() async throws {
+        let start = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let end = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+    }
+
+    @Test
+    func greatCircleNoSRID() async throws {
+        let start = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let end = Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+        if let line = result as? LineString {
+            #expect(line.projection == .epsg4326)
+        }
     }
 
 }

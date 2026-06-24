@@ -99,6 +99,38 @@ struct PlanepointTests {
         #expect(z!.isFinite)
     }
 
+    @Test
+    func planepoint4978() async throws {
+        // Triangle in ECEF near the Earth's surface with non-zero XY area.
+        let base = 6_378_137.0
+        let v1 = Coordinate3D(x: base, y: 0.0, z: 10.0, projection: .epsg4978)
+        let v2 = Coordinate3D(x: base + 10_000.0, y: 10_000.0, z: 10.0, projection: .epsg4978)
+        let v3 = Coordinate3D(x: base, y: 10_000.0, z: 10.0, projection: .epsg4978)
+        let triangle = try #require(Polygon([
+            [v1, v2, v3, v1],
+        ]))
+        let point = Coordinate3D(x: base + 3_000.0, y: 5_000.0, projection: .epsg4978)
+        let z = try #require(triangle.planepoint(point))
+        #expect(z.isFinite)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func planepointNoSRID() async throws {
+        let triangle = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0, projection: .noSRID),
+                Coordinate3D(x: 100.0, y: 100.0, z: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 100.0, z: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0, projection: .noSRID),
+            ],
+        ]))
+        let point = Coordinate3D(x: 30.0, y: 50.0, projection: .noSRID)
+        let z = try #require(triangle.planepoint(point))
+        #expect(z.isFinite)
+    }
+
     // MARK: - Antimeridian
 
     /// A triangle crossing the date line: vertices at lon=179 and lon=-179.
@@ -147,6 +179,36 @@ struct PlanepointTests {
             let point = try #require(feature.geometry as? Point)
             #expect(point.coordinate.altitude != nil)
             #expect(point.coordinate.altitude! > 0.0)
+            #expect(point.coordinate.projection == .epsg4326)
+        }
+    }
+
+    @Test
+    func tinToPointCloud3857() async throws {
+        let triangle1 = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0),
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0),
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0),
+            ],
+        ]))
+        let triangle2 = try #require(Polygon([
+            [
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
+                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 200.0),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0),
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
+            ],
+        ]))
+        let fc = FeatureCollection([Feature(triangle1), Feature(triangle2)])
+        let cloud = fc.tinToPointCloud()
+        #expect(cloud.features.count == 2)
+        for feature in cloud.features {
+            let point = try #require(feature.geometry as? Point)
+            #expect(point.coordinate.altitude != nil)
+            #expect(point.coordinate.altitude! > 0.0)
+            #expect(point.coordinate.projection == .epsg3857)
         }
     }
 

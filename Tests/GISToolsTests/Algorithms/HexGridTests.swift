@@ -94,6 +94,24 @@ struct HexGridTests {
         #expect(grid.features.count > 0)
     }
 
+    @Test
+    func hexGrid3857CrossOrigin() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: -10_000.0, y: -10_000.0),
+            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0))
+        let grid = bbox.hexGrid(cellSide: 1_000.0)
+        #expect(grid.features.count > 0)
+    }
+
+    @Test
+    func hexGrid4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0, z: 0.0, projection: .epsg4978))
+        let grid = bbox.hexGrid(cellSide: 1_000.0)
+        #expect(grid.features.count > 0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

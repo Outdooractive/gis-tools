@@ -64,7 +64,9 @@ extension Coordinate3D {
 
         return Coordinate3D(
             latitude: normalizedLatitude,
-            longitude: normalizedLongitude)
+            longitude: normalizedLongitude,
+            altitude: self.altitude,
+            m: self.m)
     }
 
     /// Calculates the location of a coordinate on a straight line between

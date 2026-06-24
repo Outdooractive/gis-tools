@@ -6,8 +6,10 @@ extension GeoJson {
     /// Snaps each coordinate to the nearest grid point with the given spacing.
     ///
     /// The tolerance is in the coordinate reference system's native unit:
-    /// - **EPSG:4326** (lon/lat) / **noSRID**: degrees
+    /// - **EPSG:4326** (lon/lat): degrees
     /// - **EPSG:3857** (web mercator): meters
+    /// - **EPSG:4978** (ECEF): meters
+    /// - **noSRID**: raw coordinate units
     ///
     /// To snap to a meter‑based grid from EPSG:4326, convert the tolerance first:
     /// ```swift

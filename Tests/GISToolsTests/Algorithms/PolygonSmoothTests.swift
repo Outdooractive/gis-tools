@@ -144,6 +144,40 @@ struct PolygonSmoothTests {
         let smoothed = polygon.smooth()
         let outerRing = try #require(smoothed.outerRing)
         #expect(outerRing.coordinates.count > 5)
+        #expect(smoothed.projection == .epsg3857)
+    }
+
+    @Test
+    func polygonSmooth4978() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 100_000.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]]))
+        let smoothed = polygon.smooth()
+        let outerRing = try #require(smoothed.outerRing)
+        #expect(outerRing.coordinates.count == 9)
+        #expect(outerRing.coordinates.allSatisfy({ $0.altitude != nil }))
+        #expect(smoothed.projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func polygonSmoothNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let smoothed = polygon.smooth()
+        let outerRing = try #require(smoothed.outerRing)
+        #expect(outerRing.coordinates.count > 5)
+        #expect(smoothed.projection == .noSRID)
     }
 
     // MARK: - Antimeridian

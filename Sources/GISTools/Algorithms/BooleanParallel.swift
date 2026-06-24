@@ -9,6 +9,11 @@ extension LineSegment {
 
     /// Checks if the receiver is parallel to the other *LineSegment*.
     ///
+    /// All projections are supported. For ``Projection/epsg3857`` and
+    /// ``Projection/epsg4978`` the bearing is obtained via `rhumbBearing`
+    /// (which projects to 4326 first). For ``Projection/noSRID`` a raw
+    /// 2-D arc-tangent is used.
+    ///
     /// - Parameter other: The other LineSegment
     /// - Parameter tolerance: The tolerance, in degrees
     /// - Parameter undirectedEdge: Whether the segment should be treated as an undirected edge
@@ -59,6 +64,11 @@ extension LineSegment {
 extension LineString {
 
     /// Checks if each of the receiver's segment is parallel to the correspondent segment of the other *LineString*.
+    ///
+    /// All projections are supported. For ``Projection/epsg3857`` and
+    /// ``Projection/epsg4978`` the bearing is obtained via `rhumbBearing`
+    /// (which projects to 4326 first). For ``Projection/noSRID`` a raw
+    /// 2-D arc-tangent is used.
     ///
     /// - Parameter other: The other LineString
     /// - Parameter tolerance: The tolerance for each pair of segments, in degrees
