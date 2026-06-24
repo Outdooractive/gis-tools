@@ -8,7 +8,9 @@ import Foundation
 extension PolygonGeometry {
 
     /// Finds coordinates that fall within the receiver.
+    /// - Parameter coordinates: The coordinates to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: The coordinates inside the polygon.
     public func coordinatesWithin(_ coordinates: [Coordinate3D], gridSize: Double? = nil) -> [Coordinate3D] {
         guard let gridSize else {
             return coordinates.filter { contains($0, ignoringBoundary: false, gridSize: nil) }
@@ -19,6 +21,7 @@ extension PolygonGeometry {
 
     /// Finds *Point*s that fall within the receiver.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: The points inside the polygon.
     public func pointsWithin(_ points: [Point], gridSize: Double? = nil) -> [Point] {
         guard let gridSize else {
             return points.filter { contains($0.coordinate, ignoringBoundary: false, gridSize: nil) }

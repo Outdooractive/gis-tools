@@ -7,6 +7,18 @@ import Foundation
 
 extension FeatureCollection {
 
+    /// Creates polygons from the LineStrings in this collection, replacing
+    /// the receiver with the result.
+    ///
+    /// The input should contain connected LineString features whose segments
+    /// form closed boundaries. The result is a ``FeatureCollection`` of
+    /// ``Polygon`` features, one per closed ring found in the graph.
+    ///
+    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    public mutating func polygonize(gridSize: Double? = nil) {
+        self = polygonized(gridSize: gridSize)
+    }
+
     /// Creates polygons from the LineStrings in this collection.
     ///
     /// The input should contain connected LineString features whose segments
@@ -34,7 +46,6 @@ extension LineString {
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         return Polygonize.polygonize(lineStrings: [snapped])
     }
-
 }
 
 extension MultiLineString {
@@ -70,19 +81,31 @@ private enum Polygonize {
     // MARK: - Public API
 
     static func polygonize(lineStrings: [LineString]) -> FeatureCollection {
+        // Determine projection from the first coordinate.
+        let projection = lineStrings.first?.coordinates.first?.projection ?? .epsg4326
+
         // Normalise antimeridian-crossing coordinates so that longitudes
         // are contiguous (shift negative values by +360°).
-        let minLon = lineStrings.flatMap(\.coordinates).map(\.longitude).min() ?? 0
-        let maxLon = lineStrings.flatMap(\.coordinates).map(\.longitude).max() ?? 0
-        let spansAntimeridian = (maxLon - minLon) > 180.0
+        // Only applies to EPSG:4326.
+        let spansAntimeridian: Bool
+        if projection == .epsg4326 {
+            let minLon = lineStrings.flatMap(\.coordinates).map(\.longitude).min() ?? 0
+            let maxLon = lineStrings.flatMap(\.coordinates).map(\.longitude).max() ?? 0
+            spansAntimeridian = (maxLon - minLon) > 180.0
+        }
+        else {
+            spansAntimeridian = false
+        }
 
         let normalised: [LineString]
         if spansAntimeridian {
             normalised = lineStrings.map { ls in
                 let coords = ls.coordinates.map { c in
-                    Coordinate3D(latitude: c.latitude,
-                                longitude: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
-                                altitude: c.altitude, m: c.m)
+                    Coordinate3D(x: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
+                                 y: c.latitude,
+                                 z: c.altitude,
+                                 m: c.m,
+                                 projection: projection)
                 }
                 // Use unchecked init: the shifted coords are still the same shape
                 return LineString(unchecked: coords, calculateBoundingBox: ls.boundingBox != nil)
@@ -115,9 +138,11 @@ private enum Polygonize {
             unshifted = polygons.map { poly in
                 let coords = poly.coordinates.map { ring in
                     ring.map { c in
-                        Coordinate3D(latitude: c.latitude,
-                                    longitude: c.longitude > 180.0 ? c.longitude - 360.0 : c.longitude,
-                                    altitude: c.altitude, m: c.m)
+                        Coordinate3D(x: c.longitude > 180.0 ? c.longitude - 360.0 : c.longitude,
+                                     y: c.latitude,
+                                     z: c.altitude,
+                                     m: c.m,
+                                     projection: projection)
                     }
                 }
                 return Polygon(unchecked: coords, calculateBoundingBox: poly.boundingBox != nil)

@@ -114,6 +114,46 @@ struct OrientedEnvelopeTests {
         ]])
         let envelope = polygon.orientedEnvelope()
         #expect(envelope != nil)
+        #expect(envelope?.projection == .epsg3857)
+        if let envelope {
+            let coords = envelope.allCoordinates
+            #expect(coords.count >= 4)
+        }
+    }
+
+    /// A polygon in noSRID produces a valid oriented envelope.
+    @Test
+    func orientedEnvelopeNoSRID() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let envelope = polygon.orientedEnvelope()
+        #expect(envelope != nil)
+        #expect(envelope?.projection == .noSRID)
+        if let envelope {
+            let coords = envelope.allCoordinates
+            #expect(coords.count >= 4)
+        }
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func orientedEnvelope4978() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+        ]])
+        let envelope = polygon.orientedEnvelope()
+        #expect(envelope != nil)
+        #expect(envelope?.projection == .epsg4978)
         if let envelope {
             let coords = envelope.allCoordinates
             #expect(coords.count >= 4)

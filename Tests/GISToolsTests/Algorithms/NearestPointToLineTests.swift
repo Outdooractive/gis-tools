@@ -46,6 +46,52 @@ struct NearestPointToLineTests {
         #expect(ls.nearestCoordinate(from: []) == nil)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func nearestCoordinateFrom3857() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+        ]))
+        let candidates = [
+            Coordinate3D(x: 50_000.0, y: 50_000.0),
+            Coordinate3D(x: 0.0, y: 10_000.0),
+        ]
+        let result = try #require(ls.nearestCoordinate(from: candidates))
+        #expect(result.coordinate == Coordinate3D(x: 0.0, y: 10_000.0))
+    }
+
+    @Test
+    func nearestCoordinateFrom4978() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.09).projected(to: .epsg4978),
+        ]))
+        let candidates = [
+            Coordinate3D(latitude: 0.045, longitude: 0.045).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978),
+        ]
+        let result = try #require(ls.nearestCoordinate(from: candidates))
+        #expect(result.coordinate.projection == .epsg4978)
+        #expect(result.distance >= 0.0)
+    }
+
+    @Test
+    func nearestCoordinateFromNoSRID() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+        ]))
+        let candidates = [
+            Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+        ]
+        let result = try #require(ls.nearestCoordinate(from: candidates))
+        #expect(result.coordinate == Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID))
+        #expect(result.coordinate.projection == .noSRID)
+    }
+
     // MARK: - Antimeridian
 
     @Test

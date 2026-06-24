@@ -13,6 +13,10 @@ extension LineString {
     /// consecutive split points, preserving the order along the original line.
     /// If there are no intersections, the result contains the original line.
     ///
+    /// All projections are supported — the intersection and point-on-line
+    /// checks operate on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// for EPSG:4978).
+    ///
     /// - Parameter splitter: A ``Point``, ``MultiPoint``, ``LineString``, or ``MultiLineString``
     ///   whose intersections with this line define the split points.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).

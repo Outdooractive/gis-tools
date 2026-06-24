@@ -306,4 +306,141 @@ struct FeatureCollectionTests {
         #expect(featureCollectionData == featureCollection2.asJsonData(prettyPrinted: true))
     }
 
+    // MARK: - Projection
+
+    // Validates projecting a FeatureCollection from EPSG:4326 to EPSG:3857.
+    @Test
+    func projected() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let feature = Feature(point)
+        let featureCollection = FeatureCollection([feature])
+
+        let projected = featureCollection.projected(to: .epsg3857)
+
+        #expect(projected.projection == .epsg3857)
+        #expect(projected.features.count == 1)
+        #expect(projected.features[0].projection == .epsg3857)
+    }
+
+    // Validates projecting a FeatureCollection to EPSG:4978.
+    @Test
+    func projectedTo4978() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let feature = Feature(point)
+        let featureCollection = FeatureCollection([feature])
+
+        let projected = featureCollection.projected(to: .epsg4978)
+
+        #expect(projected.projection == .epsg4978)
+        for feature in projected.features {
+            #expect(feature.projection == .epsg4978)
+        }
+    }
+
+    // Validates projecting a FeatureCollection to noSRID.
+    @Test
+    func projectedToNoSRID() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let feature = Feature(point)
+        let featureCollection = FeatureCollection([feature])
+
+        let projected = featureCollection.projected(to: .noSRID)
+
+        #expect(projected.projection == .noSRID)
+        for feature in projected.features {
+            #expect(feature.projection == .noSRID)
+        }
+    }
+
+    // Validates projecting a FeatureCollection with mixed geometry types.
+    @Test
+    func projectedMixedGeometries() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let featureCollection = FeatureCollection([
+            Feature(point),
+            Feature(lineString),
+            Feature(polygon),
+        ])
+
+        let projected = featureCollection.projected(to: .epsg3857)
+
+        #expect(projected.projection == .epsg3857)
+        #expect(projected.features.count == 3)
+        for feature in projected.features {
+            #expect(feature.projection == .epsg3857)
+        }
+    }
+
+    // MARK: - Bounding box
+
+    // Validates the bounding box of a FeatureCollection in EPSG:4326.
+    @Test
+    func boundingBox() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]]))
+
+        let featureCollection = FeatureCollection(
+            [Feature(point), Feature(lineString), Feature(polygon)],
+            calculateBoundingBox: true)
+
+        let bbox = try #require(featureCollection.boundingBox)
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 10.0)
+        #expect(bbox.northEast.longitude == 10.0)
+    }
+
+    // Validates calculateBoundingBox from features.
+    @Test
+    func calculateBoundingBox() async throws {
+        let point = Point(Coordinate3D(latitude: -5.0, longitude: -5.0))
+        let anotherPoint = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        let featureCollection = FeatureCollection([Feature(point), Feature(anotherPoint)])
+
+        let bbox = try #require(featureCollection.calculateBoundingBox())
+        #expect(bbox.southWest.latitude == -5.0)
+        #expect(bbox.southWest.longitude == -5.0)
+        #expect(bbox.northEast.latitude == 5.0)
+        #expect(bbox.northEast.longitude == 5.0)
+    }
+
+    // Validates intersects with a bounding box.
+    @Test
+    func intersectsBoundingBox() async throws {
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+        let featureCollection = FeatureCollection([Feature(point)])
+
+        let overlapping = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        #expect(featureCollection.intersects(overlapping))
+
+        let farAway = BoundingBox(
+            southWest: Coordinate3D(latitude: 20.0, longitude: 20.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0))
+        #expect(!featureCollection.intersects(farAway))
+    }
+
 }

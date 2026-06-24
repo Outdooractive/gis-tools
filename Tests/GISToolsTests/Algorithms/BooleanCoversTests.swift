@@ -122,4 +122,18 @@ struct BooleanCoversTests {
         #expect(polygon.covers(point))
     }
 
+    @Test
+    func polygonCoversPoint4978() async throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let inside = Point(Coordinate3D(latitude: 0.5, longitude: 0.5)).projected(to: .epsg4978)
+        #expect(polygon.covers(inside))
+    }
+
 }

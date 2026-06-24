@@ -62,6 +62,37 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
+    @Test
+    func triangleGrid3857CrossOrigin() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: -10_000.0, y: -10_000.0),
+            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0))
+        let grid = bbox.triangleGrid(cellSide: 1_000.0)
+        #expect(grid.features.count > 0)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func triangleGrid4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 6_373_000.0, y: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 6_383_000.0, y: 10_000.0, projection: .epsg4978))
+        let grid = bbox.triangleGrid(cellSide: 5_000.0)
+        #expect(grid.features.count > 0)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func triangleGridNoSRID() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID))
+        let grid = bbox.triangleGrid(cellSide: 50.0)
+        #expect(grid.features.count > 0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

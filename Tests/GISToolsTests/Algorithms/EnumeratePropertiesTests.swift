@@ -42,6 +42,8 @@ struct EnumeratePropertiesTests {
         #expect(summary["extra"]?.contains(true) == true)
     }
 
+    // MARK: - Projection tests
+
     @Test func enumerateProperties3857() async throws {
         let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0))
         let feature1 = Feature(point, properties: ["name": "Alpha", "value": 1])
@@ -56,6 +58,37 @@ struct EnumeratePropertiesTests {
         #expect(visited.count == 2)
         #expect(visited[0].1["name"] as? String == "Alpha")
         #expect(visited[1].1["name"] as? String == "Beta")
+    }
+
+    @Test func enumerateProperties4978() async throws {
+        let point = Point(Coordinate3D(
+            latitude: 1.0, longitude: 2.0).projected(to: .epsg4978))
+        let feature = Feature(point, properties: ["key": "ECEF"])
+        let collection = FeatureCollection([feature])
+
+        var visited: [(Int, [String: Sendable])] = []
+        collection.enumerateProperties { index, properties in
+            visited.append((index, properties))
+        }
+
+        #expect(visited.count == 1)
+        #expect(visited[0].1["key"] as? String == "ECEF")
+    }
+
+    @Test func enumeratePropertiesNoSRID() async throws {
+        let point = Point(Coordinate3D(
+            x: 100.0, y: 200.0, projection: .noSRID))
+        let feature1 = Feature(point, properties: ["a": 1])
+        let feature2 = Feature(point, properties: ["b": 2])
+        let collection = FeatureCollection([feature1, feature2])
+
+        var keys: [String] = []
+        collection.enumerateProperties { _, properties in
+            keys.append(contentsOf: properties.keys)
+        }
+
+        #expect(keys.contains("a"))
+        #expect(keys.contains("b"))
     }
 
 }

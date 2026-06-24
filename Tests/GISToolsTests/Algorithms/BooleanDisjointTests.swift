@@ -115,7 +115,7 @@ struct BooleanDisjointTests {
     // MARK: - Projection tests
 
     @Test
-    func polygonDisjointPoint3857() {
+    func isDisjointEPSG3857() {
         let polygon = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
@@ -123,8 +123,72 @@ struct BooleanDisjointTests {
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
         ]])
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
-        #expect(polygon.contains(point))
+        let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0))
+        let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
+        #expect(!polygon.isDisjoint(with: pointInside))
+        #expect(polygon.isDisjoint(with: pointOutside))
+    }
+
+    @Test
+    func isDisjointEPSG4978() async throws {
+        let poly4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon = poly4326.projected(to: .epsg4978)
+        let inside = Point(Coordinate3D(latitude: 0.5, longitude: 0.5)).projected(to: .epsg4978)
+        let outside = Point(Coordinate3D(latitude: 5.0, longitude: 5.0)).projected(to: .epsg4978)
+        #expect(!polygon.isDisjoint(with: inside))
+        #expect(polygon.isDisjoint(with: outside))
+    }
+
+    @Test
+    func disjointMultiPointPolygonEPSG3857() {
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 2_000.0, y: 2_000.0)])
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        #expect(!mp.isDisjoint(with: polygon))
+    }
+
+    @Test
+    func disjointMultiPointPolygonEPSG4978() async throws {
+        let poly4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon = poly4326.projected(to: .epsg4978)
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978),
+            Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978)])
+        #expect(!mp.isDisjoint(with: polygon))
+    }
+
+    @Test
+    func isDisjointNoSRID() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))
+        let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .noSRID))
+        #expect(!polygon.isDisjoint(with: pointInside))
+        #expect(polygon.isDisjoint(with: pointOutside))
     }
 
     // MARK: - Antimeridian
@@ -140,6 +204,20 @@ struct BooleanDisjointTests {
         ]]))
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 175.0))
         #expect(!polygon.isDisjoint(with: point))
+    }
+
+    // MARK: - Empty / degenerate
+
+    @Test
+    func emptyGeometriesAreDisjointFromEverything() async throws {
+        let emptyPolygon = Polygon()
+        let emptyMultiPoint = MultiPoint()
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(emptyPolygon.isDisjoint(with: point))
+        #expect(point.isDisjoint(with: emptyPolygon))
+        #expect(emptyPolygon.isDisjoint(with: emptyMultiPoint))
+        #expect(emptyMultiPoint.isDisjoint(with: emptyPolygon))
+        #expect(emptyMultiPoint.isDisjoint(with: emptyMultiPoint))
     }
 
 }

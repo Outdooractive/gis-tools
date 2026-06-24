@@ -74,4 +74,19 @@ struct SampleTests {
         #expect(result.features.count == 2)
     }
 
+    @Test
+    func sample4978() async throws {
+        let p1 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let p2 = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let p3 = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
+        let features = [
+            Feature(Point(p1)),
+            Feature(Point(p2)),
+            Feature(Point(p3)),
+        ]
+        let fc = FeatureCollection(features)
+        let result = fc.sample(size: 2)
+        #expect(result.features.count == 2)
+    }
+
 }

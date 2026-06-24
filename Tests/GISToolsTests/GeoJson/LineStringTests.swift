@@ -109,4 +109,204 @@ struct LineStringTests {
         #expect(LineString().isClosed == false)
     }
 
+    // Validates firstCoordinate and lastCoordinate accessors.
+    @Test
+    func firstAndLastCoordinate() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]))
+
+        #expect(lineString.firstCoordinate == Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(lineString.lastCoordinate == Coordinate3D(latitude: 2.0, longitude: 2.0))
+    }
+
+    // MARK: - Projection
+
+    // Validates projecting a LineString from EPSG:4326 to EPSG:3857.
+    @Test
+    func projected() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let projected = lineString.projected(to: .epsg3857)
+
+        #expect(projected.projection == .epsg3857)
+        #expect(projected.coordinates.count == 2)
+        for coord in projected.coordinates {
+            #expect(coord.projection == .epsg3857)
+            #expect(coord.x.isFinite)
+            #expect(coord.y.isFinite)
+        }
+    }
+
+    // Validates projecting a LineString from EPSG:4326 to EPSG:4978.
+    @Test
+    func projectedTo4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let projected = lineString.projected(to: .epsg4978)
+
+        #expect(projected.projection == .epsg4978)
+        for coord in projected.coordinates {
+            #expect(coord.projection == .epsg4978)
+        }
+    }
+
+    // Validates projecting a LineString from EPSG:4326 to noSRID.
+    @Test
+    func projectedToNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let projected = lineString.projected(to: .noSRID)
+
+        #expect(projected.projection == .noSRID)
+        for coord in projected.coordinates {
+            #expect(coord.projection == .noSRID)
+        }
+    }
+
+    // Validates round-trip projection from EPSG:4326 to EPSG:3857 and back.
+    @Test
+    func projected3857To4326() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+
+        let projected3857 = lineString.projected(to: .epsg3857)
+        let roundTripped = projected3857.projected(to: .epsg4326)
+
+        #expect(roundTripped.projection == .epsg4326)
+        #expect(roundTripped.coordinates.count == 2)
+        for (idx, coord) in roundTripped.coordinates.enumerated() {
+            let original = lineString.coordinates[idx]
+            #expect(abs(coord.latitude - original.latitude) < 0.0001)
+            #expect(abs(coord.longitude - original.longitude) < 0.0001)
+        }
+    }
+
+    // Validates creating a LineString in EPSG:3857 using unchecked init.
+    @Test
+    func init3857() {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+        ]
+        let lineString = LineString(unchecked: coords)
+
+        #expect(lineString.projection == .epsg3857)
+        #expect(lineString.coordinates == coords)
+    }
+
+    // Validates creating a LineString in EPSG:4978 using unchecked init.
+    @Test
+    func init4978() {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 10.0, y: 10.0, z: 200.0, projection: .epsg4978),
+        ]
+        let lineString = LineString(unchecked: coords)
+
+        #expect(lineString.projection == .epsg4978)
+        #expect(lineString.coordinates == coords)
+    }
+
+    // Validates creating a LineString in noSRID using unchecked init.
+    @Test
+    func initNoSRID() {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+        ]
+        let lineString = LineString(unchecked: coords)
+
+        #expect(lineString.projection == .noSRID)
+        #expect(lineString.coordinates == coords)
+    }
+
+    // MARK: - Bounding box
+
+    // Validates the bounding box of a LineString in EPSG:4326.
+    @Test
+    func boundingBox() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+
+        let bbox = try #require(lineString.calculateBoundingBox())
+
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 10.0)
+        #expect(bbox.northEast.longitude == 10.0)
+    }
+
+    // Validates the bounding box of a LineString in EPSG:3857.
+    @Test
+    func boundingBox3857() async throws {
+        let lineString = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ])
+
+        let bbox = try #require(lineString.calculateBoundingBox())
+
+        #expect(bbox.projection == .epsg3857)
+        #expect(bbox.southWest.x == 0.0)
+        #expect(bbox.southWest.y == 0.0)
+        #expect(bbox.northEast.x == 10.0)
+        #expect(bbox.northEast.y == 10.0)
+    }
+
+    // Validates intersects with a bounding box.
+    @Test
+    func intersectsBoundingBox() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+
+        let overlapping = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        #expect(lineString.intersects(overlapping))
+
+        let farAway = BoundingBox(
+            southWest: Coordinate3D(latitude: 20.0, longitude: 20.0),
+            northEast: Coordinate3D(latitude: 30.0, longitude: 30.0))
+        #expect(!lineString.intersects(farAway))
+    }
+
+    // Validates bounding box property when calculated on init.
+    @Test
+    func boundingBoxProperty() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ], calculateBoundingBox: true))
+
+        let bbox = try #require(lineString.boundingBox)
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 1.0)
+        #expect(bbox.northEast.longitude == 1.0)
+    }
+
 }

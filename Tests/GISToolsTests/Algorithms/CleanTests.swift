@@ -103,7 +103,21 @@ struct CleanTests {
             Coordinate3D(x: 200_000.0, y: 0.0),
         ])
         let cleaned = line.cleaned(removeDuplicates: true, removeCollinear: true)
-        #expect(cleaned.coordinates.count == 2)
+        #expect(cleaned.coordinates.count == 2) // (0,0) → (200000,0)
+    }
+
+    /// Cleaning a LineString with duplicates in EPSG:4978 removes duplicates and collinear points.
+    @Test
+    func clean4978() {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 200_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])
+        let cleaned = line.cleaned(removeDuplicates: true, removeCollinear: true)
+        #expect(cleaned.coordinates.count == 2) // (0,0) → (200000,0)
     }
 
 }

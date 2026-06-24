@@ -53,7 +53,7 @@ extension Coordinate3D {
             longitude += 360.0
         }
 
-        return Coordinate3D(latitude: destination.latitude, longitude: longitude)
+        return Coordinate3D(latitude: destination.latitude, longitude: longitude, altitude: self.altitude, m: self.m)
     }
 
     // Returns the destination point having travelled along a rhumb line from origin point the given

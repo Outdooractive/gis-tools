@@ -10,6 +10,9 @@ extension FeatureCollection {
     /// that share an endpoint (same coordinate) are merged into a single
     /// ``LineString``.
     ///
+    /// All projections are supported — endpoints are compared for coincidence
+    /// using ``Coordinate3D/isCoincident(to:)``.
+    ///
     /// - Returns: A ``FeatureCollection`` of ``LineString`` features.
     public func lineMerged() -> FeatureCollection {
         let result = LineMerge.merge(features: features, asMultiLineStrings: false)

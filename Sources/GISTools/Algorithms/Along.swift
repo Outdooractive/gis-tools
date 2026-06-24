@@ -9,6 +9,10 @@ extension LineString {
 
     /// Returns a coordinate at a specified distance along the line.
     ///
+    /// When both endpoints of the segment containing the target distance have
+    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// altitude. Otherwise the result has no altitude.
+    ///
     /// - Parameter distance: The distance along the line, in meters.
     ///
     /// - Returns: A *Coordinate3D* *distance* meters along the line.
@@ -26,9 +30,11 @@ extension LineString {
                     return coordinate
                 }
 
-                let direction: CLLocationDirection = coordinate.bearing(to: coordinates[index - 1]) - 180.0
-                let interpolated: Coordinate3D = coordinate.destination(distance: overshot, bearing: direction)
-                return interpolated
+                return interpolate(
+                    from: coordinates[index - 1],
+                    to: coordinate,
+                    overshot: overshot,
+                    projection: projection)
             }
             else {
                 travelled += coordinate.distance(from: coordinates[index + 1])
@@ -39,6 +45,10 @@ extension LineString {
     }
 
     /// Returns a `Point` at a specified distance along the line.
+    ///
+    /// When both endpoints of the segment containing the target distance have
+    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// altitude. Otherwise the result has no altitude.
     ///
     /// - Parameter distance: The distance along the line, in meters
     ///
@@ -84,6 +94,48 @@ extension LineString {
 
         travelled += coordinates[segIndex].distance(from: foot)
         return travelled
+    }
+
+    // MARK: - Private
+
+    /// Interpolate between two segment endpoints.
+    ///
+    /// For EPSG:4326 the 2-D interpolation follows the geodesic arc via
+    /// `destination`; for other CRS a straight line is used.
+    /// Z is always linearly interpolated when both endpoints have altitude.
+    ///
+    /// - Parameter overshot: How far `coord` is past the target (negative).
+    /// - Parameter projection: The receiver's projection.
+    private func interpolate(
+        from prev: Coordinate3D,
+        to coord: Coordinate3D,
+        overshot: CLLocationDistance,
+        projection: Projection
+    ) -> Coordinate3D {
+        var result: Coordinate3D
+        switch projection {
+        case .epsg4326:
+            // Go from coord back toward prev by |overshot| meters.
+            let bearing = coord.bearing(to: prev)
+            result = coord.destination(distance: -overshot, bearing: bearing)
+        default:
+            // Straight‑line interpolation.
+            let segmentLength = coord.distance(from: prev)
+            let weight = 1.0 + overshot / segmentLength
+            let lat = prev.latitude + weight * (coord.latitude - prev.latitude)
+            let lon = prev.longitude + weight * (coord.longitude - prev.longitude)
+            result = Coordinate3D(x: lon, y: lat, projection: projection)
+        }
+
+        if let za = prev.altitude,
+           let zb = coord.altitude
+        {
+            let segmentLength = coord.distance(from: prev)
+            let weight = 1.0 + overshot / segmentLength
+            result.altitude = za + weight * (zb - za)
+        }
+
+        return result
     }
 
 }

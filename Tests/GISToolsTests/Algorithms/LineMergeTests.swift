@@ -171,6 +171,38 @@ struct LineMergeTests {
         #expect(ls.coordinates.count == 3)
     }
 
+    @Test
+    func lineMerge4978() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])!
+        let fc = FeatureCollection([Feature(a), Feature(b)])
+
+        let result = fc.lineMerged()
+        #expect(result.features.count == 1)
+    }
+
+    @Test
+    func lineMergeNoSRID() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+        ])!
+        let fc = FeatureCollection([Feature(a), Feature(b)])
+
+        let result = fc.lineMerged()
+        #expect(result.features.count == 1)
+    }
+
     // Validates merging two LineStrings that cross the antimeridian.
     @Test
     func antimeridianConnected() async throws {

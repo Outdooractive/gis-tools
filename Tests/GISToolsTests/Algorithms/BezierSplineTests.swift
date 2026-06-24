@@ -125,4 +125,59 @@ struct BezierSplineTests {
         }
     }
 
+    @Test
+    func bezierSpline4978() async throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 3.0, longitude: 3.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 6.0, longitude: 0.0).projected(to: .epsg4978),
+        ])
+        // 4978 is supported (2D spline in ECEF XY plane).
+        let spline = try #require(line.bezierSpline())
+        #expect(spline.coordinates.count > 3)
+    }
+
+    // MARK: - 3D
+
+    // All coordinates have altitude → full 3D spline.
+    @Test
+    func bezierSpline3D() async throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0, altitude: 500.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
+        ])
+        let spline = try #require(line.bezierSpline(steps: 10))
+        #expect(spline.coordinates.count == 20) // 2 segments × 9 + start + end
+        // All output coordinates should carry altitude.
+        #expect(spline.coordinates.allSatisfy({ $0.altitude != nil }))
+        #expect(spline.coordinates.first!.altitude == 100.0)
+        #expect(spline.coordinates.last!.altitude == 200.0)
+    }
+
+    // Not all coordinates have altitude → stays 2D (altitude = nil in output).
+    @Test
+    func bezierSplineMixedAltitude() async throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0), // no altitude
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
+        ])
+        let spline = try #require(line.bezierSpline(steps: 10))
+        #expect(spline.coordinates.allSatisfy({ $0.altitude == nil }))
+    }
+
+    // ECEF 3D: all coordinates have altitude/Z → 3D spline.
+    @Test
+    func bezierSpline49783D() async throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
+            Coordinate3D(x: 500_000.0, y: 500_000.0, z: 500.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, z: 200.0, projection: .epsg4978),
+        ])
+        let spline = try #require(line.bezierSpline(steps: 10))
+        #expect(spline.coordinates.allSatisfy({ $0.altitude != nil }))
+        #expect(spline.coordinates.count > 3)
+    }
+
 }

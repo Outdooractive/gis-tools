@@ -13,6 +13,11 @@ extension GeoJson {
     /// Two geometries touch if they share at least one common boundary point
     /// but their interiors are disjoint.
     ///
+    /// All projections are supported. The 2‑D checks operate on raw
+    /// ``longitude``/``latitude`` values regardless of CRS.
+    /// For ``Projection/epsg4978`` (ECEF) the XY plane is used; altitude/Z
+    /// is ignored.
+    ///
     /// - Parameter other: The other geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///

@@ -13,6 +13,10 @@ extension Polygon {
     /// to each vertex. The result is the interpolated z-value at the given point using
     /// barycentric coordinates.
     ///
+    /// All projections are supported. The barycentric computation uses native XY values.
+    /// For EPSG:4978 (ECEF) this means interpolation in the XY plane; for typical
+    /// Earth-surface TIN triangles the approximation is acceptable.
+    ///
     /// - Parameter point: The query coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: The interpolated z-value, or `nil` if the point is outside the triangle
@@ -50,10 +54,17 @@ extension Polygon {
         // Normalise antimeridian crossing: if the triangle spans >180° of
         // longitude, shift negative values by +360° so the Cartesian cross
         // product reflects the short path across the date line.
-        let lons = [a.longitude, b.longitude, c.longitude, p.longitude]
-        let minLon = lons.min() ?? 0
-        let maxLon = lons.max() ?? 0
-        let shift = (maxLon - minLon) > 180.0 ? 360.0 : 0.0
+        // Only applies to EPSG:4326.
+        let shift: Double
+        if projection == .epsg4326 {
+            let lons = [a.longitude, b.longitude, c.longitude, p.longitude]
+            let minLon = lons.min() ?? 0
+            let maxLon = lons.max() ?? 0
+            shift = (maxLon - minLon) > 180.0 ? 360.0 : 0.0
+        }
+        else {
+            shift = 0.0
+        }
 
         func norm(_ coord: Coordinate3D) -> Coordinate3D {
             guard shift > 0, coord.longitude < 0 else { return coord }
@@ -111,9 +122,10 @@ extension FeatureCollection {
             else { return nil }
 
             var pointFeature = Feature(Point(Coordinate3D(
-                latitude: centroid.coordinate.latitude,
-                longitude: centroid.coordinate.longitude,
-                altitude: z)))
+                x: centroid.coordinate.longitude,
+                y: centroid.coordinate.latitude,
+                z: z,
+                projection: centroid.coordinate.projection)))
             pointFeature.properties = feature.properties
             return pointFeature
         }

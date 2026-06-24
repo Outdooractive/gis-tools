@@ -23,6 +23,56 @@ struct SharedPathsTests {
         #expect(result!.lineStrings.count == 2)
     }
 
+    // MARK: - noSRID
+
+    @Test
+    func sharedPathsNoSRID() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 50.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 50.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ])!
+        let result = a.sharedPaths(with: b)
+        #expect(result != nil)
+        #expect(result!.lineStrings.count == 1)
+        #expect(result?.lineStrings.first?.projection == .noSRID)
+    }
+
+    // MARK: - Projection preservation
+
+    @Test
+    func sharedPaths3857Projection() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ])!
+        let result = a.sharedPaths(with: b)
+        #expect(result != nil)
+        #expect(result?.lineStrings.first?.projection == .epsg3857)
+    }
+
+    @Test
+    func sharedPaths4978Projection() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])!
+        let result = a.sharedPaths(with: b)
+        #expect(result != nil)
+        #expect(result?.lineStrings.first?.projection == .epsg4978)
+    }
     // Validates that two LineStrings with one shared segment find that segment.
     @Test
     func partiallyShared() async throws {
@@ -228,6 +278,22 @@ struct SharedPathsTests {
         let b = LineString([
             Coordinate3D(x: 500_000.0, y: 0.0),
             Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ])!
+        let result = a.sharedPaths(with: b)
+        #expect(result != nil)
+        #expect(result!.lineStrings.count == 1)
+    }
+
+    @Test
+    func sharedPaths4978() async throws {
+        let a = LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])!
+        let b = LineString([
+            Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
         ])!
         let result = a.sharedPaths(with: b)
         #expect(result != nil)

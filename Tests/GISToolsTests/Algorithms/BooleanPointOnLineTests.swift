@@ -157,6 +157,16 @@ struct BooleanPointOnLineTests {
         #expect(polygon.contains(point))
     }
 
+    @Test
+    func pointOnLine4978() {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ])
+        let point = Point(Coordinate3D(x: 500.0, y: 0.0, z: 0.0, projection: .epsg4978))
+        #expect(line.checkIsOnLine(point))
+    }
+
     // MARK: - Antimeridian
 
     @Test

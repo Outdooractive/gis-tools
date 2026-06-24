@@ -6,7 +6,7 @@ struct VoronoiTests {
 
     // Validates that 3 points produce 3 Voronoi cells within the bounding box.
     @Test
-    func testThreePoints() {
+    func testThreePoints() throws {
         let points = [
             Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0))),
             Feature(Point(Coordinate3D(latitude: 15.0, longitude: 5.0))),
@@ -21,9 +21,9 @@ struct VoronoiTests {
         #expect(result.features.count == 3)
 
         for feature in result.features {
-            let poly = feature.geometry as? Polygon
-            #expect(poly != nil)
-            #expect(poly?.coordinates[0].count ?? 0 >= 4)
+            let poly = try #require(feature.geometry as? Polygon)
+            #expect(poly.coordinates[0].count >= 4)
+            #expect(poly.projection == .epsg4326)
         }
     }
 
@@ -167,7 +167,7 @@ struct VoronoiTests {
 
     // Validates that points in EPSG:3857 produce a valid Voronoi diagram.
     @Test
-    func voronoi3857() {
+    func voronoi3857() throws {
         let points = [
             Feature(Point(Coordinate3D(x: 500.0, y: 500.0))),
             Feature(Point(Coordinate3D(x: 1500.0, y: 500.0))),
@@ -182,9 +182,57 @@ struct VoronoiTests {
         #expect(result.features.count == 3)
 
         for feature in result.features {
-            let poly = feature.geometry as? Polygon
-            #expect(poly != nil)
-            #expect(poly?.coordinates[0].count ?? 0 >= 4)
+            let poly = try #require(feature.geometry as? Polygon)
+            #expect(poly.coordinates[0].count >= 4)
+            #expect(poly.projection == .epsg3857)
+        }
+    }
+
+    // Validates that points in noSRID produce a valid Voronoi diagram.
+    @Test
+    func voronoiNoSRID() throws {
+        let points = [
+            Feature(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))),
+            Feature(Point(Coordinate3D(x: 1500.0, y: 500.0, projection: .noSRID))),
+            Feature(Point(Coordinate3D(x: 1000.0, y: 1500.0, projection: .noSRID))),
+        ]
+        let fc = FeatureCollection(points)
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 2000.0, y: 2000.0, projection: .noSRID))
+
+        let result = fc.voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == 3)
+
+        for feature in result.features {
+            let poly = try #require(feature.geometry as? Polygon)
+            #expect(poly.coordinates[0].count >= 4)
+            #expect(poly.projection == .noSRID)
+        }
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func voronoi4978() throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(x: 6_378_000.0, y: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 6_378_100.0, y: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 6_378_050.0, y: 100.0, projection: .epsg4978),
+        ]
+        let points = coords.map { Feature(Point($0)) }
+        let fc = FeatureCollection(points)
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 6_377_000.0, y: -100_000.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 6_379_000.0, y: 100_000.0, projection: .epsg4978))
+
+        let result = fc.voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == 3)
+
+        for feature in result.features {
+            let poly = try #require(feature.geometry as? Polygon)
+            #expect(poly.coordinates[0].count >= 4)
+            #expect(poly.projection == .epsg4978)
         }
     }
 

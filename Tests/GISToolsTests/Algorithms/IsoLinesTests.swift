@@ -20,7 +20,21 @@ struct IsoLinesTests {
                 let dx = lon - cx
                 let dy = lat - cy
                 let z = sqrt(dx * dx + dy * dy)  // distance from center
-                let coord = Coordinate3D(x: lon, y: lat, z: z, projection: projection)
+                let coord: Coordinate3D
+                if projection == .epsg4978 {
+                    // Build an axis-aligned grid in ECEF space anchored near
+                    // the Earth's surface at (lat=0, lon=0). The grid
+                    // dimensions are ~100 km scaled to degrees at the equator.
+                    let scale = 111_320.0  // meters per degree at equator
+                    coord = Coordinate3D(
+                        x: 6_378_137.0 + lon * scale,
+                        y: lat * scale,
+                        z: z,
+                        projection: .epsg4978)
+                }
+                else {
+                    coord = Coordinate3D(x: lon, y: lat, z: z, projection: projection)
+                }
                 let feature = Feature(Point(coord))
                 features.append(feature)
             }
@@ -155,6 +169,28 @@ struct IsoLinesTests {
         let grid = FeatureCollection(features)
         let result = grid.isolines(breaks: [1.0])
         #expect(result.features.isEmpty)
+    }
+
+    // MARK: - Projection tests
+
+    @Test
+    func isoLines4978() {
+        let grid = makeGrid(projection: .epsg4978)
+        let result = grid.isolines(breaks: [1.0, 2.0])
+
+        #expect(result.features.count == 2)
+        if result.features.count >= 2 {
+            #expect(result.features[0].properties["break"] as? Double == 1.0)
+            #expect(result.features[1].properties["break"] as? Double == 2.0)
+        }
+    }
+
+    @Test
+    func isoLines3857() {
+        let grid = makeGrid(projection: .epsg3857)
+        let result = grid.isolines(breaks: [1.0, 2.0])
+
+        #expect(result.features.count == 2)
     }
 
 }

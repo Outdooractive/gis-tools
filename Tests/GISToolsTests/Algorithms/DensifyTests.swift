@@ -188,6 +188,26 @@ struct DensifyTests {
         #expect(densified.coordinates.count > 2)
     }
 
+    @Test
+    func densifyNoSRID() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID),
+        ]))
+        let densified = ls.densified(maxSegmentLength: 200_000.0)
+        #expect(densified.coordinates.count > 2)
+    }
+
+    @Test
+    func densify4978() async throws {
+        let ls = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let densified = ls.densified(maxSegmentLength: 200_000.0)
+        #expect(densified.coordinates.count > 2)
+    }
+
     // Validates that densify works on a MultiLineString crossing the antimeridian.
     @Test
     func antimeridianMultiLineString() async throws {

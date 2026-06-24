@@ -130,6 +130,37 @@ struct RewindTests {
         ]]))
         let rewinded = polygon.rewinded
         #expect(rewinded.outerRing?.coordinates.count == 5)
+        #expect(rewinded.projection == .epsg3857)
+    }
+
+    @Test
+    func rewindNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let rewinded = polygon.rewinded
+        #expect(rewinded.outerRing?.coordinates.count == 5)
+        #expect(rewinded.projection == .noSRID)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func rewind4978() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+        ]]))
+        let rewinded = polygon.rewinded
+        #expect(rewinded.outerRing?.coordinates.count == 5)
+        #expect(rewinded.projection == .epsg4978)
     }
 
     // MARK: - Antimeridian
@@ -152,6 +183,7 @@ struct RewindTests {
         let rewindedRing = try #require(rewinded.outerRing)
         #expect(!rewindedRing.isClockwise)
         #expect(rewinded.outerRing?.coordinates.count == 5)
+        #expect(rewinded.projection == polygon.projection)
     }
 
 }

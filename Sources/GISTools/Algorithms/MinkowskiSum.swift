@@ -1,4 +1,4 @@
-import Foundation
+// MARK: - Polygon
 
 extension Polygon {
 
@@ -7,6 +7,10 @@ extension Polygon {
     /// The Minkowski sum of two sets A and B is the set of all points a + b
     /// where a ∈ A and b ∈ B. This is useful for morphological dilation,
     /// generating offset shapes, and path planning.
+    ///
+    /// All projections are supported. The convex vertex-sum operates on
+    /// native XY values. Tessellation and union sub-algorithms handle any CRS
+    /// by projecting to a common coordinate system internally.
     ///
     /// - Parameter pattern: The pattern polygon to add.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
@@ -41,6 +45,8 @@ extension Polygon {
     }
 
 }
+
+// MARK: - MultiPolygon
 
 extension MultiPolygon {
 

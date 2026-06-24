@@ -80,4 +80,172 @@ struct MultiLineStringTests {
         #expect(multiLineStringData == multiLineString.asJsonData(prettyPrinted: true))
     }
 
+    // MARK: - Projection
+
+    // Validates projecting a MultiLineString from EPSG:4326 to EPSG:3857.
+    @Test
+    func projected() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let lineStringB = try #require(LineString([
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+        ]))
+        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+
+        let projected = multiLineString.projected(to: .epsg3857)
+
+        #expect(projected.projection == .epsg3857)
+        #expect(projected.lineStrings.count == 2)
+        for ls in projected.lineStrings {
+            #expect(ls.projection == .epsg3857)
+        }
+    }
+
+    // Validates projecting a MultiLineString to EPSG:4978.
+    @Test
+    func projectedTo4978() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let multiLineString = MultiLineString(unchecked: [lineStringA])
+
+        let projected = multiLineString.projected(to: .epsg4978)
+
+        #expect(projected.projection == .epsg4978)
+        for ls in projected.lineStrings {
+            #expect(ls.projection == .epsg4978)
+        }
+    }
+
+    // Validates projecting a MultiLineString to noSRID.
+    @Test
+    func projectedToNoSRID() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let multiLineString = MultiLineString(unchecked: [lineStringA])
+
+        let projected = multiLineString.projected(to: .noSRID)
+
+        #expect(projected.projection == .noSRID)
+        for ls in projected.lineStrings {
+            #expect(ls.projection == .noSRID)
+        }
+    }
+
+    // Validates creating a MultiLineString in EPSG:3857 using unchecked init.
+    @Test
+    func init3857() {
+        let lineString = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+        ])
+        let multiLineString = MultiLineString(unchecked: [lineString])
+
+        #expect(multiLineString.projection == .epsg3857)
+        #expect(multiLineString.lineStrings.count == 1)
+    }
+
+    // MARK: - Bounding box
+
+    // Validates the bounding box of a MultiLineString in EPSG:4326.
+    @Test
+    func boundingBox() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let lineStringB = try #require(LineString([
+            Coordinate3D(latitude: 9.0, longitude: 9.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+
+        let bbox = try #require(multiLineString.calculateBoundingBox())
+
+        #expect(bbox.southWest.latitude == 0.0)
+        #expect(bbox.southWest.longitude == 0.0)
+        #expect(bbox.northEast.latitude == 10.0)
+        #expect(bbox.northEast.longitude == 10.0)
+    }
+
+    // Validates the bounding box of a MultiLineString in EPSG:3857.
+    @Test
+    func boundingBox3857() async throws {
+        let lineStringA = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 5.0, y: 5.0),
+        ])
+        let lineStringB = LineString(unchecked: [
+            Coordinate3D(x: 5.0, y: 5.0),
+            Coordinate3D(x: 10.0, y: 10.0),
+        ])
+        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+
+        let bbox = try #require(multiLineString.calculateBoundingBox())
+
+        #expect(bbox.projection == .epsg3857)
+        #expect(bbox.southWest.x == 0.0)
+        #expect(bbox.southWest.y == 0.0)
+        #expect(bbox.northEast.x == 10.0)
+        #expect(bbox.northEast.y == 10.0)
+    }
+
+    // Validates intersects with a bounding box.
+    @Test
+    func intersectsBoundingBox() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let multiLineString = MultiLineString(unchecked: [lineStringA])
+
+        let overlapping = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 2.0, longitude: 2.0))
+        #expect(multiLineString.intersects(overlapping))
+
+        let farAway = BoundingBox(
+            southWest: Coordinate3D(latitude: 10.0, longitude: 10.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0))
+        #expect(!multiLineString.intersects(farAway))
+    }
+
+    // MARK: - Collection operations
+
+    // Validates insertLineString, appendLineString, and removeLineString.
+    @Test
+    func collectionOps() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let lineStringB = try #require(LineString([
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+        ]))
+        let lineStringC = try #require(LineString([
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]))
+
+        var multiLineString = MultiLineString(unchecked: [lineStringA])
+
+        multiLineString.appendLineString(lineStringB)
+        #expect(multiLineString.lineStrings.count == 2)
+
+        multiLineString.insertLineString(lineStringC, atIndex: 0)
+        #expect(multiLineString.lineStrings.count == 3)
+        #expect(multiLineString.lineStrings[0].coordinates == lineStringC.coordinates)
+
+        let removed = multiLineString.removeLineString(at: 1)
+        #expect(removed?.coordinates == lineStringA.coordinates)
+        #expect(multiLineString.lineStrings.count == 2)
+    }
+
 }

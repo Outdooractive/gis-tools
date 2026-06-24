@@ -9,7 +9,7 @@ extension BoundingBox {
 
     /// Creates a grid of square polygons.
     ///
-    /// - Parameter cellSide: Length of each cell side in meters.
+    /// - Parameter cellSide: Length of each cell side in meters (or native units for 3857/4978/noSRID).
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of square polygon features.
@@ -17,7 +17,7 @@ extension BoundingBox {
         cellSide: CLLocationDistance,
         mask: (any GeoJson)? = nil
     ) -> FeatureCollection {
-        rectangleGrid(
+        return rectangleGrid(
             cellWidth: cellSide,
             cellHeight: cellSide,
             mask: mask)

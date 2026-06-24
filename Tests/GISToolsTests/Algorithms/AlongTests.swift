@@ -18,14 +18,24 @@ struct AlongTests {
         #expect(coordinate2 == lineString.coordinates[lineString.coordinates.count - 1])
     }
 
-    // MARK: - EPSG:3857
-
     @Test
     func along3857() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 500_000.0, y: 500_000.0),
             Coordinate3D(x: 1_000_000.0, y: 0.0),
+        ]))
+        let coordinate = lineString.coordinateAlong(distance: 500_000.0)
+        #expect(coordinate.x.isFinite)
+        #expect(coordinate.y.isFinite)
+    }
+
+    @Test
+    func along4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 3.0, longitude: 3.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 6.0, longitude: 0.0).projected(to: .epsg4978),
         ]))
         let coordinate = lineString.coordinateAlong(distance: 500_000.0)
         #expect(coordinate.x.isFinite)

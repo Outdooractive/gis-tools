@@ -91,4 +91,43 @@ struct RhumbDestinationTests {
         #expect(abs(angle.latitude - expected) < 0.0000000001)
     }
 
+    // Tests rhumb destination in EPSG:3857.
+    @Test
+    func rhumbDestination3857() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0)
+        let dest = origin.rhumbDestination(distance: 100_000.0, bearing: 45.0)
+        #expect(dest.projection == .epsg3857)
+        #expect(dest.longitude.isFinite)
+        #expect(dest.latitude.isFinite)
+    }
+
+    // Tests rhumb destination in EPSG:4978.
+    @Test
+    func rhumbDestination4978() async throws {
+        let origin = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let dest = origin.rhumbDestination(distance: 100_000.0, bearing: 45.0)
+        #expect(dest.projection == .epsg4978)
+        #expect(dest.longitude.isFinite)
+        #expect(dest.latitude.isFinite)
+    }
+
+    // Tests that altitude and m values are preserved through rhumb destination computation.
+    @Test
+    func rhumbDestinationPreservesAltitudeAndM() async throws {
+        let coordinate = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 1234.0)
+        let result = coordinate.rhumbDestination(distance: 10_000.0, bearing: 90.0)
+        #expect(result.altitude == 500.0)
+        #expect(result.m == 1234.0)
+    }
+
+    // Tests that altitude and m are preserved in EPSG:3857.
+    @Test
+    func rhumbDestinationPreservesAltitudeAndM3857() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, z: 500.0, m: 1234.0)
+        let result = origin.rhumbDestination(distance: 10_000.0, bearing: 90.0)
+        #expect(result.altitude == 500.0)
+        #expect(result.m == 1234.0)
+        #expect(result.projection == .epsg3857)
+    }
+
 }

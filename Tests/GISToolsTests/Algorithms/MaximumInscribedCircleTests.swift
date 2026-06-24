@@ -289,11 +289,41 @@ struct MaximumInscribedCircleTests {
         let polygon = Polygon(unchecked: [coords4978])
         #expect(polygon.projection == .epsg4978)
 
-        // Just verify the pole is computable and produces a finite result
+        // Pole of inaccessibility
         let pole = polygon.poleOfInaccessibility(precision: 10.0)
         #expect(pole != nil)
         #expect(pole?.coordinate.longitude.isFinite == true)
         #expect(pole?.coordinate.latitude.isFinite == true)
+
+        // Maximum inscribed circle
+        let circle = polygon.maximumInscribedCircle(precision: 10.0)
+        #expect(circle != nil)
+        #expect(circle?.projection == .epsg4978)
+
+        let radius = polygon.maximumInscribedRadius(precision: 10.0)
+        #expect(radius != nil)
+        #expect(radius! > 0.0)
+    }
+
+    @Test
+    func circle4978() async throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let coords4978 = coords4326.map { $0.projected(to: .epsg4978) }
+        let polygon = Polygon(unchecked: [coords4978])
+        #expect(polygon.projection == .epsg4978)
+
+        let circle = try #require(polygon.maximumInscribedCircle())
+        #expect(circle.isValid)
+        #expect(circle.projection == polygon.projection)
+
+        let radius = try #require(polygon.maximumInscribedRadius())
+        #expect(radius > 0.0)
     }
 
 }

@@ -115,13 +115,43 @@ extension FeatureCollection {
             count)
         guard k > 0 else { return self }
 
-        // Extract coordinates
+        // Extract coordinates and detect projection once
         let coords: [Coordinate3D] = features.compactMap {
             ($0.geometry as? Point)?.coordinate
         }
-        guard coords.count == count,
-              k <= count
-        else { return self }
+        guard coords.count == count, k <= count else { return self }
+        let proj = coords.first?.projection ?? .epsg4326
+
+        // Build projection-specific squared-distance function
+        let distSq: (Coordinate3D, Coordinate3D) -> Double
+        if proj == .epsg4326 {
+            distSq = { a, b in
+                let dLat = (b.latitude - a.latitude).degreesToRadians
+                let dLon = (b.longitude - a.longitude).degreesToRadians
+                let lat1 = a.latitude.degreesToRadians
+                let lat2 = b.latitude.degreesToRadians
+                let sinDLat = sin(dLat / 2.0)
+                let sinDLon = sin(dLon / 2.0)
+                let h = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLon * sinDLon
+                // h is in [0, 1]; return squared chord length
+                return h
+            }
+        }
+        else if proj == .epsg4978 {
+            distSq = { a, b in
+                let dx = a.longitude - b.longitude
+                let dy = a.latitude - b.latitude
+                let dz = (a.altitude ?? 0.0) - (b.altitude ?? 0.0)
+                return dx * dx + dy * dy + dz * dz
+            }
+        }
+        else {
+            distSq = { a, b in
+                let dx = a.longitude - b.longitude
+                let dy = a.latitude - b.latitude
+                return dx * dx + dy * dy
+            }
+        }
 
         // Read weights if weightAttribute is provided
         let weights: [Double]
@@ -143,15 +173,20 @@ extension FeatureCollection {
 
         // K-means iterations
         let maxIter = 100
+        var clusterIndices: [[Int]] = Array(repeating: [], count: k)
         for _ in 0..<maxIter {
-            // Assign each point to nearest centroid, tracking indices
-            var clusterIndices: [[Int]] = Array(repeating: [], count: k)
+            // Clear previous assignments
+            for j in 0..<k {
+                clusterIndices[j].removeAll(keepingCapacity: true)
+            }
+
+            // Assign each point to nearest centroid (using squared distance for comparison)
             for i in 0..<count {
                 let coord = coords[i]
                 var best = 0
                 var bestDist = Double.greatestFiniteMagnitude
                 for j in 0..<k {
-                    let d = coord.distance(from: centroids[j])
+                    let d = distSq(coord, centroids[j])
                     if d < bestDist {
                         bestDist = d
                         best = j
@@ -167,25 +202,22 @@ extension FeatureCollection {
                 guard !indices.isEmpty else { continue }
 
                 var weightSum: Double = 0.0
-                var sumLat: Double = 0.0
-                var sumLon: Double = 0.0
+                var sumX: Double = 0.0
+                var sumY: Double = 0.0
                 for i in indices {
                     let w = max(weights[i], 0.0)
-                    let coord = coords[i]
                     weightSum += w
-                    sumLat += w * coord.latitude
-                    sumLon += w * coord.longitude
+                    sumX += w * coords[i].longitude
+                    sumY += w * coords[i].latitude
                 }
 
                 guard weightSum > 0 else { continue }
 
-                let newCentroid = Coordinate3D(
-                    latitude: sumLat / weightSum,
-                    longitude: sumLon / weightSum)
-                if centroids[j].latitude != newCentroid.latitude
-                    || centroids[j].longitude != newCentroid.longitude
-                {
-                    centroids[j] = newCentroid
+                let newX = sumX / weightSum
+                let newY = sumY / weightSum
+                if centroids[j].longitude != newX || centroids[j].latitude != newY {
+                    centroids[j].longitude = newX
+                    centroids[j].latitude = newY
                     changed = true
                 }
             }
@@ -198,7 +230,7 @@ extension FeatureCollection {
             var best = 0
             var bestDist = Double.greatestFiniteMagnitude
             for j in 0..<k {
-                let d = coord.distance(from: centroids[j])
+                let d = distSq(coord, centroids[j])
                 if d < bestDist {
                     bestDist = d
                     best = j

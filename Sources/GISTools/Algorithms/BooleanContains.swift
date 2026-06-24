@@ -13,6 +13,15 @@ extension GeoJson {
     /// "A contains B" means that no points of B lie in the exterior of A, and
     /// at least one point of B lies in the interior of A.
     ///
+    /// Projection handling varies by geometry type:
+    /// - **Polygon / MultiPolygon**: ``Projection/epsg4978`` (ECEF) coordinates
+    ///   are projected to ``Projection/epsg4326`` first; ``Projection/epsg3857``
+    ///   and ``Projection/noSRID`` are checked in their native coordinate space.
+    /// - **LineString / MultiLineString**: a 2‑D Euclidean distance check on
+    ///   ``longitude``/``latitude`` is used. Works for all projections but
+    ///   ignores altitude/Z.
+    /// - **Point / MultiPoint**: coordinates are compared for coincidence.
+    ///
     /// - Parameter other: The other geometry
     /// - Returns: `true` if the receiver contains the other geometry
     public func contains(_ other: GeoJson) -> Bool {
@@ -39,6 +48,8 @@ extension GeoJson {
     /// "A is within B" means that no points of A lie in the exterior of B, and
     /// at least one point of A lies in the interior of B.
     ///
+    /// Projection handling is the same as ``contains(_:)``.
+    ///
     /// - Parameter other: The other geometry
     /// - Returns: `true` if the receiver is within the other geometry
     public func isWithin(_ other: GeoJson) -> Bool {
@@ -50,12 +61,6 @@ extension GeoJson {
 // MARK: - BooleanContains namespace
 
 enum BooleanContains {
-
-}
-
-// MARK: - Geometry dispatch
-
-extension BooleanContains {
 
     static func contains(
         _ geom1: GeoJsonGeometry,

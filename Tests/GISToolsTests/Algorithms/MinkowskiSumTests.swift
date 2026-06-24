@@ -308,6 +308,55 @@ struct MinkowskiSumTests {
 
         let result = a.minkowskiSum(with: b)
         #expect(result != nil)
+        #expect(result?.projection == .epsg3857)
+    }
+
+    // Validates Minkowski sum of polygons in noSRID.
+    @Test
+    func minkowskiSumNoSRID() async throws {
+        let a = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let b = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 200.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 200.0, y: 200.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 200.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+
+        let result = a.minkowskiSum(with: b)
+        #expect(result != nil)
+        #expect(result?.projection == .noSRID)
+    }
+
+    // Validates Minkowski sum of polygons in EPSG:4978.
+    @Test
+    func minkowskiSum4978() async throws {
+        let aCoords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let bCoords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.2),
+            Coordinate3D(latitude: 0.2, longitude: 0.2),
+            Coordinate3D(latitude: 0.2, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let a = Polygon(unchecked: [aCoords4326.map { $0.projected(to: .epsg4978) }])
+        let b = Polygon(unchecked: [bCoords4326.map { $0.projected(to: .epsg4978) }])
+
+        let result = a.minkowskiSum(with: b)
+        #expect(result != nil)
+        #expect(result?.projection == .epsg4978)
     }
 
     // Validates Minkowski sum where both inputs cross the antimeridian.

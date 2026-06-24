@@ -31,4 +31,58 @@ struct BooleanClockwiseTests {
         #expect(ring.isCounterClockwise)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func booleanClockwise3857() async throws {
+        // Geographic CW ring projected to 3857.
+        let cw4326 = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let cw = Ring(unchecked: cw4326.coordinates.map { $0.projected(to: .epsg3857) })
+        #expect(cw.isClockwise)
+        #expect(cw.isCounterClockwise == false)
+
+        // Geographic CCW ring projected to 3857.
+        let ccw4326 = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let ccw = Ring(unchecked: ccw4326.coordinates.map { $0.projected(to: .epsg3857) })
+        #expect(ccw.isClockwise == false)
+        #expect(ccw.isCounterClockwise)
+    }
+
+    @Test
+    func booleanClockwise4978() async throws {
+        // Geographic CW ring projected to 4978.
+        let cw4326 = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let cw = Ring(unchecked: cw4326.coordinates.map { $0.projected(to: .epsg4978) })
+        #expect(cw.isClockwise)
+        #expect(cw.isCounterClockwise == false)
+    }
+
+    @Test
+    func booleanClockwiseNoSRID() {
+        // Raw 2-D shoelace (no antimeridian normalisation).
+        let cw = Ring(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ])
+        #expect(cw.isClockwise)
+        #expect(cw.isCounterClockwise == false)
+    }
+
 }

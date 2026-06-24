@@ -13,6 +13,9 @@ extension GeoJson {
     /// 4. Fixes ring orientation (outer CCW, inner CW per GeoJSON spec)
     /// 5. If splitting produces multiple components, returns the largest one
     ///
+    /// All projections are supported — delegates to cleaning, unkinking
+    /// and rewind which all work for any CRS.
+    ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before processing.
     /// - Returns: A valid geometry of the same type, or `nil` if repair is impossible.
     public func madeValid(

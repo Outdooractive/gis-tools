@@ -46,6 +46,31 @@ struct PointToLineDistanceTests {
         #expect(abs(distance - 500.0) < 1.0)
     }
 
+    // Verifies distance from point to line string in EPSG:4978.
+    @Test
+    func pointToLineDistance4978() throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978),
+        ]))
+        let coordinate = Coordinate3D(
+            latitude: 0.0045, longitude: 0.0045).projected(to: .epsg4978)
+        let distance = lineString.distanceFrom(coordinate: coordinate)
+        #expect(distance > 0.0)
+    }
+
+    // Verifies distance from point to line string in noSRID.
+    @Test
+    func pointToLineDistanceNoSRID() throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+        ]))
+        let coordinate = Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID)
+        let distance = lineString.distanceFrom(coordinate: coordinate)
+        #expect(abs(distance - 50.0) < 1.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

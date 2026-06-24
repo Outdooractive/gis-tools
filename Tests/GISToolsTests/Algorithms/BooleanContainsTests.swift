@@ -304,7 +304,7 @@ struct BooleanContainsTests {
     // MARK: - Projection tests
 
     @Test
-    func polygonContainsPoint3857() {
+    func containsEPSG3857() {
         let polygon = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
@@ -316,6 +316,240 @@ struct BooleanContainsTests {
         let outside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
         #expect(polygon.contains(inside))
         #expect(polygon.contains(outside) == false)
+        #expect(inside.isWithin(polygon))
+    }
+
+    @Test
+    func containsEPSG4978() async throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let inside = Point(Coordinate3D(latitude: 0.5, longitude: 0.5)).projected(to: .epsg4978)
+        let outside = Point(Coordinate3D(latitude: 5.0, longitude: 5.0)).projected(to: .epsg4978)
+        #expect(polygon.contains(inside))
+        #expect(polygon.contains(outside) == false)
+    }
+
+    @Test
+    func containsNoSRID() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let inside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))
+        let outside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .noSRID))
+        #expect(polygon.contains(inside))
+        #expect(polygon.contains(outside) == false)
+    }
+
+    // MARK: - Projection tests for non-Polygon types
+
+    @Test
+    func multiPointContainsPointEPSG3857() throws {
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0)])
+        #expect(mp.contains(Point(Coordinate3D(x: 0.0, y: 0.0))))
+        #expect(mp.contains(Point(Coordinate3D(x: 1_000.0, y: 1_000.0))))
+        #expect(mp.contains(Point(Coordinate3D(x: 500.0, y: 500.0))) == false)
+    }
+
+    @Test
+    func multiPointContainsPointEPSG4978() async throws {
+        let a = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let b = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let mp = MultiPoint(unchecked: [a, b])
+        #expect(mp.contains(Point(a)))
+        #expect(mp.contains(Point(b)))
+        #expect(mp.contains(Point(Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978))) == false)
+    }
+
+    @Test
+    func multiPointContainsPointNoSRID() throws {
+        let mp = MultiPoint(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID)])
+        #expect(mp.contains(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))))
+        #expect(mp.contains(Point(Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID))))
+        #expect(mp.contains(Point(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))) == false)
+    }
+
+    @Test
+    func lineStringContainsPointEPSG3857() throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0)])
+        #expect(line.contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
+        #expect(line.contains(Point(Coordinate3D(x: 600.0, y: 500.0))) == false)
+    }
+
+    @Test
+    func lineStringContainsPointEPSG4978() async throws {
+        // Short ECEF segment at Z=0 so 2D XY check is exact.
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100.0, y: 100.0, z: 0.0, projection: .epsg4978)])
+        #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978))))
+        #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 60.0, z: 0.0, projection: .epsg4978))) == false)
+    }
+
+    @Test
+    func lineStringContainsPointNoSRID() throws {
+        let line = LineString(unchecked: [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID)])
+        #expect(line.contains(Point(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))))
+        #expect(line.contains(Point(Coordinate3D(x: 5.0, y: 6.0, projection: .noSRID))) == false)
+    }
+
+    @Test
+    func multiLineStringContainsPointEPSG3857() throws {
+        let ml = MultiLineString(unchecked: [
+            LineString(unchecked: [Coordinate3D(x: 0.0, y: 0.0), Coordinate3D(x: 500.0, y: 500.0)]),
+            LineString(unchecked: [Coordinate3D(x: 1_000.0, y: 0.0), Coordinate3D(x: 1_500.0, y: 500.0)])])
+        #expect(ml.contains(Point(Coordinate3D(x: 250.0, y: 250.0))))
+        #expect(ml.contains(Point(Coordinate3D(x: 1_250.0, y: 250.0))))
+        #expect(ml.contains(Point(Coordinate3D(x: 750.0, y: 750.0))) == false)
+    }
+
+    @Test
+    func multiLineStringContainsPointEPSG4978() async throws {
+        let ml = MultiLineString(unchecked: [
+            LineString(unchecked: [Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978), Coordinate3D(x: 100.0, y: 100.0, z: 0.0, projection: .epsg4978)]),
+            LineString(unchecked: [Coordinate3D(x: 200.0, y: 0.0, z: 0.0, projection: .epsg4978), Coordinate3D(x: 300.0, y: 100.0, z: 0.0, projection: .epsg4978)])])
+        #expect(ml.contains(Point(Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978))))
+        #expect(ml.contains(Point(Coordinate3D(x: 250.0, y: 50.0, z: 0.0, projection: .epsg4978))))
+        #expect(ml.contains(Point(Coordinate3D(x: 150.0, y: 150.0, z: 0.0, projection: .epsg4978))) == false)
+    }
+
+    @Test
+    func multiLineStringContainsPointNoSRID() throws {
+        let ml = MultiLineString(unchecked: [
+            LineString(unchecked: [Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID), Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID)]),
+            LineString(unchecked: [Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID), Coordinate3D(x: 15.0, y: 5.0, projection: .noSRID)])])
+        #expect(ml.contains(Point(Coordinate3D(x: 2.5, y: 2.5, projection: .noSRID))))
+        #expect(ml.contains(Point(Coordinate3D(x: 12.5, y: 2.5, projection: .noSRID))))
+        #expect(ml.contains(Point(Coordinate3D(x: 7.5, y: 7.5, projection: .noSRID))) == false)
+    }
+
+    // MARK: - Polygon × MultiLineString / MultiPolygon
+
+    @Test
+    func polygonContainsMultiLineString() async throws {
+        let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
+        let insideLine = LineString([Coordinate3D(latitude: 2.0, longitude: 2.0), Coordinate3D(latitude: 5.0, longitude: 5.0)])!
+        let outsideLine = LineString([Coordinate3D(latitude: 5.0, longitude: 5.0), Coordinate3D(latitude: 15.0, longitude: 15.0)])!
+        let mlInside = MultiLineString([insideLine])!
+        let mlOutside = MultiLineString([outsideLine])!
+        #expect(polygon.contains(mlInside))
+        #expect(polygon.contains(mlOutside) == false)
+    }
+
+    @Test
+    func polygonContainsMultiPolygon() async throws {
+        let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
+        let inner1 = try #require(Polygon([[Coordinate3D(latitude: 2.0, longitude: 2.0), Coordinate3D(latitude: 2.0, longitude: 8.0), Coordinate3D(latitude: 8.0, longitude: 8.0), Coordinate3D(latitude: 8.0, longitude: 2.0), Coordinate3D(latitude: 2.0, longitude: 2.0)]]))
+        let inner2 = try #require(Polygon([[Coordinate3D(latitude: 12.0, longitude: 12.0), Coordinate3D(latitude: 12.0, longitude: 18.0), Coordinate3D(latitude: 18.0, longitude: 18.0), Coordinate3D(latitude: 18.0, longitude: 12.0), Coordinate3D(latitude: 12.0, longitude: 12.0)]]))
+        let mp = MultiPolygon([inner1, inner2])!
+        #expect(outer.contains(mp))
+    }
+
+    // MARK: - Feature / FeatureCollection with non-4326 projections
+
+    @Test
+    func featureContainsPointEPSG3857() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
+    }
+
+    @Test
+    func featureContainsPointEPSG4978() async throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        #expect(Feature(polygon4326.projected(to: .epsg4978)).contains(Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))))
+    }
+
+    @Test
+    func featureContainsPointNoSRID() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))))
+    }
+
+    @Test
+    func featureCollectionContainsPointEPSG3857() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        #expect(FeatureCollection([Feature(polygon)]).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
+    }
+
+    @Test
+    func featureCollectionContainsPointEPSG4978() async throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        #expect(FeatureCollection([Feature(polygon4326.projected(to: .epsg4978))]).contains(Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))))
+    }
+
+    @Test
+    func featureCollectionContainsPointNoSRID() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        #expect(FeatureCollection([Feature(polygon)]).contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))))
+    }
+
+    // MARK: - GeometryCollection contains
+
+    @Test
+    func geometryCollectionContainsPoint() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        let gc = GeometryCollection([polygon])
+        #expect(gc.contains(Point(Coordinate3D(latitude: 5.0, longitude: 5.0))))
+        #expect(gc.contains(Point(Coordinate3D(latitude: 20.0, longitude: 20.0))) == false)
     }
 
     // MARK: - Bounding box fast-fail
@@ -373,6 +607,29 @@ struct BooleanContainsTests {
         let pointOffLine = Point(Coordinate3D(latitude: 5.0, longitude: -175.0))
         #expect(line.contains(pointOnLine))
         #expect(line.contains(pointOffLine) == false)
+    }
+
+    // MARK: - Empty / degenerate
+
+    @Test
+    func emptyPolygonDoesNotContain() async throws {
+        let emptyPolygon = Polygon()
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(emptyPolygon.contains(point) == false)
+    }
+
+    @Test
+    func singlePointLineStringContainsItsPoint() throws {
+        let degenerateLine = LineString(unchecked: [Coordinate3D(latitude: 5.0, longitude: 10.0)])
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 10.0))
+        #expect(degenerateLine.contains(point) == false)
+    }
+
+    @Test
+    func emptyMultiPointContainsNothing() {
+        let emptyMultiPoint = MultiPoint()
+        let point = Point(Coordinate3D(latitude: 1.0, longitude: 2.0))
+        #expect(emptyMultiPoint.contains(point) == false)
     }
 
 }

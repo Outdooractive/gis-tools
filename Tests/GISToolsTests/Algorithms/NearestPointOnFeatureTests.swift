@@ -136,6 +136,20 @@ struct NearestPointOnFeatureTests {
         #expect(result.distance == 0.0)
     }
 
+    // Verifies the nearest coordinate on a polygon in EPSG:4978 is computed.
+    @Test
+    func nearestOnPolygonInside4978() throws {
+        let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c10 = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let c11 = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let c01 = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
+        let polygon = Polygon(unchecked: [[c00, c10, c11, c01, c00]])
+        let ref = Coordinate3D(latitude: 2.0, longitude: 0.5).projected(to: .epsg4978)
+        let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
+        #expect(result.coordinate.projection == .epsg4978)
+        #expect(result.distance >= 0.0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

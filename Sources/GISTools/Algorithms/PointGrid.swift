@@ -9,7 +9,7 @@ extension BoundingBox {
 
     /// Creates a grid of points within the bounding box.
     ///
-    /// - Parameter cellSide: Spacing between points in meters.
+    /// - Parameter cellSide: Spacing between points in meters (or native units for 3857/4978/noSRID).
     /// - Parameter mask: If provided, only points intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of point features.
@@ -35,8 +35,7 @@ private enum PointGrid {
         mask: (any GeoJson)?
     ) -> FeatureCollection {
         let projection = bbox.projection
-        guard projection != .noSRID else { return FeatureCollection() }
-        let coordinatesAreInMeters = projection == .epsg3857
+        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978 || projection == .noSRID
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
@@ -83,7 +82,7 @@ private enum PointGrid {
             for _ in 0 ..< rows {
                 let coord: Coordinate3D
                 if coordinatesAreInMeters {
-                    coord = Coordinate3D(x: currentX, y: currentY)
+                    coord = Coordinate3D(x: currentX, y: currentY, projection: projection)
                 }
                 else {
                     coord = Coordinate3D(latitude: currentY, longitude: currentX)

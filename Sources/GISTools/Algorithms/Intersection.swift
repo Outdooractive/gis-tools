@@ -6,6 +6,10 @@ extension Polygon {
     ///
     /// The result is the overlapping region that lies inside both polygons.
     ///
+    /// All projections are supported. For non-3857 projections the geometries
+    /// are projected to EPSG:3857, the overlay is computed, and the result is
+    /// projected back to the original CRS.
+    ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A `PolygonGeometry` representing the intersection, or `nil` if the polygons do not overlap.
@@ -28,6 +32,10 @@ extension Polygon {
 extension MultiPolygon {
 
     /// Returns the geometric intersection of the receiver with another polygon geometry.
+    ///
+    /// All projections are supported. For non-3857 projections the geometries
+    /// are projected to EPSG:3857, the overlay is computed, and the result is
+    /// projected back to the original CRS.
     ///
     /// - Parameter other: The other polygon geometry
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).

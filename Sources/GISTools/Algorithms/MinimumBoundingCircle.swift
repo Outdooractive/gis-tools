@@ -13,6 +13,10 @@ extension GeoJson {
     /// For a single ``Point`` the result is `nil`. For an empty geometry the
     /// result is `nil`.
     ///
+    /// All projections are supported. The internal Welzl algorithm operates
+    /// on native coordinate values (degrees for 4326, meters for 3857/4978).
+    /// Antimeridian normalisation only applies to EPSG:4326.
+    ///
     /// - Parameter steps: The number of steps to approximate the circle (default `64`, minimum `3`).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``Polygon`` approximating the minimum bounding circle
@@ -110,10 +114,11 @@ private enum MinimumBoundingCircle {
 
         // Antimeridian normalization: if the hull spans >180° of longitude,
         // shift negative values by +360° so Euclidean distances reflect the
-        // short path across the date line.
+        // short path across the date line. Only applies to EPSG:4326.
         let minLon = hullCoords.map(\.longitude).min() ?? 0
         let maxLon = hullCoords.map(\.longitude).max() ?? 0
-        if (maxLon - minLon) > 180.0 {
+        let is4326 = hullCoords.first?.projection == .epsg4326
+        if is4326, (maxLon - minLon) > 180.0 {
             hullCoords = hullCoords.map { coord in
                 Coordinate3D(
                     latitude: coord.latitude,

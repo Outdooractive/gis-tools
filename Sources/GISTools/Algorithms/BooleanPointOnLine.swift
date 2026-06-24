@@ -10,7 +10,10 @@ extension LineSegment {
 
     /// Tests if *Coordinate3D* is on the segment.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    public func checkIsOnSegment(_ coordinate: Coordinate3D, gridSize: Double? = nil) -> Bool {
+    public func checkIsOnSegment(
+        _ coordinate: Coordinate3D,
+        gridSize: Double? = nil
+    ) -> Bool {
         let coordinate = coordinate.projected(to: projection)
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
@@ -37,7 +40,10 @@ extension LineStringGeometry {
 
     /// Tests if *Coordinate3D* is on the line.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    public func checkIsOnLine(_ coordinate: Coordinate3D, gridSize: Double? = nil) -> Bool {
+    public func checkIsOnLine(
+        _ coordinate: Coordinate3D,
+        gridSize: Double? = nil
+    ) -> Bool {
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
         return lineSegments.contains { (segment) in
             segment.checkIsOnSegment(snappedCoordinate, gridSize: gridSize)
@@ -46,7 +52,10 @@ extension LineStringGeometry {
 
     /// Tests if *Point* is on the line.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    public func checkIsOnLine(_ point: Point, gridSize: Double? = nil) -> Bool {
+    public func checkIsOnLine(
+        _ point: Point,
+        gridSize: Double? = nil
+    ) -> Bool {
         checkIsOnLine(point.coordinate, gridSize: gridSize)
     }
 

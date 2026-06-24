@@ -10,7 +10,7 @@ extension BoundingBox {
     /// Creates a grid of triangular polygons within the bounding box.
     /// Two triangles are created in each rectangular cell.
     ///
-    /// - Parameter cellSide: Dimension of each grid cell side in meters.
+    /// - Parameter cellSide: Dimension of each grid cell side in meters (or native units for 3857/4978/noSRID).
     /// - Parameter mask: If provided, only triangles intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of triangular polygon features.
@@ -36,8 +36,7 @@ private enum TriangleGrid {
         mask: (any GeoJson)?
     ) -> FeatureCollection {
         let projection = bbox.projection
-        guard projection != .noSRID else { return FeatureCollection() }
-        let coordinatesAreInMeters = projection == .epsg3857
+        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978 || projection == .noSRID
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude
@@ -78,7 +77,7 @@ private enum TriangleGrid {
 
         func coord(x: Double, y: Double) -> Coordinate3D {
             if coordinatesAreInMeters {
-                Coordinate3D(x: x, y: y)
+                Coordinate3D(x: x, y: y, projection: projection)
             }
             else {
                 Coordinate3D(latitude: y, longitude: x)

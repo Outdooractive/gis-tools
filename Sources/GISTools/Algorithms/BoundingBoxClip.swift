@@ -9,6 +9,9 @@ extension Point {
 
     /// Clips the *Point* to the bounding box.
     ///
+    /// All projections are supported — the 2‑D Cohen–Sutherland clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    ///
     /// - Parameter boundingBox: The bounding box
     ///
     /// - Returns: The point if is inside the bounding box, *nil* otherwise.
@@ -22,6 +25,9 @@ extension Point {
 extension MultiPoint {
 
     /// Clips the *MultiPoint* to the bounding box.
+    ///
+    /// All projections are supported — the 2‑D Cohen–Sutherland clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
     ///
     /// - Parameter boundingBox: The bounding box
     ///
@@ -43,6 +49,9 @@ extension LineString {
 
     /// Clips the *LineString* to the bounding box.
     ///
+    /// All projections are supported — the 2‑D Cohen–Sutherland clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    ///
     /// - Parameter boundingBox: The bounding box
     ///
     /// - Returns: The line clipped to the bounding box.
@@ -62,6 +71,9 @@ extension MultiLineString {
 
     /// Clips the *MultiLineString* to the bounding box.
     ///
+    /// All projections are supported — the 2‑D Cohen–Sutherland clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    ///
     /// - Parameter boundingBox: The bounding box
     ///
     /// - Returns: The lines clipped to the bounding box.
@@ -80,6 +92,9 @@ extension MultiLineString {
 extension Polygon {
 
     /// Clips the *Polygon* to the bounding box. May result in degenerate edges.
+    ///
+    /// All projections are supported — the 2‑D Sutherland–Hodgeman clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
     ///
     /// - Parameter boundingBox: The bounding box
     ///
@@ -116,6 +131,9 @@ extension MultiPolygon {
 
     /// Clips the *MultiPolygon* to the bounding box. May result in degenerate edges.
     ///
+    /// All projections are supported — the 2‑D Sutherland–Hodgeman clipping
+    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    ///
     /// - Parameter boundingBox: The bounding box
     ///
     /// - Returns: The polygons clipped to the bounding box, or *nil* if the polygon would be empty.
@@ -137,6 +155,9 @@ extension MultiPolygon {
 extension GeometryCollection {
 
     /// Clips the *GeometryCollection* to the bounding box.
+    ///
+    /// All projections are supported — delegates to each geometry's
+    /// ``clipped(to:)``.
     ///
     /// - Parameter boundingBox: The bounding box
     ///
@@ -300,7 +321,7 @@ extension BoundingBox {
             codeA = lastCode
         }
 
-        if !part.isEmpty {
+        if part.isNotEmpty {
             result.append(part)
         }
 

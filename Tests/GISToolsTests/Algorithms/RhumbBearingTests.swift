@@ -19,6 +19,26 @@ struct RhumbBearingTests {
         #expect(abs(finalBearing - -104.719) < 0.01)
     }
 
+    // Tests rhumb bearing calculation in EPSG:3857 (Web Mercator).
+    @Test
+    func rhumbBearing3857() async throws {
+        let origin = Coordinate3D(x: 0.0, y: 0.0)
+        let target = Coordinate3D(x: 100_000.0, y: 100_000.0)
+
+        #expect(abs(origin.rhumbBearing(to: target) - 45.0) < 0.01)
+    }
+
+    // Tests rhumb bearing calculation in EPSG:4978 (ECEF Cartesian).
+    @Test
+    func rhumbBearing4978() async throws {
+        // Project known 4326 coordinates to 4978, then compute rhumb bearing.
+        let origin4326 = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let target4326 = Coordinate3D(latitude: 0.0, longitude: 1.0)
+        let origin = origin4326.projected(to: .epsg4978)
+        let target = target4326.projected(to: .epsg4978)
+        #expect(abs(origin.rhumbBearing(to: target) - 90.0) < 0.01)
+    }
+
     // Tests rhumb bearing calculation with .noSRID (Cartesian coordinates).
     @Test
     func rhumbBearingNoSRID() async throws {

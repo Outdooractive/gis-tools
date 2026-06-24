@@ -17,7 +17,7 @@ extension GeoJson {
 
     /// Returns a *Coordinate3D* guaranteed to be on the surface of the feature.
     public var coordinateOnFeature: Coordinate3D? {
-        coordinateOnFeature(failOnMiss: false)
+        return coordinateOnFeature(failOnMiss: false)
     }
 
     /// Returns a *Point* guaranteed to be on the surface of the feature.
@@ -32,7 +32,7 @@ extension GeoJson {
     /// Returns a *Coordinate3D* guaranteed to be on the surface of the feature.
     /// - Parameter gridSize: A grid size to snap coordinates to before computing the coordinate on feature.
     public func coordinateOnFeature(gridSize: Double? = nil) -> Coordinate3D? {
-        coordinateOnFeature(failOnMiss: false, gridSize: gridSize)
+        return coordinateOnFeature(failOnMiss: false, gridSize: gridSize)
     }
 
     private func coordinateOnFeature(failOnMiss: Bool = false, gridSize: Double? = nil) -> Coordinate3D? {

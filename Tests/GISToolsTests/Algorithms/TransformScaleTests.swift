@@ -54,7 +54,7 @@ struct TransformScaleTests {
         #expect(scaled4 == result4)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func transformScale3857() async throws {
@@ -67,6 +67,33 @@ struct TransformScaleTests {
         ]]))
         let result = polygon.scaled(factor: 2.0)
         #expect(result.allCoordinates.count == 5)
+        #expect(result.projection == .epsg3857)
+    }
+
+    @Test
+    func transformScale4978() async throws {
+        let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c10 = Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978)
+        let c11 = Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978)
+        let c01 = Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)
+        let polygon = try #require(Polygon([[c00, c10, c11, c01, c00]]))
+        let result = polygon.scaled(factor: 2.0)
+        #expect(result.allCoordinates.count == 5)
+        #expect(result.projection == .epsg4978)
+    }
+
+    @Test
+    func transformScaleNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let result = polygon.scaled(factor: 2.0)
+        #expect(result.allCoordinates.count == 5)
+        #expect(result.projection == .noSRID)
     }
 
     // MARK: - Antimeridian

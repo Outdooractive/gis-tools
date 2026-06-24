@@ -182,16 +182,45 @@ struct BooleanConcaveTests {
     // MARK: - Projection tests
 
     @Test
-    func convexPolygonConcave3857() {
-        let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
-        #expect(polygon.contains(point))
+    func concavePolygon3857() async throws {
+        // L-shape concave polygon in 4326, projected to 3857.
+        let concave4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon3857 = Polygon(unchecked: [concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }])
+        #expect(polygon3857.isConcave())
+
+        // Convex square in 4326, projected to 3857.
+        let convex4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon3857b = Polygon(unchecked: [convex4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }])
+        #expect(!polygon3857b.isConcave())
+    }
+
+    @Test
+    func concavePolygon4978() async throws {
+        let concave4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon4978 = Polygon(unchecked: [concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg4978) }])
+        #expect(polygon4978.isConcave())
     }
 
     // MARK: - Antimeridian crossing

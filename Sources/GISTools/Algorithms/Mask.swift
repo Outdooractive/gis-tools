@@ -12,23 +12,34 @@ extension PolygonGeometry {
     /// The result is ``outerPolygon`` with this geometry cut out as a hole (or holes).
     /// If no outer polygon is provided, the world bounding box `(-180, -90, 180, 90)` is used.
     ///
+    /// All projections are supported. The containment check delegates to
+    /// ``PolygonGeometry/contains(_:ignoringBoundary:gridSize:)`` which handles
+    /// 4978→4326 projection. The antimeridian normalisation only applies
+    /// to EPSG:4326.
+    ///
     /// - Parameter outerPolygon: The polygon to mask (defaults to the world bounding box).
     /// - Returns: A masked ``Polygon``, or `nil` if the geometry is empty.
     public func mask(outerPolygon: Polygon? = nil) -> Polygon? {
-        let outer = outerPolygon ?? Polygon.world
+        let outer = outerPolygon ?? Polygon.world.projected(to: projection)
         guard let outerRing = outer.outerRing else { return nil }
 
         let holes: [Ring] = polygons.compactMap { $0.outerRing }
         guard holes.isNotEmpty else { return outer }
 
         // Normalise antimeridian crossing so the Cartesian containment check works.
-        // If the outer polygon spans >180° (but < 360°) of longitude, shift all
-        // negative longitudes by +360° to make the coordinates contiguous.
+        // This only applies to EPSG:4326 where longitude is in degrees.
+        // For other projections the values are in projection units (meters for 3857/4978).
         let outerCoords = outerRing.coordinates
-        let minOuterLon = outerCoords.map(\.longitude).min() ?? 0
-        let maxOuterLon = outerCoords.map(\.longitude).max() ?? 0
-        let span = maxOuterLon - minOuterLon
-        let needShift = span > 180.0 && span < 360.0
+        let needShift: Bool
+        if projection == .epsg4326 {
+            let minOuterLon = outerCoords.map(\.longitude).min() ?? 0
+            let maxOuterLon = outerCoords.map(\.longitude).max() ?? 0
+            let span = maxOuterLon - minOuterLon
+            needShift = span > 180.0 && span < 360.0
+        }
+        else {
+            needShift = false
+        }
 
         let containedHoles: [Ring]
         if needShift {
@@ -58,18 +69,5 @@ extension PolygonGeometry {
 
         return Polygon(unchecked: [outerRing] + containedHoles)
     }
-
-}
-
-extension Polygon {
-
-    /// A polygon representing the world bounding box `(-180, -90, 180, 90)`.
-    public static let world: Polygon = Polygon(unchecked: [[
-        Coordinate3D(latitude: -90.0, longitude: -180.0),
-        Coordinate3D(latitude: -90.0, longitude: 180.0),
-        Coordinate3D(latitude: 90.0, longitude: 180.0),
-        Coordinate3D(latitude: 90.0, longitude: -180.0),
-        Coordinate3D(latitude: -90.0, longitude: -180.0),
-    ]])
 
 }

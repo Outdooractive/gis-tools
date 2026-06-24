@@ -10,6 +10,8 @@ extension PointGeometry {
     /// Compares two Point|MultiPoint geometries and returns true if their intersection set results in a geometry
     /// different from both but of the same dimension.
     ///
+    /// All projections are supported — coordinates are compared for equality.
+    ///
     /// - Parameter other: The other Point or MultiPoint
     /// - Parameter tolerance: The tolerance, in meters.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).

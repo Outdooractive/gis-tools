@@ -7,8 +7,14 @@ import Foundation
 
 extension Coordinate3D {
 
-    /// Finds the bearing angle between the receiver and another coordinate along a Rhumb line,
-    /// i.e. the angle measured in degrees from the north line (0 degrees).
+    /// Finds the bearing angle between the receiver and another coordinate
+    /// along a Rhumb line, i.e. the angle measured in degrees from the north
+    /// line (0 degrees).
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
+    /// computed by projecting both points to ``Projection/epsg4326`` first.
+    /// This produces a correct rhumb-bearing for Earth-surface points. Any
+    /// altitude difference between the coordinates is ignored.
     ///
     /// - Parameters:
     /// - Parameter other: The other coordinate

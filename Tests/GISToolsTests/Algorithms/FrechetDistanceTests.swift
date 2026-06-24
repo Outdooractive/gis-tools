@@ -152,4 +152,34 @@ struct FrechetDistanceTests {
         #expect(distance > 0.0 && distance < 5_000_000.0)
     }
 
+    // MARK: - Projection: noSRID
+
+    @Test
+    func frechetDistanceNoSRID() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 15.0, y: 0.0, projection: .noSRID),
+        ]))
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .euclidean)
+        #expect(abs(distance - 5.0) < 0.0001)
+    }
+
+    @Test
+    func frechetDistance4978() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(x: 50.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 150.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let distance = line1.frechetDistance(from: line2, distanceFunction: .euclidean)
+        #expect(abs(distance - 50.0) < 0.0001)
+    }
+
 }

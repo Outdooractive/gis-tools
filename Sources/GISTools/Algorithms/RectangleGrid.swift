@@ -9,8 +9,8 @@ extension BoundingBox {
 
     /// Creates a grid of rectangular polygons.
     ///
-    /// - Parameter cellWidth: Width of each cell in meters.
-    /// - Parameter cellHeight: Height of each cell in meters.
+    /// - Parameter cellWidth: Width of each cell in meters (or native units for 3857/4978/noSRID).
+    /// - Parameter cellHeight: Height of each cell in meters (or native units for 3857/4978/noSRID).
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of rectangular polygon features.
@@ -39,30 +39,7 @@ private enum RectangleGrid {
         mask: (any GeoJson)?
     ) -> FeatureCollection {
         let projection = bbox.projection
-
-        // For EPSG:3857 coordinates are in meters (cell dimensions too — use directly).
-        // For EPSG:4326 and EPSG:4978 coordinates are in degrees
-        // (geodetic for 4978, converted from ECEF) — convert cell from meters to degrees.
-        // noSRID has no meaningful coordinate space for a grid.
-        guard projection != .noSRID else { return FeatureCollection() }
-        return gridProjected(
-            bbox: bbox,
-            cellWidth: cellWidth,
-            cellHeight: cellHeight,
-            mask: mask)
-    }
-
-    private static func gridProjected(
-        bbox: BoundingBox,
-        cellWidth: CLLocationDistance,
-        cellHeight: CLLocationDistance,
-        mask: (any GeoJson)?
-    ) -> FeatureCollection {
-        let projection = bbox.projection
-        // For 3857: coordinates are in meters, cell dimensions are too — use directly.
-        // For 4326/4978: coordinates are in degrees, convert cell from meters to degrees.
-        let coordinatesAreInMeters = projection == .epsg3857
-
+        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978 || projection == .noSRID
         let cellStepX: Double = coordinatesAreInMeters ? cellWidth : cellWidth / 111_325.0
         let cellStepY: Double = coordinatesAreInMeters ? cellHeight : cellHeight / 111_325.0
 
@@ -91,11 +68,11 @@ private enum RectangleGrid {
                 let cellPoly: Polygon
                 if coordinatesAreInMeters {
                     cellPoly = Polygon(unchecked: [[
-                        Coordinate3D(x: currentX, y: currentY),
-                        Coordinate3D(x: currentX, y: currentY + cellStepY),
-                        Coordinate3D(x: currentX + cellStepX, y: currentY + cellStepY),
-                        Coordinate3D(x: currentX + cellStepX, y: currentY),
-                        Coordinate3D(x: currentX, y: currentY),
+                        Coordinate3D(x: currentX, y: currentY, projection: projection),
+                        Coordinate3D(x: currentX, y: currentY + cellStepY, projection: projection),
+                        Coordinate3D(x: currentX + cellStepX, y: currentY + cellStepY, projection: projection),
+                        Coordinate3D(x: currentX + cellStepX, y: currentY, projection: projection),
+                        Coordinate3D(x: currentX, y: currentY, projection: projection),
                     ]])
                 }
                 else {

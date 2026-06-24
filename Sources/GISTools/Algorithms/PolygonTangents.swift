@@ -14,6 +14,9 @@ extension Polygon {
     /// Returns `nil` if the point is inside the polygon or if the polygon has
     /// no outer ring.
     ///
+    /// All projections are supported. The tangent-finding algorithm uses
+    /// cross products on native XY values.
+    ///
     /// - Parameter point: An external point
     /// - Returns: A ``MultiPoint`` with the two tangent points, or `nil`
     public func tangentPoints(to point: Coordinate3D) -> MultiPoint? {
@@ -31,15 +34,21 @@ extension Polygon {
         guard vertices.count >= 3 else { return nil }
 
         // Determine whether to shift longitudes for antimeridian handling.
-        // Case 1: the polygon itself spans the date line (max-min > 180°).
-        // Case 2: the polygon is compact but the point is on the far side
-        //         (raw longitude difference from polygon centroid > 180°),
-        //         so the shortest tangent crosses the date line.
-        let minLon = vertices.map(\.longitude).min() ?? 0
-        let maxLon = vertices.map(\.longitude).max() ?? 0
-        let centroidLon = (minLon + maxLon) / 2.0
-        let spansAntimeridian = (maxLon - minLon) > 180.0
-        let pointOnFarSide = abs(point.longitude - centroidLon) > 180.0
+        // Only applies to EPSG:4326. For meter-based CRS the coordinate
+        // values are already in projection units (meters).
+        let spansAntimeridian: Bool
+        let pointOnFarSide: Bool
+        if projection == .epsg4326 {
+            let minLon = vertices.map(\.longitude).min() ?? 0
+            let maxLon = vertices.map(\.longitude).max() ?? 0
+            let centroidLon = (minLon + maxLon) / 2.0
+            spansAntimeridian = (maxLon - minLon) > 180.0
+            pointOnFarSide = abs(point.longitude - centroidLon) > 180.0
+        }
+        else {
+            spansAntimeridian = false
+            pointOnFarSide = false
+        }
 
         let shiftedPoint: Coordinate3D
         var shiftedVertices = vertices
@@ -48,24 +57,26 @@ extension Polygon {
         if spansAntimeridian {
             shouldUnshift = true
             shiftedPoint = Coordinate3D(
-                latitude: point.latitude,
-                longitude: point.longitude < 0 ? point.longitude + 360.0 : point.longitude,
-                altitude: point.altitude,
-                m: point.m)
+                x: point.longitude < 0 ? point.longitude + 360.0 : point.longitude,
+                y: point.latitude,
+                z: point.altitude,
+                m: point.m,
+                projection: projection)
             shiftedVertices = vertices.map { coord in
                 let newLon = coord.longitude < 0 ? coord.longitude + 360.0 : coord.longitude
-                return Coordinate3D(latitude: coord.latitude, longitude: newLon, altitude: coord.altitude, m: coord.m)
+                return Coordinate3D(x: newLon, y: coord.latitude, z: coord.altitude, m: coord.m, projection: projection)
             }
         }
         else if pointOnFarSide {
             // Shift the point so it approaches the polygon across the date line
             shouldUnshift = true
-            let shift = point.longitude < centroidLon ? 360.0 : -360.0
+            let shift = point.longitude < (vertices.map(\.longitude).min()! + vertices.map(\.longitude).max()!) / 2.0 ? 360.0 : -360.0
             shiftedPoint = Coordinate3D(
-                latitude: point.latitude,
-                longitude: point.longitude + shift,
-                altitude: point.altitude,
-                m: point.m)
+                x: point.longitude + shift,
+                y: point.latitude,
+                z: point.altitude,
+                m: point.m,
+                projection: projection)
             shiftedVertices = vertices
         }
         else {
@@ -81,8 +92,8 @@ extension Polygon {
         // Unshift tangents back to original longitude range
         func unshift(_ coord: Coordinate3D) -> Coordinate3D {
             guard shouldUnshift, abs(coord.longitude) > 180.0 else { return coord }
-            return Coordinate3D(latitude: coord.latitude, longitude: coord.longitude - 360.0,
-                                altitude: coord.altitude, m: coord.m)
+            return Coordinate3D(x: coord.longitude - 360.0, y: coord.latitude,
+                                z: coord.altitude, m: coord.m, projection: projection)
         }
         return MultiPoint([unshift(shiftedVertices[rightIdx]), unshift(shiftedVertices[leftIdx])])
     }

@@ -101,4 +101,128 @@ struct ArrayExtensionsTests {
         #expect(array.get(at: -8) == nil)
     }
 
+    // MARK: - chunked(into:)
+
+    @Test
+    func chunked() async throws {
+        let array = [1, 2, 3, 4, 5, 6, 7]
+        let chunks = array.chunked(into: 3)
+        #expect(chunks.count == 3)
+        #expect(chunks[0] == [1, 2, 3])
+        #expect(chunks[1] == [4, 5, 6])
+        #expect(chunks[2] == [7])
+    }
+
+    @Test
+    func chunkedEmpty() async throws {
+        let array: [Int] = []
+        #expect(array.chunked(into: 3).isEmpty)
+    }
+
+    @Test
+    func chunkedLargerThanCount() async throws {
+        let array = [1, 2]
+        let chunks = array.chunked(into: 10)
+        #expect(chunks.count == 1)
+        #expect(chunks[0] == [1, 2])
+    }
+
+    // MARK: - append(ifNotNil:)
+
+    @Test
+    func appendIfNotNil() async throws {
+        var array: [Int] = [1, 2]
+        array.append(ifNotNil: 3)
+        #expect(array == [1, 2, 3])
+        array.append(ifNotNil: nil)
+        #expect(array == [1, 2, 3])
+    }
+
+    // MARK: - nilIfEmpty / isNotEmpty
+
+    @Test
+    func nilIfEmptyAndIsNotEmpty() async throws {
+        let empty: [Int] = []
+        let nonEmpty = [1]
+        #expect(empty.nilIfEmpty == nil)
+        #expect(nonEmpty.nilIfEmpty == [1])
+        #expect(empty.isNotEmpty == false)
+        #expect(nonEmpty.isNotEmpty == true)
+    }
+
+    // MARK: - Coordinate3D helpers
+
+    @Test
+    func coordinateArrayHelpers() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]
+        #expect(coords.asPoints.count == 2)
+        #expect(coords.asMultiPoint != nil)
+        #expect(coords.asUncheckedMultiPoint.points.count == 2)
+        #expect(coords.asLineString != nil)
+        #expect(coords.asUncheckedLineString.coordinates == coords)
+        #expect(coords.asPolygon == nil) // 2 points cannot form a polygon
+        #expect(coords.asRing == nil) // Not closed
+    }
+
+    @Test
+    func coordinateArrayRingClosed() async throws {
+        let coords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        #expect(coords.asRing != nil)
+        #expect(coords.asUncheckedRing.coordinates == coords)
+        #expect(coords.asPolygon != nil)
+        #expect(coords.asUncheckedPolygon.outerRing != nil)
+    }
+
+    @Test
+    func coordinateArrayEmpty() async throws {
+        let coords: [Coordinate3D] = []
+        #expect(coords.asMultiPoint == nil)
+        #expect(coords.asLineString == nil)
+        #expect(coords.asPolygon == nil)
+        #expect(coords.asRing == nil)
+    }
+
+    // MARK: - GeoJsonGeometry helpers
+
+    @Test
+    func geometryArrayHelpers() async throws {
+        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let point = Point(Coordinate3D(latitude: 2.0, longitude: 2.0))
+        let geometries: [GeoJsonGeometry] = [line, point]
+        #expect(geometries.asGeometryCollection.geometries.count == 2)
+        #expect(geometries.asFeatureCollection.features.count == 2)
+    }
+
+    // MARK: - Feature helpers
+
+    @Test
+    func featureArrayHelpers() async throws {
+        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let point = Point(Coordinate3D(latitude: 2.0, longitude: 2.0))
+        let features: [Feature] = [Feature(line), Feature(point)]
+        #expect(features.asGeometryCollection.geometries.count == 2)
+        #expect(features.asFeatureCollection.features.count == 2)
+    }
+
+    // MARK: - FeatureCollection helpers
+
+    @Test
+    func featureCollectionArrayHelpers() async throws {
+        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let fc1 = FeatureCollection([Feature(line)])
+        let fc2 = FeatureCollection([Feature(Point(Coordinate3D(latitude: 2.0, longitude: 2.0)))])
+        let fcs: [FeatureCollection] = [fc1, fc2]
+        #expect(fcs.asGeometryCollection.geometries.count == 2)
+        #expect(fcs.asFeatureCollection.features.count == 2)
+    }
+
 }

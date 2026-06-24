@@ -19,6 +19,15 @@ extension Ring {
         ignoringBoundary: Bool = false,
         gridSize: Double? = nil
     ) -> Bool {
+        switch projection {
+        case .epsg4326, .epsg3857, .noSRID:
+            break
+        case .epsg4978:
+            return projected(to: .epsg4326).contains(
+                coordinate.projected(to: .epsg4326),
+                ignoringBoundary: ignoringBoundary)
+        }
+
         let coordinate = coordinate.projected(to: projection)
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
         let snappedCoordinates = gridSize.map { Ring(unchecked: coordinates).snappedToGrid(tolerance: $0).coordinates } ?? coordinates
@@ -119,6 +128,18 @@ extension Polygon {
         ignoringBoundary: Bool = false,
         gridSize: Double? = nil
     ) -> Bool {
+        switch projection {
+        case .epsg4326, .epsg3857, .noSRID:
+            break
+        case .epsg4978:
+            let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+            let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+            return snappedSelf.projected(to: .epsg4326).contains(
+                snappedCoordinate.projected(to: .epsg4326),
+                ignoringBoundary: ignoringBoundary,
+                gridSize: nil)
+        }
+
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 

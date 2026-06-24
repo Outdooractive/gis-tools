@@ -502,16 +502,65 @@ struct BooleanTouchesTests {
     // MARK: - Projection tests
 
     @Test
-    func polygonTouchesPolygon3857() {
-        let polygon = Polygon(unchecked: [[
+    func touchesEPSG3857() {
+        // Two squares touching at a single vertex in EPSG:3857.
+        let poly1 = Polygon(unchecked: [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
         ]])
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
-        #expect(polygon.contains(point))
+        let poly2 = Polygon(unchecked: [[
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 2_000.0, y: 0.0),
+            Coordinate3D(x: 2_000.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+        ]])
+        #expect(poly1.touches(poly2))
+        #expect(poly2.touches(poly1))
+    }
+
+    @Test
+    func touchesEPSG4978() async throws {
+        // Two squares touching at the 1° meridian near the equator, in 4978 (ECEF).
+        let s1 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let s2 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]]))
+        let p1 = s1.projected(to: .epsg4978)
+        let p2 = s2.projected(to: .epsg4978)
+        #expect(p1.touches(p2))
+    }
+
+    @Test
+    func touchesNoSRID() {
+        let poly1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let poly2 = Polygon(unchecked: [[
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 2_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+        ]])
+        #expect(poly1.touches(poly2))
     }
 
     // MARK: - Antimeridian
@@ -530,6 +579,30 @@ struct BooleanTouchesTests {
             Coordinate3D(latitude: 0.0, longitude: -170.0),
         ]))
         #expect(polygon.touches(line))
+    }
+
+    // MARK: - Empty / degenerate
+
+    @Test
+    func emptyPolygonDoesNotTouch() async throws {
+        let emptyPolygon = Polygon()
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        #expect(emptyPolygon.touches(point) == false)
+        #expect(point.touches(emptyPolygon) == false)
+        #expect(emptyPolygon.touches(line) == false)
+    }
+
+    @Test
+    func singlePointLineStringDoesNotTouch() throws {
+        let degenerateLine = LineString(unchecked: [Coordinate3D(latitude: 5.0, longitude: 10.0)])
+        let point = Point(Coordinate3D(latitude: 5.0, longitude: 10.0))
+        // A single-point degenerate line touches the point at its only coordinate
+        #expect(degenerateLine.touches(point))
+        #expect(point.touches(degenerateLine))
     }
 
 }

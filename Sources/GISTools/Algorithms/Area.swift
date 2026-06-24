@@ -9,6 +9,10 @@ extension Polygon {
 
     /// Returns the *Polygon*'s area.
     ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the coordinates
+    /// are projected to ``Projection/epsg4326`` first, then the geodesic area
+    /// formula is applied. Altitude differences are ignored.
+    ///
     /// - Returns: The area of the outer ring minus the area of the *union* of the inner rings, in square meters.
     public var area: Double {
         guard let outerRing else { return 0.0 }
@@ -32,6 +36,10 @@ extension MultiPolygon {
 
     /// Returns the *MultiPolygon*'s area.
     ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the coordinates
+    /// are projected to ``Projection/epsg4326`` first. Altitude differences
+    /// are ignored.
+    ///
     /// - Returns: The sum of all *Polygon*s areas, in square meters.
     public var area: Double {
         polygons.reduce(0.0, { $0 + $1.area })
@@ -45,6 +53,10 @@ extension Ring {
 
     /// Calculate the approximate area of the polygon were it projected onto the earth, in square meters.
     /// Note that this area will be positive if ring is oriented clockwise, otherwise it will be negative.
+    ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the coordinates
+    /// are projected to ``Projection/epsg4326`` first. Altitude differences
+    /// are ignored.
     ///
     /// Reference:
     /// Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion

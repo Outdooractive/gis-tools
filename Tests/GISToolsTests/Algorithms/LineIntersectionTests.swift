@@ -334,6 +334,22 @@ struct LineIntersectionTests {
         #expect(intersections.count == 1)
     }
 
+    @Test
+    func lineIntersectionNoSRID() async throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 1_000_000.0, projection: .noSRID),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .noSRID),
+        ]))
+        let feature1 = Feature(line1)
+        let feature2 = Feature(line2)
+        let intersections: [Point] = feature1.intersections(with: feature2)
+        #expect(intersections.count == 1)
+    }
+
     // MARK: - Antimeridian
 
     @Test

@@ -28,25 +28,24 @@ extension Array where Element == Coordinate3D {
         let crsTolerance: Double = {
             guard let projection = first?.projection else { return tolerance }
             switch projection {
-            case .epsg4326, .epsg4978:
+            case .epsg4326:
                 return tolerance / 111_325.0
-            case .epsg3857, .noSRID:
+            case .epsg3857, .epsg4978, .noSRID:
                 return tolerance
             }
         }()
 
         var result = self
-
         if removeDuplicates {
             result = CleanHelpers.deduplicate(result, tolerance: crsTolerance)
         }
-
         if removeCollinear {
             result = CleanHelpers.removeCollinearPoints(result, tolerance: crsTolerance)
         }
 
         if openRing, result.count >= 2 {
-            if let first = result.first, let last = result.last,
+            if let first = result.first,
+               let last = result.last,
                abs(first.longitude - last.longitude) <= crsTolerance,
                abs(first.latitude - last.latitude) <= crsTolerance
             {
@@ -55,7 +54,8 @@ extension Array where Element == Coordinate3D {
         }
 
         if closeRing, result.count >= 2 {
-            if let first = result.first, let last = result.last,
+            if let first = result.first,
+               let last = result.last,
                abs(first.longitude - last.longitude) > crsTolerance
                 || abs(first.latitude - last.latitude) > crsTolerance
             {
@@ -104,7 +104,12 @@ extension MultiLineString {
         removeCollinear: Bool = false,
         gridSize: Double? = nil
     ) -> MultiLineString {
-        let cleaned = lineStrings.map { $0.cleaned(removeDuplicates: removeDuplicates, removeCollinear: removeCollinear, gridSize: gridSize) }
+        let cleaned = lineStrings.map {
+            $0.cleaned(
+                removeDuplicates: removeDuplicates,
+                removeCollinear: removeCollinear,
+                gridSize: gridSize)
+        }
         return MultiLineString(unchecked: cleaned, calculateBoundingBox: boundingBox != nil)
     }
 
@@ -121,8 +126,12 @@ extension Polygon {
         gridSize: Double? = nil
     ) -> Polygon {
         let coords: [[Coordinate3D]] = rings.map { ring in
-            var cleaned = ring.coordinates.cleaned(removeDuplicates: removeDuplicates, removeCollinear: removeCollinear)
-            if cleaned.count >= 3, cleaned.first != cleaned.last {
+            var cleaned = ring.coordinates.cleaned(
+                removeDuplicates: removeDuplicates,
+                removeCollinear: removeCollinear)
+            if cleaned.count >= 3,
+               cleaned.first != cleaned.last
+            {
                 cleaned.append(cleaned[0])
             }
             return cleaned
@@ -142,7 +151,13 @@ extension MultiPolygon {
         removeCollinear: Bool = false,
         gridSize: Double? = nil
     ) -> MultiPolygon {
-        let coords: [[[Coordinate3D]]] = polygons.map { $0.cleaned(removeDuplicates: removeDuplicates, removeCollinear: removeCollinear, gridSize: gridSize).coordinates }
+        let coords: [[[Coordinate3D]]] = polygons.map {
+            $0.cleaned(
+                removeDuplicates: removeDuplicates,
+                removeCollinear: removeCollinear,
+                gridSize: gridSize)
+            .coordinates
+        }
         return MultiPolygon(unchecked: coords, calculateBoundingBox: boundingBox != nil)
     }
 

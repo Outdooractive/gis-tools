@@ -12,6 +12,10 @@ extension GeoJson {
     ///
     /// Non-polygon geometries return `false`.
     ///
+    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the coordinates
+    /// are projected to ``Projection/epsg4326`` first. For ``Projection/noSRID``
+    /// the raw 2-D cross product on (x, y) is used.
+    ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     /// - Returns: `true` if the geometry is a concave polygon, `false` otherwise.
     public func isConcave(gridSize: Double? = nil) -> Bool {
@@ -34,26 +38,29 @@ extension GeoJson {
 
 private enum BooleanConcave {
 
-}
-
-// MARK: - Implementation
-
-extension BooleanConcave {
-
     static func isConcave(_ polygon: Polygon) -> Bool {
-        guard let coordinates = polygon.outerRing?.coordinates else { return false }
+        guard let ring = polygon.outerRing?.coordinates else { return false }
+        guard ring.count > 4 else { return false }
 
-        // A triangle (4 coordinates including the closing coordinate) is always convex
-        guard coordinates.count > 4 else { return false }
+        let coords: [Coordinate3D]
+        if polygon.projection == .noSRID {
+            coords = ring
+        }
+        else if polygon.projection == .epsg4326 {
+            coords = ring
+        }
+        else {
+            coords = ring.map { $0.projected(to: .epsg4326) }
+        }
 
         var sign: Bool?
-        let n = coordinates.count - 1
+        let n = coords.count - 1
 
         for i in 0 ..< n {
-            let dx1 = coordinates[(i + 2) % n].longitude - coordinates[(i + 1) % n].longitude
-            let dy1 = coordinates[(i + 2) % n].latitude - coordinates[(i + 1) % n].latitude
-            let dx2 = coordinates[i].longitude - coordinates[(i + 1) % n].longitude
-            let dy2 = coordinates[i].latitude - coordinates[(i + 1) % n].latitude
+            let dx1 = coords[(i + 2) % n].longitude - coords[(i + 1) % n].longitude
+            let dy1 = coords[(i + 2) % n].latitude - coords[(i + 1) % n].latitude
+            let dx2 = coords[i].longitude - coords[(i + 1) % n].longitude
+            let dy2 = coords[i].latitude - coords[(i + 1) % n].latitude
             let zCrossProduct = dx1 * dy2 - dy1 * dx2
 
             if let s = sign {

@@ -10,6 +10,9 @@ extension FeatureCollection {
     /// region closer to that point than to any other input point. The cells are
     /// clipped to the given bounding box.
     ///
+    /// All projections are supported. The algorithm uses Cartesian math on
+    /// native XY values.
+    ///
     /// - Parameter boundingBox: The bounding box to which all cells are clipped.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``FeatureCollection`` of ``Polygon`` features, one per input point.
@@ -39,6 +42,7 @@ private enum Voronoi {
         points: [Coordinate3D],
         boundingBox: BoundingBox
     ) -> FeatureCollection {
+        let projection = points.first?.projection ?? boundingBox.projection
         let pts = points.map { Pt(x: $0.longitude, y: $0.latitude) }
         let triangles = Triangulator.triangulate(pts)
         guard triangles.isNotEmpty else { return FeatureCollection() }
@@ -81,7 +85,8 @@ private enum Voronoi {
                 point: point,
                 neighborIndices: Array(neighborIndices),
                 allPoints: points,
-                bboxPolygon: bboxPolygon)
+                bboxPolygon: bboxPolygon,
+                projection: projection)
 
             if let cell {
                 let feature = Feature(cell)
@@ -100,7 +105,8 @@ private enum Voronoi {
         point: Coordinate3D,
         neighborIndices: [Int],
         allPoints: [Coordinate3D],
-        bboxPolygon: [Coordinate3D]
+        bboxPolygon: [Coordinate3D],
+        projection: Projection
     ) -> Polygon? {
         // Start with the bounding box as the clipping polygon
         var cell = bboxPolygon
@@ -122,7 +128,7 @@ private enum Voronoi {
             let c = qSq - pSq
 
             // Clip cell to the half-plane containing point p
-            cell = Voronoi.clipPolygonByHalfPlane(polygon: cell, a: a, b: b, c: c)
+            cell = Voronoi.clipPolygonByHalfPlane(polygon: cell, a: a, b: b, c: c, projection: projection)
             guard cell.count >= 3 else { return nil }
         }
 
@@ -141,7 +147,8 @@ private enum Voronoi {
         polygon: [Coordinate3D],
         a: Double,
         b: Double,
-        c: Double
+        c: Double,
+        projection: Projection
     ) -> [Coordinate3D] {
         guard polygon.count >= 3 else { return polygon }
 
@@ -162,7 +169,7 @@ private enum Voronoi {
                 if !previousInside {
                     // Entering: add intersection
                     if let intersection = Voronoi.lineIntersection(
-                        p1: previous, p2: current, a: a, b: b, c: c) {
+                        p1: previous, p2: current, a: a, b: b, c: c, projection: projection) {
                         result.append(intersection)
                     }
                 }
@@ -171,7 +178,7 @@ private enum Voronoi {
             else if previousInside {
                 // Exiting: add intersection
                 if let intersection = Voronoi.lineIntersection(
-                    p1: previous, p2: current, a: a, b: b, c: c) {
+                    p1: previous, p2: current, a: a, b: b, c: c, projection: projection) {
                     result.append(intersection)
                 }
             }
@@ -186,7 +193,8 @@ private enum Voronoi {
         p2: Coordinate3D,
         a: Double,
         b: Double,
-        c: Double
+        c: Double,
+        projection: Projection
     ) -> Coordinate3D? {
         let x1 = p1.longitude, y1 = p1.latitude
         let x2 = p2.longitude, y2 = p2.latitude
@@ -198,8 +206,9 @@ private enum Voronoi {
         guard t >= 0, t <= 1 else { return nil }
 
         return Coordinate3D(
-            latitude: y1 + t * (y2 - y1),
-            longitude: x1 + t * (x2 - x1))
+            x: x1 + t * (x2 - x1),
+            y: y1 + t * (y2 - y1),
+            projection: projection)
     }
 
     // MARK: - Helpers

@@ -10,6 +10,10 @@ extension Polygon {
 
     /// Smooths the polygon using Chaikin's algorithm.
     ///
+    /// When all coordinates have an ``altitude`` value, the Z component is
+    /// smoothed using the same Chaikin weights (0.75 / 0.25) as the X and Y
+    /// components. Otherwise the result has no altitude.
+    ///
     /// - Parameter iterations: Number of smoothing passes (default 1).
     /// - Returns: A new smoothed polygon.
     /// - Warning: May create degenerate polygons at high iteration counts.
@@ -21,8 +25,11 @@ extension Polygon {
             normalizedCoords = coordinates.map { ring in
                 ring.map { coord in
                     Coordinate3D(
-                        latitude: coord.latitude,
-                        longitude: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude)
+                        x: coord.longitude < 0.0 ? coord.longitude + 360.0 : coord.longitude,
+                        y: coord.latitude,
+                        z: coord.altitude,
+                        m: coord.m,
+                        projection: coord.projection)
                 }
             }
         }
@@ -39,8 +46,11 @@ extension Polygon {
             resultCoords = resultCoords.map { ring in
                 ring.map { coord in
                     Coordinate3D(
-                        latitude: coord.latitude,
-                        longitude: coord.longitude > 180.0 ? coord.longitude - 360.0 : coord.longitude)
+                        x: coord.longitude > 180.0 ? coord.longitude - 360.0 : coord.longitude,
+                        y: coord.latitude,
+                        z: coord.altitude,
+                        m: coord.m,
+                        projection: coord.projection)
                 }
             }
         }
@@ -56,18 +66,30 @@ extension Polygon {
                 output.append(ring)
                 continue
             }
+            let hasAltitude = ring.allSatisfy({ $0.altitude != nil })
             var smoothed: [Coordinate3D] = []
             let n = ring.count - 1 // last == first
             for i in 0..<n {
                 let p0 = ring[i]
                 let p1 = ring[(i + 1) % n]
                 // Chaikin: insert Q (3/4, 1/4) and R (1/4, 3/4)
-                let q = Coordinate3D(
-                    latitude: 0.75 * p0.latitude + 0.25 * p1.latitude,
-                    longitude: 0.75 * p0.longitude + 0.25 * p1.longitude)
-                let r = Coordinate3D(
-                    latitude: 0.25 * p0.latitude + 0.75 * p1.latitude,
-                    longitude: 0.25 * p0.longitude + 0.75 * p1.longitude)
+                // The same weights apply to X, Y and Z.
+                let qLat = 0.75 * p0.latitude + 0.25 * p1.latitude
+                let qLon = 0.75 * p0.longitude + 0.25 * p1.longitude
+                let rLat = 0.25 * p0.latitude + 0.75 * p1.latitude
+                let rLon = 0.25 * p0.longitude + 0.75 * p1.longitude
+                let qz: Double?
+                let rz: Double?
+                if hasAltitude {
+                    qz = 0.75 * p0.altitude! + 0.25 * p1.altitude!
+                    rz = 0.25 * p0.altitude! + 0.75 * p1.altitude!
+                }
+                else {
+                    qz = nil
+                    rz = nil
+                }
+                let q = Coordinate3D(x: qLon, y: qLat, z: qz, projection: projection)
+                let r = Coordinate3D(x: rLon, y: rLat, z: rz, projection: projection)
                 smoothed.append(q)
                 smoothed.append(r)
             }
@@ -83,6 +105,10 @@ extension Polygon {
 extension MultiPolygon {
 
     /// Smooths all polygons in the MultiPolygon using Chaikin's algorithm.
+    ///
+    /// When all coordinates have an ``altitude`` value, the Z component is
+    /// smoothed using the same Chaikin weights as X and Y.
+    /// Otherwise the result has no altitude.
     ///
     /// - Parameter iterations: Number of smoothing passes (default 1).
     /// - Returns: A new smoothed MultiPolygon.

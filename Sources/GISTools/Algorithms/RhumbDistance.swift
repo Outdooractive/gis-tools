@@ -17,7 +17,6 @@ extension Coordinate3D {
         case .epsg4326:
             return _rhumbDistance(from: other.projected(to: .epsg4326))
         case .epsg3857, .epsg4978:
-            // TODO: This can be improved
             return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
         case .noSRID:
             let dx = longitude - other.longitude

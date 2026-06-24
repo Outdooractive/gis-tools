@@ -10,6 +10,14 @@ extension LineString {
     /// Takes a start and stop point, and returns a subsection of the line in-between those points.
     /// The start and stop points don't need to fall exactly on the line.
     ///
+    /// All projections are supported — the nearest-coordinate-on-line
+    /// check operates on ``Coordinate3D`` values regardless of CRS.
+    ///
+    /// When the interpolated start/stop points fall on a segment whose
+    /// endpoints both have an ``altitude`` value, the result carries a
+    /// linearly interpolated altitude. Otherwise the new points have
+    /// no altitude.
+    ///
     /// This can be useful for extracting only the part of a route between waypoints.
     ///
     /// - Parameter start: The starting point (defaults to the first coordinate if `nil`)
@@ -88,6 +96,8 @@ extension Feature {
 
     /// Takes a start and stop point, and returns a subsection of the line in-between those points.
     /// The start and stop points don't need to fall exactly on the line.
+    ///
+    /// All projections are supported — delegates to ``LineString/slice(start:end:gridSize:)``.
     ///
     /// This can be useful for extracting only the part of a route between waypoints.
     ///

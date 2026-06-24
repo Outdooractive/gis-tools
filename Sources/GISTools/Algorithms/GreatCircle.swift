@@ -9,13 +9,17 @@ extension Coordinate3D {
 
     /// Calculates a great circle route from `self` to `end`.
     ///
+    /// The computation is performed in EPSG:4326 geographic space.
+    /// For non-4326 inputs, coordinates are projected to 4326 first.
+    /// The result is always returned in EPSG:4326.
+    ///
     /// If the start and end are identical a single-point ``LineString``
     /// of length `npoints` is returned.
     ///
     /// - Parameter end: End coordinate.
     /// - Parameter npoints: Number of points along the arc (default 100).
     /// - Parameter offset: Controls anti-meridian split threshold (default 10).
-    /// - Returns: A ``LineString`` or ``MultiLineString`` representing the arc.
+    /// - Returns: A ``LineString`` or ``MultiLineString`` representing the arc in EPSG:4326.
     public func greatCircle(
         to end: Coordinate3D,
         npoints: Int = 100,
@@ -31,9 +35,14 @@ extension Coordinate3D {
             return LineString(unchecked: coords)
         }
 
+        // Great circle computation requires EPSG:4326 for the 3D slerp math.
+        // Project to 4326 first, compute, then project back if needed.
+        let start = projected(to: .epsg4326)
+        let endPoint = end.projected(to: .epsg4326)
+
         let coords = Self.greatCircleCoordinates(
-            from: self,
-            to: end,
+            from: start,
+            to: endPoint,
             npoints: npoints,
             offset: offset)
 

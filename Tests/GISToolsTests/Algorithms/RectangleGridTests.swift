@@ -80,6 +80,37 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
+    @Test
+    func rectangleGrid3857CrossOrigin() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: -10_000.0, y: -10_000.0),
+            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0))
+        let grid = bbox.rectangleGrid(cellWidth: 1_000.0, cellHeight: 1_000.0)
+        #expect(grid.features.count > 0)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func rectangleGrid4978() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 6_373_000.0, y: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 6_383_000.0, y: 10_000.0, projection: .epsg4978))
+        let grid = bbox.rectangleGrid(cellWidth: 5_000.0, cellHeight: 5_000.0)
+        #expect(grid.features.count > 0)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func rectangleGridNoSRID() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID))
+        let grid = bbox.rectangleGrid(cellWidth: 50.0, cellHeight: 50.0)
+        #expect(grid.features.count > 0)
+    }
+
     // MARK: - Antimeridian
 
     @Test

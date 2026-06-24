@@ -83,20 +83,23 @@ struct MinimumBoundingCircleTests {
         ]])
         let circle = square.minimumBoundingCircle()
         #expect(circle != nil)
+        #expect(circle?.projection == square.projection)
         if let circle { #expect(circle.outerRing?.coordinates.count == 65) }
     }
 
     /// Validates that the `steps` parameter controls polygon vertex count (12 steps → 13 coords).
     @Test
     func circleStepsCount() {
-        let circle = Polygon(unchecked: [[
+        let polygon = Polygon(unchecked: [[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]).minimumBoundingCircle(steps: 12)
+        ]])
+        let circle = polygon.minimumBoundingCircle(steps: 12)
         #expect(circle != nil)
+        #expect(circle?.projection == polygon.projection)
         if let circle { #expect(circle.outerRing?.coordinates.count == 13) }
     }
 
@@ -132,6 +135,45 @@ struct MinimumBoundingCircleTests {
         let circle = mp.minimumBoundingCircle()
         #expect(circle != nil)
         #expect(circle?.isValid == true)
+        #expect(circle?.projection == .epsg3857)
     }
 
+    /// Validates that a multi-point in EPSG:4978 produces a valid minimum bounding circle.
+    @Test
+    func minimumBoundingCircle4978() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
+        ]))
+        let circle = mp.minimumBoundingCircle()
+        #expect(circle != nil)
+        #expect(circle?.isValid == true)
+        #expect(circle?.projection == .epsg4978)
+
+        let radius = mp.minimumBoundingRadius()
+        #expect(radius != nil)
+        #expect(radius! > 0.0)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func minimumBoundingCircleNoSRID() async throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+        ]))
+        let circle = mp.minimumBoundingCircle()
+        #expect(circle != nil)
+        #expect(circle?.isValid == true)
+        #expect(circle?.projection == .noSRID)
+
+        let radius = mp.minimumBoundingRadius()
+        #expect(radius != nil)
+        #expect(radius! > 0.0)
+    }
 }

@@ -134,4 +134,21 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
+    // Validates truncating a LineString in noSRID works correctly.
+    @Test
+    func truncateNoSRID() async throws {
+        let lineString = try #require(LineString(
+            [
+                Coordinate3D(x: 100_000.123456, y: 200_000.654321, projection: .noSRID),
+                Coordinate3D(x: 300_000.987654, y: 400_000.111111, projection: .noSRID),
+            ],
+            calculateBoundingBox: true))
+
+        let truncated = lineString.truncated(precision: 2, removeAltitude: true)
+        #expect(truncated.coordinates[0].x == 100_000.12)
+        #expect(truncated.coordinates[0].y == 200_000.65)
+        #expect(truncated.coordinates[1].x == 300_000.99)
+        #expect(truncated.coordinates[1].y == 400_000.11)
+    }
+
 }

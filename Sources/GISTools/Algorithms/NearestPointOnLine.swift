@@ -8,6 +8,16 @@ import Foundation
 extension LineSegment {
 
     /// Returns the foot of the perpendicular of the coordinate to the segment.
+    ///
+    /// When both endpoints of the segment have an ``altitude`` value, the foot
+    /// carries a linearly interpolated altitude. Otherwise the result has no
+    /// altitude.
+    ///
+    /// - Parameter coordinate: The reference coordinate.
+    /// - Parameter clampToEnds: If `true`, clamps the foot to the nearest endpoint
+    ///   when the projection falls outside the segment (default `false`).
+    /// - Returns: The perpendicular foot coordinate, or `nil` if the projection
+    ///   falls outside the segment and `clampToEnds` is `false`.
     public func perpendicularFoot(
         from coordinate: Coordinate3D,
         clampToEnds: Bool = false
@@ -55,6 +65,10 @@ extension LineSegment {
 extension LineSegment {
 
     /// Calculates the closest coordinate on the segment.
+    ///
+    /// When both endpoints of the segment have an ``altitude`` value, the
+    /// result carries a linearly interpolated altitude.
+    ///
     /// - Parameter from: The reference coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnSegment(
@@ -77,8 +91,14 @@ extension LineSegment {
 extension LineString {
 
     /// Calculates the closest coordinate on the line.
+    ///
+    /// When the closest point falls on a segment whose endpoints both have
+    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// altitude.
+    ///
     /// - Parameter from: The reference coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    /// - Returns: The nearest coordinate, segment index, and distance, or `nil`.
     public func nearestCoordinateOnLine(
         from other: Coordinate3D,
         gridSize: Double? = nil
@@ -136,8 +156,14 @@ extension LineString {
 extension Feature {
 
     /// Calculates the closest coordinate on the line.
+    ///
+    /// When the closest point falls on a segment whose endpoints both have
+    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// altitude.
+    ///
     /// - Parameter from: The reference coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    /// - Returns: The nearest coordinate, segment index, and distance, or `nil`.
     public func nearestCoordinateOnLine(
         from other: Coordinate3D,
         gridSize: Double? = nil
@@ -151,6 +177,7 @@ extension Feature {
     /// Calculates the closest *Point* on the line.
     /// - Parameter from: The reference point
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+    /// - Returns: The nearest point, segment index, and distance, or `nil`.
     public func nearestPointOnLine(
         from other: Point,
         gridSize: Double? = nil

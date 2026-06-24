@@ -136,6 +136,50 @@ struct DissolveTests {
         #expect(dissolved.features.isNotEmpty)
     }
 
+    @Test
+    func dissolveNoSRID() async throws {
+        let p1 = Feature(Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]), properties: ["group": "a"])
+        let p2 = Feature(Polygon(unchecked: [[
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 2000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 2000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+        ]]), properties: ["group": "a"])
+
+        let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")
+        #expect(dissolved.features.isNotEmpty)
+    }
+
+    @Test
+    func dissolve4978() async throws {
+        let a4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let b4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+        ]]))
+        let p1 = Feature(a4326.projected(to: .epsg4978), properties: ["group": "a"])
+        let p2 = Feature(b4326.projected(to: .epsg4978), properties: ["group": "a"])
+
+        let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")
+        #expect(dissolved.features.isNotEmpty)
+    }
+
     // MARK: - Antimeridian
 
     @Test

@@ -122,8 +122,8 @@ struct PointOnFeatureTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 10.0, longitude: 170.0),
             Coordinate3D(latitude: 10.0, longitude: -170.0),
-            Coordinate3D(latitude: 0.0, longitude: -170.0),
-            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -165.0),
+            Coordinate3D(latitude: 0.0, longitude: 160.0),
         ]]))
         let result = try #require(polygon.coordinateOnFeature)
 
@@ -143,6 +143,52 @@ struct PointOnFeatureTests {
             return partPolygon.contains(result, ignoringBoundary: true)
         }
         #expect(isInsidePart)
+    }
+
+    // MARK: - Projection tests
+
+    // Verifies a point on feature in EPSG:4978 returns a valid point.
+    @Test
+    func pointOnFeature4978() async throws {
+        let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let c10 = Coordinate3D(latitude: 0.0, longitude: 0.00009).projected(to: .epsg4978)
+        let c11 = Coordinate3D(latitude: 0.00009, longitude: 0.00009).projected(to: .epsg4978)
+        let c01 = Coordinate3D(latitude: 0.00009, longitude: 0.0).projected(to: .epsg4978)
+        let polygon = try #require(Polygon([[
+            c00, c10, c11, c01, c00,
+        ]]))
+        let point = try #require(polygon.pointOnFeature)
+        #expect(point.coordinate.projection == .epsg4978)
+    }
+
+    // MARK: - EPSG:3857
+
+    @Test
+    func pointOnFeature3857() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]])
+        let point = try #require(polygon.pointOnFeature)
+        #expect(point.coordinate.projection == .epsg3857)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func pointOnFeatureNoSRID() async throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let point = try #require(polygon.pointOnFeature)
+        #expect(point.coordinate.projection == .noSRID)
     }
 
 }

@@ -164,14 +164,20 @@ struct ClustersTests {
     /// Validates DBSCAN clustering works with EPSG:4978 (ECEF).
     @Test
     func dbscanEpsg4978() async throws {
-        // Points near Null Island in ECEF space
+        // Points projected from actual Earth-surface coordinates near Null Island
+        let p1 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let p2 = Coordinate3D(latitude: 0.0, longitude: 0.005).projected(to: .epsg4978)
+        let p3 = Coordinate3D(latitude: 0.005, longitude: 0.0).projected(to: .epsg4978)
+        let p4 = Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978)
+        let p5 = Coordinate3D(latitude: 5.0, longitude: 5.005).projected(to: .epsg4978)
+        let p6 = Coordinate3D(latitude: 5.005, longitude: 5.0).projected(to: .epsg4978)
         let points: [Feature] = [
-            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 500.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 500.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 500.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: -6_378_137.0, y: 0.0, z: 500.0, projection: .epsg4978))),
+            Feature(Point(p1)),
+            Feature(Point(p2)),
+            Feature(Point(p3)),
+            Feature(Point(p4)),
+            Feature(Point(p5)),
+            Feature(Point(p6)),
         ]
         let fc = FeatureCollection(points)
         let result = fc.dbscanClusters(maxDistance: 1000.0, minPoints: 2)
@@ -186,21 +192,26 @@ struct ClustersTests {
     /// Validates K-means clustering works with EPSG:4978 (ECEF).
     @Test
     func kmeansEpsg4978() async throws {
-        // Two clusters in ECEF: one near (6.3M, 0, 0), another near (0, 6.3M, 0)
+        // Two clusters projected from actual lat/lon: one near Null Island, another 10 degrees away
+        let p1 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let p2 = Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)
+        let p3 = Coordinate3D(latitude: 10.0, longitude: 0.0).projected(to: .epsg4978)
+        let p4 = Coordinate3D(latitude: 10.0, longitude: 0.009).projected(to: .epsg4978)
+        // Seed initial centroids from different clusters: p1 (cluster 1), p3 (cluster 2)
         let points: [Feature] = [
-            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: 6_378_137.0, y: 1000.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 0.0, projection: .epsg4978))),
-            Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 1000.0, projection: .epsg4978))),
+            Feature(Point(p1)),
+            Feature(Point(p3)),
+            Feature(Point(p2)),
+            Feature(Point(p4)),
         ]
         let fc = FeatureCollection(points)
-        let result = fc.kmeansClusters(numberOfClusters: 2)
+        let result = fc.kmeansClusters(numberOfClusters: 2, seedIndex: 0)
 
         let c0: Int? = result.features[0].property(for: "cluster")
-        let c2: Int? = result.features[2].property(for: "cluster")
+        let c1: Int? = result.features[1].property(for: "cluster")
         #expect(c0 != nil)
-        #expect(c2 != nil)
-        #expect(c0 != c2)
+        #expect(c1 != nil)
+        #expect(c0 != c1)
     }
 
     // MARK: - Weighted K-means
@@ -259,25 +270,26 @@ struct ClustersTests {
     /// Validates weighted K-means with EPSG:4978 (ECEF).
     @Test
     func kmeansWeightedEpsg4978() async throws {
-        var f1 = Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var f1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)))
         f1.properties = ["pop": 1000.0]
-        var f2 = Feature(Point(Coordinate3D(x: 6_378_237.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var f2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)))
         f2.properties = ["pop": 1.0]
-        var f3 = Feature(Point(Coordinate3D(x: 0.0, y: 6_378_137.0, z: 0.0, projection: .epsg4978)))
+        var f3 = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 0.0).projected(to: .epsg4978)))
         f3.properties = ["pop": 1000.0]
-        var f4 = Feature(Point(Coordinate3D(x: 0.0, y: 6_378_237.0, z: 0.0, projection: .epsg4978)))
+        var f4 = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 0.009).projected(to: .epsg4978)))
         f4.properties = ["pop": 1.0]
-        let points = [f1, f2, f3, f4]
+        // Seed initial centroids from different clusters: f1 (cluster 1), f3 (cluster 2)
+        let points = [f1, f3, f2, f4]
         let fc = FeatureCollection(points)
-        let result = fc.kmeansClusters(numberOfClusters: 2, weightAttribute: "pop")
+        let result = fc.kmeansClusters(numberOfClusters: 2, weightAttribute: "pop", seedIndex: 0)
 
         for feature in result.features {
             let c: Int? = feature.property(for: "cluster")
             #expect(c != nil)
         }
         let c0: Int? = result.features[0].property(for: "cluster")
-        let c2: Int? = result.features[2].property(for: "cluster")
-        #expect(c0 != c2)
+        let c1: Int? = result.features[1].property(for: "cluster")
+        #expect(c0 != c1)
     }
 
     // MARK: - Algorithm comparison
@@ -427,10 +439,10 @@ struct ClustersTests {
     /// Weighted K-means changes cluster assignment (EPSG:4978, ECEF meters).
     @Test
     func weightedKmeansChangesAssignmentEpsg4978() async throws {
-        var p0 = Feature(Point(Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        let p1 = Feature(Point(Coordinate3D(x: 6_387_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        let p2 = Feature(Point(Coordinate3D(x: 6_388_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
-        let p3 = Feature(Point(Coordinate3D(x: 6_397_137.0, y: 0.0, z: 0.0, projection: .epsg4978)))
+        var p0 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)))
+        let p1 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.081).projected(to: .epsg4978)))
+        let p2 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.090).projected(to: .epsg4978)))
+        let p3 = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.171).projected(to: .epsg4978)))
         p0.properties["w"] = 10_000.0
         let points = [p0, p1, p2, p3]
 

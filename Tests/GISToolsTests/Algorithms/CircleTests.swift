@@ -21,11 +21,27 @@ struct CircleTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projection tests
 
     @Test
     func circle3857() async throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let circle = try #require(point.circle(radius: 5000.0))
+        #expect(circle.isValid)
+    }
+
+    @Test
+    func circle4978() async throws {
+        let point = Point(Coordinate3D(
+            latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
+        let circle = try #require(point.circle(radius: 5000.0))
+        #expect(circle.isValid)
+    }
+
+    @Test
+    func circleNoSRID() async throws {
+        let point = Point(Coordinate3D(
+            x: 0.0, y: 0.0, projection: .noSRID))
         let circle = try #require(point.circle(radius: 5000.0))
         #expect(circle.isValid)
     }
@@ -37,6 +53,16 @@ struct CircleTests {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
         let circle = try #require(point.circle(radius: 100_000.0))
         #expect(circle.isValid)
+    }
+
+    // MARK: - Altitude preservation
+
+    @Test
+    func circlePreservesAltitude() async throws {
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 500.0)
+        let circle = try #require(center.circle(radius: 1000.0, steps: 8))
+        let ring = try #require(circle.outerRing)
+        #expect(ring.coordinates.allSatisfy({ $0.altitude == 500.0 }))
     }
 
 }

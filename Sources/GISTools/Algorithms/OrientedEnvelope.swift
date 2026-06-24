@@ -14,6 +14,9 @@ extension GeoJson {
     /// is a rectangle that encloses the `LineString` formed by the points,
     /// or `nil` if the geometry is empty.
     ///
+    /// All projections are supported. The rotating-calipers algorithm operates
+    /// on native XY values (degrees for 4326, meters for 3857/4978).
+    ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``Polygon`` representing the minimum-area rotated rectangle
     public func orientedEnvelope(gridSize: Double? = nil) -> Polygon? {

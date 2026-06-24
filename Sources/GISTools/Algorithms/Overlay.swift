@@ -33,8 +33,12 @@ enum Overlay {
 
     /// Perform a polygon overlay operation.
     ///
+    /// The overlay algorithm operates on native XY values. Inputs are
+    /// expected in EPSG:3857 for consistent meter-scale tolerances
+    /// (callers such as ``Union.unionPolygons`` handle projection).
+    ///
     /// - Parameters:
-    ///   - polygons: The input polygons (projected to EPSG:3857).
+    ///   - polygons: The input polygons.
     ///   - boundaryTest: Returns `true` when an edge is part of the result boundary.
     /// - Returns: A MultiPolygon representing the overlay result, or `nil` if empty.
     static func overlayPolygons(

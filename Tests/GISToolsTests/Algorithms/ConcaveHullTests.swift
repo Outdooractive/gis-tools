@@ -141,17 +141,24 @@ struct ConcaveHullTests {
     // Verifies concave hull of points in EPSG:3857.
     @Test
     func concaveHull3857() throws {
-        let mp = MultiPoint([
+        guard let mp = MultiPoint([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 500.0, y: 500.0),
-        ])!
-        let hull = mp.concaveHull(maxEdgeLength: 10_000.0)
-        #expect(hull != nil)
-        #expect(hull!.polygons.count >= 1)
-        #expect(hull!.polygons[0].isValid)
+        ])
+        else {
+            Issue.record("Failed to create MultiPoint")
+            return
+        }
+        guard let hull = mp.concaveHull(maxEdgeLength: 10_000.0)
+        else {
+            Issue.record("concaveHull returned nil")
+            return
+        }
+        #expect(hull.polygons.count >= 1)
+        #expect(hull.polygons[0].isValid)
     }
 
     // Validates that `concaveHull(maxEdgeLength:gridSize:)` matches manual pre-snapping.
@@ -172,6 +179,35 @@ struct ConcaveHullTests {
         let manual = try #require(snapped.concaveHull(maxEdgeLength: maxEdge200km))
         #expect(withParam.polygons.count == manual.polygons.count)
         #expect(abs(withParam.area - manual.area) < 1.0)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func concaveHull4978() async throws {
+        // Three points on the Earth's surface — concaveHull returns the single
+        // triangle directly (no union, so no 4978→3857 projection round-trip).
+        let a = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let b = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
+        let c = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
+        let mp = try #require(MultiPoint([a, b, c]))
+        let hull = try #require(mp.concaveHull(maxEdgeLength: GISTool.convertToMeters(500, .kilometers)))
+        #expect(hull.polygons.isNotEmpty)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func concaveHullNoSRID() throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+        ]))
+        let hull = try #require(mp.concaveHull(maxEdgeLength: 100_000.0))
+        #expect(hull.polygons.isNotEmpty)
     }
 
 }

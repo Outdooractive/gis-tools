@@ -8,6 +8,9 @@ import Foundation
 extension GeoJson {
 
     /// Returns the absolute center point of the receiver.
+    ///
+    /// When all coordinates have an ``altitude`` value, the result carries
+    /// the midpoint altitude of the bounding box corners.
     public var center: Point? {
         guard let boundingBox = self.boundingBox ?? calculateBoundingBox() else { return nil }
         return Point(boundingBox.center)
@@ -21,6 +24,9 @@ extension GeoJson {
 
     /// Calculates the centroid using the mean of all vertices. This lessens the effect
     /// of small islands and artifacts when calculating the centroid of a set of polygons.
+    ///
+    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// arithmetic mean of all altitudes.
     public var centroid: Point? {
         let allCoordinates = self.allCoordinates
 
@@ -29,6 +35,8 @@ extension GeoJson {
         if allCoordinates.count == 1 {
             return Point(allCoordinates[0])
         }
+
+        let hasAltitude = allCoordinates.allSatisfy({ $0.altitude != nil })
 
         // Antimeridian normalization only applies to EPSG:4326 where longitude is
         // in degrees. For other projections (3857, 4978, noSRID), longitude values
@@ -45,16 +53,22 @@ extension GeoJson {
 
         var sumX: Double = 0.0
         var sumY: Double = 0.0
+        var sumZ: Double = 0.0
+        let n = allCoordinates.count - (allCoordinates.first == allCoordinates.last ? 1 : 0)
 
-        for coordinate in allCoordinates {
+        for i in 0 ..< n {
+            let coordinate = allCoordinates[i]
             let x = spansAntimeridian && coordinate.longitude < 0
                 ? coordinate.longitude + 360.0
                 : coordinate.longitude
             sumX += x
             sumY += coordinate.latitude
+            if hasAltitude {
+                sumZ += coordinate.altitude!
+            }
         }
 
-        var resultX = sumX / Double(allCoordinates.count)
+        var resultX = sumX / Double(n)
         if spansAntimeridian && resultX > 180.0 {
             resultX -= 360.0
         }
@@ -62,7 +76,8 @@ extension GeoJson {
         return Point(
             Coordinate3D(
                 x: resultX,
-                y: sumY / Double(allCoordinates.count),
+                y: sumY / Double(n),
+                z: hasAltitude ? sumZ / Double(n) : nil,
                 projection: projection))
     }
 
@@ -74,13 +89,18 @@ extension FeatureCollection {
 
     /// Returns the mean center of the receiver. Can be weighted.
     ///
+    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// weighted mean of all altitudes.
+    ///
     /// - Parameter weightAttribute: The property name used to weight the center
     ///
     /// - Returns: The mean center, or `nil`.
     public func centerMean(weightAttribute: String? = nil) -> Point? {
         var sumLongitude: Double = 0.0
         var sumLatitude: Double = 0.0
+        var sumAltitude: Double = 0.0
         var sumWeights: Double = 0.0
+        var hasAltitude = true
 
         for feature in features {
             var weight: Double = 1.0
@@ -91,8 +111,14 @@ extension FeatureCollection {
             guard weight > 0.0 else { continue }
 
             for coordinate in feature.allCoordinates {
+                if coordinate.altitude == nil {
+                    hasAltitude = false
+                }
                 sumLongitude += coordinate.longitude * weight
                 sumLatitude += coordinate.latitude * weight
+                if hasAltitude, let alt = coordinate.altitude {
+                    sumAltitude += alt * weight
+                }
                 sumWeights += weight
             }
         }
@@ -103,6 +129,7 @@ extension FeatureCollection {
             Coordinate3D(
                 x: sumLongitude / sumWeights,
                 y: sumLatitude / sumWeights,
+                z: hasAltitude ? sumAltitude / sumWeights : nil,
                 projection: projection))
     }
 
@@ -115,6 +142,9 @@ extension FeatureCollection {
     /// Takes a ``FeatureCollection`` and calculates the median center using the
     /// Weiszfeld algorithm. The median center is the point that requires the
     /// least total travel distance from all points in the dataset.
+    ///
+    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// median altitude computed with the same Weiszfeld iteration.
     ///
     /// - Parameters:
     ///   - weightAttribute: The property name used to weight the center.
@@ -134,13 +164,18 @@ extension FeatureCollection {
         }
 
         var centroids: [(coordinate: Coordinate3D, weight: Double)] = []
+        var hasAltitude = true
         for feature in features {
             guard let centroid = feature.centroid else { continue }
+
             var weight: Double = 1.0
             if let weightAttribute {
                 weight = feature.property(for: weightAttribute) ?? 1.0
             }
             if weight > 0 {
+                if centroid.coordinate.altitude == nil {
+                    hasAltitude = false
+                }
                 centroids.append((centroid.coordinate, weight))
             }
         }
@@ -159,6 +194,8 @@ extension FeatureCollection {
                 let adjusted = Coordinate3D(
                     x: adjustedLon,
                     y: coordinate.latitude,
+                    z: coordinate.altitude,
+                    m: coordinate.m,
                     projection: projection)
                 return (adjusted, weight)
             }
@@ -169,14 +206,15 @@ extension FeatureCollection {
         let initialCandidate = Coordinate3D(
             x: spansAntimeridian && initialLon < 0 ? initialLon + 360.0 : initialLon,
             y: initialLat,
+            z: meanCenter.coordinate.altitude,
             projection: projection)
 
         // Convert meter tolerance to CRS units
         let crsTolerance: Double = {
             switch projection {
-            case .epsg4326, .epsg4978:
+            case .epsg4326:
                 return tolerance / 111_325.0
-            case .epsg3857, .noSRID:
+            case .epsg3857, .epsg4978, .noSRID:
                 return tolerance
             }
         }()
@@ -189,12 +227,15 @@ extension FeatureCollection {
                 projection: projection),
             centroids: centroids,
             tolerance: crsTolerance,
-            counter: counter) else { return nil }
+            counter: counter,
+            hasAltitude: hasAltitude)
+        else { return nil }
 
         if spansAntimeridian && result.coordinate.longitude > 180.0 {
             result = Point(Coordinate3D(
                 x: result.coordinate.longitude - 360.0,
                 y: result.coordinate.latitude,
+                z: result.coordinate.altitude,
                 projection: projection))
         }
 
@@ -207,10 +248,12 @@ extension FeatureCollection {
         previousCandidate: Coordinate3D,
         centroids: [(coordinate: Coordinate3D, weight: Double)],
         tolerance: Double,
-        counter: Int
+        counter: Int,
+        hasAltitude: Bool
     ) -> Point? {
         var sumX: Double = 0.0
         var sumY: Double = 0.0
+        var sumZ: Double = 0.0
         var sumK: Double = 0.0
 
         for (coordinate, weight) in centroids {
@@ -221,6 +264,9 @@ extension FeatureCollection {
             let k = weight / distance
             sumX += coordinate.longitude * k
             sumY += coordinate.latitude * k
+            if hasAltitude {
+                sumZ += (coordinate.altitude ?? 0.0) * k
+            }
             sumK += k
         }
 
@@ -229,6 +275,7 @@ extension FeatureCollection {
         let newCandidate = Coordinate3D(
             x: sumX / sumK,
             y: sumY / sumK,
+            z: hasAltitude ? sumZ / sumK : nil,
             projection: projection)
 
         if counter == 0 || centroids.count == 1 {
@@ -246,7 +293,8 @@ extension FeatureCollection {
             previousCandidate: candidate,
             centroids: centroids,
             tolerance: tolerance,
-            counter: counter - 1)
+            counter: counter - 1,
+            hasAltitude: hasAltitude)
     }
 
 }
@@ -259,6 +307,9 @@ extension GeoJson {
     ///
     /// Uses the centroid of polygon formula (signed area method) for polygons,
     /// and falls back to the convex hull's center of mass for other geometries.
+    ///
+    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// signed-area-weighted mean of all altitudes.
     public var centerOfMass: Point? {
         if let feature = self as? Feature {
             return feature.geometry.centerOfMass
@@ -289,31 +340,44 @@ extension GeoJson {
             return Point(coords[0])
         }
 
+        let hasAltitude = coords.allSatisfy({ $0.altitude != nil })
+
         // Compute centroid for neutralization (to reduce rounding errors)
         var sumLat: Double = 0.0
         var sumLon: Double = 0.0
+        var sumAlt: Double = 0.0
         for coord in coords {
             sumLat += coord.latitude
             sumLon += coord.longitude
+            if hasAltitude {
+                sumAlt += coord.altitude!
+            }
         }
         let centerLat = sumLat / Double(coords.count)
         let centerLon = sumLon / Double(coords.count)
+        let centerAlt = hasAltitude ? sumAlt / Double(coords.count) : nil
 
         // Neutralized signed area computation
         var sx: Double = 0.0
         var sy: Double = 0.0
+        var sz: Double = 0.0
         var sArea: Double = 0.0
 
         for i in 0..<(coords.count - 1) {
             let xi = coords[i].longitude - centerLon
             let yi = coords[i].latitude - centerLat
+            let zi = hasAltitude ? (coords[i].altitude! - (centerAlt ?? 0.0)) : 0.0
             let xj = coords[i + 1].longitude - centerLon
             let yj = coords[i + 1].latitude - centerLat
+            let zj = hasAltitude ? (coords[i + 1].altitude! - (centerAlt ?? 0.0)) : 0.0
 
             let a = xi * yj - xj * yi
             sArea += a
             sx += (xi + xj) * a
             sy += (yi + yj) * a
+            if hasAltitude {
+                sz += (zi + zj) * a
+            }
         }
 
         // Shape has no area: fallback on centroid
@@ -321,6 +385,7 @@ extension GeoJson {
             return Point(Coordinate3D(
                 x: centerLon,
                 y: centerLat,
+                z: centerAlt,
                 projection: projection))
         }
 
@@ -330,6 +395,7 @@ extension GeoJson {
         return Point(Coordinate3D(
             x: centerLon + areaFactor * sx,
             y: centerLat + areaFactor * sy,
+            z: hasAltitude ? (centerAlt ?? 0.0) + areaFactor * sz : nil,
             projection: projection))
     }
 

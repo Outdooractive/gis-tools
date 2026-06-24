@@ -76,6 +76,57 @@ struct UnaryUnionTests {
         let mp = MultiPolygon(unchecked: [p1, p2])
         let result = try #require(mp.unaryUnion())
         #expect(result.polygons.count >= 1)
+        #expect(result.projection == .epsg3857)
+    }
+
+    // MARK: - EPSG:4978
+
+    @Test
+    func unaryUnion4978() throws {
+        let coords4326a: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let coords4326b: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.5, longitude: 0.0),
+            Coordinate3D(latitude: 0.5, longitude: 1.5),
+            Coordinate3D(latitude: 1.5, longitude: 1.5),
+            Coordinate3D(latitude: 1.5, longitude: 0.0),
+            Coordinate3D(latitude: 0.5, longitude: 0.0),
+        ]
+        let p1 = Polygon(unchecked: [coords4326a.map { $0.projected(to: .epsg4978) }])
+        let p2 = Polygon(unchecked: [coords4326b.map { $0.projected(to: .epsg4978) }])
+        let mp = MultiPolygon(unchecked: [p1, p2])
+        let result = try #require(mp.unaryUnion())
+        #expect(result.polygons.count >= 1)
+        #expect(result.projection == .epsg4978)
+    }
+
+    // MARK: - noSRID
+
+    @Test
+    func unaryUnionNoSRID() throws {
+        let p1 = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let p2 = Polygon(unchecked: [[
+            Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID),
+            Coordinate3D(x: 50.0, y: 150.0, projection: .noSRID),
+            Coordinate3D(x: 150.0, y: 150.0, projection: .noSRID),
+            Coordinate3D(x: 150.0, y: 50.0, projection: .noSRID),
+            Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID),
+        ]])
+        let mp = MultiPolygon(unchecked: [p1, p2])
+        let result = try #require(mp.unaryUnion())
+        #expect(result.polygons.count >= 1)
+        #expect(result.projection == .noSRID)
     }
 
     // MARK: - coverageUnion
@@ -124,6 +175,7 @@ struct UnaryUnionTests {
         let mp = MultiPolygon(unchecked: [p1, p2])
         let result = try #require(mp.coverageUnion())
         #expect(result.polygons.count == 1)
+        #expect(result.projection == .epsg3857)
     }
 
     @Test

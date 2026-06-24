@@ -186,6 +186,47 @@ struct NearestCoordinateOnLineTests {
         #expect(result.coordinate.longitude.isFinite)
     }
 
+    // MARK: - Projection tests
+
+    @Test
+    func nearestCoordOnLine4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978),
+        ]))
+        let point = Coordinate3D(latitude: 0.5, longitude: 0.009).projected(to: .epsg4978)
+        let result = lineString.nearestCoordinateOnLine(from: point)
+        #expect(result != nil)
+        #expect(result!.coordinate.projection == .epsg4978)
+        #expect(result!.distance.isFinite)
+    }
+
+    @Test
+    func nearestCoordOnLine3857() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+        ]))
+        let point = Coordinate3D(x: 50_000.0, y: 50_009.0)
+        let result = lineString.nearestCoordinateOnLine(from: point)
+        #expect(result != nil)
+        #expect(result!.coordinate.projection == .epsg3857)
+        #expect(result!.distance.isFinite)
+    }
+
+    @Test
+    func nearestCoordOnLineNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+        ]))
+        let point = Coordinate3D(x: 50.0, y: 50.0, projection: .noSRID)
+        let result = lineString.nearestCoordinateOnLine(from: point)
+        #expect(result != nil)
+        #expect(result!.coordinate.projection == .noSRID)
+        #expect(result!.distance == 0.0)
+    }
+
     // MARK: - Early-exit regression tests
 
     // Verifies that every segment is evaluated, not stopping at the first
