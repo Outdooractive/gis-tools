@@ -7,7 +7,7 @@ struct BooleanParallelTests {
 
     // Exact parallel segments in same direction.
     @Test
-    func segment_exactParallel_directed() {
+    func segmentExactParallelDirected() {
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
         let c = Coordinate3D(latitude: 5.0, longitude: 0.0)
@@ -20,7 +20,7 @@ struct BooleanParallelTests {
 
     // Non-parallel segments with different bearings.
     @Test
-    func segment_notParallel() {
+    func segmentNotParallel() {
         // Northward vs. Eastward — clearly not parallel
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
@@ -33,7 +33,7 @@ struct BooleanParallelTests {
 
     // Anti-parallel segments are not parallel in directed mode.
     @Test
-    func segment_antiParallel_directed() {
+    func segmentAntiParallelDirected() {
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
         let s1 = LineSegment(first: a, second: b)
@@ -43,7 +43,7 @@ struct BooleanParallelTests {
 
     // Anti-parallel segments are parallel in undirected mode.
     @Test
-    func segment_antiParallel_undirected() {
+    func segmentAntiParallelUndirected() {
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
         let s1 = LineSegment(first: a, second: b)
@@ -53,7 +53,7 @@ struct BooleanParallelTests {
 
     // Near-north segments straddling 0°/360° boundary.
     @Test
-    func segment_circularWrap_355vs5() {
+    func segmentCircularWrap355vs5() {
         // Two near-north segments straddling the 0°/360° boundary.
         // Segment 1: bearing ≈ 0.57° (just east of true north)
         // Segment 2: bearing ≈ -1.14° → azimuth 358.86°
@@ -69,7 +69,7 @@ struct BooleanParallelTests {
 
     // Bearings on opposite sides of 0° but too far apart.
     @Test
-    func segment_circularWrap_notParallel() {
+    func segmentCircularWrapNotParallel() {
         // Bearings on opposite sides of 0° but far enough apart
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.5)
@@ -82,7 +82,7 @@ struct BooleanParallelTests {
 
     // Small bearing difference within tolerance.
     @Test
-    func segment_withinTolerance() {
+    func segmentWithinTolerance() {
         // Bearing difference ≈ 0.057°, within 0.1° tolerance
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
@@ -95,7 +95,7 @@ struct BooleanParallelTests {
 
     // Bearing difference just outside tolerance.
     @Test
-    func segment_justOutsideTolerance() {
+    func segmentJustOutsideTolerance() {
         // Bearing difference ≈ 0.57°, outside 0.5° tolerance
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
@@ -108,7 +108,7 @@ struct BooleanParallelTests {
 
     // A segment is parallel to itself.
     @Test
-    func segment_selfIsParallel() {
+    func segmentSelfIsParallel() {
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
         let s = LineSegment(first: a, second: b)
@@ -118,7 +118,7 @@ struct BooleanParallelTests {
 
     // Parallel segments in noSRID projection.
     @Test
-    func segment_noSRID() {
+    func segmentNoSRID() {
         // With noSRID, rhumbBearing uses atan2(deltaLon, deltaLat)
         let a = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let b = Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID)
@@ -131,7 +131,7 @@ struct BooleanParallelTests {
 
     // Anti-parallel corrected by undirectedEdge flag.
     @Test
-    func segment_undirected_wrap() {
+    func segmentUndirectedWrap() {
         // Anti-parallel where undirectedEdge corrects the 180° flip
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let b = Coordinate3D(latitude: 10.0, longitude: 0.0)
@@ -167,7 +167,7 @@ struct BooleanParallelTests {
 
     // Two segments crossing antimeridian with same bearing.
     @Test
-    func segment_antiMeridian_parallel() {
+    func segmentAntiMeridianParallel() {
         // Two segments crossing the anti-meridian (180° longitude) with the
         // same ~2° eastward longitude step at different latitudes.
         // After deltaLambda normalisation both have bearing ≈ 11.25° and
@@ -183,7 +183,7 @@ struct BooleanParallelTests {
 
     // Segments crossing antimeridian with different bearings.
     @Test
-    func segment_antiMeridian_notParallel() {
+    func segmentAntiMeridianNotParallel() {
         // Segment crossing the anti-meridian by 2° East (bearing ≈ 11.25°)
         // vs. one crossing by 15° East (bearing ≈ 56.2°) — clearly different.
         let a = Coordinate3D(latitude: 0.0, longitude: 179.0)
@@ -197,7 +197,7 @@ struct BooleanParallelTests {
 
     // Antimeridian crossing segment and its reverse.
     @Test
-    func segment_antiMeridian_undirected() {
+    func segmentAntiMeridianUndirected() {
         // A segment crossing the anti-meridian and its reverse should be
         // parallel when treated as an undirected edge.
         let a = Coordinate3D(latitude: 0.0, longitude: 179.0)
@@ -212,7 +212,7 @@ struct BooleanParallelTests {
 
     // Parallel LineStrings return true.
     @Test
-    func lineString_isTrue() async throws {
+    func lineStringIsTrue() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanParallel", name: "LineStringTrue1_1")
         let lineString2 = try TestData.lineString(package: "BooleanParallel", name: "LineStringTrue1_2")
 
@@ -233,7 +233,7 @@ struct BooleanParallelTests {
 
     // Non-parallel LineStrings return false.
     @Test
-    func lineString_isFalse() async throws {
+    func lineStringIsFalse() async throws {
         let lineString1 = try TestData.lineString(package: "BooleanParallel", name: "LineStringFalse1_1")
         let lineString2 = try TestData.lineString(package: "BooleanParallel", name: "LineStringFalse1_2")
 
