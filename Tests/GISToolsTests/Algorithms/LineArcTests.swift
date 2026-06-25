@@ -8,8 +8,17 @@ struct LineArcTests {
     func lineArc() async throws {
         let point = Point(Coordinate3D(latitude: 44.495, longitude: 11.343))
         let lineArc = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
-        let expected = try TestData.lineString(package: "LineArc", name: "LineArcResult")
-
+        let expected = LineString(unchecked: [
+            Coordinate3D(latitude: 44.537252, longitude: 11.364576),
+            Coordinate3D(latitude: 44.53554, longitude: 11.370282),
+            Coordinate3D(latitude: 44.533437, longitude: 11.375724),
+            Coordinate3D(latitude: 44.530964, longitude: 11.380851),
+            Coordinate3D(latitude: 44.528145, longitude: 11.385612),
+            Coordinate3D(latitude: 44.525006, longitude: 11.389963),
+            Coordinate3D(latitude: 44.521578, longitude: 11.39386),
+            Coordinate3D(latitude: 44.517894, longitude: 11.397267),
+            Coordinate3D(latitude: 44.51747, longitude: 11.397614),
+        ])
         let lineArcCoordinates = lineArc.coordinates
         let expectedCoordinates = expected.coordinates
 
