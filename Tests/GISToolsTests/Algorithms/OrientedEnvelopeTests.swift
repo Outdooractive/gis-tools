@@ -6,11 +6,11 @@ struct OrientedEnvelopeTests {
 
     /// A vertical line: the oriented envelope should be a tall, narrow rectangle.
     @Test
-    func verticalLine() {
-        let line = LineString(unchecked: [
+    func verticalLine() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])
+        ]))
         let envelope = line.orientedEnvelope()
         #expect(envelope != nil)
         if let envelope {
@@ -24,11 +24,11 @@ struct OrientedEnvelopeTests {
 
     /// A horizontal line: the oriented envelope should be a wide, short rectangle.
     @Test
-    func horizontalLine() {
-        let line = LineString(unchecked: [
+    func horizontalLine() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
-        ])
+        ]))
         let envelope = line.orientedEnvelope()
         #expect(envelope != nil)
         if let envelope {
@@ -41,11 +41,11 @@ struct OrientedEnvelopeTests {
 
     /// A diagonal line at 45°: the oriented envelope should align with the line.
     @Test
-    func diagonalLine() {
-        let line = LineString(unchecked: [
+    func diagonalLine() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ])
+        ]))
         let envelope = line.orientedEnvelope()
         #expect(envelope != nil)
         if let envelope {
@@ -64,14 +64,14 @@ struct OrientedEnvelopeTests {
 
     /// A square: the oriented envelope should match the axis-aligned bounding box.
     @Test
-    func square() {
-        let square = Polygon(unchecked: [[
+    func square() throws {
+        let square = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let envelope = square.orientedEnvelope()
         #expect(envelope != nil)
         if let envelope {
@@ -100,18 +100,18 @@ struct OrientedEnvelopeTests {
         #expect(pt.orientedEnvelope() == nil)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     /// A polygon in EPSG:3857 produces a valid oriented envelope.
     @Test
-    func orientedEnvelope3857() {
-        let polygon = Polygon(unchecked: [[
+    func orientedEnvelope3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let envelope = polygon.orientedEnvelope()
         #expect(envelope != nil)
         #expect(envelope?.projection == .epsg3857)
@@ -123,14 +123,14 @@ struct OrientedEnvelopeTests {
 
     /// A polygon in noSRID produces a valid oriented envelope.
     @Test
-    func orientedEnvelopeNoSRID() {
-        let polygon = Polygon(unchecked: [[
+    func orientedEnvelopeNoSRID() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let envelope = polygon.orientedEnvelope()
         #expect(envelope != nil)
         #expect(envelope?.projection == .noSRID)
@@ -140,17 +140,16 @@ struct OrientedEnvelopeTests {
         }
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func orientedEnvelope4978() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
             Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978),
             Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978),
             Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978),
             Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
-        ]])
+        ]]))
         let envelope = polygon.orientedEnvelope()
         #expect(envelope != nil)
         #expect(envelope?.projection == .epsg4978)
@@ -164,14 +163,14 @@ struct OrientedEnvelopeTests {
 
     /// A square crossing the antimeridian should still produce a valid envelope.
     @Test
-    func antimeridianSquare() {
-        let square = Polygon(unchecked: [[
+    func antimeridianSquare() throws {
+        let square = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 179.0),
             Coordinate3D(latitude: 10.0, longitude: 179.0),
             Coordinate3D(latitude: 10.0, longitude: -179.0),
             Coordinate3D(latitude: 0.0, longitude: -179.0),
             Coordinate3D(latitude: 0.0, longitude: 179.0),
-        ]])
+        ]]))
         let envelope = square.orientedEnvelope()
         #expect(envelope != nil)
         if let envelope {
@@ -184,11 +183,11 @@ struct OrientedEnvelopeTests {
 
     /// A diagonal line crossing the antimeridian.
     @Test
-    func antimeridianLine() {
-        let line = LineString(unchecked: [
+    func antimeridianLine() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 179.0),
             Coordinate3D(latitude: 10.0, longitude: -179.0),
-        ])
+        ]))
         let envelope = line.orientedEnvelope()
         #expect(envelope != nil)
     }

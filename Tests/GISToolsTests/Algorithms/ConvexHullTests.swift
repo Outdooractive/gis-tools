@@ -104,6 +104,8 @@ struct ConvexHullTests {
 
     // Validates the convex hull of a 1000×1000 m polygon in EPSG:3857.
     @Test
+    // MARK: - Projections
+
     func convexHull3857() async throws {
         let mp = try #require(MultiPoint([
             Coordinate3D(x: 0.0, y: 0.0),

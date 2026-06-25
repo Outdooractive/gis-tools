@@ -171,7 +171,7 @@ struct IsoLinesTests {
         #expect(result.features.isEmpty)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func isoLines4978() {

@@ -76,6 +76,8 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // MARK: - Projections
+
     @Test
     func lineSliceAlong3857() async throws {
         let lineString = try #require(LineString([

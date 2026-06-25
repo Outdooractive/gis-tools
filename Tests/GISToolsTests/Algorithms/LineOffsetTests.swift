@@ -151,7 +151,7 @@ struct LineOffsetTests {
         #expect(offset.coordinates.count == 2)
     }
 
-    // MARK: - EPSG:3857 projection
+    // MARK: - Projections projection
 
     @Test
     func lineOffset3857() async throws {

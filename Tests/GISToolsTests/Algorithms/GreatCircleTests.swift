@@ -19,31 +19,6 @@ struct GreatCircleTests {
         #expect(ls.coordinates.last == end)
     }
 
-    // Validates a great circle crossing the antimeridian produces a MultiLineString.
-    @Test
-    func greatCircleCrossingAntimeridian() async throws {
-        let start = Coordinate3D(latitude: 45.0, longitude: 170.0)
-        let end = Coordinate3D(latitude: 45.0, longitude: -170.0)
-
-        let result = start.greatCircle(to: end)
-        // Should be a MultiLineString (crosses the date line)
-        #expect(result is MultiLineString)
-    }
-
-    // Validates a great circle from a point to itself returns a LineString with all identical coordinates.
-    @Test
-    func greatCircleSamePoint() async throws {
-        let point = Coordinate3D(latitude: 40.0, longitude: -73.0)
-        let result = point.greatCircle(to: point, npoints: 5)
-
-        #expect(result is LineString)
-        let ls = result as! LineString
-        #expect(ls.coordinates.count == 5)
-        for coord in ls.coordinates {
-            #expect(coord == point)
-        }
-    }
-
     // Validates a great circle with a custom number of waypoints produces the expected coordinate count.
     @Test
     func greatCircleCustomNpoints() async throws {
@@ -67,7 +42,6 @@ struct GreatCircleTests {
         #expect(result is LineString)
 
         let ls = result as! LineString
-        // All points should be near the equator
         for coord in ls.coordinates {
             #expect(abs(coord.latitude) < 1.0)
         }
@@ -83,9 +57,70 @@ struct GreatCircleTests {
         #expect(result is LineString)
 
         let ls = result as! LineString
-        // Longitude should stay near 0
         for coord in ls.coordinates {
             #expect(abs(coord.longitude) < 1.0)
+        }
+    }
+
+    // MARK: - Projections
+
+    @Test
+    func greatCircle3857() async throws {
+        let start = Coordinate3D(x: 0.0, y: 0.0)
+        let end = Coordinate3D(x: 111_319.5, y: 111_319.5)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+        if let line = result as? LineString {
+            #expect(line.coordinates[0].projection == .epsg4326)
+        }
+    }
+
+    // Validates great circle with EPSG:4978 input (result in 4326).
+    @Test
+    func greatCircle4978() async throws {
+        let start = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
+        let end = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+    }
+
+    // Validates great circle with noSRID input (result in 4326).
+    @Test
+    func greatCircleNoSRID() async throws {
+        let start = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let end = Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID)
+        let result = start.greatCircle(to: end)
+        #expect(result is LineString)
+        if let line = result as? LineString {
+            #expect(line.projection == .epsg4326)
+        }
+    }
+
+    // MARK: - Antimeridian
+
+    // Validates a great circle crossing the antimeridian produces a MultiLineString.
+    @Test
+    func greatCircleCrossingAntimeridian() async throws {
+        let start = Coordinate3D(latitude: 45.0, longitude: 170.0)
+        let end = Coordinate3D(latitude: 45.0, longitude: -170.0)
+
+        let result = start.greatCircle(to: end)
+        #expect(result is MultiLineString)
+    }
+
+    // MARK: - Edge cases
+
+    // Validates a great circle from a point to itself returns a LineString with all identical coordinates.
+    @Test
+    func greatCircleSamePoint() async throws {
+        let point = Coordinate3D(latitude: 40.0, longitude: -73.0)
+        let result = point.greatCircle(to: point, npoints: 5)
+
+        #expect(result is LineString)
+        let ls = result as! LineString
+        #expect(ls.coordinates.count == 5)
+        for coord in ls.coordinates {
+            #expect(coord == point)
         }
     }
 
@@ -96,42 +131,9 @@ struct GreatCircleTests {
         let end = Coordinate3D(latitude: 10.0, longitude: 10.0)
 
         let result = start.greatCircle(to: end, npoints: 1)
-        // Falls back to a 2-point line
         #expect(result is LineString)
         let ls = result as! LineString
         #expect(ls.coordinates.count == 2)
-    }
-    // MARK: - EPSG:3857
-
-    @Test
-    func greatCircle3857() async throws {
-        let start = Coordinate3D(x: 0.0, y: 0.0)
-        let end = Coordinate3D(x: 111_319.5, y: 111_319.5)
-        let result = start.greatCircle(to: end)
-        #expect(result is LineString)
-        // Result is in EPSG:4326 (great circle is inherently geographic).
-        if let line = result as? LineString {
-            #expect(line.coordinates[0].projection == .epsg4326)
-        }
-    }
-
-    @Test
-    func greatCircle4978() async throws {
-        let start = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
-        let end = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
-        let result = start.greatCircle(to: end)
-        #expect(result is LineString)
-    }
-
-    @Test
-    func greatCircleNoSRID() async throws {
-        let start = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
-        let end = Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID)
-        let result = start.greatCircle(to: end)
-        #expect(result is LineString)
-        if let line = result as? LineString {
-            #expect(line.projection == .epsg4326)
-        }
     }
 
 }

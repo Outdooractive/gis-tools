@@ -49,7 +49,7 @@ struct SquareGridTests {
         #expect(grid.features.count <= 4)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func squareGrid3857() async throws {
@@ -69,7 +69,6 @@ struct SquareGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func squareGrid4978() async throws {
@@ -80,7 +79,6 @@ struct SquareGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
     @Test
     func squareGridNoSRID() async throws {

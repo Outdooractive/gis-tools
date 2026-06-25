@@ -26,7 +26,7 @@ struct LineSliceTests {
         #expect(slice == result)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func lineSlice3857() async throws {
@@ -64,7 +64,7 @@ struct LineSliceTests {
         #expect(slice != nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `slice(start:end:gridSize:)` matches manual pre-snapping.
     @Test

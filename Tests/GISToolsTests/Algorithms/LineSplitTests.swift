@@ -5,11 +5,11 @@ struct LineSplitTests {
 
     /// Splitting a line at a point in the middle produces 2 segments.
     @Test
-    func splitByPoint() {
-        let line = LineString(unchecked: [
+    func splitByPoint() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])
+        ]))
         let splitter = Point(Coordinate3D(latitude: 5.0, longitude: 0.0))
         let result = line.lineSplit(with: splitter)
         #expect(result.features.count == 2)
@@ -17,26 +17,26 @@ struct LineSplitTests {
 
     /// A line split by a MultiPoint should produce segments at each split point.
     @Test
-    func splitByMultiPoint() {
-        let line = LineString(unchecked: [
+    func splitByMultiPoint() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])
-        let splitter = MultiPoint(unchecked: [
+        ]))
+        let splitter = try #require(MultiPoint([
             Coordinate3D(latitude: 3.0, longitude: 0.0),
             Coordinate3D(latitude: 7.0, longitude: 0.0),
-        ])
+        ]))
         let result = line.lineSplit(with: splitter)
         #expect(result.features.count == 3)
     }
 
     /// A line with no intersections returns the original line as a single segment.
     @Test
-    func noIntersections() {
-        let line = LineString(unchecked: [
+    func noIntersections() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])
+        ]))
         let splitter = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let result = line.lineSplit(with: splitter)
         #expect(result.features.count == 1)
@@ -44,21 +44,21 @@ struct LineSplitTests {
 
     /// A line split by another crossing LineString.
     @Test
-    func splitByLine() {
-        let line = LineString(unchecked: [
+    func splitByLine() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ])
-        let splitter = LineString(unchecked: [
+        ]))
+        let splitter = try #require(LineString([
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
-        ])
+        ]))
         let result = line.lineSplit(with: splitter)
         // Two crossing lines split each other into 2 segments each
         #expect(result.features.count == 2)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func lineSplit3857() async throws {
@@ -95,11 +95,11 @@ struct LineSplitTests {
 
     /// Grid-size snapping for noise reduction.
     @Test
-    func withGridSize() {
-        let line = LineString(unchecked: [
+    func withGridSize() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])
+        ]))
         let splitter = Point(Coordinate3D(latitude: 5.001, longitude: 0.0))
         // Without snapping, this might miss
         let result = line.lineSplit(with: splitter, gridSize: 0.1)

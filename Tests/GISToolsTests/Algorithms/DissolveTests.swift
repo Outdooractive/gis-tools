@@ -9,7 +9,7 @@ struct DissolveTests {
         latitude: Double,
         longitude: Double,
         size: Double = 1.0
-    ) -> Polygon {
+    ) throws -> Polygon {
         let half = size * 0.5
         let coords = [
             Coordinate3D(latitude: latitude - half, longitude: longitude - half),
@@ -18,20 +18,20 @@ struct DissolveTests {
             Coordinate3D(latitude: latitude - half, longitude: longitude + half),
             Coordinate3D(latitude: latitude - half, longitude: longitude - half),
         ]
-        return try! #require(Polygon([coords]))
+        return try #require(Polygon([coords]))
     }
 
     // MARK: - String property values
 
     @Test
     func stringProperty() async throws {
-        let a1 = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["group": "a"])
-        let a2 = Feature(square(latitude: 0.0, longitude: 10.0), properties: ["group": "a"])
-        let b1 = Feature(square(latitude: 10.0, longitude: 0.0), properties: ["group": "b"])
-        let line = Feature(LineString([
+        let a1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["group": "a"])
+        let a2 = Feature(try square(latitude: 0.0, longitude: 10.0), properties: ["group": "a"])
+        let b1 = Feature(try square(latitude: 10.0, longitude: 0.0), properties: ["group": "b"])
+        let line = Feature(try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
-        ])!, properties: ["group": "a"])
+        ])), properties: ["group": "a"])
 
         let dissolved = FeatureCollection([a1, a2, b1, line]).dissolved(by: "group")
 
@@ -44,9 +44,9 @@ struct DissolveTests {
 
     @Test
     func intProperty() async throws {
-        let f1 = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["zone": 1])
-        let f2 = Feature(square(latitude: 0.0, longitude: 10.0), properties: ["zone": 1])
-        let f3 = Feature(square(latitude: 10.0, longitude: 0.0), properties: ["zone": 2])
+        let f1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["zone": 1])
+        let f2 = Feature(try square(latitude: 0.0, longitude: 10.0), properties: ["zone": 1])
+        let f3 = Feature(try square(latitude: 10.0, longitude: 0.0), properties: ["zone": 2])
 
         let dissolved = FeatureCollection([f1, f2, f3]).dissolved(by: "zone")
 
@@ -59,9 +59,9 @@ struct DissolveTests {
 
     @Test
     func boolProperty() async throws {
-        let f1 = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["active": true])
-        let f2 = Feature(square(latitude: 0.0, longitude: 10.0), properties: ["active": true])
-        let f3 = Feature(square(latitude: 10.0, longitude: 0.0), properties: ["active": false])
+        let f1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["active": true])
+        let f2 = Feature(try square(latitude: 0.0, longitude: 10.0), properties: ["active": true])
+        let f3 = Feature(try square(latitude: 10.0, longitude: 0.0), properties: ["active": false])
 
         let dissolved = FeatureCollection([f1, f2, f3]).dissolved(by: "active")
 
@@ -76,8 +76,8 @@ struct DissolveTests {
 
     @Test
     func removeUnknownDropsFeaturesWithoutProperty() async throws {
-        let withProp = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
-        let withoutProp = Feature(square(latitude: 10.0, longitude: 0.0))
+        let withProp = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
+        let withoutProp = Feature(try square(latitude: 10.0, longitude: 0.0))
 
         let dissolved = FeatureCollection([withProp, withoutProp]).dissolved(by: "cat", removeUnknown: true)
 
@@ -87,8 +87,8 @@ struct DissolveTests {
 
     @Test
     func keepUnknownGroupsFeaturesWithoutProperty() async throws {
-        let withProp = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
-        let withoutProp = Feature(square(latitude: 10.0, longitude: 0.0))
+        let withProp = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
+        let withoutProp = Feature(try square(latitude: 10.0, longitude: 0.0))
 
         let dissolved = FeatureCollection([withProp, withoutProp]).dissolved(by: "cat", removeUnknown: false)
 
@@ -103,7 +103,7 @@ struct DissolveTests {
 
     @Test
     func nonPolygonFeaturesRemoved() async throws {
-        let polygon = Feature(square(latitude: 0.0, longitude: 0.0), properties: ["g": "a"])
+        let polygon = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["g": "a"])
         let point = Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0)), properties: ["g": "a"])
 
         let dissolved = FeatureCollection([polygon, point]).dissolved(by: "g")
@@ -113,24 +113,24 @@ struct DissolveTests {
         #expect(g == "a")
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func dissolve3857() async throws {
-        let p1 = Feature(Polygon(unchecked: [[
+        let p1 = Feature(try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]]), properties: ["group": "a"])
-        let p2 = Feature(Polygon(unchecked: [[
+        ]])), properties: ["group": "a"])
+        let p2 = Feature(try #require(Polygon([[
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 2000.0, y: 0.0),
             Coordinate3D(x: 2000.0, y: 1000.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 1000.0, y: 0.0),
-        ]]), properties: ["group": "a"])
+        ]])), properties: ["group": "a"])
 
         let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")
         #expect(dissolved.features.isNotEmpty)
@@ -138,20 +138,20 @@ struct DissolveTests {
 
     @Test
     func dissolveNoSRID() async throws {
-        let p1 = Feature(Polygon(unchecked: [[
+        let p1 = Feature(try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]]), properties: ["group": "a"])
-        let p2 = Feature(Polygon(unchecked: [[
+        ]])), properties: ["group": "a"])
+        let p2 = Feature(try #require(Polygon([[
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
-        ]]), properties: ["group": "a"])
+        ]])), properties: ["group": "a"])
 
         let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")
         #expect(dissolved.features.isNotEmpty)

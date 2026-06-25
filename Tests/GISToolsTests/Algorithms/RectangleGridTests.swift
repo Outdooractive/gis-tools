@@ -69,7 +69,7 @@ struct RectangleGridTests {
         #expect(grid.features.isEmpty)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func rectangleGrid3857() async throws {
@@ -89,7 +89,6 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func rectangleGrid4978() async throws {
@@ -100,7 +99,6 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
     @Test
     func rectangleGridNoSRID() async throws {

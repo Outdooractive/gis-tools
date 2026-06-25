@@ -118,10 +118,10 @@ struct MultiPointTests {
 
     // Validates creating a MultiPoint in EPSG:3857 using unchecked init.
     @Test
-    func init3857() {
+    func init3857() throws {
         let pointA = Point(Coordinate3D(x: 0.0, y: 0.0))
         let pointB = Point(Coordinate3D(x: 10.0, y: 10.0))
-        let multiPoint = MultiPoint(unchecked: [pointA, pointB])
+        let multiPoint = try #require(MultiPoint([pointA, pointB]))
 
         #expect(multiPoint.projection == .epsg3857)
         #expect(multiPoint.points.count == 2)
@@ -150,7 +150,7 @@ struct MultiPointTests {
     func boundingBox3857() async throws {
         let pointA = Point(Coordinate3D(x: 0.0, y: 0.0))
         let pointB = Point(Coordinate3D(x: 10.0, y: 10.0))
-        let multiPoint = MultiPoint(unchecked: [pointA, pointB])
+        let multiPoint = try #require(MultiPoint([pointA, pointB]))
 
         let bbox = try #require(multiPoint.calculateBoundingBox())
 
@@ -189,7 +189,7 @@ struct MultiPointTests {
         let pointB = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
         let pointC = Point(Coordinate3D(latitude: 2.0, longitude: 2.0))
 
-        var multiPoint = MultiPoint(unchecked: [pointA])
+        var multiPoint = try #require(MultiPoint([pointA]))
 
         multiPoint.appendPoint(pointB)
         #expect(multiPoint.points.count == 2)

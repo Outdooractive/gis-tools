@@ -29,9 +29,10 @@ struct BearingTests {
         #expect((-395.0).bearingToAzimuth == 325.0)
     }
 
-    // Tests bearing calculation in EPSG:3857 (Web Mercator).
+    // MARK: - Projections
+
     @Test
-    func bearingEPSG3857() async throws {
+    func bearing3857() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0)
         let target = Coordinate3D(x: 100_000.0, y: 100_000.0)
 
@@ -39,10 +40,9 @@ struct BearingTests {
         #expect(abs(bearing - 45.0) < 0.01)
     }
 
-    // Tests bearing calculation in EPSG:4978 (ECEF Cartesian).
+    // Tests bearing calculation in EPSG:4978.
     @Test
-    func bearingEPSG4978() async throws {
-        // Project known 4326 coordinates to 4978, then compute bearing.
+    func bearing4978() async throws {
         let origin4326 = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let target4326 = Coordinate3D(latitude: 0.0, longitude: 1.0)
         let origin = origin4326.projected(to: .epsg4978)
@@ -51,7 +51,7 @@ struct BearingTests {
         #expect(abs(bearing - 90.0) < 0.01)
     }
 
-    // Tests bearing calculation with .noSRID (Cartesian coordinates).
+    // Tests bearing calculation with noSRID.
     @Test
     func bearingNoSRID() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
@@ -72,6 +72,15 @@ struct BearingTests {
         let end = Coordinate3D(latitude: 10.0, longitude: -170.0)
         let bearing = start.bearing(to: end)
         #expect(bearing > 0.0 && bearing < 180.0)
+    }
+
+    // MARK: - Edge cases
+
+    @Test
+    func bearingIdenticalPoints() async throws {
+        let point = Coordinate3D(latitude: 45.0, longitude: -75.0)
+        let bearing = point.bearing(to: point)
+        #expect(bearing.isFinite)
     }
 
 }

@@ -21,7 +21,7 @@ struct LineArcTests {
         }
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func lineArc3857() async throws {
@@ -30,6 +30,7 @@ struct LineArcTests {
         #expect(lineArc.coordinates.count > 2)
     }
 
+    // Validates line arc in EPSG:4978.
     @Test
     func lineArc4978() async throws {
         let point = Point(Coordinate3D(
@@ -39,6 +40,7 @@ struct LineArcTests {
         #expect(lineArc.coordinates.count > 2)
     }
 
+    // Validates line arc in noSRID.
     @Test
     func lineArcNoSRID() async throws {
         let point = Point(Coordinate3D(
@@ -55,6 +57,14 @@ struct LineArcTests {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
         let lineArc = try #require(point.lineArc(radius: 50000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(lineArc.coordinates.count > 2)
+    }
+
+    // MARK: - Edge cases
+
+    @Test
+    func lineArcZeroRadius() async throws {
+        let point = Point(Coordinate3D(latitude: 44.495, longitude: 11.343))
+        #expect(point.lineArc(radius: 0.0, bearing1: 20.0, bearing2: 60.0) == nil)
     }
 
 }

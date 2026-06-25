@@ -58,7 +58,7 @@ struct PointGridTests {
         #expect(maskedGrid.features.count > 0)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func pointGrid3857() async throws {
@@ -78,7 +78,6 @@ struct PointGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func pointGrid4978() async throws {
@@ -89,7 +88,6 @@ struct PointGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
     @Test
     func pointGridNoSRID() async throws {

@@ -25,6 +25,8 @@ struct SnapToGridTests {
     }
 
     @Test
+    // MARK: - Projections
+
     func pointEPSG3857() async throws {
         let point = Point(Coordinate3D(x: 1500.0, y: 2700.0))
         let snapped = point.snappedToGrid(tolerance: 1000.0)
@@ -271,13 +273,13 @@ struct SnapToGridTests {
 
     @Test
     func ringSnappedToGrid() async throws {
-        let ring = Ring(unchecked: [
+        let ring = try #require(Ring([
             Coordinate3D(latitude: 0.1, longitude: 0.2),
             Coordinate3D(latitude: 1.7, longitude: 0.3),
             Coordinate3D(latitude: 1.8, longitude: 1.9),
             Coordinate3D(latitude: 0.2, longitude: 1.8),
             Coordinate3D(latitude: 0.1, longitude: 0.2),
-        ])
+        ]))
         let snapped = ring.snappedToGrid(tolerance: 1.0)
 
         let coords = snapped.coordinates
@@ -290,12 +292,12 @@ struct SnapToGridTests {
 
     @Test
     func ringSnapToGridMutating() async throws {
-        var ring = Ring(unchecked: [
+        var ring = try #require(Ring([
             Coordinate3D(latitude: 0.1, longitude: 0.2),
             Coordinate3D(latitude: 1.7, longitude: 0.3),
             Coordinate3D(latitude: 0.2, longitude: 1.8),
             Coordinate3D(latitude: 0.1, longitude: 0.2),
-        ])
+        ]))
         ring.snapToGrid(tolerance: 1.0)
 
         #expect(ring.coordinates[0] == Coordinate3D(latitude: 0.0, longitude: 0.0))

@@ -86,7 +86,7 @@ struct PointsWithinPolygonTests {
         #expect(result.isEmpty)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `coordinatesWithin(_:gridSize:)` matches manual pre-snapping.
     @Test
@@ -112,7 +112,7 @@ struct PointsWithinPolygonTests {
         #expect(withParam.count == 1)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func pointsWithinPolygon3857() async throws {
@@ -147,7 +147,6 @@ struct PointsWithinPolygonTests {
         #expect(result[0].projection == .epsg4978)
     }
 
-    // MARK: - noSRID
 
     @Test
     func pointsWithinPolygonNoSRID() async throws {

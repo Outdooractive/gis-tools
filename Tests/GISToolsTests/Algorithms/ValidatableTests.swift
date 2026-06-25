@@ -235,6 +235,8 @@ struct ValidatableTests {
 
     // Validates that a valid Polygon in EPSG:3857 is recognized as valid.
     @Test
+    // MARK: - Projections
+
     func validatable3857() async throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),

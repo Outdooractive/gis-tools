@@ -7,14 +7,14 @@ struct LineMergeTests {
     // Validates that two connected LineStrings merge into one.
     @Test
     func twoConnectedLines() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -26,14 +26,14 @@ struct LineMergeTests {
     // Validates that two disconnected LineStrings remain separate.
     @Test
     func twoDisconnectedLines() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 15.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -43,18 +43,18 @@ struct LineMergeTests {
     // Validates that three lines in a chain merge into one.
     @Test
     func threeLineChain() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
-        let c = LineString([
+        ]))
+        let c = try #require(LineString([
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 15.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b), Feature(c)])
 
         let result = fc.lineMerged()
@@ -67,18 +67,18 @@ struct LineMergeTests {
     @Test
     func junction() async throws {
         // Two lines pointing to the same junction point
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
-        let c = LineString([
+        ]))
+        let c = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b), Feature(c)])
 
         let result = fc.lineMerged()
@@ -90,15 +90,15 @@ struct LineMergeTests {
     // Validates that reversed lines (end-to-end) are handled correctly.
     @Test
     func reversedLine() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
+        ]))
         // b is reversed relative to a's continuation
-        let b = LineString([
+        let b = try #require(LineString([
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -121,10 +121,10 @@ struct LineMergeTests {
     // Validates that a single LineString returns as-is.
     @Test
     func singleLine() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a)])
 
         let result = fc.lineMerged()
@@ -135,7 +135,7 @@ struct LineMergeTests {
     // Validates that MultiLineString inputs are flattened and merged.
     @Test
     func multiLineStringInput() async throws {
-        let mls = MultiLineString([
+        let mls = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 5.0, longitude: 0.0),
@@ -144,25 +144,25 @@ struct LineMergeTests {
                 Coordinate3D(latitude: 5.0, longitude: 0.0),
                 Coordinate3D(latitude: 10.0, longitude: 0.0),
             ],
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(mls)])
 
         let result = fc.lineMerged()
         #expect(result.features.count == 1)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func lineMerge3857() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 500_000.0, y: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(x: 500_000.0, y: 0.0),
             Coordinate3D(x: 1_000_000.0, y: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -173,14 +173,14 @@ struct LineMergeTests {
 
     @Test
     func lineMerge4978() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(x: 500_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -189,14 +189,14 @@ struct LineMergeTests {
 
     @Test
     func lineMergeNoSRID() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -206,14 +206,14 @@ struct LineMergeTests {
     // Validates merging two LineStrings that cross the antimeridian.
     @Test
     func antimeridianConnected() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: -170.0),
             Coordinate3D(latitude: 5.0, longitude: -170.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -225,14 +225,14 @@ struct LineMergeTests {
     // Validates merging lines on both sides of the antimeridian.
     @Test
     func antimeridianBothSides() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 175.0),
             Coordinate3D(latitude: 0.0, longitude: 180.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 180.0),
             Coordinate3D(latitude: 0.0, longitude: -175.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -242,14 +242,14 @@ struct LineMergeTests {
     // Validates that lineMerged returns LineString features.
     @Test
     func mergedLineStringsBasic() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -262,14 +262,14 @@ struct LineMergeTests {
     // Validates that lineMerged handles disconnected lines.
     @Test
     func mergedLineStringsDisconnected() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 15.0, longitude: 0.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b)])
 
         let result = fc.lineMerged()
@@ -282,18 +282,18 @@ struct LineMergeTests {
     // Validates that lineMerged handles junctions (each branch becomes a LineString).
     @Test
     func mergedLineStringsJunction() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
-        let c = LineString([
+        ]))
+        let c = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
-        ])!
+        ]))
         let fc = FeatureCollection([Feature(a), Feature(b), Feature(c)])
 
         let result = fc.lineMerged()

@@ -3,45 +3,57 @@ import Testing
 
 struct RewindTests {
 
-    private static let lineStringClockwise = LineString([
-        Coordinate3D(latitude: -20.0, longitude: 122.0),
-        Coordinate3D(latitude: -15.0, longitude: 126.0),
-        Coordinate3D(latitude: -14.0, longitude: 129.0),
-        Coordinate3D(latitude: -15.0, longitude: 134.0),
-        Coordinate3D(latitude: -20.0, longitude: 138.0),
-        Coordinate3D(latitude: -25.0, longitude: 139.0),
-        Coordinate3D(latitude: -30.0, longitude: 134.0),
-        Coordinate3D(latitude: -30.0, longitude: 131.0),
-        Coordinate3D(latitude: -29.0, longitude: 128.0),
-        Coordinate3D(latitude: -27.0, longitude: 124.0),
-    ])!
+    private static let lineStringClockwise: LineString = {
+        guard let result = LineString([
+            Coordinate3D(latitude: -20.0, longitude: 122.0),
+            Coordinate3D(latitude: -15.0, longitude: 126.0),
+            Coordinate3D(latitude: -14.0, longitude: 129.0),
+            Coordinate3D(latitude: -15.0, longitude: 134.0),
+            Coordinate3D(latitude: -20.0, longitude: 138.0),
+            Coordinate3D(latitude: -25.0, longitude: 139.0),
+            Coordinate3D(latitude: -30.0, longitude: 134.0),
+            Coordinate3D(latitude: -30.0, longitude: 131.0),
+            Coordinate3D(latitude: -29.0, longitude: 128.0),
+            Coordinate3D(latitude: -27.0, longitude: 124.0),
+        ]) else { preconditionFailure("Failed to create lineStringClockwise") }
+        return result
+    }()
 
-    private static let lineStringCounterClockwise = LineString([
-        Coordinate3D(latitude: -27.0, longitude: 124.0),
-        Coordinate3D(latitude: -29.0, longitude: 128.0),
-        Coordinate3D(latitude: -30.0, longitude: 131.0),
-        Coordinate3D(latitude: -30.0, longitude: 134.0),
-        Coordinate3D(latitude: -25.0, longitude: 139.0),
-        Coordinate3D(latitude: -20.0, longitude: 138.0),
-        Coordinate3D(latitude: -15.0, longitude: 134.0),
-        Coordinate3D(latitude: -14.0, longitude: 129.0),
-        Coordinate3D(latitude: -15.0, longitude: 126.0),
-        Coordinate3D(latitude: -20.0, longitude: 122.0),
-    ])!
+    private static let lineStringCounterClockwise: LineString = {
+        guard let result = LineString([
+            Coordinate3D(latitude: -27.0, longitude: 124.0),
+            Coordinate3D(latitude: -29.0, longitude: 128.0),
+            Coordinate3D(latitude: -30.0, longitude: 131.0),
+            Coordinate3D(latitude: -30.0, longitude: 134.0),
+            Coordinate3D(latitude: -25.0, longitude: 139.0),
+            Coordinate3D(latitude: -20.0, longitude: 138.0),
+            Coordinate3D(latitude: -15.0, longitude: 134.0),
+            Coordinate3D(latitude: -14.0, longitude: 129.0),
+            Coordinate3D(latitude: -15.0, longitude: 126.0),
+            Coordinate3D(latitude: -20.0, longitude: 122.0),
+        ]) else { preconditionFailure("Failed to create lineStringCounterClockwise") }
+        return result
+    }()
 
-    private static let polygonClockwise = Polygon([[
-        Coordinate3D(latitude: 0.0, longitude: 0.0),
-        Coordinate3D(latitude: 1.0, longitude: 1.0),
-        Coordinate3D(latitude: 0.0, longitude: 1.0),
-        Coordinate3D(latitude: 0.0, longitude: 0.0),
-    ]])!
+    private static let polygonClockwise: Polygon = {
+        guard let result = Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]) else { preconditionFailure("Failed to create polygonClockwise") }
+        return result
+    }()
 
-    private static let polygonCounterClockwise = Polygon([[
-        Coordinate3D(latitude: 0.0, longitude: 0.0),
-        Coordinate3D(latitude: 0.0, longitude: 1.0),
-        Coordinate3D(latitude: 1.0, longitude: 1.0),
-        Coordinate3D(latitude: 0.0, longitude: 0.0),
-    ]])!
+    private static let polygonCounterClockwise: Polygon = {
+        guard let result = Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]) else { preconditionFailure("Failed to create polygonCounterClockwise") }
+        return result
+    }()
 
     // MARK: -
 
@@ -117,7 +129,7 @@ struct RewindTests {
         #expect(geometryCollectionRewinded == result)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func rewind3857() async throws {
@@ -147,7 +159,6 @@ struct RewindTests {
         #expect(rewinded.projection == .noSRID)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func rewind4978() async throws {

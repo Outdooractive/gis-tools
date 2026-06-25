@@ -216,33 +216,32 @@ struct BufferTests {
     // Validates buffer around a multi-polygon matches the expected area.
     @Test
     func bufferedMultiPolygon() async throws {
-        let multiPolygon = try #require(MultiPolygon([
-            Polygon([
-                [
-                    Coordinate3D(latitude: 47.5, longitude: 10.2),
-                    Coordinate3D(latitude: 47.5, longitude: 10.25),
-                    Coordinate3D(latitude: 47.6, longitude: 10.35),
-                    Coordinate3D(latitude: 47.7, longitude: 10.25),
-                    Coordinate3D(latitude: 47.6, longitude: 10.15),
-                    Coordinate3D(latitude: 47.5, longitude: 10.2),
-                ],
-                [
-                    Coordinate3D(latitude: 47.52, longitude: 10.25),
-                    Coordinate3D(latitude: 47.56, longitude: 10.30),
-                    Coordinate3D(latitude: 47.65, longitude: 10.23),
-                    Coordinate3D(latitude: 47.6, longitude: 10.22),
-                    Coordinate3D(latitude: 47.52, longitude: 10.25),
-                ],
-            ])!,
-            Polygon([[
-                Coordinate3D(latitude: 47.56, longitude: 10.1),
-                Coordinate3D(latitude: 47.56, longitude: 10.15),
-                Coordinate3D(latitude: 47.60, longitude: 10.15),
-                Coordinate3D(latitude: 47.65, longitude: 10.15),
-                Coordinate3D(latitude: 47.70, longitude: 10.1),
-                Coordinate3D(latitude: 47.56, longitude: 10.1),
-            ]])!,
+        let p1 = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 47.5, longitude: 10.2),
+                Coordinate3D(latitude: 47.5, longitude: 10.25),
+                Coordinate3D(latitude: 47.6, longitude: 10.35),
+                Coordinate3D(latitude: 47.7, longitude: 10.25),
+                Coordinate3D(latitude: 47.6, longitude: 10.15),
+                Coordinate3D(latitude: 47.5, longitude: 10.2),
+            ],
+            [
+                Coordinate3D(latitude: 47.52, longitude: 10.25),
+                Coordinate3D(latitude: 47.56, longitude: 10.30),
+                Coordinate3D(latitude: 47.65, longitude: 10.23),
+                Coordinate3D(latitude: 47.6, longitude: 10.22),
+                Coordinate3D(latitude: 47.52, longitude: 10.25),
+            ],
         ]))
+        let p2 = try #require(Polygon([[
+            Coordinate3D(latitude: 47.56, longitude: 10.1),
+            Coordinate3D(latitude: 47.56, longitude: 10.15),
+            Coordinate3D(latitude: 47.60, longitude: 10.15),
+            Coordinate3D(latitude: 47.65, longitude: 10.15),
+            Coordinate3D(latitude: 47.70, longitude: 10.1),
+            Coordinate3D(latitude: 47.56, longitude: 10.1),
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([p1, p2]))
         let result = try #require(multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
         checkArea(result, try loadExpected("MultiPolygonResult"))
     }
@@ -343,7 +342,7 @@ struct BufferTests {
                     steps: params.steps)))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `buffered(gridSize:)` matches manual pre-snapping.
     @Test
@@ -596,18 +595,18 @@ struct BufferTests {
         #expect(inset.area < polygon.area)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies buffer around a polygon in EPSG:3857 produces a valid result.
     @Test
     func bufferedPolygon3857() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let result = try #require(polygon.buffered(by: 1.0))
         #expect(result.polygons.count >= 1)
         let totalArea = result.polygons.reduce(0) { $0 + $1.area }
@@ -630,13 +629,13 @@ struct BufferTests {
     // Verifies buffer around a polygon in noSRID produces a valid result.
     @Test
     func bufferedNoSRID() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let result = try #require(polygon.buffered(by: 1.0))
         #expect(result.polygons.count >= 1)
         for poly in result.polygons {
@@ -719,7 +718,7 @@ struct BufferTests {
     // Validates square end on a multi-line string.
     @Test
     func squareEndMultiLine() throws {
-        let mls = MultiLineString([
+        let mls = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 48.0, longitude: 2.0),
                 Coordinate3D(latitude: 48.0, longitude: 2.1),
@@ -728,7 +727,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 48.1, longitude: 2.0),
                 Coordinate3D(latitude: 48.1, longitude: 2.1),
             ],
-        ])!
+        ]))
         let result = try #require(mls.buffered(by: 2_000.0, endType: .square))
         #expect(result.polygons.isNotEmpty)
     }
@@ -820,13 +819,13 @@ struct BufferTests {
 
     @Test
     func bevelJoinOnPolygon3857() throws {
-        let poly = Polygon([[
+        let poly = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])!
+        ]]))
         let bevel = try #require(poly.buffered(
             by: 1.0, joinType: .bevel))
         let round = try #require(poly.buffered(
@@ -843,13 +842,13 @@ struct BufferTests {
 
     @Test
     func bevelJoinMultiLine() throws {
-        let mls = MultiLineString([
+        let mls = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 1.0, longitude: 0.0),
                 Coordinate3D(latitude: 0.0, longitude: 1.0),
             ],
-        ])!
+        ]))
         let bevel = try #require(mls.buffered(
             by: 10_000.0, endType: .butt, joinType: .bevel))
         let round = try #require(mls.buffered(

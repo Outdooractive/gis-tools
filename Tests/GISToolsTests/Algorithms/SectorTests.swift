@@ -80,7 +80,7 @@ struct SectorTests {
         #expect(sector.isValid)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func sector3857() async throws {
@@ -98,7 +98,6 @@ struct SectorTests {
         #expect(sector.projection == .noSRID)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func sector4978() async throws {

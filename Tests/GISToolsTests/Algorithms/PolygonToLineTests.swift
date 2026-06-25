@@ -66,7 +66,7 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
         #expect(result[0].lineStrings.count == 2)
     }
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func polygonToLine3857() async throws {

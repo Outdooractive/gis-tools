@@ -6,12 +6,12 @@ struct BooleanClockwiseTests {
     // Tests detection of a clockwise ring orientation.
     @Test
     func booleanClockwise() async throws {
-        let ring = Ring([
+        let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])!
+        ]))
 
         #expect(ring.isClockwise)
         #expect(ring.isCounterClockwise == false)
@@ -20,18 +20,18 @@ struct BooleanClockwiseTests {
     // Tests detection of a counter-clockwise ring orientation.
     @Test
     func booleanCounterClockwise() async throws {
-        let ring = Ring([
+        let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])!
+        ]))
 
         #expect(ring.isClockwise == false)
         #expect(ring.isCounterClockwise)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func booleanClockwise3857() async throws {
@@ -42,7 +42,7 @@ struct BooleanClockwiseTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]))
-        let cw = Ring(unchecked: cw4326.coordinates.map { $0.projected(to: .epsg3857) })
+        let cw = try #require(Ring(cw4326.coordinates.map { $0.projected(to: .epsg3857) }))
         #expect(cw.isClockwise)
         #expect(cw.isCounterClockwise == false)
 
@@ -53,7 +53,7 @@ struct BooleanClockwiseTests {
             Coordinate3D(latitude: 1.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]))
-        let ccw = Ring(unchecked: ccw4326.coordinates.map { $0.projected(to: .epsg3857) })
+        let ccw = try #require(Ring(ccw4326.coordinates.map { $0.projected(to: .epsg3857) }))
         #expect(ccw.isClockwise == false)
         #expect(ccw.isCounterClockwise)
     }
@@ -67,20 +67,20 @@ struct BooleanClockwiseTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]))
-        let cw = Ring(unchecked: cw4326.coordinates.map { $0.projected(to: .epsg4978) })
+        let cw = try #require(Ring(cw4326.coordinates.map { $0.projected(to: .epsg4978) }))
         #expect(cw.isClockwise)
         #expect(cw.isCounterClockwise == false)
     }
 
     @Test
-    func booleanClockwiseNoSRID() {
+    func booleanClockwiseNoSRID() throws {
         // Raw 2-D shoelace (no antimeridian normalisation).
-        let cw = Ring(unchecked: [
+        let cw = try #require(Ring([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ])
+        ]))
         #expect(cw.isClockwise)
         #expect(cw.isCounterClockwise == false)
     }

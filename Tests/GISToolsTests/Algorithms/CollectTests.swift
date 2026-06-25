@@ -5,21 +5,21 @@ struct CollectTests {
 
     /// Collects population values from points inside two separate polygon bins.
     @Test
-    func collectPopulation() {
-        let poly1 = Polygon(unchecked: [[
+    func collectPopulation() throws {
+        let poly1 = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
-        let poly2 = Polygon(unchecked: [[
+        ]]))
+        let poly2 = try #require(Polygon([[
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 15.0, longitude: 10.0),
             Coordinate3D(latitude: 15.0, longitude: 15.0),
             Coordinate3D(latitude: 10.0, longitude: 15.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ]])
+        ]]))
 
         var point1 = Feature(Point(Coordinate3D(latitude: 2.5, longitude: 2.5)))
         point1.properties = ["pop": 100]
@@ -53,14 +53,14 @@ struct CollectTests {
 
     /// A polygon with no points inside gets an empty array.
     @Test
-    func emptyCollection() {
-        let poly = Polygon(unchecked: [[
+    func emptyCollection() throws {
+        let poly = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         var point = Feature(Point(Coordinate3D(latitude: 50.0, longitude: 50.0)))
         point.properties = ["val": 42]
 
@@ -74,11 +74,11 @@ struct CollectTests {
 
     /// Non-polygon features in the collection pass through unchanged.
     @Test
-    func nonPolygonFeature() {
-        let line = LineString(unchecked: [
+    func nonPolygonFeature() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ])
+        ]))
 
         let polys = FeatureCollection([Feature(line)])
         let result = polys.collect(from: FeatureCollection(), inProperty: "x", outProperty: "y")
@@ -87,18 +87,18 @@ struct CollectTests {
         #expect(result.features[0].properties["y"] == nil)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     /// Collects points in EPSG:3857 into a multi-point result.
     @Test
-    func collect3857() {
-        let poly = Polygon(unchecked: [[
+    func collect3857() throws {
+        let poly = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 200_000.0, y: 0.0),
             Coordinate3D(x: 200_000.0, y: 200_000.0),
             Coordinate3D(x: 0.0, y: 200_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         var point1 = Feature(Point(Coordinate3D(x: 50_000.0, y: 50_000.0)))
         point1.properties = ["pop": 100]
         var point2 = Feature(Point(Coordinate3D(x: 150_000.0, y: 150_000.0)))
@@ -145,14 +145,14 @@ struct CollectTests {
 
     /// Collects points in noSRID.
     @Test
-    func collectNoSRID() {
-        let poly = Polygon(unchecked: [[
+    func collectNoSRID() throws {
+        let poly = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         var point = Feature(Point(Coordinate3D(
             x: 50.0, y: 50.0, projection: .noSRID)))
         point.properties = ["val": 42]

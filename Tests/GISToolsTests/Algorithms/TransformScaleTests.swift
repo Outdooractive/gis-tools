@@ -54,7 +54,7 @@ struct TransformScaleTests {
         #expect(scaled4 == result4)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func transformScale3857() async throws {

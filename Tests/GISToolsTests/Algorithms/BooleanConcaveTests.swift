@@ -158,7 +158,7 @@ struct BooleanConcaveTests {
         #expect(!fc.isConcave())
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `isConcave(gridSize:)` matches manual pre-snapping.
     @Test
@@ -179,7 +179,7 @@ struct BooleanConcaveTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func concavePolygon3857() async throws {
@@ -193,7 +193,7 @@ struct BooleanConcaveTests {
             Coordinate3D(latitude: 0.0, longitude: 2.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let polygon3857 = Polygon(unchecked: [concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }])
+        let polygon3857 = try #require(Polygon([concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }]))
         #expect(polygon3857.isConcave())
 
         // Convex square in 4326, projected to 3857.
@@ -204,7 +204,7 @@ struct BooleanConcaveTests {
             Coordinate3D(latitude: 0.0, longitude: 2.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let polygon3857b = Polygon(unchecked: [convex4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }])
+        let polygon3857b = try #require(Polygon([convex4326.outerRing!.coordinates.map { $0.projected(to: .epsg3857) }]))
         #expect(!polygon3857b.isConcave())
     }
 
@@ -219,7 +219,7 @@ struct BooleanConcaveTests {
             Coordinate3D(latitude: 0.0, longitude: 2.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let polygon4978 = Polygon(unchecked: [concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg4978) }])
+        let polygon4978 = try #require(Polygon([concave4326.outerRing!.coordinates.map { $0.projected(to: .epsg4978) }]))
         #expect(polygon4978.isConcave())
     }
 

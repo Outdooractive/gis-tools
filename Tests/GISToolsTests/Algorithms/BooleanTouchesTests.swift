@@ -480,7 +480,7 @@ struct BooleanTouchesTests {
         #expect(line1.touches(line2) == line2.touches(line1))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `touches(_:gridSize:)` matches manual pre-snapping.
     @Test
@@ -499,25 +499,25 @@ struct BooleanTouchesTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
-    func touchesEPSG3857() {
+    func touchesEPSG3857() throws {
         // Two squares touching at a single vertex in EPSG:3857.
-        let poly1 = Polygon(unchecked: [[
+        let poly1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let poly2 = Polygon(unchecked: [[
+        ]]))
+        let poly2 = try #require(Polygon([[
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 2_000.0, y: 0.0),
             Coordinate3D(x: 2_000.0, y: 1_000.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
-        ]])
+        ]]))
         #expect(poly1.touches(poly2))
         #expect(poly2.touches(poly1))
     }
@@ -545,21 +545,21 @@ struct BooleanTouchesTests {
     }
 
     @Test
-    func touchesNoSRID() {
-        let poly1 = Polygon(unchecked: [[
+    func touchesNoSRID() throws {
+        let poly1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
-        let poly2 = Polygon(unchecked: [[
+        ]]))
+        let poly2 = try #require(Polygon([[
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         #expect(poly1.touches(poly2))
     }
 
@@ -598,7 +598,9 @@ struct BooleanTouchesTests {
 
     @Test
     func singlePointLineStringDoesNotTouch() throws {
-        let degenerateLine = LineString(unchecked: [Coordinate3D(latitude: 5.0, longitude: 10.0)])
+        let degenerateLine = LineString(unchecked: [
+            Coordinate3D(latitude: 5.0, longitude: 10.0)
+        ])
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 10.0))
         // A single-point degenerate line touches the point at its only coordinate
         #expect(degenerateLine.touches(point))

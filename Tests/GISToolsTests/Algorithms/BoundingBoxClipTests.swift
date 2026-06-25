@@ -95,7 +95,7 @@ struct BoundingBoxClipTests {
         #expect(clipped == nil) // invalid
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func boundingBoxClip3857() async throws {

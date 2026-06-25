@@ -81,7 +81,7 @@ struct PlanepointTests {
         #expect(polygon.planepoint(Coordinate3D(latitude: 5.0, longitude: 5.0)) == nil)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func planepoint3857() async throws {
@@ -114,7 +114,6 @@ struct PlanepointTests {
         #expect(z.isFinite)
     }
 
-    // MARK: - noSRID
 
     @Test
     func planepointNoSRID() async throws {
@@ -137,14 +136,14 @@ struct PlanepointTests {
     /// The query point is between them (lon=180, the short way across).
     @Test
     func antimeridianTriangle() async throws {
-        let triangle = Polygon(unchecked: [
+        let triangle = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 179.0, altitude: 0.0),
                 Coordinate3D(latitude: 5.0, longitude: -179.0, altitude: 100.0),
                 Coordinate3D(latitude: 0.0, longitude: -179.0, altitude: 50.0),
                 Coordinate3D(latitude: 0.0, longitude: 179.0, altitude: 0.0),
             ],
-        ])
+        ]))
         // Point near the centre of the triangle
         let point = Coordinate3D(latitude: 2.5, longitude: 180.0)
         let z = try #require(triangle.planepoint(point))

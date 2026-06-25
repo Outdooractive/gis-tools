@@ -7,7 +7,7 @@ struct IntersectionTests {
     // Validates that two overlapping squares produce the correct intersection (a smaller square).
     @Test
     func overlappingSquares() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -15,8 +15,8 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 10.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let b = Polygon([
+        ]))
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
                 Coordinate3D(latitude: 15.0, longitude: 5.0),
@@ -24,7 +24,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 5.0, longitude: 15.0),
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b)
         #expect(result != nil)
@@ -37,7 +37,7 @@ struct IntersectionTests {
     // Validates that two non-overlapping squares produce nil.
     @Test
     func nonOverlappingSquares() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 5.0, longitude: 0.0),
@@ -45,8 +45,8 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 5.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let b = Polygon([
+        ]))
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 10.0, longitude: 10.0),
                 Coordinate3D(latitude: 15.0, longitude: 10.0),
@@ -54,7 +54,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 10.0, longitude: 15.0),
                 Coordinate3D(latitude: 10.0, longitude: 10.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b)
         #expect(result == nil)
@@ -63,7 +63,7 @@ struct IntersectionTests {
     // Validates that a polygon fully contained by another returns the contained polygon.
     @Test
     func fullyContained() async throws {
-        let outer = Polygon([
+        let outer = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 20.0, longitude: 0.0),
@@ -71,8 +71,8 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 20.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let inner = Polygon([
+        ]))
+        let inner = try #require(Polygon([
             [
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
                 Coordinate3D(latitude: 15.0, longitude: 5.0),
@@ -80,7 +80,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 5.0, longitude: 15.0),
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
             ],
-        ])!
+        ]))
 
         let result = outer.intersection(with: inner)
         #expect(result != nil)
@@ -92,7 +92,7 @@ struct IntersectionTests {
     // Validates that a polygon intersecting at a single vertex returns nil.
     @Test
     func touchingAtVertex() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 5.0, longitude: 0.0),
@@ -100,16 +100,16 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 5.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let b = Polygon([
+        ]))
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
-                Coordinate3D(latitude: 10.0, longitude: 5.0),
-                Coordinate3D(latitude: 10.0, longitude: 10.0),
-                Coordinate3D(latitude: 5.0, longitude: 10.0),
+                Coordinate3D(latitude: 15.0, longitude: 5.0),
+                Coordinate3D(latitude: 15.0, longitude: 15.0),
+                Coordinate3D(latitude: 5.0, longitude: 15.0),
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b)
         // Touching at a single point — should be nil (no area)
@@ -119,7 +119,7 @@ struct IntersectionTests {
     // Validates that one polygon identical to another returns the same polygon.
     @Test
     func identicalPolygons() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -127,7 +127,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 10.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: a)
         #expect(result != nil)
@@ -139,16 +139,16 @@ struct IntersectionTests {
     // Validates intersection with a gridSize parameter snaps coordinates before computing.
     @Test
     func intersectionWithGridSize() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
-                Coordinate3D(latitude: 10.0, longitude: 0.001),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
                 Coordinate3D(latitude: 10.0, longitude: 10.0),
                 Coordinate3D(latitude: 0.0, longitude: 10.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let b = Polygon([
+        ]))
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
                 Coordinate3D(latitude: 15.0, longitude: 5.0),
@@ -156,7 +156,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 5.0, longitude: 15.0),
                 Coordinate3D(latitude: 5.0, longitude: 5.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b, gridSize: 1.0)
         #expect(result != nil)
@@ -165,7 +165,7 @@ struct IntersectionTests {
     // Validates intersection with a MultiPolygon.
     @Test
     func intersectionWithMultiPolygon() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
                 Coordinate3D(latitude: 20.0, longitude: 0.0),
@@ -173,18 +173,19 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 20.0),
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
-        ])!
-        let b = MultiPolygon([
-            Polygon([
-                [
-                    Coordinate3D(latitude: 5.0, longitude: 5.0),
-                    Coordinate3D(latitude: 15.0, longitude: 5.0),
-                    Coordinate3D(latitude: 15.0, longitude: 15.0),
-                    Coordinate3D(latitude: 5.0, longitude: 15.0),
-                    Coordinate3D(latitude: 5.0, longitude: 5.0),
-                ],
-            ])!,
-        ])!
+        ]))
+        let bInner = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+                Coordinate3D(latitude: 15.0, longitude: 5.0),
+                Coordinate3D(latitude: 15.0, longitude: 15.0),
+                Coordinate3D(latitude: 5.0, longitude: 15.0),
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+            ],
+        ]))
+        let b = try #require(MultiPolygon([
+            bInner,
+        ]))
 
         let result = a.intersection(with: b)
         #expect(result != nil)
@@ -196,7 +197,7 @@ struct IntersectionTests {
     @Test
     func antimeridianCrossingOverlap() async throws {
         // Polygon A spans from 170°E to 170°W (crossing the dateline)
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
                 Coordinate3D(latitude: 10.0, longitude: 170.0),
@@ -204,9 +205,9 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: -170.0),
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
             ],
-        ])!
+        ]))
         // Polygon B spans from 175°E to 175°W (fully inside A)
-        let b = Polygon([
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 2.0, longitude: 175.0),
                 Coordinate3D(latitude: 8.0, longitude: 175.0),
@@ -214,7 +215,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 2.0, longitude: -175.0),
                 Coordinate3D(latitude: 2.0, longitude: 175.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b)
         #expect(result != nil)
@@ -224,7 +225,7 @@ struct IntersectionTests {
     // (full overlap).
     @Test
     func antimeridianCrossingIdentical() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
                 Coordinate3D(latitude: 10.0, longitude: 170.0),
@@ -232,7 +233,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: -170.0),
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: a)
         #expect(result != nil)
@@ -240,21 +241,23 @@ struct IntersectionTests {
 
     // Validates intersection of two overlapping polygons in EPSG:3857.
     @Test
+    // MARK: - Projections
+
     func intersection3857() async throws {
-        let a = Polygon(unchecked: [[
+        let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let b = Polygon(unchecked: [[
+        ]]))
+        let b = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 500.0),
-        ]])
+        ]]))
 
         let result = a.intersection(with: b)
         #expect(result != nil)
@@ -263,20 +266,20 @@ struct IntersectionTests {
     // Validates intersection of two overlapping polygons in noSRID.
     @Test
     func intersectionNoSRID() async throws {
-        let a = Polygon(unchecked: [[
+        let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
-        let b = Polygon(unchecked: [[
+        ]]))
+        let b = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
-        ]])
+        ]]))
 
         let result = a.intersection(with: b)
         #expect(result != nil)
@@ -309,7 +312,7 @@ struct IntersectionTests {
     // Cartesian overlap return nil. One spans 170°E–178°E, the other 178°W–170°W.
     @Test
     func antimeridianNoOverlap() async throws {
-        let a = Polygon([
+        let a = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
                 Coordinate3D(latitude: 10.0, longitude: 170.0),
@@ -317,8 +320,8 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: 178.0),
                 Coordinate3D(latitude: 0.0, longitude: 170.0),
             ],
-        ])!
-        let b = Polygon([
+        ]))
+        let b = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: -178.0),
                 Coordinate3D(latitude: 10.0, longitude: -178.0),
@@ -326,7 +329,7 @@ struct IntersectionTests {
                 Coordinate3D(latitude: 0.0, longitude: -170.0),
                 Coordinate3D(latitude: 0.0, longitude: -178.0),
             ],
-        ])!
+        ]))
 
         let result = a.intersection(with: b)
         #expect(result == nil)

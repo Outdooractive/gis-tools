@@ -3,7 +3,6 @@ import Testing
 
 struct FlattenTests {
 
-    // Validates flattening a nested FeatureCollection produces the expected flat result.
     @Test
     func featureCollection() async throws {
         let original = try TestData.featureCollection(package: "Flatten", name: "FeatureCollection")
@@ -13,7 +12,6 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a nested GeometryCollection produces the expected flat result.
     @Test
     func geometryCollection() async throws {
         let original = try TestData.geometryCollection(package: "Flatten", name: "GeometryCollection")
@@ -23,7 +21,6 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a MultiPolygon geometry object produces the expected flat result.
     @Test
     func geometryObject() async throws {
         let original = try TestData.multiPolygon(package: "Flatten", name: "GeometryObject")
@@ -33,7 +30,6 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a Feature containing a MultiLineString produces the expected flat result.
     @Test
     func multiLineString() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiLineString")
@@ -43,7 +39,6 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a Feature containing a MultiPoint produces the expected flat result.
     @Test
     func multiPoint() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiPoint")
@@ -53,7 +48,6 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a Feature containing a Polygon produces the expected flat result.
     @Test
     func polygon() async throws {
         let original = try TestData.feature(package: "Flatten", name: "Polygon")
@@ -63,30 +57,40 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
-    // Validates flattening a GeometryCollection in EPSG:3857 produces a FeatureCollection.
+    // MARK: - Projections
+
     @Test
     func flatten3857() async throws {
         let a = Coordinate3D(x: 0.0, y: 0.0)
         let b = Coordinate3D(x: 100_000.0, y: 100_000.0)
-        let line = LineString(unchecked: [a, b])
-        let point = Point(Coordinate3D(x: 50_000.0, y: 50_000.0))
+        let line = try #require(LineString([a, b]))
+        let point = Point(Coordinate3D(x: 100_000.0, y: 100_000.0))
         let collection = GeometryCollection([line, point])
 
         let flattened = try #require(collection.flattened)
         #expect(flattened.features.count == 2)
     }
 
-    // Validates flattening a GeometryCollection in noSRID produces a FeatureCollection.
     @Test
     func flattenNoSRID() async throws {
         let a = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let b = Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .noSRID)
-        let line = LineString(unchecked: [a, b])
+        let line = try #require(LineString([a, b]))
         let point = Point(Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .noSRID))
         let collection = GeometryCollection([line, point])
 
         let flattened = try #require(collection.flattened)
         #expect(flattened.features.count == 2)
+    }
+
+    // MARK: - Edge cases
+
+    @Test
+    func flattenEmpty() async throws {
+        let empty = FeatureCollection([Feature].init())
+        let result = empty.flattened
+        #expect(result != nil)
+        #expect(result?.features.isEmpty == true)
     }
 
 }

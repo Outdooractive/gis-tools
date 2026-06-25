@@ -29,13 +29,13 @@ struct MakeValidTests {
     // MARK: - LineString
 
     @Test
-    func lineStringWithDuplicates() {
-        let line = LineString(unchecked: [
+    func lineStringWithDuplicates() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
-        ])
+        ]))
         let valid = line.madeValid()
         #expect(valid != nil)
         #expect(valid?.coordinates.count == 2)
@@ -44,13 +44,13 @@ struct MakeValidTests {
     // MARK: - MultiLineString
 
     @Test
-    func multiLineStringWithDuplicates() {
-        let line = LineString(unchecked: [
+    func multiLineStringWithDuplicates() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 0.0),
-        ])
-        let multi = MultiLineString(unchecked: [line])
+        ]))
+        let multi = try #require(MultiLineString([line]))
         let valid = multi.madeValid()
         #expect(valid != nil)
         #expect(valid?.lineStrings.first?.coordinates.count == 2)
@@ -59,45 +59,45 @@ struct MakeValidTests {
     // MARK: - Polygon
 
     @Test
-    func validPolygon() {
-        let polygon = Polygon(unchecked: [[
+    func validPolygon() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
     }
 
     @Test
-    func selfIntersectingBowtie() {
-        let polygon = Polygon(unchecked: [[
+    func selfIntersectingBowtie() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.kinks().coordinates.isEmpty ?? true)
     }
 
     @Test
-    func wrongWindingOrder() {
+    func wrongWindingOrder() throws {
         // Build a clockwise ring matching the existing booleanClockwise test pattern:
         // (lat=0,lon=0) → (lat=1,lon=1) → (lat=0,lon=1) → back
-        let ring = Ring([
+        let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])!
+        ]))
         #expect(ring.isClockwise)
 
-        let polygon = Polygon(unchecked: [ring.coordinates])
+        let polygon = try #require(Polygon([ring.coordinates]))
         #expect(polygon.outerRing?.isClockwise == true)
 
         let valid = polygon.madeValid()
@@ -106,8 +106,8 @@ struct MakeValidTests {
     }
 
     @Test
-    func polygonWithDuplicates() {
-        let polygon = Polygon(unchecked: [[
+    func polygonWithDuplicates() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
@@ -115,20 +115,20 @@ struct MakeValidTests {
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.coordinates[0].count == 5)
     }
 
     @Test
-    func polygonWithOpenRing() {
-        let polygon = Polygon(unchecked: [[
+    func polygonWithOpenRing() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.coordinates[0].first == valid?.coordinates[0].last)
@@ -137,22 +137,22 @@ struct MakeValidTests {
     // MARK: - MultiPolygon
 
     @Test
-    func multiPolygonWithInvalidChild() {
-        let validPolygon = Polygon(unchecked: [[
+    func multiPolygonWithInvalidChild() throws {
+        let validPolygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
-        let bowtie = Polygon(unchecked: [[
+        ]]))
+        let bowtie = try #require(Polygon([[
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 15.0, longitude: 15.0),
             Coordinate3D(latitude: 15.0, longitude: 10.0),
             Coordinate3D(latitude: 10.0, longitude: 15.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
-        ]])
-        let multi = MultiPolygon(unchecked: [validPolygon, bowtie])
+        ]]))
+        let multi = try #require(MultiPolygon([validPolygon, bowtie]))
         let valid = multi.madeValid()
         #expect(valid != nil)
         #expect(valid?.polygons.count == 2)
@@ -165,19 +165,19 @@ struct MakeValidTests {
     // MARK: - GeometryCollection
 
     @Test
-    func geometryCollection() {
-        let line = LineString(unchecked: [
+    func geometryCollection() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 0.0),
-        ])
-        let polygon = Polygon(unchecked: [[
+        ]))
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let collection = GeometryCollection([line, polygon])
         let valid = collection.madeValid()
         #expect(valid != nil)
@@ -192,14 +192,14 @@ struct MakeValidTests {
     // MARK: - Feature / FeatureCollection
 
     @Test
-    func feature() {
-        let polygon = Polygon(unchecked: [[
+    func feature() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let feature = Feature(polygon, properties: ["a": 1])
         let valid = feature.madeValid()
         #expect(valid != nil)
@@ -209,16 +209,16 @@ struct MakeValidTests {
     }
 
     @Test
-    func featureCollection() {
+    func featureCollection() throws {
         let p1 = Point(Coordinate3D(latitude: 1.0, longitude: 2.0))
         let f1 = Feature(p1, properties: ["id": 1])
-        let poly = Polygon(unchecked: [[
+        let poly = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let f2 = Feature(poly, properties: ["id": 2])
         let fc = FeatureCollection([f1, f2])
         let valid = fc.madeValid()
@@ -227,61 +227,61 @@ struct MakeValidTests {
     }
 }
 
-// MARK: - Projection tests
+// MARK: - Projections
 
 extension MakeValidTests {
 
     @Test
-    func validPolygon3857() {
-        let polygon = Polygon(unchecked: [[
+    func validPolygon3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: -500_000.0, y: -500_000.0),
             Coordinate3D(x: 500_000.0, y: -500_000.0),
             Coordinate3D(x: 500_000.0, y: 500_000.0),
             Coordinate3D(x: -500_000.0, y: 500_000.0),
             Coordinate3D(x: -500_000.0, y: -500_000.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .epsg3857)
     }
 
     @Test
-    func validPolygon4978() {
-        let polygon = Polygon(unchecked: [[
+    func validPolygon4978() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 6_000_000.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_000_100.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_000_100.0, y: 6_000_100.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_000_000.0, y: 6_000_100.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_000_000.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .epsg4978)
     }
 
     @Test
-    func validPolygonNoSRID() {
-        let polygon = Polygon(unchecked: [[
+    func validPolygonNoSRID() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 5.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .noSRID)
     }
 
     @Test
-    func bowtie3857() {
-        let polygon = Polygon(unchecked: [[
+    func bowtie3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: -500_000.0, y: -500_000.0),
             Coordinate3D(x: 500_000.0, y: 500_000.0),
             Coordinate3D(x: 500_000.0, y: -500_000.0),
             Coordinate3D(x: -500_000.0, y: 500_000.0),
             Coordinate3D(x: -500_000.0, y: -500_000.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .epsg3857)
@@ -289,14 +289,14 @@ extension MakeValidTests {
     }
 
     @Test
-    func bowtieNoSRID() {
-        let polygon = Polygon(unchecked: [[
+    func bowtieNoSRID() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
             Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 5.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .noSRID)
@@ -304,13 +304,13 @@ extension MakeValidTests {
     }
 
     @Test
-    func wrongWindingOrder3857() {
-        let polygon = Polygon(unchecked: [[
+    func wrongWindingOrder3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 500_000.0, y: 500_000.0),
             Coordinate3D(x: 0.0, y: 500_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .epsg3857)
@@ -324,30 +324,30 @@ extension MakeValidTests {
 extension MakeValidTests {
 
     @Test
-    func antimeridianValidPolygon() {
+    func antimeridianValidPolygon() throws {
         // Square that crosses the antimeridian: from 170° to -170°
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: -10.0, longitude: 170.0),
             Coordinate3D(latitude: -10.0, longitude: -170.0),
             Coordinate3D(latitude: 10.0, longitude: -170.0),
             Coordinate3D(latitude: 10.0, longitude: 170.0),
             Coordinate3D(latitude: -10.0, longitude: 170.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.outerRing?.isCounterClockwise == true)
     }
 
     @Test
-    func antimeridianBowtie() {
+    func antimeridianBowtie() throws {
         // Self-intersecting bowtie that crosses the antimeridian
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: -10.0, longitude: 175.0),
             Coordinate3D(latitude: 10.0, longitude: -175.0),
             Coordinate3D(latitude: 10.0, longitude: 175.0),
             Coordinate3D(latitude: -10.0, longitude: -175.0),
             Coordinate3D(latitude: -10.0, longitude: 175.0),
-        ]])
+        ]]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         // The result should be a non-self-intersecting polygon
@@ -355,17 +355,17 @@ extension MakeValidTests {
     }
 
     @Test
-    func antimeridianWrongWindingOrder() {
+    func antimeridianWrongWindingOrder() throws {
         // Clockwise ring crossing the antimeridian
-        let ring = Ring([
+        let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 179.0),
             Coordinate3D(latitude: 1.0, longitude: -179.0),
             Coordinate3D(latitude: 0.0, longitude: -179.0),
             Coordinate3D(latitude: 0.0, longitude: 179.0),
-        ])!
+        ]))
         #expect(ring.isClockwise)
 
-        let polygon = Polygon(unchecked: [ring.coordinates])
+        let polygon = try #require(Polygon([ring.coordinates]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.outerRing?.isCounterClockwise == true)

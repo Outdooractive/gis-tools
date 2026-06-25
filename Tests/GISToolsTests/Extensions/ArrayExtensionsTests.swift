@@ -195,7 +195,7 @@ struct ArrayExtensionsTests {
 
     @Test
     func geometryArrayHelpers() async throws {
-        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))
         let point = Point(Coordinate3D(latitude: 2.0, longitude: 2.0))
         let geometries: [GeoJsonGeometry] = [line, point]
         #expect(geometries.asGeometryCollection.geometries.count == 2)
@@ -206,7 +206,7 @@ struct ArrayExtensionsTests {
 
     @Test
     func featureArrayHelpers() async throws {
-        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))
         let point = Point(Coordinate3D(latitude: 2.0, longitude: 2.0))
         let features: [Feature] = [Feature(line), Feature(point)]
         #expect(features.asGeometryCollection.geometries.count == 2)
@@ -217,7 +217,7 @@ struct ArrayExtensionsTests {
 
     @Test
     func featureCollectionArrayHelpers() async throws {
-        let line = LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)])!
+        let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))
         let fc1 = FeatureCollection([Feature(line)])
         let fc2 = FeatureCollection([Feature(Point(Coordinate3D(latitude: 2.0, longitude: 2.0)))])
         let fcs: [FeatureCollection] = [fc1, fc2]

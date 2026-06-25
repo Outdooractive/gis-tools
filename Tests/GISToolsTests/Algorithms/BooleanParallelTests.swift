@@ -121,7 +121,7 @@ struct BooleanParallelTests {
         #expect(s1.isParallel(to: s2, undirectedEdge: true))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `isParallel(to:tolerance:undirectedEdge:gridSize:)` matches manual pre-snapping.
     @Test
@@ -212,7 +212,7 @@ struct BooleanParallelTests {
         #expect(!lineString3.isParallel(to: lineString4))
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func parallelEPSG3857() {

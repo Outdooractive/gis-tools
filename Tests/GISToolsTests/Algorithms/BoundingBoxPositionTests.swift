@@ -65,7 +65,7 @@ struct BoundingBoxPositionTests {
         let position = bbox.position(of: center)
         #expect(position.contains(.center))
     }
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func boundingBoxPosition3857() async throws {

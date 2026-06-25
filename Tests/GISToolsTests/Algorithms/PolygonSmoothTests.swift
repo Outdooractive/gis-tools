@@ -130,7 +130,7 @@ struct PolygonSmoothTests {
         #expect(ring2.coordinates.count > ring1.coordinates.count)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func polygonSmooth3857() async throws {
@@ -163,7 +163,6 @@ struct PolygonSmoothTests {
         #expect(smoothed.projection == .epsg4978)
     }
 
-    // MARK: - noSRID
 
     @Test
     func polygonSmoothNoSRID() async throws {

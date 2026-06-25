@@ -281,7 +281,7 @@ struct UnionTests {
         #expect(fc.union() != nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `union(with:gridSize:)` matches manual pre-snapping.
     @Test
@@ -310,25 +310,25 @@ struct UnionTests {
         #expect(withParam.polygons.count == manual.polygons.count)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     // Validates union of two overlapping polygons in EPSG:3857.
     @Test
     func union3857() async throws {
-        let p1 = Polygon(unchecked: [[
+        let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let p2 = Polygon(unchecked: [[
+        ]]))
+        let p2 = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 500.0),
-        ]])
+        ]]))
 
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
@@ -338,27 +338,26 @@ struct UnionTests {
     // Validates union of two overlapping polygons in noSRID.
     @Test
     func unionNoSRID() async throws {
-        let p1 = Polygon(unchecked: [[
+        let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
-        let p2 = Polygon(unchecked: [[
+        ]]))
+        let p2 = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
-        ]])
+        ]]))
 
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
         #expect(result.projection == .noSRID)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func union4978() async throws {
@@ -376,8 +375,8 @@ struct UnionTests {
             Coordinate3D(latitude: 1.5, longitude: 0.0),
             Coordinate3D(latitude: 0.5, longitude: 0.0),
         ]
-        let p1 = Polygon(unchecked: [coords4326a.map { $0.projected(to: .epsg4978) }])
-        let p2 = Polygon(unchecked: [coords4326b.map { $0.projected(to: .epsg4978) }])
+        let p1 = try #require(Polygon([coords4326a.map { $0.projected(to: .epsg4978) }]))
+        let p2 = try #require(Polygon([coords4326b.map { $0.projected(to: .epsg4978) }]))
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
         #expect(result.projection == .epsg4978)

@@ -83,7 +83,7 @@ struct HexGridTests {
         #expect(gridMiles.features.count < gridKm.features.count)
         #expect(gridKm.features.count > 0)
     }
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func hexGrid3857() async throws {

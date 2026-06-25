@@ -149,7 +149,7 @@ struct TransformTranslateTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func transformTranslate3857() async throws {
@@ -162,7 +162,6 @@ struct TransformTranslateTests {
         #expect(result.projection == .epsg3857)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func transformTranslate4978() async throws {
@@ -175,7 +174,6 @@ struct TransformTranslateTests {
         #expect(result.projection == .epsg4978)
     }
 
-    // MARK: - noSRID
 
     @Test
     func transformTranslateNoSRID() async throws {

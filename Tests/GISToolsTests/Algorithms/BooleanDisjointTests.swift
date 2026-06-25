@@ -84,7 +84,7 @@ struct BooleanDisjointTests {
         #expect(multiPolygon1.isDisjoint(with: polygon3) == false)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `isDisjoint(with:gridSize:)` matches manual pre-snapping.
     @Test
@@ -112,17 +112,17 @@ struct BooleanDisjointTests {
         #expect(withParamOutside == manualOutside)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
-    func isDisjointEPSG3857() {
-        let polygon = Polygon(unchecked: [[
+    func isDisjointEPSG3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0))
         let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
         #expect(!polygon.isDisjoint(with: pointInside))
@@ -146,17 +146,17 @@ struct BooleanDisjointTests {
     }
 
     @Test
-    func disjointMultiPointPolygonEPSG3857() {
-        let mp = MultiPoint(unchecked: [
+    func disjointMultiPointPolygonEPSG3857() throws {
+        let mp = try #require(MultiPoint([
             Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 2_000.0, y: 2_000.0)])
-        let polygon = Polygon(unchecked: [[
+            Coordinate3D(x: 2_000.0, y: 2_000.0)]))
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         #expect(!mp.isDisjoint(with: polygon))
     }
 
@@ -170,21 +170,21 @@ struct BooleanDisjointTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let polygon = poly4326.projected(to: .epsg4978)
-        let mp = MultiPoint(unchecked: [
+        let mp = try #require(MultiPoint([
             Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978),
-            Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978)])
+            Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978)]))
         #expect(!mp.isDisjoint(with: polygon))
     }
 
     @Test
-    func isDisjointNoSRID() {
-        let polygon = Polygon(unchecked: [[
+    func isDisjointNoSRID() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))
         let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .noSRID))
         #expect(!polygon.isDisjoint(with: pointInside))

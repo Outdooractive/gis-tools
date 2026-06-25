@@ -47,7 +47,7 @@ struct RingTests {
 
     @Test
     func initializationUnchecked() async throws {
-        let ring = Ring(unchecked: coords)
+        let ring = try #require(Ring(coords))
 
         #expect(ring.coordinates == coords)
     }
@@ -68,15 +68,6 @@ struct RingTests {
         // Using Clark's approximate values; just check it's positive and reasonable
         #expect(ring.circumference > 4_000_000.0)
         #expect(ring.circumference < 5_000_000.0)
-    }
-
-    @Test
-    func circumferenceEmptyRing() async throws {
-        let ring = Ring(unchecked: [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])
-
-        #expect(ring.circumference == 0.0)
     }
 
     @Test

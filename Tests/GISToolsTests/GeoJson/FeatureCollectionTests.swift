@@ -95,7 +95,7 @@ struct FeatureCollectionTests {
         let feature2 = Feature(polygon, properties: ["prop0": "value0", "prop1": ["this": "that"], "prop2": "b"])
 
         let featureCollection = FeatureCollection([feature0, feature1, feature2])
-        let string = featureCollection.asJsonString()!
+        let string = try #require(featureCollection.asJsonString())
 
         #expect(featureCollection.projection == .epsg4326)
         #expect(string.contains("\"type\":\"FeatureCollection\""))

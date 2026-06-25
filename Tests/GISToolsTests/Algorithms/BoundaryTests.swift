@@ -5,6 +5,7 @@ struct BoundaryTests {
 
     // MARK: - Point
 
+    /// Verifies that a single Point has no interior and its boundary is empty.
     @Test
     func pointBoundary() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0))
@@ -16,10 +17,10 @@ struct BoundaryTests {
 
     @Test
     func multiPointBoundary() async throws {
-        let multiPoint = MultiPoint(unchecked: [
+        let multiPoint = try #require(MultiPoint([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
-        ])
+        ]))
         let boundary = multiPoint.boundary
         #expect(boundary.geometries.isEmpty)
     }
@@ -207,7 +208,7 @@ struct BoundaryTests {
         #expect(boundary.geometries.count == 2)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func boundary3857() async throws {
@@ -235,6 +236,19 @@ struct BoundaryTests {
         #expect(boundary.isClosed)
     }
 
+    @Test
+    func boundaryNoSRID() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let boundary = try #require(polygon.boundary)
+        #expect(boundary.isClosed)
+    }
+
     // MARK: - Antimeridian
 
     /// A LineString crossing the antimeridian: boundary is still its two endpoints.
@@ -253,7 +267,7 @@ struct BoundaryTests {
     /// A Polygon crossing the antimeridian: boundary is its outer ring.
     @Test
     func antimeridianPolygon() async throws {
-        let polygon = Polygon(unchecked: [
+        let polygon = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 179.0),
                 Coordinate3D(latitude: 5.0, longitude: 179.0),
@@ -261,7 +275,7 @@ struct BoundaryTests {
                 Coordinate3D(latitude: 0.0, longitude: -179.0),
                 Coordinate3D(latitude: 0.0, longitude: 179.0),
             ],
-        ])
+        ]))
         let boundary = try #require(polygon.boundary)
         #expect(boundary.isClosed)
         #expect(boundary.coordinates.count == 5)

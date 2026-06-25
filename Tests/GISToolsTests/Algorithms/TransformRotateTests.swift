@@ -13,7 +13,7 @@ struct TransformRotateTests {
         #expect(pointTransformed == pointResult)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func transformRotate3857() async throws {

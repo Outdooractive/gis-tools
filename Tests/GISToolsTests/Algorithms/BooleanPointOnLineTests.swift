@@ -116,7 +116,7 @@ struct BooleanPointOnLineTests {
         #expect(mls.checkIsOnLine(Coordinate3D(latitude: 2.0, longitude: 2.0)) == false)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `checkIsOnLine(_:gridSize:)` and `checkIsOnSegment(_:gridSize:)` match manual pre-snapping.
     @Test
@@ -142,27 +142,27 @@ struct BooleanPointOnLineTests {
         #expect(withParamOff == manualOff)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
-    func pointOnLine3857() {
-        let polygon = Polygon(unchecked: [[
+    func pointOnLine3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let point = Point(Coordinate3D(x: 500.0, y: 500.0))
         #expect(polygon.contains(point))
     }
 
     @Test
-    func pointOnLine4978() {
-        let line = LineString(unchecked: [
+    func pointOnLine4978() throws {
+        let line = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ])
+        ]))
         let point = Point(Coordinate3D(x: 500.0, y: 0.0, z: 0.0, projection: .epsg4978))
         #expect(line.checkIsOnLine(point))
     }

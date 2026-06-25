@@ -35,8 +35,7 @@ struct AreaTests {
         #expect(abs(polygon.area - 7500.0) < 0.1)
     }
 
-    // Two overlapping holes: their union area is less than the sum of individuals.
-    // Tests polygon area calculation for a polygon with overlapping holes (hole union area is subtracted).
+    // Tests polygon area with overlapping holes.
     @Test
     func areaWithOverlappingHoles() async throws {
         let outerRing = try #require(Ring([
@@ -58,12 +57,84 @@ struct AreaTests {
             Coordinate3D(x: 40.0, y: 80.0),
         ]))
         let polygon = try #require(Polygon([outerRing, hole1, hole2]))
-
-        // Union of holes = (20,20)-(60,60) ∪ (40,40)-(80,80)
-        // Overlap region (40,40)-(60,60) has area 400
-        // Union area = 1600 + 1600 - 400 = 2800
-        // Expected area = 10000 - 2800 = 7200
         #expect(abs(polygon.area - 7200.0) < 0.1)
+    }
+
+    // MARK: - Projections
+
+    @Test
+    func area3857() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon3857 = try #require(Polygon([coords4326.map { $0.projected(to: .epsg3857) }]))
+        let area = polygon3857.area
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies area for the same polygon in EPSG:4978.
+    @Test
+    func area4978() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon4978 = try #require(Polygon([coords4326.map { $0.projected(to: .epsg4978) }]))
+        let area = polygon4978.area
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies area for the same polygon in noSRID.
+    @Test
+    func areaNoSRID() throws {
+        let coords4326: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygonNoSRID = try #require(Polygon([coords4326.map {
+            Coordinate3D(x: $0.longitude, y: $0.latitude, projection: .noSRID)
+        }]))
+        let area = polygonNoSRID.area
+        #expect(area > 1.0e12)
+        #expect(area < 1.5e12)
+    }
+
+    // Verifies area with holes in EPSG:3857.
+    @Test
+    func areaWithHole3857() throws {
+        let coords4326Outer: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let coords4326Hole: [Coordinate3D] = [
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]
+        let polygon = try #require(Polygon([
+            coords4326Outer.map { $0.projected(to: .epsg3857) },
+            coords4326Hole.map { $0.projected(to: .epsg3857) },
+        ]))
+        let area = polygon.area
+        #expect(area > 5.0e11)
+        #expect(area < 1.0e12)
     }
 
     // MARK: - Antimeridian
@@ -82,8 +153,7 @@ struct AreaTests {
         #expect(area < 2_000_000_000_000.0)
     }
 
-    /// A 1°×1° square that crosses the date line at the equator.
-    /// The area should match a normal 1°×1° square near the equator (~1.24e10 m²).
+    // A 1°×1° square crossing the date line at the equator.
     @Test
     func antimeridianCrossing() async throws {
         let ring = try #require(Ring([
@@ -98,7 +168,7 @@ struct AreaTests {
         #expect(polygon.area < 1.5e10)
     }
 
-    /// Outer ring crosses the date line, inner ring ALSO crosses the date line.
+    // Outer ring crosses the date line, inner ring also crosses.
     @Test
     func antimeridianHoleBothCross() async throws {
         let outer = try #require(Ring([
@@ -122,11 +192,11 @@ struct AreaTests {
         #expect(outerArea > 0)
         #expect(innerArea > 0)
         #expect(netArea > 0)
-        #expect(netArea < outerArea)  // hole subtracted
+        #expect(netArea < outerArea)
         #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
     }
 
-    /// Outer ring crosses the date line, inner ring is entirely east of it.
+    // Outer ring crosses the date line, inner ring is east of it.
     @Test
     func antimeridianHoleEastSide() async throws {
         let outer = try #require(Ring([
@@ -154,87 +224,7 @@ struct AreaTests {
         #expect(abs(netArea - (abs(outerArea) - abs(innerArea))) < 1.0e8)
     }
 
-    // MARK: - Projection tests
-
-    // Verifies polygon area for the same physical polygon in EPSG:3857.
-    @Test
-    func area3857() throws {
-        let coords4326: [Coordinate3D] = [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]
-        let polygon3857 = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg3857) }])
-        let area = polygon3857.area
-        // 10°×10° near equator ≈ 1.24e12 m²
-        #expect(area > 1.0e12)
-        #expect(area < 1.5e12)
-    }
-
-    // Verifies polygon area for the same physical polygon in EPSG:4978.
-    @Test
-    func area4978() throws {
-        let coords4326: [Coordinate3D] = [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]
-        let polygon4978 = Polygon(unchecked: [coords4326.map { $0.projected(to: .epsg4978) }])
-        let area = polygon4978.area
-        #expect(area > 1.0e12)
-        #expect(area < 1.5e12)
-    }
-
-    // Verifies polygon area for the same physical polygon in noSRID.
-    @Test
-    func areaNoSRID() throws {
-        let coords4326: [Coordinate3D] = [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]
-        let polygonNoSRID = Polygon(unchecked: [coords4326.map {
-            Coordinate3D(x: $0.longitude, y: $0.latitude, projection: .noSRID)
-        }])
-        let area = polygonNoSRID.area
-        #expect(area > 1.0e12)
-        #expect(area < 1.5e12)
-    }
-
-    // Verifies polygon area with holes in EPSG:3857.
-    @Test
-    func areaWithHole3857() throws {
-        let coords4326Outer: [Coordinate3D] = [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]
-        let coords4326Hole: [Coordinate3D] = [
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 8.0),
-            Coordinate3D(latitude: 8.0, longitude: 8.0),
-            Coordinate3D(latitude: 8.0, longitude: 2.0),
-            Coordinate3D(latitude: 2.0, longitude: 2.0),
-        ]
-        let polygon = Polygon(unchecked: [
-            coords4326Outer.map { $0.projected(to: .epsg3857) },
-            coords4326Hole.map { $0.projected(to: .epsg3857) },
-        ])
-        let area = polygon.area
-        // Outer 10°×10° minus hole 6°×6° ≈ 1.24e12 - 4.46e11 ≈ 7.94e11
-        #expect(area > 5.0e11)
-        #expect(area < 1.0e12)
-    }
-
-    /// Outer ring crosses the date line, inner ring is entirely west of it.
+    // Outer ring crosses the date line, inner ring is west of it.
     @Test
     func antimeridianHoleWestSide() async throws {
         let outer = try #require(Ring([

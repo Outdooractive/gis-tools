@@ -43,7 +43,18 @@ struct MidPointTests {
         #expect(abs(coordinate1.distance(from: middle) - coordinate2.distance(from: middle)) < 0.000001)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Altitude / Z
+
+    @Test
+    func midpointPreservesAltitudeAndM() async throws {
+        let a = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 10.0)
+        let b = Coordinate3D(latitude: 46.0, longitude: -74.0, altitude: 1000.0, m: 20.0)
+        let result = a.midpoint(to: b)
+        #expect(result.altitude == 750.0)
+        #expect(result.m == a.m)
+    }
+
+    // MARK: - Projections
 
     @Test
     func midPoint3857() async throws {
@@ -53,8 +64,7 @@ struct MidPointTests {
         #expect(mid.projection == .epsg3857)
     }
 
-    // MARK: - EPSG:4978
-
+    // Verifies midpoint in EPSG:4978.
     @Test
     func midPoint4978() async throws {
         let coord1 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -65,8 +75,7 @@ struct MidPointTests {
         #expect(mid.latitude.isFinite)
     }
 
-    // MARK: - noSRID
-
+    // Verifies midpoint in noSRID.
     @Test
     func midPointNoSRID() async throws {
         let coord1 = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
@@ -87,14 +96,13 @@ struct MidPointTests {
         #expect(abs(coordinate1.distance(from: middle) - coordinate2.distance(from: middle)) < 0.000001)
     }
 
-    // Tests that altitude and m values are preserved through midpoint computation.
+    // MARK: - Edge cases
+
     @Test
-    func midpointPreservesAltitudeAndM() async throws {
-        let a = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 10.0)
-        let b = Coordinate3D(latitude: 46.0, longitude: -74.0, altitude: 1000.0, m: 20.0)
-        let result = a.midpoint(to: b)
-        #expect(result.altitude == 750.0) // (500 + 1000) / 2
-        #expect(result.m == a.m) // preserves m from self
+    func midpointIdenticalPoints() async throws {
+        let point = Coordinate3D(latitude: 45.0, longitude: -75.0)
+        let mid = point.midpoint(to: point)
+        #expect(mid == point)
     }
 
 }

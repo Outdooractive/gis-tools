@@ -122,6 +122,8 @@ struct ClustersTests {
 
     /// Validates DBSCAN clustering works with EPSG:3857 (Web Mercator).
     @Test
+    // MARK: - Projections
+
     func dbscanEpsg3857() async throws {
         // Two clusters ~1 km apart in projected meters
         let points: [Feature] = [

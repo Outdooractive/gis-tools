@@ -4,7 +4,7 @@ import Testing
 
 struct SampleTests {
 
-    /// Tests that sampling an empty collection returns an empty collection.
+    // Tests that sampling an empty collection returns empty.
     @Test
     func sampleEmptyCollection() async throws {
         let fc = FeatureCollection()
@@ -12,7 +12,7 @@ struct SampleTests {
         #expect(result.features.isEmpty)
     }
 
-    /// Tests that sampling with size zero returns an empty collection.
+    // Tests that sampling with size zero returns empty.
     @Test
     func sampleSizeZero() async throws {
         let points = BoundingBox.randomPoints(count: 10)
@@ -20,7 +20,7 @@ struct SampleTests {
         #expect(result.features.isEmpty)
     }
 
-    /// Tests that sampling a single element returns one feature.
+    // Tests that sampling a single element returns one feature.
     @Test
     func sampleSizeOne() async throws {
         let points = BoundingBox.randomPoints(count: 10)
@@ -28,7 +28,7 @@ struct SampleTests {
         #expect(result.features.count == 1)
     }
 
-    /// Tests that sampling exactly the collection size returns all features.
+    // Tests that sampling exactly the collection size returns all features.
     @Test
     func sampleSizeExact() async throws {
         let points = BoundingBox.randomPoints(count: 5)
@@ -36,7 +36,7 @@ struct SampleTests {
         #expect(result.features.count == 5)
     }
 
-    /// Tests that sampling a size larger than the collection is clamped.
+    // Tests that sampling a size larger than the collection is clamped.
     @Test
     func sampleSizeClamped() async throws {
         let points = BoundingBox.randomPoints(count: 3)
@@ -44,7 +44,7 @@ struct SampleTests {
         #expect(result.features.count == 3)
     }
 
-    /// Tests that sampled features retain their properties.
+    // Tests that sampled features retain their properties.
     @Test
     func samplePreservesProperties() async throws {
         var features: [Feature] = []
@@ -60,7 +60,8 @@ struct SampleTests {
             #expect(feature.properties["id"] != nil)
         }
     }
-    // MARK: - EPSG:3857
+
+    // MARK: - Projections
 
     @Test
     func sample3857() async throws {
@@ -74,6 +75,7 @@ struct SampleTests {
         #expect(result.features.count == 2)
     }
 
+    // Tests sampling in EPSG:4978.
     @Test
     func sample4978() async throws {
         let p1 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -87,6 +89,18 @@ struct SampleTests {
         let fc = FeatureCollection(features)
         let result = fc.sample(size: 2)
         #expect(result.features.count == 2)
+    }
+
+    // Tests sampling in noSRID.
+    @Test
+    func sampleNoSRID() async throws {
+        let features = [
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))),
+            Feature(Point(Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID))),
+        ]
+        let fc = FeatureCollection(features)
+        let result = fc.sample(size: 1)
+        #expect(result.features.count == 1)
     }
 
 }

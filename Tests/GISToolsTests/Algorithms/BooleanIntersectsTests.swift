@@ -40,7 +40,7 @@ struct BooleanIntersectsTests {
         #expect(!outsidePoint.intersects(polygon))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `intersects(_:gridSize:)` matches manual pre-snapping.
     @Test
@@ -82,37 +82,37 @@ struct BooleanIntersectsTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
-    func intersectsEPSG3857() {
-        let polygon = Polygon(unchecked: [[
+    func intersectsEPSG3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0))
         let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
-        let line = LineString(unchecked: [
+        let line = try #require(LineString([
             Coordinate3D(x: 500.0, y: 500.0),
             Coordinate3D(x: 2_000.0, y: 2_000.0),
-        ])
+        ]))
         #expect(polygon.intersects(pointInside))
         #expect(!polygon.intersects(pointOutside))
         #expect(polygon.intersects(line))
     }
 
     @Test
-    func intersectsEPSG4978() async throws {
-        let polygon = Polygon(unchecked: [[
+    func intersectsEPSG4978() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]])
+        ]]))
         let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978))
         #expect(polygon.intersects(pointInside))
         #expect(!polygon.intersects(Point(Coordinate3D(x: 2_000.0, y: 2_000.0, z: 0.0, projection: .epsg4978))))
@@ -128,25 +128,25 @@ struct BooleanIntersectsTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let polygon = poly4326.projected(to: .epsg4978)
-        let crossingLine = LineString(unchecked: [
+        let crossingLine = try #require(LineString([
             Coordinate3D(latitude: 0.5, longitude: -0.5).projected(to: .epsg4978),
-            Coordinate3D(latitude: 0.5, longitude: 1.5).projected(to: .epsg4978)])
+            Coordinate3D(latitude: 0.5, longitude: 1.5).projected(to: .epsg4978)]))
         #expect(polygon.intersects(crossingLine))
-        let farLine = LineString(unchecked: [
+        let farLine = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978),
-            Coordinate3D(latitude: 6.0, longitude: 6.0).projected(to: .epsg4978)])
+            Coordinate3D(latitude: 6.0, longitude: 6.0).projected(to: .epsg4978)]))
         #expect(!polygon.intersects(farLine))
     }
 
     @Test
-    func intersectsNoSRID() {
-        let polygon = Polygon(unchecked: [[
+    func intersectsNoSRID() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))
         #expect(polygon.intersects(pointInside))
         #expect(!polygon.intersects(Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .noSRID))))

@@ -143,7 +143,7 @@ struct TinTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func tin3857() async throws {
@@ -171,16 +171,15 @@ struct TinTests {
         #expect(tri.projection == .noSRID)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func tin4978() async throws {
         // Small triangle in ECEF space near the equatorial XY plane.
-        let mp = MultiPoint(unchecked: [
+        let mp = try #require(MultiPoint([
             Coordinate3D(x: 6_378_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_378_100.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 6_378_050.0, y: 100.0, z: 0.0, projection: .epsg4978),
-        ])
+        ]))
         let fc = try #require(mp.tin())
         #expect(fc.features.count == 1)
         let tri = try #require(fc.features[0].geometry as? Polygon)

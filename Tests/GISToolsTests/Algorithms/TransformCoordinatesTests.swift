@@ -147,7 +147,7 @@ struct TransformCoordinatesTests {
         #expect(featureCollectionTransformed == featureCollectionResult)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func transformCoordinates3857() async throws {

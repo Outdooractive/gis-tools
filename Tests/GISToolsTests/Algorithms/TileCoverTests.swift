@@ -239,7 +239,7 @@ struct TileCoverTests {
         #expect(multiPoint == nil)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func tileCover3857() async throws {
@@ -259,7 +259,6 @@ struct TileCoverTests {
         #expect(tiles.isEmpty)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func tileCover4978() async throws {

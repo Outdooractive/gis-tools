@@ -3,7 +3,7 @@ import Testing
 
 struct TruncateTests {
 
-    // Validates truncating coordinate precision and removing altitude for a Point.
+    // Validates coordinate precision truncation and altitude removal for a Point.
     @Test
     func point() async throws {
         let point = Point(
@@ -17,7 +17,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
-    // Validates truncating coordinate precision and removing altitude for a MultiPoint.
+    // Validates truncation for MultiPoint.
     @Test
     func multiPoint() async throws {
         let multiPoint = try #require(MultiPoint(
@@ -37,7 +37,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
-    // Validates truncating coordinate precision and removing altitude for a LineString.
+    // Validates truncation for LineString.
     @Test
     func lineString() async throws {
         let lineString = try #require(LineString(
@@ -57,7 +57,7 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
-    // Validates truncating coordinate precision and removing altitude for a MultiLineString.
+    // Validates truncation for MultiLineString.
     @Test
     func multiLineString() async throws {
         let multiLineString = try #require(MultiLineString(
@@ -86,37 +86,8 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
-    // Validates truncating coordinate precision for a Polygon.
-    @Test
-    func polygon() async throws {
-        // TODO:
-    }
+    // MARK: - Projections
 
-    // Validates truncating coordinate precision for a MultiPolygon.
-    @Test
-    func multiPolygon() async throws {
-        // TODO:
-    }
-
-    // Validates truncating coordinate precision for a GeometryCollection.
-    @Test
-    func geometryCollection() async throws {
-        // TODO:
-    }
-
-    // Validates truncating coordinate precision for a Feature.
-    @Test
-    func feature() async throws {
-        // TODO:
-    }
-
-    // Validates truncating coordinate precision for a FeatureCollection.
-    @Test
-    func featureCollection() async throws {
-        // TODO:
-    }
-
-    // Validates truncating a LineString in EPSG:3857 reduces point count via precision reduction.
     @Test
     func truncate3857() async throws {
         let lineString = try #require(LineString(
@@ -134,7 +105,19 @@ struct TruncateTests {
         #expect(truncated.boundingBox != nil)
     }
 
-    // Validates truncating a LineString in noSRID works correctly.
+    // Validates truncation in EPSG:4978.
+    @Test
+    func truncate4978() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 100_000.123456, y: 200_000.654321, projection: .epsg4978),
+            Coordinate3D(x: 300_000.987654, y: 400_000.111111, projection: .epsg4978),
+        ]))
+        let truncated = lineString.truncated(precision: 2, removeAltitude: true)
+        #expect(truncated.coordinates[0].x == 100_000.12)
+        #expect(truncated.coordinates[0].y == 200_000.65)
+    }
+
+    // Validates truncation in noSRID.
     @Test
     func truncateNoSRID() async throws {
         let lineString = try #require(LineString(

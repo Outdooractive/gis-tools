@@ -316,7 +316,7 @@ struct LineIntersectionTests {
         #expect(s1.intersects(s2))
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func lineIntersection3857() async throws {

@@ -129,7 +129,7 @@ struct MaximumInscribedCircleTests {
         #expect(circle.isValid)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     @Test
     func circleWithGridSize() async throws {
@@ -168,7 +168,7 @@ struct MaximumInscribedCircleTests {
             Coordinate3D(latitude: 20.0, longitude: 20.0),
         ]]))
 
-        let multi = MultiPolygon(unchecked: [p1, p2])
+        let multi = try #require(MultiPolygon([p1, p2]))
         let circle = try #require(multi.maximumInscribedCircle())
         let radius = try #require(multi.maximumInscribedRadius())
         #expect(radius > 0.0)
@@ -179,13 +179,13 @@ struct MaximumInscribedCircleTests {
 
     @Test
     func circle3857() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
 
         let pole = try #require(polygon.poleOfInaccessibility())
         #expect(pole.coordinate.longitude.isFinite)
@@ -286,7 +286,7 @@ struct MaximumInscribedCircleTests {
             Coordinate3D(latitude: -1.0, longitude: 179.0),
         ]
         let coords4978 = coords4326.map { $0.projected(to: .epsg4978) }
-        let polygon = Polygon(unchecked: [coords4978])
+        let polygon = try #require(Polygon([coords4978]))
         #expect(polygon.projection == .epsg4978)
 
         // Pole of inaccessibility
@@ -315,7 +315,7 @@ struct MaximumInscribedCircleTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]
         let coords4978 = coords4326.map { $0.projected(to: .epsg4978) }
-        let polygon = Polygon(unchecked: [coords4978])
+        let polygon = try #require(Polygon([coords4978]))
         #expect(polygon.projection == .epsg4978)
 
         let circle = try #require(polygon.maximumInscribedCircle())

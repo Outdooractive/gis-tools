@@ -305,18 +305,18 @@ struct CenterTests {
         #expect(abs(com.coordinate.longitude - 5.0) < 0.001)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies centroid of a polygon in EPSG:3857.
     @Test
     func polygonCentroid3857() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let centroid = polygon.centroid
         #expect(centroid != nil)
         #expect(abs(centroid!.coordinate.x - 500.0) < 1.0)
@@ -327,13 +327,13 @@ struct CenterTests {
     // Verifies center of mass of a polygon in EPSG:3857.
     @Test
     func polygonCenterOfMass3857() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let com = try #require(polygon.centerOfMass)
         #expect(abs(com.coordinate.x - 500.0) < 1.0)
         #expect(abs(com.coordinate.y - 500.0) < 1.0)
@@ -512,7 +512,7 @@ struct CenterTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 200.0),
         ]
-        let ls = LineString(unchecked: coords)
+        let ls = try #require(LineString(coords))
         let fc = FeatureCollection([Feature(ls)])
         let mean = try #require(fc.centerMean())
         #expect(mean.coordinate.altitude != nil)
@@ -533,17 +533,17 @@ struct CenterTests {
         #expect(centroid.coordinate.altitude == nil)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func centroidEPSG3857() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let c = try #require(polygon.centroid)
         #expect(c.coordinate.projection == .epsg3857)
         #expect(abs(c.coordinate.x - 500.0) < 0.001)
@@ -552,13 +552,13 @@ struct CenterTests {
 
     @Test
     func centroidEPSG4978() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]])
+        ]]))
         let c = try #require(polygon.centroid)
         #expect(c.coordinate.projection == .epsg4978)
         #expect(c.coordinate.altitude != nil) // all coords have z: 0.0
@@ -567,13 +567,13 @@ struct CenterTests {
 
     @Test
     func centroidNoSRID() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let c = try #require(polygon.centroid)
         #expect(c.coordinate.projection == .noSRID)
         #expect(abs(c.coordinate.x - 5.0) < 0.001)

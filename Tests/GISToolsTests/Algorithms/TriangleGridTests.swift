@@ -51,7 +51,7 @@ struct TriangleGridTests {
         #expect(grid.features.count <= 8)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func triangleGrid3857() async throws {
@@ -71,7 +71,6 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func triangleGrid4978() async throws {
@@ -82,7 +81,6 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
     @Test
     func triangleGridNoSRID() async throws {

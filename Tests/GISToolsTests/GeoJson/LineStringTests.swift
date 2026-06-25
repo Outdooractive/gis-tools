@@ -197,12 +197,12 @@ struct LineStringTests {
 
     // Validates creating a LineString in EPSG:3857 using unchecked init.
     @Test
-    func init3857() {
+    func init3857() throws {
         let coords: [Coordinate3D] = [
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
         ]
-        let lineString = LineString(unchecked: coords)
+        let lineString = try #require(LineString(coords))
 
         #expect(lineString.projection == .epsg3857)
         #expect(lineString.coordinates == coords)
@@ -210,12 +210,12 @@ struct LineStringTests {
 
     // Validates creating a LineString in EPSG:4978 using unchecked init.
     @Test
-    func init4978() {
+    func init4978() throws {
         let coords: [Coordinate3D] = [
             Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
             Coordinate3D(x: 10.0, y: 10.0, z: 200.0, projection: .epsg4978),
         ]
-        let lineString = LineString(unchecked: coords)
+        let lineString = try #require(LineString(coords))
 
         #expect(lineString.projection == .epsg4978)
         #expect(lineString.coordinates == coords)
@@ -223,12 +223,12 @@ struct LineStringTests {
 
     // Validates creating a LineString in noSRID using unchecked init.
     @Test
-    func initNoSRID() {
+    func initNoSRID() throws {
         let coords: [Coordinate3D] = [
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
         ]
-        let lineString = LineString(unchecked: coords)
+        let lineString = try #require(LineString(coords))
 
         #expect(lineString.projection == .noSRID)
         #expect(lineString.coordinates == coords)
@@ -258,13 +258,13 @@ struct LineStringTests {
     // Validates the bounding box of a LineString in EPSG:3857.
     @Test
     func boundingBox3857() async throws {
-        let lineString = LineString(unchecked: [
+        let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ])
+        ]))
 
         let bbox = try #require(lineString.calculateBoundingBox())
 

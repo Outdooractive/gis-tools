@@ -42,7 +42,7 @@ struct EnumeratePropertiesTests {
         #expect(summary["extra"]?.contains(true) == true)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test func enumerateProperties3857() async throws {
         let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0))

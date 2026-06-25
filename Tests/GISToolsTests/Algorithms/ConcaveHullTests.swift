@@ -136,10 +136,12 @@ struct ConcaveHullTests {
         }
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Verifies concave hull of points in EPSG:3857.
     @Test
+    // MARK: - Projections
+
     func concaveHull3857() throws {
         guard let mp = MultiPoint([
             Coordinate3D(x: 0.0, y: 0.0),
@@ -181,7 +183,6 @@ struct ConcaveHullTests {
         #expect(abs(withParam.area - manual.area) < 1.0)
     }
 
-    // MARK: - EPSG:4978
 
     @Test
     func concaveHull4978() async throws {
@@ -195,7 +196,6 @@ struct ConcaveHullTests {
         #expect(hull.polygons.isNotEmpty)
     }
 
-    // MARK: - noSRID
 
     @Test
     func concaveHullNoSRID() throws {

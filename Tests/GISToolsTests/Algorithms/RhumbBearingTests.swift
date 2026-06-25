@@ -21,6 +21,8 @@ struct RhumbBearingTests {
 
     // Tests rhumb bearing calculation in EPSG:3857 (Web Mercator).
     @Test
+    // MARK: - Projections
+
     func rhumbBearing3857() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0)
         let target = Coordinate3D(x: 100_000.0, y: 100_000.0)

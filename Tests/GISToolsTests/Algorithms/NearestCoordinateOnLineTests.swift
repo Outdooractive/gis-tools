@@ -150,7 +150,7 @@ struct NearestCoordinateOnLineTests {
         #expect(nearestCoordinate == result)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `nearestCoordinateOnLine(from:gridSize:)` matches manual pre-snapping.
     @Test
@@ -186,7 +186,7 @@ struct NearestCoordinateOnLineTests {
         #expect(result.coordinate.longitude.isFinite)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func nearestCoordOnLine4978() async throws {

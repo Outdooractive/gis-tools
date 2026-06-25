@@ -122,7 +122,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments2 == result.lineSegments)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `overlappingSegments(with:tolerance:gridSize:)` matches manual pre-snapping.
     @Test
@@ -144,7 +144,7 @@ struct LineOverlapTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     @Test
     func lineOverlap3857() async throws {

@@ -73,7 +73,7 @@ struct PointOnFeatureTests {
         #expect(result.coordinate == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `coordinateOnFeature(gridSize:)` matches manual pre-snapping.
     @Test
@@ -93,61 +93,22 @@ struct PointOnFeatureTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Antimeridian
+    // MARK: - Projections
 
     @Test
-    func nearAntimeridian() async throws {
-        // Polygon near the antimeridian (170°–179°), NOT crossing it.
-        // Verifies the algorithm works correctly with large longitude values
-        // near ±180° without numerical issues.
+    func pointOnFeature3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 170.0),
-            Coordinate3D(latitude: 10.0, longitude: 170.0),
-            Coordinate3D(latitude: 10.0, longitude: 179.0),
-            Coordinate3D(latitude: 0.0, longitude: 179.0),
-            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 0.0),
+            Coordinate3D(x: 100_000.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
         ]]))
-        let result = try #require(polygon.coordinateOnFeature)
-
-        // The result should lie on the polygon's surface
-        #expect(polygon.contains(result, ignoringBoundary: true))
+        let point = try #require(polygon.pointOnFeature)
+        #expect(point.coordinate.projection == .epsg3857)
     }
 
-    @Test
-    func crossingAntimeridian() async throws {
-        // Polygon that wraps across the antimeridian (170° → -170°).
-        // The algorithm normalizes longitudes to [0, 360) internally
-        // and should return a valid point on the polygon's surface.
-        let polygon = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 170.0),
-            Coordinate3D(latitude: 10.0, longitude: 170.0),
-            Coordinate3D(latitude: 10.0, longitude: -170.0),
-            Coordinate3D(latitude: 0.0, longitude: -165.0),
-            Coordinate3D(latitude: 0.0, longitude: 160.0),
-        ]]))
-        let result = try #require(polygon.coordinateOnFeature)
-
-        // Latitude should be within the polygon's bounds
-        #expect(result.latitude >= 0.0)
-        #expect(result.latitude <= 10.0)
-        // Longitude should be near the antimeridian (not at planar centroid 0°)
-        // indicating the normalization fix is working
-        #expect(result.longitude.isFinite)
-        #expect(abs(result.longitude) > 90.0)
-
-        // Cut the polygon at the antimeridian and verify the result
-        // is inside one of the non-wrapping parts
-        let parts = polygon.cutAtAntimeridian()
-        let isInsidePart = parts.features.contains { feature in
-            guard let partPolygon = feature.geometry as? Polygon else { return false }
-            return partPolygon.contains(result, ignoringBoundary: true)
-        }
-        #expect(isInsidePart)
-    }
-
-    // MARK: - Projection tests
-
-    // Verifies a point on feature in EPSG:4978 returns a valid point.
+    // Verifies point on feature in EPSG:4978.
     @Test
     func pointOnFeature4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -161,34 +122,58 @@ struct PointOnFeatureTests {
         #expect(point.coordinate.projection == .epsg4978)
     }
 
-    // MARK: - EPSG:3857
-
-    @Test
-    func pointOnFeature3857() async throws {
-        let polygon = Polygon(unchecked: [[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let point = try #require(polygon.pointOnFeature)
-        #expect(point.coordinate.projection == .epsg3857)
-    }
-
-    // MARK: - noSRID
-
+    // Verifies point on feature in noSRID.
     @Test
     func pointOnFeatureNoSRID() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let point = try #require(polygon.pointOnFeature)
         #expect(point.coordinate.projection == .noSRID)
+    }
+
+    // MARK: - Antimeridian
+
+    @Test
+    func nearAntimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        let result = try #require(polygon.coordinateOnFeature)
+        #expect(polygon.contains(result, ignoringBoundary: true))
+    }
+
+    // Tests point on feature for a polygon crossing the antimeridian.
+    @Test
+    func crossingAntimeridian() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -165.0),
+            Coordinate3D(latitude: 0.0, longitude: 160.0),
+        ]]))
+        let result = try #require(polygon.coordinateOnFeature)
+
+        #expect(result.latitude >= 0.0)
+        #expect(result.latitude <= 10.0)
+        #expect(result.longitude.isFinite)
+        #expect(abs(result.longitude) > 90.0)
+
+        let parts = polygon.cutAtAntimeridian()
+        let isInsidePart = parts.features.contains { feature in
+            guard let partPolygon = feature.geometry as? Polygon else { return false }
+            return partPolygon.contains(result, ignoringBoundary: true)
+        }
+        #expect(isInsidePart)
     }
 
 }

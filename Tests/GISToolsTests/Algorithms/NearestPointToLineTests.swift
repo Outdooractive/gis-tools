@@ -46,7 +46,7 @@ struct NearestPointToLineTests {
         #expect(ls.nearestCoordinate(from: []) == nil)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func nearestCoordinateFrom3857() async throws {

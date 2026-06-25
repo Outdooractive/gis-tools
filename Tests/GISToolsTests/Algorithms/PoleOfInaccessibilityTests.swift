@@ -77,7 +77,7 @@ struct PoleOfInaccessibilityTests {
         #expect(polygon.poleOfInaccessibility() == nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `poleOfInaccessibility(gridSize:)` matches manual pre-snapping.
     @Test
@@ -130,7 +130,7 @@ struct PoleOfInaccessibilityTests {
         #expect(isInsidePart)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     @Test
     func poleOfInaccessibility4978() async throws {
@@ -151,13 +151,13 @@ struct PoleOfInaccessibilityTests {
 
     @Test
     func poleOfInaccessibility3857() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let pole = try #require(polygon.poleOfInaccessibility(precision: 1_000.0))
         #expect(pole.coordinate.longitude.isFinite)
         #expect(pole.coordinate.latitude.isFinite)
@@ -166,13 +166,13 @@ struct PoleOfInaccessibilityTests {
 
     @Test
     func poleOfInaccessibilityNoSRID() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let pole = try #require(polygon.poleOfInaccessibility(precision: 10.0))
         #expect(pole.coordinate.longitude.isFinite)
         #expect(pole.coordinate.latitude.isFinite)
