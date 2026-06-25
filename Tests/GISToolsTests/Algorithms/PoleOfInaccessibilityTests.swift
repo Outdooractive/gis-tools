@@ -100,6 +100,7 @@ struct PoleOfInaccessibilityTests {
 
     // MARK: - Antimeridian
 
+    // Verifies pole of inaccessibility for a polygon near the antimeridian.
     @Test
     func antimeridian() async throws {
         // Asymmetric polygon crossing the antimeridian (partial wrap: 170° → -175°)
@@ -132,6 +133,7 @@ struct PoleOfInaccessibilityTests {
 
     // MARK: - Projections
 
+    // Verifies pole of inaccessibility in EPSG:4978.
     @Test
     func poleOfInaccessibility4978() async throws {
         // Pole of inaccessibility is computation-heavy; using a ~0.1° polygon
@@ -149,6 +151,7 @@ struct PoleOfInaccessibilityTests {
         #expect(pole.coordinate.projection == .epsg4978)
     }
 
+    // Verifies pole of inaccessibility in EPSG:3857.
     @Test
     func poleOfInaccessibility3857() async throws {
         let polygon = try #require(Polygon([[
@@ -164,6 +167,7 @@ struct PoleOfInaccessibilityTests {
         #expect(pole.coordinate.projection == .epsg3857)
     }
 
+    // Verifies pole of inaccessibility with noSRID.
     @Test
     func poleOfInaccessibilityNoSRID() async throws {
         let polygon = try #require(Polygon([[

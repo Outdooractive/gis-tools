@@ -187,10 +187,10 @@ struct SymmetricDifferenceTests {
         #expect(result != nil)
     }
 
-    // Validates symmetric difference of two overlapping polygons in EPSG:3857.
-    @Test
     // MARK: - Projections
 
+    // Validates symmetric difference of two overlapping polygons in EPSG:3857.
+    @Test
     func symmetricDifference3857() async throws {
         let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),

@@ -151,6 +151,7 @@ struct TransformTranslateTests {
 
     // MARK: - Projections
 
+    // Validates translation in EPSG:3857.
     @Test
     func transformTranslate3857() async throws {
         let line = try #require(LineString([
@@ -163,6 +164,7 @@ struct TransformTranslateTests {
     }
 
 
+    // Validates translation in EPSG:4978.
     @Test
     func transformTranslate4978() async throws {
         let line = try #require(LineString([
@@ -175,6 +177,7 @@ struct TransformTranslateTests {
     }
 
 
+    // Validates translation with noSRID.
     @Test
     func transformTranslateNoSRID() async throws {
         let line = try #require(LineString([
@@ -186,6 +189,7 @@ struct TransformTranslateTests {
         #expect(result.projection == .noSRID)
     }
 
+    // Validates translation across the antimeridian.
     @Test
     func antimeridian() async throws {
         // coordinates straddling the date line

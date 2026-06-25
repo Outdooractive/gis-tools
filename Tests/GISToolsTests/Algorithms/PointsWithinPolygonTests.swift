@@ -114,6 +114,7 @@ struct PointsWithinPolygonTests {
 
     // MARK: - Projections
 
+    // Verifies coordinates within polygon in EPSG:3857.
     @Test
     func pointsWithinPolygon3857() async throws {
         let polygon = try #require(Polygon([[
@@ -131,6 +132,7 @@ struct PointsWithinPolygonTests {
         #expect(result.count == 1)
     }
 
+    // Verifies coordinates within polygon in EPSG:4978.
     @Test
     func pointsWithinPolygon4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -148,6 +150,7 @@ struct PointsWithinPolygonTests {
     }
 
 
+    // Verifies coordinates within polygon with noSRID.
     @Test
     func pointsWithinPolygonNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -168,6 +171,7 @@ struct PointsWithinPolygonTests {
 
     // MARK: - Antimeridian
 
+    // Verifies points within polygon near the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

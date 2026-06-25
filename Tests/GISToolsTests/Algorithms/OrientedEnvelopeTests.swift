@@ -141,6 +141,7 @@ struct OrientedEnvelopeTests {
     }
 
 
+    // Verifies oriented envelope of a polygon in EPSG:4978.
     @Test
     func orientedEnvelope4978() async throws {
         let polygon = try #require(Polygon([[

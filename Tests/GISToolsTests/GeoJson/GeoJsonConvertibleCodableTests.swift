@@ -16,6 +16,7 @@ struct GeoJsonConvertibleCodableTests {
 
     // MARK: - GeoJsonReadable
 
+    // Validates that initializing from a nil JSON value returns nil.
     @Test
     func initFromJsonWithNil() async throws {
         let point: Point? = Point(json: nil)
@@ -23,6 +24,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point == nil)
     }
 
+    // Validates that initializing from a non-dictionary JSON value returns nil.
     @Test
     func initFromJsonWithInvalidType() async throws {
         let pointFromString: Point? = Point(json: "not a dictionary")
@@ -32,6 +34,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(pointFromNumber == nil)
     }
 
+    // Validates initializing a Point from a valid JSON string.
     @Test
     func initFromValidJsonString() async throws {
         let point = try #require(Point(jsonString: pointJson))
@@ -41,6 +44,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point.coordinate == Coordinate3D(latitude: 0.0, longitude: 100.0))
     }
 
+    // Validates that initializing from invalid JSON string returns nil.
     @Test
     func initFromInvalidJsonString() async throws {
         let point: Point? = Point(jsonString: invalidJson)
@@ -48,6 +52,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point == nil)
     }
 
+    // Validates that initializing with wrong GeoJSON type returns nil.
     @Test
     func initFromJsonStringWithWrongType() async throws {
         let point: Point? = Point(jsonString: notGeoJson)
@@ -55,6 +60,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point == nil)
     }
 
+    // Validates initializing a Point from valid JSON data.
     @Test
     func initFromValidJsonData() async throws {
         let data = try #require(pointJson.data(using: .utf8))
@@ -63,6 +69,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point.type == .point)
     }
 
+    // Validates that initializing from invalid JSON data returns nil.
     @Test
     func initFromInvalidJsonData() async throws {
         let data = Data([0x00, 0x01, 0x02])
@@ -71,6 +78,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point == nil)
     }
 
+    // Validates initializing a Point from a file URL.
     @Test
     func initFromContentsOfUrl() async throws {
         let data = try #require(pointJson.data(using: .utf8))
@@ -84,6 +92,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point.type == .point)
     }
 
+    // Validates that initializing from a missing file URL returns nil.
     @Test
     func initFromContentsOfUrlWithMissingFile() async throws {
         let url = URL(fileURLWithPath: "/nonexistent/file.geojson")
@@ -94,6 +103,7 @@ struct GeoJsonConvertibleCodableTests {
 
     // MARK: - GeoJsonWritable
 
+    // Validates that asJson returns the expected dictionary representation.
     @Test
     func asJsonDictionary() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -103,6 +113,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(json["coordinates"] as? [Double] == [100.0, 0.0])
     }
 
+    // Validates that asJsonData returns valid JSON data.
     @Test
     func asJsonData() async throws {
         let point = try #require(Point(jsonString: pointJson))
@@ -112,6 +123,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(parsed["type"] as? String == "Point")
     }
 
+    // Validates that asJsonString returns a valid JSON string.
     @Test
     func asJsonString() async throws {
         let point = try #require(Point(jsonString: pointJson))
@@ -120,6 +132,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(string.contains("\"type\":\"Point\""))
     }
 
+    // Validates that pretty-printed JSON data is larger than compact data.
     @Test
     func asJsonDataPrettyPrinted() async throws {
         let point = try #require(Point(jsonString: pointJson))
@@ -129,6 +142,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(compact.count <= pretty.count)
     }
 
+    // Validates that a Point round-trips through JSON dictionary conversion.
     @Test
     func jsonRoundTrip() async throws {
         let original = Point(Coordinate3D(latitude: 42.0, longitude: -71.0))
@@ -138,6 +152,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(original == roundTripped)
     }
 
+    // Validates that a Point round-trips through JSON string conversion.
     @Test
     func stringRoundTrip() async throws {
         let original = Point(Coordinate3D(latitude: 42.0, longitude: -71.0))
@@ -147,6 +162,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(original == roundTripped)
     }
 
+    // Validates writing a Point to a file URL and reading it back.
     @Test
     func writeToUrl() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -161,6 +177,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(point == readBack)
     }
 
+    // Validates that writing to an invalid URL returns false.
     @Test
     func writeToInvalidUrl() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -170,6 +187,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(!success)
     }
 
+    // Validates that dump does not crash.
     @Test
     func dumpDoesNotCrash() {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 100.0))
@@ -179,6 +197,7 @@ struct GeoJsonConvertibleCodableTests {
 
     // MARK: - Sequence asJson
 
+    // Validates that Sequence of GeoJson produces correct JSON array.
     @Test
     func sequenceAsJson() async throws {
         let points = [
@@ -194,6 +213,7 @@ struct GeoJsonConvertibleCodableTests {
 
     // MARK: - Codable edge cases
 
+    // Validates that decoding invalid data throws an error.
     @Test
     func codableWithInvalidDataThrows() async throws {
         let invalidData = Data([0x00, 0x01, 0x02])
@@ -203,6 +223,7 @@ struct GeoJsonConvertibleCodableTests {
         }
     }
 
+    // Validates that decoding an empty JSON object throws an error.
     @Test
     func codableWithEmptyJsonObjectThrows() async throws {
         let emptyData = try #require("{}".data(using: .utf8))
@@ -212,6 +233,7 @@ struct GeoJsonConvertibleCodableTests {
         }
     }
 
+    // Validates that decoding a mismatched GeoJSON type throws an error.
     @Test
     func codableWithMismatchedTypeThrows() async throws {
         // Polygon JSON decoded as Point
@@ -225,6 +247,7 @@ struct GeoJsonConvertibleCodableTests {
         }
     }
 
+    // Validates Coordinate3D round-trips through Codable.
     @Test
     func codableCoordinate3DRoundTrip() async throws {
         let coordinate = Coordinate3D(latitude: 15.0, longitude: 10.0, altitude: 500.0, m: 1234)
@@ -234,6 +257,7 @@ struct GeoJsonConvertibleCodableTests {
         #expect(decoded == coordinate)
     }
 
+    // Validates BoundingBox round-trips through Codable.
     @Test
     func codableBoundingBoxRoundTrip() async throws {
         let box = BoundingBox(

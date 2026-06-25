@@ -135,6 +135,7 @@ struct NearestPointTests {
 
     // MARK: - Antimeridian
 
+    // Verifies nearest vertex on a multi-point near the antimeridian.
     @Test
     func antimeridian() async throws {
         let mp = try #require(MultiPoint([

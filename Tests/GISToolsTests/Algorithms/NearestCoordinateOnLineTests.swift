@@ -172,6 +172,7 @@ struct NearestCoordinateOnLineTests {
 
     // MARK: - Antimeridian
 
+    // Tests nearest coordinate on a line crossing the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([
@@ -188,6 +189,7 @@ struct NearestCoordinateOnLineTests {
 
     // MARK: - Projections
 
+    // Tests nearest coordinate on a line in EPSG:4978.
     @Test
     func nearestCoordOnLine4978() async throws {
         let lineString = try #require(LineString([
@@ -201,6 +203,7 @@ struct NearestCoordinateOnLineTests {
         #expect(result!.distance.isFinite)
     }
 
+    // Tests nearest coordinate on a line in EPSG:3857.
     @Test
     func nearestCoordOnLine3857() async throws {
         let lineString = try #require(LineString([
@@ -214,6 +217,7 @@ struct NearestCoordinateOnLineTests {
         #expect(result!.distance.isFinite)
     }
 
+    // Tests nearest coordinate on a line in noSRID.
     @Test
     func nearestCoordOnLineNoSRID() async throws {
         let lineString = try #require(LineString([

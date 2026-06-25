@@ -6,6 +6,7 @@ struct BooleanContainsTests {
 
     // MARK: - Point in Point
 
+    // Point contains identical point.
     @Test
     func pointContainsPoint() async throws {
         let point1 = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -13,6 +14,7 @@ struct BooleanContainsTests {
         #expect(point1.contains(point2))
     }
 
+    // Point does not contain a different point.
     @Test
     func pointDoesNotContainDifferentPoint() async throws {
         let point1 = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -20,6 +22,7 @@ struct BooleanContainsTests {
         #expect(point1.contains(point2) == false)
     }
 
+    // Point does not contain other geometry types.
     @Test
     func pointDoesNotContainOtherTypes() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -33,6 +36,7 @@ struct BooleanContainsTests {
 
     // MARK: - MultiPoint contains
 
+    // MultiPoint contains a member point.
     @Test
     func multiPointContainsPoint() async throws {
         let multiPoint = try #require(MultiPoint([
@@ -44,6 +48,7 @@ struct BooleanContainsTests {
         #expect(multiPoint.contains(point))
     }
 
+    // MultiPoint does not contain a non-member point.
     @Test
     func multiPointDoesNotContainPoint() async throws {
         let multiPoint = try #require(MultiPoint([
@@ -54,6 +59,7 @@ struct BooleanContainsTests {
         #expect(multiPoint.contains(point) == false)
     }
 
+    // MultiPoint contains a subset MultiPoint.
     @Test
     func multiPointContainsMultiPoint() async throws {
         let container = try #require(MultiPoint([
@@ -68,6 +74,7 @@ struct BooleanContainsTests {
         #expect(container.contains(contained))
     }
 
+    // MultiPoint does not contain a non-subset MultiPoint.
     @Test
     func multiPointDoesNotContainMultiPoint() async throws {
         let container = try #require(MultiPoint([
@@ -83,6 +90,7 @@ struct BooleanContainsTests {
 
     // MARK: - LineString contains
 
+    // LineString contains a point on it.
     @Test
     func lineStringContainsPoint() async throws {
         let line = try #require(LineString([
@@ -93,6 +101,7 @@ struct BooleanContainsTests {
         #expect(line.contains(point))
     }
 
+    // LineString does not contain an off-line point.
     @Test
     func lineStringDoesNotContainPoint() async throws {
         let line = try #require(LineString([
@@ -103,6 +112,7 @@ struct BooleanContainsTests {
         #expect(line.contains(point) == false)
     }
 
+    // LineString contains a sub-line.
     @Test
     func lineStringContainsLineString() async throws {
         let outer = try #require(LineString([
@@ -119,6 +129,7 @@ struct BooleanContainsTests {
 
     // MARK: - MultiLineString contains
 
+    // MultiLineString contains a point on one segment.
     @Test
     func multiLineStringContainsPoint() async throws {
         let line1 = try #require(LineString([
@@ -134,6 +145,7 @@ struct BooleanContainsTests {
         #expect(multiLine.contains(point))
     }
 
+    // MultiLineString does not contain a point between segments.
     @Test
     func multiLineStringDoesNotContainPoint() async throws {
         let line1 = try #require(LineString([
@@ -151,6 +163,7 @@ struct BooleanContainsTests {
 
     // MARK: - Polygon contains
 
+    // Polygon contains an interior point.
     @Test
     func polygonContainsPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -158,6 +171,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(point))
     }
 
+    // Polygon does not contain an exterior point.
     @Test
     func polygonDoesNotContainPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -165,6 +179,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(point) == false)
     }
 
+    // Polygon contains a point on its boundary.
     @Test
     func polygonContainsPointOnBoundary() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -172,6 +187,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(point))
     }
 
+    // Polygon contains a MultiPoint of interior points.
     @Test
     func polygonContainsMultiPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -183,6 +199,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(multiPoint))
     }
 
+    // Polygon contains a fully interior LineString.
     @Test
     func polygonContainsLineString() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -194,6 +211,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(line))
     }
 
+    // Polygon does not contain a LineString that exits it.
     @Test
     func polygonDoesNotContainLineStringOutside() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -204,6 +222,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(line) == false)
     }
 
+    // Polygon contains a smaller interior polygon.
     @Test
     func polygonContainsPolygon() async throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -211,6 +230,7 @@ struct BooleanContainsTests {
         #expect(outer.contains(inner))
     }
 
+    // Polygon does not contain a polygon that only touches it.
     @Test
     func polygonDoesNotContainPolygonTouching() async throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -218,6 +238,7 @@ struct BooleanContainsTests {
         #expect(outer.contains(inner) == false)
     }
 
+    // Polygon with hole does not contain a point inside the hole.
     @Test
     func polygonWithHoleContainsPointInHole() async throws {
         // Point is inside the outer ring but inside the hole -> not contained
@@ -231,6 +252,7 @@ struct BooleanContainsTests {
 
     // MARK: - MultiPolygon contains
 
+    // MultiPolygon contains a point in one of its polygons.
     @Test
     func multiPolygonContainsPoint() async throws {
         let polygon1 = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 5.0), Coordinate3D(latitude: 5.0, longitude: 5.0), Coordinate3D(latitude: 5.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -240,6 +262,7 @@ struct BooleanContainsTests {
         #expect(multiPolygon.contains(point))
     }
 
+    // MultiPolygon contains a smaller MultiPolygon.
     @Test
     func multiPolygonContainsMultiPolygon() async throws {
         let outer1 = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -254,6 +277,7 @@ struct BooleanContainsTests {
 
     // MARK: - isWithin
 
+    // Point isWithin a polygon.
     @Test
     func pointIsWithinPolygon() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -261,6 +285,7 @@ struct BooleanContainsTests {
         #expect(point.isWithin(polygon))
     }
 
+    // Point is notWithin a polygon.
     @Test
     func pointIsNotWithinPolygon() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -268,6 +293,7 @@ struct BooleanContainsTests {
         #expect(point.isWithin(polygon) == false)
     }
 
+    // Inner polygon isWithin outer polygon.
     @Test
     func polygonIsWithinPolygon() async throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -277,6 +303,7 @@ struct BooleanContainsTests {
 
     // MARK: - Feature and FeatureCollection
 
+    // Feature contains a point.
     @Test
     func featureContainsPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -285,6 +312,7 @@ struct BooleanContainsTests {
         #expect(feature.contains(point))
     }
 
+    // FeatureCollection contains a point.
     @Test
     func featureCollectionContainsPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -293,6 +321,7 @@ struct BooleanContainsTests {
         #expect(featureCollection.contains(point))
     }
 
+    // FeatureCollection does not contain an exterior point.
     @Test
     func featureCollectionDoesNotContainPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -303,6 +332,7 @@ struct BooleanContainsTests {
 
     // MARK: - Projections
 
+    // Contains check in EPSG:3857.
     @Test
     func containsEPSG3857() throws {
         let polygon = try #require(Polygon([[
@@ -319,6 +349,7 @@ struct BooleanContainsTests {
         #expect(inside.isWithin(polygon))
     }
 
+    // Contains check in EPSG:4978.
     @Test
     func containsEPSG4978() async throws {
         let polygon4326 = try #require(Polygon([[
@@ -335,6 +366,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(outside) == false)
     }
 
+    // Contains check in noSRID projection.
     @Test
     func containsNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -352,6 +384,7 @@ struct BooleanContainsTests {
 
     // MARK: - Projections for non-Polygon types
 
+    // MultiPoint contains point in EPSG:3857.
     @Test
     func multiPointContainsPointEPSG3857() throws {
         let mp = try #require(MultiPoint([
@@ -362,6 +395,7 @@ struct BooleanContainsTests {
         #expect(mp.contains(Point(Coordinate3D(x: 500.0, y: 500.0))) == false)
     }
 
+    // MultiPoint contains point in EPSG:4978.
     @Test
     func multiPointContainsPointEPSG4978() async throws {
         let a = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -372,6 +406,7 @@ struct BooleanContainsTests {
         #expect(mp.contains(Point(Coordinate3D(latitude: 5.0, longitude: 5.0).projected(to: .epsg4978))) == false)
     }
 
+    // MultiPoint contains point in noSRID.
     @Test
     func multiPointContainsPointNoSRID() throws {
         let mp = try #require(MultiPoint([
@@ -382,6 +417,7 @@ struct BooleanContainsTests {
         #expect(mp.contains(Point(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))) == false)
     }
 
+    // LineString contains point in EPSG:3857.
     @Test
     func lineStringContainsPointEPSG3857() throws {
         let line = try #require(LineString([
@@ -391,6 +427,7 @@ struct BooleanContainsTests {
         #expect(line.contains(Point(Coordinate3D(x: 600.0, y: 500.0))) == false)
     }
 
+    // LineString contains point in EPSG:4978.
     @Test
     func lineStringContainsPointEPSG4978() async throws {
         // Short ECEF segment at Z=0 so 2D XY check is exact.
@@ -401,6 +438,7 @@ struct BooleanContainsTests {
         #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 60.0, z: 0.0, projection: .epsg4978))) == false)
     }
 
+    // LineString contains point in noSRID.
     @Test
     func lineStringContainsPointNoSRID() throws {
         let line = try #require(LineString([
@@ -410,6 +448,7 @@ struct BooleanContainsTests {
         #expect(line.contains(Point(Coordinate3D(x: 5.0, y: 6.0, projection: .noSRID))) == false)
     }
 
+    // MultiLineString contains point in EPSG:3857.
     @Test
     func multiLineStringContainsPointEPSG3857() throws {
         let ml1 = try #require(LineString([
@@ -429,6 +468,7 @@ struct BooleanContainsTests {
         #expect(ml.contains(Point(Coordinate3D(x: 750.0, y: 750.0))) == false)
     }
 
+    // MultiLineString contains point in EPSG:4978.
     @Test
     func multiLineStringContainsPointEPSG4978() async throws {
         let ml1 = try #require(LineString([
@@ -448,6 +488,7 @@ struct BooleanContainsTests {
         #expect(ml.contains(Point(Coordinate3D(x: 150.0, y: 150.0, z: 0.0, projection: .epsg4978))) == false)
     }
 
+    // MultiLineString contains point in noSRID.
     @Test
     func multiLineStringContainsPointNoSRID() throws {
         let ml1 = try #require(LineString([
@@ -469,6 +510,7 @@ struct BooleanContainsTests {
 
     // MARK: - Polygon × MultiLineString / MultiPolygon
 
+    // Polygon contains MultiLineString.
     @Test
     func polygonContainsMultiLineString() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -480,6 +522,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(mlOutside) == false)
     }
 
+    // Polygon contains MultiPolygon.
     @Test
     func polygonContainsMultiPolygon() async throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 20.0), Coordinate3D(latitude: 20.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -491,6 +534,7 @@ struct BooleanContainsTests {
 
     // MARK: - Feature / FeatureCollection with non-4326 projections
 
+    // Feature contains point in EPSG:3857.
     @Test
     func featureContainsPointEPSG3857() throws {
         let polygon = try #require(Polygon([[
@@ -503,6 +547,7 @@ struct BooleanContainsTests {
         #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
     }
 
+    // Feature contains point in EPSG:4978.
     @Test
     func featureContainsPointEPSG4978() async throws {
         let polygon4326 = try #require(Polygon([[
@@ -515,6 +560,7 @@ struct BooleanContainsTests {
         #expect(Feature(polygon4326.projected(to: .epsg4978)).contains(Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))))
     }
 
+    // Feature contains point in noSRID.
     @Test
     func featureContainsPointNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -527,6 +573,7 @@ struct BooleanContainsTests {
         #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID))))
     }
 
+    // FeatureCollection contains point in EPSG:3857.
     @Test
     func featureCollectionContainsPointEPSG3857() throws {
         let polygon = try #require(Polygon([[
@@ -539,6 +586,7 @@ struct BooleanContainsTests {
         #expect(FeatureCollection([Feature(polygon)]).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
     }
 
+    // FeatureCollection contains point in EPSG:4978.
     @Test
     func featureCollectionContainsPointEPSG4978() async throws {
         let polygon4326 = try #require(Polygon([[
@@ -551,6 +599,7 @@ struct BooleanContainsTests {
         #expect(FeatureCollection([Feature(polygon4326.projected(to: .epsg4978))]).contains(Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))))
     }
 
+    // FeatureCollection contains point in noSRID.
     @Test
     func featureCollectionContainsPointNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -565,6 +614,7 @@ struct BooleanContainsTests {
 
     // MARK: - GeometryCollection contains
 
+    // GeometryCollection contains point.
     @Test
     func geometryCollectionContainsPoint() throws {
         let polygon = try #require(Polygon([[
@@ -581,6 +631,7 @@ struct BooleanContainsTests {
 
     // MARK: - Bounding box fast-fail
 
+    // Bounding box fast-fail for distant polygons.
     @Test
     func boundingBoxFastFail() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
@@ -591,6 +642,7 @@ struct BooleanContainsTests {
 
     // MARK: - Antimeridian
 
+    // Polygon near antimeridian contains an interior point.
     @Test
     func polygonNearAntimeridianContainsPoint() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 160.0)]]))
@@ -598,6 +650,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(pointInside))
     }
 
+    // Polygon near antimeridian does not contain far-side point.
     @Test
     func polygonNearAntimeridianDoesNotContainFarSide() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 160.0)]]))
@@ -606,6 +659,7 @@ struct BooleanContainsTests {
         #expect(polygon.contains(pointOutside) == false)
     }
 
+    // Point near antimeridian isWithin polygon.
     @Test
     func pointNearAntimeridianIsWithinPolygon() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 10.0, longitude: 160.0), Coordinate3D(latitude: 0.0, longitude: 160.0)]]))
@@ -613,6 +667,7 @@ struct BooleanContainsTests {
         #expect(point.isWithin(polygon))
     }
 
+    // MultiPolygon spanning antimeridian contains points on both sides.
     @Test
     func multiPolygonSpanningAntimeridianContainsPoint() async throws {
         let westPolygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: 180.0), Coordinate3D(latitude: 10.0, longitude: 180.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: 170.0)]]))
@@ -624,6 +679,7 @@ struct BooleanContainsTests {
         #expect(multiPolygon.contains(pointEast))
     }
 
+    // LineString near antimeridian contains a point on it.
     @Test
     func lineStringNearAntimeridianContainsPoint() async throws {
         let line = try #require(LineString([
@@ -638,6 +694,7 @@ struct BooleanContainsTests {
 
     // MARK: - Empty / degenerate
 
+    // Empty polygon contains nothing.
     @Test
     func emptyPolygonDoesNotContain() async throws {
         let emptyPolygon = Polygon()
@@ -645,6 +702,7 @@ struct BooleanContainsTests {
         #expect(emptyPolygon.contains(point) == false)
     }
 
+    // Single-point LineString does not contain its point.
     @Test
     func singlePointLineStringContainsItsPoint() throws {
         let degenerateLine = LineString(unchecked: [
@@ -654,6 +712,7 @@ struct BooleanContainsTests {
         #expect(degenerateLine.contains(point) == false)
     }
 
+    // Empty MultiPoint contains nothing.
     @Test
     func emptyMultiPointContainsNothing() {
         let emptyMultiPoint = MultiPoint()

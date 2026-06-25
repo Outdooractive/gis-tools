@@ -33,6 +33,7 @@ struct BooleanClockwiseTests {
 
     // MARK: - Projections
 
+    // Tests clockwise detection in EPSG:3857.
     @Test
     func booleanClockwise3857() async throws {
         // Geographic CW ring projected to 3857.
@@ -58,6 +59,7 @@ struct BooleanClockwiseTests {
         #expect(ccw.isCounterClockwise)
     }
 
+    // Tests clockwise detection in EPSG:4978.
     @Test
     func booleanClockwise4978() async throws {
         // Geographic CW ring projected to 4978.
@@ -72,6 +74,7 @@ struct BooleanClockwiseTests {
         #expect(cw.isCounterClockwise == false)
     }
 
+    // Tests clockwise detection in noSRID projection.
     @Test
     func booleanClockwiseNoSRID() throws {
         // Raw 2-D shoelace (no antimeridian normalisation).

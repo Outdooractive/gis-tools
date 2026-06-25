@@ -109,6 +109,7 @@ struct BooleanCoversTests {
 
     // MARK: - Projections
 
+    // Polygon covers point in EPSG:3857.
     @Test
     func polygonCoversPoint3857() throws {
         let polygon = try #require(Polygon([[
@@ -122,6 +123,7 @@ struct BooleanCoversTests {
         #expect(polygon.covers(point))
     }
 
+    // Polygon covers point in EPSG:4978.
     @Test
     func polygonCoversPoint4978() async throws {
         let polygon4326 = try #require(Polygon([[

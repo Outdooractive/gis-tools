@@ -88,6 +88,7 @@ struct BooleanOverlapTests {
 
     // MARK: - Projections
 
+    // Overlap check in EPSG:3857.
     @Test
     func isOverlappingEPSG3857() throws {
         // Two squares that partially overlap in EPSG:3857.
@@ -109,6 +110,7 @@ struct BooleanOverlapTests {
         #expect(poly2.isOverlapping(with: poly1))
     }
 
+    // Overlap check in EPSG:4978.
     @Test
     func isOverlappingEPSG4978() throws {
         let poly1 = try #require(Polygon([[
@@ -128,6 +130,7 @@ struct BooleanOverlapTests {
         #expect(poly1.isOverlapping(with: poly2))
     }
 
+    // Overlap check in noSRID.
     @Test
     func isOverlappingNoSRID() throws {
         let poly1 = try #require(Polygon([[
@@ -149,6 +152,7 @@ struct BooleanOverlapTests {
 
     // MARK: - Point / MultiPoint projection tests
 
+    // Identical points do not overlap per DE-9IM.
     @Test
     func isOverlappingPointEPSG3857() {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0))
@@ -157,6 +161,7 @@ struct BooleanOverlapTests {
         #expect(!a.isOverlapping(with: b))
     }
 
+    // Identical points do not overlap in EPSG:4978.
     @Test
     func isOverlappingPointEPSG4978() {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978))
@@ -164,6 +169,7 @@ struct BooleanOverlapTests {
         #expect(!a.isOverlapping(with: b))
     }
 
+    // MultiPoint overlap in EPSG:3857.
     @Test
     func isOverlappingMultiPointEPSG3857() throws {
         let mp = try #require(MultiPoint([Coordinate3D(x: 0.0, y: 0.0), Coordinate3D(x: 10.0, y: 10.0)]))
@@ -171,6 +177,7 @@ struct BooleanOverlapTests {
         #expect(mp.isOverlapping(with: other))
     }
 
+    // MultiPoint overlap in EPSG:4978.
     @Test
     func isOverlappingMultiPointEPSG4978() throws {
         let mp = try #require(MultiPoint([
@@ -184,6 +191,7 @@ struct BooleanOverlapTests {
 
     // MARK: - LineString projection tests
 
+    // LineString overlap in EPSG:3857.
     @Test
     func isOverlappingLineStringEPSG3857() throws {
         let l1 = try #require(LineString([Coordinate3D(x: 0.0, y: 0.0), Coordinate3D(x: 20.0, y: 20.0)]))
@@ -191,6 +199,7 @@ struct BooleanOverlapTests {
         #expect(l1.isOverlapping(with: l2))
     }
 
+    // LineString overlap in EPSG:4978.
     @Test
     func isOverlappingLineStringEPSG4978() throws {
         let l1 = try #require(LineString([
@@ -202,6 +211,7 @@ struct BooleanOverlapTests {
         #expect(l1.isOverlapping(with: l2))
     }
 
+    // LineString overlap in noSRID.
     @Test
     func isOverlappingLineStringNoSRID() throws {
         let l1 = try #require(LineString([
@@ -215,6 +225,7 @@ struct BooleanOverlapTests {
 
     // MARK: - Antimeridian
 
+    // Lines overlapping across the antimeridian.
     @Test
     func antimeridian() async throws {
         let line1 = try #require(LineString([
@@ -230,6 +241,7 @@ struct BooleanOverlapTests {
 
     // MARK: - Empty / degenerate
 
+    // Empty geometries do not overlap.
     @Test
     func emptyGeometriesDoNotOverlap() async throws {
         let emptyPolygon = Polygon()

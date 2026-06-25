@@ -18,6 +18,7 @@ struct DistanceTests {
 
     // MARK: - Projections
 
+    // Validates Euclidean distance in EPSG:3857 projection.
     @Test
     func distance3857() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0)
@@ -60,6 +61,7 @@ struct DistanceTests {
 
     // MARK: - Antimeridian
 
+    // Validates distance calculation across the antimeridian.
     @Test
     func antimeridian() async throws {
         let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 170.0)
@@ -70,6 +72,7 @@ struct DistanceTests {
 
     // MARK: - Edge cases
 
+    // Validates distance between identical points is zero.
     @Test
     func distanceIdenticalPoints() async throws {
         let point = Coordinate3D(latitude: 45.0, longitude: -75.0)

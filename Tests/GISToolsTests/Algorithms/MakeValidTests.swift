@@ -5,6 +5,7 @@ struct MakeValidTests {
 
     // MARK: - Point
 
+    // Tests madeValid on a simple Point geometry.
     @Test
     func point() {
         let point = Point(Coordinate3D(latitude: 1.0, longitude: 2.0))
@@ -15,6 +16,7 @@ struct MakeValidTests {
 
     // MARK: - MultiPoint
 
+    // Tests madeValid on a MultiPoint geometry.
     @Test
     func multiPoint() throws {
         let multiPoint = try #require(MultiPoint([
@@ -28,6 +30,7 @@ struct MakeValidTests {
 
     // MARK: - LineString
 
+    // Tests madeValid removes duplicate consecutive coordinates.
     @Test
     func lineStringWithDuplicates() throws {
         let line = try #require(LineString([
@@ -43,6 +46,7 @@ struct MakeValidTests {
 
     // MARK: - MultiLineString
 
+    // Tests madeValid removes duplicates in MultiLineString.
     @Test
     func multiLineStringWithDuplicates() throws {
         let line = try #require(LineString([
@@ -58,6 +62,7 @@ struct MakeValidTests {
 
     // MARK: - Polygon
 
+    // Tests madeValid on an already valid polygon.
     @Test
     func validPolygon() throws {
         let polygon = try #require(Polygon([[
@@ -71,6 +76,7 @@ struct MakeValidTests {
         #expect(valid != nil)
     }
 
+    // Tests madeValid repairs a self-intersecting bowtie polygon.
     @Test
     func selfIntersectingBowtie() throws {
         let polygon = try #require(Polygon([[
@@ -85,9 +91,9 @@ struct MakeValidTests {
         #expect(valid?.kinks().coordinates.isEmpty ?? true)
     }
 
+    // Tests madeValid reverses clockwise winding order to counter-clockwise.
     @Test
     func wrongWindingOrder() throws {
-        // Build a clockwise ring matching the existing booleanClockwise test pattern:
         // (lat=0,lon=0) → (lat=1,lon=1) → (lat=0,lon=1) → back
         let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -105,6 +111,7 @@ struct MakeValidTests {
         #expect(valid?.outerRing?.isCounterClockwise == true)
     }
 
+    // Tests madeValid removes duplicate coordinates from a polygon ring.
     @Test
     func polygonWithDuplicates() throws {
         let polygon = try #require(Polygon([[
@@ -121,6 +128,7 @@ struct MakeValidTests {
         #expect(valid?.coordinates[0].count == 5)
     }
 
+    // Tests madeValid closes an open polygon ring.
     @Test
     func polygonWithOpenRing() throws {
         let polygon = try #require(Polygon([[
@@ -136,6 +144,7 @@ struct MakeValidTests {
 
     // MARK: - MultiPolygon
 
+    // Tests madeValid repairs invalid child polygons in a MultiPolygon.
     @Test
     func multiPolygonWithInvalidChild() throws {
         let validPolygon = try #require(Polygon([[
@@ -164,6 +173,7 @@ struct MakeValidTests {
 
     // MARK: - GeometryCollection
 
+    // Tests madeValid repairs all geometries in a GeometryCollection.
     @Test
     func geometryCollection() throws {
         let line = try #require(LineString([
@@ -191,6 +201,7 @@ struct MakeValidTests {
 
     // MARK: - Feature / FeatureCollection
 
+    // Tests madeValid on a Feature preserves properties.
     @Test
     func feature() throws {
         let polygon = try #require(Polygon([[
@@ -208,6 +219,7 @@ struct MakeValidTests {
         #expect(validPoly?.kinks().coordinates.isEmpty ?? true)
     }
 
+    // Tests madeValid on a FeatureCollection.
     @Test
     func featureCollection() throws {
         let p1 = Point(Coordinate3D(latitude: 1.0, longitude: 2.0))
@@ -231,6 +243,7 @@ struct MakeValidTests {
 
 extension MakeValidTests {
 
+    // Tests madeValid preserves EPSG:3857 projection.
     @Test
     func validPolygon3857() throws {
         let polygon = try #require(Polygon([[
@@ -245,6 +258,7 @@ extension MakeValidTests {
         #expect(valid?.projection == .epsg3857)
     }
 
+    // Tests madeValid preserves EPSG:4978 projection.
     @Test
     func validPolygon4978() throws {
         let polygon = try #require(Polygon([[
@@ -259,6 +273,7 @@ extension MakeValidTests {
         #expect(valid?.projection == .epsg4978)
     }
 
+    // Tests madeValid preserves noSRID projection.
     @Test
     func validPolygonNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -273,6 +288,7 @@ extension MakeValidTests {
         #expect(valid?.projection == .noSRID)
     }
 
+    // Tests madeValid repairs a bowtie polygon in EPSG:3857.
     @Test
     func bowtie3857() throws {
         let polygon = try #require(Polygon([[
@@ -288,6 +304,7 @@ extension MakeValidTests {
         #expect(valid?.kinks().coordinates.isEmpty ?? true)
     }
 
+    // Tests madeValid repairs a bowtie polygon in noSRID.
     @Test
     func bowtieNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -303,6 +320,7 @@ extension MakeValidTests {
         #expect(valid?.kinks().coordinates.isEmpty ?? true)
     }
 
+    // Tests madeValid reverses winding order in EPSG:3857.
     @Test
     func wrongWindingOrder3857() throws {
         let polygon = try #require(Polygon([[
@@ -323,9 +341,9 @@ extension MakeValidTests {
 
 extension MakeValidTests {
 
+    // Tests madeValid on a polygon crossing the antimeridian.
     @Test
     func antimeridianValidPolygon() throws {
-        // Square that crosses the antimeridian: from 170° to -170°
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: -10.0, longitude: 170.0),
             Coordinate3D(latitude: -10.0, longitude: -170.0),
@@ -338,9 +356,9 @@ extension MakeValidTests {
         #expect(valid?.outerRing?.isCounterClockwise == true)
     }
 
+    // Tests madeValid repairs a bowtie crossing the antimeridian.
     @Test
     func antimeridianBowtie() throws {
-        // Self-intersecting bowtie that crosses the antimeridian
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: -10.0, longitude: 175.0),
             Coordinate3D(latitude: 10.0, longitude: -175.0),
@@ -354,9 +372,9 @@ extension MakeValidTests {
         #expect(valid?.kinks().coordinates.isEmpty ?? true)
     }
 
+    // Tests madeValid reverses winding order on an antimeridian polygon.
     @Test
     func antimeridianWrongWindingOrder() throws {
-        // Clockwise ring crossing the antimeridian
         let ring = try #require(Ring([
             Coordinate3D(latitude: 0.0, longitude: 179.0),
             Coordinate3D(latitude: 1.0, longitude: -179.0),

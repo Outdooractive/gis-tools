@@ -63,6 +63,7 @@ struct SampleTests {
 
     // MARK: - Projections
 
+    // Tests sampling in EPSG:3857 (Web Mercator).
     @Test
     func sample3857() async throws {
         let features = [

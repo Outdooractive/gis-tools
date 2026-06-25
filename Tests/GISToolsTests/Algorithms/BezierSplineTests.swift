@@ -71,6 +71,7 @@ struct BezierSplineTests {
 
     // MARK: - Grid size
 
+    // Validates bezier spline with a grid size snaps to grid.
     @Test
     func withGridSize() throws {
         let line = try #require(LineString([
@@ -86,6 +87,7 @@ struct BezierSplineTests {
 
     // MARK: - Altitude / Z
 
+    // Validates bezier spline interpolates altitude across 3D points.
     @Test
     func bezierSpline3D() async throws {
         let line = try #require(LineString([
@@ -168,6 +170,7 @@ struct BezierSplineTests {
 
     // MARK: - Antimeridian
 
+    // Validates bezier spline across the antimeridian.
     @Test
     func antimeridian() throws {
         let line = try #require(LineString([
@@ -186,6 +189,7 @@ struct BezierSplineTests {
 
     // MARK: - Edge cases
 
+    // Validates bezier spline returns nil for a single-point line.
     @Test
     func singlePoint() {
         let line = LineString(unchecked: [

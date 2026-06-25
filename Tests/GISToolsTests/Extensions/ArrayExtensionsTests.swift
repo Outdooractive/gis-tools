@@ -103,6 +103,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - chunked(into:)
 
+    // Validates chunked splits an array into equal-sized chunks.
     @Test
     func chunked() async throws {
         let array = [1, 2, 3, 4, 5, 6, 7]
@@ -113,12 +114,14 @@ struct ArrayExtensionsTests {
         #expect(chunks[2] == [7])
     }
 
+    // Verifies chunked(into:) returns empty array for empty input.
     @Test
     func chunkedEmpty() async throws {
         let array: [Int] = []
         #expect(array.chunked(into: 3).isEmpty)
     }
 
+    // Verifies chunked(into:) produces a single chunk when size exceeds count.
     @Test
     func chunkedLargerThanCount() async throws {
         let array = [1, 2]
@@ -129,6 +132,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - append(ifNotNil:)
 
+    // Validates append(ifNotNil:) appends non-nil values and ignores nil.
     @Test
     func appendIfNotNil() async throws {
         var array: [Int] = [1, 2]
@@ -140,6 +144,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - nilIfEmpty / isNotEmpty
 
+    // Validates nilIfEmpty returns nil for empty arrays and isNotEmpty.
     @Test
     func nilIfEmptyAndIsNotEmpty() async throws {
         let empty: [Int] = []
@@ -152,6 +157,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - Coordinate3D helpers
 
+    // Validates Coordinate3D array conversion helpers.
     @Test
     func coordinateArrayHelpers() async throws {
         let coords: [Coordinate3D] = [
@@ -167,6 +173,7 @@ struct ArrayExtensionsTests {
         #expect(coords.asRing == nil) // Not closed
     }
 
+    // Verifies that a closed ring of coordinates produces ring and polygon values.
     @Test
     func coordinateArrayRingClosed() async throws {
         let coords: [Coordinate3D] = [
@@ -182,6 +189,7 @@ struct ArrayExtensionsTests {
         #expect(coords.asUncheckedPolygon.outerRing != nil)
     }
 
+    // Verifies that an empty coordinate array yields nil for all geometry helpers.
     @Test
     func coordinateArrayEmpty() async throws {
         let coords: [Coordinate3D] = []
@@ -193,6 +201,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - GeoJsonGeometry helpers
 
+    // Validates GeoJsonGeometry array conversion helpers.
     @Test
     func geometryArrayHelpers() async throws {
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))
@@ -204,6 +213,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - Feature helpers
 
+    // Validates Feature array conversion helpers.
     @Test
     func featureArrayHelpers() async throws {
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))
@@ -215,6 +225,7 @@ struct ArrayExtensionsTests {
 
     // MARK: - FeatureCollection helpers
 
+    // Validates FeatureCollection array conversion helpers.
     @Test
     func featureCollectionArrayHelpers() async throws {
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 1.0)]))

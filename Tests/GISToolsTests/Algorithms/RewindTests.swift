@@ -131,6 +131,7 @@ struct RewindTests {
 
     // MARK: - Projections
 
+    // Tests rewind in EPSG:3857 (Web Mercator).
     @Test
     func rewind3857() async throws {
         let polygon = try #require(Polygon([[
@@ -145,6 +146,7 @@ struct RewindTests {
         #expect(rewinded.projection == .epsg3857)
     }
 
+    // Tests rewind with noSRID projection.
     @Test
     func rewindNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -160,6 +162,7 @@ struct RewindTests {
     }
 
 
+    // Tests rewind in EPSG:4978 (ECEF Cartesian).
     @Test
     func rewind4978() async throws {
         let polygon = try #require(Polygon([[
@@ -176,6 +179,7 @@ struct RewindTests {
 
     // MARK: - Antimeridian
 
+    // Tests rewind of a polygon crossing the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

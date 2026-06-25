@@ -77,6 +77,7 @@ struct LineChunkTests {
 
     // MARK: - Projections
 
+    // Tests line chunking in EPSG:3857.
     @Test
     func lineChunk3857() async throws {
         let lineString = try #require(LineString([
@@ -114,6 +115,7 @@ struct LineChunkTests {
 
     // MARK: - Antimeridian
 
+    // Tests line chunking across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([
@@ -131,6 +133,7 @@ struct LineChunkTests {
 
     // MARK: - Edge cases
 
+    // Tests chunking an empty line returns no chunks.
     @Test
     func lineChunkEmpty() async throws {
         let empty = LineString(unchecked: [])

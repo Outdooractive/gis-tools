@@ -3,6 +3,7 @@ import Testing
 
 struct FlattenTests {
 
+    // Tests flattening a FeatureCollection to individual features.
     @Test
     func featureCollection() async throws {
         let original = try TestData.featureCollection(package: "Flatten", name: "FeatureCollection")
@@ -12,6 +13,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Tests flattening a GeometryCollection to a FeatureCollection.
     @Test
     func geometryCollection() async throws {
         let original = try TestData.geometryCollection(package: "Flatten", name: "GeometryCollection")
@@ -21,6 +23,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Tests flattening a single geometry object.
     @Test
     func geometryObject() async throws {
         let original = try TestData.multiPolygon(package: "Flatten", name: "GeometryObject")
@@ -30,6 +33,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Tests flattening a MultiLineString feature.
     @Test
     func multiLineString() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiLineString")
@@ -39,6 +43,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Tests flattening a MultiPoint feature.
     @Test
     func multiPoint() async throws {
         let original = try TestData.feature(package: "Flatten", name: "MultiPoint")
@@ -48,6 +53,7 @@ struct FlattenTests {
         #expect(flattened == expected)
     }
 
+    // Tests flattening a Polygon feature.
     @Test
     func polygon() async throws {
         let original = try TestData.feature(package: "Flatten", name: "Polygon")
@@ -59,6 +65,7 @@ struct FlattenTests {
 
     // MARK: - Projections
 
+    // Tests flattening in EPSG:3857.
     @Test
     func flatten3857() async throws {
         let a = Coordinate3D(x: 0.0, y: 0.0)
@@ -71,6 +78,7 @@ struct FlattenTests {
         #expect(flattened.features.count == 2)
     }
 
+    // Tests flattening with noSRID projection.
     @Test
     func flattenNoSRID() async throws {
         let a = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
@@ -85,6 +93,7 @@ struct FlattenTests {
 
     // MARK: - Edge cases
 
+    // Tests flattening an empty FeatureCollection.
     @Test
     func flattenEmpty() async throws {
         let empty = FeatureCollection([Feature].init())

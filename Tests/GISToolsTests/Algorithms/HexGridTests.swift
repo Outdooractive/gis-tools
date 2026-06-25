@@ -4,6 +4,7 @@ import Testing
 
 struct HexGridTests {
 
+    // Tests basic hex grid generation with valid hexagons.
     @Test
     func basicHexGrid() async throws {
         let bbox = BoundingBox(
@@ -21,6 +22,7 @@ struct HexGridTests {
         }
     }
 
+    // Tests hex grid with triangle option produces triangular cells.
     @Test
     func hexGridTriangles() async throws {
         let bbox = BoundingBox(
@@ -38,6 +40,7 @@ struct HexGridTests {
         }
     }
 
+    // Tests hex grid with a polygon mask filter.
     @Test
     func hexGridWithMask() async throws {
         let bbox = BoundingBox(
@@ -59,6 +62,7 @@ struct HexGridTests {
         #expect(maskedGrid.features.count > 0)
     }
 
+    // Tests hex grid with cell larger than bounding box.
     @Test
     func hexGridLargeCell() async throws {
         let bbox = BoundingBox(
@@ -70,6 +74,7 @@ struct HexGridTests {
         #expect(grid.features.isEmpty)
     }
 
+    // Tests hex grid with different unit conversions.
     @Test
     func hexGridCustomUnits() async throws {
         let bbox = BoundingBox(
@@ -85,6 +90,7 @@ struct HexGridTests {
     }
     // MARK: - Projections
 
+    // Tests hex grid in EPSG:3857.
     @Test
     func hexGrid3857() async throws {
         let bbox = BoundingBox(
@@ -94,6 +100,7 @@ struct HexGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Tests hex grid crossing origin in EPSG:3857.
     @Test
     func hexGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
@@ -103,6 +110,7 @@ struct HexGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Tests hex grid in EPSG:4978.
     @Test
     func hexGrid4978() async throws {
         let bbox = BoundingBox(
@@ -114,6 +122,7 @@ struct HexGridTests {
 
     // MARK: - Antimeridian
 
+    // Tests hex grid near the antimeridian.
     @Test
     func antimeridian() async throws {
         let bbox = BoundingBox(

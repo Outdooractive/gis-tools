@@ -64,6 +64,7 @@ struct GreatCircleTests {
 
     // MARK: - Projections
 
+    // Tests great circle in EPSG:3857 returns 4326 result.
     @Test
     func greatCircle3857() async throws {
         let start = Coordinate3D(x: 0.0, y: 0.0)

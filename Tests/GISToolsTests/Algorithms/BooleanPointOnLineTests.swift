@@ -144,6 +144,7 @@ struct BooleanPointOnLineTests {
 
     // MARK: - Projections
 
+    // Point on line in EPSG:3857.
     @Test
     func pointOnLine3857() throws {
         let polygon = try #require(Polygon([[
@@ -157,6 +158,7 @@ struct BooleanPointOnLineTests {
         #expect(polygon.contains(point))
     }
 
+    // Point on line in EPSG:4978.
     @Test
     func pointOnLine4978() throws {
         let line = try #require(LineString([
@@ -169,6 +171,7 @@ struct BooleanPointOnLineTests {
 
     // MARK: - Antimeridian
 
+    // Point on line near antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

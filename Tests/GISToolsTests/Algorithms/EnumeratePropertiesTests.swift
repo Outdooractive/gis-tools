@@ -3,6 +3,7 @@ import Testing
 
 struct EnumeratePropertiesTests {
 
+    // Tests property enumeration over a FeatureCollection.
     @Test func enumerateProperties() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let feature1 = Feature(point, properties: ["name": "Alpha", "value": 1])
@@ -24,6 +25,7 @@ struct EnumeratePropertiesTests {
         #expect(visited[2].1.isEmpty)
     }
 
+    // Tests property summary aggregation across features.
     @Test func propertiesSummary() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let feature1 = Feature(point, properties: ["name": "Alpha", "category": "A"])
@@ -44,6 +46,7 @@ struct EnumeratePropertiesTests {
 
     // MARK: - Projections
 
+    // Tests property enumeration in EPSG:3857.
     @Test func enumerateProperties3857() async throws {
         let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0))
         let feature1 = Feature(point, properties: ["name": "Alpha", "value": 1])
@@ -60,6 +63,7 @@ struct EnumeratePropertiesTests {
         #expect(visited[1].1["name"] as? String == "Beta")
     }
 
+    // Tests property enumeration in EPSG:4978.
     @Test func enumerateProperties4978() async throws {
         let point = Point(Coordinate3D(
             latitude: 1.0, longitude: 2.0).projected(to: .epsg4978))
@@ -75,6 +79,7 @@ struct EnumeratePropertiesTests {
         #expect(visited[0].1["key"] as? String == "ECEF")
     }
 
+    // Tests property enumeration with noSRID projection.
     @Test func enumeratePropertiesNoSRID() async throws {
         let point = Point(Coordinate3D(
             x: 100.0, y: 200.0, projection: .noSRID))

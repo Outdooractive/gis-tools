@@ -57,6 +57,7 @@ struct DestinationTests {
 
     // MARK: - Altitude / Z
 
+    // Validates that destination preserves altitude and m values.
     @Test
     func destinationPreservesAltitudeAndM() async throws {
         let coordinate = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 1234.0)
@@ -67,6 +68,7 @@ struct DestinationTests {
 
     // MARK: - Projections
 
+    // Validates destination in EPSG:3857 projection.
     @Test
     func destination3857() async throws {
         let coordinate = Coordinate3D(x: 0.0, y: 0.0)
@@ -76,6 +78,7 @@ struct DestinationTests {
         #expect(dest.longitude.isFinite)
     }
 
+    // Validates destination in EPSG:4978 projection.
     @Test
     func destination4978() async throws {
         let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -85,6 +88,7 @@ struct DestinationTests {
         #expect(destination.y.isFinite)
     }
 
+    // Validates destination in noSRID projection.
     @Test
     func destinationNoSRID() async throws {
         let coordinate = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
@@ -96,6 +100,7 @@ struct DestinationTests {
 
     // MARK: - Antimeridian
 
+    // Validates destination near the antimeridian.
     @Test
     func antimeridian() async throws {
         let coordinate = Coordinate3D(latitude: 0.0, longitude: 170.0)
@@ -106,6 +111,7 @@ struct DestinationTests {
 
     // MARK: - Edge cases
 
+    // Validates destination with zero distance returns the same point.
     @Test
     func destinationZeroDistance() async throws {
         let coordinate = Coordinate3D(latitude: 45.0, longitude: -75.0)

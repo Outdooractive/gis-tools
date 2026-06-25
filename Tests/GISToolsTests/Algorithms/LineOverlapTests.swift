@@ -146,6 +146,7 @@ struct LineOverlapTests {
 
     // MARK: - Projections
 
+    // Tests line overlap detection in EPSG:3857 projection.
     @Test
     func lineOverlap3857() async throws {
         let line1 = try #require(LineString([
@@ -160,6 +161,7 @@ struct LineOverlapTests {
         #expect(overlappingSegments.count == 1)
     }
 
+    // Tests line overlap detection in EPSG:4978 projection.
     @Test
     func lineOverlap4978() async throws {
         let line1 = try #require(LineString([
@@ -174,6 +176,7 @@ struct LineOverlapTests {
         #expect(!overlappingSegments.isEmpty)
     }
 
+    // Tests line overlap detection in noSRID projection.
     @Test
     func lineOverlapNoSRID() async throws {
         let line1 = try #require(LineString([
@@ -190,6 +193,7 @@ struct LineOverlapTests {
 
     // MARK: - Antimeridian
 
+    // Tests line overlap detection across the antimeridian.
     @Test
     func antimeridian() async throws {
         let line1 = try #require(LineString([

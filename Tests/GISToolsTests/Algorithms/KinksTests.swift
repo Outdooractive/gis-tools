@@ -84,6 +84,7 @@ struct KinksTests {
 
     // MARK: - Grid size
 
+    // Tests kink detection with grid size snapping.
     @Test
     func kinksWithGridSize() async throws {
         let polygon = try #require(Polygon([[
@@ -103,6 +104,7 @@ struct KinksTests {
 
     // MARK: - Feature / FeatureCollection
 
+    // Tests kink detection on a Feature.
     @Test
     func featureKinks() async throws {
         let polygon = try #require(Polygon([[
@@ -119,6 +121,7 @@ struct KinksTests {
 
     // MARK: - Projections
 
+    // Tests kink detection in EPSG:3857.
     @Test
     func kinks3857() async throws {
         let simple = try #require(Polygon([[
@@ -177,6 +180,7 @@ struct KinksTests {
 
     // MARK: - Antimeridian
 
+    // Tests kink detection near the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -192,6 +196,7 @@ struct KinksTests {
 
     // MARK: - Unkink polygon
 
+    // Tests that a simple polygon remains unchanged after unkink.
     @Test
     func simplePolygonUnkinked() async throws {
         let coords: [Coordinate3D] = [
@@ -293,6 +298,7 @@ struct KinksTests {
 
     // MARK: - Edge cases
 
+    // Tests kink detection on a minimal two-point line.
     @Test
     func kinksWithSinglePoint() async throws {
         let line = try #require(LineString([

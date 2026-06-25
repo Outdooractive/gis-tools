@@ -239,10 +239,10 @@ struct IntersectionTests {
         #expect(result != nil)
     }
 
-    // Validates intersection of two overlapping polygons in EPSG:3857.
-    @Test
     // MARK: - Projections
 
+    // Validates intersection of two overlapping polygons in EPSG:3857.
+    @Test
     func intersection3857() async throws {
         let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
@@ -285,6 +285,7 @@ struct IntersectionTests {
         #expect(result != nil)
     }
 
+    // Validates intersection of two overlapping polygons in EPSG:4978.
     @Test
     func intersection4978() async throws {
         let a4326 = try #require(Polygon([[

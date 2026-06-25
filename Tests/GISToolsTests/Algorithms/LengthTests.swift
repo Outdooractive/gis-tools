@@ -69,6 +69,7 @@ struct LengthTests {
 
     // MARK: - Antimeridian
 
+    // Tests length calculation across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

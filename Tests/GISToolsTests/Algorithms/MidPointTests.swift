@@ -45,6 +45,7 @@ struct MidPointTests {
 
     // MARK: - Altitude / Z
 
+    // Tests that midpoint preserves altitude and M values.
     @Test
     func midpointPreservesAltitudeAndM() async throws {
         let a = Coordinate3D(latitude: 45.0, longitude: -75.0, altitude: 500.0, m: 10.0)
@@ -56,6 +57,7 @@ struct MidPointTests {
 
     // MARK: - Projections
 
+    // Tests midpoint in EPSG:3857 projection.
     @Test
     func midPoint3857() async throws {
         let coord1 = Coordinate3D(x: 0.0, y: 0.0)
@@ -88,6 +90,7 @@ struct MidPointTests {
 
     // MARK: - Antimeridian
 
+    // Tests midpoint across the antimeridian.
     @Test
     func antimeridian() async throws {
         let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 170.0)
@@ -98,6 +101,7 @@ struct MidPointTests {
 
     // MARK: - Edge cases
 
+    // Tests that midpoint of identical points returns the same point.
     @Test
     func midpointIdenticalPoints() async throws {
         let point = Coordinate3D(latitude: 45.0, longitude: -75.0)

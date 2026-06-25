@@ -337,6 +337,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Projections
 
+    // Crosses check in EPSG:3857.
     @Test
     func crossesEPSG3857() throws {
         // Diagonal crossing in EPSG:3857.
@@ -352,6 +353,7 @@ struct BooleanCrossesTests {
         #expect(line2.crosses(line1))
     }
 
+    // Crosses check in EPSG:4978.
     @Test
     func crossesEPSG4978() throws {
         let line1 = try #require(LineString([
@@ -366,6 +368,7 @@ struct BooleanCrossesTests {
         #expect(line2.crosses(line1))
     }
 
+    // Crosses check in noSRID.
     @Test
     func crossesNoSRID() throws {
         let line1 = try #require(LineString([
@@ -380,6 +383,7 @@ struct BooleanCrossesTests {
         #expect(line2.crosses(line1))
     }
 
+    // MultiPoint–LineString crosses in EPSG:3857.
     @Test
     func crossesMultiPointLineStringEPSG3857() throws {
         let mp = try #require(MultiPoint([
@@ -391,6 +395,7 @@ struct BooleanCrossesTests {
         #expect(mp.crosses(line))
     }
 
+    // MultiPoint–LineString crosses in EPSG:4978.
     @Test
     func crossesMultiPointLineStringEPSG4978() throws {
         let mp = try #require(MultiPoint([
@@ -402,6 +407,7 @@ struct BooleanCrossesTests {
         #expect(mp.crosses(line))
     }
 
+    // LineString–Polygon crosses in EPSG:3857.
     @Test
     func crossesLineStringPolygonEPSG3857() throws {
         let line = try #require(LineString([
@@ -417,6 +423,7 @@ struct BooleanCrossesTests {
         #expect(line.crosses(polygon))
     }
 
+    // LineString–Polygon crosses in EPSG:4978.
     @Test
     func crossesLineStringPolygonEPSG4978() async throws {
         let poly4326 = try #require(Polygon([[
@@ -434,6 +441,7 @@ struct BooleanCrossesTests {
         #expect(line.crosses(polygon))
     }
 
+    // MultiPoint–Polygon crosses in EPSG:3857.
     @Test
     func crossesMultiPointPolygonEPSG3857() throws {
         let mp = try #require(MultiPoint([
@@ -449,6 +457,7 @@ struct BooleanCrossesTests {
         #expect(mp.crosses(polygon))
     }
 
+    // MultiPoint–Polygon crosses in EPSG:4978.
     @Test
     func crossesMultiPointPolygonEPSG4978() async throws {
         let poly4326 = try #require(Polygon([[
@@ -467,6 +476,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Antimeridian
 
+    // LineString crosses polygon near antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -485,6 +495,7 @@ struct BooleanCrossesTests {
 
     // MARK: - Empty / degenerate
 
+    // Single-point LineString does not cross anything.
     @Test
     func singlePointLineStringDoesNotCross() throws {
         let degenerateLine = LineString(unchecked: [

@@ -21,10 +21,10 @@ struct FrechetDistanceTests {
         #expect(abs(distanceRhumbLine - 1000.0) < 0.0001)
     }
 
-    // Validates Frechet distance between two arcs in EPSG:3857 using the Euclidean distance function.
-    @Test
     // MARK: - Projections
 
+    // Validates Frechet distance between two arcs in EPSG:3857 using the Euclidean distance function.
+    @Test
     func frechetDistance3857() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0)).projected(to: .epsg3857)
         let lineArc1 = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
@@ -140,6 +140,7 @@ struct FrechetDistanceTests {
         #expect(dist < 120_000.0)
     }
 
+    // Validates Frechet distance across the antimeridian using haversine.
     @Test
     func antimeridian() async throws {
         let line1 = try #require(LineString([
@@ -156,6 +157,7 @@ struct FrechetDistanceTests {
 
     // MARK: - Projection: noSRID
 
+    // Tests Frechet distance with noSRID projection.
     @Test
     func frechetDistanceNoSRID() async throws {
         let line1 = try #require(LineString([
@@ -170,6 +172,7 @@ struct FrechetDistanceTests {
         #expect(abs(distance - 5.0) < 0.0001)
     }
 
+    // Tests Frechet distance in EPSG:4978.
     @Test
     func frechetDistance4978() async throws {
         let line1 = try #require(LineString([

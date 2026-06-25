@@ -60,6 +60,7 @@ struct LineSplitTests {
 
     // MARK: - Projections
 
+    // Tests line splitting in EPSG:3857 projection.
     @Test
     func lineSplit3857() async throws {
         let line = try #require(LineString([
@@ -71,6 +72,7 @@ struct LineSplitTests {
         #expect(result.features.count == 2)
     }
 
+    // Tests line splitting in EPSG:4978 projection.
     @Test
     func lineSplit4978() async throws {
         let line = try #require(LineString([
@@ -82,6 +84,7 @@ struct LineSplitTests {
         #expect(result.features.count == 2)
     }
 
+    // Tests line splitting in noSRID projection.
     @Test
     func lineSplitNoSRID() async throws {
         let line = try #require(LineString([

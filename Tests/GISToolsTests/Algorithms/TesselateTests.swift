@@ -178,10 +178,10 @@ struct TesselateTests {
         }
     }
 
-    // Validates that a square in EPSG:3857 tessellates into 2 triangles.
-    @Test
     // MARK: - Projections
 
+    // Validates that a square in EPSG:3857 tessellates into 2 triangles.
+    @Test
     func tesselate3857() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),

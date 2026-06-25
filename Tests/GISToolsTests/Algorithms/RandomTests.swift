@@ -92,8 +92,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests that maxRadialLength larger than half the bbox is clamped.
+    @Test
     func randomPolygonsMaxRadialLengthClamped() async throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -102,8 +102,8 @@ struct RandomTests {
         #expect(polygons.features.count == 1)
     }
 
-    @Test
     // Tests that randomLineStrings produces valid line strings.
+    @Test
     func randomLineStringsDefault() async throws {
         let lines = BoundingBox.randomLineStrings()
         #expect(lines.features.count == 1)
@@ -111,8 +111,8 @@ struct RandomTests {
         #expect(ls.coordinates.count >= 2)
     }
 
-    @Test
     // Tests randomLineStrings(count:) produces the requested count.
+    @Test
     func randomLineStringsCustomCount() async throws {
         let lines = BoundingBox.randomLineStrings(count: 3)
         #expect(lines.features.count == 3)
@@ -121,8 +121,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests random line strings within a bounding box.
+    @Test
     func randomLineStringsInBbox() async throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: -10.0, longitude: -10.0),
@@ -135,8 +135,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests short random line segments.
+    @Test
     func randomLineStringsShortSegment() async throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -149,6 +149,7 @@ struct RandomTests {
 
     // MARK: - Projections
 
+    // Tests random points in EPSG:3857 bounding box.
     @Test
     func random3857() async throws {
         let bbox = BoundingBox(
@@ -163,8 +164,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests random points in EPSG:4978 bounding box.
+    @Test
     func random4978() async throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
@@ -177,8 +178,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests random points in noSRID bounding box.
+    @Test
     func randomNoSRID() async throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
@@ -191,8 +192,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests static random point method with EPSG:3857.
+    @Test
     func randomStatic3857() async throws {
         let points = BoundingBox.randomPoints(count: 3, projection: .epsg3857)
         #expect(points.features.count == 3)
@@ -202,8 +203,8 @@ struct RandomTests {
         }
     }
 
-    @Test
     // Tests static random point method with EPSG:4978.
+    @Test
     func randomStatic4978() async throws {
         let points = BoundingBox.randomPoints(count: 3, projection: .epsg4978)
         #expect(points.features.count == 3)

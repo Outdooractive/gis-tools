@@ -15,6 +15,7 @@ struct TransformRotateTests {
 
     // MARK: - Projections
 
+    // Validates rotation in EPSG:3857.
     @Test
     func transformRotate3857() async throws {
         let polygon = try #require(Polygon([[
@@ -29,6 +30,7 @@ struct TransformRotateTests {
         #expect(result.projection == .epsg3857)
     }
 
+    // Validates rotation in EPSG:4978.
     @Test
     func transformRotate4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -41,6 +43,7 @@ struct TransformRotateTests {
         #expect(result.projection == .epsg4978)
     }
 
+    // Validates rotation with noSRID.
     @Test
     func transformRotateNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -54,6 +57,7 @@ struct TransformRotateTests {
 
     // MARK: - Antimeridian
 
+    // Validates rotation across the antimeridian.
     @Test
     func antimeridian() async throws {
         // coordinates straddling the date line

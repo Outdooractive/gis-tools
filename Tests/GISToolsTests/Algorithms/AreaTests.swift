@@ -62,6 +62,7 @@ struct AreaTests {
 
     // MARK: - Projections
 
+    // Verifies area for a polygon in EPSG:3857.
     @Test
     func area3857() throws {
         let coords4326: [Coordinate3D] = [
@@ -139,6 +140,7 @@ struct AreaTests {
 
     // MARK: - Antimeridian
 
+    // Validates area for a polygon near the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

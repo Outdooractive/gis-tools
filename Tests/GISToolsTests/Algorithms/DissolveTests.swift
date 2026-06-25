@@ -23,6 +23,7 @@ struct DissolveTests {
 
     // MARK: - String property values
 
+    // Validates dissolve by string property merges overlapping polygons.
     @Test
     func stringProperty() async throws {
         let a1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["group": "a"])
@@ -42,6 +43,7 @@ struct DissolveTests {
 
     // MARK: - Int property values
 
+    // Validates dissolve by integer property.
     @Test
     func intProperty() async throws {
         let f1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["zone": 1])
@@ -57,6 +59,7 @@ struct DissolveTests {
 
     // MARK: - Bool property values
 
+    // Validates dissolve by boolean property.
     @Test
     func boolProperty() async throws {
         let f1 = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["active": true])
@@ -74,6 +77,7 @@ struct DissolveTests {
 
     // MARK: - removeUnknown
 
+    // Validates that removeUnknown drops features without the dissolve property.
     @Test
     func removeUnknownDropsFeaturesWithoutProperty() async throws {
         let withProp = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
@@ -85,6 +89,7 @@ struct DissolveTests {
         #expect(dissolved.features.first?.properties["cat"] as? String == "x")
     }
 
+    // Validates that unknown features are kept when removeUnknown is false.
     @Test
     func keepUnknownGroupsFeaturesWithoutProperty() async throws {
         let withProp = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["cat": "x"])
@@ -101,6 +106,7 @@ struct DissolveTests {
 
     // MARK: - Non-polygon features are filtered out
 
+    // Validates that non-polygon features are filtered during dissolve.
     @Test
     func nonPolygonFeaturesRemoved() async throws {
         let polygon = Feature(try square(latitude: 0.0, longitude: 0.0), properties: ["g": "a"])
@@ -115,6 +121,7 @@ struct DissolveTests {
 
     // MARK: - Projections
 
+    // Validates dissolve in EPSG:3857 projection.
     @Test
     func dissolve3857() async throws {
         let p1 = Feature(try #require(Polygon([[
@@ -136,6 +143,7 @@ struct DissolveTests {
         #expect(dissolved.features.isNotEmpty)
     }
 
+    // Validates dissolve in noSRID projection.
     @Test
     func dissolveNoSRID() async throws {
         let p1 = Feature(try #require(Polygon([[
@@ -157,6 +165,7 @@ struct DissolveTests {
         #expect(dissolved.features.isNotEmpty)
     }
 
+    // Validates dissolve in EPSG:4978 projection.
     @Test
     func dissolve4978() async throws {
         let a4326 = try #require(Polygon([[
@@ -182,6 +191,7 @@ struct DissolveTests {
 
     // MARK: - Antimeridian
 
+    // Validates dissolve with polygons near the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

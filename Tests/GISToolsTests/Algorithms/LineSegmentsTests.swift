@@ -31,6 +31,7 @@ struct LineSegmentsTests {
 
     // MARK: - Projections
 
+    // Tests line segment decomposition in EPSG:3857.
     @Test
     func lineSegments3857() async throws {
         let lineString = try #require(LineString([
@@ -67,6 +68,7 @@ struct LineSegmentsTests {
 
     // MARK: - Antimeridian
 
+    // Tests line segment decomposition across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

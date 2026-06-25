@@ -6,6 +6,7 @@ struct SnapToGridTests {
 
     // MARK: - Point
 
+    // Tests point snaps to nearest grid intersection.
     @Test
     func pointSnapsToNearest() async throws {
         let point = Point(Coordinate3D(latitude: 1.3, longitude: 2.7))
@@ -15,6 +16,7 @@ struct SnapToGridTests {
         #expect(snapped.coordinate.longitude == 3.0)
     }
 
+    // Tests point already on grid stays unchanged.
     @Test
     func pointSnapNoChange() async throws {
         let point = Point(Coordinate3D(latitude: 2.0, longitude: 4.0))
@@ -24,9 +26,10 @@ struct SnapToGridTests {
         #expect(snapped.coordinate.longitude == 4.0)
     }
 
-    @Test
     // MARK: - Projections
 
+    // Tests point snapping in EPSG:3857 (Web Mercator).
+    @Test
     func pointEPSG3857() async throws {
         let point = Point(Coordinate3D(x: 1500.0, y: 2700.0))
         let snapped = point.snappedToGrid(tolerance: 1000.0)
@@ -36,6 +39,7 @@ struct SnapToGridTests {
         #expect(snapped.coordinate.projection == .epsg3857)
     }
 
+    // Tests point snapping in EPSG:4978 (ECEF Cartesian).
     @Test
     func pointEPSG4978() async throws {
         let point = Point(Coordinate3D(
@@ -44,6 +48,7 @@ struct SnapToGridTests {
         #expect(snapped.coordinate.projection == .epsg4978)
     }
 
+    // Tests point snapping with noSRID projection.
     @Test
     func pointNoSRID() async throws {
         let point = Point(Coordinate3D(x: 7.7, y: 3.3, projection: .noSRID))
@@ -56,6 +61,7 @@ struct SnapToGridTests {
 
     // MARK: - LineString
 
+    // Tests LineString snapping to grid.
     @Test
     func lineStringSnap() async throws {
         let line = try #require(LineString([
@@ -74,6 +80,7 @@ struct SnapToGridTests {
         #expect(coords[2].longitude == 4.0)
     }
 
+    // Tests LineString deduplicates coincident points after snapping.
     @Test
     func lineStringDedup() async throws {
         let line = try #require(LineString([
@@ -88,6 +95,7 @@ struct SnapToGridTests {
         #expect(snapped.coordinates[1] == Coordinate3D(latitude: 2.0, longitude: 2.0))
     }
 
+    // Tests LineString collapses to original when tolerance exceeds extent.
     @Test
     func lineStringCollapse() async throws {
         let line = try #require(LineString([
@@ -101,6 +109,7 @@ struct SnapToGridTests {
 
     // MARK: - Polygon
 
+    // Tests Polygon snapping to grid.
     @Test
     func polygonSnap() async throws {
         let polygon = try #require(Polygon([[
@@ -122,6 +131,7 @@ struct SnapToGridTests {
         #expect(snapped.isValid)
     }
 
+    // Tests polygon ring deduplicates points after snapping.
     @Test
     func polygonRingDedup() async throws {
         let polygon = try #require(Polygon([[
@@ -136,6 +146,7 @@ struct SnapToGridTests {
         #expect(snapped.outerRing?.coordinates.count == 4)
     }
 
+    // Tests polygon collapses to original when tolerance exceeds extent.
     @Test
     func polygonCollapse() async throws {
         let polygon = try #require(Polygon([[
@@ -151,6 +162,7 @@ struct SnapToGridTests {
 
     // MARK: - Multi geometries
 
+    // Tests MultiPolygon snapping to grid.
     @Test
     func multiPolygonSnap() async throws {
         let poly1 = try #require(Polygon([[
@@ -179,6 +191,7 @@ struct SnapToGridTests {
 
     // MARK: - Feature / FeatureCollection
 
+    // Tests Feature snaps its geometry to grid.
     @Test
     func featureFanout() async throws {
         let point = Point(Coordinate3D(latitude: 1.3, longitude: 2.7))
@@ -190,6 +203,7 @@ struct SnapToGridTests {
         #expect(snappedPoint.coordinate.longitude == 3.0)
     }
 
+    // Tests FeatureCollection snaps all feature geometries.
     @Test
     func featureCollectionFanout() async throws {
         let point1 = Point(Coordinate3D(latitude: 1.3, longitude: 2.7))
@@ -207,6 +221,7 @@ struct SnapToGridTests {
 
     // MARK: - Zero tolerance
 
+    // Tests zero tolerance preserves original coordinates.
     @Test
     func zeroTolerance() async throws {
         let point = Point(Coordinate3D(latitude: 1.3, longitude: 2.7))
@@ -218,6 +233,7 @@ struct SnapToGridTests {
 
     // MARK: - Antimeridian
 
+    // Tests LineString snapping near the antimeridian.
     @Test
     func antimeridian() async throws {
         let line = try #require(LineString([
@@ -234,6 +250,7 @@ struct SnapToGridTests {
 
     // MARK: - Coordinate3D
 
+    // Tests Coordinate3D snappedToGrid returns snapped copy.
     @Test
     func coordinate3DSnappedToGrid() async throws {
         let coord = Coordinate3D(latitude: 1.3, longitude: 2.7)
@@ -243,6 +260,7 @@ struct SnapToGridTests {
         #expect(snapped.longitude == 3.0)
     }
 
+    // Tests Coordinate3D snapToGrid mutates in place.
     @Test
     func coordinate3DSnapToGridMutating() async throws {
         var coord = Coordinate3D(latitude: 1.3, longitude: 2.7)
@@ -252,6 +270,7 @@ struct SnapToGridTests {
         #expect(coord.longitude == 3.0)
     }
 
+    // Tests Coordinate3D on grid stays unchanged.
     @Test
     func coordinate3DSnapToGridNoChange() async throws {
         let coord = Coordinate3D(latitude: 2.0, longitude: 4.0)
@@ -261,6 +280,7 @@ struct SnapToGridTests {
         #expect(snapped.longitude == 4.0)
     }
 
+    // Tests snapping preserves altitude value.
     @Test
     func coordinate3DSnapToGridPreservesAltitude() async throws {
         let coord = Coordinate3D(latitude: 1.3, longitude: 2.7, altitude: 42.0)
@@ -271,6 +291,7 @@ struct SnapToGridTests {
 
     // MARK: - Ring
 
+    // Tests Ring snapping to grid.
     @Test
     func ringSnappedToGrid() async throws {
         let ring = try #require(Ring([
@@ -290,6 +311,7 @@ struct SnapToGridTests {
         #expect(coords[4] == Coordinate3D(latitude: 0.0, longitude: 0.0))
     }
 
+    // Tests Ring snapToGrid mutates in place.
     @Test
     func ringSnapToGridMutating() async throws {
         var ring = try #require(Ring([
@@ -307,6 +329,7 @@ struct SnapToGridTests {
 
     // MARK: - LineSegment
 
+    // Tests LineSegment snapping to grid.
     @Test
     func lineSegmentSnappedToGrid() async throws {
         let segment = LineSegment(
@@ -320,6 +343,7 @@ struct SnapToGridTests {
         #expect(snapped.second.longitude == 2.0)
     }
 
+    // Tests LineSegment snapToGrid mutates in place.
     @Test
     func lineSegmentSnapToGridMutating() async throws {
         var segment = LineSegment(
@@ -333,6 +357,7 @@ struct SnapToGridTests {
         #expect(segment.second.longitude == 2.0)
     }
 
+    // Tests LineSegment snapping preserves index property.
     @Test
     func lineSegmentSnapPreservesIndex() async throws {
         let segment = LineSegment(
@@ -346,6 +371,7 @@ struct SnapToGridTests {
 
     // MARK: - BoundingBox
 
+    // Tests BoundingBox snapping to grid.
     @Test
     func boundingBoxSnappedToGrid() async throws {
         let bbox = BoundingBox(
@@ -359,6 +385,7 @@ struct SnapToGridTests {
         #expect(snapped.northEast.longitude == 8.0)
     }
 
+    // Tests BoundingBox snapToGrid mutates in place.
     @Test
     func boundingBoxSnapToGridMutating() async throws {
         var bbox = BoundingBox(

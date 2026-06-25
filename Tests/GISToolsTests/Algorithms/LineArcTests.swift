@@ -23,6 +23,7 @@ struct LineArcTests {
 
     // MARK: - Projections
 
+    // Tests line arc generation in EPSG:3857.
     @Test
     func lineArc3857() async throws {
         let point = Point(Coordinate3D(x: 5_000_000.0, y: 5_000_000.0))
@@ -52,6 +53,7 @@ struct LineArcTests {
 
     // MARK: - Antimeridian
 
+    // Tests line arc near the antimeridian.
     @Test
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
@@ -61,6 +63,7 @@ struct LineArcTests {
 
     // MARK: - Edge cases
 
+    // Tests that zero radius returns nil.
     @Test
     func lineArcZeroRadius() async throws {
         let point = Point(Coordinate3D(latitude: 44.495, longitude: 11.343))

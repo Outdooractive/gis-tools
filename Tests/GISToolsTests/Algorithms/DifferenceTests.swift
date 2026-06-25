@@ -210,10 +210,10 @@ struct DifferenceTests {
         #expect(result != nil)
     }
 
-    // Validates difference of two overlapping polygons in EPSG:3857.
-    @Test
     // MARK: - Projections
 
+    // Validates difference of two overlapping polygons in EPSG:3857.
+    @Test
     func difference3857() async throws {
         let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),

@@ -20,6 +20,7 @@ struct AlongTests {
 
     // MARK: - Projections
 
+    // Tests coordinateAlong in EPSG:3857.
     @Test
     func along3857() async throws {
         let lineString = try #require(LineString([
@@ -60,6 +61,7 @@ struct AlongTests {
 
     // MARK: - Antimeridian
 
+    // Tests coordinateAlong across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

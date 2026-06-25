@@ -4,6 +4,7 @@ import Testing
 
 struct SquareGridTests {
 
+    // Tests basic square grid generation from a bounding box.
     @Test
     func basicSquareGrid() async throws {
         let bbox = BoundingBox(
@@ -19,6 +20,7 @@ struct SquareGridTests {
         }
     }
 
+    // Tests square grid with a non-square bounding box.
     @Test
     func squareGridNonSquareBbox() async throws {
         let bbox = BoundingBox(
@@ -30,6 +32,7 @@ struct SquareGridTests {
         #expect(grid.features.count == 6)
     }
 
+    // Tests square grid generation with a mask polygon.
     @Test
     func squareGridWithMask() async throws {
         let bbox = BoundingBox(
@@ -51,6 +54,7 @@ struct SquareGridTests {
 
     // MARK: - Projections
 
+    // Tests square grid in EPSG:3857 (Web Mercator).
     @Test
     func squareGrid3857() async throws {
         let bbox = BoundingBox(
@@ -60,6 +64,7 @@ struct SquareGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Tests square grid crossing the origin in EPSG:3857.
     @Test
     func squareGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
@@ -70,6 +75,7 @@ struct SquareGridTests {
     }
 
 
+    // Tests square grid in EPSG:4978 (ECEF Cartesian).
     @Test
     func squareGrid4978() async throws {
         let bbox = BoundingBox(
@@ -80,6 +86,7 @@ struct SquareGridTests {
     }
 
 
+    // Tests square grid with noSRID projection.
     @Test
     func squareGridNoSRID() async throws {
         let bbox = BoundingBox(
@@ -91,6 +98,7 @@ struct SquareGridTests {
 
     // MARK: - Antimeridian
 
+    // Tests square grid near the antimeridian.
     @Test
     func antimeridian() async throws {
         let bbox = BoundingBox(

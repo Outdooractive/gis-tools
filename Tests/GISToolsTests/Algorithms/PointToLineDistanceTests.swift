@@ -73,6 +73,7 @@ struct PointToLineDistanceTests {
 
     // MARK: - Antimeridian
 
+    // Verifies distance from point to line near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

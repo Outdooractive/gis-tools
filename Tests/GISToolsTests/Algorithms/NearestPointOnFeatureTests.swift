@@ -152,6 +152,7 @@ struct NearestPointOnFeatureTests {
 
     // MARK: - Antimeridian
 
+    // Verifies nearest coordinate on a line string near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

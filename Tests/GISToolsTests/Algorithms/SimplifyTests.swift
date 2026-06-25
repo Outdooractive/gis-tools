@@ -54,10 +54,10 @@ struct SimplifyTests {
         #expect(withParam.coordinates == manual.coordinates)
     }
 
-    // Validates simplification of a multi-segment line string in EPSG:3857.
-    @Test
     // MARK: - Projections
 
+    // Validates simplification of a multi-segment line string in EPSG:3857.
+    @Test
     func simplify3857() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
@@ -89,6 +89,7 @@ struct SimplifyTests {
     }
 
 
+    // Validates simplification in noSRID (Euclidean) projection.
     @Test
     func simplifyNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -106,6 +107,7 @@ struct SimplifyTests {
 
     // MARK: - Antimeridian
 
+    // Tests simplification of a line crossing the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([
@@ -125,6 +127,7 @@ struct SimplifyTests {
 
     // MARK: - topologyPreserveSimplify
 
+    // Tests topology-preserving simplify on a simple line.
     @Test
     func topologyPreserveSimpleLine() async throws {
         let ls = try #require(LineString([
@@ -138,6 +141,7 @@ struct SimplifyTests {
         #expect(result.coordinates.count < ls.coordinates.count)
     }
 
+    // Tests topology-preserving simplify on a self-intersecting polygon.
     @Test
     func topologyPreserveSelfIntersectingPolygon() throws {
         let polygon = try #require(Polygon([[
@@ -151,6 +155,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
+    // Tests topology-preserving simplify on a noisy polygon.
     @Test
     func topologyPreserveInvalidPolygon() throws {
         let noisy = try #require(LineString([
@@ -168,6 +173,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
+    // Tests topology-preserving simplify in EPSG:3857.
     @Test
     func topologyPreserve3857() throws {
         let ls = try #require(LineString([
@@ -184,6 +190,7 @@ struct SimplifyTests {
 
     // MARK: - polygonHullSimplify
 
+    // Tests polygon hull simplification on a simple square.
     @Test
     func polygonHullSimpleSquare() throws {
         let polygon = try #require(Polygon([[
@@ -197,6 +204,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
+    // Tests polygon hull simplification on a self-intersecting polygon.
     @Test
     func polygonHullSelfIntersecting() throws {
         let polygon = try #require(Polygon([[
@@ -210,6 +218,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
+    // Tests polygon hull simplification in EPSG:3857.
     @Test
     func polygonHull3857() throws {
         let polygon = try #require(Polygon([[
@@ -223,6 +232,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
+    // Tests polygon hull simplification on a MultiPolygon.
     @Test
     func multiPolygonHullSimplified() throws {
         let p1 = try #require(Polygon([[
@@ -249,6 +259,7 @@ struct SimplifyTests {
 
     // MARK: - coverageSimplify
 
+    // Tests coverage simplify preserves shared edges between adjacent tiles.
     @Test
     func coverageSimplifyAdjacentTiles() throws {
         let tile1 = MapTile(x: 0, y: 0, z: 1)
@@ -274,6 +285,7 @@ struct SimplifyTests {
         #expect(rightEdge == leftEdge)
     }
 
+    // Tests coverage simplify in EPSG:3857.
     @Test
     func coverageSimplify3857() throws {
         let p1 = try #require(Polygon([[
@@ -300,6 +312,7 @@ struct SimplifyTests {
         #expect(endpoints0 == endpoints1)
     }
 
+    // Tests coverage simplify with a single polygon.
     @Test
     func coverageSimplifySinglePolygon() throws {
         let p = try #require(Polygon([[
@@ -316,6 +329,7 @@ struct SimplifyTests {
 
     // MARK: - Antimeridian
 
+    // Tests topology-preserving simplify on a line crossing the antimeridian.
     @Test
     func topologyPreserveAntimeridian() throws {
         let ls = try #require(LineString([

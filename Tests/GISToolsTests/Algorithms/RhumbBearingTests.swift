@@ -19,10 +19,10 @@ struct RhumbBearingTests {
         #expect(abs(finalBearing - -104.719) < 0.01)
     }
 
-    // Tests rhumb bearing calculation in EPSG:3857 (Web Mercator).
-    @Test
     // MARK: - Projections
 
+    // Tests rhumb bearing calculation in EPSG:3857 (Web Mercator).
+    @Test
     func rhumbBearing3857() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0)
         let target = Coordinate3D(x: 100_000.0, y: 100_000.0)
@@ -56,6 +56,7 @@ struct RhumbBearingTests {
 
     // MARK: - Antimeridian
 
+    // Tests rhumb bearing near the antimeridian.
     @Test
     func antimeridian() async throws {
         let start = Coordinate3D(latitude: 0.0, longitude: 170.0)

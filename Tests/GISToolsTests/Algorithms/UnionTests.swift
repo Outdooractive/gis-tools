@@ -359,6 +359,7 @@ struct UnionTests {
     }
 
 
+    // Validates union of two overlapping polygons in EPSG:4978.
     @Test
     func union4978() async throws {
         let coords4326a: [Coordinate3D] = [
@@ -384,6 +385,7 @@ struct UnionTests {
 
     // MARK: - Antimeridian
 
+    // Validates union across the antimeridian.
     @Test
     func antimeridian() async throws {
         let poly1 = try #require(Polygon([[

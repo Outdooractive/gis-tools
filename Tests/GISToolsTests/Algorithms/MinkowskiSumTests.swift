@@ -290,10 +290,10 @@ struct MinkowskiSumTests {
         #expect(result != nil)
     }
 
-    // Validates Minkowski sum of polygons in EPSG:3857.
-    @Test
     // MARK: - Projections
 
+    // Validates Minkowski sum of polygons in EPSG:3857.
+    @Test
     func minkowskiSum3857() async throws {
         let a = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),

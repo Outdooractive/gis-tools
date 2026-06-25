@@ -97,6 +97,7 @@ struct BoundingBoxClipTests {
 
     // MARK: - Projections
 
+    // Validates clipping in EPSG:3857 projection.
     @Test
     func boundingBoxClip3857() async throws {
         let lineString = try #require(LineString([
@@ -110,6 +111,7 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
+    // Validates clipping in noSRID projection.
     @Test
     func boundingBoxClipNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -123,6 +125,7 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
+    // Validates clipping in EPSG:4978 projection.
     @Test
     func boundingBoxClip4978() async throws {
         let lineString = try #require(LineString([
@@ -138,6 +141,7 @@ struct BoundingBoxClipTests {
 
     // MARK: - Antimeridian
 
+    // Validates clipping near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

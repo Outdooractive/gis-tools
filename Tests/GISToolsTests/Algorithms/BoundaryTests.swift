@@ -15,6 +15,7 @@ struct BoundaryTests {
 
     // MARK: - MultiPoint
 
+    // MultiPoint has empty boundary.
     @Test
     func multiPointBoundary() async throws {
         let multiPoint = try #require(MultiPoint([
@@ -27,6 +28,7 @@ struct BoundaryTests {
 
     // MARK: - LineString
 
+    // Open LineString boundary is its two endpoints.
     @Test
     func openLineStringBoundary() async throws {
         let line = try #require(LineString([
@@ -40,6 +42,7 @@ struct BoundaryTests {
         #expect(boundary.coordinates[1] == Coordinate3D(latitude: 2.0, longitude: 2.0))
     }
 
+    // Closed LineString has empty boundary.
     @Test
     func closedLineStringBoundary() async throws {
         let line = try #require(LineString([
@@ -54,6 +57,7 @@ struct BoundaryTests {
 
     // MARK: - MultiLineString
 
+    // MultiLineString boundary is odd-degree endpoints.
     @Test
     func multiLineStringBoundary() async throws {
         let line1 = try #require(LineString([
@@ -73,6 +77,7 @@ struct BoundaryTests {
         #expect(boundary.coordinates.contains(Coordinate3D(latitude: 2.0, longitude: 2.0)))
     }
 
+    // Closed MultiLineString loop has empty boundary.
     @Test
     func multiLineStringClosedLoop() async throws {
         // A closed loop of 3 segments: all endpoints appear twice (even)
@@ -95,6 +100,7 @@ struct BoundaryTests {
 
     // MARK: - Polygon
 
+    // Polygon boundary is its outer ring.
     @Test
     func polygonBoundary() async throws {
         let polygon = try #require(Polygon([
@@ -113,6 +119,7 @@ struct BoundaryTests {
 
     // MARK: - MultiPolygon
 
+    // MultiPolygon boundary includes all outer rings.
     @Test
     func multiPolygonBoundary() async throws {
         let poly1 = try #require(Polygon([
@@ -140,12 +147,14 @@ struct BoundaryTests {
 
     // MARK: - GeometryCollection
 
+    // Empty GeometryCollection has nil boundary.
     @Test
     func geometryCollectionEmptyBoundary() async throws {
         let collection = GeometryCollection([])
         #expect(collection.boundary == nil)
     }
 
+    // GeometryCollection boundary aggregates child boundaries.
     @Test
     func geometryCollectionBoundary() async throws {
         let line = try #require(LineString([
@@ -168,6 +177,7 @@ struct BoundaryTests {
 
     // MARK: - Feature
 
+    // Feature wrapping Point has empty boundary.
     @Test
     func featurePointBoundary() async throws {
         let feature = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
@@ -175,6 +185,7 @@ struct BoundaryTests {
         #expect(boundary.geometries.isEmpty)
     }
 
+    // Feature wrapping LineString has two-endpoint boundary.
     @Test
     func featureLineBoundary() async throws {
         let line = try #require(LineString([
@@ -188,6 +199,7 @@ struct BoundaryTests {
 
     // MARK: - FeatureCollection
 
+    // FeatureCollection boundary aggregates child boundaries.
     @Test
     func featureCollectionBoundary() async throws {
         let line = try #require(LineString([
@@ -210,6 +222,7 @@ struct BoundaryTests {
 
     // MARK: - Projections
 
+    // Polygon boundary in EPSG:3857.
     @Test
     func boundary3857() async throws {
         let polygon = try #require(Polygon([[
@@ -223,6 +236,7 @@ struct BoundaryTests {
         #expect(boundary.isClosed)
     }
 
+    // Polygon boundary in EPSG:4978.
     @Test
     func boundary4978() async throws {
         let polygon = try #require(Polygon([[
@@ -236,6 +250,7 @@ struct BoundaryTests {
         #expect(boundary.isClosed)
     }
 
+    // Polygon boundary in noSRID.
     @Test
     func boundaryNoSRID() async throws {
         let polygon = try #require(Polygon([[

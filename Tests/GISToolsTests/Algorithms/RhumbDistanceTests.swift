@@ -74,10 +74,10 @@ struct RhumbDistanceTests {
         #expect(abs(pointDistance - coordDistance) < 0.001)
     }
 
-    // Validates rhumb distance in EPSG:3857 projection.
-    @Test
     // MARK: - Projections
 
+    // Validates rhumb distance in EPSG:3857 projection.
+    @Test
     func distance3857() async throws {
         let coord1 = Coordinate3D(latitude: 40.0, longitude: -75.0).projected(to: .epsg3857)
         let coord2 = Coordinate3D(latitude: 39.0, longitude: -74.0).projected(to: .epsg3857)

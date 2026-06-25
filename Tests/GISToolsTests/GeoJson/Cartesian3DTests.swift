@@ -6,6 +6,7 @@ struct Cartesian3DTests {
 
     private let accuracy: Double = 0.000000000001
 
+    // Validates the human-readable description of a Cartesian3D point.
     @Test
     func description() async throws {
         let point = Cartesian3D(x: 1.0, y: 2.0, z: 3.0)
@@ -13,6 +14,7 @@ struct Cartesian3DTests {
         #expect(point.description == "Cartesian3D(x: 1.0, y: 2.0, z: 3.0)")
     }
 
+    // Validates that Cartesian3D stores x, y, z coordinates correctly.
     @Test
     func initialization() async throws {
         let point = Cartesian3D(x: 1.0, y: 2.0, z: 3.0)
@@ -22,6 +24,7 @@ struct Cartesian3DTests {
         #expect(point.z == 3.0)
     }
 
+    // Validates converting geographic coordinates to ECEF Cartesian coordinates.
     @Test
     func conversionFromCoordinate3D() async throws {
         // Equator, prime meridian → (1, 0, 0)
@@ -48,6 +51,7 @@ struct Cartesian3DTests {
         #expect(abs(east.z - 0.0) < accuracy)
     }
 
+    // Validates converting ECEF Cartesian coordinates back to geographic coordinates.
     @Test
     func conversionFromCartesian3D() async throws {
         let cartesian = Cartesian3D(x: 1.0, y: 0.0, z: 0.0)
@@ -57,6 +61,7 @@ struct Cartesian3DTests {
         #expect(abs(coordinate.longitude - 0.0) < accuracy)
     }
 
+    // Validates that converting to Cartesian and back preserves coordinates.
     @Test
     func roundTrip() async throws {
         let original = Coordinate3D(latitude: 42.5, longitude: -73.8)
@@ -67,6 +72,7 @@ struct Cartesian3DTests {
         #expect(abs(roundTripped.longitude - original.longitude) < accuracy)
     }
 
+    // Validates Cartesian3D equatable conformance.
     @Test
     func equatable() async throws {
         let a = Cartesian3D(x: 1.0, y: 2.0, z: 3.0)
@@ -77,6 +83,7 @@ struct Cartesian3DTests {
         #expect(a != c)
     }
 
+    // Validates Cartesian3D hashable conformance.
     @Test
     func hashable() async throws {
         let a = Cartesian3D(x: 1.0, y: 2.0, z: 3.0)

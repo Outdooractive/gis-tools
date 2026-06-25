@@ -98,6 +98,7 @@ struct MaskTests {
 
     // MARK: - Projections
 
+    // Tests masking in EPSG:3857 projection.
     @Test
     func mask3857() throws {
         let maskPolygon = try #require(Polygon([[
@@ -112,6 +113,7 @@ struct MaskTests {
         #expect(result?.projection == maskPolygon.projection)
     }
 
+    // Tests masking in noSRID projection.
     @Test
     func maskNoSRID() throws {
         let maskPolygon = try #require(Polygon([[
@@ -126,6 +128,7 @@ struct MaskTests {
         #expect(result?.projection == maskPolygon.projection)
     }
 
+    // Tests masking in EPSG:4978 projection.
     @Test
     func mask4978() async throws {
         let mask4326 = try #require(Polygon([[

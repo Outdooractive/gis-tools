@@ -23,6 +23,7 @@ struct CircleTests {
 
     // MARK: - Altitude / Z
 
+    // Validates that circle preserves altitude on all generated coordinates.
     @Test
     func circlePreservesAltitude() async throws {
         let center = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 500.0)
@@ -33,6 +34,7 @@ struct CircleTests {
 
     // MARK: - Projections
 
+    // Validates circle generation in EPSG:3857.
     @Test
     func circle3857() async throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0))
@@ -60,6 +62,7 @@ struct CircleTests {
 
     // MARK: - Antimeridian
 
+    // Validates circle generation near the antimeridian.
     @Test
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
@@ -69,6 +72,7 @@ struct CircleTests {
 
     // MARK: - Edge cases
 
+    // Validates that a zero radius returns nil.
     @Test
     func circleZeroRadius() async throws {
         let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))

@@ -42,6 +42,7 @@ struct IsoLinesTests {
         return FeatureCollection(features)
     }
 
+    // Tests basic isoline generation with multiple breaks.
     @Test
     func testBasicIsolines() {
         let grid = makeGrid()
@@ -57,6 +58,7 @@ struct IsoLinesTests {
         }
     }
 
+    // Tests isoline generation with a single break value.
     @Test
     func testSingleBreak() {
         let grid = makeGrid()
@@ -68,6 +70,7 @@ struct IsoLinesTests {
         #expect(!mls.lineStrings.isEmpty)
     }
 
+    // Tests that a flat grid produces no isolines.
     @Test
     func testFlatGridGeneratesNoLines() {
         var features: [Feature] = []
@@ -83,6 +86,7 @@ struct IsoLinesTests {
         #expect(result.features.isEmpty)
     }
 
+    // Tests that a break above all values produces no lines.
     @Test
     func testBreakEqualsAllValues() {
         let grid = makeGrid()
@@ -91,6 +95,7 @@ struct IsoLinesTests {
         #expect(result.features.isEmpty)
     }
 
+    // Tests that a break below all values produces no lines.
     @Test
     func testBreakBelowAllValues() {
         let grid = makeGrid()
@@ -98,6 +103,7 @@ struct IsoLinesTests {
         #expect(result.features.isEmpty)
     }
 
+    // Tests isolines on a minimal 2x2 grid.
     @Test
     func testMinimalGrid() {
         // 2x2 grid (4 points) — minimal viable grid
@@ -115,6 +121,7 @@ struct IsoLinesTests {
         #expect(!mls.lineStrings.isEmpty)
     }
 
+    // Tests that too few points produce no isolines.
     @Test
     func testTooFewPoints() {
         var features: [Feature] = []
@@ -126,6 +133,7 @@ struct IsoLinesTests {
         #expect(result.features.isEmpty)
     }
 
+    // Tests isolines with grid size snapping.
     @Test
     func testIsoLinesWithGridSize() {
         // Slightly irregular spacing — gridSize snaps to a regular grid
@@ -146,6 +154,7 @@ struct IsoLinesTests {
         #expect(result.features.count == 1)
     }
 
+    // Tests that output features are sorted by break value.
     @Test
     func testAllBreaksSorted() {
         let grid = makeGrid()
@@ -155,6 +164,7 @@ struct IsoLinesTests {
         #expect(breakValues == breakValues.sorted())
     }
 
+    // Tests that points without altitude produce no isolines.
     @Test
     func testMissingAltitudeReturnsEmpty() {
         // Points without altitude should be skipped
@@ -173,6 +183,7 @@ struct IsoLinesTests {
 
     // MARK: - Projections
 
+    // Tests isolines in EPSG:4978.
     @Test
     func isoLines4978() {
         let grid = makeGrid(projection: .epsg4978)
@@ -185,6 +196,7 @@ struct IsoLinesTests {
         }
     }
 
+    // Tests isolines in EPSG:3857.
     @Test
     func isoLines3857() {
         let grid = makeGrid(projection: .epsg3857)

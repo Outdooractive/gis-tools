@@ -78,6 +78,7 @@ struct LineSliceAlongTests {
 
     // MARK: - Projections
 
+    // Tests line slicing along in EPSG:3857 projection.
     @Test
     func lineSliceAlong3857() async throws {
         let lineString = try #require(LineString([
@@ -88,6 +89,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests line slicing along in EPSG:4978 projection.
     @Test
     func lineSliceAlong4978() async throws {
         let lineString = try #require(LineString([
@@ -98,6 +100,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests line slicing along in noSRID projection.
     @Test
     func lineSliceAlongNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -108,6 +111,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests that slicing preserves altitude values.
     @Test
     func lineSliceAlongPreservesAltitude() async throws {
         let lineString = try #require(LineString([
@@ -123,6 +127,7 @@ struct LineSliceAlongTests {
 
     // MARK: - Antimeridian
 
+    // Tests line slicing along across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

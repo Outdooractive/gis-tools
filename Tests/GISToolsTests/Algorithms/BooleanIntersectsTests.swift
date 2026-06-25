@@ -3,6 +3,7 @@ import Testing
 
 struct BooleanIntersectsTests {
 
+    // Intersecting geometries return true.
     @Test func intersectingGeometries() async throws {
         let polygon = try #require(Polygon([
             [
@@ -24,6 +25,7 @@ struct BooleanIntersectsTests {
         #expect(polygon.intersects(overlappingLine))
     }
 
+    // Non-intersecting geometries return false.
     @Test func nonIntersectingGeometries() async throws {
         let polygon = try #require(Polygon([
             [
@@ -84,6 +86,7 @@ struct BooleanIntersectsTests {
 
     // MARK: - Projections
 
+    // Intersects check in EPSG:3857.
     @Test
     func intersectsEPSG3857() throws {
         let polygon = try #require(Polygon([[
@@ -104,6 +107,7 @@ struct BooleanIntersectsTests {
         #expect(polygon.intersects(line))
     }
 
+    // Intersects check in EPSG:4978.
     @Test
     func intersectsEPSG4978() throws {
         let polygon = try #require(Polygon([[
@@ -118,6 +122,7 @@ struct BooleanIntersectsTests {
         #expect(!polygon.intersects(Point(Coordinate3D(x: 2_000.0, y: 2_000.0, z: 0.0, projection: .epsg4978))))
     }
 
+    // LineString–Polygon intersects in EPSG:4978.
     @Test
     func intersectsLineStringPolygonEPSG4978() async throws {
         let poly4326 = try #require(Polygon([[
@@ -138,6 +143,7 @@ struct BooleanIntersectsTests {
         #expect(!polygon.intersects(farLine))
     }
 
+    // Intersects check in noSRID.
     @Test
     func intersectsNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -154,6 +160,7 @@ struct BooleanIntersectsTests {
 
     // MARK: - Antimeridian
 
+    // Line intersects polygon near antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -172,6 +179,7 @@ struct BooleanIntersectsTests {
 
     // MARK: - Empty / degenerate
 
+    // Empty geometries do not intersect anything.
     @Test
     func emptyGeometriesDoNotIntersect() async throws {
         let emptyPolygon = Polygon()

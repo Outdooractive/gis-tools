@@ -3,6 +3,7 @@ import Testing
 
 struct BoundingBoxPositionTests {
 
+    // Validates that center position is correctly identified.
     @Test func center() {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -18,6 +19,7 @@ struct BoundingBoxPositionTests {
         #expect(!position.contains(.right))
     }
 
+    // Validates that top-right position is correctly identified.
     @Test func topRight() {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -31,6 +33,7 @@ struct BoundingBoxPositionTests {
         #expect(!position.contains(.center))
     }
 
+    // Validates that bottom-left position is correctly identified.
     @Test func bottomLeft() {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -44,6 +47,7 @@ struct BoundingBoxPositionTests {
         #expect(!position.contains(.center))
     }
 
+    // Validates that outside position is correctly identified.
     @Test func outside() {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -56,6 +60,7 @@ struct BoundingBoxPositionTests {
         #expect(position.contains(.right))
     }
 
+    // Validates the Point overload of position(of:).
     @Test func pointOverload() {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -67,6 +72,7 @@ struct BoundingBoxPositionTests {
     }
     // MARK: - Projections
 
+    // Validates position in EPSG:3857 projection.
     @Test
     func boundingBoxPosition3857() async throws {
         let bbox = BoundingBox(
@@ -77,6 +83,7 @@ struct BoundingBoxPositionTests {
         #expect(position.contains(.center))
     }
 
+    // Validates position in EPSG:4978 projection.
     @Test
     func boundingBoxPosition4978() async throws {
         let bbox = BoundingBox(
@@ -87,6 +94,7 @@ struct BoundingBoxPositionTests {
         #expect(position.contains(.center))
     }
 
+    // Validates position in noSRID projection.
     @Test
     func boundingBoxPositionNoSRID() async throws {
         let bbox = BoundingBox(

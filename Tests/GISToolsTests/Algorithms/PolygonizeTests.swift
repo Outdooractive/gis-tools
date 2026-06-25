@@ -110,10 +110,10 @@ struct PolygonizeTests {
         #expect(result.features.isEmpty)
     }
 
-    /// A closed LineString in EPSG:3857 forms one polygon.
-    @Test
     // MARK: - Projections
 
+    /// A closed LineString in EPSG:3857 forms one polygon.
+    @Test
     func polygonize3857() async throws {
         let square = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
@@ -148,6 +148,7 @@ struct PolygonizeTests {
     }
 
 
+    // Verifies polygonize with noSRID.
     @Test
     func polygonizeNoSRID() async throws {
         let square = try #require(LineString([

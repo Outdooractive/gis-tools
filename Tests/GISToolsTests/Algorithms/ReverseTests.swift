@@ -111,6 +111,7 @@ struct ReverseTests {
 
     // MARK: - Projections
 
+    // Tests reverse in EPSG:3857 (Web Mercator).
     @Test
     func reverse3857() async throws {
         let lineString = try #require(LineString([
@@ -149,6 +150,7 @@ struct ReverseTests {
 
     // MARK: - Edge cases
 
+    // Tests reversing a single point returns itself.
     @Test
     func reverseSinglePoint() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))

@@ -145,6 +145,7 @@ struct TinTests {
 
     // MARK: - Projections
 
+    // Validates TIN in EPSG:3857.
     @Test
     func tin3857() async throws {
         let mp = try #require(MultiPoint([
@@ -158,6 +159,7 @@ struct TinTests {
         #expect(tri.projection == .epsg3857)
     }
 
+    // Validates TIN with noSRID projection.
     @Test
     func tinNoSRID() async throws {
         let mp = try #require(MultiPoint([
@@ -172,6 +174,7 @@ struct TinTests {
     }
 
 
+    // Validates TIN in EPSG:4978.
     @Test
     func tin4978() async throws {
         // Small triangle in ECEF space near the equatorial XY plane.

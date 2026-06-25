@@ -153,6 +153,7 @@ struct LineMergeTests {
 
     // MARK: - Projections
 
+    // Tests line merge in EPSG:3857 projection.
     @Test
     func lineMerge3857() async throws {
         let a = try #require(LineString([
@@ -171,6 +172,7 @@ struct LineMergeTests {
         #expect(ls.coordinates.count == 3)
     }
 
+    // Tests line merge in EPSG:4978 projection.
     @Test
     func lineMerge4978() async throws {
         let a = try #require(LineString([
@@ -187,6 +189,7 @@ struct LineMergeTests {
         #expect(result.features.count == 1)
     }
 
+    // Tests line merge in noSRID projection.
     @Test
     func lineMergeNoSRID() async throws {
         let a = try #require(LineString([

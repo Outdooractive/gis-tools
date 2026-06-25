@@ -8,6 +8,7 @@ struct LineOffsetTests {
 
     // MARK: - Horizontal line
 
+    // Tests offsetting a horizontal line at the equator.
     @Test
     func lineOffsetHorizontal() async throws {
         let line = try #require(LineString([
@@ -25,6 +26,7 @@ struct LineOffsetTests {
 
     // MARK: - Vertical single segment
 
+    // Tests offsetting a single vertical line segment.
     @Test
     func lineOffsetSingleSegment() async throws {
         let line = try #require(LineString([
@@ -42,6 +44,7 @@ struct LineOffsetTests {
 
     // MARK: - Straight line (3 points)
 
+    // Tests offsetting a straight collinear 3-point line.
     @Test
     func lineOffsetStraight() async throws {
         let line = try #require(LineString([
@@ -63,6 +66,7 @@ struct LineOffsetTests {
 
     // MARK: - Concave line
 
+    // Tests offsetting a concave multi-point line.
     @Test
     func lineOffsetConcave() async throws {
         let line = try #require(LineString([
@@ -91,6 +95,7 @@ struct LineOffsetTests {
 
     // MARK: - MultiLineString
 
+    // Tests offsetting a MultiLineString geometry.
     @Test
     func lineOffsetMultiLineString() async throws {
         let line1 = try #require(LineString([
@@ -113,6 +118,7 @@ struct LineOffsetTests {
 
     // MARK: - Negative distance
 
+    // Tests offsetting with a negative distance goes left.
     @Test
     func lineOffsetNegativeDistance() async throws {
         let line = try #require(LineString([
@@ -127,6 +133,7 @@ struct LineOffsetTests {
 
     // MARK: - Zero distance
 
+    // Tests that a zero-distance offset returns the original line.
     @Test
     func lineOffsetZeroDistance() async throws {
         let line = try #require(LineString([
@@ -141,6 +148,7 @@ struct LineOffsetTests {
 
     // MARK: - Degenerate line (zero-length segment)
 
+    // Tests offsetting a zero-length degenerate line.
     @Test
     func lineOffsetDegenerateLine() async throws {
         let line = try #require(LineString([
@@ -153,6 +161,7 @@ struct LineOffsetTests {
 
     // MARK: - Projections projection
 
+    // Tests line offset in EPSG:3857 projection.
     @Test
     func lineOffset3857() async throws {
         let line3857 = try #require(LineString([
@@ -166,6 +175,7 @@ struct LineOffsetTests {
 
     // MARK: - Antimeridian
 
+    // Tests line offset across the antimeridian.
     @Test
     func lineOffsetAntimeridian() async throws {
         let line = try #require(LineString([

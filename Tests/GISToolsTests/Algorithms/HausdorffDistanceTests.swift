@@ -166,6 +166,7 @@ struct HausdorffDistanceTests {
 
     // MARK: - Projections
 
+    // Tests Hausdorff distance in EPSG:4978.
     @Test
     func hausdorff4978() async throws {
         let a = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
@@ -174,6 +175,7 @@ struct HausdorffDistanceTests {
         #expect(dist > 0.0)
     }
 
+    // Tests Hausdorff distance in EPSG:3857.
     @Test
     func hausdorff3857() async throws {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0))
@@ -182,6 +184,7 @@ struct HausdorffDistanceTests {
         #expect(abs(dist - 1000.0) < 0.001)
     }
 
+    // Tests Hausdorff distance with noSRID projection.
     @Test
     func hausdorffNoSRID() async throws {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))

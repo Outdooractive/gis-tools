@@ -5,6 +5,7 @@ struct BooleanConcaveTests {
 
     // MARK: - Convex polygons — false
 
+    // Triangle is convex.
     @Test
     func triangle() async throws {
         let triangle = try #require(Polygon([[
@@ -15,6 +16,7 @@ struct BooleanConcaveTests {
         #expect(!triangle.isConcave())
     }
 
+    // Square is convex.
     @Test
     func square() async throws {
         let square = try #require(Polygon([[
@@ -26,6 +28,7 @@ struct BooleanConcaveTests {
         #expect(!square.isConcave())
     }
 
+    // Convex pentagon is not concave.
     @Test
     func convexPentagon() async throws {
         let pentagon = try #require(Polygon([[
@@ -40,6 +43,7 @@ struct BooleanConcaveTests {
 
     // MARK: - Concave polygons — true
 
+    // L-shape is concave.
     @Test
     func lShape() async throws {
         let lShape = try #require(Polygon([[
@@ -53,6 +57,7 @@ struct BooleanConcaveTests {
         #expect(lShape.isConcave())
     }
 
+    // Simple concave polygon.
     @Test
     func simpleConcave() async throws {
         let concave = try #require(Polygon([[
@@ -66,6 +71,7 @@ struct BooleanConcaveTests {
 
     // MARK: - MultiPolygon
 
+    // MultiPolygon with all convex polygons.
     @Test
     func multiPolygonAllConvex() async throws {
         let square1 = try #require(Polygon([[
@@ -84,6 +90,7 @@ struct BooleanConcaveTests {
         #expect(!multiPolygon.isConcave())
     }
 
+    // MultiPolygon with one concave polygon.
     @Test
     func multiPolygonOneConcave() async throws {
         let square = try #require(Polygon([[
@@ -106,6 +113,7 @@ struct BooleanConcaveTests {
 
     // MARK: - Feature / FeatureCollection wrapping
 
+    // Concave polygon wrapped in Feature.
     @Test
     func featureWrapping() async throws {
         let lShape = try #require(Polygon([[
@@ -120,6 +128,7 @@ struct BooleanConcaveTests {
         #expect(feature.isConcave())
     }
 
+    // FeatureCollection with one concave polygon.
     @Test
     func featureCollectionWrapping() async throws {
         let lShape = try #require(Polygon([[
@@ -140,6 +149,7 @@ struct BooleanConcaveTests {
         #expect(fc.isConcave())
     }
 
+    // FeatureCollection with all convex polygons.
     @Test
     func featureCollectionAllConvex() async throws {
         let square1 = try #require(Polygon([[
@@ -181,6 +191,7 @@ struct BooleanConcaveTests {
 
     // MARK: - Projections
 
+    // Concave polygon in EPSG:3857.
     @Test
     func concavePolygon3857() async throws {
         // L-shape concave polygon in 4326, projected to 3857.
@@ -208,6 +219,7 @@ struct BooleanConcaveTests {
         #expect(!polygon3857b.isConcave())
     }
 
+    // Concave polygon in EPSG:4978.
     @Test
     func concavePolygon4978() async throws {
         let concave4326 = try #require(Polygon([[
@@ -225,6 +237,7 @@ struct BooleanConcaveTests {
 
     // MARK: - Antimeridian crossing
 
+    // Convex polygon crossing antimeridian.
     @Test
     func convexCrossingAntimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -238,6 +251,7 @@ struct BooleanConcaveTests {
         #expect(!polygon.isConcave())
     }
 
+    // Concave polygon crossing antimeridian.
     @Test
     func concaveCrossingAntimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -254,12 +268,14 @@ struct BooleanConcaveTests {
 
     // MARK: - Non-polygon geometries — false
 
+    // Point returns false for isConcave.
     @Test
     func pointReturnsFalse() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         #expect(!point.isConcave())
     }
 
+    // LineString returns false for isConcave.
     @Test
     func lineStringReturnsFalse() async throws {
         let lineString = try #require(LineString([

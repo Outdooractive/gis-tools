@@ -341,6 +341,7 @@ struct CenterTests {
 
     // MARK: - Antimeridian
 
+    // Validates centroid of a polygon crossing the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -477,6 +478,7 @@ struct CenterTests {
 
     // MARK: - Altitude preservation
 
+    // Validates that centroid preserves altitude values.
     @Test
     func centroidPreservesAltitude() async throws {
         let coords = [
@@ -492,6 +494,7 @@ struct CenterTests {
         #expect(abs(centroid.coordinate.altitude! - 250.0) < 0.001) // (100+200+300+400)/4
     }
 
+    // Validates that center of mass preserves altitude values.
     @Test
     func centerOfMassPreservesAltitude() async throws {
         let coords = [
@@ -506,6 +509,7 @@ struct CenterTests {
         #expect(com.coordinate.altitude != nil)
     }
 
+    // Validates that center mean preserves altitude values.
     @Test
     func centerMeanWeightedAltitude() async throws {
         let coords = [
@@ -519,6 +523,7 @@ struct CenterTests {
         #expect(abs(mean.coordinate.altitude! - 150.0) < 0.001)
     }
 
+    // Validates centroid omits altitude when not all vertices have it.
     @Test
     func centroidOmitsAltitudeWhenMixed() async throws {
         let coords = [
@@ -535,6 +540,7 @@ struct CenterTests {
 
     // MARK: - Projections
 
+    // Verifies centroid in EPSG:3857 projection.
     @Test
     func centroidEPSG3857() async throws {
         let polygon = try #require(Polygon([[
@@ -550,6 +556,7 @@ struct CenterTests {
         #expect(abs(c.coordinate.y - 500.0) < 0.001)
     }
 
+    // Verifies centroid in EPSG:4978 projection.
     @Test
     func centroidEPSG4978() async throws {
         let polygon = try #require(Polygon([[
@@ -565,6 +572,7 @@ struct CenterTests {
         #expect(abs(c.coordinate.altitude!) < 0.001)
     }
 
+    // Verifies centroid in noSRID projection.
     @Test
     func centroidNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -580,6 +588,7 @@ struct CenterTests {
         #expect(abs(c.coordinate.y - 5.0) < 0.001)
     }
 
+    // Validates that center preserves altitude values.
     @Test
     func centerPreservesAltitude() async throws {
         let coords = [
@@ -595,6 +604,7 @@ struct CenterTests {
         #expect(center.coordinate.altitude != nil)
     }
 
+    // Validates that centerMedian preserves altitude values.
     @Test
     func centerMedianPreservesAltitude() async throws {
         let fc = FeatureCollection([

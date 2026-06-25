@@ -24,6 +24,7 @@ struct SharedPathsTests {
     }
 
 
+    // Tests shared paths with noSRID projection.
     @Test
     func sharedPathsNoSRID() async throws {
         let a = try #require(LineString([
@@ -43,6 +44,7 @@ struct SharedPathsTests {
 
     // MARK: - Projection preservation
 
+    // Tests shared paths preserve EPSG:3857 projection.
     @Test
     func sharedPaths3857Projection() async throws {
         let a = try #require(LineString([
@@ -58,6 +60,7 @@ struct SharedPathsTests {
         #expect(result?.lineStrings.first?.projection == .epsg3857)
     }
 
+    // Tests shared paths preserve EPSG:4978 projection.
     @Test
     func sharedPaths4978Projection() async throws {
         let a = try #require(LineString([
@@ -267,6 +270,7 @@ struct SharedPathsTests {
 
     // MARK: - Projections
 
+    // Tests shared paths in EPSG:3857 (Web Mercator).
     @Test
     func sharedPaths3857() async throws {
         let a = try #require(LineString([
@@ -283,6 +287,7 @@ struct SharedPathsTests {
         #expect(result!.lineStrings.count == 1)
     }
 
+    // Tests shared paths in EPSG:4978 (ECEF Cartesian).
     @Test
     func sharedPaths4978() async throws {
         let a = try #require(LineString([

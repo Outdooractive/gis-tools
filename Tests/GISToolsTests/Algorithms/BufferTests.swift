@@ -734,6 +734,7 @@ struct BufferTests {
 
     // MARK: - Polygon end type
 
+    // Validates polygon end buffer produces larger area than butt end.
     @Test
     func polygonEndBasic() throws {
         let line = try #require(LineString([
@@ -751,6 +752,7 @@ struct BufferTests {
 
     // MARK: - Bevel join tests
 
+    // Validates bevel join on a line produces less area than round.
     @Test
     func bevelJoinBasic() throws {
         let line = try #require(LineString([
@@ -773,6 +775,7 @@ struct BufferTests {
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
 
+    // Validates bevel join on a line in EPSG:3857 produces less area than round.
     @Test
     func bevelJoin3857() throws {
         let line = try #require(LineString([
@@ -794,6 +797,7 @@ struct BufferTests {
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
 
+    // Validates bevel join on a polygon produces less area than round.
     @Test
     func bevelJoinOnPolygon() throws {
         let poly = try #require(Polygon([[
@@ -817,6 +821,7 @@ struct BufferTests {
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
 
+    // Validates bevel join on a polygon in EPSG:3857 produces less area than round.
     @Test
     func bevelJoinOnPolygon3857() throws {
         let poly = try #require(Polygon([[
@@ -840,6 +845,7 @@ struct BufferTests {
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
 
+    // Validates bevel join on a multi-line string produces less area than round.
     @Test
     func bevelJoinMultiLine() throws {
         let mls = try #require(MultiLineString([
@@ -865,6 +871,7 @@ struct BufferTests {
 
     // MARK: - Miter join tests
 
+    // Validates miter join on a line produces more area than bevel.
     @Test
     func miterJoinBasic() throws {
         let line = try #require(LineString([
@@ -885,6 +892,7 @@ struct BufferTests {
                 "miter=\(miterArea), bevel=\(bevelArea)")
     }
 
+    // Validates miter join falls back to bevel when the limit is exceeded.
     @Test
     func miterJoinLimitClamp() throws {
         // Sharp turn forces miter to exceed the limit; should fall back to bevel
@@ -908,6 +916,7 @@ struct BufferTests {
                 "miter=\(miterArea), bevel=\(bevelArea), ratio=\(ratio)")
     }
 
+    // Validates miter join on a line in EPSG:3857 produces more area than bevel.
     @Test
     func miterJoin3857() throws {
         let line = try #require(LineString([
@@ -928,6 +937,7 @@ struct BufferTests {
                 "miter=\(miterArea), bevel=\(bevelArea)")
     }
 
+    // Validates miter join on a polygon produces more area than bevel.
     @Test
     func miterJoinOnPolygon() throws {
         let poly = try #require(Polygon([[

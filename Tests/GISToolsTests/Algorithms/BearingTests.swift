@@ -31,6 +31,7 @@ struct BearingTests {
 
     // MARK: - Projections
 
+    // Tests bearing calculation in EPSG:3857 (Web Mercator).
     @Test
     func bearing3857() async throws {
         let origin = Coordinate3D(x: 0.0, y: 0.0)
@@ -66,6 +67,7 @@ struct BearingTests {
 
     // MARK: - Antimeridian
 
+    // Validates bearing across the antimeridian.
     @Test
     func antimeridian() async throws {
         let start = Coordinate3D(latitude: 0.0, longitude: 170.0)
@@ -76,6 +78,7 @@ struct BearingTests {
 
     // MARK: - Edge cases
 
+    // Validates bearing returns a finite value for identical points.
     @Test
     func bearingIdenticalPoints() async throws {
         let point = Coordinate3D(latitude: 45.0, longitude: -75.0)

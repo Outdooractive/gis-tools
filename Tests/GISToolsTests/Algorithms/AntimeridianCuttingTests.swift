@@ -485,6 +485,7 @@ struct AntimeridianCuttingTests {
         #expect(mpNoCross.crossesAntimeridian == false)
     }
 
+    // Tests MultiPolygon antimeridian detection in EPSG:3857.
     @Test
     func multiPolygonCrossesAntimeridian3857() throws {
         let coords4326: [Coordinate3D] = [
@@ -499,6 +500,7 @@ struct AntimeridianCuttingTests {
         #expect(mp.crossesAntimeridian == true)
     }
 
+    // Tests MultiPolygon antimeridian detection in EPSG:4978 (always false).
     @Test
     func multiPolygonCrossesAntimeridian4978() throws {
         let coords4326: [Coordinate3D] = [
@@ -528,6 +530,7 @@ struct AntimeridianCuttingTests {
         #expect(gcNoCross.crossesAntimeridian == false)
     }
 
+    // Tests GeometryCollection antimeridian detection in EPSG:3857.
     @Test
     func geometryCollectionCrossesAntimeridian3857() throws {
         let ls = try #require(LineString([
@@ -538,6 +541,7 @@ struct AntimeridianCuttingTests {
         #expect(gc.crossesAntimeridian == true)
     }
 
+    // Tests GeometryCollection antimeridian detection in EPSG:4978 (always false).
     @Test
     func geometryCollectionCrossesAntimeridian4978() throws {
         let ls = try #require(LineString([
@@ -562,6 +566,7 @@ struct AntimeridianCuttingTests {
         #expect(noCrossFeature.crossesAntimeridian == false)
     }
 
+    // Tests Feature antimeridian detection in EPSG:3857.
     @Test
     func featureCrossesAntimeridian3857() throws {
         let ls = try #require(LineString([
@@ -572,6 +577,7 @@ struct AntimeridianCuttingTests {
         #expect(feature.crossesAntimeridian == true)
     }
 
+    // Tests Feature antimeridian detection in EPSG:4978 (always false).
     @Test
     func featureCrossesAntimeridian4978() throws {
         let ls = try #require(LineString([
@@ -598,6 +604,7 @@ struct AntimeridianCuttingTests {
         #expect(fcNoCross.crossesAntimeridian == false)
     }
 
+    // Tests FeatureCollection antimeridian detection in EPSG:3857.
     @Test
     func featureCollectionCrossesAntimeridian3857() throws {
         let ls = try #require(LineString([
@@ -608,6 +615,7 @@ struct AntimeridianCuttingTests {
         #expect(fc.crossesAntimeridian == true)
     }
 
+    // Tests FeatureCollection antimeridian detection in EPSG:4978 (always false).
     @Test
     func featureCollectionCrossesAntimeridian4978() throws {
         let ls = try #require(LineString([

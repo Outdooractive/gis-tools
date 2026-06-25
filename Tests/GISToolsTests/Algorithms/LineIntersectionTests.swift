@@ -318,6 +318,7 @@ struct LineIntersectionTests {
 
     // MARK: - Projections
 
+    // Tests line intersection in EPSG:3857 projection.
     @Test
     func lineIntersection3857() async throws {
         let line1 = try #require(LineString([
@@ -334,6 +335,7 @@ struct LineIntersectionTests {
         #expect(intersections.count == 1)
     }
 
+    // Tests line intersection in noSRID projection.
     @Test
     func lineIntersectionNoSRID() async throws {
         let line1 = try #require(LineString([
@@ -352,6 +354,7 @@ struct LineIntersectionTests {
 
     // MARK: - Antimeridian
 
+    // Tests line intersection across the antimeridian.
     @Test
     func antimeridian() async throws {
         let line1 = try #require(LineString([

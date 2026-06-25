@@ -107,6 +107,7 @@ struct DensifyTests {
 
     // MARK: - Altitude / Z
 
+    // Validates altitude is linearly interpolated between endpoints.
     @Test
     func altitudePreserved() async throws {
         let ls = try #require(LineString([
@@ -122,6 +123,7 @@ struct DensifyTests {
 
     // MARK: - Projections
 
+    // Validates densify in EPSG:3857 projection.
     @Test
     func densify3857() async throws {
         let ls = try #require(LineString([
@@ -156,6 +158,7 @@ struct DensifyTests {
 
     // MARK: - Antimeridian
 
+    // Validates densify across the antimeridian for a LineString.
     @Test
     func antimeridianLineString() async throws {
         let ls = try #require(LineString([
@@ -191,6 +194,7 @@ struct DensifyTests {
 
     // MARK: - Edge cases
 
+    // Validates densify handles a single-vertex LineString.
     @Test
     func singleVertexLine() async throws {
         let ls = LineString(unchecked: [

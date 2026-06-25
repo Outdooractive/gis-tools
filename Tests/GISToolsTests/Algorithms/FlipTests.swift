@@ -54,6 +54,7 @@ struct FlipTests {
 
     // MARK: - Altitude / Z
 
+    // Tests that flipping preserves altitude and M values.
     @Test
     func flipPointPreservesAltitudeAndM() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0, altitude: 500.0, m: 42.0))
@@ -66,6 +67,7 @@ struct FlipTests {
 
     // MARK: - Feature / FeatureCollection
 
+    // Tests flipping a Feature preserves properties.
     @Test
     func flipFeature() async throws {
         var feature = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
@@ -79,6 +81,7 @@ struct FlipTests {
 
     // MARK: - Projections
 
+    // Tests flipping in EPSG:3857.
     @Test
     func flip3857() async throws {
         let line = try #require(LineString([

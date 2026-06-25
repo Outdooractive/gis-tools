@@ -88,6 +88,7 @@ struct TruncateTests {
 
     // MARK: - Projections
 
+    // Validates truncation in EPSG:3857.
     @Test
     func truncate3857() async throws {
         let lineString = try #require(LineString(

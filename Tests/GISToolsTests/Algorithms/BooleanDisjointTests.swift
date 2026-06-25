@@ -114,6 +114,7 @@ struct BooleanDisjointTests {
 
     // MARK: - Projections
 
+    // Disjoint check in EPSG:3857.
     @Test
     func isDisjointEPSG3857() throws {
         let polygon = try #require(Polygon([[
@@ -129,6 +130,7 @@ struct BooleanDisjointTests {
         #expect(polygon.isDisjoint(with: pointOutside))
     }
 
+    // Disjoint check in EPSG:4978.
     @Test
     func isDisjointEPSG4978() async throws {
         let poly4326 = try #require(Polygon([[
@@ -145,6 +147,7 @@ struct BooleanDisjointTests {
         #expect(polygon.isDisjoint(with: outside))
     }
 
+    // MultiPoint–Polygon disjoint in EPSG:3857.
     @Test
     func disjointMultiPointPolygonEPSG3857() throws {
         let mp = try #require(MultiPoint([
@@ -160,6 +163,7 @@ struct BooleanDisjointTests {
         #expect(!mp.isDisjoint(with: polygon))
     }
 
+    // MultiPoint–Polygon disjoint in EPSG:4978.
     @Test
     func disjointMultiPointPolygonEPSG4978() async throws {
         let poly4326 = try #require(Polygon([[
@@ -176,6 +180,7 @@ struct BooleanDisjointTests {
         #expect(!mp.isDisjoint(with: polygon))
     }
 
+    // Disjoint check in noSRID.
     @Test
     func isDisjointNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -193,6 +198,7 @@ struct BooleanDisjointTests {
 
     // MARK: - Antimeridian
 
+    // Polygon near antimeridian is not disjoint from interior point.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -208,6 +214,7 @@ struct BooleanDisjointTests {
 
     // MARK: - Empty / degenerate
 
+    // Empty geometries are disjoint from everything.
     @Test
     func emptyGeometriesAreDisjointFromEverything() async throws {
         let emptyPolygon = Polygon()

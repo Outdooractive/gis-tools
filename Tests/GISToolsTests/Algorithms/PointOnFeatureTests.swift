@@ -95,6 +95,7 @@ struct PointOnFeatureTests {
 
     // MARK: - Projections
 
+    // Verifies point on feature for a polygon in EPSG:3857.
     @Test
     func pointOnFeature3857() async throws {
         let polygon = try #require(Polygon([[
@@ -138,6 +139,7 @@ struct PointOnFeatureTests {
 
     // MARK: - Antimeridian
 
+    // Verifies point on feature for a polygon near the antimeridian.
     @Test
     func nearAntimeridian() async throws {
         let polygon = try #require(Polygon([[
