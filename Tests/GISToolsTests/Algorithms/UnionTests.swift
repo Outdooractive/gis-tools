@@ -9,7 +9,7 @@ import Testing
 /// (v0.15.7, Martinez-Rueda-Feito algorithm), the ground-truth reference.
 ///
 /// **Ported Turf.js union tests** — fixtures from `@turf/union` test suite
-/// in `TestData/Union/{in,out}/`. Comparisons use total area at 1% tolerance.
+/// in `TestData/Union/`. Comparisons use total area at 1% tolerance.
 /// Issue-regression tests verify union completes without error.
 ///
 /// Comparisons use **area, polygon count, and vertex count** rather than
@@ -48,7 +48,7 @@ struct UnionTests {
         _ name: String,
         tolerance: Double = 0.01
     ) throws -> (area: Double, tolerance: Double) {
-        let feature = try TestData.feature(package: "Union/out", name: name)
+        let feature = try TestData.feature(package: "Union", name: name + "Result")
         var total: Double = 0
         if let polygon = feature.geometry as? Polygon {
             total += polygon.area
@@ -236,13 +236,13 @@ struct UnionTests {
     // MARK: - Ported Turf.js fixture tests
 
     private static let turfTestNames = [
-        "union1", "union2", "union3", "union4", "not-overlapping",
+        "Union1", "Union2", "Union3", "Union4", "NotOverlapping",
     ]
 
     // Tests union against ported Turf.js fixture test cases.
     @Test(arguments: turfTestNames)
     func turfFixture(_ name: String) async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: name)
+        let fc = try TestData.featureCollection(package: "Union", name: name)
         let result = try #require(fc.union())
         let (expected, tolerance) = try Self.turfExpectedArea(name)
         let actual = Self.extractPolygons(from: result).reduce(0) { $0 + $1.area }
@@ -256,28 +256,28 @@ struct UnionTests {
     // Verifies issue #1983 case 1 (unable to complete output ring) completes without error.
     @Test
     func issueUnableToCompleteOutputRing1() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-1")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToCompleteOutputRing1983_1")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #1983 case 2 completes without error.
     @Test
     func issueUnableToCompleteOutputRing2() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-2")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToCompleteOutputRing1983_2")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #2258 case 1 (unable to find segment) completes without error.
     @Test
     func issueUnableToFindSegment1() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-1")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToFindSegment2258_1")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #2258 case 2 completes without error.
     @Test
     func issueUnableToFindSegment2() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-2")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToFindSegment2258_2")
         #expect(fc.union() != nil)
     }
 
