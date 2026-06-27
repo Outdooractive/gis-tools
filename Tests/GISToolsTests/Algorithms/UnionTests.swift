@@ -199,21 +199,21 @@ struct UnionTests {
         return mp.polygons
     }
 
-    /// Load a pairwise Turf union reference from TestData/Union/Pairwise/.
+    /// Load a pairwise Turf union reference from TestData/Union/.
     private static func loadPairwise(_ pairName: String) throws -> MultiPolygon {
-        try TestData.multiPolygon(package: "Union/Pairwise", name: pairName)
+        try TestData.multiPolygon(package: "Union", name: pairName + "Result")
     }
 
     private static let pairwiseTests: [(i: Int, j: Int, name: String)] = [
-        (0, 1, "pair_0_1"),
-        (0, 4, "pair_0_4"),
-        (1, 2, "pair_1_2"),
-        (1, 4, "pair_1_4"),
-        (1, 5, "pair_1_5"),
-        (2, 3, "pair_2_3"),
-        (2, 5, "pair_2_5"),
-        (2, 6, "pair_2_6"),
-        (3, 6, "pair_3_6"),
+        (0, 1, "Pair0_1"),
+        (0, 4, "Pair0_4"),
+        (1, 2, "Pair1_2"),
+        (1, 4, "Pair1_4"),
+        (1, 5, "Pair1_5"),
+        (2, 3, "Pair2_3"),
+        (2, 5, "Pair2_5"),
+        (2, 6, "Pair2_6"),
+        (3, 6, "Pair3_6"),
     ]
 
     // Tests pairwise union of flat-end buffer component polygons.
