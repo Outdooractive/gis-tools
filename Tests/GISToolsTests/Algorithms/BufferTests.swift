@@ -48,7 +48,7 @@ struct BufferTests {
         _ name: String,
         tolerance: Double = 0.10
     ) throws -> (area: Double, tolerance: Double) {
-        let fc = try TestData.featureCollection(package: "Buffer/out", name: name)
+        let fc = try TestData.featureCollection(package: "Buffer", name: name + "Result")
         var total: Double = 0
         for feature in fc.features {
             guard feature.properties["stroke"] as? String == "#F00" else { continue }
@@ -63,7 +63,7 @@ struct BufferTests {
     }
 
     private static func bufferParams(_ name: String) throws -> (distance: Double, steps: Int) {
-        let json = try TestData.stringFromFile(package: "Buffer/in", name: name)
+        let json = try TestData.stringFromFile(package: "Buffer", name: name)
         guard let data = json.data(using: .utf8),
               let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return (GISTool.convertToMeters(50, .miles), 64) }
@@ -89,7 +89,7 @@ struct BufferTests {
     func bufferedPoint() async throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
         let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("PointResult"))
+        checkArea(result, try loadExpected("RefPointResult"))
     }
 
     // Validates buffer around multiple points matches the expected area.
@@ -100,7 +100,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
         let result = try #require(multiPoint.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("MultiPointResult"))
+        checkArea(result, try loadExpected("RefMultiPointResult"))
     }
 
     // Validates round-end buffer around a short line matches the expected area.
@@ -243,7 +243,7 @@ struct BufferTests {
         ]]))
         let multiPolygon = try #require(MultiPolygon([p1, p2]))
         let result = try #require(multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("MultiPolygonResult"))
+        checkArea(result, try loadExpected("RefMultiPolygonResult"))
     }
 
     // MARK: - Ported Turf.js buffer tests
@@ -275,32 +275,27 @@ struct BufferTests {
     }
 
     private static let turfFixtures: [TurfFixture] = [
-        .init(name: "feature-collection-points", loadFeatureCollection: true),
-        .init(name: "geometry-collection-points", loadGeometryCollection: true),
-        .init(name: "linestring"),
-        .init(name: "multi-linestring"),
-        .init(name: "multi-point"),
-        .init(name: "multi-polygon"),
-        .init(name: "point"),
-        .init(name: "polygon-with-holes"),
-        .init(name: "northern-polygon"),
-        .init(name: "north-latitude-points", unionType: .overlapping),
+        .init(name: "FeatureCollectionPoints", loadFeatureCollection: true),
+        .init(name: "GeometryCollectionPoints", loadGeometryCollection: true),
+        .init(name: "LineString"),
+        .init(name: "MultiLineString"),
+        .init(name: "MultiPoint"),
+        .init(name: "MultiPolygon"),
+        .init(name: "Point"),
+        .init(name: "PolygonWithHoles"),
+        .init(name: "NorthernPolygon"),
+        .init(name: "NorthLatitudePoints", unionType: .overlapping),
 
-        // Buffer around a simple polygon produces incorrect shape;
-        // buffered circles at extreme points fall outside the polygon.
-        .init(name: "issue-#783", loadFeatureCollection: true),
-        // Buffering polygons yields a radius that's too small;
-        // point buffers are correct (Ecuador variant).
-        .init(name: "issue-#801-Ecuador", loadFeatureCollection: true),
-        // Buffering polygons yields a radius that's too small;
-        // point buffers are correct.
-        .init(name: "issue-#801", loadFeatureCollection: true),
-        // Buffer on a LineString has non-uniform stroke-width;
-        // width varies along the line.
-        .init(name: "issue-#815"),
-        // Buffer that touches itself merges into a single area
-        // instead of creating a hole.
-        .init(name: "issue-#916", loadFeatureCollection: true),
+        // Buffered circles at polygon extreme points fall outside.
+        .init(name: "PolygonExtremePoints", loadFeatureCollection: true),
+        // Polygon buffer radius too small vs point (equator variant).
+        .init(name: "PolygonCentroidEquator", loadFeatureCollection: true),
+        // Polygon buffer radius too small vs point.
+        .init(name: "PolygonCentroidRadius", loadFeatureCollection: true),
+        // Non-uniform stroke-width along a buffered line.
+        .init(name: "LineStringStripWidth"),
+        // Buffer touches itself, merges instead of creating a hole.
+        .init(name: "TouchingBufferPolygon", loadFeatureCollection: true),
     ]
 
     // Validates buffer against ported Turf.js fixture test cases.
@@ -309,13 +304,13 @@ struct BufferTests {
         let params = try Self.bufferParams(fixture.name)
         let geoJson: GeoJson
         if fixture.loadGeometryCollection {
-            geoJson = try TestData.geometryCollection(package: "Buffer/in", name: fixture.name)
+            geoJson = try TestData.geometryCollection(package: "Buffer", name: fixture.name)
         }
         else if fixture.loadFeatureCollection {
-            geoJson = try TestData.featureCollection(package: "Buffer/in", name: fixture.name)
+            geoJson = try TestData.featureCollection(package: "Buffer", name: fixture.name)
         }
         else {
-            geoJson = try TestData.feature(package: "Buffer/in", name: fixture.name)
+            geoJson = try TestData.feature(package: "Buffer", name: fixture.name)
         }
         try runTurfTest(
             name: fixture.name,
@@ -330,12 +325,12 @@ struct BufferTests {
     // Validates buffer on a long line that produces kinks and self-intersection artifacts.
     @Test
     func issue900() async throws {
-        let params = try Self.bufferParams("issue-#900")
+        let params = try Self.bufferParams("LongLineStringKinks")
         try runTurfTest(
-            name: "issue-#900",
+            name: "LongLineStringKinks",
             result: try #require(TestData.feature(
-                package: "Buffer/in",
-                name: "issue-#900")
+                package: "Buffer",
+                name: "LongLineStringKinks")
                 .buffered(
                     by: params.distance,
                     endType: .round,
@@ -422,8 +417,8 @@ struct BufferTests {
     // Validates negative (inset) buffer reduces the area of a polygon.
     @Test
     func negativeBuffer() async throws {
-        let name = "negative-buffer"
-        let json = try TestData.stringFromFile(package: "Buffer/in", name: name)
+        let name = "NegativeBuffer"
+        let json = try TestData.stringFromFile(package: "Buffer", name: name)
         guard let data = json.data(using: .utf8),
               let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return }
@@ -431,7 +426,7 @@ struct BufferTests {
         let radius = props["radius"] as? Double ?? -200.0
 
         #expect(radius < 0)
-        let feature = try TestData.feature(package: "Buffer/in", name: name)
+        let feature = try TestData.feature(package: "Buffer", name: name)
         guard let geometry = feature.geometry as? Polygon else { return }
         let result = geometry.buffered(by: GISTool.convertToMeters(radius, .miles))
         guard let resultPolygon = result?.polygons.first else { return }
