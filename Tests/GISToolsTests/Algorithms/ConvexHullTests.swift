@@ -4,6 +4,33 @@ import Testing
 
 struct ConvexHullTests {
 
+    // MARK: - Reference tests
+
+    private static let hullFixtures = [
+        "SquarePoints",
+        "RandomPoints",
+        "ThreePoints",
+    ]
+
+    @Test(arguments: hullFixtures)
+    private func turfConvexHullFixture(_ name: String) async throws {
+        let mp = try TestData.multiPoint(package: "ConvexHull", name: name)
+
+        guard let result = mp.convexHull() else {
+            Issue.record("Expected non-nil convex hull for \(name)")
+            return
+        }
+
+        let resultArea = result.area
+        #expect(resultArea > 0, "\(name): hull area should be positive")
+
+        // Load expected and compare area
+        let expected = try TestData.polygon(package: "ConvexHull", name: name + "Result")
+        let ratio = resultArea / expected.area
+        #expect(ratio > 0.95 && ratio < 1.05,
+                "\(name): area ratio \(ratio) outside [0.95, 1.05]")
+    }
+
     // Validates the convex hull of a square produces 5 coordinates (4 corners + closing) and contains a center point.
     @Test
     func convexHullSquare() async throws {

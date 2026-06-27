@@ -4,6 +4,31 @@ import Foundation
 
 struct TesselateTests {
 
+    // MARK: - Reference tests
+
+    private static let tessFixtures = [
+        "Triangle",
+        "Square",
+        "ConcavePentagon",
+        "PolygonWithHole",
+        "LShape",
+    ]
+
+    @Test(arguments: tessFixtures)
+    private func turfTesselateFixture(_ name: String) async throws {
+        let polygon = try TestData.polygon(package: "Tesselate", name: name)
+        let result = polygon.tesselated()
+
+        #expect(result.features.isNotEmpty, "\(name): expected at least one triangle")
+        // Every triangle must have exactly 3 coordinates + closing (4 total)
+        for feature in result.features {
+            if let tri = feature.geometry as? Polygon {
+                #expect(tri.outerRing?.coordinates.count == 4,
+                        "\(name): expected triangle with 4 coords, got \(tri.outerRing?.coordinates.count ?? 0)")
+            }
+        }
+    }
+
     // Validates that a triangle (3 vertices) tessellates into a single triangle.
     @Test
     func testTriangle() throws {

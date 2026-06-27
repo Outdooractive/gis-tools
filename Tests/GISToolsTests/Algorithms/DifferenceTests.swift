@@ -4,6 +4,43 @@ import Foundation
 
 struct DifferenceTests {
 
+    // MARK: - Reference tests
+
+    private static let overlayFixtures = [
+        "DisjointSquares",
+        "FullyContained",
+        "LShapeOverlap",
+    ]
+
+    private func loadOverlayPolygon(_ name: String, _ suffix: String) throws -> Polygon {
+        try TestData.polygon(package: "Overlay", name: name + suffix)
+    }
+
+    @Test(arguments: overlayFixtures)
+    private func turfDiffFixture(_ name: String) async throws {
+        let a = try loadOverlayPolygon(name, "A")
+        let b = try loadOverlayPolygon(name, "B")
+        let expected = try TestData.multiPolygon(package: "Overlay", name: name + "DiffABResult")
+
+        guard let result = a.difference(with: b) else {
+            if expected.polygons.isNotEmpty {
+                Issue.record("Expected non-nil difference for \(name)")
+            }
+            return
+        }
+
+        let resultArea = result.polygons.reduce(0) { $0 + $1.area }
+        let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
+        if expectedArea > 0 {
+            let ratio = resultArea / expectedArea
+            #expect(ratio > 0.95 && ratio < 1.05,
+                    "\(name): area ratio \(ratio) outside [0.95, 1.05]")
+        }
+        else {
+            #expect(resultArea == 0, "\(name): expected empty but got area \(resultArea)")
+        }
+    }
+
     // Validates that subtracting an overlapping square leaves an L-shaped polygon.
     @Test
     func overlappingSquares() async throws {

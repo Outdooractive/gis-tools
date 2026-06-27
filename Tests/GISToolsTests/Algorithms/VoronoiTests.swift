@@ -4,6 +4,31 @@ import Foundation
 
 struct VoronoiTests {
 
+    // MARK: - Reference tests
+
+    private static let voronoiFixtures = [
+        "ThreePoints",
+        "FourPoints",
+    ]
+
+    @Test(arguments: voronoiFixtures)
+    private func turfVoronoiFixture(_ name: String) async throws {
+        let fc = try TestData.featureCollection(package: "Voronoi", name: name)
+        let bbox = try TestData.boundingBox(package: "Voronoi", name: name + "Bbox")
+
+        let result = fc.voronoiDiagram(boundingBox: bbox)
+
+        #expect(result.features.count == fc.features.count,
+                "\(name): expected \(fc.features.count) cells, got \(result.features.count)")
+
+        for (i, feature) in result.features.enumerated() {
+            let cell = try #require(feature.geometry as? Polygon,
+                                    "\(name): cell \(i) is not a polygon")
+            #expect(cell.isValid,
+                    "\(name): cell \(i) is invalid")
+        }
+    }
+
     // Validates that 3 points produce 3 Voronoi cells within the bounding box.
     @Test
     func testThreePoints() throws {

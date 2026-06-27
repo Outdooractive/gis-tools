@@ -4,6 +4,44 @@ import Foundation
 
 struct IntersectionTests {
 
+    // MARK: - Reference tests
+
+    private static let overlayFixtures = [
+        "DisjointSquares",
+        "FullyContained",
+        "LShapeOverlap",
+    ]
+
+    private func loadOverlayPolygon(_ name: String, _ suffix: String) throws -> Polygon {
+        try TestData.polygon(package: "Overlay", name: name + suffix)
+    }
+
+    @Test(arguments: overlayFixtures)
+    private func turfIntersectFixture(_ name: String) async throws {
+        let a = try loadOverlayPolygon(name, "A")
+        let b = try loadOverlayPolygon(name, "B")
+        let expectedJson = try TestData.stringFromFile(package: "Overlay", name: name + "IntersectResult")
+        let expected = try #require(MultiPolygon(jsonString: expectedJson), "Missing expected result for \(name)")
+
+        guard let result = a.intersection(with: b) else {
+            if expected.polygons.isNotEmpty {
+                Issue.record("Expected non-nil intersection for \(name)")
+            }
+            return
+        }
+
+        let resultArea = result.polygons.reduce(0) { $0 + $1.area }
+        let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
+        if expectedArea > 0 {
+            let ratio = resultArea / expectedArea
+            #expect(ratio > 0.80 && ratio < 1.20,
+                    "\(name): area ratio \(ratio) outside [0.80, 1.20], result=\(resultArea), expected=\(expectedArea)")
+        }
+        else {
+            #expect(resultArea < 1000.0, "\(name): expected empty but got area \(resultArea)")
+        }
+    }
+
     // Validates that two overlapping squares produce the correct intersection (a smaller square).
     @Test
     func overlappingSquares() async throws {

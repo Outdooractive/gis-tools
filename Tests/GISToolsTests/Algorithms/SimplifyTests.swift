@@ -4,20 +4,24 @@ import Testing
 
 struct SimplifyTests {
 
-    // TODO: More tests
-    // https://github.com/Turfjs/turf/tree/master/packages/turf-simplify/test/in
-    // https://github.com/Turfjs/turf/tree/master/packages/turf-simplify/test/out
-
-    // Validates that invalid polygons return nil when simplified.
+    // Validates that invalid polygons are returned unmodified when simplified.
     @Test
     func invalidPolygons() async throws {
-        // TODO: Improve the polygon validity check
-
-//        let polygon1 = MultiPolygon([[[Coordinate3D(latitude: 1.0, longitude: 0.0), Coordinate3D(latitude: 2.0, longitude: 0.0), Coordinate3D(latitude: 3.0, longitude: 0.0), Coordinate3D(latitude: 2.5, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 0.0)]]])
-//        let polygon2 = MultiPolygon([[[Coordinate3D(latitude: 1.0, longitude: 0.0), Coordinate3D(latitude: 1.0, longitude: 0.0), Coordinate3D(latitude: 2.0, longitude: 1.0), Coordinate3D(latitude: 1.0, longitude: 0.0)]]])
-//
-//        XCTAssertNil(polygon1?.simplified())
-//        XCTAssertNil(polygon2?.simplified())
+        let polygon1 = MultiPolygon([[[
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.5, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0)
+        ]]])
+        let polygon2 = MultiPolygon([[[
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0)
+        ]]])
+        #expect(polygon1?.simplified() == polygon1)
+        #expect(polygon2?.simplified() == polygon2)
     }
 
     // Validates that simplification with degenerate rings does not enter an endless loop.
