@@ -12,18 +12,7 @@ struct FlipTests {
         #expect(flipped.coordinate.longitude == 10.0)
     }
 
-    // Validates flipping a Point preserves altitude and m values.
-    @Test
-    func flipPointPreservesAltitudeAndM() async throws {
-        let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0, altitude: 500.0, m: 42.0))
-        let flipped = point.flipped()
-        #expect(flipped.coordinate.latitude == 20.0)
-        #expect(flipped.coordinate.longitude == 10.0)
-        #expect(flipped.coordinate.altitude == 500.0)
-        #expect(flipped.coordinate.m == 42.0)
-    }
-
-    // Validates flipping a LineString swaps coordinates.
+    // Validates flipping a LineString swaps all coordinates.
     @Test
     func flipLineString() async throws {
         let line = try #require(LineString([
@@ -47,7 +36,7 @@ struct FlipTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
         ]))
         let poly = try #require(Polygon([ring]))
-        let multi = MultiPolygon([poly])!
+        let multi = try #require(MultiPolygon([poly]))
         let flipped = multi.flipped()
         let flippedRing = flipped.polygons[0].rings[0]
         #expect(flippedRing.coordinates[0].latitude == 1.0)
@@ -63,7 +52,22 @@ struct FlipTests {
         #expect(point.coordinate.longitude == 10.0)
     }
 
-    // Validates that a Feature and FeatureCollection also flip.
+    // MARK: - Altitude / Z
+
+    // Tests that flipping preserves altitude and M values.
+    @Test
+    func flipPointPreservesAltitudeAndM() async throws {
+        let point = Point(Coordinate3D(latitude: 10.0, longitude: 20.0, altitude: 500.0, m: 42.0))
+        let flipped = point.flipped()
+        #expect(flipped.coordinate.latitude == 20.0)
+        #expect(flipped.coordinate.longitude == 10.0)
+        #expect(flipped.coordinate.altitude == 500.0)
+        #expect(flipped.coordinate.m == 42.0)
+    }
+
+    // MARK: - Feature / FeatureCollection
+
+    // Tests flipping a Feature preserves properties.
     @Test
     func flipFeature() async throws {
         var feature = Feature(Point(Coordinate3D(latitude: 10.0, longitude: 20.0)))
@@ -75,7 +79,9 @@ struct FlipTests {
         #expect(flipped.properties["name"] as? String == "test")
     }
 
-    // Validates flipping a LineString in EPSG:3857 returns a valid result.
+    // MARK: - Projections
+
+    // Tests flipping in EPSG:3857.
     @Test
     func flip3857() async throws {
         let line = try #require(LineString([
@@ -87,7 +93,7 @@ struct FlipTests {
         #expect(flipped.coordinates.count == 3)
     }
 
-    // Validates flipping a LineString in EPSG:4978 returns a valid result.
+    // Validates flip in EPSG:4978.
     @Test
     func flip4978() async throws {
         let line = try #require(LineString([
@@ -99,6 +105,7 @@ struct FlipTests {
         #expect(flipped.coordinates.count == 3)
     }
 
+    // Validates flip in noSRID.
     @Test
     func flipNoSRID() throws {
         let point = Point(Coordinate3D(x: 10.0, y: 20.0, projection: .noSRID))
@@ -108,6 +115,7 @@ struct FlipTests {
         #expect(flipped.coordinate.y == 10.0)
     }
 
+    // Validates flip preserves the input projection.
     @Test
     func flipPointPreservesProjection() throws {
         let point3857 = Point(Coordinate3D(x: 10.0, y: 20.0))

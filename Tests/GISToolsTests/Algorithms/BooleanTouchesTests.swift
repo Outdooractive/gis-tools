@@ -6,6 +6,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Point × LineString — true
 
+    // Point touches LineString at start endpoint.
     @Test
     func pointTouchesLineStringAtStart() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -17,6 +18,7 @@ struct BooleanTouchesTests {
         #expect(line.touches(point))
     }
 
+    // Point touches LineString at end endpoint.
     @Test
     func pointTouchesLineStringAtEnd() async throws {
         let point = Point(Coordinate3D(latitude: 10.0, longitude: 10.0))
@@ -29,6 +31,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Point × LineString — false
 
+    // Point on line interior does not touch.
     @Test
     func pointOnLineInteriorDoesNotTouch() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -39,6 +42,7 @@ struct BooleanTouchesTests {
         #expect(point.touches(line) == false)
     }
 
+    // Point off line does not touch.
     @Test
     func pointOffLineDoesNotTouch() async throws {
         let point = Point(Coordinate3D(latitude: 20.0, longitude: 20.0))
@@ -51,6 +55,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Point × MultiLineString
 
+    // Point touches MultiLineString at endpoint.
     @Test
     func pointTouchesMultiLineString() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -69,6 +74,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Point × Polygon
 
+    // Point on polygon ring touches.
     @Test
     func pointOnPolygonRingTouches() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -83,6 +89,7 @@ struct BooleanTouchesTests {
         #expect(polygon.touches(point))
     }
 
+    // Point inside polygon does not touch.
     @Test
     func pointInsidePolygonDoesNotTouch() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
@@ -97,6 +104,7 @@ struct BooleanTouchesTests {
         #expect(point.touches(polygon) == false)
     }
 
+    // Point outside polygon does not touch.
     @Test
     func pointOutsidePolygonDoesNotTouch() async throws {
         let point = Point(Coordinate3D(latitude: 20.0, longitude: 20.0))
@@ -112,6 +120,7 @@ struct BooleanTouchesTests {
 
     // MARK: - MultiPoint × LineString
 
+    // MultiPoint touches LineString at endpoint.
     @Test
     func multiPointTouchesLineStringAtEndpoint() async throws {
         let mp = try #require(MultiPoint([
@@ -127,6 +136,7 @@ struct BooleanTouchesTests {
         #expect(line.touches(mp))
     }
 
+    // MultiPoint on line interior does not touch.
     @Test
     func multiPointOnLineInteriorDoesNotTouch() async throws {
         let mp = try #require(MultiPoint([
@@ -143,6 +153,7 @@ struct BooleanTouchesTests {
 
     // MARK: - MultiPoint × Polygon
 
+    // MultiPoint touches polygon on boundary.
     @Test
     func multiPointTouchesPolygonOnBoundary() async throws {
         let mp = try #require(MultiPoint([
@@ -160,6 +171,7 @@ struct BooleanTouchesTests {
         #expect(polygon.touches(mp))
     }
 
+    // MultiPoint inside polygon does not touch.
     @Test
     func multiPointInsidePolygonDoesNotTouch() async throws {
         let mp = try #require(MultiPoint([
@@ -176,6 +188,7 @@ struct BooleanTouchesTests {
         #expect(mp.touches(polygon) == false)
     }
 
+    // MultiPoint partially inside polygon does not touch.
     @Test
     func multiPointPartialInsidePolygonDoesNotTouch() async throws {
         let mp = try #require(MultiPoint([
@@ -195,6 +208,7 @@ struct BooleanTouchesTests {
 
     // MARK: - LineString × LineString
 
+    // LineStrings touch at shared endpoint.
     @Test
     func lineStringsTouchAtEndpoint() async throws {
         let line1 = try #require(LineString([
@@ -210,6 +224,7 @@ struct BooleanTouchesTests {
         #expect(line2.touches(line1))
     }
 
+    // Crossing LineStrings do not touch.
     @Test
     func lineStringsCrossingDoNotTouch() async throws {
         let line1 = try #require(LineString([
@@ -225,6 +240,7 @@ struct BooleanTouchesTests {
         #expect(line2.touches(line1) == false)
     }
 
+    // Overlapping LineStrings do not touch.
     @Test
     func lineStringsOverlappingDoNotTouch() async throws {
         let line1 = try #require(LineString([
@@ -239,6 +255,7 @@ struct BooleanTouchesTests {
         #expect(line1.touches(line2) == false)
     }
 
+    // Disjoint LineStrings do not touch.
     @Test
     func lineStringsDisjointDoNotTouch() async throws {
         let line1 = try #require(LineString([
@@ -254,6 +271,7 @@ struct BooleanTouchesTests {
 
     // MARK: - LineString × Polygon
 
+    // LineString touches polygon at vertex.
     @Test
     func lineStringTouchesPolygonAtVertex() async throws {
         let line = try #require(LineString([
@@ -272,6 +290,7 @@ struct BooleanTouchesTests {
         #expect(polygon.touches(line))
     }
 
+    // LineString inside polygon does not touch.
     @Test
     func lineStringInsidePolygonDoesNotTouch() async throws {
         let line = try #require(LineString([
@@ -291,6 +310,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Polygon × Polygon
 
+    // Polygons touch at shared vertex.
     @Test
     func polygonsTouchAtVertex() async throws {
         let poly1 = try #require(Polygon([[
@@ -312,6 +332,7 @@ struct BooleanTouchesTests {
         #expect(poly2.touches(poly1))
     }
 
+    // Overlapping polygons do not touch.
     @Test
     func polygonsOverlapDoNotTouch() async throws {
         let poly1 = try #require(Polygon([[
@@ -332,6 +353,7 @@ struct BooleanTouchesTests {
         #expect(poly1.touches(poly2) == false)
     }
 
+    // Disjoint polygons do not touch.
     @Test
     func polygonsDisjointDoNotTouch() async throws {
         let poly1 = try #require(Polygon([[
@@ -353,6 +375,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Polygon × MultiPolygon
 
+    // Polygon touches MultiPolygon at vertex.
     @Test
     func polygonTouchesMultiPolygon() async throws {
         let poly1 = try #require(Polygon([[
@@ -384,6 +407,7 @@ struct BooleanTouchesTests {
 
     // MARK: - MultiLineString × Polygon
 
+    // MultiLineString touches polygon at endpoint.
     @Test
     func multiLineStringTouchesPolygon() async throws {
         let line1 = try #require(LineString([
@@ -409,6 +433,7 @@ struct BooleanTouchesTests {
 
     // MARK: - FeatureCollection
 
+    // FeatureCollection touches via unwrapped geometry.
     @Test
     func featureCollectionTouches() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -421,6 +446,7 @@ struct BooleanTouchesTests {
         #expect(line.touches(fc))
     }
 
+    // FeatureCollection does not touch distant geometry.
     @Test
     func featureCollectionDoesNotTouch() async throws {
         let point = Point(Coordinate3D(latitude: 20.0, longitude: 20.0))
@@ -434,6 +460,7 @@ struct BooleanTouchesTests {
 
     // MARK: - GeometryCollection
 
+    // GeometryCollection touches via unwrapped geometry.
     @Test
     func geometryCollectionTouches() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -447,6 +474,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Unsupported combinations return false
 
+    // Point–Point never touches (unsupported).
     @Test
     func pointPointDoesNotTouch() async throws {
         let p1 = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
@@ -454,6 +482,7 @@ struct BooleanTouchesTests {
         #expect(p1.touches(p2) == false)
     }
 
+    // MultiPoint–MultiPoint never touches (unsupported).
     @Test
     func multiPointMultiPointDoesNotTouch() async throws {
         let mp1 = try #require(MultiPoint([
@@ -467,6 +496,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Commutativity
 
+    // Touches is commutative.
     @Test
     func touchesIsCommutative() async throws {
         let line1 = try #require(LineString([
@@ -480,7 +510,7 @@ struct BooleanTouchesTests {
         #expect(line1.touches(line2) == line2.touches(line1))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `touches(_:gridSize:)` matches manual pre-snapping.
     @Test
@@ -499,29 +529,31 @@ struct BooleanTouchesTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Touches check in EPSG:3857.
     @Test
-    func touchesEPSG3857() {
+    func touchesEPSG3857() throws {
         // Two squares touching at a single vertex in EPSG:3857.
-        let poly1 = Polygon(unchecked: [[
+        let poly1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let poly2 = Polygon(unchecked: [[
+        ]]))
+        let poly2 = try #require(Polygon([[
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 2_000.0, y: 0.0),
             Coordinate3D(x: 2_000.0, y: 1_000.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
-        ]])
+        ]]))
         #expect(poly1.touches(poly2))
         #expect(poly2.touches(poly1))
     }
 
+    // Touches check in EPSG:4978.
     @Test
     func touchesEPSG4978() async throws {
         // Two squares touching at the 1° meridian near the equator, in 4978 (ECEF).
@@ -544,27 +576,29 @@ struct BooleanTouchesTests {
         #expect(p1.touches(p2))
     }
 
+    // Touches check in noSRID.
     @Test
-    func touchesNoSRID() {
-        let poly1 = Polygon(unchecked: [[
+    func touchesNoSRID() throws {
+        let poly1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
-        let poly2 = Polygon(unchecked: [[
+        ]]))
+        let poly2 = try #require(Polygon([[
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2_000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         #expect(poly1.touches(poly2))
     }
 
     // MARK: - Antimeridian
 
+    // Line touches polygon near antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -583,6 +617,7 @@ struct BooleanTouchesTests {
 
     // MARK: - Empty / degenerate
 
+    // Empty polygon does not touch anything.
     @Test
     func emptyPolygonDoesNotTouch() async throws {
         let emptyPolygon = Polygon()
@@ -596,9 +631,12 @@ struct BooleanTouchesTests {
         #expect(emptyPolygon.touches(line) == false)
     }
 
+    // Single-point LineString touches its only coordinate.
     @Test
     func singlePointLineStringDoesNotTouch() throws {
-        let degenerateLine = LineString(unchecked: [Coordinate3D(latitude: 5.0, longitude: 10.0)])
+        let degenerateLine = LineString(unchecked: [
+            Coordinate3D(latitude: 5.0, longitude: 10.0)
+        ])
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 10.0))
         // A single-point degenerate line touches the point at its only coordinate
         #expect(degenerateLine.touches(point))

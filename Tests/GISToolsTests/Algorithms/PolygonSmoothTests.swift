@@ -130,8 +130,9 @@ struct PolygonSmoothTests {
         #expect(ring2.coordinates.count > ring1.coordinates.count)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Verifies polygon smoothing in EPSG:3857.
     @Test
     func polygonSmooth3857() async throws {
         let polygon = try #require(Polygon([[
@@ -147,6 +148,7 @@ struct PolygonSmoothTests {
         #expect(smoothed.projection == .epsg3857)
     }
 
+    // Verifies polygon smoothing in EPSG:4978.
     @Test
     func polygonSmooth4978() async throws {
         let polygon = try #require(Polygon([[
@@ -163,8 +165,8 @@ struct PolygonSmoothTests {
         #expect(smoothed.projection == .epsg4978)
     }
 
-    // MARK: - noSRID
 
+    // Verifies polygon smoothing with noSRID.
     @Test
     func polygonSmoothNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -182,6 +184,7 @@ struct PolygonSmoothTests {
 
     // MARK: - Antimeridian
 
+    // Verifies polygon smoothing for a polygon crossing the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

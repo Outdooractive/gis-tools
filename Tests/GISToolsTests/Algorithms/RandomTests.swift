@@ -4,7 +4,7 @@ import Testing
 
 struct RandomTests {
 
-    /// Tests that a random position within the world bounding box has valid coordinates.
+    // Tests random coordinate within the world bounding box.
     @Test
     func randomCoordinateInWorld() async throws {
         let pos = BoundingBox.randomCoordinate()
@@ -12,7 +12,7 @@ struct RandomTests {
         #expect(pos.longitude >= -180.0 && pos.longitude <= 180.0)
     }
 
-    /// Tests that a random position within a custom bounding box falls inside it.
+    // Tests random coordinate within a custom bounding box.
     @Test
     func randomCoordinateInBbox() async throws {
         let bbox = BoundingBox(
@@ -25,7 +25,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that randomPoints() defaults to a single point.
+    // Tests that randomPoints defaults to one point.
     @Test
     func randomPointsDefaultCount() async throws {
         let points = BoundingBox.randomPoints()
@@ -33,7 +33,7 @@ struct RandomTests {
         #expect(points.features[0].geometry is Point)
     }
 
-    /// Tests that randomPoints(count:) produces the requested number of points.
+    // Tests that randomPoints(count:) produces the requested number.
     @Test
     func randomPointsCustomCount() async throws {
         let points = BoundingBox.randomPoints(count: 5)
@@ -43,7 +43,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that random points within a bounding box lie inside it.
+    // Tests random points within a bounding box lie inside it.
     @Test
     func randomPointsInBbox() async throws {
         let bbox = BoundingBox(
@@ -58,7 +58,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that randomPolygons() produces valid polygons.
+    // Tests that randomPolygons produces valid polygons.
     @Test
     func randomPolygonsDefault() async throws {
         let polygons = BoundingBox.randomPolygons()
@@ -68,7 +68,7 @@ struct RandomTests {
         #expect(polygon.outerRing?.coordinates.count ?? 0 >= 4)
     }
 
-    /// Tests that randomPolygons(count:) produces the requested number of polygons.
+    // Tests randomPolygons(count:) produces the requested count.
     @Test
     func randomPolygonsCustomCount() async throws {
         let polygons = BoundingBox.randomPolygons(count: 3)
@@ -78,7 +78,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that random polygons within a bounding box are valid.
+    // Tests random polygons within a bounding box are valid.
     @Test
     func randomPolygonsInBbox() async throws {
         let bbox = BoundingBox(
@@ -92,7 +92,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that maxRadialLength larger than the bounding box half-size is clamped.
+    // Tests that maxRadialLength larger than half the bbox is clamped.
     @Test
     func randomPolygonsMaxRadialLengthClamped() async throws {
         let bbox = BoundingBox(
@@ -102,7 +102,7 @@ struct RandomTests {
         #expect(polygons.features.count == 1)
     }
 
-    /// Tests that randomLineStrings() produces valid line strings.
+    // Tests that randomLineStrings produces valid line strings.
     @Test
     func randomLineStringsDefault() async throws {
         let lines = BoundingBox.randomLineStrings()
@@ -111,7 +111,7 @@ struct RandomTests {
         #expect(ls.coordinates.count >= 2)
     }
 
-    /// Tests that randomLineStrings(count:) produces the requested number of line strings.
+    // Tests randomLineStrings(count:) produces the requested count.
     @Test
     func randomLineStringsCustomCount() async throws {
         let lines = BoundingBox.randomLineStrings(count: 3)
@@ -121,7 +121,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that random line strings within a bounding box have the expected vertex count.
+    // Tests random line strings within a bounding box.
     @Test
     func randomLineStringsInBbox() async throws {
         let bbox = BoundingBox(
@@ -135,7 +135,7 @@ struct RandomTests {
         }
     }
 
-    /// Tests that short random line segments are generated correctly.
+    // Tests short random line segments.
     @Test
     func randomLineStringsShortSegment() async throws {
         let bbox = BoundingBox(
@@ -146,8 +146,10 @@ struct RandomTests {
         let ls = try #require(lines.features[0].geometry as? LineString)
         #expect(ls.coordinates.count == 3)
     }
-    // MARK: - EPSG:3857
 
+    // MARK: - Projections
+
+    // Tests random points in EPSG:3857 bounding box.
     @Test
     func random3857() async throws {
         let bbox = BoundingBox(
@@ -162,6 +164,7 @@ struct RandomTests {
         }
     }
 
+    // Tests random points in EPSG:4978 bounding box.
     @Test
     func random4978() async throws {
         let bbox = BoundingBox(
@@ -175,8 +178,7 @@ struct RandomTests {
         }
     }
 
-    // MARK: - noSRID
-
+    // Tests random points in noSRID bounding box.
     @Test
     func randomNoSRID() async throws {
         let bbox = BoundingBox(
@@ -190,8 +192,7 @@ struct RandomTests {
         }
     }
 
-    // MARK: - Static methods with projection
-
+    // Tests static random point method with EPSG:3857.
     @Test
     func randomStatic3857() async throws {
         let points = BoundingBox.randomPoints(count: 3, projection: .epsg3857)
@@ -202,6 +203,7 @@ struct RandomTests {
         }
     }
 
+    // Tests static random point method with EPSG:4978.
     @Test
     func randomStatic4978() async throws {
         let points = BoundingBox.randomPoints(count: 3, projection: .epsg4978)

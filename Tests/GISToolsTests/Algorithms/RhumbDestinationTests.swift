@@ -67,6 +67,8 @@ struct RhumbDestinationTests {
         #expect(other == result)
     }
 
+    // MARK: - Projections
+
     // Tests rhumb destination with .noSRID (Cartesian coordinates).
     @Test
     func rhumbDestinationNoSRID() async throws {

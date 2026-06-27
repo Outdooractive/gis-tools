@@ -22,7 +22,7 @@ struct LengthTests {
         #expect(lineSegment.index == 0)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies segment length for EPSG:3857 (Euclidean in projected meters).
     @Test
@@ -58,10 +58,10 @@ struct LengthTests {
     // Verifies LineString length in EPSG:3857.
     @Test
     func lengthLineString3857() throws {
-        let line = LineString(unchecked: [
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg3857),
             Coordinate3D(latitude: 0.0, longitude: 10.0).projected(to: .epsg3857),
-        ])
+        ]))
         let length = line.length
         #expect(length > 1_000_000.0)
         #expect(length < 1_200_000.0)
@@ -69,6 +69,7 @@ struct LengthTests {
 
     // MARK: - Antimeridian
 
+    // Tests length calculation across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

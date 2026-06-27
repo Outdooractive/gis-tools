@@ -74,6 +74,8 @@ struct RhumbDistanceTests {
         #expect(abs(pointDistance - coordDistance) < 0.001)
     }
 
+    // MARK: - Projections
+
     // Validates rhumb distance in EPSG:3857 projection.
     @Test
     func distance3857() async throws {

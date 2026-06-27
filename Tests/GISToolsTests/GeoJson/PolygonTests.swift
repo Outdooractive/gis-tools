@@ -266,7 +266,7 @@ struct PolygonTests {
 
     // Validates creating a Polygon in EPSG:3857 using unchecked init.
     @Test
-    func init3857() {
+    func init3857() throws {
         let coords: [[Coordinate3D]] = [[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
@@ -274,7 +274,7 @@ struct PolygonTests {
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
         ]]
-        let polygon = Polygon(unchecked: coords)
+        let polygon = try #require(Polygon(coords))
 
         #expect(polygon.projection == .epsg3857)
         #expect(polygon.coordinates == coords)
@@ -282,7 +282,7 @@ struct PolygonTests {
 
     // Validates creating a Polygon in EPSG:4978 using unchecked init.
     @Test
-    func init4978() {
+    func init4978() throws {
         let coords: [[Coordinate3D]] = [[
             Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
             Coordinate3D(x: 10.0, y: 0.0, z: 100.0, projection: .epsg4978),
@@ -290,7 +290,7 @@ struct PolygonTests {
             Coordinate3D(x: 0.0, y: 10.0, z: 100.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 100.0, projection: .epsg4978),
         ]]
-        let polygon = Polygon(unchecked: coords)
+        let polygon = try #require(Polygon(coords))
 
         #expect(polygon.projection == .epsg4978)
         #expect(polygon.coordinates == coords)
@@ -298,7 +298,7 @@ struct PolygonTests {
 
     // Validates creating a Polygon in noSRID using unchecked init.
     @Test
-    func initNoSRID() {
+    func initNoSRID() throws {
         let coords: [[Coordinate3D]] = [[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
@@ -306,7 +306,7 @@ struct PolygonTests {
             Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
         ]]
-        let polygon = Polygon(unchecked: coords)
+        let polygon = try #require(Polygon(coords))
 
         #expect(polygon.projection == .noSRID)
         #expect(polygon.coordinates == coords)
@@ -337,13 +337,13 @@ struct PolygonTests {
     // Validates the bounding box of a Polygon in EPSG:3857.
     @Test
     func boundingBox3857() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
 
         let bbox = try #require(polygon.calculateBoundingBox())
 

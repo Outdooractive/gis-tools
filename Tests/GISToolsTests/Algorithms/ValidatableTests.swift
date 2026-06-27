@@ -212,6 +212,7 @@ struct ValidatableTests {
 
     // MARK: - validated property
 
+    // Validates that validated returns self when valid.
     @Test
     func validatedReturnsSelfWhenValid() async throws {
         let point = Point(Coordinate3D(latitude: 1.0, longitude: 1.0))
@@ -219,12 +220,14 @@ struct ValidatableTests {
         #expect(point.validated?.isValid == true)
     }
 
+    // Validates that validated returns nil when invalid.
     @Test
     func validatedReturnsNilWhenInvalid() async throws {
         let empty = MultiPoint()
         #expect(empty.validated == nil)
     }
 
+    // Validates validated on a FeatureCollection.
     @Test
     func validatedFeatureCollection() async throws {
         let valid = FeatureCollection([Feature(Point(Coordinate3D(latitude: 1.0, longitude: 1.0)))])
@@ -232,6 +235,8 @@ struct ValidatableTests {
         let invalid = FeatureCollection([Feature(LineString())])
         #expect(invalid.validated == nil)
     }
+
+    // MARK: - Projections
 
     // Validates that a valid Polygon in EPSG:3857 is recognized as valid.
     @Test

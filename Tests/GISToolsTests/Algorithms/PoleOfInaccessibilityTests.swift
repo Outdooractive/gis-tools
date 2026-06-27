@@ -77,7 +77,7 @@ struct PoleOfInaccessibilityTests {
         #expect(polygon.poleOfInaccessibility() == nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `poleOfInaccessibility(gridSize:)` matches manual pre-snapping.
     @Test
@@ -100,6 +100,7 @@ struct PoleOfInaccessibilityTests {
 
     // MARK: - Antimeridian
 
+    // Verifies pole of inaccessibility for a polygon near the antimeridian.
     @Test
     func antimeridian() async throws {
         // Asymmetric polygon crossing the antimeridian (partial wrap: 170° → -175°)
@@ -130,8 +131,9 @@ struct PoleOfInaccessibilityTests {
         #expect(isInsidePart)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Verifies pole of inaccessibility in EPSG:4978.
     @Test
     func poleOfInaccessibility4978() async throws {
         // Pole of inaccessibility is computation-heavy; using a ~0.1° polygon
@@ -149,30 +151,32 @@ struct PoleOfInaccessibilityTests {
         #expect(pole.coordinate.projection == .epsg4978)
     }
 
+    // Verifies pole of inaccessibility in EPSG:3857.
     @Test
     func poleOfInaccessibility3857() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 0.0),
             Coordinate3D(x: 100_000.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 100_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let pole = try #require(polygon.poleOfInaccessibility(precision: 1_000.0))
         #expect(pole.coordinate.longitude.isFinite)
         #expect(pole.coordinate.latitude.isFinite)
         #expect(pole.coordinate.projection == .epsg3857)
     }
 
+    // Verifies pole of inaccessibility with noSRID.
     @Test
     func poleOfInaccessibilityNoSRID() async throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         let pole = try #require(polygon.poleOfInaccessibility(precision: 10.0))
         #expect(pole.coordinate.longitude.isFinite)
         #expect(pole.coordinate.latitude.isFinite)

@@ -7,16 +7,16 @@ struct HausdorffDistanceTests {
     // Validates that identical geometries have zero Hausdorff distance.
     @Test
     func identicalLines() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
+        ]))
 
         let dist = a.hausdorffDistance(from: b)
         #expect(dist == 0.0)
@@ -25,14 +25,14 @@ struct HausdorffDistanceTests {
     // Validates that a line and its shifted version have the expected distance.
     @Test
     func parallelShifted() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 20.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 1.0, longitude: 10.0),
             Coordinate3D(latitude: 1.0, longitude: 20.0),
-        ])!
+        ]))
 
         let dist = a.hausdorffDistance(from: b)
         // Approx 111 km per degree of latitude at the equator
@@ -56,15 +56,15 @@ struct HausdorffDistanceTests {
     @Test
     func antimeridianOneDegreeApart() async throws {
         // Line A: lon 179.5°E (just east of the dateline)
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 179.5),
             Coordinate3D(latitude: 10.0, longitude: 179.5),
-        ])!
+        ]))
         // Line B: lon 179.5°W (just west of the dateline, 1° away)
-        let b = LineString([
+        let b = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: -179.5),
             Coordinate3D(latitude: 10.0, longitude: -179.5),
-        ])!
+        ]))
 
         let dist = a.hausdorffDistance(from: b)
         // 1° of longitude at the equator ≈ 111 km
@@ -83,14 +83,14 @@ struct HausdorffDistanceTests {
     // Validates that the Hausdorff distance works with MultiPoint.
     @Test
     func multiPoints() async throws {
-        let a = MultiPoint([
+        let a = try #require(MultiPoint([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
-        ])!
-        let b = MultiPoint([
+        ]))
+        let b = try #require(MultiPoint([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
-        ])!
+        ]))
 
         let dist = a.hausdorffDistance(from: b)
         // The farthest point in A from B is (0,10) at ~5° from (0,5) ≈ 555 km
@@ -119,14 +119,14 @@ struct HausdorffDistanceTests {
     // Validates Hausdorff distance across the antimeridian.
     @Test
     func antimeridianLineStrings() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 1.0, longitude: 170.0),
             Coordinate3D(latitude: 1.0, longitude: -170.0),
-        ])!
+        ]))
 
         let dist = a.hausdorffDistance(from: b)
         // 1° of latitude ≈ 111 km
@@ -150,22 +150,23 @@ struct HausdorffDistanceTests {
     // Validates that the Hausdorff distance is symmetric.
     @Test
     func symmetric() async throws {
-        let a = LineString([
+        let a = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
-        ])!
-        let b = LineString([
+        ]))
+        let b = try #require(LineString([
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 15.0, longitude: 0.0),
-        ])!
+        ]))
 
         let dAB = a.hausdorffDistance(from: b)
         let dBA = b.hausdorffDistance(from: a)
         #expect(abs(dAB - dBA) < 0.001)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Tests Hausdorff distance in EPSG:4978.
     @Test
     func hausdorff4978() async throws {
         let a = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
@@ -174,6 +175,7 @@ struct HausdorffDistanceTests {
         #expect(dist > 0.0)
     }
 
+    // Tests Hausdorff distance in EPSG:3857.
     @Test
     func hausdorff3857() async throws {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0))
@@ -182,6 +184,7 @@ struct HausdorffDistanceTests {
         #expect(abs(dist - 1000.0) < 0.001)
     }
 
+    // Tests Hausdorff distance with noSRID projection.
     @Test
     func hausdorffNoSRID() async throws {
         let a = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))

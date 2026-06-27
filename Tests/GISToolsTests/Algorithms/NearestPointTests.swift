@@ -53,7 +53,7 @@ struct NearestPointTests {
         #expect(ls.nearestCoordinate(from: Coordinate3D(latitude: 0.0, longitude: 0.0)) == nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `nearestCoordinate(from:gridSize:)` matches manual pre-snapping.
     @Test
@@ -91,7 +91,7 @@ struct NearestPointTests {
         #expect(withParam.point.coordinate == manual.point.coordinate)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies nearest coordinate on a line string in EPSG:3857.
     @Test
@@ -135,6 +135,7 @@ struct NearestPointTests {
 
     // MARK: - Antimeridian
 
+    // Verifies nearest vertex on a multi-point near the antimeridian.
     @Test
     func antimeridian() async throws {
         let mp = try #require(MultiPoint([

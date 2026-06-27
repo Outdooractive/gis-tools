@@ -10,6 +10,7 @@ struct LineSegmentTests {
     private let a = Coordinate3D(latitude: 0.0, longitude: 0.0)
     private let b = Coordinate3D(latitude: 10.0, longitude: 10.0)
 
+    // Validates basic LineSegment initialization and properties.
     @Test
     func initialization() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -20,6 +21,7 @@ struct LineSegmentTests {
         #expect(segment.boundingBox == nil)
     }
 
+    // Validates LineSegment initialization with an index.
     @Test
     func initializationWithIndex() async throws {
         let segment = LineSegment(first: a, second: b, index: 3)
@@ -27,6 +29,7 @@ struct LineSegmentTests {
         #expect(segment.index == 3)
     }
 
+    // Validates LineSegment initialization with bounding box calculation.
     @Test
     func initializationWithBoundingBox() async throws {
         let segment = LineSegment(first: a, second: b, calculateBoundingBox: true)
@@ -37,6 +40,7 @@ struct LineSegmentTests {
         #expect(segment.boundingBox == expectedBox)
     }
 
+    // Validates that coordinates property returns both endpoints.
     @Test
     func coordinates() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -44,6 +48,7 @@ struct LineSegmentTests {
         #expect(segment.coordinates == [a, b])
     }
 
+    // Validates that projection is inferred from coordinates.
     @Test
     func projection() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -51,6 +56,7 @@ struct LineSegmentTests {
         #expect(segment.projection == .epsg4326)
     }
 
+    // Validates projection detection for EPSG:3857 coordinates.
     @Test
     func projection3857() async throws {
         let a3857 = Coordinate3D(x: 0.0, y: 0.0)
@@ -60,6 +66,7 @@ struct LineSegmentTests {
         #expect(segment.projection == .epsg3857)
     }
 
+    // Validates projecting a LineSegment to a different projection.
     @Test
     func projected() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -74,6 +81,7 @@ struct LineSegmentTests {
         #expect(abs(projected.second.y - expectedSecond.y) < 0.001)
     }
 
+    // Validates projecting to the same projection returns identical coordinates.
     @Test
     func projectedSameProjection() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -83,6 +91,7 @@ struct LineSegmentTests {
         #expect(projected.second == segment.second)
     }
 
+    // Validates LineSegment equatable conformance.
     @Test
     func equatable() async throws {
         let s1 = LineSegment(first: a, second: b)
@@ -93,6 +102,7 @@ struct LineSegmentTests {
         #expect(s1 != s3)
     }
 
+    // Validates LineSegment hashable conformance.
     @Test
     func hashable() async throws {
         let s1 = LineSegment(first: a, second: b)
@@ -102,6 +112,7 @@ struct LineSegmentTests {
         #expect(set.count == 1)
     }
 
+    // Validates calculateBoundingBox returns the correct bounding box.
     @Test
     func calculateBoundingBox() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -113,6 +124,7 @@ struct LineSegmentTests {
         #expect(box == expectedBox)
     }
 
+    // Validates intersects with bounding boxes.
     @Test
     func intersectsBoundingBox() async throws {
         let segment = LineSegment(first: a, second: b)
@@ -128,6 +140,7 @@ struct LineSegmentTests {
     }
 
     #if canImport(CoreLocation)
+    // Validates initialization from CLLocationCoordinate2D pairs.
     @Test
     func initializationWithCLLocationCoordinate2D() async throws {
         let first = CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0)
@@ -138,6 +151,7 @@ struct LineSegmentTests {
         #expect(segment.second == Coordinate3D(second))
     }
 
+    // Validates initialization from CLLocation pairs.
     @Test
     func initializationWithCLLocation() async throws {
         let first = CLLocation(latitude: 0.0, longitude: 0.0)

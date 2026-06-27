@@ -81,8 +81,9 @@ struct PlanepointTests {
         #expect(polygon.planepoint(Coordinate3D(latitude: 5.0, longitude: 5.0)) == nil)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Verifies planepoint interpolation in EPSG:3857.
     @Test
     func planepoint3857() async throws {
         let triangle = try #require(Polygon([
@@ -99,6 +100,7 @@ struct PlanepointTests {
         #expect(z!.isFinite)
     }
 
+    // Verifies planepoint interpolation in EPSG:4978.
     @Test
     func planepoint4978() async throws {
         // Triangle in ECEF near the Earth's surface with non-zero XY area.
@@ -114,8 +116,8 @@ struct PlanepointTests {
         #expect(z.isFinite)
     }
 
-    // MARK: - noSRID
 
+    // Verifies planepoint interpolation with noSRID.
     @Test
     func planepointNoSRID() async throws {
         let triangle = try #require(Polygon([
@@ -137,14 +139,14 @@ struct PlanepointTests {
     /// The query point is between them (lon=180, the short way across).
     @Test
     func antimeridianTriangle() async throws {
-        let triangle = Polygon(unchecked: [
+        let triangle = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 179.0, altitude: 0.0),
                 Coordinate3D(latitude: 5.0, longitude: -179.0, altitude: 100.0),
                 Coordinate3D(latitude: 0.0, longitude: -179.0, altitude: 50.0),
                 Coordinate3D(latitude: 0.0, longitude: 179.0, altitude: 0.0),
             ],
-        ])
+        ]))
         // Point near the centre of the triangle
         let point = Coordinate3D(latitude: 2.5, longitude: 180.0)
         let z = try #require(triangle.planepoint(point))
@@ -154,6 +156,7 @@ struct PlanepointTests {
 
     // MARK: - TIN to point cloud
 
+    // Verifies TIN to point cloud conversion in EPSG:4326.
     @Test
     func tinToPointCloud() async throws {
         let triangle1 = try #require(Polygon([
@@ -183,6 +186,7 @@ struct PlanepointTests {
         }
     }
 
+    // Verifies TIN to point cloud conversion in EPSG:3857.
     @Test
     func tinToPointCloud3857() async throws {
         let triangle1 = try #require(Polygon([

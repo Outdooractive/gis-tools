@@ -9,7 +9,7 @@ import Testing
 /// (v0.15.7, Martinez-Rueda-Feito algorithm), the ground-truth reference.
 ///
 /// **Ported Turf.js union tests** — fixtures from `@turf/union` test suite
-/// in `TestData/Union/{in,out}/`. Comparisons use total area at 1% tolerance.
+/// in `TestData/Union/`. Comparisons use total area at 1% tolerance.
 /// Issue-regression tests verify union completes without error.
 ///
 /// Comparisons use **area, polygon count, and vertex count** rather than
@@ -48,7 +48,7 @@ struct UnionTests {
         _ name: String,
         tolerance: Double = 0.01
     ) throws -> (area: Double, tolerance: Double) {
-        let feature = try TestData.feature(package: "Union/out", name: name)
+        let feature = try TestData.feature(package: "Union", name: name + "Result")
         var total: Double = 0
         if let polygon = feature.geometry as? Polygon {
             total += polygon.area
@@ -199,21 +199,21 @@ struct UnionTests {
         return mp.polygons
     }
 
-    /// Load a pairwise Turf union reference from TestData/Union/Pairwise/.
+    /// Load a pairwise Turf union reference from TestData/Union/.
     private static func loadPairwise(_ pairName: String) throws -> MultiPolygon {
-        try TestData.multiPolygon(package: "Union/Pairwise", name: pairName)
+        try TestData.multiPolygon(package: "Union", name: pairName + "Result")
     }
 
     private static let pairwiseTests: [(i: Int, j: Int, name: String)] = [
-        (0, 1, "pair_0_1"),
-        (0, 4, "pair_0_4"),
-        (1, 2, "pair_1_2"),
-        (1, 4, "pair_1_4"),
-        (1, 5, "pair_1_5"),
-        (2, 3, "pair_2_3"),
-        (2, 5, "pair_2_5"),
-        (2, 6, "pair_2_6"),
-        (3, 6, "pair_3_6"),
+        (0, 1, "Pair0_1"),
+        (0, 4, "Pair0_4"),
+        (1, 2, "Pair1_2"),
+        (1, 4, "Pair1_4"),
+        (1, 5, "Pair1_5"),
+        (2, 3, "Pair2_3"),
+        (2, 5, "Pair2_5"),
+        (2, 6, "Pair2_6"),
+        (3, 6, "Pair3_6"),
     ]
 
     // Tests pairwise union of flat-end buffer component polygons.
@@ -236,13 +236,13 @@ struct UnionTests {
     // MARK: - Ported Turf.js fixture tests
 
     private static let turfTestNames = [
-        "union1", "union2", "union3", "union4", "not-overlapping",
+        "Union1", "Union2", "Union3", "Union4", "NotOverlapping",
     ]
 
     // Tests union against ported Turf.js fixture test cases.
     @Test(arguments: turfTestNames)
     func turfFixture(_ name: String) async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: name)
+        let fc = try TestData.featureCollection(package: "Union", name: name)
         let result = try #require(fc.union())
         let (expected, tolerance) = try Self.turfExpectedArea(name)
         let actual = Self.extractPolygons(from: result).reduce(0) { $0 + $1.area }
@@ -256,32 +256,32 @@ struct UnionTests {
     // Verifies issue #1983 case 1 (unable to complete output ring) completes without error.
     @Test
     func issueUnableToCompleteOutputRing1() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-1")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToCompleteOutputRing1983_1")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #1983 case 2 completes without error.
     @Test
     func issueUnableToCompleteOutputRing2() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-complete-output-ring-1983-2")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToCompleteOutputRing1983_2")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #2258 case 1 (unable to find segment) completes without error.
     @Test
     func issueUnableToFindSegment1() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-1")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToFindSegment2258_1")
         #expect(fc.union() != nil)
     }
 
     // Verifies issue #2258 case 2 completes without error.
     @Test
     func issueUnableToFindSegment2() async throws {
-        let fc = try TestData.featureCollection(package: "Union/in", name: "unable-to-find-segment-2258-2")
+        let fc = try TestData.featureCollection(package: "Union", name: "UnableToFindSegment2258_2")
         #expect(fc.union() != nil)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `union(with:gridSize:)` matches manual pre-snapping.
     @Test
@@ -310,25 +310,25 @@ struct UnionTests {
         #expect(withParam.polygons.count == manual.polygons.count)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     // Validates union of two overlapping polygons in EPSG:3857.
     @Test
     func union3857() async throws {
-        let p1 = Polygon(unchecked: [[
+        let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let p2 = Polygon(unchecked: [[
+        ]]))
+        let p2 = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 500.0),
             Coordinate3D(x: 1500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 1500.0),
             Coordinate3D(x: 500.0, y: 500.0),
-        ]])
+        ]]))
 
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
@@ -338,28 +338,28 @@ struct UnionTests {
     // Validates union of two overlapping polygons in noSRID.
     @Test
     func unionNoSRID() async throws {
-        let p1 = Polygon(unchecked: [[
+        let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
-        let p2 = Polygon(unchecked: [[
+        ]]))
+        let p2 = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 500.0, projection: .noSRID),
             Coordinate3D(x: 1500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 1500.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
-        ]])
+        ]]))
 
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
         #expect(result.projection == .noSRID)
     }
 
-    // MARK: - EPSG:4978
 
+    // Validates union of two overlapping polygons in EPSG:4978.
     @Test
     func union4978() async throws {
         let coords4326a: [Coordinate3D] = [
@@ -376,8 +376,8 @@ struct UnionTests {
             Coordinate3D(latitude: 1.5, longitude: 0.0),
             Coordinate3D(latitude: 0.5, longitude: 0.0),
         ]
-        let p1 = Polygon(unchecked: [coords4326a.map { $0.projected(to: .epsg4978) }])
-        let p2 = Polygon(unchecked: [coords4326b.map { $0.projected(to: .epsg4978) }])
+        let p1 = try #require(Polygon([coords4326a.map { $0.projected(to: .epsg4978) }]))
+        let p2 = try #require(Polygon([coords4326b.map { $0.projected(to: .epsg4978) }]))
         let result = try #require(p1.union(with: p2))
         #expect(result.polygons.count >= 1)
         #expect(result.projection == .epsg4978)
@@ -385,6 +385,7 @@ struct UnionTests {
 
     // MARK: - Antimeridian
 
+    // Validates union across the antimeridian.
     @Test
     func antimeridian() async throws {
         let poly1 = try #require(Polygon([[

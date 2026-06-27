@@ -91,7 +91,7 @@ struct PolygonTangentsTests {
     /// and the external point is at lon=-170.
     @Test
     func antimeridian() async throws {
-        let polygon = Polygon(unchecked: [
+        let polygon = try #require(Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 179.0),
                 Coordinate3D(latitude: 5.0, longitude: 179.0),
@@ -99,7 +99,7 @@ struct PolygonTangentsTests {
                 Coordinate3D(latitude: 0.0, longitude: -179.0),
                 Coordinate3D(latitude: 0.0, longitude: 179.0),
             ],
-        ])
+        ]))
         let point = Coordinate3D(latitude: 2.5, longitude: -170.0)
         let tangentPoints = try #require(polygon.tangentPoints(to: point))
 
@@ -115,7 +115,7 @@ struct PolygonTangentsTests {
     /// and the point is at lon=-140 (east of the date line).
     @Test
     func antimeridianPointOnOtherSide() async throws {
-        let polygon = Polygon(unchecked: [
+        let polygon = try #require(Polygon([
             [
                 Coordinate3D(latitude: -15.0, longitude: 175.0),
                 Coordinate3D(latitude: -15.0, longitude: -175.0),
@@ -123,7 +123,7 @@ struct PolygonTangentsTests {
                 Coordinate3D(latitude: -20.0, longitude: 175.0),
                 Coordinate3D(latitude: -15.0, longitude: 175.0),
             ],
-        ])
+        ]))
         let point = Coordinate3D(latitude: -17.5, longitude: -140.0)
         let tangentPoints = try #require(polygon.tangentPoints(to: point))
 
@@ -133,8 +133,9 @@ struct PolygonTangentsTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Verifies tangent points for a polygon in EPSG:3857.
     @Test
     func polygonTangents3857() async throws {
         let polygon = try #require(Polygon([
@@ -152,6 +153,7 @@ struct PolygonTangentsTests {
         #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .epsg3857 }))
     }
 
+    // Verifies tangent points for a polygon in EPSG:4978.
     @Test
     func polygonTangents4978() async throws {
         let polygon = try #require(Polygon([
@@ -169,8 +171,8 @@ struct PolygonTangentsTests {
         #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .epsg4978 }))
     }
 
-    // MARK: - noSRID
 
+    // Verifies tangent points for a polygon with noSRID.
     @Test
     func polygonTangentsNoSRID() async throws {
         let polygon = try #require(Polygon([

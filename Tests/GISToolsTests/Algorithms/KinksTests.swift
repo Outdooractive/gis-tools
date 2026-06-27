@@ -29,10 +29,9 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
-    /// Tests that a self-intersecting (bow-tie) polygon detects kinks.
+    // Tests that a self-intersecting (bow-tie) polygon detects kinks.
     @Test
     func polygonWithKinks() async throws {
-        // Bow-tie polygon: self-intersecting
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
@@ -72,22 +71,6 @@ struct KinksTests {
             ],
         ]))
         let result = mls.kinks()
-        // The second line crosses the first
-        #expect(result.points.isNotEmpty)
-    }
-
-    // Tests that kink detection works through the Feature wrapper type.
-    @Test
-    func featureKinks() async throws {
-        let polygon = try #require(Polygon([[
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-            Coordinate3D(latitude: 10.0, longitude: 10.0),
-            Coordinate3D(latitude: 0.0, longitude: 10.0),
-            Coordinate3D(latitude: 10.0, longitude: 0.0),
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]]))
-        let feature = Feature(polygon)
-        let result = feature.kinks()
         #expect(result.points.isNotEmpty)
     }
 
@@ -99,9 +82,9 @@ struct KinksTests {
         #expect(result.points.isEmpty)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
-    // Validates that `kinks(gridSize:)` matches manual pre-snapping.
+    // Tests kink detection with grid size snapping.
     @Test
     func kinksWithGridSize() async throws {
         let polygon = try #require(Polygon([[
@@ -119,70 +102,85 @@ struct KinksTests {
         #expect(withParam.points.count == manual.points.count)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Feature / FeatureCollection
 
-    // Tests kink detection on simple and self-intersecting polygons in EPSG:3857.
+    // Tests kink detection on a Feature.
     @Test
-    func kinks3857() async {
-        let simple = Polygon(unchecked: [[
+    func featureKinks() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let feature = Feature(polygon)
+        let result = feature.kinks()
+        #expect(result.points.isNotEmpty)
+    }
+
+    // MARK: - Projections
+
+    // Tests kink detection in EPSG:3857.
+    @Test
+    func kinks3857() async throws {
+        let simple = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let simpleResult = simple.kinks()
-        #expect(simpleResult.points.isEmpty)
+        ]]))
+        #expect(simple.kinks().points.isEmpty)
 
-        let bowtie = Polygon(unchecked: [[
+        let bowtie = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let bowtieResult = bowtie.kinks()
-        #expect(bowtieResult.points.isNotEmpty)
+        ]]))
+        #expect(bowtie.kinks().points.isNotEmpty)
     }
 
-    // Tests kink detection on simple and self-intersecting polygons in EPSG:4978.
+    // Tests kink detection on self-intersecting polygons in EPSG:4978.
     @Test
-    func kinks4978() async {
-        let simple = Polygon(unchecked: [[
+    func kinks4978() async throws {
+        let simple = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1000.0, y: 1000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 1000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]])
-        let simpleResult = simple.kinks()
-        #expect(simpleResult.points.isEmpty)
+        ]]))
+        #expect(simple.kinks().points.isEmpty)
 
-        let bowtie = Polygon(unchecked: [[
+        let bowtie = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1000.0, y: 1000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 1000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]])
-        let bowtieResult = bowtie.kinks()
-        #expect(bowtieResult.points.isNotEmpty) // self-intersection detected
+        ]]))
+        #expect(bowtie.kinks().points.isNotEmpty)
     }
 
+    // Tests kink detection on simple polygons in noSRID.
     @Test
-    func kinksNoSRID() async {
-        let simple = Polygon(unchecked: [[
+    func kinksNoSRID() async throws {
+        let simple = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ]])
+        ]]))
         #expect(simple.kinks().points.isEmpty)
     }
 
     // MARK: - Antimeridian
 
+    // Tests kink detection near the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[
@@ -198,7 +196,7 @@ struct KinksTests {
 
     // MARK: - Unkink polygon
 
-    /// Tests that a simple convex polygon remains unchanged.
+    // Tests that a simple polygon remains unchanged after unkink.
     @Test
     func simplePolygonUnkinked() async throws {
         let coords: [Coordinate3D] = [
@@ -214,7 +212,7 @@ struct KinksTests {
         #expect(result[0].isValid)
     }
 
-    /// Tests that a self-intersecting (bow-tie) polygon is split into simple polygons.
+    // Tests that a self-intersecting bow-tie polygon is split into simple polygons.
     @Test
     func selfIntersectingPolygonUnkinked() async throws {
         let coords: [Coordinate3D] = [
@@ -232,7 +230,7 @@ struct KinksTests {
         }
     }
 
-    /// Tests that a multi-polygon with one self-intersecting polygon is handled correctly.
+    // Tests that a multi-polygon with one self-intersecting polygon is handled correctly.
     @Test
     func multiPolygonUnkinked() async throws {
         let coords1: [Coordinate3D] = [
@@ -259,7 +257,7 @@ struct KinksTests {
         }
     }
 
-    /// Tests that a valid (non-self-intersecting) polygon remains unchanged.
+    // Tests that a valid non-self-intersecting polygon remains unchanged.
     @Test
     func validPolygonUnchanged() async throws {
         let coords: [Coordinate3D] = [
@@ -273,7 +271,7 @@ struct KinksTests {
         #expect(result.count >= 1)
     }
 
-    /// Tests that a polygon with a hole (inner ring) is handled correctly.
+    // Tests that a polygon with a hole is handled correctly by unkink.
     @Test
     func polygonWithHoleUnkinked() async throws {
         let outer: [Coordinate3D] = [
@@ -296,6 +294,19 @@ struct KinksTests {
         for p in result {
             #expect(p.isValid)
         }
+    }
+
+    // MARK: - Edge cases
+
+    // Tests kink detection on a minimal two-point line.
+    @Test
+    func kinksWithSinglePoint() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let result = line.kinks()
+        #expect(result.points.isEmpty)
     }
 
 }

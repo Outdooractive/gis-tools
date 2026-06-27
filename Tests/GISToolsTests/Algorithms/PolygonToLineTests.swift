@@ -3,6 +3,7 @@ import Testing
 
 struct PolygonToLineTests {
 
+    // Verifies converting a single polygon to line strings.
     @Test func singlePolygon() async throws {
         let polygon = try #require(Polygon([
             [
@@ -19,6 +20,7 @@ struct PolygonToLineTests {
         #expect(result[0].lineStrings[0].coordinates.count == polygon.rings[0].coordinates.count)
     }
 
+    // Verifies converting a multi-polygon to line strings.
     @Test func multiPolygon() async throws {
         let polygon1 = try #require(Polygon([
             [
@@ -45,6 +47,7 @@ struct PolygonToLineTests {
         #expect(result[1].lineStrings[0].coordinates.count == polygon2.rings[0].coordinates.count)
     }
 
+    // Verifies converting a polygon with a hole to line strings.
     @Test func polygonWithHole() async throws {
         let polygon = try #require(Polygon([
             [
@@ -66,8 +69,9 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
         #expect(result[0].lineStrings.count == 2)
     }
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Verifies converting a polygon to line strings in EPSG:3857.
     @Test
     func polygonToLine3857() async throws {
         let polygon = try #require(Polygon([[
@@ -81,6 +85,7 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
     }
 
+    // Verifies converting a polygon to line strings in EPSG:4978.
     @Test
     func polygonToLine4978() async throws {
         let polygon = try #require(Polygon([[
@@ -94,6 +99,7 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
     }
 
+    // Verifies converting a polygon to line strings with noSRID.
     @Test
     func polygonToLineNoSRID() async throws {
         let polygon = try #require(Polygon([[

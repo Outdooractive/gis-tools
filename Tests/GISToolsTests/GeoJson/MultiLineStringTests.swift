@@ -93,7 +93,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 2.0, longitude: 2.0),
             Coordinate3D(latitude: 3.0, longitude: 3.0),
         ]))
-        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+        let multiLineString = try #require(MultiLineString([lineStringA, lineStringB]))
 
         let projected = multiLineString.projected(to: .epsg3857)
 
@@ -111,7 +111,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
         ]))
-        let multiLineString = MultiLineString(unchecked: [lineStringA])
+        let multiLineString = try #require(MultiLineString([lineStringA]))
 
         let projected = multiLineString.projected(to: .epsg4978)
 
@@ -128,7 +128,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
         ]))
-        let multiLineString = MultiLineString(unchecked: [lineStringA])
+        let multiLineString = try #require(MultiLineString([lineStringA]))
 
         let projected = multiLineString.projected(to: .noSRID)
 
@@ -140,12 +140,12 @@ struct MultiLineStringTests {
 
     // Validates creating a MultiLineString in EPSG:3857 using unchecked init.
     @Test
-    func init3857() {
-        let lineString = LineString(unchecked: [
+    func init3857() throws {
+        let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
-        ])
-        let multiLineString = MultiLineString(unchecked: [lineString])
+        ]))
+        let multiLineString = try #require(MultiLineString([lineString]))
 
         #expect(multiLineString.projection == .epsg3857)
         #expect(multiLineString.lineStrings.count == 1)
@@ -164,7 +164,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 9.0, longitude: 9.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]))
-        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+        let multiLineString = try #require(MultiLineString([lineStringA, lineStringB]))
 
         let bbox = try #require(multiLineString.calculateBoundingBox())
 
@@ -177,15 +177,15 @@ struct MultiLineStringTests {
     // Validates the bounding box of a MultiLineString in EPSG:3857.
     @Test
     func boundingBox3857() async throws {
-        let lineStringA = LineString(unchecked: [
+        let lineStringA = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 5.0, y: 5.0),
-        ])
-        let lineStringB = LineString(unchecked: [
+        ]))
+        let lineStringB = try #require(LineString([
             Coordinate3D(x: 5.0, y: 5.0),
             Coordinate3D(x: 10.0, y: 10.0),
-        ])
-        let multiLineString = MultiLineString(unchecked: [lineStringA, lineStringB])
+        ]))
+        let multiLineString = try #require(MultiLineString([lineStringA, lineStringB]))
 
         let bbox = try #require(multiLineString.calculateBoundingBox())
 
@@ -203,7 +203,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
         ]))
-        let multiLineString = MultiLineString(unchecked: [lineStringA])
+        let multiLineString = try #require(MultiLineString([lineStringA]))
 
         let overlapping = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -234,7 +234,7 @@ struct MultiLineStringTests {
             Coordinate3D(latitude: 5.0, longitude: 5.0),
         ]))
 
-        var multiLineString = MultiLineString(unchecked: [lineStringA])
+        var multiLineString = try #require(MultiLineString([lineStringA]))
 
         multiLineString.appendLineString(lineStringB)
         #expect(multiLineString.lineStrings.count == 2)

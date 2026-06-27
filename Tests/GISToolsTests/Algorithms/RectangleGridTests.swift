@@ -4,6 +4,7 @@ import Testing
 
 struct RectangleGridTests {
 
+    // Tests basic rectangle grid generation from a bounding box.
     @Test
     func basicRectangleGrid() async throws {
         let bbox = BoundingBox(
@@ -22,6 +23,7 @@ struct RectangleGridTests {
         }
     }
 
+    // Tests rectangle grid cell count for a larger bounding box.
     @Test
     func rectangleGridCellSize() async throws {
         let bbox = BoundingBox(
@@ -35,6 +37,7 @@ struct RectangleGridTests {
         #expect(grid.features.count == 16)
     }
 
+    // Tests rectangle grid generation with a mask polygon.
     @Test
     func rectangleGridWithMask() async throws {
         let bbox = BoundingBox(
@@ -57,6 +60,7 @@ struct RectangleGridTests {
         #expect(grid.features.count <= 4)
     }
 
+    // Tests that a grid smaller than one cell returns empty.
     @Test
     func rectangleGridEmpty() async throws {
         let bbox = BoundingBox(
@@ -69,8 +73,9 @@ struct RectangleGridTests {
         #expect(grid.features.isEmpty)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Tests rectangle grid in EPSG:3857 (Web Mercator).
     @Test
     func rectangleGrid3857() async throws {
         let bbox = BoundingBox(
@@ -80,6 +85,7 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Tests rectangle grid crossing the origin in EPSG:3857.
     @Test
     func rectangleGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
@@ -89,8 +95,8 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
+    // Tests rectangle grid in EPSG:4978 (ECEF Cartesian).
     @Test
     func rectangleGrid4978() async throws {
         let bbox = BoundingBox(
@@ -100,8 +106,8 @@ struct RectangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
+    // Tests rectangle grid with noSRID projection.
     @Test
     func rectangleGridNoSRID() async throws {
         let bbox = BoundingBox(
@@ -113,6 +119,7 @@ struct RectangleGridTests {
 
     // MARK: - Antimeridian
 
+    // Tests rectangle grid near the antimeridian.
     @Test
     func antimeridian() async throws {
         let bbox = BoundingBox(

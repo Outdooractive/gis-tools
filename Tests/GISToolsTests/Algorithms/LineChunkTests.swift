@@ -6,16 +6,19 @@ import Testing
 
 struct LineChunkTests {
 
-    private let lineString = LineString([
-        Coordinate3D(latitude: 40.250184183819854, longitude: -86.28524780273438),
-        Coordinate3D(latitude: 40.17887331434696, longitude: -85.98587036132812),
-        Coordinate3D(latitude: 40.08857859823707, longitude: -85.97213745117188),
-        Coordinate3D(latitude: 40.15578608609647, longitude: -85.77987670898438),
-    ])!
+    private func makeLineString() throws -> LineString {
+        try #require(LineString([
+            Coordinate3D(latitude: 40.250184183819854, longitude: -86.28524780273438),
+            Coordinate3D(latitude: 40.17887331434696, longitude: -85.98587036132812),
+            Coordinate3D(latitude: 40.08857859823707, longitude: -85.97213745117188),
+            Coordinate3D(latitude: 40.15578608609647, longitude: -85.77987670898438),
+        ]))
+    }
 
     // Tests that chunking a line string into short segments produces the expected number and positions of chunks.
     @Test
     func lineChunkShort() async throws {
+        let lineString = try makeLineString()
         let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(5, .miles)).lineStrings
         #expect(chunks.count == 7)
 
@@ -34,6 +37,7 @@ struct LineChunkTests {
     // Tests that chunking a line string with segments longer than the line returns a single chunk equal to the original.
     @Test
     func lineChunkLong() async throws {
+        let lineString = try makeLineString()
         let chunks = lineString.chunked(segmentLength: GISTool.convertToMeters(50, .miles)).lineStrings
         #expect(chunks.count == 1)
         #expect(chunks[0] == lineString)
@@ -42,6 +46,7 @@ struct LineChunkTests {
     // Tests that dropping intermediate coordinates during chunking produces simplified chunks with fewer vertices.
     @Test
     func lineChunkDropIntermediates() async throws {
+        let lineString = try makeLineString()
         let chunks = lineString.chunked(segmentLength: lineString.length / 2).lineStrings
         #expect(chunks.count == 2)
         #expect(chunks[0].coordinates.count == 3)
@@ -58,7 +63,7 @@ struct LineChunkTests {
     func evenlyDivided() async throws {
         let a = Coordinate3D.zero
         let b = a.destination(distance: 100.0, bearing: 90.0)
-        let line = LineString(unchecked: [a, b])
+        let line = try #require(LineString([a, b]))
         let dividedLine = line.evenlyDivided(segmentLength: 1.0)
 
         #expect(line.allCoordinates.count == 2)
@@ -70,8 +75,9 @@ struct LineChunkTests {
         }
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Tests line chunking in EPSG:3857.
     @Test
     func lineChunk3857() async throws {
         let lineString = try #require(LineString([
@@ -83,6 +89,7 @@ struct LineChunkTests {
         #expect(chunks.count > 1)
     }
 
+    // Validates line chunking in EPSG:4978.
     @Test
     func lineChunk4978() async throws {
         let lineString = try #require(LineString([
@@ -94,8 +101,21 @@ struct LineChunkTests {
         #expect(chunks.count > 1)
     }
 
+    // Validates line chunking in noSRID.
+    @Test
+    func lineChunkNoSRID() async throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+        ]))
+        let chunks = lineString.chunked(segmentLength: 200.0).lineStrings
+        #expect(chunks.count > 1)
+    }
+
     // MARK: - Antimeridian
 
+    // Tests line chunking across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([
@@ -109,6 +129,16 @@ struct LineChunkTests {
                 #expect(abs(coord.longitude) > 150.0)
             }
         }
+    }
+
+    // MARK: - Edge cases
+
+    // Tests chunking an empty line returns no chunks.
+    @Test
+    func lineChunkEmpty() async throws {
+        let empty = LineString(unchecked: [])
+        let chunks = empty.chunked(segmentLength: 100.0).lineStrings
+        #expect(chunks.isEmpty)
     }
 
 }

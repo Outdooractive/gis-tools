@@ -154,6 +154,8 @@ struct ConversionTests {
         #expect(abs(result.longitudeDegrees - 1.0) < 0.01)
     }
 
+    // MARK: - Projections
+
     // Validates projecting a coordinate from EPSG:4326 to EPSG:3857 and back.
     @Test
     func conversion3857() async throws {

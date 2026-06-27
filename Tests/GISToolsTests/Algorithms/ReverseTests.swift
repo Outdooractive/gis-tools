@@ -3,7 +3,7 @@ import Testing
 
 struct ReverseTests {
 
-    // Tests reversing the coordinate order of a LineString and MultiLineString.
+    // Tests reversing coordinate order in LineString and MultiLineString.
     @Test
     func lineString() async throws {
         let lineString = try #require(LineString([
@@ -40,7 +40,7 @@ struct ReverseTests {
         #expect(multiLineStringReversed.lineStrings[1].coordinates.map(\.latitude) == [5.0, 4.0, 3.0, 2.0, 1.0, 0.0])
     }
 
-    // Tests reversing the geometry order within a FeatureCollection and the coordinate order of each line geometry.
+    // Tests reversing geometry order in FeatureCollection and coordinate order within each.
     @Test
     func featureCollection() async throws {
         let featureCollection = FeatureCollection([
@@ -84,8 +84,7 @@ struct ReverseTests {
         #expect(reversed.features[0].allCoordinates == [Coordinate3D(latitude: 40.0, longitude: 40.0)])
     }
 
-    // Tests that GeometryCollection reverses coordinates within each geometry
-    // but preserves the order of geometries.
+    // Tests reversing coordinates within GeometryCollection geometries.
     @Test
     func geometryCollection() async throws {
         let geometryCollection = GeometryCollection([
@@ -101,18 +100,18 @@ struct ReverseTests {
         ])
         let reversed = geometryCollection.reversed
 
-        // Geometry order is preserved
         #expect(reversed.geometries[0].type == .lineString)
         #expect(reversed.geometries[1].type == .point)
         #expect(reversed.geometries[2].type == .multiLineString)
 
-        // Coordinates within each geometry are reversed
         #expect(reversed.geometries[0].allCoordinates.map(\.latitude) == [1.0, 0.0])
         #expect(reversed.geometries[1].allCoordinates.map(\.latitude) == [20.0])
         #expect(reversed.geometries[2].allCoordinates.map(\.latitude) == [1.0, 0.0])
     }
-    // MARK: - Projection tests
 
+    // MARK: - Projections
+
+    // Tests reverse in EPSG:3857 (Web Mercator).
     @Test
     func reverse3857() async throws {
         let lineString = try #require(LineString([
@@ -124,6 +123,7 @@ struct ReverseTests {
         #expect(reversed.coordinates.count == 3)
     }
 
+    // Validates reverse in EPSG:4978.
     @Test
     func reverse4978() async throws {
         let c0 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -134,6 +134,7 @@ struct ReverseTests {
         #expect(reversed.coordinates.count == 3)
     }
 
+    // Validates reverse in noSRID.
     @Test
     func reverseNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -145,6 +146,16 @@ struct ReverseTests {
         #expect(reversed.coordinates.count == 3)
         #expect(reversed.coordinates.first == Coordinate3D(
             x: 100.0, y: 100.0, projection: .noSRID))
+    }
+
+    // MARK: - Edge cases
+
+    // Tests reversing a single point returns itself.
+    @Test
+    func reverseSinglePoint() async throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let reversed = point.reversed
+        #expect(reversed.coordinate == point.coordinate)
     }
 
 }

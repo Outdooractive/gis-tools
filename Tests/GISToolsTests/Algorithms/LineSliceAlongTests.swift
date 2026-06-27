@@ -3,10 +3,26 @@ import Testing
 
 struct LineSliceAlongTests {
 
+    private static let inputLineString = LineString(unchecked: [
+        Coordinate3D(latitude: 22.350075806124867, longitude: 113.99414062499999),
+        Coordinate3D(latitude: 23.241346102386135, longitude: 116.76269531249999),
+        Coordinate3D(latitude: 24.367113562651276, longitude: 117.7734375),
+        Coordinate3D(latitude: 25.20494115356912, longitude: 118.828125),
+        Coordinate3D(latitude: 26.78484736105119, longitude: 119.794921875),
+        Coordinate3D(latitude: 28.110748760633534, longitude: 120.80566406250001),
+        Coordinate3D(latitude: 29.49698759653577, longitude: 121.59667968749999),
+        Coordinate3D(latitude: 31.12819929911196, longitude: 121.59667968749999),
+        Coordinate3D(latitude: 32.84267363195431, longitude: 120.84960937499999),
+        Coordinate3D(latitude: 34.125447565116126, longitude: 119.83886718750001),
+        Coordinate3D(latitude: 35.31736632923788, longitude: 118.69628906249999),
+        Coordinate3D(latitude: 36.80928470205937, longitude: 121.4208984375),
+        Coordinate3D(latitude: 37.37015718405753, longitude: 122.82714843749999),
+    ])
+
     // Verifies that slicing a line between two valid distances returns the correct start and end coordinates.
     @Test
     func slice() async throws {
-        let lineString = try TestData.lineString(package: "LineSliceAlong", name: "LineSliceAlong")
+        let lineString = Self.inputLineString
 
         let start: Double = try #require(GISTool.convert(length: 500.0, from: .miles, to: .meters))
         let startCoordinate: Coordinate3D = lineString.coordinateAlong(distance: start)
@@ -22,7 +38,7 @@ struct LineSliceAlongTests {
     // Verifies that slicing when the stop distance exceeds the line length still returns valid start and end coordinates.
     @Test
     func sliceOvershoot() async throws {
-        let lineString = try TestData.lineString(package: "LineSliceAlong", name: "LineSliceAlong")
+        let lineString = Self.inputLineString
 
         let start: Double = try #require(GISTool.convert(length: 500.0, from: .miles, to: .meters))
         let startCoordinate: Coordinate3D = lineString.coordinateAlong(distance: start)
@@ -76,6 +92,9 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // MARK: - Projections
+
+    // Tests line slicing along in EPSG:3857 projection.
     @Test
     func lineSliceAlong3857() async throws {
         let lineString = try #require(LineString([
@@ -86,6 +105,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests line slicing along in EPSG:4978 projection.
     @Test
     func lineSliceAlong4978() async throws {
         let lineString = try #require(LineString([
@@ -96,6 +116,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests line slicing along in noSRID projection.
     @Test
     func lineSliceAlongNoSRID() async throws {
         let lineString = try #require(LineString([
@@ -106,6 +127,7 @@ struct LineSliceAlongTests {
         #expect(sliced.coordinates.count >= 2)
     }
 
+    // Tests that slicing preserves altitude values.
     @Test
     func lineSliceAlongPreservesAltitude() async throws {
         let lineString = try #require(LineString([
@@ -121,6 +143,7 @@ struct LineSliceAlongTests {
 
     // MARK: - Antimeridian
 
+    // Tests line slicing along across the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

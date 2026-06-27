@@ -4,6 +4,7 @@ import Testing
 
 struct PointGridTests {
 
+    // Verifies basic point grid generation within a bounding box.
     @Test
     func basicPointGrid() async throws {
         let bbox = BoundingBox(
@@ -25,6 +26,7 @@ struct PointGridTests {
         }
     }
 
+    // Verifies smaller cell spacing produces more grid points.
     @Test
     func pointGridSpacing() async throws {
         let bbox = BoundingBox(
@@ -36,6 +38,7 @@ struct PointGridTests {
         #expect(grid.features.count > 10)
     }
 
+    // Verifies point grid with a mask polygon filters points.
     @Test
     func pointGridWithMask() async throws {
         let bbox = BoundingBox(
@@ -58,8 +61,9 @@ struct PointGridTests {
         #expect(maskedGrid.features.count > 0)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Verifies point grid generation in EPSG:3857.
     @Test
     func pointGrid3857() async throws {
         let bbox = BoundingBox(
@@ -69,6 +73,7 @@ struct PointGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Verifies point grid crossing the origin in EPSG:3857.
     @Test
     func pointGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
@@ -78,8 +83,8 @@ struct PointGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
+    // Verifies point grid generation in EPSG:4978.
     @Test
     func pointGrid4978() async throws {
         let bbox = BoundingBox(
@@ -89,8 +94,8 @@ struct PointGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
+    // Verifies point grid generation with noSRID.
     @Test
     func pointGridNoSRID() async throws {
         let bbox = BoundingBox(
@@ -102,6 +107,7 @@ struct PointGridTests {
 
     // MARK: - Antimeridian
 
+    // Verifies point grid near the antimeridian.
     @Test
     func antimeridian() async throws {
         let bbox = BoundingBox(

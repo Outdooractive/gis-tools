@@ -5,6 +5,7 @@ struct TileCoverTests {
 
     // MARK: - Point
 
+    // Tests tile cover for a single point at zoom level 1.
     @Test
     func pointTileCover() {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 90.0))
@@ -12,6 +13,7 @@ struct TileCoverTests {
         #expect(tiles == [MapTile(x: 1, y: 0, z: 1)])
     }
 
+    // Tests tile cover for a MultiPoint.
     @Test
     func multiPointTileCover() throws {
         let multiPoint = try #require(MultiPoint([
@@ -27,6 +29,7 @@ struct TileCoverTests {
 
     // MARK: - Line string (edge walking)
 
+    // Tests LineString tile cover using edge walking.
     @Test
     func lineStringQuadTileCover() throws {
         let lineString = try #require(LineString([
@@ -44,6 +47,7 @@ struct TileCoverTests {
         ]))
     }
 
+    // Tests diagonal LineString covers multiple intermediate tiles.
     @Test
     func lineStringDiagonalCoversIntermediateTiles() throws {
         let lineString = try #require(LineString([
@@ -61,6 +65,7 @@ struct TileCoverTests {
         #expect(distinctY.count >= 2)
     }
 
+    // Tests horizontal LineString edge crosses multiple tiles.
     @Test
     func lineStringHorizontalEdgeCrossesMultipleTiles() throws {
         // A horizontal line crossing the equator spanning many tiles
@@ -79,6 +84,7 @@ struct TileCoverTests {
         #expect(uniqueY.count == 1)
     }
 
+    // Tests vertical LineString edge crosses multiple tiles.
     @Test
     func lineStringVerticalEdgeCrossesMultipleTiles() throws {
         let lineString = try #require(LineString([
@@ -96,6 +102,7 @@ struct TileCoverTests {
 
     // MARK: - Polygon
 
+    // Tests polygon tile cover covers interior tiles.
     @Test
     func polygonTileCover() throws {
         let polygon = try #require(Polygon([[
@@ -113,6 +120,7 @@ struct TileCoverTests {
         ]))
     }
 
+    // Tests polygon tile cover with a larger interior area.
     @Test
     func polygonTileCoverWithInterior() throws {
         // A polygon covering a 3×3 block of tiles at zoom 2.
@@ -129,6 +137,7 @@ struct TileCoverTests {
         #expect(tiles.count >= 4)
     }
 
+    // Tests MultiPolygon tile cover merges tiles from both polygons.
     @Test
     func multiPolygonTileCover() throws {
         let polygon1 = try #require(Polygon([[
@@ -150,6 +159,7 @@ struct TileCoverTests {
         #expect(tiles.contains(MapTile(x: 2, y: 1, z: 2)))
     }
 
+    // Tests MultiLineString tile cover merges tiles from both lines.
     @Test
     func multiLineStringTileCover() throws {
         let line1 = try #require(LineString([
@@ -170,6 +180,7 @@ struct TileCoverTests {
 
     // MARK: - Feature / FeatureCollection
 
+    // Tests Feature tile cover delegates to geometry.
     @Test
     func featureTileCover() {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 90.0))
@@ -178,6 +189,7 @@ struct TileCoverTests {
         #expect(tiles == [MapTile(x: 1, y: 0, z: 1)])
     }
 
+    // Tests FeatureCollection tile cover merges tiles from all features.
     @Test
     func featureCollectionTileCover() {
         let point1 = Point(Coordinate3D(latitude: 45.0, longitude: 90.0))
@@ -192,6 +204,7 @@ struct TileCoverTests {
 
     // MARK: - BoundingBox
 
+    // Tests BoundingBox tile cover at zoom level 2.
     @Test
     func boundingBoxTileCover() {
         let bbox = BoundingBox(
@@ -208,6 +221,7 @@ struct TileCoverTests {
 
     // MARK: - Edge cases
 
+    // Tests tile cover at zoom level 0 returns single world tile.
     @Test
     func zoomLevelZero() {
         let point = Point(Coordinate3D(latitude: 45.0, longitude: 90.0))
@@ -215,6 +229,7 @@ struct TileCoverTests {
         #expect(tiles == [MapTile(x: 0, y: 0, z: 0)])
     }
 
+    // Tests tile cover at high zoom level returns single tile.
     @Test
     func highZoomLevel() {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
@@ -223,6 +238,7 @@ struct TileCoverTests {
         #expect(tiles.first?.z == 18)
     }
 
+    // Tests coordinate on tile boundary returns exactly one tile.
     @Test
     func coordinateOnTileBoundary() {
         // These coordinates fall exactly on tile boundaries at zoom 1
@@ -233,14 +249,16 @@ struct TileCoverTests {
         #expect(tiles.count == 1)
     }
 
+    // Tests empty MultiPoint initialization returns nil.
     @Test
     func emptyMultiPointReturnsNil() {
         let multiPoint: MultiPoint? = MultiPoint([] as [Coordinate3D])
         #expect(multiPoint == nil)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Tests tile cover in EPSG:3857 (Web Mercator).
     @Test
     func tileCover3857() async throws {
         let bbox = BoundingBox(
@@ -250,6 +268,7 @@ struct TileCoverTests {
         #expect(!tiles.isEmpty)
     }
 
+    // Tests tile cover with noSRID projection returns empty.
     @Test
     func tileCoverNoSRID() async throws {
         let bbox = BoundingBox(
@@ -259,8 +278,8 @@ struct TileCoverTests {
         #expect(tiles.isEmpty)
     }
 
-    // MARK: - EPSG:4978
 
+    // Tests tile cover in EPSG:4978 (ECEF Cartesian).
     @Test
     func tileCover4978() async throws {
         let bbox = BoundingBox(
@@ -272,6 +291,7 @@ struct TileCoverTests {
 
     // MARK: - Anti-meridian
 
+    // Tests LineString tile cover crossing the anti-meridian.
     @Test
     func lineStringAcrossAntiMeridian() throws {
         // A line crossing the anti-meridian (180° longitude).
@@ -288,6 +308,7 @@ struct TileCoverTests {
         ]))
     }
 
+    // Tests BoundingBox tile cover crossing the anti-meridian.
     @Test
     func boundingBoxAcrossAntiMeridian() {
         // A bounding box crossing the anti-meridian is internally
@@ -303,6 +324,7 @@ struct TileCoverTests {
         #expect(xs.contains(3))
     }
 
+    // Tests polygon tile cover crossing the anti-meridian.
     @Test
     func polygonAcrossAntiMeridian() throws {
         // A polygon that crosses the anti-meridian, represented

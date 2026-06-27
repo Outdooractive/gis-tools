@@ -43,13 +43,13 @@ struct PolygonizeTests {
     /// A closed LineString via the `polygonize()` shortcut.
     @Test
     func polygonizeShortcut() async throws {
-        let square = LineString(unchecked: [
+        let square = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])
+        ]))
         var fc = FeatureCollection([Feature(square)])
         fc.polygonize()
         #expect(fc.features.count == 1)
@@ -110,16 +110,18 @@ struct PolygonizeTests {
         #expect(result.features.isEmpty)
     }
 
+    // MARK: - Projections
+
     /// A closed LineString in EPSG:3857 forms one polygon.
     @Test
     func polygonize3857() async throws {
-        let square = LineString(unchecked: [
+        let square = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 0.0),
             Coordinate3D(x: 1000.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 1000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ])
+        ]))
         let multiLine = try #require(MultiLineString([square]))
         let result = multiLine.polygonized()
 
@@ -136,7 +138,7 @@ struct PolygonizeTests {
         let c10 = Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978)
         let c11 = Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978)
         let c01 = Coordinate3D(latitude: 0.0, longitude: 0.009).projected(to: .epsg4978)
-        let square = LineString(unchecked: [c00, c10, c11, c01, c00])
+        let square = try #require(LineString([c00, c10, c11, c01, c00]))
         let multiLine = try #require(MultiLineString([square]))
         let result = multiLine.polygonized()
 
@@ -145,17 +147,17 @@ struct PolygonizeTests {
         #expect(polygon.projection == .epsg4978)
     }
 
-    // MARK: - noSRID
 
+    // Verifies polygonize with noSRID.
     @Test
     func polygonizeNoSRID() async throws {
-        let square = LineString(unchecked: [
+        let square = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 100.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-        ])
+        ]))
         let result = square.polygonized()
         #expect(result.features.count == 1)
         let polygon = try #require(result.features[0].geometry as? Polygon)

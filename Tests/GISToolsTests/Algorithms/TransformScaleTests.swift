@@ -54,8 +54,9 @@ struct TransformScaleTests {
         #expect(scaled4 == result4)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Validates scaling in EPSG:3857.
     @Test
     func transformScale3857() async throws {
         let polygon = try #require(Polygon([[
@@ -70,6 +71,7 @@ struct TransformScaleTests {
         #expect(result.projection == .epsg3857)
     }
 
+    // Validates scaling in EPSG:4978.
     @Test
     func transformScale4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
@@ -82,6 +84,7 @@ struct TransformScaleTests {
         #expect(result.projection == .epsg4978)
     }
 
+    // Validates scaling with noSRID.
     @Test
     func transformScaleNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -98,6 +101,7 @@ struct TransformScaleTests {
 
     // MARK: - Antimeridian
 
+    // Validates scaling across the antimeridian.
     @Test
     func antimeridian() async throws {
         // coordinates straddling the date line

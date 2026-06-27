@@ -147,8 +147,9 @@ struct TransformCoordinatesTests {
         #expect(featureCollectionTransformed == featureCollectionResult)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Validates coordinate transformation in EPSG:3857.
     @Test
     func transformCoordinates3857() async throws {
         let lineString = try #require(LineString([
@@ -164,6 +165,7 @@ struct TransformCoordinatesTests {
         #expect(result.coordinates.count == 2)
     }
 
+    // Validates coordinate transformation in EPSG:4978.
     @Test
     func transformCoordinates4978() async throws {
         let lineString = try #require(LineString([
@@ -181,6 +183,7 @@ struct TransformCoordinatesTests {
         #expect(result.coordinates[0].projection == .epsg4978)
     }
 
+    // Validates coordinate transformation with noSRID.
     @Test
     func transformCoordinatesNoSRID() async throws {
         let polygon = try #require(Polygon([[
@@ -201,6 +204,7 @@ struct TransformCoordinatesTests {
 
     // MARK: - Antimeridian
 
+    // Validates coordinate transformation across the antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

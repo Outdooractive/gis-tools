@@ -104,6 +104,7 @@ struct ClustersTests {
 
     // MARK: - Antimeridian
 
+    // Validates DBSCAN handles points near the antimeridian.
     @Test
     func antimeridian() async throws {
         let points: [Point] = [
@@ -119,6 +120,8 @@ struct ClustersTests {
     }
 
     // MARK: - Projection-specific
+
+    // MARK: - Projections
 
     /// Validates DBSCAN clustering works with EPSG:3857 (Web Mercator).
     @Test
@@ -625,6 +628,7 @@ struct ClusterBenchmarks {
 
     // MARK: - K-means benchmarks
 
+    // Benchmarks K-means clustering with 100 points.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceKmeans100() {
         let fc = FeatureCollection(Self.performanceInput100)
@@ -633,6 +637,7 @@ struct ClusterBenchmarks {
         }
     }
 
+    // Benchmarks K-means clustering with 500 points.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceKmeans500() {
         let fc = FeatureCollection(Self.performanceInput500)
@@ -641,6 +646,7 @@ struct ClusterBenchmarks {
         }
     }
 
+    // Benchmarks weighted K-means clustering with 500 points.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceWeightedKmeans500() {
         let fc = FeatureCollection(Self.performanceInputWeighted500)
@@ -651,6 +657,7 @@ struct ClusterBenchmarks {
 
     // MARK: - DBSCAN benchmarks
 
+    // Benchmarks DBSCAN clustering with 100 points.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceDbscan100() {
         let fc = FeatureCollection(Self.performanceInput100)
@@ -659,6 +666,7 @@ struct ClusterBenchmarks {
         }
     }
 
+    // Benchmarks DBSCAN clustering with 500 points.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceDbscan500() {
         let fc = FeatureCollection(Self.performanceInput500)
@@ -670,6 +678,7 @@ struct ClusterBenchmarks {
     // MARK: - Natural Earth benchmarks (requires shapefile trait)
 
     #if EnableShapefileSupport
+    // Benchmarks K-means on the Natural Earth dataset.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthKmeans() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
@@ -680,6 +689,7 @@ struct ClusterBenchmarks {
         }
     }
 
+    // Benchmarks weighted K-means on the Natural Earth dataset.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthWeightedKmeans() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")
@@ -690,6 +700,7 @@ struct ClusterBenchmarks {
         }
     }
 
+    // Benchmarks DBSCAN on the Natural Earth dataset.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceNaturalEarthDbscan() {
         let url = TestData.shapefileUrl(package: "Shapefiles", name: "ne_10m_populated_places_simple")

@@ -102,6 +102,8 @@ struct ConvexHullTests {
         #expect(hull.isValid)
     }
 
+    // MARK: - Projections
+
     // Validates the convex hull of a 1000×1000 m polygon in EPSG:3857.
     @Test
     func convexHull3857() async throws {

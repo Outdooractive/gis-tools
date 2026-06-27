@@ -12,7 +12,7 @@ struct PointToLineDistanceTests {
         #expect(lineString.distanceFrom(coordinate: coordinate) == 111_195.0802335329)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `distanceFrom(coordinate:gridSize:)` matches manual pre-snapping.
     @Test
@@ -31,7 +31,7 @@ struct PointToLineDistanceTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies distance from point to line string in EPSG:3857.
     @Test
@@ -73,6 +73,7 @@ struct PointToLineDistanceTests {
 
     // MARK: - Antimeridian
 
+    // Verifies distance from point to line near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

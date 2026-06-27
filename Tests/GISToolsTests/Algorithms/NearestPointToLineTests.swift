@@ -46,8 +46,9 @@ struct NearestPointToLineTests {
         #expect(ls.nearestCoordinate(from: []) == nil)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Verifies nearest coordinate to a line in EPSG:3857.
     @Test
     func nearestCoordinateFrom3857() async throws {
         let ls = try #require(LineString([
@@ -62,6 +63,7 @@ struct NearestPointToLineTests {
         #expect(result.coordinate == Coordinate3D(x: 0.0, y: 10_000.0))
     }
 
+    // Verifies nearest coordinate to a line in EPSG:4978.
     @Test
     func nearestCoordinateFrom4978() async throws {
         let ls = try #require(LineString([
@@ -77,6 +79,7 @@ struct NearestPointToLineTests {
         #expect(result.distance >= 0.0)
     }
 
+    // Verifies nearest coordinate to a line with noSRID.
     @Test
     func nearestCoordinateFromNoSRID() async throws {
         let ls = try #require(LineString([
@@ -94,6 +97,7 @@ struct NearestPointToLineTests {
 
     // MARK: - Antimeridian
 
+    // Verifies nearest coordinate on a line near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([

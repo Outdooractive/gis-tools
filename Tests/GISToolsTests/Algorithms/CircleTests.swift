@@ -21,8 +21,20 @@ struct CircleTests {
         }
     }
 
-    // MARK: - Projection tests
+    // MARK: - Altitude / Z
 
+    // Validates that circle preserves altitude on all generated coordinates.
+    @Test
+    func circlePreservesAltitude() async throws {
+        let center = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 500.0)
+        let circle = try #require(center.circle(radius: 1000.0, steps: 8))
+        let ring = try #require(circle.outerRing)
+        #expect(ring.coordinates.allSatisfy({ $0.altitude == 500.0 }))
+    }
+
+    // MARK: - Projections
+
+    // Validates circle generation in EPSG:3857.
     @Test
     func circle3857() async throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0))
@@ -30,6 +42,7 @@ struct CircleTests {
         #expect(circle.isValid)
     }
 
+    // Validates circle generation in EPSG:4978.
     @Test
     func circle4978() async throws {
         let point = Point(Coordinate3D(
@@ -38,6 +51,7 @@ struct CircleTests {
         #expect(circle.isValid)
     }
 
+    // Validates circle generation in noSRID.
     @Test
     func circleNoSRID() async throws {
         let point = Point(Coordinate3D(
@@ -48,6 +62,7 @@ struct CircleTests {
 
     // MARK: - Antimeridian
 
+    // Validates circle generation near the antimeridian.
     @Test
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
@@ -55,14 +70,13 @@ struct CircleTests {
         #expect(circle.isValid)
     }
 
-    // MARK: - Altitude preservation
+    // MARK: - Edge cases
 
+    // Validates that a zero radius returns nil.
     @Test
-    func circlePreservesAltitude() async throws {
-        let center = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 500.0)
-        let circle = try #require(center.circle(radius: 1000.0, steps: 8))
-        let ring = try #require(circle.outerRing)
-        #expect(ring.coordinates.allSatisfy({ $0.altitude == 500.0 }))
+    func circleZeroRadius() async throws {
+        let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
+        #expect(point.circle(radius: 0.0) == nil)
     }
 
 }

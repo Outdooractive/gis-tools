@@ -219,7 +219,7 @@ struct BooleanPointInPolygonTests {
         #expect(fc.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `contains(gridSize:)` on Polygon matches manual pre-snapping.
     @Test
@@ -283,36 +283,39 @@ struct BooleanPointInPolygonTests {
         #expect(withParam == manual)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
+    // Point in polygon in EPSG:3857.
     @Test
-    func pointInPolygon3857() {
-        let polygon = Polygon(unchecked: [[
+    func pointInPolygon3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let point = Point(Coordinate3D(x: 500.0, y: 500.0))
         #expect(polygon.contains(point))
     }
 
+    // Point in polygon in EPSG:4978.
     @Test
-    func pointInPolygon4978() {
-        let polygon = Polygon(unchecked: [[
+    func pointInPolygon4978() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]])
+        ]]))
         let point = Point(Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978))
         #expect(polygon.contains(point))
     }
 
     // MARK: - Antimeridian
 
+    // Point in polygon near antimeridian.
     @Test
     func antimeridian() async throws {
         let polygon = try #require(Polygon([[

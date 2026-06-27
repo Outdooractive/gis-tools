@@ -15,11 +15,11 @@ struct MinimumBoundingCircleTests {
 
     /// Validates that two points define a circle with half their distance as radius.
     @Test
-    func radiusTwoPoints() {
-        let line = LineString(unchecked: [
+    func radiusTwoPoints() throws {
+        let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
-        ])
+        ]))
         let r = line.minimumBoundingRadius()
         #expect(r != nil)
         if let r { #expect(abs(r - 5.0) < 0.001) }
@@ -27,14 +27,14 @@ struct MinimumBoundingCircleTests {
 
     /// Validates the MBC radius of a 10x10 square: half the diagonal (5√2 ≈ 7.07).
     @Test
-    func radiusSquare() {
-        let square = Polygon(unchecked: [[
+    func radiusSquare() throws {
+        let square = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let r = square.minimumBoundingRadius()
         #expect(r != nil)
         if let r { #expect(abs(r - 5.0 * sqrt(2.0)) < 0.01) }
@@ -42,14 +42,14 @@ struct MinimumBoundingCircleTests {
 
     /// Validates the MBC radius of a pentagon matching the shapely example (radius 5.0).
     @Test
-    func radiusPentagon() {
-        let polygon = Polygon(unchecked: [[
+    func radiusPentagon() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 5.0, longitude: 10.0),
             Coordinate3D(latitude: 10.0, longitude: 5.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 5.0),
-        ]])
+        ]]))
         let r = polygon.minimumBoundingRadius()
         #expect(r != nil)
         if let r { #expect(abs(r - 5.0) < 0.01) }
@@ -73,14 +73,14 @@ struct MinimumBoundingCircleTests {
 
     /// Validates that a square produces a 65-vertex circle polygon (64 steps + close).
     @Test
-    func circleSquare() {
-        let square = Polygon(unchecked: [[
+    func circleSquare() throws {
+        let square = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let circle = square.minimumBoundingCircle()
         #expect(circle != nil)
         #expect(circle?.projection == square.projection)
@@ -89,39 +89,20 @@ struct MinimumBoundingCircleTests {
 
     /// Validates that the `steps` parameter controls polygon vertex count (12 steps → 13 coords).
     @Test
-    func circleStepsCount() {
-        let polygon = Polygon(unchecked: [[
+    func circleStepsCount() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 10.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ]])
+        ]]))
         let circle = polygon.minimumBoundingCircle(steps: 12)
         #expect(circle != nil)
         #expect(circle?.projection == polygon.projection)
         if let circle { #expect(circle.outerRing?.coordinates.count == 13) }
     }
-
-    // MARK: - Antimeridian
-
-    /// A square crossing the antimeridian: MBC radius should be half the diagonal (~7.07 deg).
-    @Test
-    func radiusAntimeridian() {
-        let square = Polygon(unchecked: [[
-            Coordinate3D(latitude: 0.0, longitude: 179.0),
-            Coordinate3D(latitude: 10.0, longitude: 179.0),
-            Coordinate3D(latitude: 10.0, longitude: -179.0),
-            Coordinate3D(latitude: 0.0, longitude: -179.0),
-            Coordinate3D(latitude: 0.0, longitude: 179.0),
-        ]])
-        let r = square.minimumBoundingRadius()
-        #expect(r != nil)
-        // Diagonal = sqrt(10^2 + 2^2) ≈ 10.2, half = ~5.1
-        if let r { #expect(abs(r - 5.1) < 0.5) }
-    }
-
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
     /// Validates that a multi-point in EPSG:3857 produces a valid minimum bounding circle.
     @Test
@@ -157,8 +138,8 @@ struct MinimumBoundingCircleTests {
         #expect(radius! > 0.0)
     }
 
-    // MARK: - noSRID
 
+    // Validates minimum bounding circle in noSRID.
     @Test
     func minimumBoundingCircleNoSRID() async throws {
         let mp = try #require(MultiPoint([
@@ -176,4 +157,23 @@ struct MinimumBoundingCircleTests {
         #expect(radius != nil)
         #expect(radius! > 0.0)
     }
+
+    // MARK: - Antimeridian
+
+    /// A square crossing the antimeridian: MBC radius should be half the diagonal (~7.07 deg).
+    @Test
+    func radiusAntimeridian() throws {
+        let square = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+        ]]))
+        let r = square.minimumBoundingRadius()
+        #expect(r != nil)
+        // Diagonal = sqrt(10^2 + 2^2) ≈ 10.2, half = ~5.1
+        if let r { #expect(abs(r - 5.1) < 0.5) }
+    }
+
 }

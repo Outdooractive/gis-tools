@@ -90,7 +90,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 0.0, longitude: 100.8),
             Coordinate3D(latitude: 0.0, longitude: 100.2)
         ]]]))
-        let string = multiPolygon.asJsonString()!
+        let string = try #require(multiPolygon.asJsonString())
 
         #expect(multiPolygon.projection == .epsg4326)
         #expect(string.contains("\"type\":\"MultiPolygon\""))
@@ -143,9 +143,9 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 3.0, longitude: 103.0),
         ]]))
 
-        let multiA = MultiPolygon([polygonA, polygonB])!
-        let multiB = MultiPolygon([polygonA, polygonB])!
-        let multiBShifted = MultiPolygon([polygonA, polygonBShifted])!
+        let multiA = try #require(MultiPolygon([polygonA, polygonB]))
+        let multiB = try #require(MultiPolygon([polygonA, polygonB]))
+        let multiBShifted = try #require(MultiPolygon([polygonA, polygonBShifted]))
 
         // Same polygons → equal
         #expect(multiA == multiB)
@@ -161,7 +161,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 11.0, longitude: 100.0),
             Coordinate3D(latitude: 10.0, longitude: 100.0),
         ]]))
-        let multiC = MultiPolygon([polygonA, polygonC])!
+        let multiC = try #require(MultiPolygon([polygonA, polygonC]))
         #expect(multiA != multiC)
     }
 
@@ -184,7 +184,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 2.0, longitude: 3.0),
             Coordinate3D(latitude: 2.0, longitude: 2.0),
         ]]))
-        let multiPolygon = MultiPolygon(unchecked: [polygonA, polygonB])
+        let multiPolygon = try #require(MultiPolygon([polygonA, polygonB]))
 
         let projected = multiPolygon.projected(to: .epsg3857)
 
@@ -205,7 +205,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let multiPolygon = MultiPolygon(unchecked: [polygonA])
+        let multiPolygon = try #require(MultiPolygon([polygonA]))
 
         let projected = multiPolygon.projected(to: .epsg4978)
 
@@ -225,7 +225,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let multiPolygon = MultiPolygon(unchecked: [polygonA])
+        let multiPolygon = try #require(MultiPolygon([polygonA]))
 
         let projected = multiPolygon.projected(to: .noSRID)
 
@@ -237,15 +237,15 @@ struct MultiPolygonTests {
 
     // Validates creating a MultiPolygon in EPSG:3857 using unchecked init.
     @Test
-    func init3857() {
-        let polygon = Polygon(unchecked: [[
+    func init3857() throws {
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 0.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 10.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let multiPolygon = MultiPolygon(unchecked: [polygon])
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([polygon]))
 
         #expect(multiPolygon.projection == .epsg3857)
         #expect(multiPolygon.polygons.count == 1)
@@ -270,7 +270,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 9.0, longitude: 10.0),
             Coordinate3D(latitude: 9.0, longitude: 9.0),
         ]]))
-        let multiPolygon = MultiPolygon(unchecked: [polygonA, polygonB])
+        let multiPolygon = try #require(MultiPolygon([polygonA, polygonB]))
 
         let bbox = try #require(multiPolygon.calculateBoundingBox())
 
@@ -283,21 +283,21 @@ struct MultiPolygonTests {
     // Validates the bounding box of a MultiPolygon in EPSG:3857.
     @Test
     func boundingBox3857() async throws {
-        let polygonA = Polygon(unchecked: [[
+        let polygonA = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 5.0, y: 0.0),
             Coordinate3D(x: 5.0, y: 5.0),
             Coordinate3D(x: 0.0, y: 5.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
-        let polygonB = Polygon(unchecked: [[
+        ]]))
+        let polygonB = try #require(Polygon([[
             Coordinate3D(x: 5.0, y: 5.0),
             Coordinate3D(x: 10.0, y: 5.0),
             Coordinate3D(x: 10.0, y: 10.0),
             Coordinate3D(x: 5.0, y: 10.0),
             Coordinate3D(x: 5.0, y: 5.0),
-        ]])
-        let multiPolygon = MultiPolygon(unchecked: [polygonA, polygonB])
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([polygonA, polygonB]))
 
         let bbox = try #require(multiPolygon.calculateBoundingBox())
 
@@ -318,7 +318,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let multiPolygon = MultiPolygon(unchecked: [polygonA])
+        let multiPolygon = try #require(MultiPolygon([polygonA]))
 
         let overlapping = BoundingBox(
             southWest: Coordinate3D(latitude: 0.5, longitude: 0.5),
@@ -379,7 +379,7 @@ struct MultiPolygonTests {
             Coordinate3D(latitude: 4.0, longitude: 4.0),
         ]]))
 
-        var multiPolygon = MultiPolygon(unchecked: [polygonA])
+        var multiPolygon = try #require(MultiPolygon([polygonA]))
 
         multiPolygon.appendPolygon(polygonB)
         #expect(multiPolygon.polygons.count == 2)

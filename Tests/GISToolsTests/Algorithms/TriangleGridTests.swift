@@ -4,6 +4,7 @@ import Testing
 
 struct TriangleGridTests {
 
+    // Validates basic triangle grid generation.
     @Test
     func basicTriangleGrid() async throws {
         let bbox = BoundingBox(
@@ -22,6 +23,7 @@ struct TriangleGridTests {
         }
     }
 
+    // Validates triangle grid with small cells.
     @Test
     func triangleGridSmallCells() async throws {
         let bbox = BoundingBox(
@@ -32,6 +34,7 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Validates triangle grid with a mask polygon.
     @Test
     func triangleGridWithMask() async throws {
         let bbox = BoundingBox(
@@ -51,8 +54,9 @@ struct TriangleGridTests {
         #expect(grid.features.count <= 8)
     }
 
-    // MARK: - EPSG:3857
+    // MARK: - Projections
 
+    // Validates triangle grid in EPSG:3857.
     @Test
     func triangleGrid3857() async throws {
         let bbox = BoundingBox(
@@ -62,6 +66,7 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
+    // Validates triangle grid in EPSG:3857 crossing origin.
     @Test
     func triangleGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
@@ -71,8 +76,8 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - EPSG:4978
 
+    // Validates triangle grid in EPSG:4978.
     @Test
     func triangleGrid4978() async throws {
         let bbox = BoundingBox(
@@ -82,8 +87,8 @@ struct TriangleGridTests {
         #expect(grid.features.count > 0)
     }
 
-    // MARK: - noSRID
 
+    // Validates triangle grid with noSRID.
     @Test
     func triangleGridNoSRID() async throws {
         let bbox = BoundingBox(
@@ -95,6 +100,7 @@ struct TriangleGridTests {
 
     // MARK: - Antimeridian
 
+    // Validates triangle grid across the antimeridian.
     @Test
     func antimeridian() async throws {
         let bbox = BoundingBox(

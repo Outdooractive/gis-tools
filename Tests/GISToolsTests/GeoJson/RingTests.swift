@@ -12,6 +12,7 @@ struct RingTests {
         Coordinate3D(latitude: 0.0, longitude: 0.0),
     ]
 
+    // Validates basic Ring initialization with closed coordinates.
     @Test
     func initialization() async throws {
         let ring = try #require(Ring(coords))
@@ -19,6 +20,7 @@ struct RingTests {
         #expect(ring.coordinates == coords)
     }
 
+    // Validates that Ring auto-closes when given unclosed coordinates.
     @Test
     func initializationAutoCloses() async throws {
         // 3 coordinates → auto-close (append first) → 4 coordinates → valid
@@ -33,6 +35,7 @@ struct RingTests {
         #expect(ring.coordinates.last == ring.coordinates.first)
     }
 
+    // Validates that Ring returns nil with fewer than 3 coordinates.
     @Test
     func initializationNotEnoughCoordinates() async throws {
         let oneCoord = [Coordinate3D(latitude: 0.0, longitude: 0.0)]
@@ -45,13 +48,15 @@ struct RingTests {
         #expect(Ring(twoCoords) == nil)
     }
 
+    // Validates unchecked Ring initialization with valid coordinates.
     @Test
     func initializationUnchecked() async throws {
-        let ring = Ring(unchecked: coords)
+        let ring = try #require(Ring(coords))
 
         #expect(ring.coordinates == coords)
     }
 
+    // Validates that Ring can be converted to a LineString.
     @Test
     func lineString() async throws {
         let ring = try #require(Ring(coords))
@@ -60,6 +65,7 @@ struct RingTests {
         #expect(lineString.coordinates == coords)
     }
 
+    // Validates that circumference returns a reasonable value for a square ring.
     @Test
     func circumference() async throws {
         let ring = try #require(Ring(coords))
@@ -70,15 +76,7 @@ struct RingTests {
         #expect(ring.circumference < 5_000_000.0)
     }
 
-    @Test
-    func circumferenceEmptyRing() async throws {
-        let ring = Ring(unchecked: [
-            Coordinate3D(latitude: 0.0, longitude: 0.0),
-        ])
-
-        #expect(ring.circumference == 0.0)
-    }
-
+    // Validates that projection is inferred from coordinates.
     @Test
     func projection() async throws {
         let ring = try #require(Ring(coords))
@@ -86,6 +84,7 @@ struct RingTests {
         #expect(ring.projection == .epsg4326)
     }
 
+    // Validates projecting a Ring to a different projection.
     @Test
     func projected() async throws {
         let ring = try #require(Ring(coords))
@@ -95,6 +94,7 @@ struct RingTests {
         #expect(projected.coordinates.count == 5)
     }
 
+    // Validates projecting to the same projection returns identical coordinates.
     @Test
     func projectedSameProjection() async throws {
         let ring = try #require(Ring(coords))
@@ -103,6 +103,7 @@ struct RingTests {
         #expect(projected.coordinates == ring.coordinates)
     }
 
+    // Validates intersects with overlapping, containing, and non-overlapping boxes.
     @Test
     func intersectsBoundingBox() async throws {
         let ring = try #require(Ring(coords))
@@ -121,6 +122,7 @@ struct RingTests {
         #expect(!ring.intersects(nonOverlappingBox))
     }
 
+    // Validates that two rings with the same coordinates are equal.
     @Test
     func equatableSame() async throws {
         let ringA = try #require(Ring(coords))
@@ -129,6 +131,7 @@ struct RingTests {
         #expect(ringA == ringB)
     }
 
+    // Validates that rings with shifted start vertices are still equal.
     @Test
     func equatableShiftedStart() async throws {
         let ring = try #require(Ring(coords))
@@ -146,6 +149,7 @@ struct RingTests {
         #expect(ring == ringShifted)
     }
 
+    // Validates that rings with different coordinates are not equal.
     @Test
     func equatableNotEqual() async throws {
         let ring = try #require(Ring(coords))

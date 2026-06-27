@@ -165,6 +165,8 @@ struct VoronoiTests {
         }
     }
 
+    // MARK: - Projections
+
     // Validates that points in EPSG:3857 produce a valid Voronoi diagram.
     @Test
     func voronoi3857() throws {
@@ -211,8 +213,8 @@ struct VoronoiTests {
         }
     }
 
-    // MARK: - EPSG:4978
 
+    // Validates Voronoi in EPSG:4978.
     @Test
     func voronoi4978() throws {
         let coords: [Coordinate3D] = [

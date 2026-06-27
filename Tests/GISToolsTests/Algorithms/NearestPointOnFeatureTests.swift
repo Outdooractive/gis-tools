@@ -81,7 +81,7 @@ struct NearestPointOnFeatureTests {
         #expect(result.coordinate == Coordinate3D(latitude: 10.0, longitude: 0.0))
     }
 
-    // MARK: - gridSize
+    // MARK: - Grid size
 
     // Validates that `nearestCoordinateOnFeature(from:gridSize:)` matches manual pre-snapping.
     @Test
@@ -104,7 +104,7 @@ struct NearestPointOnFeatureTests {
         #expect(abs(withParam.distance - manual.distance) < 0.0000000001)
     }
 
-    // MARK: - Projection tests
+    // MARK: - Projections
 
     // Verifies nearest coordinate on a line string in EPSG:3857.
     @Test
@@ -123,13 +123,13 @@ struct NearestPointOnFeatureTests {
     // Verifies a point inside a polygon in EPSG:3857 returns itself.
     @Test
     func nearestOnPolygonInside3857() throws {
-        let polygon = Polygon(unchecked: [[
+        let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 0.0),
             Coordinate3D(x: 1_000.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 1_000.0),
             Coordinate3D(x: 0.0, y: 0.0),
-        ]])
+        ]]))
         let ref = Coordinate3D(x: 500.0, y: 500.0)
         let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
         #expect(result.coordinate == ref)
@@ -143,7 +143,7 @@ struct NearestPointOnFeatureTests {
         let c10 = Coordinate3D(latitude: 1.0, longitude: 0.0).projected(to: .epsg4978)
         let c11 = Coordinate3D(latitude: 1.0, longitude: 1.0).projected(to: .epsg4978)
         let c01 = Coordinate3D(latitude: 0.0, longitude: 1.0).projected(to: .epsg4978)
-        let polygon = Polygon(unchecked: [[c00, c10, c11, c01, c00]])
+        let polygon = try #require(Polygon([[c00, c10, c11, c01, c00]]))
         let ref = Coordinate3D(latitude: 2.0, longitude: 0.5).projected(to: .epsg4978)
         let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
         #expect(result.coordinate.projection == .epsg4978)
@@ -152,6 +152,7 @@ struct NearestPointOnFeatureTests {
 
     // MARK: - Antimeridian
 
+    // Verifies nearest coordinate on a line string near the antimeridian.
     @Test
     func antimeridian() async throws {
         let lineString = try #require(LineString([
