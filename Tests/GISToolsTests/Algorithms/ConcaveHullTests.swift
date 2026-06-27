@@ -4,6 +4,28 @@ import Testing
 
 struct ConcaveHullTests {
 
+    // MARK: - Reference tests
+
+    private static let concaveFixtures: [(name: String, maxEdgeKm: Double)] = [
+        ("LineWithNoise", 200.0),
+    ]
+
+    @Test(arguments: concaveFixtures)
+    private func turfConcaveHullFixture(_ fixture: (name: String, maxEdgeKm: Double)) async throws {
+        let mp = try TestData.multiPoint(package: "ConcaveHull", name: fixture.name)
+        let maxEdge = GISTool.convertToMeters(fixture.maxEdgeKm, .kilometers)
+
+        guard let result = mp.concaveHull(maxEdgeLength: maxEdge) else {
+            Issue.record("Expected non-nil concave hull for \(fixture.name)")
+            return
+        }
+
+        #expect(result.polygons.isNotEmpty, "\(fixture.name): hull has no polygons")
+        for poly in result.polygons {
+            #expect(poly.isValid, "\(fixture.name): hull polygon is invalid")
+        }
+    }
+
     // Validates basic concave hull of points forming a rough circle.
     @Test
     func concaveHullBasic() async throws {

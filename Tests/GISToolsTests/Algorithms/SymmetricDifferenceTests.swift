@@ -4,6 +4,43 @@ import Foundation
 
 struct SymmetricDifferenceTests {
 
+    // MARK: - Reference tests
+
+    private static let overlayFixtures = [
+        "DisjointSquares",
+        "FullyContained",
+        "LShapeOverlap",
+    ]
+
+    private func loadOverlayPolygon(_ name: String, _ suffix: String) throws -> Polygon {
+        try TestData.polygon(package: "Overlay", name: name + suffix)
+    }
+
+    @Test(arguments: overlayFixtures)
+    private func turfSymDiffFixture(_ name: String) async throws {
+        let a = try loadOverlayPolygon(name, "A")
+        let b = try loadOverlayPolygon(name, "B")
+        let expected = try TestData.multiPolygon(package: "Overlay", name: name + "SymDiffResult")
+
+        guard let result = a.symmetricDifference(with: b) else {
+            if expected.polygons.isNotEmpty {
+                Issue.record("Expected non-nil symmetric difference for \(name)")
+            }
+            return
+        }
+
+        let resultArea = result.polygons.reduce(0) { $0 + $1.area }
+        let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
+        if expectedArea > 0 {
+            let ratio = resultArea / expectedArea
+            #expect(ratio > 0.60 && ratio < 1.40,
+                    "\(name): area ratio \(ratio) outside [0.60, 1.40]")
+        }
+        else {
+            #expect(resultArea == 0, "\(name): expected empty but got area \(resultArea)")
+        }
+    }
+
     // Validates that two overlapping squares produce an L-shaped symmetric difference.
     @Test
     func overlappingSquares() async throws {

@@ -1,0 +1,10 @@
+{
+  "southWest": {
+    "lat": 0.0,
+    "lon": 0.0
+  },
+  "northEast": {
+    "lat": 20.0,
+    "lon": 20.0
+  }
+}

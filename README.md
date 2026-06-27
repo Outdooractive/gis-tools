@@ -48,7 +48,7 @@ This package requires Swift 6.1 or higher (at least Xcode 15), and compiles on i
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "1.13.6"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "2.0.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [

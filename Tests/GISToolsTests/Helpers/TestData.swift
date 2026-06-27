@@ -40,6 +40,20 @@ struct TestData {
         try MultiPolygon(jsonString: stringFromFile(package: package, name: name))!
     }
 
+    static func boundingBox(package: String, name: String) throws -> BoundingBox {
+        let data = try dataFromFile(package: package, name: name)
+        let json = try JSONSerialization.jsonObject(with: data)
+        guard let dict = json as? [String: [String: Double]],
+              let sw = dict["southWest"], let ne = dict["northEast"],
+              let swLat = sw["lat"], let swLon = sw["lon"],
+              let neLat = ne["lat"], let neLon = ne["lon"]
+        else { throw TestDataError.invalidBoundingBox }
+
+        return BoundingBox(
+            southWest: Coordinate3D(latitude: swLat, longitude: swLon),
+            northEast: Coordinate3D(latitude: neLat, longitude: neLon))
+    }
+
     // MARK: -
 
     static func stringFromFile(package: String, name: String) throws -> String {
@@ -75,4 +89,8 @@ struct TestData {
             .appendingPathComponent(name)
     }
 
+}
+
+enum TestDataError: Error {
+    case invalidBoundingBox
 }
