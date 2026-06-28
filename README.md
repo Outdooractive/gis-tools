@@ -23,6 +23,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
 - [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — reads and writes GPX 1.1 files (.gpx)
+- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — reads FIT activity files (.fit, read-only)
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -914,6 +915,16 @@ GPX support has been extracted into its own package: [**gis-tools-gpx**](https:/
 ```swift
 dependencies: [
     .package(url: "https://github.com/Outdooractive/gis-tools-gpx", from: "1.0.0"),
+]
+```
+
+# FIT (.fit)
+
+FIT support has been extracted into its own package: [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit).
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/Outdooractive/gis-tools-fit", from: "1.0.0"),
 ]
 ```
 
