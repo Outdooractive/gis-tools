@@ -83,39 +83,51 @@ struct MapTileTests {
         #expect(MapTile(coordinate: coordinate, atZoom: 18) == MapTile(x: 138513, y: 91601, z: 18))
     }
 
-    // Verifies siblings returns the other tiles sharing the same parent.
+    // Verifies siblings returns the other tiles sharing the same parent (quad-tree).
     @Test
     func siblings() async throws {
-        // z=0: the only tile returns itself.
-        #expect(MapTile(x: 0, y: 0, z: 0).siblings == [MapTile(x: 0, y: 0, z: 0)])
+        // z=0: no other tiles exist.
+        #expect(MapTile(x: 0, y: 0, z: 0).siblings.isEmpty)
 
-        // z=1, tile (0,0): parent is (0,0,0), children (0,0,1)..(1,1,1), exclude self.
+        // z=1, tile (0,0): parent (0,0,0) has 4 children; exclude self → 3.
         let s1 = MapTile(x: 0, y: 0, z: 1).siblings
         #expect(s1.count == 3)
         #expect(s1.contains(MapTile(x: 1, y: 0, z: 1)))
         #expect(s1.contains(MapTile(x: 0, y: 1, z: 1)))
         #expect(s1.contains(MapTile(x: 1, y: 1, z: 1)))
         #expect(!s1.contains(MapTile(x: 0, y: 0, z: 1)))
+    }
 
-        // z=2, tile (3,3) (SE corner): siblings are the other 3 quadrants of (1,1,1).
-        let s2 = MapTile(x: 3, y: 3, z: 2).siblings
-        #expect(s2.count == 3)
-        #expect(s2.contains(MapTile(x: 2, y: 2, z: 2)))
-        #expect(s2.contains(MapTile(x: 3, y: 2, z: 2)))
-        #expect(s2.contains(MapTile(x: 2, y: 3, z: 2)))
+    // Verifies neighbours returns the tile and all valid 8-directional adjacent tiles.
+    @Test
+    func neighbours() async throws {
+        // z=0: no other tiles exist.
+        #expect(MapTile(x: 0, y: 0, z: 0).neighbours.isEmpty)
 
-        // z=2, tile (0,0) (NW corner): siblings are the other 3 quadrants of (0,0,1).
-        let s3 = MapTile(x: 0, y: 0, z: 2).siblings
-        #expect(s3.count == 3)
-        #expect(s3.contains(MapTile(x: 1, y: 0, z: 2)))
-        #expect(s3.contains(MapTile(x: 0, y: 1, z: 2)))
-        #expect(s3.contains(MapTile(x: 1, y: 1, z: 2)))
+        // z=1, tile (0,0): 5 of 9 offsets out of world → 4 (self + E + S + SE).
+        let n1 = MapTile(x: 0, y: 0, z: 1).neighbours
+        #expect(n1.count == 4)
+        #expect(n1.contains(MapTile(x: 0, y: 0, z: 1)))
+        #expect(n1.contains(MapTile(x: 1, y: 0, z: 1)))
+        #expect(n1.contains(MapTile(x: 0, y: 1, z: 1)))
+        #expect(n1.contains(MapTile(x: 1, y: 1, z: 1)))
 
-        // Invalid out-of-world tile returns empty siblings.
-        #expect(MapTile(x: -1, y: 0, z: 2).siblings.isEmpty)
-        #expect(MapTile(x: 0, y: -1, z: 2).siblings.isEmpty)
-        #expect(MapTile(x: 5, y: 0, z: 2).siblings.isEmpty)
-        #expect(MapTile(x: 0, y: 5, z: 2).siblings.isEmpty)
+        // z=2, tile (3,3) (SE corner): only NW/N/W stay in-world.
+        let n2 = MapTile(x: 3, y: 3, z: 2).neighbours
+        #expect(n2.count == 4)
+        #expect(n2.contains(MapTile(x: 3, y: 3, z: 2)))  // self
+        #expect(n2.contains(MapTile(x: 2, y: 2, z: 2)))  // NW
+        #expect(n2.contains(MapTile(x: 3, y: 2, z: 2)))  // N
+        #expect(n2.contains(MapTile(x: 2, y: 3, z: 2)))  // W
+
+        // z=2, tile (1,1) (fully interior): all 9 neighbours valid.
+        #expect(MapTile(x: 1, y: 1, z: 2).neighbours.count == 9)
+
+        // Invalid out-of-world tile returns empty.
+        #expect(MapTile(x: -1, y: 0, z: 2).neighbours.isEmpty)
+        #expect(MapTile(x: 0, y: -1, z: 2).neighbours.isEmpty)
+        #expect(MapTile(x: 5, y: 0, z: 2).neighbours.isEmpty)
+        #expect(MapTile(x: 0, y: 5, z: 2).neighbours.isEmpty)
     }
 
     // Verifies that parent returns the tile at the previous zoom level (or itself at zoom 0).

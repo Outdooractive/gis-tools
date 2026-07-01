@@ -47,16 +47,28 @@ public struct MapTile: CustomStringConvertible, Sendable {
         ]
     }
 
-    /// The sibling tiles sharing the same parent (excludes self).
-    /// At z=0 the only tile is returned as itself.
-    /// Out-of-world tiles (x or y outside `0 ..< 2ˠ`) are silently excluded.
+    /// Map tiles that share the same parent tile (excludes self).
+    /// At zoom level 0 there are no other tiles, so this returns an empty array.
     public var siblings: [MapTile] {
-        guard z > 0 else { return [self] }
+        guard z > 0 else { return [] }
+        return parent.children.filter { $0.x != x || $0.y != y }
+    }
+
+    /// The tile and all valid adjacent tiles at the same zoom level
+    /// (8-directional neighbours). Out-of-world tiles are silently skipped.
+    /// At zoom level 0 there are no other tiles, so this returns an empty array.
+    public var neighbours: [MapTile] {
+        guard z > 0 else { return [] }
         let maxXY = (1 << z) - 1
-        return parent.children.filter { candidate in
-            (candidate.x != x || candidate.y != y)
-                && candidate.x >= 0 && candidate.x <= maxXY
-                && candidate.y >= 0 && candidate.y <= maxXY
+        guard x >= 0, x <= maxXY, y >= 0, y <= maxXY else { return [] }
+        let offsets: [(dx: Int, dy: Int)] = [
+            (0, 0), (-1, -1), (0, -1), (1, -1),
+            (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+        return offsets.compactMap { (dx, dy) -> MapTile? in
+            let nx = x + dx
+            let ny = y + dy
+            guard nx >= 0, nx <= maxXY, ny >= 0, ny <= maxXY else { return nil }
+            return MapTile(x: nx, y: ny, z: z)
         }
     }
 
