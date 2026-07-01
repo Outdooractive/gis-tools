@@ -47,9 +47,17 @@ public struct MapTile: CustomStringConvertible, Sendable {
         ]
     }
 
-    /// The sibling tiles sharing the same parent.
+    /// The sibling tiles sharing the same parent (excludes self).
+    /// At z=0 the only tile is returned as itself.
+    /// Out-of-world tiles (x or y outside `0 ..< 2ˠ`) are silently excluded.
     public var siblings: [MapTile] {
-        parent.children
+        guard z > 0 else { return [self] }
+        let maxXY = (1 << z) - 1
+        return parent.children.filter { candidate in
+            (candidate.x != x || candidate.y != y)
+                && candidate.x >= 0 && candidate.x <= maxXY
+                && candidate.y >= 0 && candidate.y <= maxXY
+        }
     }
 
     /// Creates a map tile from its coordinates and zoom level.

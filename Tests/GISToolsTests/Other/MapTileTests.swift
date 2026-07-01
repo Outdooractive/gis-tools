@@ -83,6 +83,41 @@ struct MapTileTests {
         #expect(MapTile(coordinate: coordinate, atZoom: 18) == MapTile(x: 138513, y: 91601, z: 18))
     }
 
+    // Verifies siblings returns the other tiles sharing the same parent.
+    @Test
+    func siblings() async throws {
+        // z=0: the only tile returns itself.
+        #expect(MapTile(x: 0, y: 0, z: 0).siblings == [MapTile(x: 0, y: 0, z: 0)])
+
+        // z=1, tile (0,0): parent is (0,0,0), children (0,0,1)..(1,1,1), exclude self.
+        let s1 = MapTile(x: 0, y: 0, z: 1).siblings
+        #expect(s1.count == 3)
+        #expect(s1.contains(MapTile(x: 1, y: 0, z: 1)))
+        #expect(s1.contains(MapTile(x: 0, y: 1, z: 1)))
+        #expect(s1.contains(MapTile(x: 1, y: 1, z: 1)))
+        #expect(!s1.contains(MapTile(x: 0, y: 0, z: 1)))
+
+        // z=2, tile (3,3) (SE corner): siblings are the other 3 quadrants of (1,1,1).
+        let s2 = MapTile(x: 3, y: 3, z: 2).siblings
+        #expect(s2.count == 3)
+        #expect(s2.contains(MapTile(x: 2, y: 2, z: 2)))
+        #expect(s2.contains(MapTile(x: 3, y: 2, z: 2)))
+        #expect(s2.contains(MapTile(x: 2, y: 3, z: 2)))
+
+        // z=2, tile (0,0) (NW corner): siblings are the other 3 quadrants of (0,0,1).
+        let s3 = MapTile(x: 0, y: 0, z: 2).siblings
+        #expect(s3.count == 3)
+        #expect(s3.contains(MapTile(x: 1, y: 0, z: 2)))
+        #expect(s3.contains(MapTile(x: 0, y: 1, z: 2)))
+        #expect(s3.contains(MapTile(x: 1, y: 1, z: 2)))
+
+        // Invalid out-of-world tile returns empty siblings.
+        #expect(MapTile(x: -1, y: 0, z: 2).siblings.isEmpty)
+        #expect(MapTile(x: 0, y: -1, z: 2).siblings.isEmpty)
+        #expect(MapTile(x: 5, y: 0, z: 2).siblings.isEmpty)
+        #expect(MapTile(x: 0, y: 5, z: 2).siblings.isEmpty)
+    }
+
     // Verifies that parent returns the tile at the previous zoom level (or itself at zoom 0).
     @Test
     func parent() async throws {
