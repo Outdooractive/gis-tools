@@ -141,6 +141,39 @@ struct BoundingBoxClipTests {
 
     // MARK: - Antimeridian
 
+    // All geometries with coordinates well inside the world-spanning bounding box
+    // at z=0 in EPSG:4326 must survive clipping without being dropped.
+    // The bbox below is exactly what MapTile(x:0, y:0, z:0).boundingBox(.epsg4326) produces.
+    @Test(arguments: [
+        "Point",
+        "MultiPoint",
+        "LineString",
+        "Polygon",
+    ] as [String])
+    func insideWorldBox(_ label: String) async throws {
+        let bbox = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4326)
+        let coords = [
+            Coordinate3D(latitude: 48.8566, longitude: 2.3522),
+            Coordinate3D(latitude: 52.5200, longitude: 13.4050),
+            Coordinate3D(latitude: 47.3769, longitude: 8.5417),
+        ]
+        let geom: Feature
+        switch label {
+        case "Point":
+            geom = Feature(Point(coords[0]))
+        case "MultiPoint":
+            geom = Feature(MultiPoint(coords)!)
+        case "LineString":
+            geom = Feature(LineString(coords)!)
+        case "Polygon":
+            geom = Feature(Polygon([coords + [coords[0]]])!)
+        default:
+            return
+        }
+        let clipped = geom.clipped(to: bbox)
+        #expect(clipped != nil, "\(label) was dropped")
+    }
+
     // Validates clipping near the antimeridian.
     @Test
     func antimeridian() async throws {
