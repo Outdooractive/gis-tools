@@ -189,6 +189,12 @@ public struct MapTile: CustomStringConvertible, Sendable {
                 northEast: Coordinate3D(x: Double(x), y: Double(y), projection: projection))
         }
 
+        if projection == .epsg4978 {
+            return ecefBoundingBox
+        }
+
+        // EPSG:3857, EPSG:4326
+
         /// Tile bounds in EPSG:3857.
         // Flip y
         let y = (1 << z) - 1 - y
@@ -207,6 +213,69 @@ public struct MapTile: CustomStringConvertible, Sendable {
             projection: projection)
 
         return BoundingBox(southWest: southWest, northEast: northEast)
+    }
+
+    /// The axis-aligned bounding box of this tile in EPSG:4978 (ECEF).
+    ///
+    /// Unlike EPSG:4326 and EPSG:3857 where the SW and NE tile corners
+    /// directly define the AABB, ECEF requires sampling the tile's lat/lon
+    /// range at interior critical points (equator, ±90°/±180° longitude)
+    /// to capture the true ECEF extrema.
+    private var ecefBoundingBox: BoundingBox {
+        let y = (1 << z) - 1 - self.y
+
+        let sw4326 = GISTool.coordinate(
+            fromPixelX: Double(x) * GISTool.tileSideLength,
+            pixelY: Double(y) * GISTool.tileSideLength,
+            zoom: z,
+            projection: .epsg4326)
+        let ne4326 = GISTool.coordinate(
+            fromPixelX: Double(x + 1) * GISTool.tileSideLength,
+            pixelY: Double(y + 1) * GISTool.tileSideLength,
+            zoom: z,
+            projection: .epsg4326)
+
+        let latMin = sw4326.latitude
+        let latMax = ne4326.latitude
+        let lonMin = sw4326.longitude
+        let lonMax = ne4326.longitude
+
+        var xValues: [Double] = []
+        var yValues: [Double] = []
+        var zValues: [Double] = []
+
+        func addECEF(lat: Double, lon: Double) {
+            let pt = Coordinate3D(latitude: lat, longitude: lon).projected(to: .epsg4978)
+            xValues.append(pt.x)
+            yValues.append(pt.y)
+            zValues.append(pt.z ?? 0.0)
+        }
+
+        func evaluateRange(latMin: Double, latMax: Double, lonMin: Double, lonMax: Double) {
+            addECEF(lat: latMin, lon: lonMin)
+            addECEF(lat: latMin, lon: lonMax)
+            addECEF(lat: latMax, lon: lonMin)
+            addECEF(lat: latMax, lon: lonMax)
+
+            if latMin <= 0.0, 0.0 <= latMax {
+                if lonMin <= 0.0, 0.0 <= lonMax { addECEF(lat: 0.0, lon: 0.0) }
+                if lonMin <= 180.0, 180.0 <= lonMax { addECEF(lat: 0.0, lon: 180.0) }
+                if lonMin <= 90.0, 90.0 <= lonMax { addECEF(lat: 0.0, lon: 90.0) }
+                if lonMin <= -90.0, -90.0 <= lonMax { addECEF(lat: 0.0, lon: -90.0) }
+            }
+        }
+
+        if lonMin <= lonMax {
+            evaluateRange(latMin: latMin, latMax: latMax, lonMin: lonMin, lonMax: lonMax)
+        }
+        else {
+            evaluateRange(latMin: latMin, latMax: latMax, lonMin: lonMin, lonMax: 180.0)
+            evaluateRange(latMin: latMin, latMax: latMax, lonMin: -180.0, lonMax: lonMax)
+        }
+
+        return BoundingBox(
+            southWest: Coordinate3D(x: xValues.min()!, y: yValues.min()!, z: zValues.min()!, projection: .epsg4978),
+            northEast: Coordinate3D(x: xValues.max()!, y: yValues.max()!, z: zValues.max()!, projection: .epsg4978))
     }
 
     // MARK: - Quadkey

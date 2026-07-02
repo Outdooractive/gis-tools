@@ -199,15 +199,12 @@ extension GISTool {
     ) -> Coordinate3D {
         let resolution = metersPerPixel(atZoom: zoom, tileSideLength: tileSideLength)
 
-        let coordinateXY = Coordinate3D(
+        let mercatorXY = Coordinate3D(
             x: pixelX * resolution - GISTool.originShift,
-            y: pixelY * resolution - GISTool.originShift)
+            y: pixelY * resolution - GISTool.originShift,
+            projection: .epsg3857)
 
-        if projection == .epsg4326 {
-            return coordinateXY.projected(to: projection)
-        }
-
-        return coordinateXY
+        return mercatorXY.projected(to: projection)
     }
 
     /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).

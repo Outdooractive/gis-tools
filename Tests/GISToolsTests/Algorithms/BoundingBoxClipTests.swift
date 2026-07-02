@@ -139,6 +139,18 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
+    // Clipping a point at the Earth's center (0,0,0) in EPSG:4978 to the
+    // world tile bounding box should return the point unchanged, since the
+    // ECEF AABB of the full Mercator viewable globe contains the origin.
+    @Test
+    func worldBoundingBoxClip4978() async throws {
+        let world = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4978)
+        let point = Feature(Point(Coordinate3D(x: 0.0, y: 0.0).projected(to: .epsg4978)))
+        let result = try #require(point.clipped(to: world))
+
+        #expect(result == point)
+    }
+
     // MARK: - Antimeridian
 
     // All geometries with coordinates well inside the world-spanning bounding box

@@ -239,6 +239,67 @@ struct MapTileTests {
         #expect(abs(z32Bounds.northEast.latitude - 51.508094) < 0.00001)
     }
 
+    // Verifies MapTile bounding boxes in EPSG:4978 projection.
+    @Test
+    func epsg4978TileBounds() async throws {
+        let worldBounds = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4978)
+        #expect(worldBounds.southWest.projection == .epsg4978)
+        #expect(worldBounds.northEast.projection == .epsg4978)
+
+        // The world tile should span the full Earth surface extent in ECEF.
+        // ECEF x ranges from -6378137 (lon=180, lat=0) to +6378137 (lon=0, lat=0),
+        // y from -6378137 (lon=-90, lat=0) to +6378137 (lon=90, lat=0),
+        // z from -6332896 (lat=-85.05) to +6332896 (lat=85.05).
+        #expect(worldBounds.southWest.x <= -6378136.0)
+        #expect(worldBounds.northEast.x >= 6378136.0)
+        #expect(worldBounds.southWest.y <= -6378136.0)
+        #expect(worldBounds.northEast.y >= 6378136.0)
+        #expect(worldBounds.southWest.z ?? 0.0 <= -6332895.0)
+        #expect(worldBounds.northEast.z ?? 0.0 >= 6332895.0)
+
+        // Known surface points must be inside the world bounding box
+        let coords: [Coordinate3D] = [
+            Coordinate3D(x: 6378137.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: -6378137.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 6378137.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: -6378137.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]
+        for coord in coords {
+            #expect(worldBounds.contains(coord))
+        }
+    }
+
+    // Verifies the ECEF bounding box for a smaller tile (13/4331/2886, Swiss Alps region).
+    @Test
+    func epsg4978SmallTileBounds() async throws {
+        let tileBounds = MapTile(x: 4331, y: 2886, z: 13).boundingBox(projection: .epsg4978)
+        #expect(tileBounds.southWest.projection == .epsg4978)
+        #expect(tileBounds.northEast.projection == .epsg4978)
+
+        // The tile's center point in 4326, projected to ECEF, must be inside its ECEF AABB.
+        let center4326 = MapTile(x: 4331, y: 2886, z: 13).boundingBox().center
+        let centerECEF = center4326.projected(to: .epsg4978)
+        #expect(tileBounds.contains(centerECEF))
+
+        // All four 4326 corners of the tile, projected to ECEF, must be inside.
+        let bbox4326 = MapTile(x: 4331, y: 2886, z: 13).boundingBox()
+        let corners = [
+            Coordinate3D(latitude: bbox4326.southWest.latitude, longitude: bbox4326.southWest.longitude),
+            Coordinate3D(latitude: bbox4326.southWest.latitude, longitude: bbox4326.northEast.longitude),
+            Coordinate3D(latitude: bbox4326.northEast.latitude, longitude: bbox4326.southWest.longitude),
+            Coordinate3D(latitude: bbox4326.northEast.latitude, longitude: bbox4326.northEast.longitude),
+        ]
+        for corner in corners {
+            #expect(tileBounds.contains(corner.projected(to: .epsg4978)))
+        }
+
+        // An arbitrary surface point far from this tile (equator, prime meridian)
+        // must NOT be inside this tile's ECEF AABB.
+        let farPoint = Coordinate3D(x: 6378137.0, y: 0.0, z: 0.0, projection: .epsg4978)
+        #expect(!tileBounds.contains(farPoint))
+    }
+
     // Verifies the meters-per-pixel value at zoom level 0 matches the expected Web Mercator constant.
     @Test
     func metersPerPixelAtEquator() async throws {
