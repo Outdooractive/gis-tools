@@ -30,6 +30,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
+- Includes a property/spatial query DSL for filtering features (`QueryParser`)
 - Pure Swift without external dependencies
 
 ## Notes
@@ -886,6 +887,80 @@ Provides an encoder/decoder for Polylines.
 ```swift
 let polyline = [Coordinate3D(latitude: 47.56, longitude: 10.22)].encodePolyline()
 let coordinates = polyline.decodePolyline()
+```
+
+# Query DSL
+
+This package includes a query DSL parser and evaluator for filtering `Feature` objects by their properties and spatial location. The parser uses Reverse Polish Notation (RPN) internally but accepts a natural infix syntax.
+
+## QueryParser
+
+```swift
+let parser = QueryParser(string: ".highway == primary and .name =~ '^Main'")
+let matches = parser.evaluate(on: someFeature)
+```
+
+### Property access
+
+Properties are accessed by prefixing the key with `.`:
+
+| Query | Meaning |
+|-------|---------|
+| `.name` | Property `name` exists and is truthy |
+| `.foo.bar` | Nested property `foo → bar` |
+| `."foo.bar"` | Property whose key contains a dot |
+| `.foo.[0]` | First element of array property `foo` |
+| `.some.0` | Shorthand for array access |
+
+### Comparisons
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `==` | Equal | `.value == 1` |
+| `!=` | Not equal | `.value != 2` |
+| `>` | Greater than | `.value > 0` |
+| `>=` | Greater or equal | `.value >= 1` |
+| `<` | Less than | `.value < 2` |
+| `<=` | Less or equal | `.value <= 1` |
+| `=~` | Regex match | `.name =~ /^Main/i` |
+| `=*` | String contains | `.name =* "ain"` |
+| `=^` | String starts with | `.name =^ "Mai"` |
+| `=$` | String ends with | `.name =$ "ain"` |
+
+Cross-type numeric comparisons work automatically (e.g. `Int` vs `Double`).
+
+### Set membership
+
+```
+.class in ["primary", "secondary"]
+.value in [1, 3, 5]
+```
+
+### Boolean logic
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `and` | Logical AND | `.a == 1 and .b == 2` |
+| `or` | Logical OR | `.a == 1 or .b == 1` |
+| `not` | Logical NOT | `.a not` |
+| `exists` | Truthy check | `.a exists` |
+
+### Spatial predicates
+
+| Predicate | Syntax | Meaning |
+|-----------|--------|---------|
+| `near` | `near(lat, lon, tolerance)` | Feature centroid is within `tolerance` meters |
+| `within` | `within(minLon, minLat, maxLon, maxLat)` | Feature bbox is fully inside the rectangle |
+| `intersects` | `intersects(minLon, minLat, maxLon, maxLat)` | Feature geometry intersects the rectangle |
+
+## Convenience methods
+
+```swift
+// Filter a FeatureCollection by query string
+let hospitals = featureCollection.query(term: ".class == 'hospital'")
+
+// Filter an array of Features
+let matches = features.query(term: ".name =~ /hospital/i and near(48.85, 2.35, 1000)")
 ```
 
 # GeoPackage (.gpkg)
