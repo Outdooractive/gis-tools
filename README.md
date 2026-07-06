@@ -936,6 +936,18 @@ Cross-type numeric comparisons work automatically (e.g. `Int` vs `Double`).
 .value in [1, 3, 5]
 ```
 
+### Grouping with parentheses
+
+Expressions can be grouped with `(` and `)` to override default left-to-right evaluation:
+
+```
+(.name == "Berlin" OR .name == "Paris") AND .population > 100000
+NOT (.bridge exists) OR .oneway == true
+(.highway in ["primary", "secondary"] AND .surface == "asphalt") OR .bridge == "yes"
+```
+
+Parentheses may be nested up to any depth.
+
 ### Boolean logic
 
 | Operator | Meaning | Example |
@@ -961,6 +973,9 @@ let hospitals = featureCollection.query(term: ".class == 'hospital'")
 
 // Filter an array of Features
 let matches = features.query(term: ".name =~ /hospital/i and near(48.85, 2.35, 1000)")
+
+// Complex grouped query
+let result = featureCollection.query(term: "(.amenity == \"restaurant\" AND .stars >= 3) OR .cuisine == \"italian\"")
 ```
 
 # GeoPackage (.gpkg)

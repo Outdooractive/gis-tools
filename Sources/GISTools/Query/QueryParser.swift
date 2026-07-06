@@ -12,6 +12,7 @@ import Foundation
 /// - Boolean operators: ``and``, ``or``, ``not`` (+ ``exists`` for truthy check)
 /// - Spatial filters: ``near(lat,lon,tolerance)``, ``within(minLon,minLat,maxLon,maxLat)``,
 ///   ``intersects(minLon,minLat,maxLon,maxLat)``
+/// - Grouping with parentheses: ``(A AND B) OR C``
 ///
 /// Example queries:
 /// ```
@@ -19,6 +20,8 @@ import Foundation
 /// .class in ["primary", "secondary"] and .name =* "Main"
 /// .population > 1000 and within(11.5,3.8,11.6,3.9)
 /// .highway == primary and intersects(11.5,3.8,11.6,3.9)
+/// (.name == "Berlin" OR .name == "Paris") AND .population > 100000
+/// NOT (.name exists) OR .value >= 10
 /// ```
 public struct QueryParser {
 
@@ -132,9 +135,9 @@ public struct QueryParser {
     public init?(string: String) {
         self.reader = Reader(characters: Array(string.utf8))
 
-        if !self.parseQuery() {
-            return nil
-        }
+        guard var reader = self.reader,
+              parseQuery(reader: &reader)
+        else { return nil }
     }
 
     /// Creates a parser with a pre-built expression pipeline, skipping
@@ -166,64 +169,104 @@ public struct QueryParser {
             case let .comparison(comparison):
                 switch comparison {
                 case .equals, .notEquals:
-                    guard stack.count >= 2,
-                          let second = stack.removeFirst(),
-                          let first = stack.removeFirst()
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    if comparison == .equals {
-                        stack.insert(first == second, at: 0)
+                    let rawSecond = stack.removeFirst()
+                    let rawFirst = stack.removeFirst()
+                    let result: Bool
+                    if let second = rawSecond as? AnyHashable,
+                       let first = rawFirst as? AnyHashable
+                    {
+                        result = comparison == .equals ? (first == second) : (first != second)
                     }
                     else {
-                        stack.insert(first != second, at: 0)
+                        result = false
                     }
+                    stack.insert(result, at: 0)
 
                 case .greaterThan, .greaterThanOrEqual, .lessThan, .lessThanOrEqual:
-                    guard stack.count >= 2,
-                          let second = stack.removeFirst(),
-                          let first = stack.removeFirst()
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    stack.insert(compare(first: first, second: second, condition: comparison), at: 0)
+                    let rawSecond = stack.removeFirst()
+                    let rawFirst = stack.removeFirst()
+                    if let first = rawFirst, let second = rawSecond {
+                        stack.insert(compare(first: first, second: second, condition: comparison), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
 
                 case .regex:
-                    guard stack.count >= 2,
-                          let regex = stack.removeFirst() as? String,
-                          let value = stack.removeFirst() as? String
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    stack.insert(value.matches(regex), at: 0)
+                    let rawRegex = stack.removeFirst()
+                    let rawValue = stack.removeFirst()
+                    if let regex = rawRegex as? String,
+                       let value = rawValue as? String
+                    {
+                        stack.insert(value.matches(regex), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
 
                 case .contains:
-                    guard stack.count >= 2,
-                          let needle = stack.removeFirst() as? String,
-                          let haystack = stack.removeFirst() as? String
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    stack.insert(haystack.localizedCaseInsensitiveContains(needle), at: 0)
+                    let rawNeedle = stack.removeFirst()
+                    let rawHaystack = stack.removeFirst()
+                    if let needle = rawNeedle as? String,
+                       let haystack = rawHaystack as? String
+                    {
+                        stack.insert(haystack.localizedCaseInsensitiveContains(needle), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
 
                 case .startsWith:
-                    guard stack.count >= 2,
-                          let needle = stack.removeFirst() as? String,
-                          let haystack = stack.removeFirst() as? String
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    stack.insert(haystack.lowercased().hasPrefix(needle.lowercased()), at: 0)
+                    let rawNeedle = stack.removeFirst()
+                    let rawHaystack = stack.removeFirst()
+                    if let needle = rawNeedle as? String,
+                       let haystack = rawHaystack as? String
+                    {
+                        stack.insert(haystack.lowercased().hasPrefix(needle.lowercased()), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
 
                 case .endsWith:
-                    guard stack.count >= 2,
-                          let needle = stack.removeFirst() as? String,
-                          let haystack = stack.removeFirst() as? String
-                    else { return false }
+                    guard stack.count >= 2 else { return false }
 
-                    stack.insert(haystack.lowercased().hasSuffix(needle.lowercased()), at: 0)
+                    let rawNeedle = stack.removeFirst()
+                    let rawHaystack = stack.removeFirst()
+                    if let needle = rawNeedle as? String,
+                       let haystack = rawHaystack as? String
+                    {
+                        stack.insert(haystack.lowercased().hasSuffix(needle.lowercased()), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
 
                 case .in:
-                    guard let setValues = stack.removeFirst() as? [AnyHashable],
-                          let value = stack.removeFirst()
-                    else { return false }
+                    guard stack.isNotEmpty else { return false }
 
-                    stack.insert(setValues.contains(value), at: 0)
+                    let rawSetValues = stack.removeFirst()
+                    guard stack.isNotEmpty else { return false }
+                    let rawValue = stack.removeFirst()
+
+                    if let setValues = rawSetValues as? [AnyHashable],
+                       let value = rawValue
+                    {
+                        stack.insert(setValues.contains(value), at: 0)
+                    }
+                    else {
+                        stack.insert(false, at: 0)
+                    }
                 }
 
             case let .condition(condition):
@@ -428,12 +471,12 @@ public struct QueryParser {
         }
     }
 
-    private mutating func parseQuery() -> Bool {
-        guard var reader else { return false }
-
-        reader.skipWhitespace()
-
+    private mutating func parseQuery(
+        reader: inout Reader,
+        until terminator: UInt8? = nil
+    ) -> Bool {
         pipeline = []
+        reader.skipWhitespace()
 
         var terms: [Expression] = []
         var comparison: Expression?
@@ -441,6 +484,11 @@ public struct QueryParser {
         var isBeginningOfTerm = true
 
         outer: while let char = reader.peek() {
+            // Check for terminator (e.g., ')') when in a sub-expression
+            if let terminator, char == terminator {
+                break
+            }
+
             // Check for:
             // - and, or, not, exists
             // - ==, !=, >, >=, <, <=, =~, =*, =^, =$
@@ -489,8 +537,6 @@ public struct QueryParser {
                 }
 
                 if hasIn {
-                    // .value in [literal, ...]
-                    // Flush the current term (the value expression) and comparison
                     pipeline?.append(contentsOf: terms)
                     if let comparison {
                         pipeline?.append(comparison)
@@ -505,7 +551,6 @@ public struct QueryParser {
 
                     reader.moveIndex(by: 2)
 
-                    // Expect a bracket-delimited set
                     reader.skipWhitespace()
                     guard reader.peek() == UInt8(ascii: "[") else { return false }
                     reader.moveIndex(by: 1)
@@ -544,7 +589,6 @@ public struct QueryParser {
                     continue
                 }
 
-                // Must be in the middle, otherwise it's just some literal value
                 if terms.count == 1,
                    let term = reader.readComparisonExpression()
                 {
@@ -555,10 +599,29 @@ public struct QueryParser {
             }
 
             switch char {
-            case UInt8(ascii: " "):
+            case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"):
                 reader.skipWhitespace()
                 isBeginningOfTerm = true
                 continue
+
+            case UInt8(ascii: "("):
+                pipeline?.append(contentsOf: terms)
+                if let comparison { pipeline?.append(comparison) }
+                if let condition { pipeline?.append(condition) }
+                terms = []
+                comparison = nil
+                condition = nil
+                isBeginningOfTerm = false
+
+                reader.moveIndex(by: 1)
+
+                guard parseQuery(reader: &reader, until: UInt8(ascii: ")")) else { return false }
+
+                reader.skipWhitespace()
+                guard reader.peek() == UInt8(ascii: ")") else { return false }
+                reader.moveIndex(by: 1)
+
+                isBeginningOfTerm = true
 
             case UInt8(ascii: "."):
                 guard let term = reader.readValueExpression() else { return false }
@@ -580,7 +643,9 @@ public struct QueryParser {
             pipeline?.append(condition)
         }
 
-        // Only literal values -> global search
+        // Only apply the global-search fallback at the top level (no terminator)
+        guard terminator == nil else { return true }
+
         if pipeline?.allSatisfy({ if case .literal = $0 { true } else { false } }) ?? false,
            let searchString = pipeline?
             .compactMap({ expression in
@@ -667,13 +732,14 @@ public struct QueryParser {
             var offset = 0
 
             while let char = peek(withOffset: offset) {
-                if char == UInt8(ascii: " ") {
+                switch char {
+                case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"):
                     offset += 1
                     continue
+                default:
+                    moveIndex(by: offset)
+                    return char
                 }
-
-                moveIndex(by: offset)
-                return char
             }
 
             // Advance past any trailing whitespace so callers don't loop.
@@ -693,7 +759,7 @@ public struct QueryParser {
                     moveIndex(by: 1)
                     return values
 
-                case UInt8(ascii: " "):
+                case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"):
                     skipWhitespace()
 
                 case UInt8(ascii: ","):
@@ -752,7 +818,7 @@ public struct QueryParser {
 
             outer: while let char = peek(withOffset: offset) {
                 switch char {
-                case UInt8(ascii: " "):
+                case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"):
                     break outer
 
                 case UInt8(ascii: "."):
@@ -821,7 +887,7 @@ public struct QueryParser {
 
             outer: while let char = peek(withOffset: offset) {
                 switch char {
-                case UInt8(ascii: " "), UInt8(ascii: ","), UInt8(ascii: ")"):
+                case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"), UInt8(ascii: ","), UInt8(ascii: ")"):
                     break outer
 
                 case UInt8(ascii: "\""):

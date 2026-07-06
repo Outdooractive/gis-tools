@@ -633,7 +633,7 @@ struct QueryParserTests {
     func invalidQueriesReturnNil() {
         // These degenerate inputs parse as search values, not nil,
         // so check that the pipeline is non-nil instead.
-        #expect(QueryParser(string: "(") != nil)
+        #expect(QueryParser(string: "(") == nil)
         #expect(QueryParser(string: ".") != nil)
         #expect(QueryParser(string: "==") != nil)
         #expect(QueryParser(string: "near(") == nil)
@@ -763,6 +763,276 @@ struct QueryParserTests {
         // Should have: value, literalSet, in, value, literal, contains,
         //              value, literal, >=, near, and, and, and
         #expect(pipeline.count == 13)
+    }
+
+    // MARK: - Parenthesized groups
+
+    @Test
+    func parensInsideString() throws {
+        #expect(QueryParser(string: #".name == "test(value)""#) != nil)
+        #expect(QueryParser(string: ".name == 'test(value)'") != nil)
+        #expect(QueryParser(string: #".name in ["a(b)", "c)d"]"#) != nil)
+    }
+
+    @Test
+    func basicGrouping() throws {
+        let expr = #"(.name == "a" AND .value == 1) OR .other == "b""#
+        let parser = try #require(QueryParser(string: expr))
+        #expect(parser.pipeline != nil)
+    }
+
+    @Test
+    func groupingWithParensInStrings() throws {
+        let expr = #"(.name == "test(a)" OR .value == 2) AND .other == "b""#
+        let parser = try #require(QueryParser(string: expr))
+        #expect(parser.pipeline != nil)
+    }
+
+    @Test
+    func notBeforeGroup() throws {
+        let expr = "NOT (.name == 'a' AND .value == 1)"
+        let parser = try #require(QueryParser(string: expr))
+        #expect(parser.pipeline != nil)
+    }
+
+    @Test
+    func nestedGroups() throws {
+        let expr = "( (.a == 1 AND .b == 2) OR (.c == 3 AND .d == 4) ) AND .e == 5"
+        let parser = try #require(QueryParser(string: expr))
+        #expect(parser.pipeline != nil)
+    }
+
+    @Test
+    func unmatchedParensReturnNil() throws {
+        #expect(QueryParser(string: ".name == \"a\")") == nil)
+        #expect(QueryParser(string: "(.name == \"a\"") == nil)
+    }
+
+    @Test
+    func groupedEvaluation() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "name": "Berlin",
+            "value": 5,
+        ])
+        var parser = try #require(QueryParser(string: #"(.name == "Berlin" AND .value == 5) OR .other == "nope""#))
+        #expect(parser.evaluate(on: feature))
+
+        parser = try #require(QueryParser(string: #".name == "Berlin" AND (.value == 999 OR .other == "nope")"#))
+        #expect(parser.evaluate(on: feature) == false)
+    }
+
+    @Test
+    func parensAroundSingleExpression() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1])
+        let parser = try #require(QueryParser(string: "(.a == 1)"))
+        #expect(parser.evaluate(on: feature))
+    }
+
+    // MARK: - Edge cases
+
+    @Test
+    func stringEscaping() throws {
+        #expect(QueryParser(string: #".name == "it's fine""#) != nil)
+        #expect(QueryParser(string: ".name == 'he said \"hello\"'") != nil)
+        #expect(QueryParser(string: #".tags in ["it's", '"hello"']"#) != nil)
+        #expect(QueryParser(string: #".name == "   ""#) != nil)
+        #expect(QueryParser(string: ".name == 'straße'") != nil)
+        #expect(QueryParser(string: ".name == 'café'") != nil)
+    }
+
+    @Test
+    func stringEscapingEvaluation() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "name": "it's fine",
+            "greeting": "hello \"world\"",
+            "unicode": "café",
+        ])
+        var parser = try #require(QueryParser(string: #".name == "it's fine""#))
+        #expect(parser.evaluate(on: feature))
+        parser = try #require(QueryParser(string: ".greeting == 'hello \"world\"'"))
+        #expect(parser.evaluate(on: feature))
+        parser = try #require(QueryParser(string: ".unicode == 'café'"))
+        #expect(parser.evaluate(on: feature))
+    }
+
+    @Test
+    func numericEdgeCases() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "large": Int.max,
+            "small": Int.min,
+            "negative": -42,
+            "zero": 0,
+        ])
+        #expect(QueryParser(pipeline: [.value([.key("large")]), .literal(Int.max), .comparison(.equals)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [.value([.key("negative")]), .literal(-42), .comparison(.equals)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [.value([.key("zero")]), .literal(0), .comparison(.equals)]).evaluate(on: feature))
+        let parser = try #require(QueryParser(string: ".negative == -42"))
+        #expect(parser.evaluate(on: feature))
+    }
+
+    @Test
+    func propertyAccessEdgeCases() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "a": ["b": ["c": ["d": 42]]] as [String: Sendable],
+            "arr": [1, 2, 3],
+            "empty_arr": [] as [Sendable],
+        ])
+        #expect(QueryParser(pipeline: [
+            .value([.key("a"), .key("b"), .key("c"), .key("d")]), .literal(42), .comparison(.equals)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [
+            .value([.key("arr"), .index(0)]), .literal(1), .comparison(.equals)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [
+            .value([.key("arr"), .index(999)]), .literal(1), .comparison(.equals)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("empty_arr"), .index(0)]), .literal(1), .comparison(.equals)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("nonexistent")]), .literal(1), .comparison(.equals)]).evaluate(on: feature) == false)
+    }
+
+    @Test
+    func spatialEdgeCases() throws {
+        let origin = Coordinate3D(latitude: 10.0, longitude: 20.0)
+        var parser = QueryParser(pipeline: [.near(origin, 0.0)])
+        #expect(parser.evaluate(on: Feature(Point(origin), properties: [:])))
+        parser = QueryParser(pipeline: [.near(origin, -1.0)])
+        #expect(parser.evaluate(on: Feature(Point(Coordinate3D(latitude: 10.001, longitude: 20.001)), properties: [:])) == false)
+
+        let point = Coordinate3D(latitude: 5.0, longitude: 10.0)
+        let degenerate = BoundingBox(southWest: point, northEast: point)
+        parser = QueryParser(pipeline: [.intersects(degenerate)])
+        #expect(parser.evaluate(on: Feature(Point(point), properties: [:])))
+
+        let poly = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 11.0, longitude: 20.0),
+            Coordinate3D(latitude: 11.0, longitude: 21.0),
+            Coordinate3D(latitude: 10.0, longitude: 21.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+        ]]))
+        parser = QueryParser(pipeline: [.near(Coordinate3D(latitude: 10.5, longitude: 20.5), 1_000_000.0)])
+        #expect(parser.evaluate(on: Feature(poly, properties: [:])))
+    }
+
+    @Test
+    func booleanEdgeCases() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1, "b": 2, "c": 3])
+
+        #expect(QueryParser(pipeline: [
+            .value([.key("a")]), .condition(.not), .condition(.not), .condition(.not)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("nonexistent")]), .condition(.not), .condition(.not)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("a")]), .literal(1), .comparison(.equals),
+            .value([.key("b")]), .literal(2), .comparison(.equals),
+            .condition(.and),
+            .value([.key("c")]), .literal(3), .comparison(.equals),
+            .condition(.and),
+        ]).evaluate(on: feature))
+    }
+
+    @Test
+    func booleanChaining() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6, "g": 7, "h": 8, "i": 9, "j": 10])
+
+        let query = ".a == 1 and .b == 2 and .c == 3 and .d == 4 and .e == 5 and .f == 6 and .g == 7 and .h == 8 and .i == 9 and .j == 10"
+        var parser = try #require(QueryParser(string: query))
+        #expect(parser.evaluate(on: feature))
+
+        let queryFail = ".a == 1 and .b == 2 and .c == 3 and .d == 4 and .e == 5 and .f == 6 and .g == 7 and .h == 8 and .i == 9 and .j == 999"
+        parser = try #require(QueryParser(string: queryFail))
+        #expect(parser.evaluate(on: feature) == false)
+
+        let condition = ".a == 1 and "
+        let longQuery = String(repeating: condition, count: 100) + ".a == 1"
+        parser = try #require(QueryParser(string: longQuery))
+        #expect(parser.evaluate(on: feature))
+
+        let veryLongQuery = String(repeating: condition, count: 1000) + ".a == 1"
+        parser = try #require(QueryParser(string: veryLongQuery))
+        #expect(parser.evaluate(on: feature))
+    }
+
+    @Test
+    func keywordsAsValues() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "word_and": "and", "word_or": "or", "word_not": "not",
+            "word_exists": "exists", "word_in": "in",
+        ])
+        #expect(try #require(QueryParser(string: #".word_and == "and""#)).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".word_or == 'or'")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: #".word_not == "not""#)).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".word_exists == 'exists'")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: #".word_in == "in""#)).evaluate(on: feature))
+    }
+
+    @Test
+    func whitespaceEdgeCases() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1])
+        #expect(try #require(QueryParser(string: ".a\t==\t1")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".a\n==\n1")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: "\n\n  .a   ==   1  \n")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".a in [ 1 , 2 , 3 ]")).evaluate(on: feature))
+    }
+
+    @Test
+    func caseInsensitiveKeywords() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1, "b": 2])
+        #expect(try #require(QueryParser(string: ".a == 1 AND .b == 2")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".a == 1 And .b == 2")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: ".a == 1 OR .b == 2")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: "NOT .a == 1")).evaluate(on: feature) == false)
+    }
+
+    @Test
+    func osmLikeQueries() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 48.85, longitude: 2.35)), properties: [
+            "highway": "primary", "name": "Rue de Rivoli", "maxspeed": 50,
+            "oneway": true, "surface": "asphalt", "lanes": 4, "bridge": "yes",
+        ])
+        let queries: [(String, Bool)] = [
+            (#".highway in ["primary", "secondary"] and .maxspeed >= 30 and .surface == "asphalt""#, true),
+            (#".bridge exists and .oneway exists and .lanes >= 2"#, true),
+            (#".highway == "motorway" and .surface == "concrete""#, false),
+            ("near(48.85, 2.35, 1000) and .highway == \"primary\"",  true),
+            (#".bridge exists and .tunnel not"#, true),
+            (#"(.highway in ["primary", "secondary"] AND .surface == "asphalt") OR .bridge == "yes""#, true),
+        ]
+        for (query, expected) in queries {
+            let parser = try #require(QueryParser(string: query))
+            #expect(parser.evaluate(on: feature) == expected, "Failed for query: \(query)")
+        }
+    }
+
+    @Test
+    func existsWithVariousTypes() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: [
+            "str": "", "zero": 0,
+        ])
+        #expect(QueryParser(pipeline: [.value([.key("str")]), .condition(.exists)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [.value([.key("zero")]), .condition(.exists)]).evaluate(on: feature))
+        #expect(QueryParser(pipeline: [.value([.key("totally_missing")]), .condition(.exists)]).evaluate(on: feature) == false)
+    }
+
+    @Test
+    func missingPropertyComparisons() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["only_key": 1])
+        #expect(QueryParser(pipeline: [
+            .value([.key("missing")]), .literal(1), .comparison(.equals)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("missing")]), .literal(1), .comparison(.notEquals)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("missing")]), .literal(1), .comparison(.greaterThan)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("missing")]), .literal("x"), .comparison(.contains)]).evaluate(on: feature) == false)
+        #expect(QueryParser(pipeline: [
+            .value([.key("missing")]), .literalSet([1]), .comparison(.in)]).evaluate(on: feature) == false)
+    }
+
+    @Test
+    func deeplyNestedParens() throws {
+        let feature = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), properties: ["a": 1, "b": 2])
+        #expect(try #require(QueryParser(string: "(((.a == 1))) AND (.b == 2)")).evaluate(on: feature))
+        #expect(try #require(QueryParser(string: "((.a == 1 AND .b == 2) OR (.a == 999 AND .b == 999)) AND (.a == 1)")).evaluate(on: feature))
     }
 
 }
