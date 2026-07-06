@@ -9,7 +9,7 @@ import Foundation
 /// - Comparisons: ``==``, ``!=``, ``>``, ``>=``, ``<``, ``<=``, ``=~`` (regex),
 ///   ``=*`` (contains), ``=^`` (starts with), ``=$`` (ends with)
 /// - Set membership: ``.class in ["primary", "secondary"]``
-/// - Boolean operators: ``and``, ``or``, ``not`` (+ ``exists`` for truthy check)
+/// - Boolean operators: ``and``, ``or``, ``not`` (+ ``exists`` for presence check)
 /// - Spatial filters: ``near(lat,lon,tolerance)``, ``within(minLon,minLat,maxLon,maxLat)``,
 ///   ``intersects(minLon,minLat,maxLon,maxLat)``
 /// - Grouping with parentheses: ``(A AND B) OR C``
@@ -174,8 +174,8 @@ public struct QueryParser {
                     let rawSecond = stack.removeFirst()
                     let rawFirst = stack.removeFirst()
                     let result: Bool
-                    if let second = rawSecond as? AnyHashable,
-                       let first = rawFirst as? AnyHashable
+                    if let second = rawSecond,
+                       let first = rawFirst
                     {
                         result = comparison == .equals ? (first == second) : (first != second)
                     }
@@ -298,8 +298,7 @@ public struct QueryParser {
                     guard stack.isNotEmpty else { return false }
 
                     let value = stack.removeFirst()
-                    let valueIsTrue = if let bool = value as? Bool { bool } else { value != nil }
-                    stack.insert(valueIsTrue, at: 0)
+                    stack.insert(value != nil, at: 0)
                 }
 
             case let .literal(value):
