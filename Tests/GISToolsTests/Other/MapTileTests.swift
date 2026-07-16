@@ -372,4 +372,122 @@ struct MapTileTests {
         #expect(MapTile(string: "16/34626/22899") == MapTile(x: 34626, y: 22899, z: 16))
     }
 
+    // MARK: - Ancestry
+
+    // Verifies isAncestorOf for direct parents, grandparents, and non-ancestors.
+    @Test
+    func isAncestorOf() async throws {
+        let parent = MapTile(x: 1, y: 1, z: 2)
+        // Direct children at z=3
+        #expect(parent.isAncestorOf(MapTile(x: 2, y: 2, z: 3)))
+        #expect(parent.isAncestorOf(MapTile(x: 3, y: 2, z: 3)))
+        #expect(parent.isAncestorOf(MapTile(x: 2, y: 3, z: 3)))
+        #expect(parent.isAncestorOf(MapTile(x: 3, y: 3, z: 3)))
+        // Grandchildren at z=4
+        #expect(parent.isAncestorOf(MapTile(x: 4, y: 4, z: 4)))
+        #expect(parent.isAncestorOf(MapTile(x: 7, y: 7, z: 4)))
+        // Not a descendant
+        #expect(!parent.isAncestorOf(MapTile(x: 0, y: 0, z: 3)))
+        #expect(!parent.isAncestorOf(MapTile(x: 0, y: 0, z: 4)))
+        // Same tile is not an ancestor of itself
+        #expect(!parent.isAncestorOf(parent))
+        // Higher zoom is not an ancestor of lower zoom
+        #expect(!MapTile(x: 2, y: 2, z: 3).isAncestorOf(parent))
+    }
+
+    // Verifies isDescendantOf is the inverse of isAncestorOf.
+    @Test
+    func isDescendantOf() async throws {
+        let child = MapTile(x: 2, y: 2, z: 3)
+        #expect(child.isDescendantOf(MapTile(x: 1, y: 1, z: 2)))
+        #expect(child.isDescendantOf(MapTile(x: 0, y: 0, z: 0)))
+        // Not a descendant
+        #expect(!child.isDescendantOf(MapTile(x: 0, y: 0, z: 2)))
+        // Same tile
+        #expect(!child.isDescendantOf(child))
+        // Lower zoom is not a descendant of higher zoom
+        #expect(!MapTile(x: 1, y: 1, z: 2).isDescendantOf(child))
+    }
+
+    // Verifies isRelated covers ancestors, descendants, and identity.
+    @Test
+    func isRelated() async throws {
+        let tile = MapTile(x: 2, y: 2, z: 3)
+        // Same tile
+        #expect(tile.isRelated(to: tile))
+        // Ancestor
+        #expect(tile.isRelated(to: MapTile(x: 1, y: 1, z: 2)))
+        #expect(tile.isRelated(to: MapTile(x: 0, y: 0, z: 0)))
+        // Descendant
+        #expect(tile.isRelated(to: MapTile(x: 4, y: 4, z: 4)))
+        #expect(tile.isRelated(to: MapTile(x: 4, y: 5, z: 4)))
+        // Not related
+        #expect(!tile.isRelated(to: MapTile(x: 0, y: 0, z: 2)))
+        #expect(!tile.isRelated(to: MapTile(x: 1, y: 0, z: 2)))
+        #expect(!tile.isRelated(to: MapTile(x: 3, y: 3, z: 3)))
+    }
+
+    // Verifies ancestors returns the chain from immediate parent to root.
+    @Test
+    func ancestors() async throws {
+        let tile = MapTile(x: 4, y: 6, z: 3)
+        let chain = tile.ancestors
+        #expect(chain.count == 3)
+        #expect(chain[0] == MapTile(x: 2, y: 3, z: 2))
+        #expect(chain[1] == MapTile(x: 1, y: 1, z: 1))
+        #expect(chain[2] == MapTile(x: 0, y: 0, z: 0))
+
+        // z=0 has no ancestors
+        #expect(MapTile(x: 0, y: 0, z: 0).ancestors.isEmpty)
+    }
+
+    // Verifies descendants(atZoom:) returns all tiles at the target zoom.
+    @Test
+    func descendants() async throws {
+        let tile = MapTile(x: 1, y: 1, z: 2)
+
+        // Same zoom → just self
+        #expect(tile.descendants(atZoom: 2) == [tile])
+
+        // One level deeper → 4 children
+        let d3 = tile.descendants(atZoom: 3)
+        #expect(d3.count == 4)
+        #expect(d3.contains(MapTile(x: 2, y: 2, z: 3)))
+        #expect(d3.contains(MapTile(x: 3, y: 2, z: 3)))
+        #expect(d3.contains(MapTile(x: 2, y: 3, z: 3)))
+        #expect(d3.contains(MapTile(x: 3, y: 3, z: 3)))
+
+        // Two levels deeper → 16 grandchildren
+        #expect(tile.descendants(atZoom: 4).count == 16)
+
+        // Lower zoom → empty
+        #expect(tile.descendants(atZoom: 1).isEmpty)
+    }
+
+    // MARK: - Containment
+
+    // Verifies contains for coordinates inside and outside a tile.
+    @Test
+    func containsCoordinate() async throws {
+        // z=2, x=1, y=1 covers lon -90..0, lat 0..66.51 (northern hemisphere,
+        // second row from the top in the XYZ convention where y=0 is north).
+        let tile = MapTile(x: 1, y: 1, z: 2)
+
+        // Interior point
+        let interior = Coordinate3D(latitude: 40.0, longitude: -45.0)
+        #expect(tile.contains(interior))
+
+        // Near NW corner (interior)
+        let nearNw = Coordinate3D(latitude: 60.0, longitude: -89.5)
+        #expect(tile.contains(nearNw))
+
+        // Outside (wrong longitude)
+        let east = Coordinate3D(latitude: 40.0, longitude: 45.0)
+        #expect(!tile.contains(east))
+
+        // Outside (wrong latitude — southern hemisphere)
+        let south = Coordinate3D(latitude: -40.0, longitude: -45.0)
+        #expect(!tile.contains(south))
+    }
+
 }

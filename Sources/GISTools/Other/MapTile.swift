@@ -378,6 +378,105 @@ public struct MapTile: CustomStringConvertible, Sendable {
         GISTool.metersPerPixel(atZoom: z, latitude: centerCoordinate().latitude)
     }
 
+    // MARK: - Ancestry / Descendant
+
+    /// Returns `true` if this tile is an ancestor of `other`.
+    ///
+    /// A tile is an ancestor of another if the other tile can be reached by
+    /// repeatedly applying ``children`` (i.e. the other tile is at a higher
+    /// zoom level and falls within this tile's quadrant). A tile is not
+    /// considered an ancestor of itself.
+    ///
+    /// - Parameter other: The potential descendant tile.
+    /// - Returns: `true` if this tile is an ancestor of `other`.
+    public func isAncestorOf(_ other: MapTile) -> Bool {
+        guard other.z > z else { return false }
+        var tile = other
+        while tile.z > z {
+            tile = tile.parent
+        }
+        return tile == self
+    }
+
+    /// Returns `true` if this tile is a descendant of `other`.
+    ///
+    /// A tile is a descendant of another if this tile can be reached by
+    /// repeatedly applying ``children`` from the other tile (i.e. this tile
+    /// is at a higher zoom level and falls within the other tile's quadrant).
+    /// A tile is not considered a descendant of itself.
+    ///
+    /// - Parameter other: The potential ancestor tile.
+    /// - Returns: `true` if this tile is a descendant of `other`.
+    public func isDescendantOf(_ other: MapTile) -> Bool {
+        other.isAncestorOf(self)
+    }
+
+    /// Returns `true` if this tile is an ancestor or descendant of `other`,
+    /// or if they are the same tile.
+    ///
+    /// Two tiles are related if one can be reached from the other by walking
+    /// the ``parent`` chain. Tiles at the same zoom are related only if they
+    /// are identical.
+    ///
+    /// - Parameter other: The tile to check for a relationship.
+    /// - Returns: `true` if the tiles are ancestors, descendants, or identical.
+    public func isRelated(to other: MapTile) -> Bool {
+        if self == other { return true }
+        return isAncestorOf(other) || isDescendantOf(other)
+    }
+
+    /// All ancestor tiles from the immediate parent up to the root tile
+    /// (z = 0), ordered from nearest (smallest zoom difference) to farthest.
+    ///
+    /// At zoom level 0 this is an empty array.
+    public var ancestors: [MapTile] {
+        guard z > 0 else { return [] }
+        var result: [MapTile] = []
+        var tile = parent
+        while tile.z >= 0 {
+            result.append(tile)
+            if tile.z == 0 { break }
+            tile = tile.parent
+        }
+        return result
+    }
+
+    /// All descendant tiles of this tile at the given target zoom level.
+    ///
+    /// The target zoom must be greater than or equal to this tile's zoom.
+    /// If the target zoom equals this tile's zoom, the result contains only
+    /// this tile. If the target zoom is less than this tile's zoom, the result
+    /// is empty.
+    ///
+    /// - Parameter zoom: The target zoom level.
+    /// - Returns: An array of descendant tiles at the given zoom level.
+    public func descendants(atZoom zoom: Int) -> [MapTile] {
+        guard zoom >= z else { return [] }
+        if zoom == z { return [self] }
+
+        var tiles: [MapTile] = [self]
+        for _ in z ..< zoom {
+            tiles = tiles.flatMap { $0.children }
+        }
+        return tiles
+    }
+
+    // MARK: - Containment
+
+    /// Returns `true` if the given geographic coordinate falls within this
+    /// tile's bounding box.
+    ///
+    /// The coordinate is projected to EPSG:4326 before testing. Coordinates
+    /// exactly on the tile boundary (east or south edge) are considered
+    /// outside, matching the half-open interval convention used by the
+    /// tile pyramid.
+    ///
+    /// - Parameter coordinate: The geographic coordinate to test.
+    /// - Returns: `true` if the coordinate is within this tile.
+    public func contains(_ coordinate: Coordinate3D) -> Bool {
+        boundingBox().contains(coordinate.projected(to: .epsg4326))
+    }
+
     // MARK: - Private
 
     /// Normalizes a coordinate for tile indexing using Web Mercator projection.
