@@ -691,18 +691,19 @@ extension Coordinate3D {
         }
 
         var phi = atan2(z, p * (1.0 - e2))
-        for _ in 0..<10 {
+        var h: Double = 0.0
+        for _ in 0 ..< 10 {
             let sinPhi = sin(phi)
+            let cosPhi = cos(phi)
             let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
-            let h = p / cos(phi) - N
+            h = p / cosPhi - N
             phi = atan2(z * (N + h), p * ((1.0 - e2) * N + h))
         }
 
-        let sinPhi = sin(phi)
-        let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
-        let h = p / cos(phi) - N
-
-        let lat = phi * 180.0 / .pi
+        // Clamp latitude to the valid geodetic range. The iterative solver
+        // can diverge for points near the geocenter (huge negative altitude),
+        // producing |lat| > 90.
+        let lat = Swift.min(90.0, Swift.max(-90.0, phi * 180.0 / .pi))
         let lon = atan2(y, x) * 180.0 / .pi
 
         return (lat, lon, h)
