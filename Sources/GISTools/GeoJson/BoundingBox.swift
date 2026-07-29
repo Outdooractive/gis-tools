@@ -108,6 +108,16 @@ public struct BoundingBox:
 
         self.southWest = southWest
         self.northEast = northEast
+
+        switch projection {
+        case .epsg3857, .epsg4326, .epsg4978:
+            let clamped = self.clamped()
+            self.southWest = clamped.southWest
+            self.northEast = clamped.northEast
+
+        case .noSRID:
+            break
+        }
     }
 
     /// Create a bounding box with a `southWest` and `northEast` coordinate.
@@ -209,6 +219,7 @@ public struct BoundingBox:
         BoundingBox(
             coordinates: [southWest, northEast],
             padding: padding)!
+            .clamped()
     }
 
     /// Returns a copy of the receiver expanded by `degrees`.
@@ -252,6 +263,7 @@ public struct BoundingBox:
                     latitude: northEast.latitude + dy,
                     longitude: northEast.longitude + dx,
                     altitude: northEast.altitude))
+                .clamped()
 
         case .noSRID:
             return self // Don't know what to do -> ignore
@@ -273,7 +285,7 @@ public struct BoundingBox:
         var ne = northEast.destination(distance: distance, bearing: 45.0)
         sw.altitude = southWest.altitude
         ne.altitude = northEast.altitude
-        return BoundingBox(southWest: sw, northEast: ne)
+        return BoundingBox(southWest: sw, northEast: ne).clamped()
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
@@ -288,7 +300,7 @@ public struct BoundingBox:
     ///    - coordinate: The coordinate to include
     /// - Returns: A new bounding box that encompasses both the receiver and the coordinate
     public func expanded(byIncluding coordinate: Coordinate3D) -> BoundingBox {
-        BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!
+        BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!.clamped()
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
@@ -308,7 +320,7 @@ public struct BoundingBox:
             northEast,
             boundingBox.southWest.projected(to: projection),
             boundingBox.northEast.projected(to: projection),
-        ])!
+        ])!.clamped()
     }
 
     /// A textual description of the bounding box.
@@ -483,6 +495,7 @@ extension BoundingBox {
                     y: northEast.latitude + pad,
                     z: northEast.altitude,
                     projection: projection))
+                .clamped()
         }
         else {
             let pad = (h - w) / 2.0
@@ -497,6 +510,7 @@ extension BoundingBox {
                     y: northEast.latitude,
                     z: northEast.altitude,
                     projection: projection))
+                .clamped()
         }
     }
 
@@ -915,6 +929,7 @@ extension BoundingBox {
                 y: max(lhs.northEast.y, rhs.northEast.y),
                 z: allHaveAltitude ? maxAltitude : nil,
                 projection: lhs.projection))
+            .clamped()
     }
 
     /// Combine two bounding boxes.
