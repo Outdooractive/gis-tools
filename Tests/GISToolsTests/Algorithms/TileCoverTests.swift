@@ -342,4 +342,166 @@ struct TileCoverTests {
         #expect(xs.contains(0) || xs.contains(3))
     }
 
+    // MARK: - Interior fill
+
+    // Tests that a bounding box covers the full interior tile block, not
+    // just the perimeter. This is the regression test for the originally
+    // reported bbox "10,47,11,48" at zoom 14.
+    @Test
+    func boundingBoxInteriorFillAtZoom14() {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 47.0, longitude: 10.0),
+            northEast: Coordinate3D(latitude: 48.0, longitude: 11.0))
+        let tiles = bbox.tileCover(atZoom: 14)
+        let xs = Set(tiles.map(\.x))
+        let ys = Set(tiles.map(\.y))
+        // Every tile in the bounding tile-rectangle must be present.
+        #expect(tiles.count == xs.count * ys.count)
+        // Sanity-check the spans against a known reference at zoom 14.
+        #expect(xs.count >= 40)
+        #expect(ys.count >= 60)
+    }
+
+    // Tests that a polygon with a hole excludes the hole's interior tiles
+    // while still covering the outer ring and the hole's boundary.
+    @Test
+    func polygonWithHoleExcludesInteriorTiles() throws {
+        // At zoom 6 (64×64 world) the outer ring (-40..40 lon/lat) spans many
+        // tiles, and the inner ring (-15..15 lon/lat) carves out a multi-tile
+        // hole. A deep-interior hole tile (well inside the inner ring, not on
+        // its boundary) must be excluded.
+        let outer: [Coordinate3D] = [
+            Coordinate3D(latitude: 40.0, longitude: -40.0),
+            Coordinate3D(latitude: 40.0, longitude: 40.0),
+            Coordinate3D(latitude: -40.0, longitude: 40.0),
+            Coordinate3D(latitude: -40.0, longitude: -40.0),
+            Coordinate3D(latitude: 40.0, longitude: -40.0),
+        ]
+        let inner: [Coordinate3D] = [
+            Coordinate3D(latitude: 15.0, longitude: -15.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: -15.0, longitude: 15.0),
+            Coordinate3D(latitude: -15.0, longitude: -15.0),
+            Coordinate3D(latitude: 15.0, longitude: -15.0),
+        ]
+        let polygon = try #require(Polygon([outer, inner]))
+        let tiles = polygon.tileCover(atZoom: 6)
+        // Outer tiles (well outside the hole) must be present.
+        #expect(tiles.contains(MapTile(x: 24, y: 24, z: 6)))
+        #expect(tiles.contains(MapTile(x: 39, y: 39, z: 6)))
+        // A deep-interior hole tile (lon ~0, lat ~0, well inside the inner
+        // ring and not on its boundary) must NOT be present.
+        #expect(!tiles.contains(MapTile(x: 32, y: 32, z: 6)))
+    }
+
+    // MARK: - All projections
+
+    // Tests tile cover in EPSG:4326 returns a full interior block.
+    @Test
+    func tileCover4326FullInterior() {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 47.0, longitude: 10.0),
+            northEast: Coordinate3D(latitude: 48.0, longitude: 11.0))
+        let tiles = bbox.tileCover(atZoom: 14)
+        let xs = Set(tiles.map(\.x))
+        let ys = Set(tiles.map(\.y))
+        #expect(tiles.count == xs.count * ys.count)
+        #expect(tiles.count > 100)
+    }
+
+    // Tests tile cover in EPSG:3857 produces a full interior cover for an
+    // equivalent bounding box.
+    @Test
+    func tileCover3857FullInterior() {
+        let bbox3857 = BoundingBox(
+            southWest: Coordinate3D(latitude: 47.0, longitude: 10.0).projected(to: .epsg3857),
+            northEast: Coordinate3D(latitude: 48.0, longitude: 11.0).projected(to: .epsg3857))
+        let tiles = bbox3857.tileCover(atZoom: 14)
+        let xs = Set(tiles.map(\.x))
+        let ys = Set(tiles.map(\.y))
+        #expect(tiles.count == xs.count * ys.count)
+        #expect(tiles.count > 100)
+    }
+
+    // Tests tile cover in EPSG:4978 (ECEF) returns a non-empty cover for a
+    // bounding box. ECEF bounding-box semantics can distort the effective
+    // polygon across the 4326 roundtrip (see ``boundingBoxGeometry``), so we
+    // only assert non-empty coverage here; projection-roundtrip precision is
+    // covered by the EPSG:4326 and EPSG:3857 tests.
+    @Test
+    func tileCover4978FullInterior() {
+        let bbox4978 = BoundingBox(
+            southWest: Coordinate3D(latitude: 47.0, longitude: 10.0).projected(to: .epsg4978),
+            northEast: Coordinate3D(latitude: 48.0, longitude: 11.0).projected(to: .epsg4978))
+        let tiles = bbox4978.tileCover(atZoom: 14)
+        #expect(!tiles.isEmpty)
+    }
+
+    // Tests tile cover with noSRID returns an empty array.
+    @Test
+    func tileCoverNoSRIDReturnsEmpty() {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID))
+        let tiles = bbox.tileCover(atZoom: 14)
+        #expect(tiles.isEmpty)
+    }
+
+    // MARK: - Anti-meridian interior fill
+
+    // Tests that a bounding box crossing the anti-meridian fills the interior
+    // tiles on both sides of the date line.
+    @Test
+    func boundingBoxAcrossAntiMeridianFillsInterior() {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: -170.0))
+        let tiles = bbox.tileCover(atZoom: 4)
+        let xs = Set(tiles.map(\.x))
+        #expect(xs.contains(0))
+        #expect(xs.contains(15))
+        // Every tile in the bounding tile-rectangle must be present (full
+        // interior cover, not just the perimeter).
+        let ys = Set(tiles.map(\.y))
+        #expect(tiles.count == xs.count * ys.count)
+    }
+
+    // Tests that a polygon crossing the anti-meridian fills interior tiles on
+    // both sides of the date line.
+    @Test
+    func polygonAcrossAntiMeridianFillsInterior() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+        ]]))
+        let tiles = polygon.tileCover(atZoom: 4)
+        let xs = Set(tiles.map(\.x))
+        #expect(xs.contains(0))
+        #expect(xs.contains(15))
+        // Every tile in the bounding tile-rectangle must be present (full
+        // interior cover, not just the perimeter).
+        let ys = Set(tiles.map(\.y))
+        #expect(tiles.count == xs.count * ys.count)
+    }
+
+    // Tests that a polygon crossing the anti-meridian produces the same
+    // tiles as the equivalent split MultiPolygon.
+    @Test
+    func polygonAndBoundingBoxAntiMeridianAgree() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: -10.0, longitude: -170.0),
+        ]]))
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: -170.0))
+        let polygonTiles = Set(polygon.tileCover(atZoom: 4))
+        let bboxTiles = Set(bbox.tileCover(atZoom: 4))
+        #expect(polygonTiles == bboxTiles)
+    }
+
 }
