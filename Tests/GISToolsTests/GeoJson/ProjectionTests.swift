@@ -129,6 +129,26 @@ struct ProjectionTests {
         #expect(abs(merc.latitude - via4326.latitude) < 0.001)
     }
 
+    /// Tests that near-geocenter ECEF coordinates project to valid latitudes
+    /// in [-90, 90]. The iterative ECEF→geodetic solver can diverge for
+    /// points near the geocenter (huge negative altitude), producing
+    /// |latitude| > 90 without clamping.
+    @Test
+    func convertFrom4978NearOriginClampsLatitude() {
+        let nearOriginPoints: [(x: Double, y: Double, z: Double)] = [
+            (0.0, 0.0, 0.0),
+            (1_000.0, 0.0, 0.0),
+            (1_000.0, 1_000.0, 0.0),
+            (0.0, 1_000.0, 0.0),
+            (500.0, 500.0, 0.0),
+        ]
+        for (x, y, z) in nearOriginPoints {
+            let geo = Coordinate3D(x: x, y: y, z: z, projection: .epsg4978).projected(to: .epsg4326)
+            #expect(geo.latitude >= -90.0, "latitude \(geo.latitude) < -90 for ECEF (\(x), \(y), \(z))")
+            #expect(geo.latitude <= 90.0, "latitude \(geo.latitude) > 90 for ECEF (\(x), \(y), \(z))")
+        }
+    }
+
     /// Validates that each projection case reports the correct SRID number.
     @Test
     func cases() async throws {
