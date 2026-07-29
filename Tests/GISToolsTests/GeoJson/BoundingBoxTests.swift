@@ -665,6 +665,110 @@ struct BoundingBoxTests {
         #expect(abs(bbox3_4326.projected(to: .epsg3857).northEast.y - bbox3_3857.northEast.y) < 0.00001)
     }
 
+    // Validates that expanded(byDegrees:) clamps to world bounds.
+    @Test
+    func expandingByDegreesClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -85.0, longitude: -175.0),
+            northEast: Coordinate3D(latitude: 85.0, longitude: 175.0))
+
+        let expanded = bbox.expanded(byDegrees: 10.0)
+        #expect(expanded == BoundingBox.world)
+    }
+
+    // Validates that expanded(byDistance:) clamps to world bounds.
+    @Test
+    func expandingByDistanceClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -89.0, longitude: -179.0),
+            northEast: Coordinate3D(latitude: 89.0, longitude: 179.0))
+
+        let expanded = bbox.expanded(byDistance: 200_000.0)
+        #expect(expanded.southWest.latitude >= -90.0)
+        #expect(expanded.northEast.latitude <= 90.0)
+        #expect(expanded.southWest.longitude >= -180.0)
+        #expect(expanded.northEast.longitude <= 180.0)
+    }
+
+    // Validates that expanded(byIncluding:) with a far-away coordinate clamps to world bounds.
+    @Test
+    func expandingByIncludingCoordinateClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -80.0, longitude: -160.0),
+            northEast: Coordinate3D(latitude: 80.0, longitude: 160.0))
+
+        let expanded = bbox.expanded(byIncluding: Coordinate3D(latitude: 100.0, longitude: 200.0))
+        #expect(expanded.southWest.latitude >= -90.0)
+        #expect(expanded.northEast.latitude <= 90.0)
+        #expect(expanded.southWest.longitude >= -180.0)
+        #expect(expanded.northEast.longitude <= 180.0)
+    }
+
+    // Validates that expanded(byIncluding:) with a far-away bounding box clamps to world bounds.
+    @Test
+    func expandingByIncludingBoxClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -80.0, longitude: -160.0),
+            northEast: Coordinate3D(latitude: 80.0, longitude: 160.0))
+        let farBox = BoundingBox(
+            southWest: Coordinate3D(latitude: -100.0, longitude: -200.0),
+            northEast: Coordinate3D(latitude: 100.0, longitude: 200.0))
+
+        let expanded = bbox.expanded(byIncluding: farBox)
+        #expect(expanded == BoundingBox.world)
+    }
+
+    // Validates that padded() clamps to world bounds.
+    @Test
+    func paddedClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -85.0, longitude: -175.0),
+            northEast: Coordinate3D(latitude: 85.0, longitude: 175.0))
+
+        let padded = bbox.padded(1_000_000.0)
+        #expect(padded == BoundingBox.world)
+    }
+
+    // Validates that squared() clamps to world bounds.
+    @Test
+    func squaredClampsToWorldBounds() async throws {
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -80.0, longitude: -10.0),
+            northEast: Coordinate3D(latitude: 80.0, longitude: 10.0))
+
+        let square = bbox.squared()
+        #expect(square.southWest.latitude >= -90.0)
+        #expect(square.northEast.latitude <= 90.0)
+        #expect(square.southWest.longitude >= -180.0)
+        #expect(square.northEast.longitude <= 180.0)
+    }
+
+    // Validates that the + operator clamps to world bounds.
+    @Test
+    func plusOperatorClampsToWorldBounds() async throws {
+        let bbox1 = BoundingBox(
+            southWest: Coordinate3D(latitude: -80.0, longitude: -160.0),
+            northEast: Coordinate3D(latitude: 80.0, longitude: 160.0))
+        let bbox2 = BoundingBox(
+            southWest: Coordinate3D(latitude: -100.0, longitude: -200.0),
+            northEast: Coordinate3D(latitude: 100.0, longitude: 200.0))
+
+        let combined = bbox1 + bbox2
+        #expect(combined == BoundingBox.world)
+    }
+
+    // Validates that init(coordinates:padding:) clamps to world bounds.
+    @Test
+    func initWithPaddingClampsToWorldBounds() async throws {
+        let bbox = try #require(BoundingBox(
+            coordinates: [
+                Coordinate3D(latitude: -85.0, longitude: -175.0),
+                Coordinate3D(latitude: 85.0, longitude: 175.0),
+            ],
+            padding: 1_000_000.0))
+        #expect(bbox == BoundingBox.world)
+    }
+
     // MARK: - boundingBoxGeometry
 
     // Validates that a non-wrapping bounding box produces a Polygon geometry.
