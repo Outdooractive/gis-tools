@@ -12,6 +12,46 @@
 # GISTools
 GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms ported from [https://turfjs.org][4].
 
+## Table of Contents
+
+- [GISTools](#gistools)
+  - [Features](#features)
+  - [Notes](#notes)
+  - [Requirements](#requirements)
+  - [Installation with Swift Package Manager](#installation-with-swift-package-manager)
+  - [Package Traits](#package-traits)
+  - [Usage](#usage)
+- [GeoJSON](#geojson)
+  - [GeoJson protocol](#geojson-protocol)
+  - [BoundingBoxRepresentable protocol](#boundingboxrepresentable-protocol)
+  - [GeoJsonConvertible protocol / GeoJsonCodable](#geojsonconvertible-protocol--geojsoncodable)
+  - [GeoJsonReader](#geojsonreader)
+  - [Coordinate3D](#coordinate3d)
+  - [BoundingBox](#boundingbox)
+  - [Point](#point)
+  - [MultiPoint](#multipoint)
+  - [LineString](#linestring)
+  - [MultiLineString](#multilinestring)
+  - [Polygon](#polygon)
+  - [MultiPolygon](#multipolygon)
+  - [GeometryCollection](#geometrycollection)
+  - [Feature](#feature)
+  - [FeatureCollection](#featurecollection)
+- [SwiftData](#swiftdata)
+- [WKB/WKT/TWKB](#wbkwkttwkb)
+- [Spatial index](#spatial-index)
+- [MapTile](#maptile)
+- [Polylines](#polylines)
+- [Query DSL](#query-dsl)
+- [Algorithms](#algorithms)
+- [Graph](#graph)
+  - [Construction](#construction)
+  - [Graph algorithms](#graph-algorithms)
+- [Related packages](#related-packages)
+- [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
+
 ## Features
 
 - Supports the full [GeoJSON standard][6]
@@ -1137,6 +1177,55 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | unkink-polygon              | `let simplePolygons = polygon.unkinked(gridSize: 0.001)`                                                                              |     | [Source][150] / [Tests][151] |
 | voronoi                     | `let cells = points.voronoiDiagram(boundingBox: bbox)`                                                                                |     | [Source][223] / [Tests][224] |
 
+# Graph
+
+The package includes a `Graph` type for routing and network analysis on GeoJSON `LineString` / `MultiLineString` features. Nodes are created at each line-segment endpoint; coordinates within a configurable `nodeTolerance` (default 1 m) are merged into a single node via a spatial-hash index, giving near O(1) deduplication during construction. The graph supports both undirected and directed (`oneway`-tagged) edges, optional edge filters for mode-restricted routing (e.g. hiking / cycling), and works across all projections (EPSG:4326, EPSG:3857, EPSG:4978, noSRID), including geometries that cross the antimeridian.
+
+## Construction
+
+```swift
+// Build a graph from a feature collection of LineStrings / MultiLineStrings.
+let graph = Graph(featureCollection: featureCollection)
+
+// Directed graph: features with a truthy "oneway" property become one-way edges.
+let directed = Graph(featureCollection: featureCollection, isDirected: true)
+
+// Pick two nodes and route between them.
+let start = graph.nodes[0]
+let end = graph.nodes[graph.nodeCount - 1]
+let path = graph.shortestPath(from: start, to: end)
+let length = graph.length(ofPath: path)
+```
+
+Nodes can also be added manually with `createNode(at:)`, `addUndirectedEdge(from:to:)`, and `addDirectedEdge(from:to:)`.
+
+## Graph algorithms
+
+| Name | Example | Source / Tests |
+| ---- | ------- | -------------- |
+| Shortest path (Dijkstra) | `graph.shortestPath(from: a, to: b)` | [Source][247] / [Tests][248] |
+| A* search | `graph.aStarPath(from: a, to: b)` | [Source][249] / [Tests][250] |
+| Bidirectional Dijkstra | `graph.bidirectionalShortestPath(from: a, to: b)` | [Source][251] / [Tests][252] |
+| K-shortest paths (Yen) | `graph.kShortestPaths(from: a, to: b, k: 3)` | [Source][253] / [Tests][254] |
+| Multi-criteria shortest path | `graph.shortestPath(from: a, to: b) { $0.weight }` | [Source][255] / [Tests][256] |
+| Chain contraction | `graph.contracted()` | [Source][257] / [Tests][258] |
+| Contraction-accelerated routing | `graph.shortestPathViaContraction(from: a, to: b)` | [Source][257] / [Tests][259] |
+| Dead-end pruning | `graph.prunedDeadEnds()` | [Source][260] / [Tests][261] |
+| Graph partitioning (tiling) | `graph.partition(intoGridRows: 4, columns: 4)` | [Source][262] / [Tests][263] |
+| Bridge detection | `graph.bridges()` | [Source][264] / [Tests][265] |
+| Articulation points | `graph.articulationPoints()` | [Source][266] / [Tests][267] |
+| Betweenness centrality | `graph.betweennessCentrality()` | [Source][268] / [Tests][269] |
+| Strongly connected components | `graph.stronglyConnectedComponents()` | [Source][270] / [Tests][271] |
+| Minimum spanning tree | `graph.minimumSpanningTree()` | [Source][272] / [Tests][273] |
+| Eulerian path / circuit | `graph.eulerianPath()` | [Source][274] / [Tests][275] |
+| Chinese Postman tour | `graph.chinesePostmanTour()` | [Source][274] / [Tests][275] |
+| TSP approximation | `graph.travelingSalespersonTour(nodes: [...])` | [Source][276] / [Tests][277] |
+| Cycle detection | `graph.cycles(from: node)` | [Source][278] |
+| BFS / DFS | `graph.breadthFirstSearch(from: node)` / `graph.depthFirstSearch(from: node)` | [Source][279] |
+| Connected components | `graph.connectedComponents` | [Source][279] |
+| Node-on-edge splitting | `graph.nodeOnEdge(near: coordinate)` | [Source][280] |
+| Roundabout detection | see `Graph+Cycles.swift` | [Source][278] |
+
 # Related packages
 Currently only two:
 - [mvt-tools][125]: Vector tiles reader/writer for Swift
@@ -1396,6 +1485,40 @@ Thomas Rasch, Outdooractive
 [244]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/MakeValidTests.swift "MakeValidTests"
 [245]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/UnaryUnion.swift "UnaryUnion"
 [246]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/UnaryUnionTests.swift "UnaryUnionTests"
+[247]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+ShortestPath.swift "Graph+ShortestPath"
+[248]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/ShortestPathTests.swift "ShortestPathTests"
+[249]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+AStar.swift "Graph+AStar"
+[250]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/AStarTests.swift "AStarTests"
+[251]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Bidirectional.swift "Graph+Bidirectional"
+[252]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/BidirectionalShortestPathTests.swift "BidirectionalShortestPathTests"
+[253]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+KShortestPaths.swift "Graph+KShortestPaths"
+[254]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/KShortestPathsTests.swift "KShortestPathsTests"
+[255]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+MultiCriteriaPath.swift "Graph+MultiCriteriaPath"
+[256]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/MultiCriteriaShortestPathTests.swift "MultiCriteriaShortestPathTests"
+[257]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Contraction.swift "Graph+Contraction"
+[258]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/ContractionTests.swift "ContractionTests"
+[259]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/ContractionRoutingTests.swift "ContractionRoutingTests"
+[260]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+DeadEnds.swift "Graph+DeadEnds"
+[261]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/DeadEndPruningTests.swift "DeadEndPruningTests"
+[262]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Partitioning.swift "Graph+Partitioning"
+[263]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/PartitioningTests.swift "PartitioningTests"
+[264]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Bridges.swift "Graph+Bridges"
+[265]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/BridgeDetectionTests.swift "BridgeDetectionTests"
+[266]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+ArticulationPoints.swift "Graph+ArticulationPoints"
+[267]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/ArticulationPointTests.swift "ArticulationPointTests"
+[268]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+BetweennessCentrality.swift "Graph+BetweennessCentrality"
+[269]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/BetweennessCentralityTests.swift "BetweennessCentralityTests"
+[270]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+StronglyConnectedComponents.swift "Graph+StronglyConnectedComponents"
+[271]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/StronglyConnectedComponentsTests.swift "StronglyConnectedComponentsTests"
+[272]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+MinimumSpanningTree.swift "Graph+MinimumSpanningTree"
+[273]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/MinimumSpanningTreeTests.swift "MinimumSpanningTreeTests"
+[274]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Eulerian.swift "Graph+Eulerian"
+[275]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/EulerianTests.swift "EulerianTests"
+[276]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Tsp.swift "Graph+Tsp"
+[277]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/TspTests.swift "TspTests"
+[278]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Cycles.swift "Graph+Cycles"
+[279]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Traversal.swift "Graph+Traversal"
+[280]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+NodeOnEdge.swift "Graph+NodeOnEdge"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
