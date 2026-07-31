@@ -29,12 +29,24 @@ enum GraphTestHelper {
         Graph(featureCollection: _raplochCollection, isDirected: false)
     }()
 
+    private static let _immenstadtCollection2: FeatureCollection = {
+        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt_2")
+    }()
+
+    private static let _immenstadtGraph2: Graph = {
+        Graph(featureCollection: _immenstadtCollection2, isDirected: false)
+    }()
+
     static func immenstadtCollection() throws -> FeatureCollection {
         _immenstadtCollection
     }
 
     static func immenstadtGraph() throws -> Graph {
         _immenstadtGraph
+    }
+
+    static func immenstadtGraph2() throws -> Graph {
+        _immenstadtGraph2
     }
 
     static func raplochCollection() throws -> FeatureCollection {
