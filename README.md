@@ -46,6 +46,8 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - [Algorithms](#algorithms)
 - [Graph](#graph)
   - [Construction](#construction)
+  - [Merge](#merge)
+  - [Export](#export)
   - [Graph algorithms](#graph-algorithms)
 - [Related packages](#related-packages)
 - [Contributing](#contributing)
@@ -71,7 +73,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 - Includes a property/spatial query DSL for filtering features (`QueryParser`)
-- Includes a `Graph` type for routing and network analysis — Dijkstra, A*, bidirectional search, K-shortest paths, multi-criteria routing, chain contraction, dead-end pruning, bridge/articulation-point detection, betweenness centrality, strongly connected components, minimum spanning tree, Eulerian/Chinese Postman tours, and TSP approximation
+- Includes a `Graph` type for routing and network analysis — Dijkstra, A*, bidirectional search, K-shortest paths, multi-criteria routing, chain contraction, dead-end pruning, bridge/articulation-point detection, betweenness centrality, strongly connected components, minimum spanning tree, Eulerian/Chinese Postman tours, TSP approximation, graph tile merging with spatial deduplication, and export back to GeoJSON
 - Pure Swift without external dependencies
 
 ## Notes
@@ -1213,36 +1215,63 @@ for component in components {
 let sub = graph.subgraph(containing: [nodeA, nodeB, nodeC])
 ```
 
+## Merge
+
+Multiple graphs (e.g. from tiled road networks) can be merged into one. Nodes within `nodeTolerance` are spatially deduplicated, and duplicate edges between the same node pair are removed:
+
+```swift
+// Merge an array of graphs (primary API).
+let merged = Graph.merged([tile1, tile2, tile3])
+
+// Convenience for merging a single graph into another.
+let merged = graph.merged(with: anotherGraph)
+```
+
+Edges cut at tile boundaries become degree-2 chain nodes. Call `contracted()` on the merged result to collapse them into continuous edges.
+
+## Export
+
+A graph can be exported back to a `FeatureCollection` for debugging or for use with other GeoJSON tooling:
+
+```swift
+let fc = graph.toFeatureCollection()
+// Each edge becomes a 2-point LineString feature.
+// Original feature properties, id, and edge weight are preserved.
+// Directed edges get a "oneway": "yes" property.
+```
+
 ## Graph algorithms
 
 | Name | Example | Source / Tests |
 | ---- | ------- | -------------- |
-| Shortest path (Dijkstra) | `graph.shortestPath(from: a, to: b)` | [Source][247] / [Tests][248] |
 | A* search | `graph.aStarPath(from: a, to: b)` | [Source][249] / [Tests][250] |
-| Bidirectional Dijkstra | `graph.bidirectionalShortestPath(from: a, to: b)` | [Source][251] / [Tests][252] |
-| K-shortest paths (Yen) | `graph.kShortestPaths(from: a, to: b, k: 3)` | [Source][253] / [Tests][254] |
-| Multi-criteria shortest path | `graph.shortestPath(from: a, to: b) { $0.weight }` | [Source][255] / [Tests][256] |
-| Chain contraction | `graph.contracted()` / `graph.contracted { $0.feature?.property(for: "type") == $1.feature?.property(for: "type") }` | [Source][257] / [Tests][258] |
-| Contraction-accelerated routing | `graph.shortestPathViaContraction(from: a, to: b)` | [Source][257] / [Tests][259] |
-| Dead-end pruning | `graph.prunedDeadEnds()` | [Source][260] / [Tests][261] |
-| Graph partitioning (tiling) | `graph.partition(intoGridRows: 4, columns: 4)` | [Source][262] / [Tests][263] |
-| Bridge detection | `graph.bridges()` | [Source][264] / [Tests][265] |
 | Articulation points | `graph.articulationPoints()` | [Source][266] / [Tests][267] |
-| Betweenness centrality | `graph.betweennessCentrality()` | [Source][268] / [Tests][269] |
-| Strongly connected components | `graph.stronglyConnectedComponents()` | [Source][270] / [Tests][271] |
-| SCC graphs | `graph.stronglyConnectedComponentGraphs()` | [Source][270] / [Tests][271] |
-| Minimum spanning tree | `graph.minimumSpanningTree()` | [Source][272] / [Tests][273] |
-| Eulerian path / circuit | `graph.eulerianPath()` | [Source][274] / [Tests][275] |
-| Chinese Postman tour | `graph.chinesePostmanTour()` | [Source][274] / [Tests][275] |
-| TSP approximation | `graph.travelingSalespersonTour(nodes: [...])` | [Source][276] / [Tests][277] |
-| Cycle detection | `graph.cycles(from: node)` | [Source][278] |
 | BFS / DFS | `graph.breadthFirstSearch(from: node)` / `graph.depthFirstSearch(from: node)` | [Source][279] |
 | BFS / DFS (callback) | `graph.breadthFirstSearch(from: node) { _ in true }` / `graph.depthFirstSearch(from: node) { _ in true }` | [Source][279] |
+| Betweenness centrality | `graph.betweennessCentrality()` | [Source][268] / [Tests][269] |
+| Bidirectional Dijkstra | `graph.bidirectionalShortestPath(from: a, to: b)` | [Source][251] / [Tests][252] |
+| Bridge detection | `graph.bridges()` | [Source][264] / [Tests][265] |
+| Chain contraction | `graph.contracted()` / `graph.contracted { $0.feature?.property(for: "type") == $1.feature?.property(for: "type") }` | [Source][257] / [Tests][258] |
+| Chinese Postman tour | `graph.chinesePostmanTour()` | [Source][274] / [Tests][275] |
 | Connected components | `graph.connectedComponents` | [Source][279] |
 | Connected component graphs | `graph.connectedComponentGraphs` | [Source][279] |
-| Subgraph extraction | `graph.subgraph(containing: [a, b, c])` | [Source][279] |
+| Contraction-accelerated routing | `graph.shortestPathViaContraction(from: a, to: b)` | [Source][257] / [Tests][259] |
+| Cycle detection | `graph.cycles(from: node)` | [Source][278] |
+| Dead-end pruning | `graph.prunedDeadEnds()` | [Source][260] / [Tests][261] |
+| Eulerian path / circuit | `graph.eulerianPath()` | [Source][274] / [Tests][275] |
+| Graph export (to FeatureCollection) | `graph.toFeatureCollection()` | [Source][283] / [Tests][284] |
+| Graph merge | `Graph.merged([graph1, graph2])` | [Source][281] / [Tests][282] |
+| Graph partitioning (tiling) | `graph.partition(intoGridRows: 4, columns: 4)` | [Source][262] / [Tests][263] |
+| K-shortest paths (Yen) | `graph.kShortestPaths(from: a, to: b, k: 3)` | [Source][253] / [Tests][254] |
+| Minimum spanning tree | `graph.minimumSpanningTree()` | [Source][272] / [Tests][273] |
+| Multi-criteria shortest path | `graph.shortestPath(from: a, to: b) { $0.weight }` | [Source][255] / [Tests][256] |
 | Node-on-edge splitting | `graph.nodeOnEdge(near: coordinate)` | [Source][280] |
 | Roundabout detection | see `Graph+Cycles.swift` | [Source][278] |
+| SCC graphs | `graph.stronglyConnectedComponentGraphs()` | [Source][270] / [Tests][271] |
+| Shortest path (Dijkstra) | `graph.shortestPath(from: a, to: b)` | [Source][247] / [Tests][248] |
+| Strongly connected components | `graph.stronglyConnectedComponents()` | [Source][270] / [Tests][271] |
+| Subgraph extraction | `graph.subgraph(containing: [a, b, c])` | [Source][279] |
+| TSP approximation | `graph.travelingSalespersonTour(nodes: [...])` | [Source][276] / [Tests][277] |
 
 # Related packages
 Currently only two:
@@ -1537,6 +1566,10 @@ Thomas Rasch, Outdooractive
 [278]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Cycles.swift "Graph+Cycles"
 [279]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Traversal.swift "Graph+Traversal"
 [280]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+NodeOnEdge.swift "Graph+NodeOnEdge"
+[281]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Merge.swift "Graph+Merge"
+[282]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/GraphMergeTests.swift "GraphMergeTests"
+[283]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Convenience.swift "Graph+Convenience"
+[284]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/GraphExportTests.swift "GraphExportTests"
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms

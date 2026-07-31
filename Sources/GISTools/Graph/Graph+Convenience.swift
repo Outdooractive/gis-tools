@@ -19,6 +19,44 @@ extension Graph {
         return total
     }
 
+    /// Returns the graph as a `FeatureCollection`.
+    ///
+    /// Each unique edge becomes a ``LineString`` feature. If the edge
+    /// carries an original feature reference, its `id` and `properties` are
+    /// preserved. Directed edges receive a `"oneway"` property set to
+    /// `"yes"`. A `"weight"` property records the edge weight in meters.
+    ///
+    /// This is useful for debugging the state of a graph after
+    /// transformations, or for exporting results of graph operations back
+    /// to standard GeoJSON tooling.
+    public func toFeatureCollection() -> FeatureCollection {
+        var features: [Feature] = []
+        features.reserveCapacity(edges.count)
+
+        for edge in edges {
+            let lineString = LineString(unchecked: [
+                edge.from.coordinate,
+                edge.to.coordinate
+            ])
+            var props: [String: Sendable] = [:]
+            if let original = edge.feature {
+                props = original.properties
+            }
+            if edge.isDirected {
+                props["oneway"] = "yes"
+            }
+            props["weight"] = edge.weight
+
+            let feature = Feature(
+                lineString,
+                id: edge.feature?.id,
+                properties: props)
+            features.append(feature)
+        }
+
+        return FeatureCollection(features)
+    }
+
 }
 
 extension Graph: CustomDebugStringConvertible {
