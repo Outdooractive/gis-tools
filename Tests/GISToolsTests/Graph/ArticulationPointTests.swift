@@ -13,6 +13,10 @@ import Testing
 /// (critical intersections). Coverage spans synthetic graphs with known cut
 /// vertices, the real-world Immenstadt network, all supported projections,
 /// antimeridian-crossing geometries, and directed graphs.
+///
+/// Marked `.serialized` because the real-network test validates each cut
+/// vertex by removing it and re-running connected-component BFS.
+@Suite(.serialized)
 struct ArticulationPointTests {
 
     // MARK: - Basic detection

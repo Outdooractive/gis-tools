@@ -13,6 +13,10 @@ import Testing
 /// Coverage spans synthetic graphs where the set of simple paths is fully
 /// enumerable, the real-world Immenstadt network, all supported projections,
 /// and antimeridian-crossing geometries.
+///
+/// Marked `.serialized` because Yen's algorithm runs up to `k` Dijkstra
+/// passes with path-deviation computations.
+@Suite(.serialized)
 struct KShortestPathsTests {
 
   // MARK: - Basic behaviour

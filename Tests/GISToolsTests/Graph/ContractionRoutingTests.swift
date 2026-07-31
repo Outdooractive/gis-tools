@@ -15,6 +15,10 @@ import Testing
 /// must return paths whose cost matches a direct search on the full graph.
 /// Coverage spans the real-world Immenstadt network, all supported
 /// projections, and antimeridian-crossing geometries.
+///
+/// Marked `.serialized` because each test runs both contracted and direct
+/// routing, plus contraction itself.
+@Suite(.serialized)
 struct ContractionRoutingTests {
 
   // MARK: - Parity with direct routing on the real network

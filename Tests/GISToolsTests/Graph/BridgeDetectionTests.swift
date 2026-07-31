@@ -14,6 +14,10 @@ import Testing
 /// with known bridges, the real-world Immenstadt network, all supported
 /// projections, antimeridian-crossing geometries, directed graphs (weak
 /// connectivity), and parallel-edge handling.
+///
+/// Marked `.serialized` because the real-network test validates each bridge
+/// by removing it and re-running connected-component BFS.
+@Suite(.serialized)
 struct BridgeDetectionTests {
 
   // MARK: - Basic detection

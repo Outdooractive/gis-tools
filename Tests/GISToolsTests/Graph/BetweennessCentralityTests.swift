@@ -13,6 +13,10 @@ import Testing
 /// between other nodes. Coverage spans synthetic graphs with known
 /// centralities, the real-world Immenstadt network, all supported
 /// projections, antimeridian-crossing geometries, and directed graphs.
+///
+/// Marked `.serialized` because Brandes' algorithm runs Dijkstra from every
+/// node, making this the most expensive suite in the graph tests.
+@Suite(.serialized)
 struct BetweennessCentralityTests {
 
     // MARK: - Basic properties
@@ -132,7 +136,8 @@ struct BetweennessCentralityTests {
     func immenstadtBetweennessIsNonNegative() throws {
         // Centrality values must be non-negative, and at least one node must
         // have positive betweenness (otherwise the metric is trivially 0).
-        let graph = try GraphTestHelper.immenstadtGraph()
+        // Uses a bounded subgraph to keep runtime reasonable.
+        let graph = try GraphTestHelper.immenstadtCore(maxNodes: 500)
         let centrality = graph.betweennessCentrality()
         #expect(centrality.count == graph.nodeCount)
         var maxValue = 0.0
@@ -152,7 +157,8 @@ struct BetweennessCentralityTests {
         // Articulation points (critical intersections) tend to carry
         // significant through-traffic: their betweenness should be at least the
         // graph's median betweenness.
-        let graph = try GraphTestHelper.immenstadtGraph()
+        // Uses a bounded subgraph to keep runtime reasonable.
+        let graph = try GraphTestHelper.immenstadtCore(maxNodes: 500)
         let centrality = graph.betweennessCentrality()
         let cutVertices = Set(graph.articulationPoints().map(\.index))
 
