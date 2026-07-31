@@ -138,12 +138,37 @@ public struct Graph: Sendable {
         self.isDirected = isDirected
         self.onewayProperty = onewayProperty
 
-        let referenceLatitude = featureCollection.features
-            .compactMap({ ($0.geometry as? LineString)?.coordinates.first?.latitude })
-            .first ?? 0.0
+        var referenceLatitude: Double = 0.0
+        var foundReference = false
+        var totalCoordinates = 0
+
+        for feature in featureCollection.features {
+            switch feature.geometry {
+            case let lineString as LineString:
+                totalCoordinates += lineString.coordinates.count
+                if !foundReference, let lat = lineString.coordinates.first?.latitude {
+                    referenceLatitude = lat
+                    foundReference = true
+                }
+            case let multiLineString as MultiLineString:
+                for ls in multiLineString.lineStrings {
+                    totalCoordinates += ls.coordinates.count
+                    if !foundReference, let lat = ls.coordinates.first?.latitude {
+                        referenceLatitude = lat
+                        foundReference = true
+                    }
+                }
+            default:
+                continue
+            }
+        }
+
         self.spatialIndex = SpatialIndex(
             tolerance: nodeTolerance,
             referenceLatitude: referenceLatitude)
+
+        adjacencyList.reserveCapacity(max(totalCoordinates / 2, 1))
+        spatialIndex.cells.reserveCapacity(max(totalCoordinates / 4, 1))
 
         for feature in featureCollection.features {
             switch feature.geometry {

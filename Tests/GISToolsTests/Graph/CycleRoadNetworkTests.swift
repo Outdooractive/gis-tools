@@ -8,6 +8,10 @@ import Testing
 /// Cycle-detection tests on the real-world Immenstadt road network, including
 /// a parameter sweep over the bounding limits and curvature-restricted
 /// roundabout detection.
+///
+/// Marked `.serialized` because the suite runs 7 cycle-detection traversals
+/// on the full road network.
+@Suite(.serialized)
 struct CycleRoadNetworkTests {
 
     /// Loads the Immenstadt road network and asserts that cycles are found and

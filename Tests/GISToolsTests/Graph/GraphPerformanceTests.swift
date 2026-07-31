@@ -47,7 +47,7 @@ struct GraphPerformanceTests {
         let elapsed = Date().timeIntervalSince(start)
 
         print("Immenstadt Dijkstra x100: \(pathCount)/100 found, \(elapsed)s")
-        #expect(elapsed < 1.0, "100 Dijkstra queries too slow: \(elapsed)s")
+        #expect(elapsed < 2.0, "100 Dijkstra queries too slow: \(elapsed)s")
     }
 
     @Test

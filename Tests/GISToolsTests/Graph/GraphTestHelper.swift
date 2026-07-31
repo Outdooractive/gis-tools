@@ -6,28 +6,61 @@ import Foundation
 import Testing
 
 /// Shared helpers for the graph test suite.
+///
+/// The Immenstadt and Raploch road-network graphs are parsed once and
+/// reused across all tests. Because ``Graph`` is a value type, every test
+/// that accesses the cached graph receives its own copy-on-write snapshot;
+/// mutations made by individual tests never affect the shared fixture.
 enum GraphTestHelper {
 
+    private static let _immenstadtCollection: FeatureCollection = {
+        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt")
+    }()
+
+    private static let _immenstadtGraph: Graph = {
+        Graph(featureCollection: _immenstadtCollection, isDirected: false)
+    }()
+
+    private static let _raplochCollection: FeatureCollection = {
+        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Raploch")
+    }()
+
+    private static let _raplochGraph: Graph = {
+        Graph(featureCollection: _raplochCollection, isDirected: false)
+    }()
+
+    private static let _immenstadtCollection2: FeatureCollection = {
+        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt_2")
+    }()
+
+    private static let _immenstadtGraph2: Graph = {
+        Graph(featureCollection: _immenstadtCollection2, isDirected: false)
+    }()
+
     static func immenstadtCollection() throws -> FeatureCollection {
-        try TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt")
+        _immenstadtCollection
     }
 
     static func immenstadtGraph() throws -> Graph {
-        Graph(featureCollection: try immenstadtCollection(), isDirected: false)
+        _immenstadtGraph
+    }
+
+    static func immenstadtGraph2() throws -> Graph {
+        _immenstadtGraph2
     }
 
     static func raplochCollection() throws -> FeatureCollection {
-        try TestData.featureCollection(package: "Graph", name: "RoadNetwork_Raploch")
+        _raplochCollection
     }
 
     static func raplochGraph() throws -> Graph {
-        Graph(featureCollection: try raplochCollection(), isDirected: false)
+        _raplochGraph
     }
 
-    /// Finds a node near a feature tagged with `roundabout`.
+    /// Finds a node near a feature tagged with `roundabout` in the cached
+    /// Immenstadt collection.
     static func roundaboutNode(in graph: Graph) throws -> Node? {
-        let collection = try immenstadtCollection()
-        for feature in collection.features {
+        for feature in _immenstadtCollection.features {
             let isRoundabout: Bool = {
                 if let s: String = feature.property(for: "roundabout") {
                     return s == "yes" || s == "1" || s == "true"
@@ -102,6 +135,31 @@ enum GraphTestHelper {
         reachable.dropFirst().max(by: {
             $0.coordinate.distance(from: seed.coordinate) < $1.coordinate.distance(from: seed.coordinate)
         }) ?? reachable.last
+    }
+
+    /// Returns a connected subgraph of the Immenstadt road network bounded to
+    /// roughly `maxNodes` nodes, built by BFS from the largest component's
+    /// first node.
+    ///
+    /// The subgraph preserves real road-network topology while being small
+    /// enough for expensive graph algorithms (e.g. betweenness centrality).
+    static func immenstadtCore(maxNodes: Int = 500) throws -> Graph {
+        let graph = _immenstadtGraph
+        let component = graph.connectedComponents.max(by: { $0.count < $1.count })!
+        let seed = component.first!
+
+        var visited: Set<Int> = [seed.index]
+        var queue: [Int] = [seed.index]
+        while !queue.isEmpty, visited.count < maxNodes {
+            let current = queue.removeFirst()
+            for edge in graph.edges(for: graph.node(withIndex: current)!) {
+                if visited.insert(edge.to.index).inserted {
+                    queue.append(edge.to.index)
+                }
+            }
+        }
+
+        return graph.subgraph(containing: visited)
     }
 
 }
