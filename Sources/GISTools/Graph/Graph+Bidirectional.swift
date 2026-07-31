@@ -43,8 +43,10 @@ extension Graph {
         blockedNodes: Set<Node>? = nil,
         edgeFilter: ((Edge) -> Bool)? = nil
     ) -> [Node] {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+              destination.index >= 0,
+              destination.index < adjacencyList.count
         else { return [] }
 
         if source == destination { return [source] }
@@ -63,18 +65,16 @@ extension Graph {
             for edge in edgeList.edges {
                 reverseAdjacency[edge.to.index].append(
                     ReverseLink(
-                        from: edge.from.index, weight: edge.weight, edge: edge))
+                        from: edge.from.index,
+                        weight: edge.weight,
+                        edge: edge))
             }
         }
 
-        var gForward: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var gBackward: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var predForward: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
-        var predBackward: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
+        var gForward: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var gBackward: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var predForward: [Int] = Array(repeating: -1, count: adjacencyList.count)
+        var predBackward: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var settledForward: Set<Int> = []
         var settledBackward: Set<Int> = []
 
@@ -83,10 +83,8 @@ extension Graph {
 
         var heapForward = MinHeap<BidirectionalHeapEntry>()
         var heapBackward = MinHeap<BidirectionalHeapEntry>()
-        heapForward.push(
-            BidirectionalHeapEntry(gScore: 0.0, index: source.index))
-        heapBackward.push(
-            BidirectionalHeapEntry(gScore: 0.0, index: destination.index))
+        heapForward.push(BidirectionalHeapEntry(gScore: 0.0, index: source.index))
+        heapBackward.push(BidirectionalHeapEntry(gScore: 0.0, index: destination.index))
 
         // Best meeting cost found so far and the node at which it occurs.
         // Updated whenever a relaxation discovers a node that has already
@@ -122,13 +120,17 @@ extension Graph {
             let expandForward: Bool
             if heapForward.isEmpty {
                 expandForward = false
-            } else if heapBackward.isEmpty {
+            }
+            else if heapBackward.isEmpty {
                 expandForward = true
-            } else {
+            }
+            else {
                 expandForward = topForward <= topBackward
             }
 
-            if expandForward, let entry = heapForward.pop() {
+            if expandForward,
+               let entry = heapForward.pop()
+            {
                 let u = entry.index
                 if settledForward.contains(u) { continue }
                 settledForward.insert(u)
@@ -146,15 +148,18 @@ extension Graph {
                     if relaxed < gForward[v] {
                         gForward[v] = relaxed
                         predForward[v] = u
-                        heapForward.push(
-                            BidirectionalHeapEntry(gScore: relaxed, index: v))
+                        heapForward.push(BidirectionalHeapEntry(gScore: relaxed, index: v))
+
                         // If the backward search has already reached `v`, the
                         // path source -> ... -> u -> v -> ... -> destination
                         // is a candidate for the best meeting.
                         if gBackward[v] < .infinity { noteMeeting(v) }
                     }
                 }
-            } else if !expandForward, let entry = heapBackward.pop() {
+            }
+            else if !expandForward,
+                    let entry = heapBackward.pop()
+            {
                 let v = entry.index
                 if settledBackward.contains(v) { continue }
                 settledBackward.insert(v)
@@ -173,20 +178,23 @@ extension Graph {
                         gBackward[u] = relaxed
                         // `u`'s successor toward the destination is `v`.
                         predBackward[u] = v
-                        heapBackward.push(
-                            BidirectionalHeapEntry(gScore: relaxed, index: u))
+                        heapBackward.push(BidirectionalHeapEntry(gScore: relaxed, index: u))
+
                         // If the forward search has already reached `u`, the
                         // path source -> ... -> u -> v -> ... -> destination
                         // is a candidate for the best meeting.
                         if gForward[u] < .infinity { noteMeeting(u) }
                     }
                 }
-            } else {
+            }
+            else {
                 break
             }
         }
 
-        guard bestMeetingIndex >= 0, bestMeeting < .infinity else { return [] }
+        guard bestMeetingIndex >= 0,
+              bestMeeting < .infinity
+        else { return [] }
 
         // Reconstruct the forward half: source -> ... -> meeting.
         var forwardHalf: [Int] = []
@@ -227,9 +235,10 @@ extension Graph {
         let gScore: Double
         let index: Int
 
-        static func < (lhs: BidirectionalHeapEntry, rhs: BidirectionalHeapEntry)
-            -> Bool
-        {
+        static func < (
+            lhs: BidirectionalHeapEntry,
+            rhs: BidirectionalHeapEntry
+        ) -> Bool {
             if lhs.gScore != rhs.gScore {
                 return lhs.gScore < rhs.gScore
             }

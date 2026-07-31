@@ -199,4 +199,136 @@ struct StronglyConnectedComponentsTests {
         #expect(sccs[0].count == 3)
     }
 
+    // MARK: - SCC graphs
+
+    @Test
+    func sccGraphsCountMatchesComponents() {
+        // Two cycles joined by a one-way edge: 2 SCCs of 3 nodes each.
+        let cycle1 = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.0, longitude: 20.0),
+                Coordinate3D(latitude: 10.05, longitude: 20.05),
+                Coordinate3D(latitude: 10.1, longitude: 20.0),
+                Coordinate3D(latitude: 10.0, longitude: 20.0),
+            ])!,
+            properties: ["oneway": "yes"])
+        let cycle2 = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+                Coordinate3D(latitude: 10.05, longitude: 20.55),
+                Coordinate3D(latitude: 10.1, longitude: 20.5),
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+            ])!,
+            properties: ["oneway": "yes"])
+        let link = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.1, longitude: 20.0),
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+            ])!,
+            properties: ["oneway": "yes"])
+
+        let directed = Graph(
+            featureCollection: FeatureCollection([cycle1, cycle2, link]),
+            isDirected: true)
+
+        let sccGraphs = directed.stronglyConnectedComponentGraphs()
+        #expect(sccGraphs.count == 2, "Expected 2 SCC graphs, got \(sccGraphs.count)")
+        for scc in sccGraphs {
+            #expect(scc.nodeCount == 3)
+        }
+    }
+
+    @Test
+    func sccGraphsExcludeInterComponentEdges() {
+        // The one-way link edge between the two cycles must NOT appear inside
+        // either SCC graph (it's a condensation-DAG edge, not internal).
+        let cycle1 = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.0, longitude: 20.0),
+                Coordinate3D(latitude: 10.05, longitude: 20.05),
+                Coordinate3D(latitude: 10.1, longitude: 20.0),
+                Coordinate3D(latitude: 10.0, longitude: 20.0),
+            ])!,
+            properties: ["oneway": "yes"])
+        let cycle2 = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+                Coordinate3D(latitude: 10.05, longitude: 20.55),
+                Coordinate3D(latitude: 10.1, longitude: 20.5),
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+            ])!,
+            properties: ["oneway": "yes"])
+        let link = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.1, longitude: 20.0),
+                Coordinate3D(latitude: 10.0, longitude: 20.5),
+            ])!,
+            properties: ["oneway": "yes"])
+
+        let directed = Graph(
+            featureCollection: FeatureCollection([cycle1, cycle2, link]),
+            isDirected: true)
+
+        // The original has 3 features: 2 cycles (3 one-way edges each) + 1 link
+        // = 7 directed edges total.
+        let originalEdges = directed.directedEdgeCount
+        #expect(originalEdges == 7)
+
+        let sccGraphs = directed.stronglyConnectedComponentGraphs()
+        var totalSccEdges = 0
+        for scc in sccGraphs {
+            totalSccEdges += scc.directedEdgeCount
+        }
+        // Each cycle contributes 3 one-way edges; the link is excluded.
+        #expect(totalSccEdges == 6, "Inter-SCC link edge should be excluded, got \(totalSccEdges)")
+    }
+
+    @Test
+    func sccGraphsCoverAllNodes() {
+        // Every node must appear in exactly one SCC graph.
+        let chain = Feature(
+            LineString([
+                Coordinate3D(latitude: 10.0, longitude: 20.0),
+                Coordinate3D(latitude: 10.05, longitude: 20.05),
+                Coordinate3D(latitude: 10.1, longitude: 20.1),
+            ])!,
+            properties: ["oneway": "yes"])
+        let directed = Graph(
+            featureCollection: FeatureCollection([chain]),
+            isDirected: true)
+
+        let sccGraphs = directed.stronglyConnectedComponentGraphs()
+        var totalNodes = 0
+        for scc in sccGraphs {
+            totalNodes += scc.nodeCount
+        }
+        #expect(totalNodes == directed.nodeCount, "SCC graphs must cover all nodes")
+    }
+
+    @Test
+    func sccGraphsEmpty() {
+        let graph = Graph()
+        #expect(graph.stronglyConnectedComponentGraphs().isEmpty)
+    }
+
+    @Test
+    func sccGraphsUndirectedEqualsComponentGraphs() {
+        // In an undirected graph, SCC graphs == connected component graphs.
+        var graph = Graph()
+        let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.05, longitude: 20.05))
+        graph.addUndirectedEdge(from: a, to: b)
+        let c = graph.createNode(at: Coordinate3D(latitude: 11.0, longitude: 21.0))
+        let d = graph.createNode(at: Coordinate3D(latitude: 11.05, longitude: 21.05))
+        graph.addUndirectedEdge(from: c, to: d)
+
+        let sccGraphs = graph.stronglyConnectedComponentGraphs()
+        let componentGraphs = graph.connectedComponentGraphs
+        #expect(sccGraphs.count == componentGraphs.count)
+        for (scc, component) in zip(sccGraphs, componentGraphs) {
+            #expect(scc.nodeCount == component.nodeCount)
+            #expect(scc.directedEdgeCount == component.directedEdgeCount)
+        }
+    }
+
 }

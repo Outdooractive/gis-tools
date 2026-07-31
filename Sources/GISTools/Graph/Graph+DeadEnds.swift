@@ -54,9 +54,9 @@ extension Graph {
     ///   part of the core). `nil` (the default) prunes dead-ends of any length.
     /// - Returns: The pruned graph, the removed nodes, and the original/pruned
     ///   index mappings, or `nil` if the graph is empty.
-    public func prunedDeadEnds(maximumBranches: Int? = nil)
-        -> DeadEndPruneResult?
-    {
+    public func prunedDeadEnds(
+        maximumBranches: Int? = nil
+    ) -> DeadEndPruneResult? {
         guard adjacencyList.isNotEmpty else { return nil }
 
         // Iteratively peel degree-1 (and degree-0) nodes. `alive` tracks which
@@ -118,8 +118,7 @@ extension Graph {
 
         // Build the pruned graph: compactly relabel surviving nodes and copy
         // their edges (dropping any that pointed to removed nodes).
-        var newIndexForOld: [Int?] = Array(
-            repeating: nil, count: adjacencyList.count)
+        var newIndexForOld: [Int?] = Array(repeating: nil, count: adjacencyList.count)
         var originalIndexForNew: [Int] = []
         var edgeLists: [Graph.EdgeList] = []
         for i in 0..<adjacencyList.count where alive[i] {
@@ -129,24 +128,25 @@ extension Graph {
             edgeLists.append(
                 EdgeList(
                     node: Node(
-                        index: edgeLists.count, coordinate: node.coordinate)))
+                        index: edgeLists.count,
+                        coordinate: node.coordinate)))
         }
 
         for i in 0..<adjacencyList.count where alive[i] {
             guard let newFromIndex = newIndexForOld[i] else { continue }
+
             let fromNode = edgeLists[newFromIndex].node
             for edge in adjacencyList[i].edges {
                 guard alive[edge.to.index],
-                    let newToIndex = newIndexForOld[edge.to.index]
+                      let newToIndex = newIndexForOld[edge.to.index]
                 else { continue }
                 let toNode = edgeLists[newToIndex].node
                 edgeLists[newFromIndex].edges.append(
-                    Edge(
-                        from: fromNode,
-                        to: toNode,
-                        feature: edge.feature,
-                        isDirected: edge.isDirected,
-                        weight: edge.weight))
+                    Edge(from: fromNode,
+                         to: toNode,
+                         feature: edge.feature,
+                         isDirected: edge.isDirected,
+                         weight: edge.weight))
             }
         }
 
@@ -187,7 +187,7 @@ extension Graph {
     ///   array if the graph is empty or has no dead-ends.
     public func deadEnds(maximumBranches: Int? = nil) -> [Node] {
         guard adjacencyList.isNotEmpty,
-            let result = prunedDeadEnds(maximumBranches: maximumBranches)
+              let result = prunedDeadEnds(maximumBranches: maximumBranches)
         else { return [] }
         return result.removedNodes
     }

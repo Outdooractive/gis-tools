@@ -69,7 +69,8 @@ extension Graph {
                         sigma[w] = sigma[v]
                         pred[w] = [v]
                         heap.push(HeapEntry(distance: relaxed, index: w))
-                    } else if relaxed == dist[w] {
+                    }
+                    else if relaxed == dist[w] {
                         // Equal-length alternative path: accumulate.
                         sigma[w] += sigma[v]
                         pred[w].insert(v)

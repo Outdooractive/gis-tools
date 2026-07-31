@@ -35,10 +35,8 @@ extension Graph {
         let blocked = blockedNodes?.map(\.index) ?? []
         let blockedSet: Set<Int> = Set(blocked)
 
-        var distances: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var predecessors: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
+        var distances: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var visited: Set<Int> = []
 
         distances[source.index] = 0.0
@@ -64,8 +62,7 @@ extension Graph {
                 if relaxed < distances[neighborIndex] {
                     distances[neighborIndex] = relaxed
                     predecessors[neighborIndex] = entry.index
-                    heap.push(
-                        HeapEntry(distance: relaxed, index: neighborIndex))
+                    heap.push(HeapEntry(distance: relaxed, index: neighborIndex))
                 }
             }
         }

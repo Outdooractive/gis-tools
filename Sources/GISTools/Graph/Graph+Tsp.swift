@@ -53,9 +53,10 @@ extension Graph {
         start: Node? = nil
     ) -> TspTour {
         // Deduplicate while preserving order.
-        var seen = Set<Int>()
+        var seen: Set<Int> = []
         let uniqueNodes = nodes.filter { node in
-            node.index >= 0 && node.index < adjacencyList.count
+            node.index >= 0
+                && node.index < adjacencyList.count
                 && seen.insert(node.index).inserted
         }
         guard uniqueNodes.isNotEmpty else {
@@ -69,9 +70,12 @@ extension Graph {
 
         // Determine the start node.
         let startIndex: Int
-        if let start = start, let idx = uniqueNodes.firstIndex(of: start) {
+        if let start = start,
+           let idx = uniqueNodes.firstIndex(of: start)
+        {
             startIndex = idx
-        } else {
+        }
+        else {
             startIndex = 0
         }
 
@@ -144,6 +148,7 @@ extension Graph {
         var order: [Int] = [startIndex]
         visited[startIndex] = true
         var current = startIndex
+
         for _ in 0..<(n - 1) {
             var best = -1
             var bestDist = Double.infinity
@@ -154,7 +159,11 @@ extension Graph {
                     best = candidate
                 }
             }
-            if best < 0 { break }
+
+            if best < 0 {
+                break
+            }
+
             order.append(best)
             visited[best] = true
             current = best
@@ -169,6 +178,7 @@ extension Graph {
     private func twoOpt(order: inout [Int], distances: [[Double]]) {
         let n = order.count
         guard n >= 4 else { return }  // 2-opt needs at least 4 nodes
+
         let epsilon = 0.0000001
         var improved = true
         while improved {
@@ -177,7 +187,12 @@ extension Graph {
                 for j in (i + 1)..<n {
                     // Skip the full reversal (i == 0 and j == n-1): it just
                     // reverses the entire tour, leaving length unchanged.
-                    if i == 0, j == n - 1 { continue }
+                    if i == 0,
+                       j == n - 1
+                    {
+                        continue
+                    }
+
                     // Edges (pred(i), i) and (j, succ(j)) become
                     // (pred(i), j) and (i, succ(j)) after reversing [i, j].
                     let a = order[i == 0 ? n - 1 : i - 1]

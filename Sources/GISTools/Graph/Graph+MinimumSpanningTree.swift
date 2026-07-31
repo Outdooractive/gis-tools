@@ -50,7 +50,9 @@ extension Graph {
 
         // Sort by weight ascending; tie-break deterministically by endpoints.
         let sortedEdges = bestByPair.values.sorted { lhs, rhs in
-            if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
+            if lhs.weight != rhs.weight {
+                return lhs.weight < rhs.weight
+            }
             if lhs.from.index != rhs.from.index {
                 return lhs.from.index < rhs.from.index
             }
@@ -114,13 +116,17 @@ extension Graph {
         mutating func union(_ x: Int, _ y: Int) -> Bool {
             let rx = find(x)
             let ry = find(y)
-            if rx == ry { return false }
+            if rx == ry {
+                return false
+            }
             // Union by rank: attach the shorter tree under the taller.
             if rank[rx] < rank[ry] {
                 parent[rx] = ry
-            } else if rank[rx] > rank[ry] {
+            }
+            else if rank[rx] > rank[ry] {
                 parent[ry] = rx
-            } else {
+            }
+            else {
                 parent[ry] = rx
                 rank[rx] += 1
             }

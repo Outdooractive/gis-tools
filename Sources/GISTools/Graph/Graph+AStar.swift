@@ -33,8 +33,10 @@ extension Graph {
         blockedNodes: Set<Node>? = nil,
         edgeFilter: ((Edge) -> Bool)? = nil
     ) -> [Node] {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+              destination.index >= 0,
+              destination.index < adjacencyList.count
         else { return [] }
 
         if source == destination { return [source] }
@@ -45,22 +47,18 @@ extension Graph {
 
         // Heuristic: straight-line distance from `index` to the destination.
         func heuristic(_ index: Int) -> Double {
-            adjacencyList[index].node.coordinate.distance(
-                from: destinationCoordinate)
+            adjacencyList[index].node.coordinate.distance(from: destinationCoordinate)
         }
 
-        var gScore: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var predecessors: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
+        var gScore: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var visited: Set<Int> = []
 
         gScore[source.index] = 0.0
 
         // Min-heap ordered by f = g + h. O((V+E) log V).
         var heap = MinHeap<AStarEntry>()
-        heap.push(
-            AStarEntry(fScore: heuristic(source.index), index: source.index))
+        heap.push(AStarEntry(fScore: heuristic(source.index), index: source.index))
 
         while let entry = heap.pop() {
             if visited.contains(entry.index) { continue }

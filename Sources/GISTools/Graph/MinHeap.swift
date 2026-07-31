@@ -56,7 +56,7 @@ extension Graph {
 
             storage.swapAt(0, storage.count - 1)
             let result = storage.removeLast()
-            if !storage.isEmpty {
+            if storage.isNotEmpty {
                 siftDown(0)
             }
             return result
@@ -69,7 +69,8 @@ extension Graph {
                 if storage[i] < storage[parent] {
                     storage.swapAt(i, parent)
                     i = parent
-                } else {
+                }
+                else {
                     return
                 }
             }

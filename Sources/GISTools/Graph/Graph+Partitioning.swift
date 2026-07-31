@@ -84,9 +84,10 @@ extension Graph {
         intoGridRows rows: Int,
         columns: Int
     ) -> [[Partition]] {
-        guard rows >= 1, columns >= 1, adjacencyList.isNotEmpty else {
-            return []
-        }
+        guard rows >= 1,
+              columns >= 1,
+              adjacencyList.isNotEmpty
+        else { return [] }
 
         // Compute the graph's bounding box over all node coordinates.
         var minLat = Double.infinity
@@ -100,8 +101,13 @@ extension Graph {
             minLon = min(minLon, coordinate.longitude)
             maxLon = max(maxLon, coordinate.longitude)
         }
-        guard minLat.isFinite, maxLat.isFinite, minLon.isFinite, maxLon.isFinite
+
+        guard minLat.isFinite,
+              maxLat.isFinite,
+              minLon.isFinite,
+              maxLon.isFinite
         else { return [] }
+
         // Guard against a degenerate (single-coordinate) extent.
         let latSpan = max(maxLat - minLat, 0.0)
         let lonSpan = max(maxLon - minLon, 0.0)
@@ -109,8 +115,7 @@ extension Graph {
         let colWidth = lonSpan == 0.0 ? 0.0 : lonSpan / Double(columns)
 
         // Determine the projection to use for tile bounding boxes.
-        let projection =
-            adjacencyList.first?.node.coordinate.projection ?? .epsg4326
+        let projection = adjacencyList.first?.node.coordinate.projection ?? .epsg4326
 
         // Assign each node to a (row, column) tile.
         func tile(for coordinate: Coordinate3D) -> (row: Int, column: Int) {
@@ -143,11 +148,11 @@ extension Graph {
             repeating: Array(repeating: [], count: columns),
             count: rows)
         var partitionIndexOfOriginal: [Int?] = Array(
-            repeating: nil, count: adjacencyList.count)
+            repeating: nil,
+            count: adjacencyList.count)
         for originalIndex in 0..<adjacencyList.count {
             let (row, column) = nodeTile[originalIndex]
-            partitionIndexOfOriginal[originalIndex] =
-                tileNodes[row][column].count
+            partitionIndexOfOriginal[originalIndex] = tileNodes[row][column].count
             tileNodes[row][column].append(originalIndex)
         }
 
@@ -212,7 +217,8 @@ extension Graph {
             edgeLists.append(
                 EdgeList(
                     node: Node(
-                        index: edgeLists.count, coordinate: node.coordinate)))
+                        index: edgeLists.count,
+                        coordinate: node.coordinate)))
         }
 
         for (localIndex, originalIndex) in originalIndices.enumerated() {
@@ -243,6 +249,7 @@ extension Graph {
             isDirected: isDirected,
             onewayProperty: onewayProperty)
         partition.adjacencyList = edgeLists
+
         if let firstCoord = edgeLists.first?.node.coordinate {
             partition.spatialIndex = SpatialIndex(
                 tolerance: nodeTolerance,
@@ -252,11 +259,13 @@ extension Graph {
                     nodeIndex: newIndex,
                     coordinate: edgeLists[newIndex].node.coordinate)
             }
-        } else {
+        }
+        else {
             partition.spatialIndex = SpatialIndex(
                 tolerance: nodeTolerance,
                 referenceLatitude: 0.0)
         }
+
         return partition
     }
 
@@ -276,9 +285,15 @@ extension Graph {
                 guard toRow != localRow || toColumn != localColumn else {
                     continue
                 }
+
                 // Deduplicate undirected pairs (each stored twice).
                 let pair = IndexPair(a: originalIndex, b: toOriginal)
-                if !edge.isDirected, !seen.insert(pair).inserted { continue }
+                if !edge.isDirected,
+                   !seen.insert(pair).inserted
+                {
+                    continue
+                }
+
                 edges.append(
                     CrossTileEdge(
                         localOriginalIndex: originalIndex,
@@ -307,12 +322,9 @@ extension Graph {
         projection: Projection
     ) -> BoundingBox {
         let south = minLat + Double(row) * rowHeight
-        let north =
-            (row == rows - 1) ? maxLat : minLat + Double(row + 1) * rowHeight
+        let north = (row == rows - 1) ? maxLat : minLat + Double(row + 1) * rowHeight
         let west = minLon + Double(column) * colWidth
-        let east =
-            (column == columns - 1)
-            ? maxLon : minLon + Double(column + 1) * colWidth
+        let east = (column == columns - 1) ? maxLon : minLon + Double(column + 1) * colWidth
         let southWest = Coordinate3D(x: west, y: south, projection: projection)
         let northEast = Coordinate3D(x: east, y: north, projection: projection)
         return BoundingBox(southWest: southWest, northEast: northEast)

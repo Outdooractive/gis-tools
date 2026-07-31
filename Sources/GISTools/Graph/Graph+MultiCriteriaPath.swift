@@ -45,18 +45,20 @@ extension Graph {
         costFunction: @escaping EdgeCostFunction,
         blockedNodes: Set<Node>? = nil
     ) -> [Node] {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+            destination.index >= 0,
+              destination.index < adjacencyList.count
         else { return [] }
 
-        if source == destination { return [source] }
+        if source == destination {
+            return [source]
+        }
 
         let blockedSet: Set<Int> = Set(blockedNodes?.map(\.index) ?? [])
 
-        var costs: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var predecessors: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
+        var costs: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var visited: Set<Int> = []
 
         costs[source.index] = 0.0
@@ -83,8 +85,7 @@ extension Graph {
                 if relaxed < costs[neighborIndex] {
                     costs[neighborIndex] = relaxed
                     predecessors[neighborIndex] = entry.index
-                    heap.push(
-                        HeapEntry(distance: relaxed, index: neighborIndex))
+                    heap.push(HeapEntry(distance: relaxed, index: neighborIndex))
                 }
             }
         }
@@ -93,7 +94,9 @@ extension Graph {
 
         var pathIndices: [Int] = [destination.index]
         var index = predecessors[destination.index]
-        while index != -1, index != source.index {
+        while index != -1,
+              index != source.index
+        {
             pathIndices.append(index)
             index = predecessors[index]
         }

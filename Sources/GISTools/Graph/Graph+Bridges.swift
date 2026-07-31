@@ -69,8 +69,9 @@ extension Graph {
                     // Skip the edge we arrived on (the parent edge). For
                     // parallel edges with the same key, skip only the first
                     // occurrence so subsequent ones act as back edges.
-                    if let parent = frame.parentKey, key == parent,
-                        !frame.skippedParent
+                    if let parent = frame.parentKey,
+                       key == parent,
+                       !frame.skippedParent
                     {
                         stack[stack.count - 1].skippedParent = true
                         continue
@@ -81,14 +82,15 @@ extension Graph {
                         disc[v] = timer
                         low[v] = timer
                         timer += 1
-                        stack.append(
-                            DFSFrame(node: v, parentKey: key, nextEdge: 0))
-                    } else {
+                        stack.append(DFSFrame(node: v, parentKey: key, nextEdge: 0))
+                    }
+                    else {
                         // Back edge (or forward/cross edge in the undirected
                         // view): update low[u] via the neighbor's discovery.
                         low[u] = min(low[u], disc[v])
                     }
-                } else {
+                }
+                else {
                     // All neighbors processed: pop and propagate low to parent.
                     stack.removeLast()
                     if let parent = stack.last {
@@ -98,11 +100,11 @@ extension Graph {
                         if low[u] > disc[pu] {
                             // The edge pu -> u is a bridge. Report it. Find
                             // the actual stored edge from pu to u.
-                            if let edge = adjacencyList[pu].edges.first(where: {
-                                $0.to.index == u
-                            }),
-                                reportedKeys.insert(BridgeEdgeKey(a: pu, b: u))
-                                    .inserted
+                            if let edge = adjacencyList[pu].edges
+                                .first(where: {
+                                    $0.to.index == u
+                                }),
+                                reportedKeys.insert(BridgeEdgeKey(a: pu, b: u)).inserted
                             {
                                 bridges.append(edge)
                             }

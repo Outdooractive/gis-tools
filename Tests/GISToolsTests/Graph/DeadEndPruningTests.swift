@@ -269,7 +269,6 @@ struct DeadEndPruningTests {
       let prunedEnd = result.prunedIndexOfOriginal[end.index]
     else {
       // Endpoint was a dead-end; skip (nothing to compare in the core).
-      #expect(true, "Endpoint was a dead-end, no core route to compare")
       return
     }
 

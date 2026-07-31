@@ -45,7 +45,10 @@ extension Graph {
             // rule), and a skippedParent flag for parallel-edge handling.
             var stack: [ArticulationFrame] = [
                 ArticulationFrame(
-                    node: start, parent: -1, parentKey: nil, nextEdge: 0)
+                    node: start,
+                    parent: -1,
+                    parentKey: nil,
+                    nextEdge: 0)
             ]
             disc[start] = timer
             low[start] = timer
@@ -64,8 +67,9 @@ extension Graph {
                     let key = ArticulationEdgeKey(a: u, b: v)
 
                     // Skip the edge we arrived on (parent edge), once.
-                    if let parent = frame.parentKey, key == parent,
-                        !frame.skippedParent
+                    if let parent = frame.parentKey,
+                       key == parent,
+                       !frame.skippedParent
                     {
                         stack[stack.count - 1].skippedParent = true
                         continue
@@ -80,16 +84,22 @@ extension Graph {
                         timer += 1
                         stack.append(
                             ArticulationFrame(
-                                node: v, parent: u, parentKey: key, nextEdge: 0)
+                                node: v,
+                                parent: u,
+                                parentKey: key,
+                                nextEdge: 0)
                         )
-                    } else {
+                    }
+                    else {
                         // Back edge: update low[u] via the neighbor's discovery.
                         low[u] = min(low[u], disc[v])
                     }
-                } else {
+                }
+                else {
                     // All neighbors processed: pop and propagate low to parent.
                     stack.removeLast()
                     guard let parent = stack.last else { continue }
+
                     let pu = parent.node
                     low[pu] = min(low[pu], low[u])
 

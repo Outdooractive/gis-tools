@@ -71,6 +71,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
 - Can encode/decode Polylines
 - Includes a property/spatial query DSL for filtering features (`QueryParser`)
+- Includes a `Graph` type for routing and network analysis — Dijkstra, A*, bidirectional search, K-shortest paths, multi-criteria routing, chain contraction, dead-end pruning, bridge/articulation-point detection, betweenness centrality, strongly connected components, minimum spanning tree, Eulerian/Chinese Postman tours, and TSP approximation
 - Pure Swift without external dependencies
 
 ## Notes
@@ -1199,6 +1200,19 @@ let length = graph.length(ofPath: path)
 
 Nodes can also be added manually with `createNode(at:)`, `addUndirectedEdge(from:to:)`, and `addDirectedEdge(from:to:)`.
 
+A subset of the graph can be extracted as a standalone `Graph` via `subgraph(containing:)`, and the connected components can each be obtained as a `Graph` via `connectedComponentGraphs`:
+
+```swift
+// Extract each connected component as its own Graph.
+let components = graph.connectedComponentGraphs
+for component in components {
+    print("\(component.nodeCount) nodes, \(component.directedEdgeCount) edges")
+}
+
+// Or extract an arbitrary subset of nodes.
+let sub = graph.subgraph(containing: [nodeA, nodeB, nodeC])
+```
+
 ## Graph algorithms
 
 | Name | Example | Source / Tests |
@@ -1208,7 +1222,7 @@ Nodes can also be added manually with `createNode(at:)`, `addUndirectedEdge(from
 | Bidirectional Dijkstra | `graph.bidirectionalShortestPath(from: a, to: b)` | [Source][251] / [Tests][252] |
 | K-shortest paths (Yen) | `graph.kShortestPaths(from: a, to: b, k: 3)` | [Source][253] / [Tests][254] |
 | Multi-criteria shortest path | `graph.shortestPath(from: a, to: b) { $0.weight }` | [Source][255] / [Tests][256] |
-| Chain contraction | `graph.contracted()` | [Source][257] / [Tests][258] |
+| Chain contraction | `graph.contracted()` / `graph.contracted { $0.feature?.property(for: "type") == $1.feature?.property(for: "type") }` | [Source][257] / [Tests][258] |
 | Contraction-accelerated routing | `graph.shortestPathViaContraction(from: a, to: b)` | [Source][257] / [Tests][259] |
 | Dead-end pruning | `graph.prunedDeadEnds()` | [Source][260] / [Tests][261] |
 | Graph partitioning (tiling) | `graph.partition(intoGridRows: 4, columns: 4)` | [Source][262] / [Tests][263] |
@@ -1216,13 +1230,17 @@ Nodes can also be added manually with `createNode(at:)`, `addUndirectedEdge(from
 | Articulation points | `graph.articulationPoints()` | [Source][266] / [Tests][267] |
 | Betweenness centrality | `graph.betweennessCentrality()` | [Source][268] / [Tests][269] |
 | Strongly connected components | `graph.stronglyConnectedComponents()` | [Source][270] / [Tests][271] |
+| SCC graphs | `graph.stronglyConnectedComponentGraphs()` | [Source][270] / [Tests][271] |
 | Minimum spanning tree | `graph.minimumSpanningTree()` | [Source][272] / [Tests][273] |
 | Eulerian path / circuit | `graph.eulerianPath()` | [Source][274] / [Tests][275] |
 | Chinese Postman tour | `graph.chinesePostmanTour()` | [Source][274] / [Tests][275] |
 | TSP approximation | `graph.travelingSalespersonTour(nodes: [...])` | [Source][276] / [Tests][277] |
 | Cycle detection | `graph.cycles(from: node)` | [Source][278] |
 | BFS / DFS | `graph.breadthFirstSearch(from: node)` / `graph.depthFirstSearch(from: node)` | [Source][279] |
+| BFS / DFS (callback) | `graph.breadthFirstSearch(from: node) { _ in true }` / `graph.depthFirstSearch(from: node) { _ in true }` | [Source][279] |
 | Connected components | `graph.connectedComponents` | [Source][279] |
+| Connected component graphs | `graph.connectedComponentGraphs` | [Source][279] |
+| Subgraph extraction | `graph.subgraph(containing: [a, b, c])` | [Source][279] |
 | Node-on-edge splitting | `graph.nodeOnEdge(near: coordinate)` | [Source][280] |
 | Roundabout detection | see `Graph+Cycles.swift` | [Source][278] |
 

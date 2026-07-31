@@ -333,7 +333,6 @@ struct BidirectionalShortestPathTests {
       isDirected: true)
 
     let a = directed.nodes[0]
-    let b = directed.nodes[1]
     let c = directed.nodes[2]
 
     let dijkstra = directed.shortestPath(from: a, to: c)

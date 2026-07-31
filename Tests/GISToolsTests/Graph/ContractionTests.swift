@@ -408,4 +408,128 @@ struct ContractionTests {
       result.graph.nodeCount == 2, "Two-way chain should be contracted even in directed graph")
   }
 
+  // MARK: - Edge-property-aware contraction
+
+  @Test
+  func propertyAwareContractionPreservesBoundary() throws {
+    // a --(service)-- b --(trail)-- c --(trail)-- d
+    // Without the predicate, b and c are both contracted (degree 2). With a
+    // type-compatibility predicate, b is kept (its two edges differ: service
+    // vs trail), while c is still contracted (both edges are trail).
+    let service = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.0, longitude: 20.0),
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+      ])!,
+      properties: ["type": "service"])
+    let trail1 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+        Coordinate3D(latitude: 10.1, longitude: 20.1),
+      ])!,
+      properties: ["type": "trail"])
+    let trail2 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.1, longitude: 20.1),
+        Coordinate3D(latitude: 10.15, longitude: 20.15),
+      ])!,
+      properties: ["type": "trail"])
+
+    let graph = Graph(featureCollection: FeatureCollection([service, trail1, trail2]))
+
+    // Without predicate: both b and c contracted -> 2 nodes (a, d).
+    let plain = try #require(graph.contracted())
+    #expect(plain.graph.nodeCount == 2, "Plain contraction should remove both")
+
+    // With type-compatibility: b is kept (service != trail), c is contracted
+    // (trail == trail) -> 3 nodes (a, b, d).
+    let typed = try #require(graph.contracted { edge1, edge2 in
+      let t1: String? = edge1.feature?.property(for: "type")
+      let t2: String? = edge2.feature?.property(for: "type")
+      return t1 == t2
+    })
+    #expect(typed.graph.nodeCount == 3, "Property-aware should keep boundary, got \(typed.graph.nodeCount)")
+    // b must survive.
+    let b = graph.node(at: Coordinate3D(latitude: 10.05, longitude: 20.05), tolerance: 5.0)!
+    #expect(typed.contractedIndexOfOriginal[b.index] != nil, "Boundary node b should survive")
+  }
+
+  @Test
+  func propertyAwareContractionAllSameTypeContractsFully() throws {
+    // All edges have the same type: the predicate never blocks contraction,
+    // so the result equals plain contraction.
+    let f1 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.0, longitude: 20.0),
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+      ])!,
+      properties: ["type": "residential"])
+    let f2 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+        Coordinate3D(latitude: 10.1, longitude: 20.1),
+      ])!,
+      properties: ["type": "residential"])
+
+    let graph = Graph(featureCollection: FeatureCollection([f1, f2]))
+
+    let plain = try #require(graph.contracted())
+    let typed = try #require(graph.contracted { edge1, edge2 in
+      let t1: String? = edge1.feature?.property(for: "type")
+      let t2: String? = edge2.feature?.property(for: "type")
+      return t1 == t2
+    })
+    #expect(plain.graph.nodeCount == typed.graph.nodeCount, "Same-type should contract the same")
+  }
+
+  @Test
+  func propertyAwareContractionRoutingStillCorrect() throws {
+    // Even with property-aware contraction, routing on the contracted graph must
+    // produce the same cost as the original.
+    let service = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.0, longitude: 20.0),
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+      ])!,
+      properties: ["type": "service"])
+    let trail1 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.05, longitude: 20.05),
+        Coordinate3D(latitude: 10.1, longitude: 20.1),
+      ])!,
+      properties: ["type": "trail"])
+    let trail2 = Feature(
+      LineString([
+        Coordinate3D(latitude: 10.1, longitude: 20.1),
+        Coordinate3D(latitude: 10.15, longitude: 20.15),
+      ])!,
+      properties: ["type": "trail"])
+
+    let graph = Graph(featureCollection: FeatureCollection([service, trail1, trail2]))
+    let typed = try #require(graph.contracted { edge1, edge2 in
+      let t1: String? = edge1.feature?.property(for: "type")
+      let t2: String? = edge2.feature?.property(for: "type")
+      return t1 == t2
+    })
+
+    let a = graph.node(at: Coordinate3D(latitude: 10.0, longitude: 20.0), tolerance: 5.0)!
+    let d = graph.node(at: Coordinate3D(latitude: 10.15, longitude: 20.15), tolerance: 5.0)!
+    let originalPath = graph.shortestPath(from: a, to: d)
+
+    guard let contractedA = typed.contractedIndexOfOriginal[a.index],
+          let contractedD = typed.contractedIndexOfOriginal[d.index]
+    else {
+      Issue.record("Endpoint mapping failed")
+      return
+    }
+    let contractedPath = typed.graph.shortestPath(
+      from: typed.graph.node(withIndex: contractedA)!,
+      to: typed.graph.node(withIndex: contractedD)!)
+    #expect(contractedPath.isNotEmpty)
+    let expanded = try #require(graph.expandPath(contractedPath, using: typed))
+    #expect(
+      abs(graph.length(ofPath: originalPath) - graph.length(ofPath: expanded)) < 0.001,
+      "Property-aware contraction route cost should match original")
+  }
+
 }

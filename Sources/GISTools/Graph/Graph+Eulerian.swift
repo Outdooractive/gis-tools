@@ -107,8 +107,8 @@ extension Graph {
             let neighbor: Int
             let edgeID: Int
         }
-        var adjacency: [[EEdge]] = Array(
-            repeating: [], count: adjacencyList.count)
+
+        var adjacency: [[EEdge]] = Array(repeating: [], count: adjacencyList.count)
         var nextEdgeID = 0
         for edge in edges {
             let id = nextEdgeID
@@ -204,8 +204,7 @@ extension Graph {
             let neighbor: Int
             let edgeID: Int
         }
-        var augmented: [[AugmentedEdge]] = Array(
-            repeating: [], count: adjacencyList.count)
+        var augmented: [[AugmentedEdge]] = Array(repeating: [], count: adjacencyList.count)
         var nextEdgeID = 0
 
         // Add every original undirected edge once (deduped by `graph.edges`),
@@ -231,10 +230,8 @@ extension Graph {
             for k in 0..<path.count - 1 {
                 let id = nextEdgeID
                 nextEdgeID += 1
-                augmented[path[k]].append(
-                    AugmentedEdge(neighbor: path[k + 1], edgeID: id))
-                augmented[path[k + 1]].append(
-                    AugmentedEdge(neighbor: path[k], edgeID: id))
+                augmented[path[k]].append(AugmentedEdge(neighbor: path[k + 1], edgeID: id))
+                augmented[path[k + 1]].append(AugmentedEdge(neighbor: path[k], edgeID: id))
             }
         }
 
@@ -317,10 +314,10 @@ extension Graph {
     /// Standard Dijkstra returning the distance array from `source` to every
     /// node.
     func dijkstraDistances(from source: Int) -> [Double] {
-        var dist: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
+        var dist: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
         var visited: Set<Int> = []
         dist[source] = 0.0
+
         var heap = MinHeap<HeapEntry>()
         heap.push(HeapEntry(distance: 0.0, index: source))
         while let entry = heap.pop() {
@@ -330,8 +327,7 @@ extension Graph {
                 let relaxed = dist[entry.index] + edge.weight
                 if relaxed < dist[edge.to.index] {
                     dist[edge.to.index] = relaxed
-                    heap.push(
-                        HeapEntry(distance: relaxed, index: edge.to.index))
+                    heap.push(HeapEntry(distance: relaxed, index: edge.to.index))
                 }
             }
         }
@@ -374,11 +370,14 @@ extension Graph {
             let i: Int
             let j: Int
             let distance: Double
+
             static func < (lhs: Pair, rhs: Pair) -> Bool {
                 if lhs.distance != rhs.distance {
                     return lhs.distance < rhs.distance
                 }
-                if lhs.i != rhs.i { return lhs.i < rhs.i }
+                if lhs.i != rhs.i {
+                    return lhs.i < rhs.i
+                }
                 return lhs.j < rhs.j
             }
         }

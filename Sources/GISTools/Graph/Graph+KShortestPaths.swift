@@ -39,12 +39,16 @@ extension Graph {
         blockedNodes: Set<Node>? = nil,
         edgeFilter: ((Edge) -> Bool)? = nil
     ) -> [[Node]] {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count,
-            k >= 1
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+              destination.index >= 0,
+              destination.index < adjacencyList.count,
+              k >= 1
         else { return [] }
 
-        if source == destination { return [[source]] }
+        if source == destination {
+            return [[source]]
+        }
 
         // The first shortest path seeds the algorithm.
         guard
@@ -83,12 +87,12 @@ extension Graph {
                 var blockedEdges: [EdgeKey] = []
                 for foundPath in foundPaths {
                     guard foundPath.count > i else { continue }
+
                     let foundRoot = Array(foundPath[0...i])
                     if foundRoot == rootPath {
                         let fromIndex = foundPath[i].index
                         let toIndex = foundPath[i + 1].index
-                        blockedEdges.append(
-                            EdgeKey(from: fromIndex, to: toIndex))
+                        blockedEdges.append(EdgeKey(from: fromIndex, to: toIndex))
                     }
                 }
 
@@ -182,6 +186,7 @@ extension Graph {
     /// has no connecting edge.
     private func pathCost(_ path: [Node]) -> Double {
         guard path.count >= 2 else { return 0.0 }
+
         var total: Double = 0.0
         for i in 1..<path.count {
             guard let weight = weight(from: path[i - 1], to: path[i]) else {
@@ -203,19 +208,21 @@ extension Graph {
         blockedEdges: [EdgeKey],
         edgeFilter: ((Edge) -> Bool)?
     ) -> [Node]? {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+              destination.index >= 0,
+              destination.index < adjacencyList.count
         else { return nil }
 
-        if source == destination { return [source] }
+        if source == destination {
+            return [source]
+        }
 
         let blockedNodesSet: Set<Int> = Set(blockedNodeIndices)
         let blockedEdgesSet: Set<EdgeKey> = Set(blockedEdges)
 
-        var distances: [Double] = Array(
-            repeating: .infinity, count: adjacencyList.count)
-        var predecessors: [Int] = Array(
-            repeating: -1, count: adjacencyList.count)
+        var distances: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
+        var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var visited: Set<Int> = []
 
         distances[source.index] = 0.0
@@ -234,9 +241,7 @@ extension Graph {
                 let neighborIndex = edge.to.index
 
                 if blockedNodesSet.contains(neighborIndex) { continue }
-                if blockedEdgesSet.contains(
-                    EdgeKey(from: entry.index, to: neighborIndex))
-                {
+                if blockedEdgesSet.contains(EdgeKey(from: entry.index, to: neighborIndex)) {
                     continue
                 }
                 if let edgeFilter, !edgeFilter(edge) { continue }
@@ -245,8 +250,7 @@ extension Graph {
                 if relaxed < distances[neighborIndex] {
                     distances[neighborIndex] = relaxed
                     predecessors[neighborIndex] = entry.index
-                    heap.push(
-                        HeapEntry(distance: relaxed, index: neighborIndex))
+                    heap.push(HeapEntry(distance: relaxed, index: neighborIndex))
                 }
             }
         }

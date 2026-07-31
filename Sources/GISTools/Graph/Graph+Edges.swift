@@ -49,19 +49,25 @@ extension Graph {
     /// The degree (number of incident edges) of the given node, or 0 if the
     /// node is not in the graph.
     public func degree(of node: Node) -> Int {
-        guard node.index >= 0, node.index < adjacencyList.count else { return 0 }
+        guard node.index >= 0,
+              node.index < adjacencyList.count
+        else { return 0 }
         return adjacencyList[node.index].edges.count
     }
 
     /// Returns the neighbors of the given node.
     public func neighbors(for source: Node) -> [Node] {
-        guard source.index >= 0, source.index < adjacencyList.count else { return [] }
+        guard source.index >= 0,
+              source.index < adjacencyList.count
+        else { return [] }
         return adjacencyList[source.index].edges.map { adjacencyList[$0.to.index].node }
     }
 
     /// Returns the edges from the given node.
     public func edges(for source: Node) -> [Edge] {
-        guard source.index >= 0, source.index < adjacencyList.count else { return [] }
+        guard source.index >= 0,
+              source.index < adjacencyList.count
+        else { return [] }
         return adjacencyList[source.index].edges
     }
 
@@ -71,7 +77,9 @@ extension Graph {
         from source: Node,
         to destination: Node
     ) -> Double? {
-        guard source.index >= 0, source.index < adjacencyList.count else { return nil }
+        guard source.index >= 0,
+              source.index < adjacencyList.count
+        else { return nil }
         return adjacencyList[source.index].edges.first(where: { $0.to == destination })?.weight
     }
 
@@ -81,7 +89,9 @@ extension Graph {
         from source: Node,
         to destination: Node
     ) -> Feature? {
-        guard source.index >= 0, source.index < adjacencyList.count else { return nil }
+        guard source.index >= 0,
+              source.index < adjacencyList.count
+        else { return nil }
         return adjacencyList[source.index].edges.first(where: { $0.to == destination })?.feature
     }
 
@@ -103,7 +113,9 @@ extension Graph {
         from: Node,
         to: Node
     ) {
-        guard from.index >= 0, from.index < adjacencyList.count else { return }
+        guard from.index >= 0,
+              from.index < adjacencyList.count
+        else { return }
         adjacencyList[from.index].edges.removeAll { $0.to == to }
     }
 

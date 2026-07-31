@@ -56,6 +56,38 @@ extension Graph {
     /// - Returns: The contracted graph and the original/contracted index
     ///   mappings, or `nil` if the graph is empty.
     public func contracted() -> ContractionResult? {
+        contracted(edgeCompatibility: nil)
+    }
+
+    /// Removes degree-2 chain nodes by merging their edges, preserving
+    /// boundaries where adjacent edges differ.
+    ///
+    /// This overload accepts an `edgeCompatibility` predicate: a degree-2 node
+    /// is only contracted when its two incident edges are *compatible*
+    /// according to the closure. Use this to preserve transitions between road
+    /// classes (e.g. "service road" → "trail"), surface types, or any other
+    /// feature property — the boundary node is kept so the two edge types stay
+    /// distinct in the contracted graph.
+    ///
+    /// For example, to contract only within a single road class:
+    /// ```swift
+    /// let result = graph.contracted { edge1, edge2 in
+    ///     edge1.feature?.property(for: "type") == edge2.feature?.property(for: "type")
+    /// }
+    /// ```
+    ///
+    /// When `edgeCompatibility` is `nil`, all degree-2 pass-through nodes are
+    /// contracted regardless of edge properties (the behavior of
+    /// ``contracted()``).
+    ///
+    /// - Parameter edgeCompatibility: An optional closure that decides whether
+    ///   two adjacent edges at a degree-2 node may be merged. Return `true` to
+    ///   allow contraction at that node, `false` to keep it as a boundary.
+    /// - Returns: The contracted graph and the original/contracted index
+    ///   mappings, or `nil` if the graph is empty.
+    public func contracted(
+        edgeCompatibility: ((Edge, Edge) -> Bool)?
+    ) -> ContractionResult? {
         guard adjacencyList.isNotEmpty else { return nil }
 
         // Phase 1: decide which original nodes survive (are kept) and which
@@ -63,9 +95,11 @@ extension Graph {
         //
         // A node is a *candidate* when it is a pure two-way degree-2
         // pass-through whose two neighbors are distinct and not already
-        // directly connected. Candidates form maximal paths (and possibly
-        // cycles) linked through "anchor" nodes (non-candidates such as
-        // junctions, leaves, or nodes adjacent to a direct shortcut).
+        // directly connected, AND (when `edgeCompatibility` is provided) whose
+        // two incident edges are compatible. Candidates form maximal paths
+        // (and possibly cycles) linked through "anchor" nodes (non-candidates
+        // such as junctions, leaves, nodes adjacent to a direct shortcut, or
+        // property boundaries).
         //
         // Removal rule:
         // - An *open* candidate path (both ends touch anchors) is collapsed to
@@ -75,7 +109,9 @@ extension Graph {
         //   cycle, with no routing benefit.
         var keep = Array(repeating: true, count: adjacencyList.count)
         var candidates = Set<Int>()
-        for i in 0..<adjacencyList.count where isContractionCandidate(index: i)
+        for i in 0..<adjacencyList.count where isContractionCandidate(
+            index: i,
+            edgeCompatibility: edgeCompatibility)
         {
             candidates.insert(i)
         }
@@ -120,7 +156,10 @@ extension Graph {
                     }
                     return neighbors.first { !candidates.contains($0) }
                 }
-                if let head = headAnchor, let tail = tailAnchor, head != tail {
+                if let head = headAnchor,
+                   let tail = tailAnchor,
+                   head != tail
+                {
                     removable.formUnion(path)
                 }
             }
@@ -132,8 +171,7 @@ extension Graph {
         // Phase 2: build the contracted graph by relabeling kept nodes
         // compactly and, for each kept node, emitting merged edges to other
         // kept nodes (following chains through removed nodes).
-        var newIndexForOld: [Int?] = Array(
-            repeating: nil, count: adjacencyList.count)
+        var newIndexForOld: [Int?] = Array(repeating: nil, count: adjacencyList.count)
         var originalIndexForNew: [Int] = []
         var edgeLists: [Graph.EdgeList] = []
         for i in 0..<adjacencyList.count where keep[i] {
@@ -143,7 +181,8 @@ extension Graph {
             edgeLists.append(
                 EdgeList(
                     node: Node(
-                        index: edgeLists.count, coordinate: node.coordinate)))
+                        index: edgeLists.count,
+                        coordinate: node.coordinate)))
         }
 
         // Phase 3: walk every edge out of each kept node, following chains of
@@ -177,7 +216,8 @@ extension Graph {
                             feature: mergedFeature,
                             isDirected: true,
                             weight: totalWeight))
-                } else {
+                }
+                else {
                     // Undirected chain: emit both directions once.
                     let key = UndirectedEdgeKey(
                         a: min(newFromIndex, newToIndex),
@@ -238,9 +278,11 @@ extension Graph {
     /// - Returns: The expanded path as original-graph nodes, or `nil` if the
     ///   path cannot be expanded.
     public func expandPath(
-        _ contractedPath: [Node], using result: ContractionResult
+        _ contractedPath: [Node],
+        using result: ContractionResult
     ) -> [Node]? {
         guard contractedPath.isNotEmpty else { return [] }
+
         var expanded: [Node] = []
         for (position, contractedNode) in contractedPath.enumerated() {
             guard contractedNode.index < result.originalIndices.count else {
@@ -303,7 +345,10 @@ extension Graph {
             edgeFilter: edgeFilter,
             search: { graph, s, d, blocked, filter in
                 graph.shortestPath(
-                    from: s, to: d, blockedNodes: blocked, edgeFilter: filter)
+                    from: s,
+                    to: d,
+                    blockedNodes: blocked,
+                    edgeFilter: filter)
             })
     }
 
@@ -340,7 +385,10 @@ extension Graph {
             edgeFilter: edgeFilter,
             search: { graph, s, d, blocked, filter in
                 graph.aStarPath(
-                    from: s, to: d, blockedNodes: blocked, edgeFilter: filter)
+                    from: s,
+                    to: d,
+                    blockedNodes: blocked,
+                    edgeFilter: filter)
             })
     }
 
@@ -376,7 +424,10 @@ extension Graph {
             edgeFilter: edgeFilter,
             search: { graph, s, d, blocked, filter in
                 graph.bidirectionalShortestPath(
-                    from: s, to: d, blockedNodes: blocked, edgeFilter: filter)
+                    from: s,
+                    to: d,
+                    blockedNodes: blocked,
+                    edgeFilter: filter)
             })
     }
 
@@ -389,8 +440,10 @@ extension Graph {
         edgeFilter: ((Edge) -> Bool)?,
         search: (Graph, Node, Node, Set<Node>?, ((Edge) -> Bool)?) -> [Node]
     ) -> [Node] {
-        guard source.index >= 0, source.index < adjacencyList.count,
-            destination.index >= 0, destination.index < adjacencyList.count
+        guard source.index >= 0,
+              source.index < adjacencyList.count,
+              destination.index >= 0,
+              destination.index < adjacencyList.count
         else { return [] }
 
         if source == destination { return [source] }
@@ -406,11 +459,8 @@ extension Graph {
 
         guard let result = contracted() else { return [] }
 
-        guard
-            let contractedSourceIndex = result.contractedIndexOfOriginal[
-                source.index],
-            let contractedDestinationIndex = result.contractedIndexOfOriginal[
-                destination.index]
+        guard let contractedSourceIndex = result.contractedIndexOfOriginal[source.index],
+              let contractedDestinationIndex = result.contractedIndexOfOriginal[destination.index]
         else {
             // An endpoint was an intermediate chain node. Fall back to a direct
             // search on the full graph.
@@ -422,20 +472,15 @@ extension Graph {
         var contractedBlocked: Set<Node> = []
         if let blockedNodes {
             for blocked in blockedNodes {
-                guard
-                    let mapped = result.contractedIndexOfOriginal[blocked.index]
-                else {
-                    return search(
-                        self, source, destination, blockedNodes, edgeFilter)
+                guard let mapped = result.contractedIndexOfOriginal[blocked.index] else {
+                    return search(self, source, destination, blockedNodes, edgeFilter)
                 }
                 contractedBlocked.insert(result.graph.node(withIndex: mapped)!)
             }
         }
 
-        let contractedSource = result.graph.node(
-            withIndex: contractedSourceIndex)!
-        let contractedDestination = result.graph.node(
-            withIndex: contractedDestinationIndex)!
+        let contractedSource = result.graph.node(withIndex: contractedSourceIndex)!
+        let contractedDestination = result.graph.node(withIndex: contractedDestinationIndex)!
         let contractedPath = search(
             result.graph,
             contractedSource,
@@ -468,19 +513,36 @@ extension Graph {
     /// typically short and contracting them would complicate reverse traversal
     /// without meaningful speedup. Only pure two-way pass-through nodes are
     /// removed.
-    private func isContractionCandidate(index: Int) -> Bool {
+    private func isContractionCandidate(
+        index: Int,
+        edgeCompatibility: ((Edge, Edge) -> Bool)?
+    ) -> Bool {
         let edges = adjacencyList[index].edges
         // All incident edges must be undirected (two-way).
-        guard edges.count == 2, edges.allSatisfy({ !$0.isDirected }) else {
-            return false
-        }
+        guard edges.count == 2,
+              edges.allSatisfy({ !$0.isDirected })
+        else { return false }
+
         let n0 = edges[0].to.index
         let n1 = edges[1].to.index
-        guard n0 != index, n1 != index, n0 != n1 else { return false }
+        guard n0 != index,
+              n1 != index,
+              n0 != n1
+        else { return false }
+
         // The two neighbors must not already be directly connected, otherwise
         // contracting this node would create a parallel edge or collapse a
         // triangle.
-        return !areAdjacent(n0, n1)
+        guard !areAdjacent(n0, n1) else { return false }
+
+        // When a compatibility predicate is provided, the two incident edges
+        // must be compatible for the node to be contractible. This preserves
+        // boundaries where edge properties change (e.g. road class, surface).
+        if let edgeCompatibility, !edgeCompatibility(edges[0], edges[1]) {
+            return false
+        }
+
+        return true
     }
 
     /// The two neighbor indices of a contraction-candidate node, in edge order.
@@ -507,12 +569,15 @@ extension Graph {
 
         // Walk in one direction. Returns the path and whether it closed a
         // cycle back to `start` (without hitting an anchor).
-        func walkDirection(_ firstStep: Int) -> (path: [Int], closedCycle: Bool)
-        {
+        func walkDirection(
+            _ firstStep: Int
+        ) -> (path: [Int], closedCycle: Bool) {
             var path: [Int] = []
             var previous = start
             var current = firstStep
-            while candidates.contains(current), !visited.contains(current) {
+            while candidates.contains(current),
+                  !visited.contains(current)
+            {
                 visited.insert(current)
                 path.append(current)
                 let neighbors = chainNeighbors(of: current)

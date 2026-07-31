@@ -69,14 +69,16 @@ extension Graph {
                         stack.append(v)
                         onStack[v] = true
                         dfsStack.append(SCCFrame(node: v, nextEdge: 0))
-                    } else if onStack[v] {
+                    }
+                    else if onStack[v] {
                         // Back edge to a node on the current recursion stack:
                         // update low[u] via its discovery.
                         low[u] = min(low[u], disc[v])
                     }
                     // Else: cross/forward edge to an already-popped node —
                     // ignore (cannot contribute to a SCC with u).
-                } else {
+                }
+                else {
                     // All neighbors processed: pop and propagate low to parent.
                     dfsStack.removeLast()
                     if let parent = dfsStack.last {
@@ -99,6 +101,28 @@ extension Graph {
         }
 
         return components
+    }
+
+    /// Partitions the graph into strongly connected components, returning each
+    /// component as a standalone ``Graph``.
+    ///
+    /// This is the graph-valued counterpart to
+    /// ``stronglyConnectedComponents()``: each SCC becomes an independent
+    /// `Graph` containing only the nodes in that SCC and the edges *between*
+    /// them. Edges that cross from one SCC to another (the condensation DAG's
+    /// edges) are excluded — they belong to the inter-component structure, not
+    /// to any single SCC. Node indices are remapped compactly within each
+    /// subgraph.
+    ///
+    /// In an undirected graph every connected component is also strongly
+    /// connected, so this produces the same partition as
+    /// ``connectedComponentGraphs``.
+    ///
+    /// - Returns: One `Graph` per strongly connected component, in reverse
+    ///   topological order (a component appears before any component that can
+    ///   reach it), or an empty array if the graph is empty.
+    public func stronglyConnectedComponentGraphs() -> [Graph] {
+        stronglyConnectedComponents().map { subgraph(containing: $0) }
     }
 
     // MARK: - SCC support
