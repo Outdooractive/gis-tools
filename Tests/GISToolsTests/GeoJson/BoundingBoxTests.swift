@@ -690,6 +690,37 @@ struct BoundingBoxTests {
         #expect(expanded.northEast.longitude <= 180.0)
     }
 
+    // Validates that expanding a box whose north-east corner sits on the
+    // antimeridian does not wrap north-east to the western hemisphere and
+    // produce an inverted box (southWest.longitude > northEast.longitude).
+    // This reproduces the eastern-edge tile 2/3 case (EPSG:3857) that broke
+    // PostGIS `ST_MakeEnvelope` and feature clipping in the tile server.
+    @Test
+    func expandingByDistanceDoesNotInvertAtEasternAntimeridian() async throws {
+        // Tile 2/3 in EPSG:3857: north-east at +180° (originShift).
+        let bbox = MapTile(x: 3, y: 1, z: 2).boundingBox(projection: .epsg3857)
+        #expect(abs(bbox.northEast.longitude - GISTool.originShift) < 0.001)
+
+        let expanded = bbox.expanded(byDistance: 2_000_000.0)
+
+        // The expanded north-east must stay at the eastern world boundary,
+        // not wrap to a negative longitude and invert the box.
+        #expect(expanded.southWest.longitude < expanded.northEast.longitude)
+        #expect(abs(expanded.northEast.longitude - GISTool.originShift) < 0.001)
+    }
+
+    // Same as above but for the western antimeridian edge (tile 2/0).
+    @Test
+    func expandingByDistanceDoesNotInvertAtWesternAntimeridian() async throws {
+        let bbox = MapTile(x: 0, y: 1, z: 2).boundingBox(projection: .epsg3857)
+        #expect(abs(bbox.southWest.longitude - (-GISTool.originShift)) < 0.001)
+
+        let expanded = bbox.expanded(byDistance: 2_000_000.0)
+
+        #expect(expanded.southWest.longitude < expanded.northEast.longitude)
+        #expect(abs(expanded.southWest.longitude - (-GISTool.originShift)) < 0.001)
+    }
+
     // Validates that expanded(byIncluding:) with a far-away coordinate clamps to world bounds.
     @Test
     func expandingByIncludingCoordinateClampsToWorldBounds() async throws {

@@ -285,7 +285,39 @@ public struct BoundingBox:
         var ne = northEast.destination(distance: distance, bearing: 45.0)
         sw.altitude = southWest.altitude
         ne.altitude = northEast.altitude
-        return BoundingBox(southWest: sw, northEast: ne).clamped()
+
+        // `destination()` wraps longitudes across the antimeridian into
+        // [-180, 180] (or [-originShift, originShift] for EPSG:3857). When the
+        // buffer pushes past the world edge this produces an *inverted* box
+        // (southWest.longitude > northEast.longitude), which breaks callers
+        // that build a single axis-aligned envelope (e.g. PostGIS
+        // `ST_MakeEnvelope`) or clip features to the box. Clamp the wrapped
+        // coordinate back to the world boundary instead.
+        switch projection {
+        case .epsg3857:
+            let upper = GISTool.originShift
+            let lower = -GISTool.originShift
+            if ne.longitude < southWest.longitude { ne.longitude = upper }
+            if sw.longitude > northEast.longitude { sw.longitude = lower }
+            // Final safety clamp for any remaining out-of-range values.
+            sw.longitude = min(upper, max(lower, sw.longitude))
+            ne.longitude = min(upper, max(lower, ne.longitude))
+            sw.latitude = min(upper, max(lower, sw.latitude))
+            ne.latitude = min(upper, max(lower, ne.latitude))
+
+        case .epsg4326:
+            if ne.longitude < southWest.longitude { ne.longitude = 180.0 }
+            if sw.longitude > northEast.longitude { sw.longitude = -180.0 }
+            sw.longitude = min(180.0, max(-180.0, sw.longitude))
+            ne.longitude = min(180.0, max(-180.0, ne.longitude))
+            sw.latitude = min(90.0, max(-90.0, sw.latitude))
+            ne.latitude = min(90.0, max(-90.0, ne.latitude))
+
+        case .epsg4978, .noSRID:
+            break
+        }
+
+        return BoundingBox(southWest: sw, northEast: ne)
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
