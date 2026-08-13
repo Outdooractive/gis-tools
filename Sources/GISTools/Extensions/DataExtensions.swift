@@ -13,7 +13,7 @@ extension Data {
             .map { String(chars[$0]) + String(chars[$0 + 1]) }
             .compactMap { UInt8($0, radix: 16) }
 
-        guard hex.count / bytes.count == 2 else { return nil }
+        guard !bytes.isEmpty, hex.count / bytes.count == 2 else { return nil }
 
         self.init(bytes)
     }

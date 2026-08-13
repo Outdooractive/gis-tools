@@ -228,6 +228,27 @@ struct WKBTests {
         #expect(encodedMultiPointZSRID == multiPointZSRIDData)
     }
 
+    // A PostGIS EWKB LINESTRING with embedded SRID 3857 (Web Mercator).
+    private let lineStringSRID3857Data = Data(hex: "0102000020110F00000F000000B1AB426CB24C3141FF9A56141D015741AC6335BCD04C31414C475DB321015741ED12DD37F14C3141A108733D240157410B3F0D08104D3141930997E929015741B6607F03364D3141EF0AD7643A0157415F3425CA4C4D31411CA75DBE43015741EE7275C6624D3141BB7F3DBC4A01574143F574298B4D314127F08B8E550157412E207A6FB24D314172BC8B0E59015741DEEDD74ECD4D31412A5F69605801574149F56264EE4D3141B4213FDD540157417E97E4BB044E31414813A5AB54015741383AAE891E4E3141201F4C71580157413CF330C6434E3141D260EB125E015741CEAD8B65734E3141034DA5EF63015741")!
+
+    // Validates auto-detecting the embedded SRID from a PostGIS EWKB LINESTRING.
+    @Test
+    func lineStringSRIDAutoDetection() async throws {
+        let lineString = try WKBCoder.decode(wkb: lineStringSRID3857Data, sourceProjection: nil) as! LineString
+        #expect(lineString.coordinates.count == 15)
+        #expect(abs(lineString.coordinates[0].longitude - 10.184617401417709) < 0.0000001)
+        #expect(abs(lineString.coordinates[0].latitude - 47.53870670004494) < 0.0000001)
+    }
+
+    // Validates that a plain WKB (no SRID flag) with no explicit projection fails cleanly
+    // instead of misreading the point count as an SRID.
+    @Test
+    func plainWKBNoSRIDAutoDetection() async throws {
+        #expect(throws: WKBCoder.WKBCoderError.unknownSRID) {
+            _ = try WKBCoder.decode(wkb: lineStringData, sourceProjection: nil)
+        }
+    }
+
     // MARK: - LineString
 
     // SELECT 'LINESTRING (1 1, 1 2, 1 3, 2 2)'::geometry;

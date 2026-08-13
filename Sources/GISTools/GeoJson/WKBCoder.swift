@@ -31,14 +31,14 @@ extension GeoJsonGeometry {
     ///
     /// - Parameters:
     ///    - wkb: The WKB encoded data.
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     ///    - calculateBoundingBox: Whether to calculate a bounding box (default `false`).
     /// - Returns: A GeoJSON geometry, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326,
         calculateBoundingBox: Bool = false
     ) {
@@ -73,13 +73,13 @@ extension GeoJsonGeometry {
     ///
     /// - Parameters:
     ///    - wkb: The WKB encoded data.
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     /// - Returns: A GeoJSON geometry, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func parse(
         wkb: Data,
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
         try? WKBCoder.decode(
@@ -132,7 +132,7 @@ extension Feature {
     ///
     /// - Parameters:
     ///    - wkb: The WKB encoded data.
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     ///    - id: A feature identifier (default `nil`).
     ///    - properties: Feature properties (default `[:]`).
@@ -141,7 +141,7 @@ extension Feature {
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326,
         id: Identifier? = nil,
         properties: [String: Sendable] = [:],
@@ -187,14 +187,14 @@ extension FeatureCollection {
     ///
     /// - Parameters:
     ///    - wkb: The WKB encoded data.
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     ///    - calculateBoundingBox: Whether to calculate a bounding box (default `false`).
     /// - Returns: A FeatureCollection, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public init?(
         wkb: Data,
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326,
         calculateBoundingBox: Bool = false
     ) {
@@ -235,12 +235,12 @@ extension Data {
     /// Decode a GeoJSON object from WKB.
     ///
     /// - Parameters:
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     /// - Returns: A GeoJSON geometry, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asGeoJsonGeometry(
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326
     ) -> GeoJsonGeometry? {
         GeometryCollection.parse(
@@ -275,14 +275,14 @@ extension Data {
     /// Decode a GeoJSON object from WKB.
     ///
     /// - Parameters:
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     ///    - id: A feature identifier (default `nil`).
     ///    - properties: Feature properties (default `[:]`).
     /// - Returns: A Feature, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeature(
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326,
         id: Feature.Identifier? = nil,
         properties: [String: Sendable] = [:]
@@ -315,12 +315,12 @@ extension Data {
     /// Decode a GeoJSON object from WKB.
     ///
     /// - Parameters:
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     /// - Returns: A FeatureCollection, or `nil` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public func asFeatureCollection(
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326
     ) -> FeatureCollection? {
         FeatureCollection(
@@ -412,14 +412,14 @@ extension WKBCoder {
     ///
     /// - Parameters:
     ///    - wkb: The WKB encoded data.
-    ///    - sourceProjection: The source projection.
+    ///    - sourceProjection: The projection of the source coordinates, or `nil` to read the SRID from the WKB data.
     ///    - targetProjection: The target projection (default `.epsg4326`).
     /// - Returns: A decoded GeoJSON geometry.
     /// - Throws: A `WKBCoderError` if decoding fails.
     /// - Important: The resulting GeoJSON will always be projected to EPSG:4326.
     public static func decode(
         wkb: Data,
-        sourceProjection: Projection,
+        sourceProjection: Projection?,
         targetProjection: Projection = .epsg4326
     ) throws -> GeoJsonGeometry {
         let bytes = [UInt8](wkb)
@@ -447,6 +447,7 @@ extension WKBCoder {
         var typeCodeValue = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
         var decodeZ = false
         var decodeM = false
+        let hasSRID = typeCodeValue & 0x2000_0000 != 0
 
         if typeCodeValue & 0x8000_0000 != 0 {
             decodeZ = true
@@ -461,7 +462,9 @@ extension WKBCoder {
         }
 
         var sourceProjection = sourceProjection
-        if sourceProjection == nil {
+        if sourceProjection == nil,
+           hasSRID
+        {
             let srid = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
             sourceProjection = Projection(srid: Int(srid))
         }

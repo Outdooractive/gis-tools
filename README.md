@@ -324,7 +324,26 @@ static func geoJsonFrom(jsonData: Data) -> GeoJson?
 static func geoJsonFrom(jsonString: String) -> GeoJson?
 ```
 
+The reader can also auto-detect a geometry from a string or data payload, regardless of whether it is GeoJSON, WKT (with or without an `SRID=…;` prefix), or hex-encoded WKB/EWKB/TWKB:
+```swift
+/// Try to initialize a geometry from a string, auto-detecting the format.
+static func geometryFrom(string: String, targetProjection: Projection = .epsg4326) -> GeoJsonGeometry?
+
+/// Try to initialize a geometry from data, auto-detecting the format.
+static func geometryFrom(data: Data, targetProjection: Projection = .epsg4326) -> GeoJsonGeometry?
+```
+
 Example:
+```swift
+// A PostGIS EWKB hex string (SRID 3857) is decoded and projected to EPSG:4326.
+let ewkb = "0102000020110F00000F000000B1AB426CB24C3141FF9A56141D015741..."
+let lineString = GeoJsonReader.geometryFrom(string: ewkb) as! LineString
+
+// Plain WKT and SRID-prefixed WKT are both recognized.
+let point = GeoJsonReader.geometryFrom(string: "SRID=4326;POINT (11.5 48.1)") as! Point
+```
+
+The `geoJsonFrom` methods work on any GeoJSON-shaped input:
 ```swift
 let json: [String: Any] = [
     "type": "Point",
