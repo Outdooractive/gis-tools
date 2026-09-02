@@ -152,7 +152,7 @@ public struct BoundingBox:
         self.projection = .epsg4326
 
         // GeoJSON
-        if let geoJsonCoordinates = json as? [Double] {
+        if let geoJsonCoordinates = JsonCoercion.doubleArray(json) {
             if geoJsonCoordinates.count == 4 {
                 self.southWest = Coordinate3D(latitude: geoJsonCoordinates[1], longitude: geoJsonCoordinates[0])
                 self.northEast = Coordinate3D(latitude: geoJsonCoordinates[3], longitude: geoJsonCoordinates[2])
@@ -167,7 +167,7 @@ public struct BoundingBox:
             }
         }
         // Not GeoJSON
-        else if let geoJsonCoordinates = json as? [[Double]],
+        else if let geoJsonCoordinates = JsonCoercion.coordinateArrayList(json),
                 !geoJsonCoordinates.isEmpty
         {
             let coordinates = geoJsonCoordinates.compactMap { Coordinate3D(json: $0) }

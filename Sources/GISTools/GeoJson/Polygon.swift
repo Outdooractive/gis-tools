@@ -138,7 +138,7 @@ public struct Polygon:
     ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Sendable],
+        guard let geoJson = JsonCoercion.dictionary(json),
               Polygon.isValid(geoJson: geoJson),
               let coordinates: [[Coordinate3D]] = Polygon.tryCreate(json: geoJson["coordinates"])
         else { return nil }

@@ -67,7 +67,7 @@ public struct GeometryCollection: GeoJsonGeometry {
     /// - important: The source is expected to be in EPSG:4326.
     /// - Returns: A geometry collection, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Sendable],
+        guard let geoJson = JsonCoercion.dictionary(json),
               GeometryCollection.isValid(geoJson: geoJson),
               let geometries: [GeoJsonGeometry] = GeometryCollection.tryCreate(json: geoJson["geometries"])
         else { return nil }

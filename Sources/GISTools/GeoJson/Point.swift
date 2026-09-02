@@ -66,7 +66,7 @@ public struct Point: PointGeometry {
     /// - Returns: A `Point`, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = json as? [String: Sendable],
+        guard let geoJson = JsonCoercion.dictionary(json),
               Point.isValid(geoJson: geoJson),
               let coordinate: Coordinate3D = Point.tryCreate(json: geoJson["coordinates"])
         else { return nil }
