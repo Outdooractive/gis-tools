@@ -733,7 +733,7 @@ extension Coordinate3D: GeoJsonReadable {
         var pAltitude: CLLocationDistance?
         var pM: Double?
 
-        if let pointArray = json as? [Double?],
+        if let pointArray = JsonCoercion.coordinateArray(json),
            pointArray.count >= 2
         {
             pLongitude = pointArray[0]
@@ -741,11 +741,11 @@ extension Coordinate3D: GeoJsonReadable {
             pAltitude = if pointArray.count >= 3 { pointArray[2] } else { nil }
             pM = if pointArray.count >= 4 { pointArray[3] } else { nil }
         }
-        else if let pointDictionary = json as? [String: Any] {
-            pLongitude = pointDictionary["x"] as? Double
-            pLatitude = pointDictionary["y"] as? Double
-            pAltitude = pointDictionary["z"] as? CLLocationDistance
-            pM = pointDictionary["m"] as? Double
+        else if let pointDictionary = JsonCoercion.dictionary(json) {
+            pLongitude = JsonCoercion.double(pointDictionary["x"])
+            pLatitude = JsonCoercion.double(pointDictionary["y"])
+            pAltitude = JsonCoercion.double(pointDictionary["z"]).map { CLLocationDistance($0) }
+            pM = JsonCoercion.double(pointDictionary["m"])
         }
         else {
             return nil

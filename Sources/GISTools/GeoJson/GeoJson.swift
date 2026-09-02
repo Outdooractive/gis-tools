@@ -218,7 +218,7 @@ extension GeoJson {
 
     /// Try to create an array of objects from any JSON object.
     public static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [V]? {
-        if let array = json as? [Any] {
+        if let array = JsonCoercion.array(json) {
             return array.compactMap { V(json: $0) }
         }
         return nil
@@ -226,7 +226,7 @@ extension GeoJson {
 
     /// Try to create an array of arrays of objects from any JSON object.
     static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[V]]? {
-        if let array = json as? [Any] {
+        if let array = JsonCoercion.array(json) {
             return array.compactMap { tryCreate(json: $0) }
         }
         return nil
@@ -234,7 +234,7 @@ extension GeoJson {
 
     /// Try to create an array of arrays of arrays of objects from any JSON object.
     static func tryCreate<V: GeoJsonReadable>(json: Any?) -> [[[V]]]? {
-        if let array = json as? [Any] {
+        if let array = JsonCoercion.array(json) {
             return array.compactMap { tryCreate(json: $0) }
         }
         return nil
@@ -242,7 +242,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON object from any JSON object.
     public static func tryCreate(json: Any?) -> GeoJson? {
-        if let geoJson = json as? [String: Sendable],
+        if let geoJson = JsonCoercion.dictionary(json),
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid
@@ -265,7 +265,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON geometry from any JSON object.
     public static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
-        if let geoJson = json as? [String: Sendable],
+        if let geoJson = JsonCoercion.dictionary(json),
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid
@@ -286,7 +286,7 @@ extension GeoJson {
 
     /// Try to create an array of GeoJSON geometries from any JSON object.
     public static func tryCreate(json: Any?) -> [GeoJsonGeometry]? {
-        if let array = json as? [Any] {
+        if let array = JsonCoercion.array(json) {
             return array.compactMap { tryCreateGeometry(json: $0) }
         }
         return nil

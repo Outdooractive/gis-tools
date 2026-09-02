@@ -206,7 +206,7 @@ extension GeoJson {
 
         switch type {
         case .point:
-            guard let coordinates = geoJson["coordinates"] as? [Any],
+            guard let coordinates = JsonCoercion.array(geoJson["coordinates"]),
                   !coordinates.isEmpty
             else { return false }
             return true
