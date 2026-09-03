@@ -15,6 +15,70 @@ struct MapTileTests {
         #expect(MapTile(coordinate: Coordinate3D(latitude: -33.8566, longitude: 151.215), atZoom: 14) == MapTile(x: 15073, y: 9831, z: 14))
     }
 
+    // Verifies that coordinates just west and east of the prime meridian land
+    // in different tiles: truncation towards zero would place -0.04° and
+    // +0.04° into the same tile.
+    @Test
+    func tileFromCoordinateNegativePrecision() async throws {
+        // At zoom 12, tiles are 360/4096 ≈ 0.0879° wide; ±0.04° are on
+        // opposite sides of tile border 2048.
+        let west = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: -0.04), atZoom: 12)
+        let east = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: 0.04), atZoom: 12)
+
+        #expect(west.x == 2047)
+        #expect(east.x == 2048)
+    }
+
+    // Verifies that longitudes beyond the anti-meridian wrap into range
+    // instead of producing invalid tile coordinates.
+    @Test
+    func tileFromCoordinateAntiMeridianWrapping() async throws {
+        // -190° is the same meridian as +170°.
+        let wrapped = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: -190.0), atZoom: 12)
+        let expected = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: 170.0), atZoom: 12)
+        #expect(wrapped == expected)
+
+        // Beyond the dateline east: +185° is the same meridian as -175°.
+        let east = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: 185.0), atZoom: 12)
+        let equivalent = MapTile(coordinate: Coordinate3D(latitude: 0.0, longitude: -175.0), atZoom: 12)
+        #expect(east == equivalent)
+    }
+
+    // Verifies that latitudes beyond the Web Mercator limits clamp to the
+    // first/last tile row instead of producing out-of-range tiles.
+    @Test
+    func tileFromCoordinatePoleClamping() async throws {
+        let northPole = MapTile(coordinate: Coordinate3D(latitude: 90.0, longitude: 0.0), atZoom: 4)
+        #expect(northPole.y == 0)
+        #expect(northPole.x == 8)
+
+        let southPole = MapTile(coordinate: Coordinate3D(latitude: -90.0, longitude: 0.0), atZoom: 4)
+        #expect(southPole.y == 15)
+
+        // The exact Mercator limit at the north edge must not produce a
+        // negative y through floating point round-off.
+        let mercatorMax = MapTile(coordinate: Coordinate3D(latitude: 85.05112877980659, longitude: 0.0), atZoom: 12)
+        #expect(mercatorMax.y == 0)
+        #expect(mercatorMax.x == 2048)
+    }
+
+    // Verifies that tile coordinates stay within 0 ..< 2^zoom on both axes
+    // for a dense sample of the full coordinate range.
+    @Test
+    func tileFromCoordinateStaysInWorld() async throws {
+        var latitude = -90.0
+        while latitude <= 90.0 {
+            var longitude = -540.0
+            while longitude <= 540.0 {
+                let tile = MapTile(coordinate: Coordinate3D(latitude: latitude, longitude: longitude), atZoom: 9)
+                #expect(tile.x >= 0 && tile.x < (1 << 9), "x out of range at \(latitude), \(longitude)")
+                #expect(tile.y >= 0 && tile.y < (1 << 9), "y out of range at \(latitude), \(longitude)")
+                longitude += 13.7
+            }
+            latitude += 3.3
+        }
+    }
+
     // Verifies MapTile initialization from bounding boxes with optional maxZoom clamping.
     @Test
     func tileFromBoundingBox() async throws {

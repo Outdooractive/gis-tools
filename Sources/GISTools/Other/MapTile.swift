@@ -86,6 +86,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     /// Creates a map tile from a geographic coordinate at the given zoom level.
     ///
+    /// Longitudes beyond ±180 wrap around the anti-meridian, latitudes beyond
+    /// the Web Mercator limits (±85.0511°) are clamped, and the resulting
+    /// tile is always within `0 ..< 2^zoom` on both axes.
+    ///
     /// - Parameters:
     ///    - coordinate: The geographic coordinate
     ///    - zoom: The zoom level
@@ -93,8 +97,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
         let scale = Double(1 << zoom)
         let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate.projected(to: .epsg4326))
 
-        self.x = Int(normalizedCoordinate.longitude * scale)
-        self.y = Int(normalizedCoordinate.latitude * scale)
+        self.x = min(max(Int(floor(normalizedCoordinate.longitude * scale)), 0), (1 << zoom) - 1)
+        self.y = min(max(Int(floor(normalizedCoordinate.latitude * scale)), 0), (1 << zoom) - 1)
         self.z = zoom
     }
 
@@ -480,11 +484,19 @@ public struct MapTile: CustomStringConvertible, Sendable {
     // MARK: - Private
 
     /// Normalizes a coordinate for tile indexing using Web Mercator projection.
+    ///
+    /// The returned coordinate lies in `[0, 1]²` (up to floating point
+    /// round-off at the edges), with longitudes beyond ±180 wrapped into
+    /// range and latitudes clamped to the Web Mercator limits.
     static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
         var (latitude, longitude) = (coordinate.latitude, coordinate.longitude)
 
+        longitude = longitude.truncatingRemainder(dividingBy: 360.0)
         if longitude > 180.0 {
-           longitude -= 360.0
+            longitude -= 360.0
+        }
+        if longitude < -180.0 {
+            longitude += 360.0
         }
 
         latitude = min(85.05112877980659, max(-85.05112877980659, latitude))
