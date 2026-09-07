@@ -116,6 +116,97 @@ extension [Coordinate3D] {
 
 }
 
+// MARK: - Hashable
+
+/// A quantized, sortable representation of a coordinate, used for
+/// epsilon-consistent hashing of rings.
+///
+/// Coordinates are quantized like `Coordinate3D.hash(into:)` so that
+/// coordinates within `GISTool.equalityDelta` of each other usually produce
+/// the same key (the same boundary caveat applies).
+private struct QuantizedVertex: Comparable, Hashable {
+
+    let latitude: Double
+    let longitude: Double
+    let altitudeState: Int
+    let altitude: Double
+
+    init(_ coordinate: Coordinate3D) {
+        self.latitude = (coordinate.latitude / GISTool.equalityDelta).rounded()
+        self.longitude = (coordinate.longitude / GISTool.equalityDelta).rounded()
+        self.altitudeState = coordinate.altitude == nil ? 0 : 1
+        self.altitude = coordinate.altitude ?? 0.0
+    }
+
+    static func <(lhs: QuantizedVertex, rhs: QuantizedVertex) -> Bool {
+        if lhs.latitude != rhs.latitude { return lhs.latitude < rhs.latitude }
+        if lhs.longitude != rhs.longitude { return lhs.longitude < rhs.longitude }
+        if lhs.altitudeState != rhs.altitudeState { return lhs.altitudeState < rhs.altitudeState }
+        return lhs.altitude < rhs.altitude
+    }
+
+}
+
+extension [Coordinate3D] {
+
+    /// Combine a rotation-canonical, quantized representation of the receiver,
+    /// treated as a closed ring, into the hasher.
+    ///
+    /// This mirrors `compareShifted(_:)`: the closing vertex is dropped and all
+    /// rotations of the remaining vertices are regarded as equal, so the
+    /// rotation that sorts lexicographically smallest is used as the canonical
+    /// form. Two rings that `compareShifted(_:)` regards as equal therefore
+    /// always produce the same hash.
+    func hashAsCanonicalRing(into hasher: inout Hasher) {
+        let vertices = Array(dropLast()).map({ QuantizedVertex($0) })
+        let count = vertices.count
+        guard count > 0 else { return }
+
+        var canonicalStart = 0
+        if count > 1 {
+            for start in 1..<count {
+                if vertices.rotation(at: start, isLexicographicallySmallerThan: canonicalStart) {
+                    canonicalStart = start
+                }
+            }
+        }
+
+        for offset in 0..<count {
+            hasher.combine(vertices[(canonicalStart + offset) % count])
+        }
+    }
+
+}
+
+extension [QuantizedVertex] {
+
+    /// Check if the rotation of the vertices starting at `start` sorts
+    /// lexicographically before the rotation starting at `other`.
+    func rotation(at start: Int, isLexicographicallySmallerThan other: Int) -> Bool {
+        for offset in indices {
+            let lhs = self[(start + offset) % count]
+            let rhs = self[(other + offset) % count]
+            if lhs != rhs {
+                return lhs < rhs
+            }
+        }
+        return false
+    }
+
+}
+
+extension Ring: Hashable {
+
+    /// The hash is based on the projection and a rotation-canonical, quantized
+    /// representation of the ring's vertices, consistent with `==` (which
+    /// regards rings with shifted start vertices as equal).
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        coordinates.hashAsCanonicalRing(into: &hasher)
+    }
+
+}
+
 // MARK: - Projection
 
 extension Ring: Projectable {
