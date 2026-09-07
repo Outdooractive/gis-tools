@@ -158,14 +158,14 @@ struct FeatureTests {
         {
             "type": "Feature",
             "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
-            "properties": { "isoCode": "CH", "name": "Zurich", "priority": 3 }
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": 3 }
         }
         """
         let feature = try #require(Feature(jsonString: json))
 
         let properties = try feature.properties(as: RegionProperties.self)
 
-        #expect(properties == RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
     }
 
     // Validates that properties written as 3.0 decode into Int fields.
@@ -175,14 +175,14 @@ struct FeatureTests {
         {
             "type": "Feature",
             "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
-            "properties": { "isoCode": "CH", "name": "Zurich", "priority": 3.0 }
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": 3.0 }
         }
         """
         let feature = try #require(Feature(jsonString: json))
 
         let properties = try feature.properties(as: RegionProperties.self)
 
-        #expect(properties == RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
     }
 
     // Validates that type mismatches and missing keys throw real errors
@@ -193,7 +193,7 @@ struct FeatureTests {
         {
             "type": "Feature",
             "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
-            "properties": { "isoCode": "CH", "name": "Zurich", "priority": "high" }
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": "high" }
         }
         """
         let featureMismatch = try #require(Feature(jsonString: mismatchJson))
@@ -206,7 +206,7 @@ struct FeatureTests {
         {
             "type": "Feature",
             "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
-            "properties": { "isoCode": "CH", "name": "Zurich" }
+            "properties": { "isoCode": "CH", "name": "Zürich" }
         }
         """
         let featureMissing = try #require(Feature(jsonString: missingJson))
@@ -258,14 +258,14 @@ struct FeatureTests {
     func initEncodedProperties() async throws {
         let feature = try Feature(
             Point(Coordinate3D(latitude: 47.3, longitude: 8.5)),
-            encodedProperties: RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+            encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
 
         #expect(feature.properties["isoCode"] as? String == "CH")
-        #expect(feature.properties["name"] as? String == "Zurich")
+        #expect(feature.properties["name"] as? String == "Zürich")
         #expect(feature.properties["priority"] as? Int == 3)
 
         let properties = try feature.properties(as: RegionProperties.self)
-        #expect(properties == RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
 
         let jsonProperties = try #require(feature.asJson["properties"] as? [String: Sendable])
         #expect(jsonProperties["priority"] as? Int == 3)
@@ -325,6 +325,47 @@ struct FeatureTests {
         }
     }
 
+    // Validates the bulk JSONValue conversion of properties.
+    @Test
+    func jsonProperties() async throws {
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": {
+                "string": "text",
+                "int": 3,
+                "fractionalInt": 3.0,
+                "fractional": 3.5,
+                "bool": true,
+                "null": null,
+                "nested": { "inner": 1.0 }
+            }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        let jsonProperties = try feature.jsonProperties()
+
+        #expect(jsonProperties == [
+            "string": .string("text"),
+            "int": .int(3),
+            "fractionalInt": .int(3),
+            "fractional": .number(3.5),
+            "bool": .bool(true),
+            "null": .null,
+            "nested": .object(["inner": .int(1)]),
+        ])
+
+        // Non-JSON-compatible values throw
+        var featureWithData = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureWithData.properties["data"] = Data([0x01])
+
+        #expect(throws: DecodingError.self) {
+            try featureWithData.jsonProperties()
+        }
+    }
+
     // Validates that typed property access works in all projections and
     // survives reprojection.
     @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
@@ -332,11 +373,11 @@ struct FeatureTests {
         let point = Point(Coordinate3D(latitude: 47.3, longitude: 8.5)).projected(to: projection)
         let feature = try Feature(
             point,
-            encodedProperties: RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+            encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
 
         #expect(feature.projection == projection)
         let properties = try feature.properties(as: RegionProperties.self)
-        #expect(properties == RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
 
         let targetProjection: Projection = projection == .epsg4326 ? .epsg3857 : .epsg4326
         let projected = feature.projected(to: targetProjection)

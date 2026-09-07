@@ -769,6 +769,9 @@ let props = try feature.properties(as: RegionProperties.self)
 // Pattern matching:
 if case .int(let priority) = feature.jsonValue(for: "priority") { ... }
 
+// Bulk conversion:
+let jsonProperties = try feature.jsonProperties()
+
 // Coercing accessors:
 let priority = feature.intValue(for: "priority")      // 3.0 → 3
 let name = feature.stringValue(for: "name")

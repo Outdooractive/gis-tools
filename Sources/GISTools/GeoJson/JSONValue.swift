@@ -118,6 +118,27 @@ extension JSONValue {
 
 extension JSONValue {
 
+    /// Convert a property-style dictionary into a `[String: JSONValue]` dictionary.
+    ///
+    /// - Parameter dictionary: The property-style dictionary
+    /// - Returns: The values as ``JSONValue`` (normalizing numbers along the way)
+    /// - Throws: A `DecodingError` if a value is not JSON-compatible
+    static func jsonDictionary(from dictionary: [String: Sendable]) throws -> [String: JSONValue] {
+        var jsonDictionary: [String: JSONValue] = [:]
+        jsonDictionary.reserveCapacity(dictionary.count)
+
+        for (key, value) in dictionary {
+            guard let jsonValue = JSONValue(value: value) else {
+                throw DecodingError.dataCorrupted(.init(
+                    codingPath: [],
+                    debugDescription: "The value for key \"\(key)\" is not JSON-compatible"))
+            }
+            jsonDictionary[key] = jsonValue
+        }
+
+        return jsonDictionary
+    }
+
     /// Decode a `[String: Sendable]` dictionary into a `Decodable` type.
     ///
     /// The values are converted to ``JSONValue`` (normalizing numbers along
@@ -137,18 +158,7 @@ extension JSONValue {
         as type: T.Type,
         decoder: JSONDecoder
     ) throws -> T {
-        var jsonDictionary: [String: JSONValue] = [:]
-        jsonDictionary.reserveCapacity(dictionary.count)
-
-        for (key, value) in dictionary {
-            guard let jsonValue = JSONValue(value: value) else {
-                throw DecodingError.dataCorrupted(.init(
-                    codingPath: [],
-                    debugDescription: "The value for key \"\(key)\" is not JSON-compatible"))
-            }
-            jsonDictionary[key] = jsonValue
-        }
-
+        let jsonDictionary = try jsonDictionary(from: dictionary)
         let data = try JSONEncoder().encode(jsonDictionary)
         return try decoder.decode(T.self, from: data)
     }
