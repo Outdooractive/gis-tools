@@ -172,6 +172,23 @@ extension GeometryCollection: Equatable {
 
 }
 
+// MARK: - Hashable
+
+extension GeometryCollection: Hashable {
+
+    /// The hash is based on the projection and the hashes of the contained
+    /// geometries, consistent with `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        for geometry in geometries {
+            if let hashableGeometry = geometry as? any Hashable {
+                hasher.combine(hashableGeometry)
+            }
+        }
+    }
+
+}
+
 // MARK: - Projection
 
 extension GeometryCollection {

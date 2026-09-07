@@ -229,6 +229,21 @@ extension FeatureCollection: Equatable {
 
 }
 
+// MARK: - Hashable
+
+extension FeatureCollection: Hashable {
+
+    /// The hash is based on the projection and the hashes of the features,
+    /// consistent with `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        for feature in features {
+            hasher.combine(feature)
+        }
+    }
+
+}
+
 // MARK: - Projection
 
 extension FeatureCollection {

@@ -125,6 +125,81 @@ extension GeoJson {
 
 }
 
+// MARK: - Typed foreign members
+
+extension GeoJson {
+
+    /// Decode the receiver's foreign members into a `Decodable` type.
+    ///
+    /// The values are converted to ``JSONValue`` (normalizing numbers along
+    /// the way), encoded to JSON, and decoded with the given decoder — meaning
+    /// `JSONDecoder` strategies (`dateDecodingStrategy`,
+    /// `keyDecodingStrategy`, …) apply and real `DecodingError`s are thrown
+    /// instead of failing silently.
+    ///
+    /// - Parameters:
+    ///    - type: The type to decode into
+    ///    - decoder: The decoder to use (default `JSONDecoder()`)
+    /// - Returns: The decoded value
+    /// - Throws: A `DecodingError` if the foreign members cannot be decoded
+    ///           into the given type, or if a value is not JSON-compatible
+    public func foreignMembers<T: Decodable>(
+        as type: T.Type,
+        decoder: JSONDecoder = JSONDecoder()
+    ) throws -> T {
+        try JSONValue.decode(foreignMembers, as: type, decoder: decoder)
+    }
+
+    /// Returns a foreign member as ``JSONValue``, e.g. for exhaustive pattern matching.
+    ///
+    /// - Parameter key: The foreign member key
+    /// - Returns: The foreign member value, or `nil` if the key doesn't exist
+    ///            or the value is not JSON-compatible
+    public func jsonForeignMember(for key: String) -> JSONValue? {
+        JSONValue(value: foreignMembers[key])
+    }
+
+    /// Returns a foreign member coerced to `Int`.
+    ///
+    /// Numbers are converted when they can be represented exactly, so a
+    /// member written as `3.0` returns `3`.
+    ///
+    /// - Parameter key: The foreign member key
+    /// - Returns: The foreign member value, or `nil` if the key doesn't exist
+    ///            or the value is not exactly representable as an integer
+    public func intForeignMember(for key: String) -> Int? {
+        JsonCoercion.int(foreignMembers[key])
+    }
+
+    /// Returns a foreign member coerced to `Double`.
+    ///
+    /// - Parameter key: The foreign member key
+    /// - Returns: The foreign member value, or `nil` if the key doesn't exist
+    ///            or the value is not a number
+    public func doubleForeignMember(for key: String) -> Double? {
+        JsonCoercion.double(foreignMembers[key])
+    }
+
+    /// Returns a foreign member coerced to `Bool`.
+    ///
+    /// - Parameter key: The foreign member key
+    /// - Returns: The foreign member value, or `nil` if the key doesn't exist
+    ///            or the value is not a boolean
+    public func boolForeignMember(for key: String) -> Bool? {
+        JsonCoercion.bool(foreignMembers[key])
+    }
+
+    /// Returns a foreign member coerced to `String`.
+    ///
+    /// - Parameter key: The foreign member key
+    /// - Returns: The foreign member value, or `nil` if the key doesn't exist
+    ///            or the value is not a string
+    public func stringForeignMember(for key: String) -> String? {
+        JsonCoercion.string(foreignMembers[key])
+    }
+
+}
+
 // MARK: - EmptyCreatable
 
 /// GeoJSON objects that can be created empty, which might lead to

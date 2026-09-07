@@ -309,4 +309,30 @@ struct LineStringTests {
         #expect(bbox.northEast.longitude == 1.0)
     }
 
+    // MARK: - Hashable
+
+    // Validates that equal LineStrings have equal hashes and deduplicate in sets.
+    @Test
+    func hashable() async throws {
+        let lineStringA = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let lineStringB = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let lineStringC = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]))
+
+        #expect(lineStringA == lineStringB)
+        #expect(lineStringA.hashValue == lineStringB.hashValue)
+        #expect(lineStringA != lineStringC)
+
+        let set: Set<LineString> = [lineStringA, lineStringB, lineStringC]
+        #expect(set.count == 2)
+    }
+
 }

@@ -203,4 +203,31 @@ struct MultiPointTests {
         #expect(multiPoint.points.count == 2)
     }
 
+    // MARK: - Hashable
+
+    // Validates that equal MultiPoints have equal hashes and deduplicate in sets.
+    @Test
+    func hashable() async throws {
+        let multiPointA = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let multiPointB = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let multiPointC = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]))
+
+        #expect(multiPointA == multiPointB)
+        #expect(multiPointA.hashValue == multiPointB.hashValue)
+        #expect(multiPointA != multiPointC)
+
+        let set: Set<MultiPoint> = [multiPointA, multiPointB, multiPointC]
+        #expect(set.count == 2)
+    }
+
 }

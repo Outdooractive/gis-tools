@@ -738,6 +738,49 @@ init(_ geometry: GeoJsonGeometry,
 func projected(to newProjection: Projection) -> Feature
 ```
 
+### Typed property access
+
+Property reads (`property(for:)`, `subscript(_:)`) are unchecked casts that
+return `nil` on any type mismatch — notably an `Int` read fails on a value
+written as `3.0`. For typed access, `JSONValue` supports exhaustive pattern
+matching, and properties can be decoded into any `Decodable` type (numeric
+coercion handled, real errors instead of silent `nil`s):
+```swift
+enum JSONValue: Hashable, Sendable, Codable {
+    case string(String)
+    case number(Double)
+    case int(Int)
+    case bool(Bool)
+    case array([JSONValue])
+    case object([String: JSONValue])
+    case null
+}
+
+struct RegionProperties: Codable {
+    let isoCode: String
+    let name: String
+    let priority: Int
+}
+
+// Decode properties into a domain type (CodingKeys and JSONDecoder
+// strategies like dateDecodingStrategy apply):
+let props = try feature.properties(as: RegionProperties.self)
+
+// Pattern matching:
+if case .int(let priority) = feature.jsonValue(for: "priority") { ... }
+
+// Coercing accessors:
+let priority = feature.intValue(for: "priority")      // 3.0 → 3
+let name = feature.stringValue(for: "name")
+
+// Create a Feature from Encodable properties:
+let feature = try Feature(geometry, encodedProperties: RegionProperties(...))
+
+// The same accessors exist for foreign members on all GeoJson types:
+let zoom = point.intForeignMember(for: "zoom")
+let extra = try point.foreignMembers(as: Extra.self)
+```
+
 ## FeatureCollection
 [Implementation][38] / [FeatureCollection test cases][39]
 

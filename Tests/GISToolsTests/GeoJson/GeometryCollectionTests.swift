@@ -71,4 +71,29 @@ struct GeometryCollectionTests {
         #expect(geometryCollectionData == geometryCollection.asJsonData(prettyPrinted: true))
     }
 
+    // MARK: - Hashable
+
+    // Validates that equal GeometryCollections have equal hashes and
+    // deduplicate in sets.
+    @Test
+    func hashable() async throws {
+        let geometries: [GeoJsonGeometry] = [
+            Point(Coordinate3D(latitude: 47.3, longitude: 8.5)),
+            try #require(LineString([
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+            ])),
+        ]
+        let geometryCollectionA = GeometryCollection(geometries)
+        let geometryCollectionB = GeometryCollection(geometries)
+        let geometryCollectionC = GeometryCollection([geometries[0]])
+
+        #expect(geometryCollectionA == geometryCollectionB)
+        #expect(geometryCollectionA.hashValue == geometryCollectionB.hashValue)
+        #expect(geometryCollectionA != geometryCollectionC)
+
+        let set: Set<GeometryCollection> = [geometryCollectionA, geometryCollectionB, geometryCollectionC]
+        #expect(set.count == 2)
+    }
+
 }

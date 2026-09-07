@@ -443,4 +443,26 @@ struct FeatureCollectionTests {
         #expect(!featureCollection.intersects(farAway))
     }
 
+    // MARK: - Hashable
+
+    // Validates that equal FeatureCollections have equal hashes and
+    // deduplicate in sets.
+    @Test
+    func hashable() async throws {
+        let features: [Feature] = [
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), id: .int(0)),
+            Feature(Point(Coordinate3D(latitude: 1.0, longitude: 1.0)), id: .int(1)),
+        ]
+        let featureCollectionA = FeatureCollection(features)
+        let featureCollectionB = FeatureCollection(features)
+        let featureCollectionC = FeatureCollection([features[0]])
+
+        #expect(featureCollectionA == featureCollectionB)
+        #expect(featureCollectionA.hashValue == featureCollectionB.hashValue)
+        #expect(featureCollectionA != featureCollectionC)
+
+        let set: Set<FeatureCollection> = [featureCollectionA, featureCollectionB, featureCollectionC]
+        #expect(set.count == 2)
+    }
+
 }

@@ -328,3 +328,16 @@ extension LineString: Equatable {
     }
 
 }
+
+// MARK: - Hashable
+
+extension LineString: Hashable {
+
+    /// The hash is based on the projection and the (epsilon-quantized)
+    /// coordinates, consistent with `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        hasher.combine(coordinates)
+    }
+
+}
