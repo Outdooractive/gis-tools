@@ -267,6 +267,22 @@ extension MultiPolygon: Equatable {
 
 }
 
+// MARK: - Hashable
+
+extension MultiPolygon: Hashable {
+
+    /// The hash is based on the projection and the hashes of the polygons,
+    /// consistent with `==` (which regards rings with shifted start vertices
+    /// as equal).
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        for polygon in polygons {
+            hasher.combine(polygon)
+        }
+    }
+
+}
+
 // MARK: - Polygons
 
 extension MultiPolygon {

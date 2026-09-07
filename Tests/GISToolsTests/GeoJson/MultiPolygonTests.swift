@@ -393,4 +393,65 @@ struct MultiPolygonTests {
         #expect(multiPolygon.polygons.count == 2)
     }
 
+    // MARK: - Hashable
+
+    // Builds a simple square polygon for the hash tests.
+    private func squarePolygon(_ offset: Double, rotated: Bool = false) throws -> Polygon {
+        var coordinates: [Coordinate3D] = [
+            Coordinate3D(latitude: offset, longitude: offset),
+            Coordinate3D(latitude: offset, longitude: offset + 1.0),
+            Coordinate3D(latitude: offset + 1.0, longitude: offset + 1.0),
+            Coordinate3D(latitude: offset + 1.0, longitude: offset),
+            Coordinate3D(latitude: offset, longitude: offset),
+        ]
+        if rotated {
+            coordinates = [
+                Coordinate3D(latitude: offset, longitude: offset + 1.0),
+                Coordinate3D(latitude: offset + 1.0, longitude: offset + 1.0),
+                Coordinate3D(latitude: offset + 1.0, longitude: offset),
+                Coordinate3D(latitude: offset, longitude: offset),
+                Coordinate3D(latitude: offset, longitude: offset + 1.0),
+            ]
+        }
+        return try #require(Polygon([coordinates]))
+    }
+
+    // Validates that identical MultiPolygons have equal hashes.
+    @Test
+    func hashableIdentical() async throws {
+        let multiPolygonA = try #require(MultiPolygon([squarePolygon(0.0), squarePolygon(2.0)]))
+        let multiPolygonB = try #require(MultiPolygon([squarePolygon(0.0), squarePolygon(2.0)]))
+
+        #expect(multiPolygonA == multiPolygonB)
+        #expect(multiPolygonA.hashValue == multiPolygonB.hashValue)
+
+        let set: Set<MultiPolygon> = [multiPolygonA, multiPolygonB]
+        #expect(set.count == 1)
+    }
+
+    // Validates that MultiPolygons with shifted ring start vertices have
+    // equal hashes.
+    @Test
+    func hashableShiftedRing() async throws {
+        let multiPolygon = try #require(MultiPolygon([squarePolygon(0.0)]))
+        let multiPolygonShifted = try #require(MultiPolygon([squarePolygon(0.0, rotated: true)]))
+
+        #expect(multiPolygon == multiPolygonShifted)
+        #expect(multiPolygon.hashValue == multiPolygonShifted.hashValue)
+
+        let set: Set<MultiPolygon> = [multiPolygon, multiPolygonShifted]
+        #expect(set.count == 1)
+    }
+
+    // Validates that MultiPolygons with swapped polygon order are not equal
+    // and have different hashes.
+    @Test
+    func hashablePolygonOrderSwapped() async throws {
+        let multiPolygonA = try #require(MultiPolygon([squarePolygon(0.0), squarePolygon(2.0)]))
+        let multiPolygonB = try #require(MultiPolygon([squarePolygon(2.0), squarePolygon(0.0)]))
+
+        #expect(multiPolygonA != multiPolygonB)
+        #expect(multiPolygonA.hashValue != multiPolygonB.hashValue)
+    }
+
 }

@@ -276,3 +276,19 @@ extension Polygon: Equatable {
     }
 
 }
+
+// MARK: - Hashable
+
+extension Polygon: Hashable {
+
+    /// The hash is based on the projection and rotation-canonical, quantized
+    /// representations of the rings, consistent with `==` (which regards rings
+    /// with shifted start vertices as equal).
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        for ring in coordinates {
+            ring.hashAsCanonicalRing(into: &hasher)
+        }
+    }
+
+}

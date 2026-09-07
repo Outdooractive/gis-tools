@@ -394,4 +394,108 @@ struct PolygonTests {
         #expect(bbox.northEast.longitude == 1.0)
     }
 
+    // MARK: - Hashable
+
+    private let polygonCoords: [[Coordinate3D]] = [[
+        Coordinate3D(latitude: 0.0, longitude: 0.0),
+        Coordinate3D(latitude: 0.0, longitude: 10.0),
+        Coordinate3D(latitude: 10.0, longitude: 10.0),
+        Coordinate3D(latitude: 10.0, longitude: 0.0),
+        Coordinate3D(latitude: 0.0, longitude: 0.0),
+    ]]
+
+    // Validates that identical polygons have equal hashes.
+    @Test
+    func hashableIdentical() async throws {
+        let polygonA = try #require(Polygon(polygonCoords))
+        let polygonB = try #require(Polygon(polygonCoords))
+
+        #expect(polygonA == polygonB)
+        #expect(polygonA.hashValue == polygonB.hashValue)
+
+        let set: Set<Polygon> = [polygonA, polygonB]
+        #expect(set.count == 1)
+    }
+
+    // Validates that polygons with shifted ring start vertices have equal hashes.
+    @Test
+    func hashableShiftedRing() async throws {
+        let polygon = try #require(Polygon(polygonCoords))
+        let shiftedCoords: [[Coordinate3D]] = [[
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]]
+        let polygonShifted = try #require(Polygon(shiftedCoords))
+
+        #expect(polygon == polygonShifted)
+        #expect(polygon.hashValue == polygonShifted.hashValue)
+
+        let set: Set<Polygon> = [polygon, polygonShifted]
+        #expect(set.count == 1)
+    }
+
+    // Validates that polygons with shifted inner rings have equal hashes.
+    @Test
+    func hashableShiftedInnerRing() async throws {
+        let polygonWithHole = try #require(Polygon(jsonString: PolygonTests.polygonJsonWithHoles))
+        let shiftedCoords: [[Coordinate3D]] = [
+            [
+                Coordinate3D(latitude: 0.0, longitude: 100.0),
+                Coordinate3D(latitude: 0.0, longitude: 101.0),
+                Coordinate3D(latitude: 1.0, longitude: 101.0),
+                Coordinate3D(latitude: 1.0, longitude: 100.0),
+                Coordinate3D(latitude: 0.0, longitude: 100.0),
+            ],
+            [
+                Coordinate3D(latitude: 2.0, longitude: 100.8),
+                Coordinate3D(latitude: 2.0, longitude: 100.2),
+                Coordinate3D(latitude: 1.0, longitude: 100.2),
+                Coordinate3D(latitude: 1.0, longitude: 100.8),
+                Coordinate3D(latitude: 2.0, longitude: 100.8),
+            ],
+        ]
+        let polygonWithHoleShifted = try #require(Polygon(shiftedCoords))
+
+        #expect(polygonWithHole == polygonWithHoleShifted)
+        #expect(polygonWithHole.hashValue == polygonWithHoleShifted.hashValue)
+    }
+
+    // Validates that polygons with different ring order are not equal and
+    // have different hashes.
+    @Test
+    func hashableRingOrderSwapped() async throws {
+        let outerRing: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let holeRing: [Coordinate3D] = [
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]
+        let polygonA = try #require(Polygon(unchecked: [outerRing, holeRing]))
+        let polygonB = try #require(Polygon(unchecked: [holeRing, outerRing]))
+
+        #expect(polygonA != polygonB)
+        #expect(polygonA.hashValue != polygonB.hashValue)
+    }
+
+    // Validates that projections participate in polygon equality and hashing.
+    @Test
+    func hashableProjections() async throws {
+        let polygon4326 = try #require(Polygon(polygonCoords))
+        let polygon3857 = polygon4326.projected(to: .epsg3857)
+
+        #expect(polygon4326 != polygon3857)
+        #expect(polygon4326.hashValue != polygon3857.hashValue)
+    }
+
 }

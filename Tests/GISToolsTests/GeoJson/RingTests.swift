@@ -165,4 +165,156 @@ struct RingTests {
         #expect(ring != otherRing)
     }
 
+    // MARK: - Hashable
+
+    // Validates that identical rings have equal hashes.
+    @Test
+    func hashableIdentical() async throws {
+        let ringA = try #require(Ring(coords))
+        let ringB = try #require(Ring(coords))
+
+        #expect(ringA == ringB)
+        #expect(ringA.hashValue == ringB.hashValue)
+    }
+
+    // Validates that rings with shifted start vertices have equal hashes.
+    @Test
+    func hashableShiftedStart() async throws {
+        let ring = try #require(Ring(coords))
+        let shiftedCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]
+        let ringShifted = try #require(Ring(shiftedCoords))
+
+        #expect(ring == ringShifted)
+        #expect(ring.hashValue == ringShifted.hashValue)
+
+        let set: Set<Ring> = [ring, ringShifted]
+        #expect(set.count == 1)
+    }
+
+    // Validates that rings with different vertices have different hashes.
+    @Test
+    func hashableNotEqual() async throws {
+        let ring = try #require(Ring(coords))
+        let otherCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let otherRing = try #require(Ring(otherCoords))
+
+        #expect(ring != otherRing)
+        #expect(ring.hashValue != otherRing.hashValue)
+    }
+
+    // Validates that reversing a ring changes equality and hash (a reversal
+    // is not a rotation).
+    @Test
+    func hashableReversed() async throws {
+        let ring = try #require(Ring(coords))
+        let reversedCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let ringReversed = try #require(Ring(reversedCoords))
+
+        #expect(ring != ringReversed)
+        #expect(ring.hashValue != ringReversed.hashValue)
+    }
+
+    // Validates that epsilon-equal rings (within `GISTool.equalityDelta`) are
+    // equal and have equal hashes.
+    @Test
+    func hashableEpsilonEqual() async throws {
+        let ring = try #require(Ring(coords))
+        let epsilonCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.00000000003, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.00000000003, longitude: 0.0),
+        ]
+        let ringEpsilon = try #require(Ring(epsilonCoords))
+
+        #expect(ring == ringEpsilon)
+        #expect(ring.hashValue == ringEpsilon.hashValue)
+    }
+
+    // Validates that rings differing only in altitude are not equal and have
+    // different hashes.
+    @Test
+    func hashableAltitude() async throws {
+        let ring = try #require(Ring(coords))
+        let altitudeCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0, altitude: 100.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0, altitude: 100.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0),
+        ]
+        let ringAltitude = try #require(Ring(altitudeCoords))
+
+        #expect(ring != ringAltitude)
+        #expect(ring.hashValue != ringAltitude.hashValue)
+    }
+
+    // Validates that projections participate in equality and hashing.
+    @Test
+    func hashableProjections() async throws {
+        let ring4326 = try #require(Ring(coords))
+        let ring3857 = ring4326.projected(to: .epsg3857)
+        let ring3857Again = ring3857.projected(to: .epsg3857)
+
+        #expect(ring3857 == ring3857Again)
+        #expect(ring3857.hashValue == ring3857Again.hashValue)
+
+        #expect(ring4326 != ring3857)
+        #expect(ring4326.hashValue != ring3857.hashValue)
+    }
+
+    // Validates that rings crossing the antimeridian hash consistently when
+    // their start vertex is shifted.
+    @Test
+    func hashableAntimeridian() async throws {
+        let antimeridianCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+        ]
+        let ring = try #require(Ring(antimeridianCoords))
+        let shiftedCoords: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+        ]
+        let ringShifted = try #require(Ring(shiftedCoords))
+
+        #expect(ring == ringShifted)
+        #expect(ring.hashValue == ringShifted.hashValue)
+    }
+
+    // Validates that empty (unchecked) rings are equal and hash equally.
+    @Test
+    func hashableEmpty() async throws {
+        let ringA = Ring(unchecked: [])
+        let ringB = Ring(unchecked: [])
+
+        #expect(ringA == ringB)
+        #expect(ringA.hashValue == ringB.hashValue)
+    }
+
 }
