@@ -360,18 +360,73 @@ struct FeatureTests {
         #expect(set.count == 1)
     }
 
-    // Validates that features with different property VALUES are still equal
-    // (property values are only compared by key) and hash equally. Deep value
-    // comparison is tracked separately.
+    // Validates that features with different property VALUES are not equal
+    // and hash differently.
     @Test
-    func hashablePropertyValuesNotCompared() async throws {
+    func hashablePropertyValuesCompared() async throws {
         var featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
         featureA.properties["count"] = 3
         var featureB = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
         featureB.properties["count"] = 4
 
+        #expect(featureA != featureB)
+        #expect(featureA.hashValue != featureB.hashValue)
+
+        let set: Set<Feature> = [featureA, featureB]
+        #expect(set.count == 2)
+    }
+
+    // Validates that numerically equal property values (3 vs 3.0) compare
+    // and hash equally.
+    @Test
+    func equalityNormalizedNumbers() async throws {
+        var featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureA.properties["count"] = 3
+        var featureB = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureB.properties["count"] = 3.0
+
         #expect(featureA == featureB)
         #expect(featureA.hashValue == featureB.hashValue)
+
+        let set: Set<Feature> = [featureA, featureB]
+        #expect(set.count == 1)
+    }
+
+    // Validates that nested property values compare deeply (after normalization).
+    @Test
+    func equalityNestedValues() async throws {
+        let nestedA: [String: Sendable] = ["a": 1, "b": [Sendable]([1, 2])]
+        let nestedB: [String: Sendable] = ["a": 1.0, "b": [Sendable]([1.0, 2.0])]
+        let nestedC: [String: Sendable] = ["a": 2]
+
+        var featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureA.properties["nested"] = nestedA
+        var featureB = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureB.properties["nested"] = nestedB
+        var featureC = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureC.properties["nested"] = nestedC
+
+        #expect(featureA == featureB)
+        #expect(featureA.hashValue == featureB.hashValue)
+        #expect(featureA != featureC)
+    }
+
+    // Validates that non-JSON-compatible property values are regarded as
+    // equal when present on both sides, keeping == reflexive.
+    @Test
+    func equalityNonJsonFallback() async throws {
+        var featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureA.properties["data"] = Data([0x01])
+        var featureB = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureB.properties["data"] = Data([0x02])
+        var featureC = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureC.properties["data"] = Data([0x03])
+        var featureD = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+
+        #expect(featureA == featureB)
+        #expect(featureA.hashValue == featureB.hashValue)
+        #expect(featureA == featureA)
+        #expect(featureA != featureD)
     }
 
     // Validates that features differing in geometry, id, or property keys
