@@ -264,6 +264,19 @@ extension MultiPoint: Equatable {
 
 }
 
+// MARK: - Hashable
+
+extension MultiPoint: Hashable {
+
+    /// The hash is based on the projection and the (epsilon-quantized)
+    /// coordinates, consistent with `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        hasher.combine(coordinates)
+    }
+
+}
+
 // MARK: - Points
 
 extension MultiPoint {

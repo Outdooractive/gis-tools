@@ -248,4 +248,31 @@ struct MultiLineStringTests {
         #expect(multiLineString.lineStrings.count == 2)
     }
 
+    // MARK: - Hashable
+
+    // Validates that equal MultiLineStrings have equal hashes and deduplicate in sets.
+    @Test
+    func hashable() async throws {
+        let coordinates: [[Coordinate3D]] = [
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+            ],
+            [
+                Coordinate3D(latitude: 2.0, longitude: 2.0),
+                Coordinate3D(latitude: 3.0, longitude: 3.0),
+            ],
+        ]
+        let multiLineStringA = try #require(MultiLineString(coordinates))
+        let multiLineStringB = try #require(MultiLineString(coordinates))
+        let multiLineStringC = try #require(MultiLineString([coordinates[0]]))
+
+        #expect(multiLineStringA == multiLineStringB)
+        #expect(multiLineStringA.hashValue == multiLineStringB.hashValue)
+        #expect(multiLineStringA != multiLineStringC)
+
+        let set: Set<MultiLineString> = [multiLineStringA, multiLineStringB, multiLineStringC]
+        #expect(set.count == 2)
+    }
+
 }

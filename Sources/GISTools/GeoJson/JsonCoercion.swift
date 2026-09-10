@@ -116,24 +116,38 @@ enum JsonCoercion {
         return result
     }
 
+    /// Check if a value is a boolean.
+    ///
+    /// Booleans are `NSNumber`-backed when they come from `JSONSerialization`
+    /// (`__NSCFBoolean`) or when bridged from a native `Bool`. The `objCType`
+    /// `"c"` marker is the reliable discriminator on all supported platforms:
+    /// `is Bool` answers `true` for plain numbers on some Linux Foundation
+    /// versions, and conditional casts to `Bool` also succeed for
+    /// `NSNumber(value: 1)`. (An `Int8` would also report `"c"`, but JSON has
+    /// no `Int8` numbers and `Int8` values cannot be stored in property
+    /// dictionaries.)
+    ///
+    /// - Parameter value: A JSON value
+    /// - Returns: `true` if the value is a boolean
+    static func isBoolean(_ value: Any?) -> Bool {
+        guard let value else { return false }
+
+        if let number = value as? NSNumber {
+            return String(cString: number.objCType) == "c"
+        }
+
+        return value is Bool
+    }
+
     /// Numeric value of a JSON number, tolerating both bridged `NSNumber` and
     /// native Swift numeric types (including `Float`).
     ///
     /// - Parameter value: A JSON value
     /// - Returns: The value as `Double`, or `nil` if the value is not a number
     static func double(_ value: Any?) -> Double? {
-        guard let value else { return nil }
+        guard let value, !isBoolean(value) else { return nil }
 
         if let number = value as? NSNumber {
-            // Reject booleans: they are `NSNumber`-backed (`__NSCFBoolean` on
-            // Darwin, and bridged native `Bool`). Note that `value is Bool`
-            // is *not* usable as a discriminator on Linux corelibs, where
-            // plain numbers like `1.0` also answer `true`; `objCType == "c"`
-            // is the reliable boolean marker on both platforms. (An `Int8`
-            // would also report `"c"`, but JSON has no `Int8` numbers.)
-            if String(cString: number.objCType) == "c" {
-                return nil
-            }
             return number.doubleValue
         }
         if let double = value as? Double {
@@ -143,6 +157,65 @@ enum JsonCoercion {
             return Double(float)
         }
         return nil
+    }
+
+    /// Integer value of a JSON number, tolerating both bridged `NSNumber` and
+    /// native Swift numeric types.
+    ///
+    /// Numbers are converted when they can be represented exactly (`3.0`
+    /// becomes `3`); fractional numbers and values beyond the `Int` range
+    /// return `nil`. Booleans are never converted to numbers.
+    ///
+    /// - Parameter value: A JSON value
+    /// - Returns: The value as `Int`, or `nil` if the value is not exactly
+    ///            representable as an integer
+    static func int(_ value: Any?) -> Int? {
+        guard let value, !isBoolean(value) else { return nil }
+
+        if let int = value as? Int {
+            return int
+        }
+        if let double = value as? Double {
+            return Int(exactly: double)
+        }
+        if let int64 = value as? Int64 {
+            return Int(exactly: int64)
+        }
+        if let uint = value as? UInt {
+            return Int(exactly: uint)
+        }
+        if let uint64 = value as? UInt64 {
+            return Int(exactly: uint64)
+        }
+        if let float = value as? Float {
+            return Int(exactly: Double(float))
+        }
+        return nil
+    }
+
+    /// Boolean value of a JSON boolean, tolerating bridged `NSNumber`
+    /// booleans and native `Bool`.
+    ///
+    /// - Parameter value: A JSON value
+    /// - Returns: The value as `Bool`, or `nil` if the value is not a boolean
+    static func bool(_ value: Any?) -> Bool? {
+        guard let value, isBoolean(value) else { return nil }
+
+        if let number = value as? NSNumber {
+            return number.boolValue
+        }
+        if let bool = value as? Bool {
+            return bool
+        }
+        return nil
+    }
+
+    /// String value of a JSON string.
+    ///
+    /// - Parameter value: A JSON value
+    /// - Returns: The value as `String`, or `nil` if the value is not a string
+    static func string(_ value: Any?) -> String? {
+        value as? String
     }
 
     /// Coerce a JSON array of numbers into `[Double]`.

@@ -188,3 +188,16 @@ extension Point: Equatable {
     }
 
 }
+
+// MARK: - Hashable
+
+extension Point: Hashable {
+
+    /// The hash is based on the projection and the (epsilon-quantized)
+    /// coordinate, consistent with `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        hasher.combine(coordinate)
+    }
+
+}

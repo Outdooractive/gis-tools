@@ -143,4 +143,310 @@ struct FeatureTests {
         #expect(Feature.Identifier(value: UInt64(9223372036854775808))?.uint64Value == 9223372036854775808)
     }
 
+    // MARK: - Typed properties
+
+    private struct RegionProperties: Codable, Equatable {
+        let isoCode: String
+        let name: String
+        let priority: Int
+    }
+
+    // Validates decoding properties into a domain type.
+    @Test
+    func propertiesAs() async throws {
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": 3 }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        let properties = try feature.properties(as: RegionProperties.self)
+
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+    }
+
+    // Validates that properties written as 3.0 decode into Int fields.
+    @Test
+    func propertiesAsNormalizesNumbers() async throws {
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": 3.0 }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        let properties = try feature.properties(as: RegionProperties.self)
+
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+    }
+
+    // Validates that type mismatches and missing keys throw real errors
+    // instead of failing silently.
+    @Test
+    func propertiesAsErrors() async throws {
+        let mismatchJson = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": { "isoCode": "CH", "name": "Zürich", "priority": "high" }
+        }
+        """
+        let featureMismatch = try #require(Feature(jsonString: mismatchJson))
+
+        #expect(throws: DecodingError.self) {
+            try featureMismatch.properties(as: RegionProperties.self)
+        }
+
+        let missingJson = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": { "isoCode": "CH", "name": "Zürich" }
+        }
+        """
+        let featureMissing = try #require(Feature(jsonString: missingJson))
+
+        #expect(throws: DecodingError.self) {
+            try featureMissing.properties(as: RegionProperties.self)
+        }
+    }
+
+    // Validates that the optional decoder parameter is applied
+    // (e.g. the snake_case key decoding strategy).
+    @Test
+    func propertiesAsDecoderStrategy() async throws {
+        struct SnakeCaseProperties: Codable, Equatable {
+            let isoCode: String
+        }
+
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": { "iso_code": "CH" }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let properties = try feature.properties(as: SnakeCaseProperties.self, decoder: decoder)
+
+        #expect(properties == SnakeCaseProperties(isoCode: "CH"))
+    }
+
+    // Validates that non-JSON-compatible property values throw.
+    @Test
+    func propertiesAsNotJsonCompatible() async throws {
+        var feature = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        feature.properties["data"] = Data([0x01])
+
+        #expect(throws: DecodingError.self) {
+            try feature.properties(as: [String: JSONValue].self)
+        }
+    }
+
+    // Validates creating a Feature from Encodable properties and reading
+    // them back with properties(as:).
+    @Test
+    func initEncodedProperties() async throws {
+        let feature = try Feature(
+            Point(Coordinate3D(latitude: 47.3, longitude: 8.5)),
+            encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+
+        #expect(feature.properties["isoCode"] as? String == "CH")
+        #expect(feature.properties["name"] as? String == "Zürich")
+        #expect(feature.properties["priority"] as? Int == 3)
+
+        let properties = try feature.properties(as: RegionProperties.self)
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+
+        let jsonProperties = try #require(feature.asJson["properties"] as? [String: Sendable])
+        #expect(jsonProperties["priority"] as? Int == 3)
+    }
+
+    // Validates that non-object Encodable properties throw.
+    @Test
+    func initEncodedPropertiesNotAnObject() async throws {
+        #expect(throws: EncodingError.self) {
+            try Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)), encodedProperties: [1, 2, 3])
+        }
+        #expect(throws: EncodingError.self) {
+            try Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)), encodedProperties: 42)
+        }
+    }
+
+    // Validates the JSONValue and coercing accessors.
+    @Test
+    func typedAccessors() async throws {
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": {
+                "string": "text",
+                "int": 3,
+                "fractionalInt": 3.0,
+                "fractional": 3.5,
+                "bool": true,
+                "null": null
+            }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        #expect(feature.stringValue(for: "string") == "text")
+        #expect(feature.intValue(for: "int") == 3)
+        #expect(feature.intValue(for: "fractionalInt") == 3)
+        #expect(feature.intValue(for: "fractional") == nil)
+        #expect(feature.doubleValue(for: "int") == 3.0)
+        #expect(feature.doubleValue(for: "fractional") == 3.5)
+        #expect(feature.boolValue(for: "bool") == true)
+        #expect(feature.boolValue(for: "int") == nil)
+        #expect(feature.stringValue(for: "missing") == nil)
+
+        #expect(feature.jsonValue(for: "int") == .int(3))
+        #expect(feature.jsonValue(for: "fractional") == .number(3.5))
+        #expect(feature.jsonValue(for: "null") == .null)
+        #expect(feature.jsonValue(for: "missing") == nil)
+
+        // Exhaustive pattern matching over property values
+        if case .number(let double) = feature.jsonValue(for: "fractional") {
+            #expect(double == 3.5)
+        }
+        else {
+            Issue.record("Expected a .number value")
+        }
+    }
+
+    // Validates the bulk JSONValue conversion of properties.
+    @Test
+    func jsonProperties() async throws {
+        let json = """
+        {
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [8.5, 47.3] },
+            "properties": {
+                "string": "text",
+                "int": 3,
+                "fractionalInt": 3.0,
+                "fractional": 3.5,
+                "bool": true,
+                "null": null,
+                "nested": { "inner": 1.0 }
+            }
+        }
+        """
+        let feature = try #require(Feature(jsonString: json))
+
+        let jsonProperties = try feature.jsonProperties()
+
+        #expect(jsonProperties == [
+            "string": .string("text"),
+            "int": .int(3),
+            "fractionalInt": .int(3),
+            "fractional": .number(3.5),
+            "bool": .bool(true),
+            "null": .null,
+            "nested": .object(["inner": .int(1)]),
+        ])
+
+        // Non-JSON-compatible values throw
+        var featureWithData = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureWithData.properties["data"] = Data([0x01])
+
+        #expect(throws: DecodingError.self) {
+            try featureWithData.jsonProperties()
+        }
+    }
+
+    // Validates that typed property access works in all projections and
+    // survives reprojection.
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func typedPropertiesAllProjections(_ projection: Projection) async throws {
+        let point = Point(Coordinate3D(latitude: 47.3, longitude: 8.5)).projected(to: projection)
+        let feature = try Feature(
+            point,
+            encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+
+        #expect(feature.projection == projection)
+        let properties = try feature.properties(as: RegionProperties.self)
+        #expect(properties == RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+
+        let targetProjection: Projection = projection == .epsg4326 ? .epsg3857 : .epsg4326
+        let projected = feature.projected(to: targetProjection)
+        let projectedProperties = try projected.properties(as: RegionProperties.self)
+
+        #expect(projectedProperties == properties)
+    }
+
+    // MARK: - Hashable
+
+    // Validates that equal features have equal hashes and deduplicate in sets.
+    @Test
+    func hashableEqual() async throws {
+        let featureA = try #require(Feature(jsonString: FeatureTests.featureJson))
+        let featureB = try #require(Feature(jsonString: FeatureTests.featureJson))
+
+        #expect(featureA == featureB)
+        #expect(featureA.hashValue == featureB.hashValue)
+
+        let set: Set<Feature> = [featureA, featureB]
+        #expect(set.count == 1)
+    }
+
+    // Validates that features with different property VALUES are still equal
+    // (property values are only compared by key) and hash equally. Deep value
+    // comparison is tracked separately.
+    @Test
+    func hashablePropertyValuesNotCompared() async throws {
+        var featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureA.properties["count"] = 3
+        var featureB = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureB.properties["count"] = 4
+
+        #expect(featureA == featureB)
+        #expect(featureA.hashValue == featureB.hashValue)
+    }
+
+    // Validates that features differing in geometry, id, or property keys
+    // are not equal and hash differently.
+    @Test
+    func hashableNotEqual() async throws {
+        let featureA = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        let featureB = Feature(Point(Coordinate3D(latitude: 47.4, longitude: 8.5)))
+
+        #expect(featureA != featureB)
+        #expect(featureA.hashValue != featureB.hashValue)
+
+        var featureC = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureC.properties["count"] = 3
+
+        #expect(featureA != featureC)
+        #expect(featureA.hashValue != featureC.hashValue)
+
+        var featureD = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        featureD.id = .int(5)
+
+        #expect(featureA != featureD)
+        #expect(featureA.hashValue != featureD.hashValue)
+    }
+
+    // Validates that features in different projections are not equal and
+    // hash differently.
+    @Test
+    func hashableProjections() async throws {
+        let feature4326 = Feature(Point(Coordinate3D(latitude: 47.3, longitude: 8.5)))
+        let feature3857 = feature4326.projected(to: .epsg3857)
+
+        #expect(feature4326 != feature3857)
+        #expect(feature4326.hashValue != feature3857.hashValue)
+    }
+
 }

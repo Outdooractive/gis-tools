@@ -257,6 +257,26 @@ extension Feature: Equatable {
 
 }
 
+// MARK: - Hashable
+
+extension Feature: Hashable {
+
+    /// The hash is consistent with `==`: projection, geometry, identifier,
+    /// and property keys. Property values are not compared (yet), so they are
+    /// not hashed either.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        if let hashableGeometry = geometry as? any Hashable {
+            hasher.combine(hashableGeometry)
+        }
+        hasher.combine(id)
+        for key in properties.keys.sorted() {
+            hasher.combine(key)
+        }
+    }
+
+}
+
 // MARK: - Projection
 
 extension Feature {
@@ -325,6 +345,150 @@ extension Feature {
         set {
             setProperty(newValue, for: key)
         }
+    }
+
+}
+
+// MARK: - Typed properties
+
+extension Feature {
+
+    /// Decode the receiver's properties into a `Decodable` type.
+    ///
+    /// The property values are converted to ``JSONValue`` (normalizing numbers
+    /// along the way, so a property written as `3.0` decodes into an `Int`
+    /// field), encoded to JSON, and decoded with the given decoder — meaning
+    /// `JSONDecoder` strategies (`dateDecodingStrategy`,
+    /// `keyDecodingStrategy`, …) apply and real `DecodingError`s are thrown
+    /// instead of failing silently.
+    ///
+    /// ```swift
+    /// struct RegionProperties: Codable {
+    ///     let isoCode: String
+    ///     let name: String
+    ///     let priority: Int
+    /// }
+    ///
+    /// let props = try feature.properties(as: RegionProperties.self)
+    /// ```
+    ///
+    /// - Parameters:
+    ///    - type: The type to decode into
+    ///    - decoder: The decoder to use (default `JSONDecoder()`)
+    /// - Returns: The decoded value
+    /// - Throws: A `DecodingError` if the properties cannot be decoded into
+    ///           the given type, or if a property value is not JSON-compatible
+    public func properties<T: Decodable>(
+        as type: T.Type,
+        decoder: JSONDecoder = JSONDecoder()
+    ) throws -> T {
+        try JSONValue.decode(properties, as: type, decoder: decoder)
+    }
+
+    /// Create a `Feature` with properties from an `Encodable` value.
+    ///
+    /// The value is encoded to JSON and its properties are stored as native
+    /// `Sendable` values (`Int` fields stay `Int`, `String` fields stay
+    /// `String`), so they serialize and read back consistently.
+    ///
+    /// ```swift
+    /// let feature = try Feature(
+    ///     geometry,
+    ///     encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
+    /// ```
+    ///
+    /// - important: The argument label is `encodedProperties:` (not
+    ///              `properties:`) so that dictionary-literal call sites keep
+    ///              resolving to the `[String: Sendable]` initializer.
+    ///
+    /// - Parameters:
+    ///    - geometry: The geometry object
+    ///    - id: An optional identifier
+    ///    - encodedProperties: The properties (must encode to a JSON object)
+    ///    - calculateBoundingBox: When true, calculate the bounding box from the geometry
+    /// - Throws: An `EncodingError` if the value cannot be encoded to JSON,
+    ///           or if it does not encode to a JSON object
+    public init<T: Encodable>(
+        _ geometry: GeoJsonGeometry,
+        id: Identifier? = nil,
+        encodedProperties: T,
+        calculateBoundingBox: Bool = false
+    ) throws {
+        let data = try JSONEncoder().encode(encodedProperties)
+
+        guard let jsonProperties = try? JSONDecoder().decode([String: JSONValue].self, from: data) else {
+            throw EncodingError.invalidValue(encodedProperties, .init(
+                codingPath: [],
+                debugDescription: "The properties do not encode to a JSON object"))
+        }
+
+        var sendableProperties: [String: Sendable] = [:]
+        sendableProperties.reserveCapacity(jsonProperties.count)
+
+        for (key, jsonValue) in jsonProperties {
+            sendableProperties[key] = jsonValue.asSendable
+        }
+
+        self.init(geometry, id: id, properties: sendableProperties, calculateBoundingBox: calculateBoundingBox)
+    }
+
+    /// Returns a property as ``JSONValue``, e.g. for exhaustive pattern matching.
+    ///
+    /// - Parameter key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or the
+    ///            value is not JSON-compatible
+    public func jsonValue(for key: String) -> JSONValue? {
+        JSONValue(value: properties[key])
+    }
+
+    /// The receiver's properties as a `[String: JSONValue]` dictionary.
+    ///
+    /// Values are converted directly (no JSON round-trip), normalizing numbers
+    /// along the way, so a property stored as `3.0` becomes `.int(3)`.
+    ///
+    /// - Returns: The properties as JSON values
+    /// - Throws: A `DecodingError` if a property value is not JSON-compatible
+    public func jsonProperties() throws -> [String: JSONValue] {
+        try JSONValue.jsonDictionary(from: properties)
+    }
+
+    /// Returns a property coerced to `Int`.
+    ///
+    /// Numbers are converted when they can be represented exactly, so a
+    /// property written as `3.0` returns `3`.
+    ///
+    /// - Parameter key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or the
+    ///            value is not exactly representable as an integer
+    public func intValue(for key: String) -> Int? {
+        JsonCoercion.int(properties[key])
+    }
+
+    /// Returns a property coerced to `Double`.
+    ///
+    /// - Parameter key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or the
+    ///            value is not a number
+    public func doubleValue(for key: String) -> Double? {
+        JsonCoercion.double(properties[key])
+    }
+
+    /// Returns a property coerced to `Bool`.
+    ///
+    /// - Parameter key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or the
+    ///            value is not a boolean
+    public func boolValue(for key: String) -> Bool? {
+        JsonCoercion.bool(properties[key])
+    }
+
+    /// Returns a property coerced to `String`.
+    ///
+    /// - Parameter key: The property key
+    /// - Returns: The property value, or `nil` if the key doesn't exist or the
+    ///            value is not a string
+    public func stringValue(for key: String) -> String? {
+        JsonCoercion.string(properties[key])
     }
 
 }
