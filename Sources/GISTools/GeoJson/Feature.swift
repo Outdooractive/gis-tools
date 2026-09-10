@@ -242,7 +242,13 @@ extension Feature {
 
 extension Feature: Equatable {
 
-    /// Two features are equal when their projection, geometry, identifier, and property keys match.
+    /// Two features are equal when their projection, geometry, identifier, and
+    /// properties match.
+    ///
+    /// Property values are compared after ``JSONValue`` normalization, so a
+    /// property stored as `3.0` equals one stored as `3`. Values that are not
+    /// JSON-compatible (e.g. `Data`) cannot be compared generically and are
+    /// regarded as equal when they are present on both sides.
     public static func ==(
         lhs: Feature,
         rhs: Feature
@@ -250,9 +256,36 @@ extension Feature: Equatable {
         return lhs.projection == rhs.projection
             && lhs.geometry.isEqualTo(rhs.geometry)
             && lhs.id == rhs.id
-            && lhs.properties.keys == rhs.properties.keys
-        // TODO
-//            && lhs.properties == rhs.properties
+            && Feature.deepEqual(lhs.properties, rhs.properties)
+    }
+
+    /// Compare two property dictionaries by their ``JSONValue``-normalized values.
+    ///
+    /// Values that cannot be converted to ``JSONValue`` (e.g. `Data`) are
+    /// regarded as equal when they are present on both sides, keeping `==`
+    /// reflexive.
+    fileprivate static func deepEqual(
+        _ lhs: [String: Sendable],
+        _ rhs: [String: Sendable]
+    ) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+
+        for (key, lhsValue) in lhs {
+            guard let rhsValue = rhs[key] else { return false }
+
+            switch (JSONValue(value: lhsValue), JSONValue(value: rhsValue)) {
+            case (.some(let lhsJson), .some(let rhsJson)):
+                if lhsJson != rhsJson {
+                    return false
+                }
+            case (.none, .none):
+                continue
+            default:
+                return false
+            }
+        }
+
+        return true
     }
 
 }
@@ -261,9 +294,9 @@ extension Feature: Equatable {
 
 extension Feature: Hashable {
 
-    /// The hash is consistent with `==`: projection, geometry, identifier,
-    /// and property keys. Property values are not compared (yet), so they are
-    /// not hashed either.
+    /// The hash is consistent with `==`: projection, geometry, identifier, and
+    /// the ``JSONValue``-normalized property values. Values that are not
+    /// JSON-compatible hash to a fixed bucket, matching the `==` fallback.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(projection)
         if let hashableGeometry = geometry as? any Hashable {
@@ -272,6 +305,7 @@ extension Feature: Hashable {
         hasher.combine(id)
         for key in properties.keys.sorted() {
             hasher.combine(key)
+            hasher.combine(JSONValue(value: properties[key])?.hashValue ?? 0)
         }
     }
 

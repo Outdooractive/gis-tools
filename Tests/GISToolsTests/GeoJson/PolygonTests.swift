@@ -481,8 +481,8 @@ struct PolygonTests {
             Coordinate3D(latitude: 4.0, longitude: 2.0),
             Coordinate3D(latitude: 2.0, longitude: 2.0),
         ]
-        let polygonA = try #require(Polygon(unchecked: [outerRing, holeRing]))
-        let polygonB = try #require(Polygon(unchecked: [holeRing, outerRing]))
+        let polygonA = Polygon(unchecked: [outerRing, holeRing])
+        let polygonB = Polygon(unchecked: [holeRing, outerRing])
 
         #expect(polygonA != polygonB)
         #expect(polygonA.hashValue != polygonB.hashValue)

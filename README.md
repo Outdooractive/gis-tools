@@ -740,8 +740,11 @@ func projected(to newProjection: Projection) -> Feature
 
 ### Typed property access
 
-Property reads (`property(for:)`, `subscript(_:)`) are unchecked casts that return `nil` on any type mismatch — notably an `Int` read fails on a value written as `3.0`.
-For typed access, `JSONValue` supports exhaustive pattern matching, and properties can be decoded into any `Decodable` type (numeric coercion handled, real errors instead of silent `nil`s):
+Property reads (`property(for:)`, `subscript(_:)`) are unchecked casts that
+return `nil` on any type mismatch — notably an `Int` read fails on a value
+written as `3.0`. For typed access, `JSONValue` supports exhaustive pattern
+matching, and properties can be decoded into any `Decodable` type (numeric
+coercion handled, real errors instead of silent `nil`s):
 ```swift
 enum JSONValue: Hashable, Sendable, Codable {
     case string(String)
@@ -781,7 +784,9 @@ let zoom = point.intForeignMember(for: "zoom")
 let extra = try point.foreignMembers(as: Extra.self)
 ```
 
-`JSONValue` itself is a general-purpose JSON model with typed accessors, subscript traversal, string/number/bool/array/dictionary literals, and a JSON string representation (`description`):
+`JSONValue` itself is a general-purpose JSON model with typed accessors,
+subscript traversal, string/number/bool/array/dictionary literals, and a JSON
+string representation (`description`):
 ```swift
 let value: JSONValue = ["name": "Zürich", "tags": [1, 2.5, true]]
 
@@ -800,8 +805,13 @@ if case .object(let object) = value { ... }
 print(feature.jsonValue(for: "name") ?? .null)
 ```
 
-Note that `JSONValue` uses custom `==` and `hash(into:)` implementations: an integer and a number compare equal when the number is exactly that integer, so `.int(3) == .number(3.0)` is `true` (and both hash the same, deduplicating in sets).
-Comparisons within the same case remain exact — `.number(0.1 + 0.2) != .number(0.3)`. This mirrors the number normalization when parsing (`3.0`becomes `.int(3)`), but values constructed directly can mix cases, so dictionary/set keys behave on numeric value, not on the enum case.
+Note that `JSONValue` uses custom `==` and `hash(into:)` implementations: an
+integer and a number compare equal when the number is exactly that integer,
+so `.int(3) == .number(3.0)` is `true` (and both hash the same, deduplicating
+in sets). Comparisons within the same case remain exact — `.number(0.1 + 0.2)
+!= .number(0.3)`. This mirrors the number normalization when parsing (`3.0`
+becomes `.int(3)`), but values constructed directly can mix cases, so
+dictionary/set keys behave on numeric value, not on the enum case.
 
 ## FeatureCollection
 [Implementation][38] / [FeatureCollection test cases][39]
