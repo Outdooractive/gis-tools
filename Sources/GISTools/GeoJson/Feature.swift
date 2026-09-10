@@ -428,7 +428,7 @@ extension Feature {
     /// ```swift
     /// let feature = try Feature(
     ///     geometry,
-    ///     encodedProperties: RegionProperties(isoCode: "CH", name: "Zurich", priority: 3))
+    ///     encodedProperties: RegionProperties(isoCode: "CH", name: "Zürich", priority: 3))
     /// ```
     ///
     /// - important: The argument label is `encodedProperties:` (not
@@ -473,6 +473,17 @@ extension Feature {
     ///            value is not JSON-compatible
     public func jsonValue(for key: String) -> JSONValue? {
         JSONValue(value: properties[key])
+    }
+
+    /// The receiver's properties as a `[String: JSONValue]` dictionary.
+    ///
+    /// Values are converted directly (no JSON round-trip), normalizing numbers
+    /// along the way, so a property stored as `3.0` becomes `.int(3)`.
+    ///
+    /// - Returns: The properties as JSON values
+    /// - Throws: A `DecodingError` if a property value is not JSON-compatible
+    public func jsonProperties() throws -> [String: JSONValue] {
+        try JSONValue.jsonDictionary(from: properties)
     }
 
     /// Returns a property coerced to `Int`.

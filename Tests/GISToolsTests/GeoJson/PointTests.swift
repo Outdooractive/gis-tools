@@ -95,6 +95,27 @@ struct PointTests {
         #expect(extra == Extra(int: 3))
     }
 
+    // Validates the bulk JSONValue conversion of foreign members.
+    @Test
+    func jsonForeignMembers() async throws {
+        let json = """
+        {
+            "type": "Point",
+            "coordinates": [8.5, 47.3],
+            "string": "text",
+            "fractionalInt": 3.0
+        }
+        """
+        let point = try #require(Point(jsonString: json))
+
+        let jsonForeignMembers = try point.jsonForeignMembers()
+
+        #expect(jsonForeignMembers == [
+            "string": .string("text"),
+            "fractionalInt": .int(3),
+        ])
+    }
+
     // MARK: - Hashable
 
     // Validates that equal points have equal hashes and deduplicate in sets.

@@ -65,7 +65,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
 - [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — reads and writes GPX 1.1 files (.gpx)
-- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — reads FIT activity files (.fit, read-only)
+- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — reads and writes FIT activity files (.fit)
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
@@ -94,7 +94,7 @@ This package requires Swift 6.1 or higher (at least Xcode 15), and compiles on i
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "2.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "2.3.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -769,6 +769,9 @@ let props = try feature.properties(as: RegionProperties.self)
 // Pattern matching:
 if case .int(let priority) = feature.jsonValue(for: "priority") { ... }
 
+// Bulk conversion:
+let jsonProperties = try feature.jsonProperties()
+
 // Coercing accessors:
 let priority = feature.intValue(for: "priority")      // 3.0 → 3
 let name = feature.stringValue(for: "name")
@@ -780,6 +783,35 @@ let feature = try Feature(geometry, encodedProperties: RegionProperties(...))
 let zoom = point.intForeignMember(for: "zoom")
 let extra = try point.foreignMembers(as: Extra.self)
 ```
+
+`JSONValue` itself is a general-purpose JSON model with typed accessors,
+subscript traversal, string/number/bool/array/dictionary literals, and a JSON
+string representation (`description`):
+```swift
+let value: JSONValue = ["name": "Zürich", "tags": [1, 2.5, true]]
+
+// Typed accessors (integral .number(3.0) reads as 3, .int(3) as 3.0):
+let name = value.stringValue        // String?
+let priority = value.intValue       // Int?
+let zoom = value.coercedIntValue    // also coerces "3" / "3.0" strings
+
+// Subscript chaining for nested values, nil for missing keys/indices:
+let tag = value["tags"]?[1]         // .number(2.5)
+
+// Pattern matching still works:
+if case .object(let object) = value { ... }
+
+// JSON output (object keys sorted, prettyPrinted: true for indentation):
+print(feature.jsonValue(for: "name") ?? .null)
+```
+
+Note that `JSONValue` uses custom `==` and `hash(into:)` implementations: an
+integer and a number compare equal when the number is exactly that integer,
+so `.int(3) == .number(3.0)` is `true` (and both hash the same, deduplicating
+in sets). Comparisons within the same case remain exact — `.number(0.1 + 0.2)
+!= .number(0.3)`. This mirrors the number normalization when parsing (`3.0`
+becomes `.int(3)`), but values constructed directly can mix cases, so
+dictionary/set keys behave on numeric value, not on the enum case.
 
 ## FeatureCollection
 [Implementation][38] / [FeatureCollection test cases][39]

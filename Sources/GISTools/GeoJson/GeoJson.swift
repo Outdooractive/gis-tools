@@ -159,6 +159,18 @@ extension GeoJson {
         JSONValue(value: foreignMembers[key])
     }
 
+    /// The receiver's foreign members as a `[String: JSONValue]` dictionary.
+    ///
+    /// Values are converted directly (no JSON round-trip), normalizing numbers
+    /// along the way, so a member stored as `3.0` becomes `.int(3)`.
+    ///
+    /// - Returns: The foreign members as JSON values
+    /// - Throws: A `DecodingError` if a foreign member value is not
+    ///           JSON-compatible
+    public func jsonForeignMembers() throws -> [String: JSONValue] {
+        try JSONValue.jsonDictionary(from: foreignMembers)
+    }
+
     /// Returns a foreign member coerced to `Int`.
     ///
     /// Numbers are converted when they can be represented exactly, so a
