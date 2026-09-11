@@ -465,4 +465,20 @@ struct FeatureCollectionTests {
         #expect(set.count == 2)
     }
 
+    // MARK: - Description
+
+    // Validates that the description is a compact JSON string representation
+    // of the FeatureCollection.
+    @Test
+    func description() async throws {
+        let featureCollection = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), id: .int(0)),
+        ])
+
+        let json = try #require(try JSONSerialization.jsonObject(with: Data(featureCollection.description.utf8)) as? [String: Sendable])
+        let jsonFeatureCollection = try #require(FeatureCollection(json: json))
+
+        #expect(featureCollection == jsonFeatureCollection)
+    }
+
 }

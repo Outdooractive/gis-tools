@@ -33,6 +33,7 @@ public protocol GeoJson:
     Projectable,
     ValidatableGeoJson,
     Codable,
+    CustomStringConvertible,
     CustomDebugStringConvertible,
     Sendable
 {
@@ -83,6 +84,15 @@ extension GeoJson {
         }
 
         return String(describing: json)
+    }
+
+}
+
+extension GeoJson {
+
+    /// The receiver as a compact JSON string representation.
+    public var description: String {
+        asJsonString() ?? String(describing: asJson)
     }
 
 }
