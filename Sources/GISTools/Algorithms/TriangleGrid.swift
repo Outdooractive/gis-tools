@@ -36,7 +36,7 @@ private enum TriangleGrid {
         mask: (any GeoJson)?
     ) -> FeatureCollection {
         let projection = bbox.projection
-        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978 || projection == .noSRID
+        let coordinatesAreInMeters = !projection.isGeographic
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude

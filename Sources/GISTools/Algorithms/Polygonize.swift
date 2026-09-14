@@ -88,7 +88,7 @@ private enum Polygonize {
         // are contiguous (shift negative values by +360°).
         // Only applies to EPSG:4326.
         let spansAntimeridian: Bool
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let minLon = lineStrings.flatMap(\.coordinates).map(\.longitude).min() ?? 0
             let maxLon = lineStrings.flatMap(\.coordinates).map(\.longitude).max() ?? 0
             spansAntimeridian = (maxLon - minLon) > 180.0

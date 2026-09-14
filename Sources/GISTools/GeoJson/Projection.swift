@@ -72,3 +72,65 @@ public enum Projection:
     }
 
 }
+
+// MARK: - ProjectionKind
+
+extension Projection {
+
+    /// The receiver's semantic category.
+    public var kind: ProjectionKind {
+        switch self {
+        case .noSRID: .undefined
+        case .epsg3857: .planar
+        case .epsg4326: .geographic
+        case .epsg4978: .geocentric
+        }
+    }
+
+    /// `true` if the receiver uses angular (degree-based) coordinates.
+    public var isGeographic: Bool {
+        kind == .geographic
+    }
+
+    /// `true` if the receiver uses planar (meter-based, Euclidean) coordinates.
+    public var isPlanar: Bool {
+        kind == .planar
+    }
+
+    /// `true` if the receiver uses geocentric 3D cartesian coordinates.
+    public var isGeocentric: Bool {
+        kind == .geocentric
+    }
+
+    /// `false` for ``Projection/noSRID``, `true` otherwise.
+    public var hasSRID: Bool {
+        kind != .undefined
+    }
+
+    /// The absolute value beyond which the receiver's horizontal axis wraps
+    /// around (±180° for EPSG:4326, ±`originShift` meters for EPSG:3857),
+    /// or `nil` if the horizontal axis does not wrap.
+    public var wraparoundExtent: Double? {
+        switch self {
+        case .noSRID, .epsg4978:
+            nil
+        case .epsg3857:
+            GISTool.originShift
+        case .epsg4326:
+            180.0
+        }
+    }
+
+    /// Converts a length in meters to the receiver's native coordinate units.
+    ///
+    /// For geographic (degree-based) projections the value is divided by an
+    /// approximate meters-per-degree factor; for all other projections
+    /// coordinates are already in meters and the value is returned unchanged.
+    ///
+    /// - Parameter meters: The length in meters
+    /// - Returns: The length in the receiver's coordinate units
+    public func crsLength(fromMeters meters: Double) -> Double {
+        isGeographic ? meters / 111_325.0 : meters
+    }
+
+}

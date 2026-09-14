@@ -31,7 +31,7 @@ extension PolygonGeometry {
         // For other projections the values are in projection units (meters for 3857/4978).
         let outerCoords = outerRing.coordinates
         let needShift: Bool
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let minOuterLon = outerCoords.map(\.longitude).min() ?? 0
             let maxOuterLon = outerCoords.map(\.longitude).max() ?? 0
             let span = maxOuterLon - minOuterLon

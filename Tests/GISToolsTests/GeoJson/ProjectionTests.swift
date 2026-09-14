@@ -249,4 +249,56 @@ struct ProjectionTests {
         #expect(Projection(wkt: "") == nil)
     }
 
+    /// Validates the semantic category of each projection.
+    @Test
+    func kind() async throws {
+        #expect(Projection.noSRID.kind == .undefined)
+        #expect(Projection.epsg3857.kind == .planar)
+        #expect(Projection.epsg4326.kind == .geographic)
+        #expect(Projection.epsg4978.kind == .geocentric)
+    }
+
+    /// Validates the projection kind flag computed properties.
+    @Test
+    func kindFlags() async throws {
+        #expect(Projection.epsg4326.isGeographic)
+        #expect(!Projection.epsg3857.isGeographic)
+        #expect(!Projection.epsg4978.isGeographic)
+        #expect(!Projection.noSRID.isGeographic)
+
+        #expect(Projection.epsg3857.isPlanar)
+        #expect(!Projection.epsg4326.isPlanar)
+        #expect(!Projection.epsg4978.isPlanar)
+        #expect(!Projection.noSRID.isPlanar)
+
+        #expect(Projection.epsg4978.isGeocentric)
+        #expect(!Projection.epsg4326.isGeocentric)
+        #expect(!Projection.epsg3857.isGeocentric)
+        #expect(!Projection.noSRID.isGeocentric)
+
+        #expect(Projection.epsg4326.hasSRID)
+        #expect(Projection.epsg3857.hasSRID)
+        #expect(Projection.epsg4978.hasSRID)
+        #expect(!Projection.noSRID.hasSRID)
+    }
+
+    /// Validates the horizontal wraparound extent of each projection.
+    @Test
+    func wraparoundExtent() async throws {
+        #expect(Projection.epsg4326.wraparoundExtent == 180.0)
+        #expect(Projection.epsg3857.wraparoundExtent == GISTool.originShift)
+        #expect(Projection.epsg4978.wraparoundExtent == nil)
+        #expect(Projection.noSRID.wraparoundExtent == nil)
+    }
+
+    /// Validates meter-to-CRS-unit conversion.
+    @Test
+    func crsLengthFromMeters() async throws {
+        #expect(Projection.epsg4326.crsLength(fromMeters: 111_325.0) == 1.0)
+        #expect(abs(Projection.epsg4326.crsLength(fromMeters: 55_662.5) - 0.5) < 0.0000000001)
+        #expect(Projection.epsg3857.crsLength(fromMeters: 1000.0) == 1000.0)
+        #expect(Projection.epsg4978.crsLength(fromMeters: 1000.0) == 1000.0)
+        #expect(Projection.noSRID.crsLength(fromMeters: 1000.0) == 1000.0)
+    }
+
 }

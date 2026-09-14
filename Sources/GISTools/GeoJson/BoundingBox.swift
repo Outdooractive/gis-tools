@@ -86,14 +86,14 @@ public struct BoundingBox:
         }
 
         if padding > 0.0 {
-            switch projection {
-            case .epsg3857, .epsg4978:
+            switch projection.kind {
+            case .planar, .geocentric:
                 southWest.latitude -= padding
                 northEast.latitude += padding
                 southWest.longitude -= padding
                 northEast.longitude += padding
 
-            case .epsg4326:
+            case .geographic:
                 let latLongDegrees = GISTool.degrees(fromMeters: padding, atLatitude: southWest.latitude)
 
                 southWest.latitude -= latLongDegrees.latitudeDegrees
@@ -101,7 +101,7 @@ public struct BoundingBox:
                 southWest.longitude -= latLongDegrees.longitudeDegrees
                 northEast.longitude += latLongDegrees.longitudeDegrees
 
-            case .noSRID:
+            case .undefined:
                 break // Don't know what to do -> ignore
             }
         }
@@ -109,14 +109,10 @@ public struct BoundingBox:
         self.southWest = southWest
         self.northEast = northEast
 
-        switch projection {
-        case .epsg3857, .epsg4326, .epsg4978:
+        if projection.hasSRID {
             let clamped = self.clamped()
             self.southWest = clamped.southWest
             self.northEast = clamped.northEast
-
-        case .noSRID:
-            break
         }
     }
 
@@ -239,6 +235,10 @@ public struct BoundingBox:
 
     /// Returns a copy of the receiver expanded by `dx` and `dy` horizontally and vertically.
     ///
+    /// For geographic projections the expansion is applied in degrees directly;
+    /// for other projections with an SRID the receiver is projected to
+    /// EPSG:4326, expanded, and projected back.
+    ///
     /// - Parameters:
     ///    - dx: The horizontal expansion in degrees
     ///    - dy: The vertical expansion in degrees
@@ -247,25 +247,27 @@ public struct BoundingBox:
         byHorizontalDegrees dx: CLLocationDegrees,
         verticalDegrees dy: CLLocationDegrees
     ) -> BoundingBox {
-        switch projection {
-        case .epsg3857, .epsg4978:
+        switch projection.kind {
+        case .planar, .geocentric:
             return projected(to: .epsg4326)
                 .expanded(byHorizontalDegrees: dx, verticalDegrees: dy)
                 .projected(to: projection)
 
-        case .epsg4326:
+        case .geographic:
             return BoundingBox(
                 southWest: Coordinate3D(
-                    latitude: southWest.latitude - dy,
-                    longitude: southWest.longitude - dx,
-                    altitude: southWest.altitude),
+                    x: southWest.longitude - dx,
+                    y: southWest.latitude - dy,
+                    z: southWest.altitude,
+                    projection: projection),
                 northEast: Coordinate3D(
-                    latitude: northEast.latitude + dy,
-                    longitude: northEast.longitude + dx,
-                    altitude: northEast.altitude))
+                    x: northEast.longitude + dx,
+                    y: northEast.latitude + dy,
+                    z: northEast.altitude,
+                    projection: projection))
                 .clamped()
 
-        case .noSRID:
+        case .undefined:
             return self // Don't know what to do -> ignore
         }
     }
@@ -548,18 +550,18 @@ extension BoundingBox {
 
     /// The size of the bounding box (width, height) in meters (approximation).
     public var size: (width: Double, height: Double) {
-        switch projection {
-        case .epsg3857, .epsg4978, .noSRID:
-            return (width: northEast.longitude - southWest.longitude,
-                    height: northEast.latitude - southWest.latitude)
-
-        case .epsg4326:
+        switch projection.kind {
+        case .geographic:
             let boundingBox = self.normalized()
             let bearingAngle = boundingBox.southWest.bearing(to: boundingBox.northEast)
             let diagonalLength = boundingBox.southWest.distance(from: boundingBox.northEast)
 
             return (width: diagonalLength * sin(bearingAngle.degreesToRadians),
                     height: diagonalLength * cos(bearingAngle.degreesToRadians))
+
+        case .planar, .geocentric, .undefined:
+            return (width: northEast.longitude - southWest.longitude,
+                    height: northEast.latitude - southWest.latitude)
         }
     }
 
@@ -580,30 +582,16 @@ extension BoundingBox {
 
         // self crosses the date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
-            switch projection {
-            case .noSRID, .epsg4978:
-                return false
+            guard let extent = projection.wraparoundExtent else { return false }
 
-            case .epsg3857:
-                let left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.y))
-                if left.contains(coordinate) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.y),
-                    northEast: boundingBox.northEast)
-                return right.contains(coordinate)
-
-            case .epsg4326:
-                let left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-                if left.contains(coordinate) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                    northEast: boundingBox.northEast)
-                return right.contains(coordinate)
-            }
+            let left = BoundingBox(
+                southWest: boundingBox.southWest,
+                northEast: Coordinate3D(x: extent, y: boundingBox.northEast.y, projection: projection))
+            if left.contains(coordinate) { return true }
+            let right = BoundingBox(
+                southWest: Coordinate3D(x: -extent, y: boundingBox.southWest.y, projection: projection),
+                northEast: boundingBox.northEast)
+            return right.contains(coordinate)
         }
 
         return coordinate.latitude >= boundingBox.southWest.latitude
@@ -653,57 +641,29 @@ extension BoundingBox {
 
         // self crosses date line
         if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
-            switch projection {
-            case .noSRID, .epsg4978:
-                return false
+            guard let extent = projection.wraparoundExtent else { return false }
 
-            case .epsg3857:
-                let left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.y))
-                if left.intersects(other) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.y),
-                    northEast: boundingBox.northEast)
-                return right.intersects(other)
-
-            case .epsg4326:
-                let left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-                if left.intersects(other) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                    northEast: boundingBox.northEast)
-                return right.intersects(other)
-            }
+            let left = BoundingBox(
+                southWest: boundingBox.southWest,
+                northEast: Coordinate3D(x: extent, y: boundingBox.northEast.y, projection: projection))
+            if left.intersects(other) { return true }
+            let right = BoundingBox(
+                southWest: Coordinate3D(x: -extent, y: boundingBox.southWest.y, projection: projection),
+                northEast: boundingBox.northEast)
+            return right.intersects(other)
         }
         // other crosses date line
         else if other.southWest.longitude > other.northEast.longitude {
-            switch projection {
-            case .noSRID, .epsg4978:
-                return false
+            guard let extent = projection.wraparoundExtent else { return false }
 
-            case .epsg3857:
-                let left = BoundingBox(
-                    southWest: other.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.y))
-                if self.intersects(left) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.y),
-                    northEast: other.northEast)
-                return self.intersects(right)
-
-            case .epsg4326:
-                let left = BoundingBox(
-                    southWest: other.southWest,
-                    northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
-                if self.intersects(left) { return true }
-                let right = BoundingBox(
-                    southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
-                    northEast: other.northEast)
-                return self.intersects(right)
-            }
+            let left = BoundingBox(
+                southWest: other.southWest,
+                northEast: Coordinate3D(x: extent, y: other.northEast.y, projection: projection))
+            if self.intersects(left) { return true }
+            let right = BoundingBox(
+                southWest: Coordinate3D(x: -extent, y: other.southWest.y, projection: projection),
+                northEast: other.northEast)
+            return self.intersects(right)
         }
         else {
             return boundingBox.southWest.longitude <= other.northEast.longitude
@@ -727,26 +687,14 @@ extension BoundingBox {
             let left: BoundingBox
             let right: BoundingBox
 
-            switch projection {
-            case .noSRID, .epsg4978:
-                return nil
+            guard let extent = projection.wraparoundExtent else { return nil }
 
-            case .epsg3857:
-                left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: boundingBox.northEast.latitude))
-                right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: boundingBox.southWest.latitude),
-                    northEast: boundingBox.northEast)
-
-            case .epsg4326:
-                left = BoundingBox(
-                    southWest: boundingBox.southWest,
-                    northEast: Coordinate3D(latitude: boundingBox.northEast.latitude, longitude: 180.0))
-                right = BoundingBox(
-                    southWest: Coordinate3D(latitude: boundingBox.southWest.latitude, longitude: -180.0),
-                    northEast: boundingBox.northEast)
-            }
+            left = BoundingBox(
+                southWest: boundingBox.southWest,
+                northEast: Coordinate3D(x: extent, y: boundingBox.northEast.latitude, projection: projection))
+            right = BoundingBox(
+                southWest: Coordinate3D(x: -extent, y: boundingBox.southWest.latitude, projection: projection),
+                northEast: boundingBox.northEast)
 
             let leftIntersection = left.intersection(other)
             let rightIntersection = right.intersection(other)
@@ -770,26 +718,14 @@ extension BoundingBox {
             let left: BoundingBox
             let right: BoundingBox
 
-            switch projection {
-            case .noSRID, .epsg4978:
-                return nil
+            guard let extent = projection.wraparoundExtent else { return nil }
 
-            case .epsg3857:
-                left = BoundingBox(
-                    southWest: other.southWest,
-                    northEast: Coordinate3D(x: GISTool.originShift, y: other.northEast.y))
-                right = BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: other.southWest.y),
-                    northEast: other.northEast)
-
-            case .epsg4326:
-                left = BoundingBox(
-                    southWest: other.southWest,
-                    northEast: Coordinate3D(latitude: other.northEast.latitude, longitude: 180.0))
-                right = BoundingBox(
-                    southWest: Coordinate3D(latitude: other.southWest.latitude, longitude: -180.0),
-                    northEast: other.northEast)
-            }
+            left = BoundingBox(
+                southWest: other.southWest,
+                northEast: Coordinate3D(x: extent, y: other.northEast.y, projection: projection))
+            right = BoundingBox(
+                southWest: Coordinate3D(x: -extent, y: other.southWest.y, projection: projection),
+                northEast: other.northEast)
 
             let leftIntersection = self.intersection(left)
             let rightIntersection = self.intersection(right)
@@ -851,12 +787,12 @@ extension BoundingBox {
     ///
     /// - Returns: A copy of this bounding box with longitudes normalized to the [-180, 180] range
     public func normalized() -> BoundingBox {
-        switch projection {
-        case .noSRID:
+        switch projection.kind {
+        case .undefined:
             return self
 
-        case .epsg4978:
-            // EPSG:4978 is geocentric (ECEF); there is no date line. An inverted box
+        case .geocentric:
+            // Geocentric (ECEF) projections have no date line. An inverted box
             // (south-west > north-east) is treated as a min/max axis-aligned box.
             let minX = min(southWest.longitude, northEast.longitude)
             let maxX = max(southWest.longitude, northEast.longitude)
@@ -877,22 +813,17 @@ extension BoundingBox {
                     m: northEast.m,
                     projection: projection))
 
-        case .epsg3857:
-            guard northEast.longitude - southWest.longitude < (2 * GISTool.originShift) else {
+        case .geographic, .planar:
+            guard let extent = projection.wraparoundExtent else {
                 return BoundingBox(
-                    southWest: Coordinate3D(x: -GISTool.originShift, y: southWest.latitude),
-                    northEast: Coordinate3D(x: GISTool.originShift, y: northEast.latitude))
+                    southWest: southWest.normalized(),
+                    northEast: northEast.normalized())
             }
 
-            return BoundingBox(
-                southWest: southWest.normalized(),
-                northEast: northEast.normalized())
-
-        case .epsg4326:
-            guard northEast.longitude - southWest.longitude < 360.0 else {
+            guard northEast.longitude - southWest.longitude < (2.0 * extent) else {
                 return BoundingBox(
-                    southWest: Coordinate3D(latitude: southWest.latitude, longitude: -180.0),
-                    northEast: Coordinate3D(latitude: northEast.latitude, longitude: 180.0))
+                    southWest: Coordinate3D(x: -extent, y: southWest.latitude, projection: projection),
+                    northEast: Coordinate3D(x: extent, y: northEast.latitude, projection: projection))
             }
 
             return BoundingBox(

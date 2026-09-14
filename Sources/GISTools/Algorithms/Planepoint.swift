@@ -56,7 +56,7 @@ extension Polygon {
         // product reflects the short path across the date line.
         // Only applies to EPSG:4326.
         let shift: Double
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let lons = [a.longitude, b.longitude, c.longitude, p.longitude]
             let minLon = lons.min() ?? 0
             let maxLon = lons.max() ?? 0

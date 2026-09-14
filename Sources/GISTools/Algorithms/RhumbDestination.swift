@@ -10,6 +10,9 @@ extension Coordinate3D {
     /// Returns the destination coordinate having travelled the given distance along a Rhumb line from the
     /// origin with the given bearing.
     ///
+    /// For projections other than EPSG:4326 the computation is performed
+    /// in EPSG:4326 and the result is projected back.
+    ///
     /// - Parameters:
     /// - Parameter distance: The distance from the receiver, in meters
     /// - Parameter bearing: The direction, ranging from -180 to 180 degrees from north
@@ -19,14 +22,10 @@ extension Coordinate3D {
         distance: CLLocationDistance,
         bearing: CLLocationDegrees
     ) -> Coordinate3D {
-        switch projection {
-        case .epsg4326:
-            return _rhumbDestination(distance: distance, bearing: bearing)
-        case .epsg3857:
-            return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: .epsg3857)
-        case .epsg4978:
-            return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: .epsg4978)
-        case .noSRID:
+        switch projection.kind {
+        case .geographic, .planar, .geocentric:
+            return projected(to: .epsg4326)._rhumbDestination(distance: distance, bearing: bearing).projected(to: projection)
+        case .undefined:
             let theta = bearing.degreesToRadians
             return Coordinate3D(
                 x: longitude + distance * sin(theta),

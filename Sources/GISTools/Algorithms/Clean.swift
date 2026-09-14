@@ -24,15 +24,10 @@ extension Array where Element == Coordinate3D {
         tolerance: CLLocationDistance = GISTool.equalityDelta
     ) -> [Coordinate3D] {
         // Convert meter tolerance to CRS units if coordinates are in degrees.
-        // For 3857 and noSRID the coordinates are in meters already.
+        // For other projections the coordinates are in meters already.
         let crsTolerance: Double = {
             guard let projection = first?.projection else { return tolerance }
-            switch projection {
-            case .epsg4326:
-                return tolerance / 111_325.0
-            case .epsg3857, .epsg4978, .noSRID:
-                return tolerance
-            }
+            return projection.crsLength(fromMeters: tolerance)
         }()
 
         var result = self

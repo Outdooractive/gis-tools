@@ -384,37 +384,22 @@ extension Coordinate3D {
 
     /// Normalize this coordinate.
     ///
-    /// For EPSG:4326 and EPSG:3857, clamps the longitude to the valid range.
-    /// For EPSG:4978 (ECEF) this is a no-op.
+    /// For projections with a wraparound horizontal axis (EPSG:4326, EPSG:3857),
+    /// clamps the longitude to the valid range. For other projections
+    /// (e.g. EPSG:4978 (ECEF)) this is a no-op.
     ///
     /// - Returns: A copy with longitude normalized to the valid range
     public func normalized() -> Coordinate3D {
-        switch projection {
-        case .epsg3857:
-            guard longitude < -GISTool.originShift
-                    || longitude > GISTool.originShift
-            else { return self }
+        guard let extent = projection.wraparoundExtent else { return self }
+        guard longitude < -extent
+                || longitude > extent
+        else { return self }
 
-            var longitude = self.longitude
-            while longitude < -GISTool.originShift { longitude += (2.0 * GISTool.originShift) }
-            while longitude > GISTool.originShift { longitude -= (2.0 * GISTool.originShift) }
+        var longitude = self.longitude
+        while longitude < -extent { longitude += (2.0 * extent) }
+        while longitude > extent { longitude -= (2.0 * extent) }
 
-            return Coordinate3D(x: longitude, y: latitude, z: altitude, m: m)
-
-        case .epsg4326:
-            guard longitude < -180.0
-                    || longitude > 180.0
-            else { return self }
-
-            var longitude = self.longitude
-            while longitude < -180.0 { longitude += 360.0 }
-            while longitude > 180.0 { longitude -= 360.0 }
-
-            return Coordinate3D(latitude: latitude, longitude: longitude, altitude: altitude, m: m)
-
-        default:
-            return self
-        }
+        return Coordinate3D(x: longitude, y: latitude, z: altitude, m: m, projection: projection)
     }
 
     /// Clamped to [[-180,-90], [180,90]]  (no-op for Cartesian projections).

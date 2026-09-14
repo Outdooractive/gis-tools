@@ -11,6 +11,9 @@ extension Coordinate3D {
     /// distance in meters and a bearing in degrees.
     /// This uses the Haversine formula to account for global curvature.
     ///
+    /// For projections other than EPSG:4326 the computation is performed
+    /// in EPSG:4326 and the result is projected back.
+    ///
     /// - Parameter distance: The distance from the receiver, in meters
     /// - Parameter bearing: The direction, ranging from -180 to 180
     ///
@@ -19,14 +22,10 @@ extension Coordinate3D {
         distance: CLLocationDistance,
         bearing: CLLocationDegrees
     ) -> Coordinate3D {
-        switch projection {
-        case .epsg4326:
-            return _destination(distance: distance, bearing: bearing)
-        case .epsg3857:
-            return projected(to: .epsg4326)._destination(distance: distance, bearing: bearing).projected(to: .epsg3857)
-        case .epsg4978:
-            return projected(to: .epsg4326)._destination(distance: distance, bearing: bearing).projected(to: .epsg4978)
-        case .noSRID:
+        switch projection.kind {
+        case .geographic, .planar, .geocentric:
+            return projected(to: .epsg4326)._destination(distance: distance, bearing: bearing).projected(to: projection)
+        case .undefined:
             return self // Ignore
         }
     }

@@ -19,10 +19,7 @@ extension Ring {
         ignoringBoundary: Bool = false,
         gridSize: Double? = nil
     ) -> Bool {
-        switch projection {
-        case .epsg4326, .epsg3857, .noSRID:
-            break
-        case .epsg4978:
+        if projection.isGeocentric {
             return projected(to: .epsg4326).contains(
                 coordinate.projected(to: .epsg4326),
                 ignoringBoundary: ignoringBoundary)
@@ -39,12 +36,12 @@ extension Ring {
             coordinatesCount -= 1
         }
 
-        // Detect antimeridian crossing (EPSG:4326 only): check if any edge
+        // Detect antimeridian crossing (degree-based projections only): check if any edge
         // jumps more than 180° in longitude, which indicates the ring wraps
         // across ±180°. For projected systems (3857, 4978) the X values are
         // in meters where a >180 jump is just a long edge.
         var crossesAntimeridian = false
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             for i in 0 ..< coordinatesCount {
                 let j = (i + coordinatesCount - 1) % coordinatesCount
                 let dLon = snappedCoordinates[i].longitude - snappedCoordinates[j].longitude
@@ -128,10 +125,7 @@ extension Polygon {
         ignoringBoundary: Bool = false,
         gridSize: Double? = nil
     ) -> Bool {
-        switch projection {
-        case .epsg4326, .epsg3857, .noSRID:
-            break
-        case .epsg4978:
+        if projection.isGeocentric {
             let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
             let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
             return snappedSelf.projected(to: .epsg4326).contains(
@@ -149,7 +143,7 @@ extension Polygon {
             // Bounding box doesn't contain the point. If the polygon crosses the
             // antimeridian, the point may still be inside the wrapped side.
             if let outerRing = snappedSelf.outerRing,
-               projection == .epsg4326
+               projection.isGeographic
             {
                 let coords = outerRing.coordinates
                 var crossesAM = false

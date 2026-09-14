@@ -353,20 +353,20 @@ public enum Simplify {
               let firstCoordinate = coordinates.first
         else { return coordinates }
 
-        switch firstCoordinate.projection {
-        case .epsg3857, .epsg4978, .noSRID:
-            return simplify(
-                coordinates: coordinates,
-                tolerance: toleranceInMeters,
-                highQuality: highQuality)
-
-        case .epsg4326:
+        switch firstCoordinate.projection.kind {
+        case .geographic:
             let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.longitude * .pi / 180.0) * 111.0) * 1000.0
             let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
 
             return simplify(
                 coordinates: coordinates,
                 tolerance: toleranceInDegrees,
+                highQuality: highQuality)
+
+        case .planar, .geocentric, .undefined:
+            return simplify(
+                coordinates: coordinates,
+                tolerance: toleranceInMeters,
                 highQuality: highQuality)
         }
     }
@@ -516,14 +516,7 @@ public enum Simplify {
         guard coordinates.count > 3 else { return coordinates }
         guard let first = coordinates.first else { return coordinates }
 
-        let crsTolerance: Double
-        switch first.projection {
-        case .epsg4326:
-            let metersPerDegree = 111_325.0
-            crsTolerance = toleranceInMeters / metersPerDegree
-        case .epsg3857, .epsg4978, .noSRID:
-            crsTolerance = toleranceInMeters
-        }
+        let crsTolerance: Double = first.projection.crsLength(fromMeters: toleranceInMeters)
 
         let closeIfNeeded = coordinates.count >= 2 && coordinates.first == coordinates.last
         let coords = closeIfNeeded ? Array(coordinates.dropLast()) : coordinates
