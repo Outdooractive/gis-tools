@@ -523,40 +523,10 @@ extension WKBCoder {
             if m?.isFinite == false { m = nil }
         }
 
-        switch sourceProjection {
-        case .epsg4326:
-            switch targetProjection {
-            case .epsg3857, .epsg4978:
-                return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m).projected(to: targetProjection)
-            case .epsg4326:
-                return Coordinate3D(latitude: y, longitude: x, altitude: z, m: m)
-            case .noSRID:
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
-            }
-
-        case .epsg3857:
-            switch targetProjection {
-            case .epsg3857:
-                return Coordinate3D(x: x, y: y, z: z, m: m)
-            case .epsg4326, .epsg4978:
-                return Coordinate3D(x: x, y: y, z: z, m: m).projected(to: targetProjection)
-            case .noSRID:
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
-            }
-
-        case .epsg4978:
-            switch targetProjection {
-            case .epsg4978:
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978)
-            case .epsg4326, .epsg3857:
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978).projected(to: targetProjection)
-            case .noSRID:
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
-            }
-
-        case .noSRID:
-            return Coordinate3D(x: x, y: y, z: z, m: m, projection: targetProjection)
-        }
+        // WKB always stores x (longitude/easting) first, then y (latitude/northing).
+        // noSRID coordinates are copied verbatim by `projected(to:)`.
+        return Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection)
+            .projected(to: targetProjection)
     }
 
     private static func decodePoint(

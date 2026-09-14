@@ -165,6 +165,8 @@ struct ProjectionTests {
         #expect(Projection(srid: 4326) == .epsg4326)
         #expect(Projection(srid: 3857) == .epsg3857)
         #expect(Projection(srid: 4978) == .epsg4978)
+        #expect(Projection(srid: 3395) == .epsg3395)
+        #expect(Projection(srid: 32662) == .epsg32662)
     }
 
     /// Validates initialization from known EPSG:3857 alias SRIDs.
@@ -193,6 +195,8 @@ struct ProjectionTests {
         #expect(Projection.epsg3857.description == "EPSG:3857")
         #expect(Projection.epsg4326.description == "EPSG:4326")
         #expect(Projection.epsg4978.description == "EPSG:4978")
+        #expect(Projection.epsg3395.description == "EPSG:3395")
+        #expect(Projection.epsg32662.description == "EPSG:32662")
     }
 
     /// Validates the `srid` computed property returns the correct integer.
@@ -202,6 +206,8 @@ struct ProjectionTests {
         #expect(Projection.epsg3857.srid == 3857)
         #expect(Projection.epsg4326.srid == 4326)
         #expect(Projection.epsg4978.srid == 4978)
+        #expect(Projection.epsg3395.srid == 3395)
+        #expect(Projection.epsg32662.srid == 32662)
     }
 
     /// Validates equality and inequality between projections.
@@ -245,6 +251,8 @@ struct ProjectionTests {
         #expect(Projection(wkt: #"GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]"#) == .epsg4326)
         #expect(Projection(wkt: #"PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg3857)
         #expect(Projection(wkt: #"GEOCCS["WGS 84 (geocentric)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["metre",1]]"#) == .epsg4978)
+        #expect(Projection(wkt: #"PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg3395)
+        #expect(Projection(wkt: #"PROJCS["WGS 84 / Plate Carree",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["degree",0.0174532925199433]]"#) == .epsg32662)
         #expect(Projection(wkt: "unknown") == nil)
         #expect(Projection(wkt: "") == nil)
     }
@@ -256,6 +264,8 @@ struct ProjectionTests {
         #expect(Projection.epsg3857.kind == .planar)
         #expect(Projection.epsg4326.kind == .geographic)
         #expect(Projection.epsg4978.kind == .geocentric)
+        #expect(Projection.epsg3395.kind == .planar)
+        #expect(Projection.epsg32662.kind == .planar)
     }
 
     /// Validates the projection kind flag computed properties.
@@ -265,21 +275,29 @@ struct ProjectionTests {
         #expect(!Projection.epsg3857.isGeographic)
         #expect(!Projection.epsg4978.isGeographic)
         #expect(!Projection.noSRID.isGeographic)
+        #expect(!Projection.epsg3395.isGeographic)
+        #expect(!Projection.epsg32662.isGeographic)
 
         #expect(Projection.epsg3857.isPlanar)
         #expect(!Projection.epsg4326.isPlanar)
         #expect(!Projection.epsg4978.isPlanar)
         #expect(!Projection.noSRID.isPlanar)
+        #expect(Projection.epsg3395.isPlanar)
+        #expect(Projection.epsg32662.isPlanar)
 
         #expect(Projection.epsg4978.isGeocentric)
         #expect(!Projection.epsg4326.isGeocentric)
         #expect(!Projection.epsg3857.isGeocentric)
         #expect(!Projection.noSRID.isGeocentric)
+        #expect(!Projection.epsg3395.isGeocentric)
+        #expect(!Projection.epsg32662.isGeocentric)
 
         #expect(Projection.epsg4326.hasSRID)
         #expect(Projection.epsg3857.hasSRID)
         #expect(Projection.epsg4978.hasSRID)
         #expect(!Projection.noSRID.hasSRID)
+        #expect(Projection.epsg3395.hasSRID)
+        #expect(Projection.epsg32662.hasSRID)
     }
 
     /// Validates the horizontal wraparound extent of each projection.
@@ -289,6 +307,8 @@ struct ProjectionTests {
         #expect(Projection.epsg3857.wraparoundExtent == GISTool.originShift)
         #expect(Projection.epsg4978.wraparoundExtent == nil)
         #expect(Projection.noSRID.wraparoundExtent == nil)
+        #expect(Projection.epsg3395.wraparoundExtent == GISTool.originShift)
+        #expect(Projection.epsg32662.wraparoundExtent == 180.0)
     }
 
     /// Validates meter-to-CRS-unit conversion.
@@ -306,7 +326,7 @@ struct ProjectionTests {
     @Test
     func roundTrips() async throws {
         let base = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 250.0, m: 7.0)
-        let projections: [Projection] = [.epsg4326, .epsg3857, .epsg4978]
+        let projections: [Projection] = [.epsg4326, .epsg3857, .epsg4978, .epsg3395, .epsg32662]
 
         for source in projections {
             let start = base.projected(to: source)
@@ -324,6 +344,65 @@ struct ProjectionTests {
                 #expect(abs((back.altitude ?? 0.0) - (start.altitude ?? 0.0)) < 0.001)
             }
         }
+    }
+
+    /// Tests coordinate projection from EPSG:4326 to EPSG:3395 (ellipsoidal
+    /// Mercator) and back. Reference values computed independently with the
+    /// Snyder ellipsoidal Mercator formulas on the WGS84 ellipsoid.
+    @Test
+    func convertTo3395() async throws {
+        let coordinate1 = Coordinate3D(latitude: 41.0, longitude: -71.0)
+        let result1 = coordinate1.projected(to: .epsg3395)
+        #expect(abs(result1.longitude - -7_903_683.846322423) < 0.000001)
+        #expect(abs(result1.latitude - 4_984_302.519220173) < 0.000001)
+
+        let coordinate2 = Coordinate3D(latitude: 35.522895, longitude: -97.552175)
+        let result2 = coordinate2.projected(to: .epsg3395)
+        #expect(abs(result2.longitude - -10_859_458.446776314) < 0.000001)
+        #expect(abs(result2.latitude - 4_210_342.228773801) < 0.000001)
+
+        // The equator is identical to EPSG:3857.
+        let equator = Coordinate3D(latitude: 0.0, longitude: 23.5)
+        let resultEquator = equator.projected(to: .epsg3395)
+        let resultEquator3857 = equator.projected(to: .epsg3857)
+        #expect(abs(resultEquator.longitude - resultEquator3857.longitude) < 0.0000000001)
+        #expect(abs(resultEquator.latitude - resultEquator3857.latitude) < 0.0000000001)
+
+        // Away from the equator, ellipsoidal y is smaller than spherical y
+        // in the northern hemisphere.
+        #expect(abs(result1.latitude) < abs(Coordinate3D(latitude: 41.0, longitude: -71.0).projected(to: .epsg3857).latitude))
+
+        // Round trips, including near the projection's y extent.
+        for latitude in [0.0, 41.0, -33.86, 80.0, -80.0] {
+            let coordinate = Coordinate3D(latitude: latitude, longitude: -71.0, altitude: 10.0)
+            let back = coordinate.projected(to: .epsg3395).projected(to: .epsg4326)
+            #expect(abs(back.latitude - latitude) < 0.000001)
+            #expect(abs(back.longitude - -71.0) < 0.000001)
+            #expect(abs((back.altitude ?? 0.0) - 10.0) < 0.0000000001)
+        }
+    }
+
+    /// Tests coordinate projection from EPSG:4326 to EPSG:32662 (Plate Carree)
+    /// and back. Plate Carree uses longitude/latitude directly as x/y.
+    @Test
+    func convertTo32662() async throws {
+        let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 100.0, m: 3.0)
+        let result = coordinate.projected(to: .epsg32662)
+        #expect(result.longitude == -71.0)
+        #expect(result.latitude == 41.0)
+        #expect(result.altitude == 100.0)
+        #expect(result.m == 3.0)
+
+        let back = result.projected(to: .epsg4326)
+        #expect(back.longitude == -71.0)
+        #expect(back.latitude == 41.0)
+        #expect(back.altitude == 100.0)
+        #expect(back.m == 3.0)
+
+        // Values outside the degree range are copied as-is (no wrap/clamp on
+        // plain conversion).
+        let outOfRange = Coordinate3D(latitude: 41.0, longitude: 200.0).projected(to: .epsg32662)
+        #expect(outOfRange.longitude == 200.0)
     }
 
     /// EPSG:3857 → EPSG:4978 (and back) is routed through the EPSG:4326 pivot

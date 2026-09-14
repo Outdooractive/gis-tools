@@ -1,5 +1,5 @@
 
-/// Projections that this library can handle (EPSG:3857 and EPSG:4326).
+/// Projections that this library can handle.
 public enum Projection:
     Int,
     CustomStringConvertible,
@@ -15,6 +15,12 @@ public enum Projection:
     case epsg4326 = 4326
     /// EPSG:4978 - geocentric (ECEF) (https://epsg.io/4978).
     case epsg4978 = 4978
+    /// EPSG:3395 - WGS 84 / World Mercator, ellipsoidal Mercator
+    /// (https://epsg.io/3395).
+    case epsg3395 = 3395
+    /// EPSG:32662 - WGS 84 / Plate Carree, equirectangular
+    /// (https://epsg.io/32662).
+    case epsg32662 = 32662
 
     /// Initialize a Projection with a SRID number.
     ///
@@ -28,6 +34,8 @@ public enum Projection:
         case 102_100, 102_113, 900_913, 3587, 3785, 3857, 41001, 54004: self = .epsg3857
         case 4326: self = .epsg4326
         case 4978: self = .epsg4978
+        case 3395: self = .epsg3395
+        case 32662: self = .epsg32662
         default: return nil
         }
     }
@@ -35,15 +43,23 @@ public enum Projection:
     /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
     ///
     /// Matches common patterns for the supported projections:
-    /// - EPSG:3857 — `PROJCS["...Mercator..."...]`
+    /// - EPSG:3857 — `PROJCS["...Pseudo-Mercator..."...]`
+    /// - EPSG:3395 — `PROJCS["...Mercator..."...]` (without "Pseudo")
+    /// - EPSG:32662 — `PROJCS["...Plate Carree..."...]`
     /// - EPSG:4326 — `GEOGCS["...WGS 84..."...]` or `GEOGCS["...WGS_1984..."...]`
     /// - EPSG:4978 — `GEOCCS["...WGS 84..."...]` or `GEOCCS["...WGS_1984..."...]`
     ///
     /// - Parameter wkt: A WKT projection string
     /// - Returns: A `Projection`, or `nil` if the string is not recognised
     public init?(wkt: String) {
-        if wkt.contains("PROJCS") && wkt.contains("Mercator") {
+        if wkt.contains("PROJCS") && wkt.contains("Pseudo-Mercator") {
             self = .epsg3857
+        }
+        else if wkt.contains("PROJCS") && wkt.contains("Mercator") {
+            self = .epsg3395
+        }
+        else if wkt.contains("PROJCS") && (wkt.contains("Plate Carree") || wkt.contains("Plate Carre")) {
+            self = .epsg32662
         }
         else if wkt.contains("GEOCCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
             self = .epsg4978
@@ -68,6 +84,8 @@ public enum Projection:
         case .epsg3857: return "EPSG:3857"
         case .epsg4326: return "EPSG:4326"
         case .epsg4978: return "EPSG:4978"
+        case .epsg3395: return "EPSG:3395"
+        case .epsg32662: return "EPSG:32662"
         }
     }
 
@@ -81,7 +99,7 @@ extension Projection {
     public var kind: ProjectionKind {
         switch self {
         case .noSRID: .undefined
-        case .epsg3857: .planar
+        case .epsg3857, .epsg3395, .epsg32662: .planar
         case .epsg4326: .geographic
         case .epsg4978: .geocentric
         }
@@ -114,9 +132,9 @@ extension Projection {
         switch self {
         case .noSRID, .epsg4978:
             nil
-        case .epsg3857:
+        case .epsg3857, .epsg3395:
             GISTool.originShift
-        case .epsg4326:
+        case .epsg4326, .epsg32662:
             180.0
         }
     }
