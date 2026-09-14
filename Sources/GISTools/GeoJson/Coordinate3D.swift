@@ -462,6 +462,17 @@ extension Coordinate3D: Projectable {
                 projection: newProjection)
         }
 
+        // The pivot conversions are identity transformations for the pivot
+        // projection itself. Skip the pivot lookup and the identity copy in
+        // both directions - this is the common case for GeoJSON (4326) and
+        // hot reprojection loops.
+        if projection == .epsg4326 {
+            return ProjectionRegistry.definition(for: newProjection).forward(self)
+        }
+        if newProjection == .epsg4326 {
+            return ProjectionRegistry.definition(for: projection).inverse(self)
+        }
+
         let pivot = ProjectionRegistry.definition(for: projection).inverse(self)
         return ProjectionRegistry.definition(for: newProjection).forward(pivot)
     }
@@ -723,6 +734,28 @@ extension Coordinate3D: Hashable {
         hasher.combine(lat)
         hasher.combine(lon)
         hasher.combine(altitude)
+    }
+
+}
+
+// MARK: - Validity
+
+extension Coordinate3D {
+
+    /// Whether the coordinate lies within the valid extent of its projection.
+    ///
+    /// For projections without a defined extent (geocentric projections or
+    /// coordinates without an SRID) this is always `true`.
+    ///
+    /// - SeeAlso: ``Projection/validExtent``
+    public var isValid: Bool {
+        guard let extent = ProjectionRegistry.definition(for: projection).validExtent
+        else { return true }
+
+        return longitude >= extent.minX
+            && longitude <= extent.maxX
+            && latitude >= extent.minY
+            && latitude <= extent.maxY
     }
 
 }

@@ -79,4 +79,31 @@ struct UtmDefinitionTests {
         #expect(Projection.epsg32719.description == "EPSG:32719")
     }
 
+    /// Validates the UTM convenience API.
+    @Test
+    func utmConvenienceApi() async throws {
+        for zone in [1, 19, 33, 60] {
+            let northern = try #require(Projection(utmZone: zone, hemisphere: .north))
+            #expect(northern.rawValue == 32_600 + zone)
+            #expect(northern.utmZone == zone)
+            #expect(northern.utmHemisphere == .north)
+
+            let southern = try #require(Projection(utmZone: zone, hemisphere: .south))
+            #expect(southern.rawValue == 32_700 + zone)
+            #expect(southern.utmZone == zone)
+            #expect(southern.utmHemisphere == .south)
+        }
+
+        // Invalid zone numbers.
+        #expect(Projection(utmZone: 0, hemisphere: .north) == nil)
+        #expect(Projection(utmZone: 61, hemisphere: .south) == nil)
+
+        // Non-UTM projections.
+        #expect(Projection.epsg4326.utmZone == nil)
+        #expect(Projection.epsg4326.utmHemisphere == nil)
+        #expect(Projection.epsg3857.utmZone == nil)
+        #expect(Projection.epsg3395.utmHemisphere == nil)
+        #expect(Projection.noSRID.utmZone == nil)
+    }
+
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The hemisphere of a UTM zone.
-enum UtmHemisphere: Sendable {
+public enum UtmHemisphere: Sendable {
 
     /// Northern zone (EPSG:32601–32660, false northing 0).
     case north
@@ -205,6 +205,37 @@ struct UtmDefinition: ProjectionDefinition {
                 + (15.0 * e2 * e2 / 256.0 + 45.0 * pow(e2, 3) / 1024.0) * sin(4.0 * phi)
                 - (35.0 * pow(e2, 3) / 3072.0) * sin(6.0 * phi)
         )
+    }
+
+}
+
+// MARK: - Projection
+
+extension Projection {
+
+    /// The UTM zone number (1–60) of the receiver, or `nil` for
+    /// non-UTM projections.
+    public var utmZone: Int? {
+        UtmDefinition.definition(for: self)?.zone
+    }
+
+    /// The UTM hemisphere of the receiver, or `nil` for non-UTM projections.
+    public var utmHemisphere: UtmHemisphere? {
+        UtmDefinition.definition(for: self)?.hemisphere
+    }
+
+    /// Creates a UTM zone projection from its zone number and hemisphere.
+    ///
+    /// - Parameters:
+    ///     - utmZone: The UTM zone number (`1 ... 60`)
+    ///     - hemisphere: The hemisphere the zone covers
+    /// - Returns: The zone projection, or `nil` for an invalid zone number
+    public init?(utmZone: Int, hemisphere: UtmHemisphere) {
+        guard utmZone >= 1, utmZone <= 60 else { return nil }
+
+        let srid = hemisphere == .north ? 32_600 + utmZone : 32_700 + utmZone
+        guard let projection = Projection(srid: srid) else { return nil }
+        self = projection
     }
 
 }
