@@ -260,10 +260,11 @@ struct Epsg4978Definition: ProjectionDefinition {
 
 /// Null math for coordinates without an SRID.
 ///
-/// Coordinates without an SRID are *interpreted* as EPSG:4326 when
-/// transformed through the pivot (e.g. into EPSG:4978). Verbatim-copy
-/// semantics for EPSG:4326/EPSG:3857 targets are handled directly in
-/// ``Coordinate3D/projected(to:)`` and never reach this definition.
+/// Coordinates without an SRID carry no CRS information, so no transformation
+/// math applies to them: ``Coordinate3D/projected(to:)`` copies their values
+/// verbatim for every target projection and this definition is never reached
+/// through the pivot. Its conversions exist only for completeness and copy
+/// values verbatim as well.
 struct NoSridDefinition: ProjectionDefinition {
 
     var projection: Projection { .noSRID }
@@ -290,7 +291,7 @@ struct NoSridDefinition: ProjectionDefinition {
     }
 
     func inverse(_ coordinate: Coordinate3D) -> Coordinate3D {
-        // Coordinates without an SRID are interpreted as EPSG:4326.
+        // Verbatim copy; noSRID values are never transformed.
         Coordinate3D(
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,

@@ -345,43 +345,33 @@ struct ProjectionTests {
     }
 
     /// Pins the noSRID semantics:
-    /// - Projecting to `.noSRID` copies values verbatim.
-    /// - Projecting from `.noSRID` into EPSG:4326 or EPSG:3857 copies the
-    ///   values verbatim (the library treats noSRID values as planar meters).
-    /// - Projecting from `.noSRID` into EPSG:4978 interprets the values as
-    ///   EPSG:4326.
+    /// - Coordinates without an SRID are always copied verbatim, regardless
+    ///   of the target projection: without a CRS there is nothing to
+    ///   transform from.
+    /// - Projecting to `.noSRID` copies values verbatim as well.
     /// - Per-axis helpers treat noSRID values as already being in the target.
     @Test
     func noSridSemantics() async throws {
         let coordinate = Coordinate3D(x: -71.0, y: 41.0, z: 50.0, m: 2.0, projection: .noSRID)
 
+        // Verbatim copy into every target projection.
+        for target: Projection in [.epsg4326, .epsg3857, .epsg4978] {
+            let result = coordinate.projected(to: target)
+            #expect(result.projection == target)
+            #expect(result.longitude == -71.0)
+            #expect(result.latitude == 41.0)
+            #expect(result.altitude == 50.0)
+            #expect(result.m == 2.0)
+        }
+
         // Verbatim copy when dropping the SRID.
-        let mercator = coordinate.projected(to: .epsg3857)
+        let mercator = Coordinate3D(latitude: 41.0, longitude: -71.0).projected(to: .epsg3857)
         let dropped = mercator.projected(to: .noSRID)
         #expect(dropped.projection == .noSRID)
         #expect(dropped.longitude == mercator.longitude)
         #expect(dropped.latitude == mercator.latitude)
         #expect(dropped.altitude == mercator.altitude)
         #expect(dropped.m == mercator.m)
-
-        // Verbatim relabel into EPSG:4326 and EPSG:3857.
-        let as4326 = coordinate.projected(to: .epsg4326)
-        #expect(as4326.latitude == 41.0)
-        #expect(as4326.longitude == -71.0)
-        #expect(as4326.altitude == 50.0)
-        #expect(as4326.m == 2.0)
-
-        let as3857 = coordinate.projected(to: .epsg3857)
-        #expect(as3857.latitude == 41.0)
-        #expect(as3857.longitude == -71.0)
-        #expect(as3857.altitude == 50.0)
-        #expect(as3857.m == 2.0)
-
-        // Interpreted as EPSG:4326 when projecting into EPSG:4978.
-        let as4978 = coordinate.projected(to: .epsg4978)
-        let from4326Ecef = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 50.0).projected(to: .epsg4978)
-        #expect(abs(as4978.longitude - from4326Ecef.longitude) < 0.0000000001)
-        #expect(abs(as4978.latitude - from4326Ecef.latitude) < 0.0000000001)
 
         // Per-axis helpers return the values unchanged for noSRID sources.
         #expect(coordinate.latitudeProjected(to: .epsg3857) == 41.0)

@@ -440,12 +440,10 @@ extension Coordinate3D: Projectable {
     ///
     /// Conversions are routed through the EPSG:4326 pivot: the receiver is
     /// converted to EPSG:4326 first, then into the target projection.
-    /// Projecting to ``Projection/noSRID`` copies the coordinate values verbatim.
     ///
-    /// Coordinates without an SRID keep their historical semantics:
-    /// they are copied verbatim when projecting into EPSG:4326 or
-    /// EPSG:3857 (the library treats noSRID values as planar meters),
-    /// and are interpreted as EPSG:4326 when projecting into EPSG:4978.
+    /// Coordinates without an SRID are always copied verbatim, regardless of
+    /// the target projection: their values are meaningless without a CRS, so
+    /// no transformation math is applied to them.
     ///
     /// - Parameters:
     ///    - newProjection: The target projection
@@ -453,26 +451,15 @@ extension Coordinate3D: Projectable {
     public func projected(to newProjection: Projection) -> Coordinate3D {
         guard newProjection != projection else { return self }
 
-        // Dropping the SRID copies the coordinate values verbatim.
-        if newProjection == .noSRID {
+        // Coordinates without an SRID are copied verbatim into any target:
+        // without a CRS there is nothing to transform from.
+        if projection == .noSRID || newProjection == .noSRID {
             return Coordinate3D(
                 x: longitude,
                 y: latitude,
                 z: altitude,
                 m: m,
-                projection: .noSRID)
-        }
-
-        // Coordinates without an SRID are copied verbatim when projecting
-        // into EPSG:3857 (planar-meter convention). The EPSG:4326 path is
-        // already a verbatim relabel through the pivot.
-        if projection == .noSRID, newProjection == .epsg3857 {
-            return Coordinate3D(
-                x: longitude,
-                y: latitude,
-                z: altitude,
-                m: m,
-                projection: .epsg3857)
+                projection: newProjection)
         }
 
         let pivot = ProjectionRegistry.definition(for: projection).inverse(self)
