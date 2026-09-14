@@ -42,7 +42,8 @@ public enum Projection:
 
     /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
     ///
-    /// Matches common patterns for the supported projections:
+    /// The string is matched against the WKT patterns registered by the
+    /// library's projections (in registry order, first match wins):
     /// - EPSG:3857 — `PROJCS["...Pseudo-Mercator..."...]`
     /// - EPSG:3395 — `PROJCS["...Mercator..."...]` (without "Pseudo")
     /// - EPSG:32662 — `PROJCS["...Plate Carree..."...]`
@@ -52,24 +53,10 @@ public enum Projection:
     /// - Parameter wkt: A WKT projection string
     /// - Returns: A `Projection`, or `nil` if the string is not recognised
     public init?(wkt: String) {
-        if wkt.contains("PROJCS") && wkt.contains("Pseudo-Mercator") {
-            self = .epsg3857
-        }
-        else if wkt.contains("PROJCS") && wkt.contains("Mercator") {
-            self = .epsg3395
-        }
-        else if wkt.contains("PROJCS") && (wkt.contains("Plate Carree") || wkt.contains("Plate Carre")) {
-            self = .epsg32662
-        }
-        else if wkt.contains("GEOCCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
-            self = .epsg4978
-        }
-        else if wkt.contains("GEOGCS") && (wkt.contains("WGS 84") || wkt.contains("WGS_1984")) {
-            self = .epsg4326
-        }
-        else {
+        guard let definition = ProjectionRegistry.definition(matchingWkt: wkt) else {
             return nil
         }
+        self = definition.projection
     }
 
     /// The receiver's SRID number.

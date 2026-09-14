@@ -22,6 +22,17 @@ protocol ProjectionDefinition: Sendable {
     /// or `nil` if no meaningful world extent exists.
     var worldBoundingBox: BoundingBox? { get }
 
+    /// WKT fragment sets identifying this projection in a `.prj` file
+    /// (e.g. `["PROJCS", "Pseudo-Mercator"]` for EPSG:3857).
+    ///
+    /// Each inner list is one alternative: a WKT string matches the
+    /// definition when every fragment of at least one alternative is
+    /// contained in the string. Definitions are probed in registry order
+    /// and the first match wins, so the registry order is significant:
+    /// more specific patterns must come before more generic ones (e.g.
+    /// EPSG:3857's "Pseudo-Mercator" before EPSG:3395's "Mercator").
+    var wktMatchers: [[String]] { get }
+
     /// Converts a coordinate from EPSG:4326 into the receiver's projection.
     ///
     /// - Parameter coordinate: A coordinate in EPSG:4326
@@ -41,6 +52,17 @@ enum ProjectionRegistry {
 
     // MARK: - Lookup
 
+    /// The definitions in match order. More specific WKT patterns must
+    /// come before more generic ones.
+    private static let allDefinitions: [any ProjectionDefinition] = [
+        epsg3857Definition,
+        epsg3395Definition,
+        epsg32662Definition,
+        epsg4978Definition,
+        epsg4326Definition,
+        noSridDefinition,
+    ]
+
     /// The definition implementing the math for a projection.
     ///
     /// - Parameter projection: The projection to look up
@@ -53,6 +75,18 @@ enum ProjectionRegistry {
         case .epsg4978: epsg4978Definition
         case .epsg3395: epsg3395Definition
         case .epsg32662: epsg32662Definition
+        }
+    }
+
+    /// The first definition with a WKT alternative fully contained in the string.
+    ///
+    /// - Parameter wkt: A WKT projection string
+    /// - Returns: The matching definition, or `nil` if the string is not recognised
+    static func definition(matchingWkt wkt: String) -> (any ProjectionDefinition)? {
+        allDefinitions.first { definition in
+            definition.wktMatchers.contains { alternative in
+                alternative.allSatisfy { wkt.contains($0) }
+            }
         }
     }
 
@@ -74,6 +108,13 @@ struct Epsg4326Definition: ProjectionDefinition {
 
     var projection: Projection { .epsg4326 }
     var kind: ProjectionKind { .geographic }
+
+    var wktMatchers: [[String]] {
+        [
+            ["GEOGCS", "WGS 84"],
+            ["GEOGCS", "WGS_1984"],
+        ]
+    }
 
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
         (minX: -180.0, minY: -90.0, maxX: 180.0, maxY: 90.0)
@@ -104,6 +145,12 @@ struct Epsg3857Definition: ProjectionDefinition {
 
     var projection: Projection { .epsg3857 }
     var kind: ProjectionKind { .planar }
+
+    var wktMatchers: [[String]] {
+        [
+            ["PROJCS", "Pseudo-Mercator"],
+        ]
+    }
 
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
         (minX: -GISTool.originShift, minY: -GISTool.originShift, maxX: GISTool.originShift, maxY: GISTool.originShift)
@@ -150,6 +197,13 @@ struct Epsg4978Definition: ProjectionDefinition {
 
     var projection: Projection { .epsg4978 }
     var kind: ProjectionKind { .geocentric }
+
+    var wktMatchers: [[String]] {
+        [
+            ["GEOCCS", "WGS 84"],
+            ["GEOCCS", "WGS_1984"],
+        ]
+    }
 
     /// Geocentric coordinates are unbounded.
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
@@ -277,6 +331,12 @@ struct Epsg3395Definition: ProjectionDefinition {
     var projection: Projection { .epsg3395 }
     var kind: ProjectionKind { .planar }
 
+    var wktMatchers: [[String]] {
+        [
+            ["PROJCS", "Mercator"],
+        ]
+    }
+
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
         (minX: -GISTool.originShift, minY: -Self.maxExtent, maxX: GISTool.originShift, maxY: Self.maxExtent)
     }
@@ -349,6 +409,12 @@ struct Epsg32662Definition: ProjectionDefinition {
     var projection: Projection { .epsg32662 }
     var kind: ProjectionKind { .planar }
 
+    var wktMatchers: [[String]] {
+        [
+            ["PROJCS", "Plate Carree"],
+        ]
+    }
+
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
         (minX: -180.0, minY: -90.0, maxX: 180.0, maxY: 90.0)
     }
@@ -391,6 +457,10 @@ struct NoSridDefinition: ProjectionDefinition {
 
     var projection: Projection { .noSRID }
     var kind: ProjectionKind { .undefined }
+
+    var wktMatchers: [[String]] {
+        []
+    }
 
     /// Coordinates without an SRID have no defined extent.
     var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {

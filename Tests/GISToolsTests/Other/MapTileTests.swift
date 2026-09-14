@@ -553,5 +553,61 @@ struct MapTileTests {
         let south = Coordinate3D(latitude: -40.0, longitude: -45.0)
         #expect(!tile.contains(south))
     }
+    // MARK: - Projections
+
+    // Verifies tile bounding boxes in the newer WGS84 projections. The tile
+    // math computes the EPSG:3857 pixel bounds and projects them through the
+    // projection registry, so the result must match a manual reprojection.
+    @Test
+    func boundingBox3395() async throws {
+        let tile = MapTile(x: 1, y: 1, z: 2)
+        let box = try #require(tile.boundingBox(projection: .epsg3395))
+
+        let expectedSw = try #require(tile.boundingBox(projection: .epsg4326)).southWest
+            .projected(to: .epsg3395)
+        let expectedNe = try #require(tile.boundingBox(projection: .epsg4326)).northEast
+            .projected(to: .epsg3395)
+
+        #expect(abs(box.southWest.longitude - expectedSw.longitude) < 0.000001)
+        #expect(abs(box.southWest.latitude - expectedSw.latitude) < 0.000001)
+        #expect(abs(box.northEast.longitude - expectedNe.longitude) < 0.000001)
+        #expect(abs(box.northEast.latitude - expectedNe.latitude) < 0.000001)
+        #expect(box.contains(Coordinate3D(latitude: 1.4061125, longitude: -0.87890625).projected(to: .epsg3395)))
+    }
+
+    // Verifies tile bounding boxes in EPSG:32662 (Plate Carree). At zoom 4
+    // tiles span 22.5 degrees of longitude: tile x=8 starts at longitude
+    // -180 + 8 * 22.5 = 0.0. Latitudes follow the Web Mercator row layout
+    // and must match the manually reprojected EPSG:4326 bounds exactly.
+    @Test
+    func boundingBox32662() async throws {
+        let tile = MapTile(x: 8, y: 5, z: 4)
+        let box = try #require(tile.boundingBox(projection: .epsg32662))
+
+        let box4326 = try #require(tile.boundingBox(projection: .epsg4326))
+
+        #expect(abs(box.southWest.longitude - 0.0) < 0.000001)
+        #expect(abs(box.northEast.longitude - 22.5) < 0.000001)
+        #expect(abs(box.southWest.latitude - box4326.southWest.latitude) < 0.000001)
+        #expect(abs(box.northEast.latitude - box4326.northEast.latitude) < 0.000001)
+
+        #expect(box.contains(Coordinate3D(latitude: 45.0, longitude: 10.0).projected(to: .epsg32662)))
+    }
+
+    // Verifies center coordinates in the newer projections round trip
+    // through the EPSG:4326 tile center.
+    @Test
+    func centerCoordinate3395And32662() async throws {
+        let tile = MapTile(x: 1, y: 1, z: 2)
+        let center4326 = tile.centerCoordinate(projection: .epsg4326)
+
+        for projection: Projection in [.epsg3395, .epsg32662] {
+            let center = tile.centerCoordinate(projection: projection)
+            #expect(center.projection == projection)
+            let back = center.projected(to: .epsg4326)
+            #expect(abs(back.latitude - center4326.latitude) < 0.000001)
+            #expect(abs(back.longitude - center4326.longitude) < 0.000001)
+        }
+    }
 
 }
