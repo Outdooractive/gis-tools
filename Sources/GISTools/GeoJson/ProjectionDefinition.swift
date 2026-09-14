@@ -50,46 +50,6 @@ protocol ProjectionDefinition: Sendable {
 /// Registry providing the ``ProjectionDefinition`` for each ``Projection``.
 enum ProjectionRegistry {
 
-    // MARK: - Lookup
-
-    /// The definitions in match order. More specific WKT patterns must
-    /// come before more generic ones.
-    private static let allDefinitions: [any ProjectionDefinition] = [
-        epsg3857Definition,
-        epsg3395Definition,
-        epsg32662Definition,
-        epsg4978Definition,
-        epsg4326Definition,
-        noSridDefinition,
-    ]
-
-    /// The definition implementing the math for a projection.
-    ///
-    /// - Parameter projection: The projection to look up
-    /// - Returns: The definition for the projection
-    static func definition(for projection: Projection) -> any ProjectionDefinition {
-        switch projection {
-        case .noSRID: noSridDefinition
-        case .epsg3857: epsg3857Definition
-        case .epsg4326: epsg4326Definition
-        case .epsg4978: epsg4978Definition
-        case .epsg3395: epsg3395Definition
-        case .epsg32662: epsg32662Definition
-        }
-    }
-
-    /// The first definition with a WKT alternative fully contained in the string.
-    ///
-    /// - Parameter wkt: A WKT projection string
-    /// - Returns: The matching definition, or `nil` if the string is not recognised
-    static func definition(matchingWkt wkt: String) -> (any ProjectionDefinition)? {
-        allDefinitions.first { definition in
-            definition.wktMatchers.contains { alternative in
-                alternative.allSatisfy { wkt.contains($0) }
-            }
-        }
-    }
-
     // MARK: - Definitions
 
     private static let noSridDefinition = NoSridDefinition()
@@ -98,6 +58,71 @@ enum ProjectionRegistry {
     private static let epsg4978Definition = Epsg4978Definition()
     private static let epsg3395Definition = Epsg3395Definition()
     private static let epsg32662Definition = Epsg32662Definition()
+
+    /// All definitions keyed by projection, built eagerly so lookups are
+    /// constant time and every `Projection` case is covered.
+    ///
+    /// `UtmTests` sweeps every UTM SRID and asserts that lookups resolve to
+    /// definitions whose ``ProjectionDefinition/projection`` matches.
+    private static let definitions: [Projection: any ProjectionDefinition] = {
+        var map: [Projection: any ProjectionDefinition] = [
+            .noSRID: noSridDefinition,
+            .epsg3857: epsg3857Definition,
+            .epsg4326: epsg4326Definition,
+            .epsg4978: epsg4978Definition,
+            .epsg3395: epsg3395Definition,
+            .epsg32662: epsg32662Definition,
+        ]
+
+        for srid in 32_601 ... 32_760 {
+            guard let projection = Projection(srid: srid),
+                  let utmDefinition = UtmDefinition.definition(for: projection)
+            else { continue }
+            map[projection] = utmDefinition
+        }
+
+        return map
+    }()
+
+    /// The definitions with WKT patterns, in match order. More specific
+    /// patterns must come before more generic ones (e.g. EPSG:3857's
+    /// "Pseudo-Mercator" before EPSG:3395's "Mercator"). UTM zones register
+    /// no WKT patterns.
+    private static var wktDefinitions: [any ProjectionDefinition] {
+        [
+            epsg3857Definition,
+            epsg3395Definition,
+            epsg32662Definition,
+            epsg4978Definition,
+            epsg4326Definition,
+        ]
+    }
+
+    // MARK: - Lookup
+
+    /// The definition implementing the math for a projection.
+    ///
+    /// - Parameter projection: The projection to look up
+    /// - Returns: The definition for the projection
+    static func definition(for projection: Projection) -> any ProjectionDefinition {
+        guard let definition = definitions[projection] else {
+            assertionFailure("No projection definition registered for \(projection)")
+            return noSridDefinition
+        }
+        return definition
+    }
+
+    /// The first definition with a WKT alternative fully contained in the string.
+    ///
+    /// - Parameter wkt: A WKT projection string
+    /// - Returns: The matching definition, or `nil` if the string is not recognised
+    static func definition(matchingWkt wkt: String) -> (any ProjectionDefinition)? {
+        wktDefinitions.first { definition in
+            definition.wktMatchers.contains { alternative in
+                alternative.allSatisfy { wkt.contains($0) }
+            }
+        }
+    }
 
 }
 
