@@ -295,28 +295,17 @@ public struct BoundingBox:
         // that build a single axis-aligned envelope (e.g. PostGIS
         // `ST_MakeEnvelope`) or clip features to the box. Clamp the wrapped
         // coordinate back to the world boundary instead.
-        switch projection {
-        case .epsg3857:
-            let upper = GISTool.originShift
-            let lower = -GISTool.originShift
-            if ne.longitude < southWest.longitude { ne.longitude = upper }
-            if sw.longitude > northEast.longitude { sw.longitude = lower }
+        if let wrapExtent = projection.wraparoundExtent {
+            if ne.longitude < southWest.longitude { ne.longitude = wrapExtent }
+            if sw.longitude > northEast.longitude { sw.longitude = -wrapExtent }
             // Final safety clamp for any remaining out-of-range values.
-            sw.longitude = min(upper, max(lower, sw.longitude))
-            ne.longitude = min(upper, max(lower, ne.longitude))
-            sw.latitude = min(upper, max(lower, sw.latitude))
-            ne.latitude = min(upper, max(lower, ne.latitude))
+            sw.longitude = min(wrapExtent, max(-wrapExtent, sw.longitude))
+            ne.longitude = min(wrapExtent, max(-wrapExtent, ne.longitude))
+        }
 
-        case .epsg4326:
-            if ne.longitude < southWest.longitude { ne.longitude = 180.0 }
-            if sw.longitude > northEast.longitude { sw.longitude = -180.0 }
-            sw.longitude = min(180.0, max(-180.0, sw.longitude))
-            ne.longitude = min(180.0, max(-180.0, ne.longitude))
-            sw.latitude = min(90.0, max(-90.0, sw.latitude))
-            ne.latitude = min(90.0, max(-90.0, ne.latitude))
-
-        case .epsg4978, .noSRID:
-            break
+        if let extent = ProjectionRegistry.definition(for: projection).validExtent {
+            sw.latitude = min(extent.maxY, max(extent.minY, sw.latitude))
+            ne.latitude = min(extent.maxY, max(extent.minY, ne.latitude))
         }
 
         return BoundingBox(southWest: sw, northEast: ne)

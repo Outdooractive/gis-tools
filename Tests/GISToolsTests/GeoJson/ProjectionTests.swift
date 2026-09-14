@@ -301,4 +301,166 @@ struct ProjectionTests {
         #expect(Projection.noSRID.crsLength(fromMeters: 1000.0) == 1000.0)
     }
 
+    /// Round-trips a coordinate through every projection pair; the result must
+    /// match the original (within projection precision).
+    @Test
+    func roundTrips() async throws {
+        let base = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 250.0, m: 7.0)
+        let projections: [Projection] = [.epsg4326, .epsg3857, .epsg4978]
+
+        for source in projections {
+            let start = base.projected(to: source)
+            #expect(start.projection == source)
+
+            for target in projections where source != target {
+                let there = start.projected(to: target)
+                #expect(there.projection == target)
+                #expect(there.m == 7.0)
+
+                let back = there.projected(to: source)
+                #expect(back.projection == source)
+                #expect(abs(back.latitude - start.latitude) < 0.000001)
+                #expect(abs(back.longitude - start.longitude) < 0.000001)
+                #expect(abs((back.altitude ?? 0.0) - (start.altitude ?? 0.0)) < 0.001)
+            }
+        }
+    }
+
+    /// EPSG:3857 → EPSG:4978 (and back) is routed through the EPSG:4326 pivot
+    /// and matches the chained manual conversion.
+    @Test
+    func pivotRouting3857To4978() async throws {
+        let mercator = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 100.0, m: 3.0)
+
+        let ecef = mercator.projected(to: .epsg4978)
+        let chained = mercator.projected(to: .epsg4326).projected(to: .epsg4978)
+        #expect(abs(ecef.longitude - chained.longitude) < 0.0000000001)
+        #expect(abs(ecef.latitude - chained.latitude) < 0.0000000001)
+        #expect(abs((ecef.altitude ?? 0.0) - (chained.altitude ?? 0.0)) < 0.0000000001)
+        #expect(ecef.m == 3.0)
+
+        let back = ecef.projected(to: .epsg3857)
+        #expect(abs(back.longitude - mercator.longitude) < 0.000001)
+        #expect(abs(back.latitude - mercator.latitude) < 0.000001)
+    }
+
+    /// Pins the noSRID semantics:
+    /// - Projecting to `.noSRID` copies values verbatim.
+    /// - Projecting from `.noSRID` into EPSG:4326 or EPSG:3857 copies the
+    ///   values verbatim (the library treats noSRID values as planar meters).
+    /// - Projecting from `.noSRID` into EPSG:4978 interprets the values as
+    ///   EPSG:4326.
+    /// - Per-axis helpers treat noSRID values as already being in the target.
+    @Test
+    func noSridSemantics() async throws {
+        let coordinate = Coordinate3D(x: -71.0, y: 41.0, z: 50.0, m: 2.0, projection: .noSRID)
+
+        // Verbatim copy when dropping the SRID.
+        let mercator = coordinate.projected(to: .epsg3857)
+        let dropped = mercator.projected(to: .noSRID)
+        #expect(dropped.projection == .noSRID)
+        #expect(dropped.longitude == mercator.longitude)
+        #expect(dropped.latitude == mercator.latitude)
+        #expect(dropped.altitude == mercator.altitude)
+        #expect(dropped.m == mercator.m)
+
+        // Verbatim relabel into EPSG:4326 and EPSG:3857.
+        let as4326 = coordinate.projected(to: .epsg4326)
+        #expect(as4326.latitude == 41.0)
+        #expect(as4326.longitude == -71.0)
+        #expect(as4326.altitude == 50.0)
+        #expect(as4326.m == 2.0)
+
+        let as3857 = coordinate.projected(to: .epsg3857)
+        #expect(as3857.latitude == 41.0)
+        #expect(as3857.longitude == -71.0)
+        #expect(as3857.altitude == 50.0)
+        #expect(as3857.m == 2.0)
+
+        // Interpreted as EPSG:4326 when projecting into EPSG:4978.
+        let as4978 = coordinate.projected(to: .epsg4978)
+        let from4326Ecef = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 50.0).projected(to: .epsg4978)
+        #expect(abs(as4978.longitude - from4326Ecef.longitude) < 0.0000000001)
+        #expect(abs(as4978.latitude - from4326Ecef.latitude) < 0.0000000001)
+
+        // Per-axis helpers return the values unchanged for noSRID sources.
+        #expect(coordinate.latitudeProjected(to: .epsg3857) == 41.0)
+        #expect(coordinate.longitudeProjected(to: .epsg3857) == -71.0)
+        #expect(coordinate.latitudeProjected(to: .epsg4978) == 41.0)
+        #expect(coordinate.longitudeProjected(to: .epsg4978) == -71.0)
+    }
+
+    /// Per-axis helpers match the corresponding full projection for all
+    /// non-noSRID projections.
+    @Test
+    func perAxisHelpersMatchProjection() async throws {
+        let sources: [Coordinate3D] = [
+            Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 10.0),
+            Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 10.0),
+            Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 0.0).projected(to: .epsg4978),
+        ]
+        let targets: [Projection] = [.epsg4326, .epsg3857, .epsg4978]
+
+        for source in sources {
+            for target in targets {
+                let projected = source.projected(to: target)
+                #expect(abs(source.latitudeProjected(to: target) - projected.latitude) < 0.0000000001)
+                #expect(abs(source.longitudeProjected(to: target) - projected.longitude) < 0.0000000001)
+            }
+        }
+    }
+
+    /// Altitude and m values are preserved through projections where defined.
+    @Test
+    func altitudeAndMPreserved() async throws {
+        let withAltitude = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 300.0, m: 5.0)
+
+        let mercator = withAltitude.projected(to: .epsg3857)
+        #expect(mercator.altitude == 300.0)
+        #expect(mercator.m == 5.0)
+
+        // In EPSG:4978 the altitude becomes the ECEF z coordinate; m is preserved.
+        let ecef = withAltitude.projected(to: .epsg4978)
+        #expect(ecef.altitude != nil)
+        #expect(ecef.m == 5.0)
+        let back = ecef.projected(to: .epsg4326)
+        #expect(abs((back.altitude ?? 0.0) - 300.0) < 0.001)
+
+        // Without altitude, EPSG:3857 keeps nil and EPSG:4978 gains a computed z.
+        let withoutAltitude = Coordinate3D(latitude: 41.0, longitude: -71.0)
+        #expect(withoutAltitude.projected(to: .epsg3857).altitude == nil)
+        #expect(withoutAltitude.projected(to: .epsg4978).altitude != nil)
+    }
+
+    /// Validates `clamped()` against the valid extent of each projection.
+    @Test
+    func clamped() async throws {
+        // EPSG:4326: ±180 longitude, ±90 latitude.
+        let geographic = Coordinate3D(latitude: 95.0, longitude: 200.0).clamped()
+        #expect(geographic.latitude == 90.0)
+        #expect(geographic.longitude == 180.0)
+
+        // EPSG:3857: ±originShift on both axes.
+        let shift = GISTool.originShift
+        let planar = Coordinate3D(x: shift + 1000.0, y: -(shift + 1000.0), projection: .epsg3857).clamped()
+        #expect(planar.longitude == shift)
+        #expect(planar.latitude == -shift)
+
+        // EPSG:4978 and noSRID are unbounded no-ops.
+        let ecef = Coordinate3D(x: 1_000_000_000.0, y: -1_000_000_000.0, projection: .epsg4978).clamped()
+        #expect(ecef.longitude == 1_000_000_000.0)
+        #expect(ecef.latitude == -1_000_000_000.0)
+
+        let noSrid = Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID).clamped()
+        #expect(noSrid.longitude == 500.0)
+        #expect(noSrid.latitude == 500.0)
+
+        // In-range values are returned unchanged.
+        let inRange = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 9.0, m: 1.0).clamped()
+        #expect(inRange.latitude == 41.0)
+        #expect(inRange.longitude == -71.0)
+        #expect(inRange.altitude == 9.0)
+        #expect(inRange.m == 1.0)
+    }
+
 }

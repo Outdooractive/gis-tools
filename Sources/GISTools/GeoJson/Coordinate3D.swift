@@ -407,39 +407,27 @@ extension Coordinate3D {
         self = self.clamped()
     }
 
-    /// Clamped to [[-180,-90], [180,90]].
+    /// Clamped to the valid coordinate range of the receiver's projection.
     ///
-    /// For EPSG:4326 and EPSG:3857, clamps the longitude to the valid range.
-    /// For EPSG:4978 (ECEF) this is a no-op.
+    /// For projections with a defined extent (e.g. EPSG:4326, EPSG:3857),
+    /// clamps both axes to that extent. For unbounded projections
+    /// (e.g. EPSG:4978 (ECEF)) this is a no-op.
     ///
     /// - Returns: A copy clamped to the valid coordinate range
     public func clamped() -> Coordinate3D {
-        switch projection {
-        case .epsg3857:
-            guard longitude < -GISTool.originShift || longitude > GISTool.originShift
-                || latitude < -GISTool.originShift || latitude > GISTool.originShift
-            else { return self }
+        guard let extent = ProjectionRegistry.definition(for: projection).validExtent
+        else { return self }
 
-            return Coordinate3D(
-                x: min(GISTool.originShift, max(-GISTool.originShift, longitude)),
-                y: min(GISTool.originShift, max(-GISTool.originShift, latitude)),
-                z: altitude,
-                m: m)
+        guard longitude < extent.minX || longitude > extent.maxX
+            || latitude < extent.minY || latitude > extent.maxY
+        else { return self }
 
-        case .epsg4326:
-            guard longitude < -180.0 || longitude > 180.0
-                || latitude < -90.0 || latitude > 90.0
-            else { return self }
-
-            return Coordinate3D(
-                latitude: min(90.0, max(-90.0, latitude)),
-                longitude: min(180.0, max(-180.0, longitude)),
-                altitude: altitude,
-                m: m)
-
-        default:
-            return self
-        }
+        return Coordinate3D(
+            x: min(extent.maxX, max(extent.minX, longitude)),
+            y: min(extent.maxY, max(extent.minY, latitude)),
+            z: altitude,
+            m: m,
+            projection: projection)
     }
 
 }
@@ -450,58 +438,23 @@ extension Coordinate3D: Projectable {
 
     /// Reproject this coordinate.
     ///
+    /// Conversions are routed through the EPSG:4326 pivot: the receiver is
+    /// converted to EPSG:4326 first, then into the target projection.
+    /// Projecting to ``Projection/noSRID`` copies the coordinate values verbatim.
+    ///
+    /// Coordinates without an SRID keep their historical semantics:
+    /// they are copied verbatim when projecting into EPSG:4326 or
+    /// EPSG:3857 (the library treats noSRID values as planar meters),
+    /// and are interpreted as EPSG:4326 when projecting into EPSG:4978.
+    ///
     /// - Parameters:
     ///    - newProjection: The target projection
     /// - Returns: A new coordinate in the requested projection
     public func projected(to newProjection: Projection) -> Coordinate3D {
         guard newProjection != projection else { return self }
 
-        switch newProjection {
-        case .epsg3857:
-            switch projection {
-            case .epsg3857:
-                return self
-            case .epsg4326, .noSRID:
-                return Coordinate3D(
-                    x: longitudeProjected(to: newProjection),
-                    y: latitudeProjected(to: newProjection),
-                    z: altitude,
-                    m: m,
-                    projection: newProjection)
-            case .epsg4978:
-                return projected(to: .epsg4326).projected(to: .epsg3857)
-            }
-
-        case .epsg4326:
-            switch projection {
-            case .epsg4326:
-                return self
-            case .epsg3857, .noSRID:
-                return Coordinate3D(
-                    x: longitudeProjected(to: newProjection),
-                    y: latitudeProjected(to: newProjection),
-                    z: altitude,
-                    m: m,
-                    projection: newProjection)
-            case .epsg4978:
-                let (lat, lon, alt) = Coordinate3D.ecefToGeodetic(
-                    x: longitude, y: latitude, z: altitude ?? 0.0)
-                return Coordinate3D(latitude: lat, longitude: lon, altitude: alt, m: m)
-            }
-
-        case .epsg4978:
-            switch projection {
-            case .epsg4978:
-                return self
-            case .epsg4326, .noSRID:
-                let (x, y, z) = Coordinate3D.geodeticToEcef(
-                    latitude: latitude, longitude: longitude, altitude: altitude ?? 0.0)
-                return Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978)
-            case .epsg3857:
-                return projected(to: .epsg4326).projected(to: .epsg4978)
-            }
-
-        case .noSRID:
+        // Dropping the SRID copies the coordinate values verbatim.
+        if newProjection == .noSRID {
             return Coordinate3D(
                 x: longitude,
                 y: latitude,
@@ -509,6 +462,21 @@ extension Coordinate3D: Projectable {
                 m: m,
                 projection: .noSRID)
         }
+
+        // Coordinates without an SRID are copied verbatim when projecting
+        // into EPSG:3857 (planar-meter convention). The EPSG:4326 path is
+        // already a verbatim relabel through the pivot.
+        if projection == .noSRID, newProjection == .epsg3857 {
+            return Coordinate3D(
+                x: longitude,
+                y: latitude,
+                z: altitude,
+                m: m,
+                projection: .epsg3857)
+        }
+
+        let pivot = ProjectionRegistry.definition(for: projection).inverse(self)
+        return ProjectionRegistry.definition(for: newProjection).forward(pivot)
     }
 
     /// Project this coordinate's latitude.
@@ -517,50 +485,13 @@ extension Coordinate3D: Projectable {
     ///    - newProjection: The target projection
     /// - Returns: The latitude value in the requested projection
     public func latitudeProjected(to newProjection: Projection) -> Double {
-        switch newProjection {
-        case .epsg3857:
-            switch projection {
-            case .epsg3857, .noSRID:
-                return latitude
-            case .epsg4326:
-                var y: Double = log(tan((90.0 + latitude) * Double.pi / 360.0)) / (Double.pi / 180.0)
-                y *= GISTool.originShift / 180.0
-                return y
-            case .epsg4978:
-                return projected(to: .epsg4326).latitudeProjected(to: .epsg3857)
-            }
-
-        case .epsg4326:
-            switch projection {
-            case .epsg4326, .noSRID:
-                return latitude
-            case .epsg3857:
-                return 180.0 / Double.pi * (2.0 * atan(exp((latitude / GISTool.originShift) * 180.0 * Double.pi / 180.0)) - Double.pi / 2.0)
-            case .epsg4978:
-                let (lat, _, _) = Coordinate3D.ecefToGeodetic(
-                    x: longitude,
-                    y: latitude,
-                    z: altitude ?? 0.0)
-                return lat
-            }
-
-        case .epsg4978:
-            switch projection {
-            case .epsg4978, .noSRID:
-                return latitude
-            case .epsg4326:
-                let (_, y, _) = Coordinate3D.geodeticToEcef(
-                    latitude: latitude,
-                    longitude: longitude,
-                    altitude: altitude ?? 0.0)
-                return y
-            case .epsg3857:
-                return projected(to: .epsg4326).latitudeProjected(to: .epsg4978)
-            }
-
-        case .noSRID:
+        // Coordinates without an SRID are treated as already being in the
+        // target projection for per-axis lookups.
+        if projection == .noSRID {
             return latitude
         }
+
+        return projected(to: newProjection).latitude
     }
 
     /// Project this coordinate's longitude.
@@ -569,129 +500,13 @@ extension Coordinate3D: Projectable {
     ///    - newProjection: The target projection
     /// - Returns: The longitude value in the requested projection
     public func longitudeProjected(to newProjection: Projection) -> Double {
-        switch newProjection {
-        case .epsg3857:
-            switch projection {
-            case .epsg3857, .noSRID:
-                return longitude
-            case .epsg4326:
-                return longitude * GISTool.originShift / 180.0
-            case .epsg4978:
-                return projected(to: .epsg4326).longitudeProjected(to: .epsg3857)
-            }
-
-        case .epsg4326:
-            switch projection {
-            case .epsg4326, .noSRID:
-                return longitude
-            case .epsg3857:
-                return (longitude / GISTool.originShift) * 180.0
-            case .epsg4978:
-                let (_, lon, _) = Coordinate3D.ecefToGeodetic(
-                    x: longitude,
-                    y: latitude,
-                    z: altitude ?? 0.0)
-                return lon
-            }
-
-        case .epsg4978:
-            switch projection {
-            case .epsg4978, .noSRID:
-                return longitude
-            case .epsg4326:
-                let (x, _, _) = Coordinate3D.geodeticToEcef(
-                    latitude: latitude,
-                    longitude: longitude,
-                    altitude: altitude ?? 0.0)
-                return x
-            case .epsg3857:
-                return projected(to: .epsg4326).longitudeProjected(to: .epsg4978)
-            }
-
-        case .noSRID:
+        // Coordinates without an SRID are treated as already being in the
+        // target projection for per-axis lookups.
+        if projection == .noSRID {
             return longitude
         }
-    }
 
-}
-
-// MARK: - EPSG:4978 (ECEF) Helpers
-
-extension Coordinate3D {
-
-    /// Convert geodetic (EPSG:4326) to geocentric (EPSG:4978) coordinates.
-    ///
-    /// Uses the WGS84 ellipsoid: a = 6,378,137 m, 1/f = 298.257223563.
-    ///
-    /// - Parameters:
-    ///   - latitude: Latitude in degrees
-    ///   - longitude: Longitude in degrees
-    ///   - altitude: Height above ellipsoid in meters
-    /// - Returns: ECEF X, Y, Z in meters
-    fileprivate static func geodeticToEcef(
-        latitude: Double,
-        longitude: Double,
-        altitude: Double
-    ) -> (x: Double, y: Double, z: Double) {
-        let a = GISTool.equatorialRadius
-        let e2 = GISTool.wgs84EccentricitySquared
-
-        let phi = latitude * .pi / 180.0
-        let lambda = longitude * .pi / 180.0
-        let h = altitude
-
-        let sinPhi = sin(phi)
-        let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
-
-        let x = (N + h) * cos(phi) * cos(lambda)
-        let y = (N + h) * cos(phi) * sin(lambda)
-        let z = ((1.0 - e2) * N + h) * sinPhi
-
-        return (x, y, z)
-    }
-
-    /// Convert geocentric (EPSG:4978) to geodetic (EPSG:4326) coordinates.
-    ///
-    /// Uses the iterative Bowring method (typically converges in ~3 iterations).
-    ///
-    /// - Parameters:
-    ///   - x: ECEF X in meters
-    ///   - y: ECEF Y in meters
-    ///   - z: ECEF Z in meters
-    /// - Returns: Latitude (degrees), longitude (degrees), altitude (meters)
-    fileprivate static func ecefToGeodetic(
-        x: Double,
-        y: Double,
-        z: Double
-    ) -> (latitude: Double, longitude: Double, altitude: Double) {
-        let a = GISTool.equatorialRadius
-        let e2 = GISTool.wgs84EccentricitySquared
-
-        let p = sqrt(x * x + y * y)
-
-        guard p > GISTool.intersectionEpsilon else {
-            let lat = z >= 0.0 ? 90.0 : -90.0
-            let h = abs(z) - a * (1.0 - e2)
-            return (lat, 0.0, h)
-        }
-
-        var phi = atan2(z, p * (1.0 - e2))
-        var h: Double = 0.0
-        for _ in 0 ..< 10 {
-            let sinPhi = sin(phi)
-            let cosPhi = cos(phi)
-            let N = a / sqrt(1.0 - e2 * sinPhi * sinPhi)
-            h = p / cosPhi - N
-            phi = atan2(z * (N + h), p * ((1.0 - e2) * N + h))
-        }
-
-        // Clamp latitude to the valid geodetic range. The iterative solver
-        // can diverge for points near the geocenter (huge negative altitude),
-        // producing |lat| > 90.
-        let lat = Swift.min(90.0, Swift.max(-90.0, phi * 180.0 / .pi))
-        let lon = atan2(y, x) * 180.0 / .pi
-
-        return (lat, lon, h)
+        return projected(to: newProjection).longitude
     }
 
 }
