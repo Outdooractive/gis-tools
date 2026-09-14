@@ -561,12 +561,11 @@ struct MapTileTests {
     @Test
     func boundingBox3395() async throws {
         let tile = MapTile(x: 1, y: 1, z: 2)
-        let box = try #require(tile.boundingBox(projection: .epsg3395))
+        let box = tile.boundingBox(projection: .epsg3395)
 
-        let expectedSw = try #require(tile.boundingBox(projection: .epsg4326)).southWest
-            .projected(to: .epsg3395)
-        let expectedNe = try #require(tile.boundingBox(projection: .epsg4326)).northEast
-            .projected(to: .epsg3395)
+        let tileBox4326 = tile.boundingBox(projection: .epsg4326)
+        let expectedSw = tileBox4326.southWest.projected(to: .epsg3395)
+        let expectedNe = tileBox4326.northEast.projected(to: .epsg3395)
 
         #expect(abs(box.southWest.longitude - expectedSw.longitude) < 0.000001)
         #expect(abs(box.southWest.latitude - expectedSw.latitude) < 0.000001)
@@ -582,9 +581,9 @@ struct MapTileTests {
     @Test
     func boundingBox32662() async throws {
         let tile = MapTile(x: 8, y: 5, z: 4)
-        let box = try #require(tile.boundingBox(projection: .epsg32662))
+        let box = tile.boundingBox(projection: .epsg32662)
 
-        let box4326 = try #require(tile.boundingBox(projection: .epsg4326))
+        let box4326 = tile.boundingBox(projection: .epsg4326)
 
         #expect(abs(box.southWest.longitude - 0.0) < 0.000001)
         #expect(abs(box.northEast.longitude - 22.5) < 0.000001)

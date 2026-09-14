@@ -286,7 +286,13 @@ public enum Projection:
 
     /// Initialize a Projection from a WKT projection string (e.g. from a `.prj` file).
     ///
-    /// The string is matched against the WKT patterns registered by the
+    /// UTM zones are identified through their zone token first (e.g.
+    /// `PROJCS["WGS_1984_UTM_Zone_19N",...]`, central meridian parameter
+    /// cross-validated when present), since such strings mention
+    /// `Transverse_Mercator` — which would otherwise wrongly match the
+    /// generic EPSG:3395 Mercator fragments.
+    ///
+    /// The string is then matched against the WKT patterns registered by the
     /// library's projections (in registry order, first match wins):
     /// - EPSG:3857 — `PROJCS["...Pseudo-Mercator..."...]`
     /// - EPSG:3395 — `PROJCS["...Mercator..."...]` (without "Pseudo")
@@ -297,6 +303,20 @@ public enum Projection:
     /// - Parameter wkt: A WKT projection string
     /// - Returns: A `Projection`, or `nil` if the string is not recognised
     public init?(wkt: String) {
+        // A UTM zone token identifies a string unambiguously as UTM, so it wins
+        // over projection name fragments — UTM `.prj` strings mention
+        // "Transverse_Mercator", which would otherwise wrongly match the
+        // generic EPSG:3395 fragments. When a zone token is present but the
+        // identification is malformed or contradicted by its central meridian,
+        // the string is rejected rather than matched to an unrelated projection.
+        if UtmWktIdentification.hasUtmZoneToken(in: wkt) {
+            guard let utmProjection = UtmWktIdentification.projection(in: wkt) else {
+                return nil
+            }
+            self = utmProjection
+            return
+        }
+
         guard let definition = ProjectionRegistry.definition(matchingWkt: wkt) else {
             return nil
         }
@@ -398,6 +418,49 @@ extension Projection {
     /// - Returns: The length in the receiver's coordinate units
     public func crsLength(fromMeters meters: Double) -> Double {
         isGeographic ? meters / 111_325.0 : meters
+    }
+
+}
+
+// MARK: - UTM WKT
+
+/// Namespace for identifying UTM zones in WKT projection strings.
+///
+/// Both patterns allow spaces or underscores as word separators (the common
+/// ESRI variant is `WGS_1984_UTM_Zone_19N`), and match case-insensitively.
+private enum UtmWktIdentification {
+
+    /// Returns the UTM zone projection identified in the string, or `nil`.
+    ///
+    /// The hemisphere token (`N`/`S`) is required: without it the zones are
+    /// ambiguous and no result is returned rather than a guess. When the
+    /// string also carries a `Central_Meridian` parameter, it must agree
+    /// with the identified zone.
+    static func projection(in wkt: String) -> Projection? {
+        let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*(\d{1,2})[\s_]*([NS])/
+        let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
+
+        guard let zoneMatch = wkt.firstMatch(of: zoneRegex) else { return nil }
+
+        guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
+        let isSouthern = zoneMatch.2.uppercased() == "S"
+        let srid = isSouthern ? 32_700 + zone : 32_600 + zone
+
+        if let meridianMatch = wkt.firstMatch(of: centralMeridianRegex) {
+            let expected = Double((zone - 1) * 6 - 180 + 3)
+            guard let centralMeridian = Double(String(meridianMatch.1)),
+                  abs(centralMeridian - expected) < 0.001
+            else { return nil }
+        }
+
+        return Projection(srid: srid)
+    }
+
+    /// `true` when the string carries a UTM zone token (regardless of
+    /// whether the zone identification succeeds).
+    static func hasUtmZoneToken(in wkt: String) -> Bool {
+        let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*\d/
+        return wkt.firstMatch(of: zoneRegex) != nil
     }
 
 }
