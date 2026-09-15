@@ -1317,21 +1317,21 @@ Thomas Rasch, Outdooractive
 [283]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Convenience.swift "Graph+Convenience"
 [284]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/GraphExportTests.swift "GraphExportTests"
 
-[285]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Ch1903PlusLv95Definition.swift
-[286]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Ch1903Lv03Definition.swift
-[287]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishGridTM65Definition.swift
-[288]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishGridTM75Definition.swift
-[289]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishTransverseMercatorDefinition.swift
+[285]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Ch1903PlusLv95Definition.swift
+[286]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Ch1903Lv03Definition.swift
+[287]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/IrishGridTM65Definition.swift
+[288]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/IrishGridTM75Definition.swift
+[289]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/IrishTransverseMercatorDefinition.swift
 
-[290]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3857Definition.swift
-[291]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg4978Definition.swift
-[292]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3395Definition.swift
-[293]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg32662Definition.swift
-[294]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Etrs89Definition.swift
-[295]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Nad27Definition.swift
-[296]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936BngDefinition.swift
-[297]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936Definition.swift
-[298]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/UtmDefinition.swift
+[290]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3857Definition.swift
+[291]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg4978Definition.swift
+[292]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3395Definition.swift
+[293]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg32662Definition.swift
+[294]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Etrs89Definition.swift
+[295]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Nad27Definition.swift
+[296]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936BngDefinition.swift
+[297]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936Definition.swift
+[298]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/UtmDefinition.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 
