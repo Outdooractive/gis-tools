@@ -37,6 +37,8 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
   - [GeometryCollection](#geometrycollection)
   - [Feature](#feature)
   - [FeatureCollection](#featurecollection)
+- [Projections](#projections)
+  - [Implemented projections](#implemented-projections)
 - [SwiftData](#swiftdata)
 - [WKB/WKT/TWKB](#wbkwkttwkb)
 - [Spatial index](#spatial-index)
@@ -59,8 +61,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports the full [GeoJSON standard][6]
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
-- Supports EPSG:3857 (web mercator) and EPSG:4326 (geodetic) conversions
-- Experimental support for EPSG:4978 (ECEF geocentric) coordinate conversion and spatial operations
+- Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4277/27700 (OSGB 1936 / British National Grid) and all 120 UTM zones, plus user-definable custom projections
 - Supports WKT/WKB/TWKB, also with different projections
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
@@ -438,24 +439,20 @@ let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
 print(coordinate.isZero)
 ```
 
-## Projections
+# Projections
 [Implementation][20]
 
-Coordinates born as EPSG:4326 or EPSG:3857 know their projection and all operations keep them there. Coordinates can be re-projected:
+Coordinates carry their projection with them and all operations keep them in it. Coordinates can be re-projected:
 
 ```swift
 let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0)
 let utm19 = coordinate.projected(to: .epsg32619)   // UTM zone 19N
 let mercator = utm19.projected(to: .epsg3857)
 let projectedBack = mercator.projected(to: .epsg4326)
-print(projection.description, projection.srid)
+print(coordinate.projection.description, coordinate.projection.srid)
 ```
 
-Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections (EPSG:4326, 3857, 4978, 3395, 32662, 4258/ETRS89, 4267/NAD27, 4277/OSGB 1936, 27700/British National Grid and all 120 UTM zones), custom projections can be registered - registration is add-only, applied for the whole process, typically at startup:
-```swift
-let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0).projected(to: .epsg4267)  // NAD27
-let datum = Projection.epsg27700.datum  // Datum.osgb1936, Airy 1830
-```
+Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections listed below, custom projections can be registered - registration is add-only, applied for the whole process, typically at startup. Datums of built-in CRSs can be inspected via `Projection.epsg27700.datum` (== `Datum.osgb1936`, Airy 1830):
 
 ```swift
 let custom = CustomProjection(
@@ -475,410 +472,30 @@ Projection.register(custom)
 let customProjection = try Projection(srid: 900_001)
 ```
 
+## Implemented projections
+
+| EPSG | Response | Coordinate units | Transformation | Source |
+| --- | --- | --- | --- | --- |
+| 4326 | WGS84 geodetic | degrees | pivot | `ProjectionDefinition.swift` |
+| 3857 | Web Mercator | meters | spherical Mercator | [Epsg3857Definition.swift][23] |
+| 4978 | WGS84 geocentric (ECEF) | meters | geodetic <-> geocentric (WGS84) | [Epsg4978Definition.swift][24] |
+| 3395 | WGS84 / World Mercator | meters | ellipsoidal Mercator | [Epsg3395Definition.swift][25] |
+| 32662 | WGS84 / Plate Carree | degrees | identity | [Epsg32662Definition.swift][26] |
+| 4258 | ETRS89 geodetic | degrees | identity (≈ WGS84) | [Etrs89Definition.swift][27] |
+| 4267 | NAD27 geodetic | degrees | Helmert "NAD27 to WGS 84 (4)", ~10 m | [Nad27Definition.swift][28] |
+| 4277 | OSGB 1936 geodetic | degrees | Helmert "OSGB 1936 to WGS 84 (6)", ~2 m | [Osgb1936Definition.swift][29] |
+| 27700 | OSGB 1936 / British National Grid | meters | Helmert + TM on Airy 1830 | [Osgb1936BngDefinition.swift][29] |
+| 32601–32660 | UTM zones 1N–60N | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][30] |
+| 32701–32760 | UTM zones 1S–60S | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][30] |
+
+Custom projections register through `Projection.register(CustomProjection)` (see [CustomProjection.swift][31]); the model types live in `Projection.swift`/`ProjectionKind.swift`/`ProjectionExtent.swift`/`Datum.swift` and the WKT matching / registry in `ProjectionRegistry.swift` resp. `ProjectionDefinition.swift` in `Sources/GISTools/Projections/`.
+
 All algorithms dispatch on the projection *kind* (geographic/planar/geocentric) and honor the definition's capabilities (wraparound extents, valid ranges, world bounding boxes), so custom projections work across the whole library like built-in ones.
 
 ### Datum accuracy note
-The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m). Sub-meter-centimeter accuracy for NAD27 (NADCON) or Great Britain (OSTN15, EPSG:7709) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized in HELMERT via `HelmertTransformation` for use in your own `CustomProjection` definitions.
+The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m). Sub-meter-centimeter accuracy for NAD27 (NADCON) or Great Britain (OSTN15, EPSG:7709) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized via `HelmertTransformation` for use in your own `CustomProjection` definitions.
 
 Attribution: EPSG parameter values are based on the EPSG dataset (https://epsg.org) used under its terms; OS transform parameters reference the Ordnance Survey *Guide to Coordinate Systems in Great Britain*.
-
-## BoundingBox
-[Implementation][18] / [BoundingBox test cases][19]
-
-Each GeoJSON object can have a rectangular BoundingBox (see `BoundingBoxRepresentable` above):
-```swift
-/// The bounding box's `projection`.
-let projection: Projection
-
-/// The bounding boxes south-west (bottom-left) coordinate.
-var southWest: Coordinate3D
-/// The bounding boxes north-east (upper-right) coordinate.
-var northEast: Coordinate3D
-
-/// Create a bounding box with a `southWest` and `northEast` coordinate.
-init(southWest: Coordinate3D, northEast: Coordinate3D)
-
-/// Create a bounding box from `coordinates` and an optional padding in kilometers.
-init?(coordinates: [Coordinate3D], paddingKilometers: Double = 0.0)
-
-/// Create a bounding box from other bounding boxes.
-init?(boundingBoxes: [BoundingBox])
-
-/// Reproject this bounding box.
-func projected(to newProjection: Projection) -> BoundingBox
-```
-
-Example:
-```swift
-let point = Point(Coordinat3D(latitude: 47.56, longitude: 10.22), calculateBoundingBox: true)
-print(point.boundingBox!)
-```
-
-## Point
-[Implementation][20] / [Point test cases][21]
-
-A `Point` is a wrapper around a single coordinate:
-```swift
-/// The receiver's coordinate.
-let coordinate: Coordinate3D
-
-/// Initialize a Point with a coordinate.
-init(_ coordinate: Coordinate3D, calculateBoundingBox: Bool = false)
-
-/// Reproject the Point.
-func projected(to newProjection: Projection) -> Point
-```
-
-Example:
-```swift
-let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
-```
-
-## MultiPoint
-[Implementation][22] / [MultiPoint test cases][23]
-
-A `MultiPoint` is an array of coordinates:
-```swift
-/// The receiver's coordinates.
-let coordinates: [Coordinate3D]
-
-/// The receiver’s coordinates converted to Points.
-var points: [Point]
-
-/// Try to initialize a MultiPoint with some coordinates.
-init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false)
-
-/// Try to initialize a MultiPoint with some Points.
-init?(_ points: [Point], calculateBoundingBox: Bool = false)
-
-/// Reproject the MultiPoint.
-func projected(to newProjection: Projection) -> MultiPoint
-```
-
-Example:
-```swift
-let multiPoint = MultiPoint([
-    Coordinate3D(latitude: 0.0, longitude: 100.0),
-    Coordinate3D(latitude: 1.0, longitude: 101.0)
-])!
-```
-
-## LineString
-[Implementation][24] / [LineString test cases][25]
-
-`LineString` is an array of two or more coordinates that form a line:
-```swift
-/// The LineString's coordinates.
-let coordinates: [Coordinate3D]
-
-/// Try to initialize a LineString with some coordinates.
-init?(_ coordinates: [Coordinate3D], calculateBoundingBox: Bool = false)
-
-/// Initialize a LineString with a LineSegment.
-init(_ lineSegment: LineSegment, calculateBoundingBox: Bool = false)
-
-/// Try to initialize a LineString with some LineSegments.
-init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false)
-
-/// Reproject the LineString.
-func projected(to newProjection: Projection) -> LineString
-```
-
-Example:
-```swift
-let lineString = LineString([
-    Coordinate3D(latitude: 0.0, longitude: 100.0),
-    Coordinate3D(latitude: 1.0, longitude: 101.0)
-])!
-
-let segment = LineSegment(
-    first: Coordinate3D(latitude: 0.0, longitude: 100.0),
-    second: Coordinate3D(latitude: 1.0, longitude: 101.0))
-let lineString = LineString(lineSegment)
-```
-
-## MultiLineString
-[Implementation][26] / [MultiLineString test cases][27]
-
-A `MultiLineString` is array of `LineString`s:
-```swift
-/// The MultiLineString's coordinates.
-let coordinates: [[Coordinate3D]]
-
-/// The receiver’s coordinates converted to LineStrings.
-var lineStrings: [LineString]
-
-/// Try to initialize a MultiLineString with some coordinates.
-init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false)
-
-/// Try to initialize a MultiLineString with some LineStrings.
-init?(_ lineStrings: [LineString], calculateBoundingBox: Bool = false)
-
-/// Try to initialize a MultiLineString with some LineSegments. Each LineSegment will result in one LineString.
-init?(_ lineSegments: [LineSegment], calculateBoundingBox: Bool = false)
-
-/// Reproject the MultiLineString.
-func projected(to newProjection: Projection) -> MultiLineString
-```
-
-Example:
-```swift
-let multiLineString = MultiLineString([
-    [Coordinate3D(latitude: 0.0, longitude: 100.0), Coordinate3D(latitude: 1.0, longitude: 101.0)],
-    [Coordinate3D(latitude: 2.0, longitude: 102.0), Coordinate3D(latitude: 3.0, longitude: 103.0)],
-])!
-```
-
-## Polygon
-[Implementation][28] / [Polygon test cases][29]
-
-A `Polygon` is a shape consisting of one or more rings, where the first ring is the outer ring bounding the surface, and the inner rings bound holes within the surface. Please see [section 3.1.6][30] in the RFC for more information.
-```swift
-/// The receiver's coordinates.
-let coordinates: [[Coordinate3D]]
-
-/// The receiver's outer ring.
-var outerRing: Ring?
-
-/// All of the receiver's inner rings.
-var innerRings: [Ring]?
-
-/// All of the receiver's rings (outer + inner).
-var rings: [Ring]
-
-/// Try to initialize a Polygon with some coordinates.
-init?(_ coordinates: [[Coordinate3D]], calculateBoundingBox: Bool = false)
-
-/// Try to initialize a Polygon with some Rings.
-init?(_ rings: [Ring], calculateBoundingBox: Bool = false)
-
-/// Reproject the Polygon.
-func projected(to newProjection: Projection) -> Polygon
-```
-
-Example:
-```swift
-let polygonWithHole = Polygon([
-    [
-        Coordinate3D(latitude: 0.0, longitude: 100.0),
-        Coordinate3D(latitude: 0.0, longitude: 101.0),
-        Coordinate3D(latitude: 1.0, longitude: 101.0),
-        Coordinate3D(latitude: 1.0, longitude: 100.0),
-        Coordinate3D(latitude: 0.0, longitude: 100.0)
-    ],
-    [
-        Coordinate3D(latitude: 1.0, longitude: 100.8),
-        Coordinate3D(latitude: 0.0, longitude: 100.8),
-        Coordinate3D(latitude: 0.0, longitude: 100.2),
-        Coordinate3D(latitude: 1.0, longitude: 100.2),
-        Coordinate3D(latitude: 1.0, longitude: 100.8)
-    ],
-])!
-print(polygonWithHole.area)
-```
-
-## MultiPolygon
-[Implementation][31] / [MultiPolygon test cases][32]
-
-A `MultiPolygon` is an array of `Polygon`s:
-```swift
-/// The receiver's coordinates.
-let coordinates: [[[Coordinate3D]]]
-
-/// The receiver’s coordinates converted to Polygons.
-var polygons: [Polygon]
-
-/// Try to initialize a MultiPolygon with some coordinates.
-init?(_ coordinates: [[[Coordinate3D]]], calculateBoundingBox: Bool = false)
-
-/// Try to initialize a MultiPolygon with some Polygons.
-init?(_ polygons: [Polygon], calculateBoundingBox: Bool = false)
-
-/// Reproject the MultiPolygon.
-func projected(to newProjection: Projection) -> MultiPolygon
-```
-
-Example:
-```swift
-let multiPolygon = MultiPolygon([
-    [
-        [
-            Coordinate3D(latitude: 2.0, longitude: 102.0),
-            Coordinate3D(latitude: 2.0, longitude: 103.0),
-            Coordinate3D(latitude: 3.0, longitude: 103.0),
-            Coordinate3D(latitude: 3.0, longitude: 102.0),
-            Coordinate3D(latitude: 2.0, longitude: 102.0),
-        ]
-    ],
-    [
-        [
-            Coordinate3D(latitude: 0.0, longitude: 100.0),
-            Coordinate3D(latitude: 0.0, longitude: 101.0),
-            Coordinate3D(latitude: 1.0, longitude: 101.0),
-            Coordinate3D(latitude: 1.0, longitude: 100.0),
-            Coordinate3D(latitude: 0.0, longitude: 100.0),
-        ],
-        [
-            Coordinate3D(latitude: 0.0, longitude: 100.2),
-            Coordinate3D(latitude: 1.0, longitude: 100.2),
-            Coordinate3D(latitude: 1.0, longitude: 100.8),
-            Coordinate3D(latitude: 0.0, longitude: 100.8),
-            Coordinate3D(latitude: 0.0, longitude: 100.2),
-        ]
-    ]
-])!
-```
-
-## GeometryCollection
-[Implementation][33] / [GeometryCollection test cases][34]
-
-A `GeometryCollection` is an array of GeoJSON geometries, i.e. `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon` or even `GeometryCollection`, though the latter is not recommended. Please see [section 3.1.8][35] in the RFC for more information.
-```swift
-/// The GeometryCollection's geometry objects.
-let geometries: [GeoJsonGeometry]
-
-/// Initialize a GeometryCollection with a geometry object.
-init(_ geometry: GeoJsonGeometry, calculateBoundingBox: Bool = false)
-
-/// Initialize a GeometryCollection with some geometry objects.
-init(_ geometries: [GeoJsonGeometry], calculateBoundingBox: Bool = false)
-
-/// Reproject the GeometryCollection.
-func projected(to newProjection: Projection) -> GeometryCollection
-```
-
-## Feature
-[Implementation][36] / [Feature test cases][37]
-
-A `Feature` is sort of a container for exactly one GeoJSON geometry (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`) together with some `properties` and an optional `id`:
-```swift
-/// A GeoJSON identifier that can either be a string or number.
-/// Any parsed integer value `Int64.min ⪬ i ⪬ Int64.max`  will be cast to `Int`
-/// (or `Int64` on 32-bit platforms), values above `Int64.max` will be cast to `UInt`
-/// (or `UInt64` on 32-bit platforms).
-enum Identifier: Equatable, Hashable, CustomStringConvertible {
-    case string(String)
-    case int(Int)
-    case uint(UInt)
-    case double(Double)
-}
-
-/// An arbitrary identifier.
-var id: Identifier?
-
-/// The `Feature`s geometry object.
-let geometry: GeoJsonGeometry
-
-/// Only 'Feature' objects may have properties.
-var properties: [String: Any]
-
-/// Create a ``Feature`` from any ``GeoJsonGeometry`` object.
-init(_ geometry: GeoJsonGeometry,
-     id: Identifier? = nil,
-     properties: [String: Any] = [:],
-     calculateBoundingBox: Bool = false)
-
-/// Reproject the Feature.
-func projected(to newProjection: Projection) -> Feature
-```
-
-### Typed property access
-
-Property reads (`property(for:)`, `subscript(_:)`) are unchecked casts that
-return `nil` on any type mismatch — notably an `Int` read fails on a value
-written as `3.0`. For typed access, `JSONValue` supports exhaustive pattern
-matching, and properties can be decoded into any `Decodable` type (numeric
-coercion handled, real errors instead of silent `nil`s):
-```swift
-enum JSONValue: Hashable, Sendable, Codable {
-    case string(String)
-    case number(Double)
-    case int(Int)
-    case bool(Bool)
-    case array([JSONValue])
-    case object([String: JSONValue])
-    case null
-}
-
-struct RegionProperties: Codable {
-    let isoCode: String
-    let name: String
-    let priority: Int
-}
-
-// Decode properties into a domain type (CodingKeys and JSONDecoder
-// strategies like dateDecodingStrategy apply):
-let props = try feature.properties(as: RegionProperties.self)
-
-// Pattern matching:
-if case .int(let priority) = feature.jsonValue(for: "priority") { ... }
-
-// Bulk conversion:
-let jsonProperties = try feature.jsonProperties()
-
-// Coercing accessors:
-let priority = feature.intValue(for: "priority")      // 3.0 → 3
-let name = feature.stringValue(for: "name")
-
-// Create a Feature from Encodable properties:
-let feature = try Feature(geometry, encodedProperties: RegionProperties(...))
-
-// The same accessors exist for foreign members on all GeoJson types:
-let zoom = point.intForeignMember(for: "zoom")
-let extra = try point.foreignMembers(as: Extra.self)
-```
-
-`JSONValue` itself is a general-purpose JSON model with typed accessors,
-subscript traversal, string/number/bool/array/dictionary literals, and a JSON
-string representation (`description`):
-```swift
-let value: JSONValue = ["name": "Zürich", "tags": [1, 2.5, true]]
-
-// Typed accessors (integral .number(3.0) reads as 3, .int(3) as 3.0):
-let name = value.stringValue        // String?
-let priority = value.intValue       // Int?
-let zoom = value.coercedIntValue    // also coerces "3" / "3.0" strings
-
-// Subscript chaining for nested values, nil for missing keys/indices:
-let tag = value["tags"]?[1]         // .number(2.5)
-
-// Pattern matching still works:
-if case .object(let object) = value { ... }
-
-// JSON output (object keys sorted, prettyPrinted: true for indentation):
-print(feature.jsonValue(for: "name") ?? .null)
-```
-
-Note that `JSONValue` uses custom `==` and `hash(into:)` implementations: an
-integer and a number compare equal when the number is exactly that integer,
-so `.int(3) == .number(3.0)` is `true` (and both hash the same, deduplicating
-in sets). Comparisons within the same case remain exact — `.number(0.1 + 0.2)
-!= .number(0.3)`. This mirrors the number normalization when parsing (`3.0`
-becomes `.int(3)`), but values constructed directly can mix cases, so
-dictionary/set keys behave on numeric value, not on the enum case.
-
-## FeatureCollection
-[Implementation][38] / [FeatureCollection test cases][39]
-
-A `FeatureCollection` is an array of `Feature` objects:
-```swift
-/// The FeatureCollection's Feature objects.
-private(set) var features: [Feature]
-
-/// Initialize a FeatureCollection with one Feature.
-init(_ feature: Feature, calculateBoundingBox: Bool = false)
-
-/// Initialize a FeatureCollection with some geometry objects.
-init(_ geometries: [GeoJsonGeometry], calculateBoundingBox: Bool = false)
-
-/// Normalize any GeoJSON object into a FeatureCollection.
-init?(_ geoJson: GeoJson?, calculateBoundingBox: Bool = false)
-
-/// Reproject the FeatureCollection.
-func projected(to newProjection: Projection) -> FeatureCollection
-```
-
-This type is somewhat special since its initializers will accept any valid GeoJSON object and return a `FeatureCollection` with the input wrapped in `Feature` objects if the input are geometries, or by collecting the input if it’s a `Feature`.
 
 # SwiftData
 
@@ -1443,7 +1060,7 @@ Thomas Rasch, Outdooractive
 [17]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/CoordinateTests.swift
 [18]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/BoundingBox.swift
 [19]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/BoundingBoxTests.swift
-[20]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Projection.swift
+[20]:	https://github.com/Outdooractive/gis-tools/tree/main/Sources/GISTools/Projections
 [21]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/PointTests.swift
 [22]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/MultiPoint.swift
 [23]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiPointTests.swift
@@ -1454,7 +1071,7 @@ Thomas Rasch, Outdooractive
 [28]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Polygon.swift
 [29]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/PolygonTests.swift
 [30]:	https://www.rfc-editor.org/rfc/rfc7946#section-3.1.6 "3.1.6"
-[31]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/MultiPolygon.swift
+[31]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/CustomProjection.swift
 [32]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiPolygonTests.swift
 [33]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/GeometryCollection.swift
 [34]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/GeometryCollectionTests.swift
@@ -1712,4 +1329,13 @@ Thomas Rasch, Outdooractive
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
 
+
+[23]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3857Definition.swift
+[24]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg4978Definition.swift
+[25]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3395Definition.swift
+[26]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg32662Definition.swift
+[27]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Etrs89Definition.swift
+[28]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Nad27Definition.swift
+[29]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936BngDefinition.swift
+[30]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/UtmDefinition.swift
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
