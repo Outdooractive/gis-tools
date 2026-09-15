@@ -50,6 +50,11 @@ public struct CustomProjection: Sendable {
     /// algorithm dispatch.
     public var kind: ProjectionKind
 
+    /// The geodetic datum of the projection's coordinate frame. For
+    /// non-WGS84 datums, ``forward``/``inverse`` perform the datum
+    /// transformation relative to the pivot. Defaults to ``Datum/wgs84``.
+    public var datum: Datum
+
     /// The absolute value beyond which the horizontal axis wraps around
     /// (e.g. the antimeridian for geographic coordinate systems).
     /// `nil` disables wrapping.
@@ -82,6 +87,7 @@ public struct CustomProjection: Sendable {
     public init(
         srid: Int,
         kind: ProjectionKind,
+        datum: Datum = .wgs84,
         wraparoundExtent: Double? = nil,
         validExtent: ProjectionExtent? = nil,
         worldBoundingBox: BoundingBox? = nil,
@@ -91,6 +97,7 @@ public struct CustomProjection: Sendable {
     ) {
         self.srid = srid
         self.kind = kind
+        self.datum = datum
         self.wraparoundExtent = wraparoundExtent
         self.validExtent = validExtent
         self.worldBoundingBox = worldBoundingBox
@@ -137,6 +144,7 @@ struct RegisteredCustomDefinition: ProjectionDefinition {
 
     var projection: Projection { Projection(uncheckedSrid: custom.srid, definition: self) }
     var kind: ProjectionKind { custom.kind }
+    var datum: Datum { custom.datum }
     var wraparoundExtent: Double? { custom.wraparoundExtent }
     var validExtent: ProjectionExtent? { custom.validExtent }
     var worldBoundingBox: BoundingBox? { custom.worldBoundingBox }

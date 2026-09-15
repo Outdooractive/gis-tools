@@ -27,7 +27,8 @@ struct ProjectionWktMatcherTests {
     @Test
     func unrecognized() async throws {
         #expect(Projection(wkt: "PROJCS[\"Something Else\"]") == nil)
-        #expect(Projection(wkt: "GEOGCS[\"ETRS89\"]") == nil)
+        // ETRS89 is a registered projection with its own WKT fragments.
+        #expect(Projection(wkt: "GEOGCS[\"ETRS89\"]") == .epsg4258)
         #expect(Projection(wkt: "") == nil)
     }
 

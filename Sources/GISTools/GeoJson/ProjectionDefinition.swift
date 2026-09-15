@@ -15,6 +15,9 @@ protocol ProjectionDefinition: Sendable {
     /// The semantic category of the projection.
     var kind: ProjectionKind { get }
 
+    /// The geodetic datum of the projection's coordinate frame.
+    var datum: Datum { get }
+
     /// The valid coordinate extent of the projection, or `nil` if the
     /// coordinate space is unbounded (e.g. geocentric or no SRID).
     var validExtent: ProjectionExtent? { get }
@@ -53,6 +56,17 @@ protocol ProjectionDefinition: Sendable {
 
 }
 
+extension ProjectionDefinition {
+
+    /// The geodetic datum of the projection's coordinate frame.
+    ///
+    /// Default is ``Datum/wgs84``; datum-capable projections override this.
+    var datum: Datum {
+        .wgs84
+    }
+
+}
+
 /// Registry providing ``ProjectionDefinition`` implementations for
 /// registered projections.
 ///
@@ -71,6 +85,10 @@ enum ProjectionRegistry {
     private static let epsg4978Definition = Epsg4978Definition()
     private static let epsg3395Definition = Epsg3395Definition()
     private static let epsg32662Definition = Epsg32662Definition()
+    private static let nad27Definition = Nad27Definition()
+    private static let etrs89Definition = Etrs89Definition()
+    private static let osgb1936Definition = Osgb1936Definition()
+    private static let osgb1936BngDefinition = Osgb1936BngDefinition()
 
     /// All built-in definitions: the 6 base definitions and all UTM zones,
     /// keyed by canonical SRID.
@@ -85,6 +103,10 @@ enum ProjectionRegistry {
             4978: epsg4978Definition,
             3395: epsg3395Definition,
             32_662: epsg32662Definition,
+            4258: etrs89Definition,
+            4267: nad27Definition,
+            4277: osgb1936Definition,
+            27700: osgb1936BngDefinition,
         ]
 
         for srid in 32_601 ... 32_660 {
@@ -110,8 +132,12 @@ enum ProjectionRegistry {
 
     private static let builtinWktDefinitions: [any ProjectionDefinition] = [
         epsg3857Definition,
+        osgb1936BngDefinition,
         epsg3395Definition,
         epsg32662Definition,
+        etrs89Definition,
+        nad27Definition,
+        osgb1936Definition,
         epsg4978Definition,
         epsg4326Definition,
     ]

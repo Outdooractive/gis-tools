@@ -18,6 +18,13 @@ extension Double {
         self.remainder(dividingBy: 2.0 * .pi) * 180.0 / .pi
     }
 
+    /// Converts an angle in arc seconds to radians.
+    ///
+    /// - Returns: The angle in radians.
+    public var arcSecondsToRadians: Self {
+        self / 3_600.0 * .pi / 180.0
+    }
+
 }
 
 extension Double {

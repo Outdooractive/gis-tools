@@ -32,6 +32,15 @@ public struct Projection:
     /// EPSG:32662 - WGS 84 / Plate Carree, equirectangular
     /// (https://epsg.io/32662).
     public static let epsg32662 = Projection.builtin(srid: 32_662)
+    /// EPSG:4258 - ETRS89 geodetic degrees (https://epsg.io/4258).
+    /// Effectively coincides with WGS84 at meter accuracy.
+    public static let epsg4258 = Projection.builtin(srid: 4258)
+    /// EPSG:4267 - NAD27 geodetic degrees (https://epsg.io/4267).
+    public static let epsg4267 = Projection.builtin(srid: 4267)
+    /// EPSG:4277 - OSGB 1936 geodetic degrees (https://epsg.io/4277).
+    public static let epsg4277 = Projection.builtin(srid: 4277)
+    /// EPSG:27700 - OSGB 1936 / British National Grid (https://epsg.io/27700).
+    public static let epsg27700 = Projection.builtin(srid: 27_700)
     // UTM zones (northern EPSG:32601-32660, southern EPSG:32701-32760).
     /// EPSG:32601 - UTM zone 1N (https://epsg.io/32601).
     public static let epsg32601 = Projection.builtin(srid: 32601)
@@ -455,6 +464,12 @@ extension Projection {
     /// `false` for ``Projection/noSRID``, `true` otherwise.
     public var hasSRID: Bool {
         kind != .undefined
+    }
+
+    /// The geodetic datum of the receiver's coordinate frame, resolved from
+    /// the projection's captured definition.
+    public var datum: Datum {
+        definition.datum
     }
 
     /// The absolute value beyond which the receiver's horizontal axis wraps

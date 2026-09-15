@@ -451,7 +451,11 @@ let projectedBack = mercator.projected(to: .epsg4326)
 print(projection.description, projection.srid)
 ```
 
-Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections (EPSG:4326, 3857, 4978, 3395, 32662 and all 120 UTM zones), custom projections can be registered - registration is add-only, applied for the whole process, typically at startup:
+Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections (EPSG:4326, 3857, 4978, 3395, 32662, 4258/ETRS89, 4267/NAD27, 4277/OSGB 1936, 27700/British National Grid and all 120 UTM zones), custom projections can be registered - registration is add-only, applied for the whole process, typically at startup:
+```swift
+let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0).projected(to: .epsg4267)  // NAD27
+let datum = Projection.epsg27700.datum  // Datum.osgb1936, Airy 1830
+```
 
 ```swift
 let custom = CustomProjection(
@@ -472,6 +476,11 @@ let customProjection = try Projection(srid: 900_001)
 ```
 
 All algorithms dispatch on the projection *kind* (geographic/planar/geocentric) and honor the definition's capabilities (wraparound extents, valid ranges, world bounding boxes), so custom projections work across the whole library like built-in ones.
+
+### Datum accuracy note
+The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m). Sub-meter-centimeter accuracy for NAD27 (NADCON) or Great Britain (OSTN15, EPSG:7709) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized in HELMERT via `HelmertTransformation` for use in your own `CustomProjection` definitions.
+
+Attribution: EPSG parameter values are based on the EPSG dataset (https://epsg.org) used under its terms; OS transform parameters reference the Ordnance Survey *Guide to Coordinate Systems in Great Britain*.
 
 ## BoundingBox
 [Implementation][18] / [BoundingBox test cases][19]
@@ -1702,3 +1711,5 @@ Thomas Rasch, Outdooractive
 
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
+
+[#248]:	https://github.com/Outdooractive/gis-tools/issues/248
