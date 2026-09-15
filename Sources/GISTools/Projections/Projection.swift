@@ -51,6 +51,32 @@ public struct Projection:
     public static let epsg29903 = Projection.builtin(srid: 29_903)
     /// EPSG:2157 - IRENET95 / Irish Transverse Mercator (https://epsg.io/2157).
     public static let epsg2157 = Projection.builtin(srid: 2157)
+    /// EPSG:3035 - ETRS89-LAEA Europe, the EU-wide equal-area grid
+    /// (https://epsg.io/3035).
+    public static let epsg3035 = Projection.builtin(srid: 3035)
+    /// EPSG:3034 - ETRS89-LCC Europe, the European Lambert conformal
+    /// conic (https://epsg.io/3034).
+    public static let epsg3034 = Projection.builtin(srid: 3034)
+    /// EPSG:2154 - RGF93 / Lambert-93, the official French grid
+    /// (https://epsg.io/2154).
+    public static let epsg2154 = Projection.builtin(srid: 2154)
+    /// EPSG:28992 - Amersfoort / RD New, the official Dutch grid
+    /// (https://epsg.io/28992).
+    public static let epsg28992 = Projection.builtin(srid: 28_992)
+    /// EPSG:25831 - ETRS89 / UTM zone 31N (https://epsg.io/25831).
+    public static let epsg25831 = Projection.builtin(srid: 25_831)
+    /// EPSG:25832 - ETRS89 / UTM zone 32N (https://epsg.io/25832).
+    public static let epsg25832 = Projection.builtin(srid: 25_832)
+    /// EPSG:25833 - ETRS89 / UTM zone 33N (https://epsg.io/25833).
+    public static let epsg25833 = Projection.builtin(srid: 25_833)
+    /// EPSG:25834 - ETRS89 / UTM zone 34N (https://epsg.io/25834).
+    public static let epsg25834 = Projection.builtin(srid: 25_834)
+    /// EPSG:25835 - ETRS89 / UTM zone 35N (https://epsg.io/25835).
+    public static let epsg25835 = Projection.builtin(srid: 25_835)
+    /// EPSG:25836 - ETRS89 / UTM zone 36N (https://epsg.io/25836).
+    public static let epsg25836 = Projection.builtin(srid: 25_836)
+    /// EPSG:25837 - ETRS89 / UTM zone 37N (https://epsg.io/25837).
+    public static let epsg25837 = Projection.builtin(srid: 25_837)
     // UTM zones (northern EPSG:32601-32660, southern EPSG:32701-32760).
     /// EPSG:32601 - UTM zone 1N (https://epsg.io/32601).
     public static let epsg32601 = Projection.builtin(srid: 32601)
@@ -517,16 +543,29 @@ private enum UtmWktIdentification {
     /// ambiguous and no result is returned rather than a guess. When the
     /// string also carries a `Central_Meridian` parameter, it must agree
     /// with the identified zone.
+    ///
+    /// Strings that name the ETRS89 datum next to the zone token
+    /// (e.g. `PROJCS["ETRS89 / UTM zone 32N"...]`) resolve into the
+    /// EPSG:25831–25837 belt instead of the WGS84 zones wherever the EPSG
+    /// defines the datum-zoned pairing.
     static func projection(in wkt: String) -> Projection? {
         // A UTM zone token, e.g. `UTM Zone 19N` or `UTM_Zone_5s`.
         let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*(\d{1,2})[\s_]*([NS])/
         // A central meridian parameter, e.g. `"Central_Meridian",-69`.
         let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
+        // An ETRS89 datum token, e.g. `ETRS89` or the ESRI `ETRS_1989`.
+        let etrsRegex = /(?i)ETRS[\s_]*(?:89|1989)/
 
         guard let zoneMatch = wkt.firstMatch(of: zoneRegex) else { return nil }
 
         guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
         let isSouthern = zoneMatch.2.uppercased() == "S"
+
+        // The ETRS89 belt: EPSG:25831–25837 (Northern only).
+        if wkt.firstMatch(of: etrsRegex) != nil, !isSouthern, (31 ... 37).contains(zone) {
+            return Projection(srid: 25_800 + zone)
+        }
+
         let srid = isSouthern ? 32_700 + zone : 32_600 + zone
 
         if let meridianMatch = wkt.firstMatch(of: centralMeridianRegex) {

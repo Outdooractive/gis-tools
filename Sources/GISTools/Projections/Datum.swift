@@ -144,6 +144,14 @@ public struct Datum:
         realization: "Irish realization of ETRS89",
         ellipsoid: .grs80)
 
+    /// Amersfoort, the Dutch national datum on the Bessel 1841 ellipsoid
+    /// (EPSG:4289; used by EPSG:28992, RD New). Transformations use the
+    /// published "Amersfoort to WGS 84 (4)" Euler parameters.
+    public static let amersfoort = Datum(
+        name: "Amersfoort",
+        realization: "Dutch national triangulation (1850-1985)",
+        ellipsoid: .bessel1841)
+
     /// A human readable datum name.
     public let name: String
 

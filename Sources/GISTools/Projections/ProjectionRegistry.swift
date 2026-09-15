@@ -28,9 +28,13 @@ enum ProjectionRegistry {
     private static let irishGridTM65Definition = IrishGridTM65Definition()
     private static let irishGridTM75Definition = IrishGridTM75Definition()
     private static let irishTransverseMercatorDefinition = IrishTransverseMercatorDefinition()
+    private static let etrs89LaeaDefinition = Etrs89LaeaDefinition()
+    private static let etrs89LccDefinition = Etrs89LccDefinition()
+    private static let lambert93Definition = Lambert93Definition()
+    private static let rdNewDefinition = RdNewDefinition()
 
-    /// All built-in definitions: the 6 base definitions and all UTM zones,
-    /// keyed by canonical SRID.
+    /// All built-in definitions: the base definitions and all UTM zone
+    /// belts, keyed by canonical SRID.
     ///
     /// `UtmTests` sweeps every UTM SRID and asserts that lookups resolve to
     /// definitions whose ``ProjectionDefinition/projection`` matches.
@@ -51,6 +55,10 @@ enum ProjectionRegistry {
             29_902: irishGridTM65Definition,
             29_903: irishGridTM75Definition,
             2157: irishTransverseMercatorDefinition,
+            3035: etrs89LaeaDefinition,
+            3034: etrs89LccDefinition,
+            2154: lambert93Definition,
+            28992: rdNewDefinition,
         ]
 
         for srid in 32_601 ... 32_660 {
@@ -58,6 +66,9 @@ enum ProjectionRegistry {
         }
         for srid in 32_701 ... 32_760 {
             map[srid] = UtmDefinition.definition(forSrid: srid)
+        }
+        for srid in 25_831 ... 25_837 {
+            map[srid] = Etrs89UtmDefinition.definition(forSrid: srid)
         }
 
         return map
@@ -82,6 +93,10 @@ enum ProjectionRegistry {
         irishGridTM75Definition,
         irishGridTM65Definition,
         irishTransverseMercatorDefinition,
+        rdNewDefinition,
+        lambert93Definition,
+        etrs89LaeaDefinition,
+        etrs89LccDefinition,
         epsg3395Definition,
         epsg32662Definition,
         etrs89Definition,
