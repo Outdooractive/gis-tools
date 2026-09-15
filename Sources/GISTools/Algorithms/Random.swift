@@ -118,7 +118,7 @@ extension BoundingBox {
 
     /// The world bounding box projected to the given CRS.
     private static func worldBox(projection: Projection) -> BoundingBox {
-        guard let worldBox = ProjectionRegistry.definition(for: projection).worldBoundingBox else {
+        guard let worldBox = projection.definition.worldBoundingBox else {
             // No defined world extent: fall back to the EPSG:4326 world box.
             return BoundingBox.world
         }

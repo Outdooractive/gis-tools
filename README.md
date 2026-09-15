@@ -438,6 +438,41 @@ let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
 print(coordinate.isZero)
 ```
 
+## Projections
+[Implementation][20]
+
+Coordinates born as EPSG:4326 or EPSG:3857 know their projection and all operations keep them there. Coordinates can be re-projected:
+
+```swift
+let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0)
+let utm19 = coordinate.projected(to: .epsg32619)   // UTM zone 19N
+let mercator = utm19.projected(to: .epsg3857)
+let projectedBack = mercator.projected(to: .epsg4326)
+print(projection.description, projection.srid)
+```
+
+Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections (EPSG:4326, 3857, 4978, 3395, 32662 and all 120 UTM zones), custom projections can be registered - registration is add-only, applied for the whole process, typically at startup:
+
+```swift
+let custom = CustomProjection(
+    srid: 900_001,
+    kind: .planar,
+    validExtent: ProjectionExtent(minX: -200_000, minY: -200_000, maxX: 200_000, maxY: 200_000),
+    forward: { coordinate in
+        Coordinate3D(latitude: coordinate.latitude * 1_000.0,
+                     longitude: coordinate.longitude * 1_000.0)
+    },
+    inverse: { coordinate in
+        Coordinate3D(latitude: coordinate.latitude / 1_000.0,
+                     longitude: coordinate.longitude / 1_000.0)
+    })
+Projection.register(custom)
+
+let customProjection = try Projection(srid: 900_001)
+```
+
+All algorithms dispatch on the projection *kind* (geographic/planar/geocentric) and honor the definition's capabilities (wraparound extents, valid ranges, world bounding boxes), so custom projections work across the whole library like built-in ones.
+
 ## BoundingBox
 [Implementation][18] / [BoundingBox test cases][19]
 
@@ -1399,7 +1434,7 @@ Thomas Rasch, Outdooractive
 [17]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/CoordinateTests.swift
 [18]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/BoundingBox.swift
 [19]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/BoundingBoxTests.swift
-[20]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Point.swift
+[20]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Projection.swift
 [21]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/PointTests.swift
 [22]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/MultiPoint.swift
 [23]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiPointTests.swift

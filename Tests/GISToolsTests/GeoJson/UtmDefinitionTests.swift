@@ -11,7 +11,7 @@ struct UtmDefinitionTests {
     func sridMapping() async throws {
         for zone in 1 ... 60 {
             let northern = try #require(Projection(srid: 32_600 + zone))
-            #expect(northern.rawValue == 32_600 + zone)
+            #expect(northern.srid == 32_600 + zone)
             let northernDefinition = UtmDefinition.definition(for: northern)
             #expect(northernDefinition?.zone == zone)
             #expect(northernDefinition?.hemisphere == .north)
@@ -36,15 +36,15 @@ struct UtmDefinitionTests {
     func registryCoverage() async throws {
         for srid in [0, 3857, 4326, 4978, 3395, 32662] {
             let projection = try #require(Projection(srid: srid))
-            #expect(ProjectionRegistry.definition(for: projection).projection == projection)
+            #expect(projection.definition.projection == projection)
         }
         for srid in 32_601 ... 32_660 {
             let projection = try #require(Projection(srid: srid))
-            #expect(ProjectionRegistry.definition(for: projection).projection == projection)
+            #expect(projection.definition.projection == projection)
         }
         for srid in 32_701 ... 32_760 {
             let projection = try #require(Projection(srid: srid))
-            #expect(ProjectionRegistry.definition(for: projection).projection == projection)
+            #expect(projection.definition.projection == projection)
         }
     }
 
@@ -84,12 +84,12 @@ struct UtmDefinitionTests {
     func utmConvenienceApi() async throws {
         for zone in [1, 19, 33, 60] {
             let northern = try #require(Projection(utmZone: zone, hemisphere: .north))
-            #expect(northern.rawValue == 32_600 + zone)
+            #expect(northern.srid == 32_600 + zone)
             #expect(northern.utmZone == zone)
             #expect(northern.utmHemisphere == .north)
 
             let southern = try #require(Projection(utmZone: zone, hemisphere: .south))
-            #expect(southern.rawValue == 32_700 + zone)
+            #expect(southern.srid == 32_700 + zone)
             #expect(southern.utmZone == zone)
             #expect(southern.utmHemisphere == .south)
         }

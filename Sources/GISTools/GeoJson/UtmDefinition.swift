@@ -32,14 +32,30 @@ public enum UtmHemisphere: Sendable {
 /// and matches the use expected of UTM coordinates.
 struct UtmDefinition: ProjectionDefinition {
 
-    /// The projection case of the zone (EPSG:326xx/327xx).
-    let projection: Projection
+    /// The projection of the zone (EPSG:326xx/327xx), carrying this
+    /// definition itself.
+    var projection: Projection {
+        Projection(uncheckedSrid: srid, definition: self)
+    }
+
+    private var srid: Int {
+        hemisphere == .north ? 32_600 + zone : 32_700 + zone
+    }
 
     /// The UTM zone number, 1–60.
     let zone: Int
 
     /// The hemisphere the zone covers.
     let hemisphere: UtmHemisphere
+
+    /// Creates a UTM definition from its zone number and hemisphere.
+    init(
+        zone: Int,
+        hemisphere: UtmHemisphere
+    ) {
+        self.zone = zone
+        self.hemisphere = hemisphere
+    }
 
     /// The UTM central scale factor.
     private static let k0 = 0.9996
@@ -55,13 +71,12 @@ struct UtmDefinition: ProjectionDefinition {
     var kind: ProjectionKind { .planar }
 
     /// The EPSG-defined sector extent of the zone.
-    var validExtent: (minX: Double, minY: Double, maxX: Double, maxY: Double)? {
-        (
+    var validExtent: ProjectionExtent? {
+        ProjectionExtent(
             minX: 100_000.0,
             minY: 0.0,
             maxX: 900_000.0,
-            maxY: 10_000_000.0
-        )
+            maxY: 10_000_000.0)
     }
 
     /// The sector of the zone in its own coordinates (the full extent of
@@ -71,6 +86,11 @@ struct UtmDefinition: ProjectionDefinition {
         return BoundingBox(
             southWest: Coordinate3D(x: extent.minX, y: extent.minY, projection: projection),
             northEast: Coordinate3D(x: extent.maxX, y: extent.maxY, projection: projection))
+    }
+
+    /// UTM zone coordinates never wrap.
+    var wraparoundExtent: Double? {
+        nil
     }
 
     /// UTM zones have no unique WKT fragment.
@@ -86,8 +106,14 @@ struct UtmDefinition: ProjectionDefinition {
     /// - Parameter projection: The projection to look up
     /// - Returns: The definition for the zone, or `nil` if the projection is not UTM
     static func definition(for projection: Projection) -> UtmDefinition? {
-        let srid = projection.rawValue
+        definition(forSrid: projection.srid)
+    }
 
+    /// Returns the UTM definition for a canonical SRID.
+    ///
+    /// - Parameter srid: An EPSG:326xx/327xx SRID
+    /// - Returns: The definition for the zone, or `nil` if the SRID is not UTM
+    static func definition(forSrid srid: Int) -> UtmDefinition? {
         let isNorthern = srid >= 32_601 && srid <= 32_660
         let isSouthern = srid >= 32_701 && srid <= 32_760
         guard isNorthern || isSouthern else { return nil }
@@ -96,7 +122,7 @@ struct UtmDefinition: ProjectionDefinition {
         let zone = isNorthern ? srid - 32_600 : srid - 32_700
         guard zone >= 1, zone <= 60 else { return nil }
 
-        return UtmDefinition(projection: projection, zone: zone, hemisphere: hemisphere)
+        return UtmDefinition(zone: zone, hemisphere: hemisphere)
     }
 
     // MARK: - Conversions
@@ -224,18 +250,5 @@ extension Projection {
         UtmDefinition.definition(for: self)?.hemisphere
     }
 
-    /// Creates a UTM zone projection from its zone number and hemisphere.
-    ///
-    /// - Parameters:
-    ///     - utmZone: The UTM zone number (`1 ... 60`)
-    ///     - hemisphere: The hemisphere the zone covers
-    /// - Returns: The zone projection, or `nil` for an invalid zone number
-    public init?(utmZone: Int, hemisphere: UtmHemisphere) {
-        guard utmZone >= 1, utmZone <= 60 else { return nil }
-
-        let srid = hemisphere == .north ? 32_600 + utmZone : 32_700 + utmZone
-        guard let projection = Projection(srid: srid) else { return nil }
-        self = projection
-    }
 
 }

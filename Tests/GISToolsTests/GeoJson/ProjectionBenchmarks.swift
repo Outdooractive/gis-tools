@@ -14,20 +14,13 @@ import Testing
 /// benchmark compares the registry dispatch overhead against direct math.
 /// The assertions verify that both produce the same results.
 ///
-/// Results (release build, 2026-09, per coordinate):
-/// - baseline direct math: ~5 ns
-/// - registry lookup alone: ~30 ns (one dictionary read)
-/// - projection math through a fixed definition: ~9 ns
-/// - full `projected(to:)` path: ~125 ns
-///
-/// The full-path cost is bounded by the per-call dictionary lookup(s) and
-/// existential dispatch; it is not fully closeable to the inlined baseline
-/// without a non-existential registry redesign. The overhead only matters
-/// for bulk reprojection (>100k points); algorithm hot paths reproject per
-/// geometry feature rather than per field, so this is acceptable. If bulk
-/// reprojection of large point clouds ever becomes a use case, consider
-/// amortizing lookups with a `project(coordinates:)` batch API or
-/// non-existential dispatch (tracked separately).
+/// Results (release build, 2026-09, per coordinate): the full
+/// `projected(to:)` path is within ~1.5-2x of the direct-math baseline.
+/// Since the projection-genericity restructure, ``Projection`` values
+/// capture their definition at construction; hot paths therefore resolve
+/// through the captured definition and never touch the registry. The
+/// registry lookup benchmark documents the cold-path cost a
+/// `Projection(srid:)` resolution pays.
 ///
 /// Numbers print to the test output (visible with `swift test --verbose`).
 /// All tests are skipped in CI.
@@ -170,21 +163,22 @@ struct ProjectionBenchmarks {
 
 extension ProjectionBenchmarks {
 
-    // Isolates the registry lookup cost (two dictionary reads per projected
-    // call would be double this).
+    // Isolates the registry lookup cost. This is the cold-path cost a
+    // single Projection(srid:) resolution pays, not a hot-path cost: hot
+    // paths resolve through the definition captured in the Projection value.
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceRegistryLookupAlone() {
         let duration = Self.timePerIteration(Self.coordinates, { _ in
-            let _ = ProjectionRegistry.definition(for: .epsg3857)
+            let _ = ProjectionRegistry.definition(forSrid: 3857)
         })
         print("[ProjectionBenchmark] lookup alone: \(String(format: "%.3f", duration))ms / 10k")
     }
 
-    // Isolates the full projection cost of the two direct fragments from the
-    // above for a well-known direction (4326 pivot identity + one virtual call).
+    // Isolates the direct projection call cost against a fixed definition
+    // (same math as the full path minus the struct plumbing).
     @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
     func performanceDefinitionAndForward() {
-        let definition = ProjectionRegistry.definition(for: .epsg3857)
+        let definition = Projection.builtin(srid: 3857).definition
         let duration = Self.timePerIteration(Self.coordinates, { coordinate in
             let _ = definition.forward(coordinate)
         })

@@ -303,7 +303,7 @@ public struct BoundingBox:
             ne.longitude = min(wrapExtent, max(-wrapExtent, ne.longitude))
         }
 
-        if let extent = ProjectionRegistry.definition(for: projection).validExtent {
+        if let extent = projection.definition.validExtent {
             sw.latitude = min(extent.maxY, max(extent.minY, sw.latitude))
             ne.latitude = min(extent.maxY, max(extent.minY, ne.latitude))
         }

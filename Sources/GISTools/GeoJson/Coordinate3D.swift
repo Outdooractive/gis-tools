@@ -415,7 +415,7 @@ extension Coordinate3D {
     ///
     /// - Returns: A copy clamped to the valid coordinate range
     public func clamped() -> Coordinate3D {
-        guard let extent = ProjectionRegistry.definition(for: projection).validExtent
+        guard let extent = projection.definition.validExtent
         else { return self }
 
         guard longitude < extent.minX || longitude > extent.maxX
@@ -467,14 +467,14 @@ extension Coordinate3D: Projectable {
         // both directions - this is the common case for GeoJSON (4326) and
         // hot reprojection loops.
         if projection == .epsg4326 {
-            return ProjectionRegistry.definition(for: newProjection).forward(self)
+            return newProjection.definition.forward(self)
         }
         if newProjection == .epsg4326 {
-            return ProjectionRegistry.definition(for: projection).inverse(self)
+            return projection.definition.inverse(self)
         }
 
-        let pivot = ProjectionRegistry.definition(for: projection).inverse(self)
-        return ProjectionRegistry.definition(for: newProjection).forward(pivot)
+        let pivot = projection.definition.inverse(self)
+        return newProjection.definition.forward(pivot)
     }
 
     /// Project this coordinate's latitude.
@@ -749,7 +749,7 @@ extension Coordinate3D {
     ///
     /// - SeeAlso: ``Projection/validExtent``
     public var isValid: Bool {
-        guard let extent = ProjectionRegistry.definition(for: projection).validExtent
+        guard let extent = projection.definition.validExtent
         else { return true }
 
         return longitude >= extent.minX
