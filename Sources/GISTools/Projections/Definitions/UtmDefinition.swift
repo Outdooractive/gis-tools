@@ -21,15 +21,18 @@ public enum UtmHemisphere: Sendable {
 
 /// Transverse Mercator math for a single UTM zone.
 ///
-/// Uses the standard Snyder transverse Mercator formulas (*Map Projections -
-/// A Working Manual*, USGS PP 1395) on the WGS84 ellipsoid with the UTM
+/// Uses Karney's transverse Mercator algorithm (the Krüger series extended
+/// to 6th order, *Transverse Mercator with an accuracy of a few
+/// nanometers*, arXiv:1002.1417) on the WGS84 ellipsoid with the UTM
 /// central scale factor of 0.9996. Coordinates are easting/northing in
 /// meters with a false easting of 500_000 m and a false northing of
 /// 0 m (northern zones) or 10_000_000 m (southern zones).
 ///
-/// The formulas lose accuracy farther than about ±3–4° from the zone's
-/// central meridian, which is inherent to the transverse Mercator series
-/// and matches the use expected of UTM coordinates.
+/// The mapping is accurate to a few nanometers essentially anywhere in the
+/// zone (and well beyond it); the Snyder series it replaces degrades
+/// quickly farther than about ±3–4° from the zone's central meridian.
+/// Compared to Snyder the results shift at the sub-millimeter level
+/// in-zone (both are valid UTM within the EPSG-defined accuracy).
 struct UtmDefinition: ProjectionDefinition {
 
     /// The projection of the zone (EPSG:326xx/327xx), carrying this
@@ -68,7 +71,9 @@ struct UtmDefinition: ProjectionDefinition {
         Double((zone - 1) * 6 - 180 + 3) * .pi / 180.0
     }
 
-    var kind: ProjectionKind { .planar }
+    var kind: ProjectionKind {
+        .planar
+    }
 
     /// The EPSG-defined sector extent of the zone.
     var validExtent: ProjectionExtent? {
@@ -83,6 +88,7 @@ struct UtmDefinition: ProjectionDefinition {
     /// the projection: a UTM zone covers no "world" extent).
     var worldBoundingBox: BoundingBox? {
         guard let extent = validExtent else { return nil }
+
         return BoundingBox(
             southWest: Coordinate3D(x: extent.minX, y: extent.minY, projection: projection),
             northEast: Coordinate3D(x: extent.maxX, y: extent.maxY, projection: projection))
@@ -127,16 +133,15 @@ struct UtmDefinition: ProjectionDefinition {
 
     // MARK: - Conversions
 
-    // The UTM convention applies the Snyder transverse Mercator formulas on
-    // the WGS84 ellipsoid with the 0.9996 scale factor and the per-zone
-    // false easting/northing; delegating to the parameterized math keeps
-    // the UTM zones and other TM-based CRSs (EPSG:27700 etc.) on the same
-    // implementation.
+    // The UTM convention applies Karney's transverse Mercator on the WGS84
+    // ellipsoid with the 0.9996 scale factor and the per-zone false
+    // easting/northing; the parameterized math keeps the UTM zones and
+    // other TM-based CRSs on the same implementation.
 
     /// Hoisted batch conversion functions: the TM parameterization is
     /// built once per batch instead of per coordinate.
     var prepared: BatchPreparedTransforms {
-        let tm = transverseMercator
+        let tm = karneyTransverseMercator
         let projection = self.projection
 
         return BatchPreparedTransforms(
@@ -163,11 +168,10 @@ struct UtmDefinition: ProjectionDefinition {
             })
     }
 
-    /// The Snyder transverse Mercator setup of the zone.
-    var transverseMercator: TransverseMercatorMath {
-        TransverseMercatorMath(
+    /// The Karney transverse Mercator setup of the zone.
+    var karneyTransverseMercator: KarneyTransverseMercatorMath {
+        KarneyTransverseMercatorMath(
             ellipsoid: Ellipsoid.wgs84,
-            latitudeOfOrigin: 0.0,
             longitudeOfOrigin: centralMeridian * 180.0 / .pi,
             scaleFactor: Self.k0,
             falseEasting: Self.falseEasting,
@@ -175,7 +179,7 @@ struct UtmDefinition: ProjectionDefinition {
     }
 
     func forward(_ coordinate: Coordinate3D) -> Coordinate3D {
-        let (easting, northing) = transverseMercator.forward(
+        let (easting, northing) = karneyTransverseMercator.forward(
             latitude: coordinate.latitude,
             longitude: coordinate.longitude)
 
@@ -188,7 +192,7 @@ struct UtmDefinition: ProjectionDefinition {
     }
 
     func inverse(_ coordinate: Coordinate3D) -> Coordinate3D {
-        let (latitude, longitude) = transverseMercator.inverse(
+        let (latitude, longitude) = karneyTransverseMercator.inverse(
             x: coordinate.longitude,
             y: coordinate.latitude)
 
@@ -197,22 +201,6 @@ struct UtmDefinition: ProjectionDefinition {
             longitude: longitude,
             altitude: coordinate.altitude,
             m: coordinate.m)
-    }
-
-    // MARK: - Snippet helpers
-
-    /// Snyder meridian arc length (formulas 3-21) from the equator to `phi`,
-    /// in meters.
-    private static func meridianArc(_ phi: Double) -> Double {
-        let a = GISTool.equatorialRadius
-        let e2 = GISTool.wgs84EccentricitySquared
-
-        return a * (
-            (1.0 - e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * pow(e2, 3) / 256.0) * phi
-                - (3.0 * e2 / 8.0 + 3.0 * e2 * e2 / 32.0 + 45.0 * pow(e2, 3) / 1024.0) * sin(2.0 * phi)
-                + (15.0 * e2 * e2 / 256.0 + 45.0 * pow(e2, 3) / 1024.0) * sin(4.0 * phi)
-                - (35.0 * pow(e2, 3) / 3072.0) * sin(6.0 * phi)
-        )
     }
 
 }
@@ -234,6 +222,5 @@ extension Projection {
         UtmDefinition.definition(for: self)?.hemisphere
             ?? Etrs89UtmDefinition.definition(forSrid: srid).map { _ in .north }
     }
-
 
 }

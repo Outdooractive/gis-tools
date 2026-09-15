@@ -26,9 +26,13 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
         self.zone = zone
     }
 
-    var kind: ProjectionKind { .planar }
+    var kind: ProjectionKind {
+        .planar
+    }
 
-    var datum: Datum { .etrs89 }
+    var datum: Datum {
+        .etrs89
+    }
 
     var validExtent: ProjectionExtent? {
         ProjectionExtent(
@@ -40,12 +44,15 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
 
     var worldBoundingBox: BoundingBox? {
         guard let extent = validExtent else { return nil }
+
         return BoundingBox(
             southWest: Coordinate3D(x: extent.minX, y: extent.minY, projection: projection),
             northEast: Coordinate3D(x: extent.maxX, y: extent.maxY, projection: projection))
     }
 
-    var wraparoundExtent: Double? { nil }
+    var wraparoundExtent: Double? {
+        nil
+    }
 
     var wktMatchers: [[String]] {
         // Identified through the UTM zone token evaluation in
@@ -54,10 +61,10 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
         []
     }
 
-    var transverseMercator: TransverseMercatorMath {
-        TransverseMercatorMath(
+    /// The Karney transverse Mercator setup of the zone.
+    var karneyTransverseMercator: KarneyTransverseMercatorMath {
+        KarneyTransverseMercatorMath(
             ellipsoid: .grs80,
-            latitudeOfOrigin: 0.0,
             longitudeOfOrigin: Double((zone - 1) * 6 - 180 + 3),
             scaleFactor: 0.9996,
             falseEasting: 500_000.0,
@@ -65,7 +72,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
     }
 
     var prepared: BatchPreparedTransforms {
-        let tm = transverseMercator
+        let tm = karneyTransverseMercator
         let projection = self.projection
 
         return BatchPreparedTransforms(
@@ -93,7 +100,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
     }
 
     func forward(_ coordinate: Coordinate3D) -> Coordinate3D {
-        let (easting, northing) = transverseMercator.forward(
+        let (easting, northing) = karneyTransverseMercator.forward(
             latitude: coordinate.latitude,
             longitude: coordinate.longitude)
 
@@ -106,7 +113,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
     }
 
     func inverse(_ coordinate: Coordinate3D) -> Coordinate3D {
-        let (latitude, longitude) = transverseMercator.inverse(
+        let (latitude, longitude) = karneyTransverseMercator.inverse(
             x: coordinate.longitude,
             y: coordinate.latitude)
 
@@ -120,6 +127,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
     /// Returns the ETRS89/UTM definition for a canonical SRID.
     static func definition(forSrid srid: Int) -> Etrs89UtmDefinition? {
         guard srid >= 25_831, srid <= 25_837 else { return nil }
+
         return Etrs89UtmDefinition(zone: srid - 25_800)
     }
 

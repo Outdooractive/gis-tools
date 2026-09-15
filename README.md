@@ -494,14 +494,14 @@ let customProjection = try Projection(srid: 900_001)
 | 4267 | NAD27 geodetic | degrees | Helmert "NAD27 to WGS 84 (4)", ~10 m | [Nad27Definition.swift][295] |
 | 4277 | OSGB 1936 geodetic | degrees | Helmert "OSGB 1936 to WGS 84 (6)", ~2 m | [Osgb1936Definition.swift][297] |
 | 27700 | OSGB 1936 / British National Grid | meters | Helmert + TM on Airy 1830 | [Osgb1936BngDefinition.swift][296] |
-| 32601–32660 | UTM zones 1N–60N | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][298] |
-| 32701–32760 | UTM zones 1S–60S | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][298] |
+| 32601–32660 | UTM zones 1N–60N | meters | transverse Mercator, Karney series (WGS84) | [UtmDefinition.swift][298] |
+| 32701–32760 | UTM zones 1S–60S | meters | transverse Mercator, Karney series (WGS84) | [UtmDefinition.swift][298] |
 | 2056 | CH1903+ / LV95 | meters | Helmert "CH1903+ to WGS 84 (1)" + Swiss oblique Mercator on Bessel 1841 | [Ch1903PlusLv95Definition.swift][285] |
 | 21781 | CH1903 / LV03 | meters | same projection, false easting/northing shifted | [Ch1903Lv03Definition.swift][286] |
 | 29902 | TM65 / Irish Grid | meters | Helmert "TM65 to WGS 84 (2)" + TM on Modified Airy | [IrishGridTM65Definition.swift][287] |
 | 29903 | TM75 / Irish Grid | meters | same projection, TM75 datum | [IrishGridTM75Definition.swift][288] |
 | 2157 | IRENET95 / Irish Transverse Mercator | meters | TM on GRS80 (≈ WGS84) | [IrishTransverseMercatorDefinition.swift][289] |
-| 25831–25837 | ETRS89/UTM zones 31N–37N | meters | transverse Mercator (GRS80, ≈ WGS84) | [Etrs89UtmDefinition.swift][299] |
+| 25831–25837 | ETRS89/UTM zones 31N–37N | meters | transverse Mercator, Karney series (GRS80, ≈ WGS84) | [Etrs89UtmDefinition.swift][299] |
 | 3035 | ETRS89-LAEA Europe | meters | Lambert azimuthal equal-area (GRS80, ≈ WGS84) | [Etrs89LaeaDefinition.swift][300] |
 | 3034 | ETRS89-LCC Europe | meters | Lambert conformal conic 35°/65° (GRS80, ≈ WGS84) | [Etrs89LccDefinition.swift][301] |
 | 2154 | RGF93 / Lambert-93 | meters | Lambert conformal conic 49°/44° (GRS80, ≈ WGS84) | [Lambert93Definition.swift][302] |
@@ -514,7 +514,7 @@ All algorithms dispatch on the projection *kind* (geographic/planar/geocentric) 
 ### Datum accuracy note
 The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid, Swiss LV95/LV03, Irish Grid TM65/TM75 and Dutch RD New) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m; "CH1903+ to WGS 84 (1)" / EPSG:1676, ~1 m; "TM65 to WGS 84 (2)" / EPSG:1641, ~1 m; "Amersfoort to WGS 84 (4)" / [EPSG:4833](https://epsg.io/4833), ~1 m). Sub-meter-centimeter accuracy for NAD27 (NADCON), Great Britain (OSTN15, EPSG:7709), Switzerland (CHENyx06a.gsb, EPSG:15486) or the Netherlands (RD-transformation grids) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized via `HelmertTransformation` for use in your own `CustomProjection` definitions.
 
-Attribution: EPSG parameter values are based on the EPSG dataset (https://epsg.org) used under its terms; OS transform parameters reference the Ordnance Survey *Guide to Coordinate Systems in Great Britain*.
+Attribution: EPSG parameter values are based on the EPSG dataset (https://epsg.org) used under its terms; OS transform parameters reference the Ordnance Survey *Guide to Coordinate Systems in Great Britain*. The UTM zones use Karney's transverse Mercator (the Krüger series to 6th order, [arXiv:1002.1417](https://arxiv.org/abs/1002.1417)), accurate to nanometers anywhere within the zones instead of the Snyder series' ±3–4° degradation; compared to the previous Snyder-based values the results shift at the sub-millimeter level in-zone.
 
 # SwiftData
 

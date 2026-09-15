@@ -10,43 +10,43 @@ struct UtmAlgorithmTests {
 
     // MARK: - Known reference values
 
-    // Validates forward values against independently computed references:
-    // the Snyder formulas were verified in Python against numerically
-    // integrated meridian arcs before being ported.
+    /// Validates forward values against independently computed references:
+    /// the Karney 6th-order Krueger series was verified in Python against
+    /// Karney's published test set (TMcoords.dat, 80-digit accuracy) and
+    /// PROJ 9.8 before being ported.
     @Test
-    func knownReferenceValues() async throws {
+    func knownReferenceValues() {
         // Zone 31N at 50N/3E (central meridian): x is exactly the false
-        // easting, y is the scaled meridian arc to 50 degrees (verified
-        // against numeric integration of the meridian radius).
+        // easting, y is the scaled meridian arc to 50 degrees.
         let zone31 = Coordinate3D(latitude: 50.0, longitude: 3.0).projected(to: .epsg32631)
         #expect(abs(zone31.longitude - 500_000.0) < 0.000001)
-        #expect(abs(zone31.latitude - 5_538_630.703) < 0.001)
+        #expect(abs(zone31.latitude - 5_538_630.702867) < 0.000001)
 
         // Zone edges at the equator are the known ±333_978.56 meter offsets
         // around the false easting (zones 1 and 60 both touch the date line).
         let zoneEdgeWest = Coordinate3D(latitude: 0.0, longitude: -180.0).projected(to: .epsg32601)
-        #expect(abs(zoneEdgeWest.longitude - 166_021.443) < 0.001)
+        #expect(abs(zoneEdgeWest.longitude - 166_021.443081) < 0.000001)
         #expect(abs(zoneEdgeWest.latitude) < 0.000001)
 
         let zoneEdgeEast = Coordinate3D(latitude: 0.0, longitude: 174.0).projected(to: .epsg32660)
-        #expect(abs(zoneEdgeEast.longitude - 166_021.443) < 0.001)
+        #expect(abs(zoneEdgeEast.longitude - 166_021.443081) < 0.000001)
 
         // Zone 19N at 41N/71W.
         let zone19 = Coordinate3D(latitude: 41.0, longitude: -71.0).projected(to: .epsg32619)
-        #expect(abs(zone19.longitude - 331_792.115) < 0.001)
-        #expect(abs(zone19.latitude - 4_540_683.529) < 0.001)
+        #expect(abs(zone19.longitude - 331_792.114806) < 0.000001)
+        #expect(abs(zone19.latitude - 4_540_683.529277) < 0.000001)
 
         // Zone 20S at 45.5S/63W: northing is below 10_000_000 (false northing).
         let zone20south = Coordinate3D(latitude: -45.5, longitude: -63.0).projected(to: .epsg32720)
         #expect(abs(zone20south.longitude - 500_000.0) < 0.000001)
-        #expect(abs(zone20south.latitude - 4_961_503.495) < 0.001)
+        #expect(abs(zone20south.latitude - 4_961_503.495567) < 0.000001)
     }
 
-    // Validates round trips between EPSG:4326 and both hemispheres of the
-    // same zone: eastings are identical and northings differ by exactly the
-    // 10_000_000 false-northing offset.
+    /// Validates round trips between EPSG:4326 and both hemispheres of the
+    /// same zone: eastings are identical and northings differ by exactly the
+    /// 10_000_000 false-northing offset.
     @Test
-    func hemisphereSymmetry() async throws {
+    func hemisphereSymmetry() {
         let equator = Coordinate3D(latitude: 0.0, longitude: -71.0)
         let north = equator.projected(to: .epsg32619)
         let south = equator.projected(to: .epsg32719)
@@ -60,10 +60,10 @@ struct UtmAlgorithmTests {
 
     // MARK: - Round trips
 
-    // Round-trips coordinates through each point's own zone across all
-    // longitudes and near-polar latitudes.
+    /// Round-trips coordinates through each point's own zone across all
+    /// longitudes and near-polar latitudes.
     @Test
-    func roundTrips() async throws {
+    func roundTrips() throws {
         let latitudes: [Double] = [0.0, 41.0, -45.5, 80.0, -80.0, 89.0, -89.0]
         let longitudes: [Double] = [-180.0, -177.0, -150.0, -71.0, 0.0, 3.0, 45.0, 150.0, 174.0, 179.0]
 
@@ -86,9 +86,9 @@ struct UtmAlgorithmTests {
 
     // MARK: - Algorithm smoke tests
 
-    // Validates bounding boxes and containment in a UTM zone.
+    /// Validates bounding boxes and containment in a UTM zone.
     @Test
-    func boundingBoxAndContains() async throws {
+    func boundingBoxAndContains() throws {
         let coordinates: [[Coordinate3D]] = [[
             Coordinate3D(x: 300_000.0, y: 4_000_000.0, projection: .epsg32619),
             Coordinate3D(x: 400_000.0, y: 4_000_000.0, projection: .epsg32619),
@@ -108,19 +108,19 @@ struct UtmAlgorithmTests {
         #expect(!polygon.contains(Coordinate3D(x: 450_000.0, y: 4_050_000.0, projection: .epsg32619)))
     }
 
-    // Validates Euclidean distance (planar kind) in a UTM zone.
+    /// Validates Euclidean distance (planar kind) in a UTM zone.
     @Test
-    func distance() async throws {
+    func distance() {
         let origin = Coordinate3D(x: 500_000.0, y: 4_000_000.0, projection: .epsg32619)
         let point = Coordinate3D(x: 500_000.0, y: 4_300_000.0, projection: .epsg32619)
 
         #expect(abs(origin.distance(from: point) - 300_000.0) < 0.000001)
     }
 
-    // Validates that the antimeridian machinery is a no-op for UTM zones:
-    // coordinates in a zone never wrap, so nothing crosses or cuts.
+    /// Validates that the antimeridian machinery is a no-op for UTM zones:
+    /// coordinates in a zone never wrap, so nothing crosses or cuts.
     @Test
-    func antimeridianIsNoop() async throws {
+    func antimeridianIsNoop() throws {
         #expect(Projection.epsg32660.wraparoundExtent == nil)
 
         // A geographic line across the date line, expressed in zone 60/1
@@ -136,9 +136,9 @@ struct UtmAlgorithmTests {
         #expect(cut.features.count == 1)
     }
 
-    // Validates normalize/clamp in a zone sector.
+    /// Validates normalize/clamp in a zone sector.
     @Test
-    func normalizeAndClamp() async throws {
+    func normalizeAndClamp() {
         // Zone coordinates never wrap (no wraparound extent).
         let normalized = Coordinate3D(x: 950_000.0, y: 5_000_000.0, projection: .epsg32619).normalized()
         #expect(normalized.longitude == 950_000.0)
@@ -148,9 +148,9 @@ struct UtmAlgorithmTests {
         #expect(clamped.latitude == 10_000_000.0)
     }
 
-    // Validates geodesic operations via the EPSG:4326 pivot.
+    /// Validates geodesic operations via the EPSG:4326 pivot.
     @Test
-    func destinationAndBearing() async throws {
+    func destinationAndBearing() {
         // 100_000 meters north of a zone point.
         // `destination()` uses a spherical earth model, so the grid northern
         // distance differs from the elipsoidal meridian arc by a few hundred
@@ -165,9 +165,9 @@ struct UtmAlgorithmTests {
 
     // MARK: - Coders
 
-    // Validates a WKB round trip with an embedded UTM zone SRID.
+    /// Validates a WKB round trip with an embedded UTM zone SRID.
     @Test
-    func wkbRoundTrip() async throws {
+    func wkbRoundTrip() throws {
         let point = Point(Coordinate3D(x: 331_792.115, y: 4_540_683.529, projection: .epsg32619))
 
         let wkb = try #require(WKBCoder.encode(geometry: point, targetProjection: .epsg32619))
@@ -180,9 +180,9 @@ struct UtmAlgorithmTests {
         #expect(abs(decoded.coordinate.y - 4_540_683.529) < 0.000001)
     }
 
-    // Validates random coordinate generation in a zone's world box.
+    /// Validates random coordinate generation in a zone's world box.
     @Test
-    func random() async throws {
+    func random() {
         let coordinate = BoundingBox.randomCoordinate(projection: .epsg32619)
         #expect(coordinate.projection == .epsg32619)
         #expect(coordinate.longitude >= 100_000.0)
