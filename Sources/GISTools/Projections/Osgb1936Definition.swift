@@ -37,6 +37,26 @@ struct Osgb1936Definition: ProjectionDefinition {
         ]
     }
 
+    /// Hoisted batch conversion functions: the Helmert rotation matrices
+    /// are built once per batch instead of per coordinate.
+    var prepared: BatchPreparedTransforms {
+        let steps = Self.helmert.prepared()
+        let projection = self.projection
+
+        return BatchPreparedTransforms(
+            forward: { coordinate in
+                Self.helmert.transform(
+                    wgs84ToDatum: coordinate,
+                    step: steps.wgs84ToDatum,
+                    targetProjection: projection)
+            },
+            inverse: { coordinate in
+                Self.helmert.transform(
+                    datumToWgs84: coordinate,
+                    step: steps.datumToWgs84)
+            })
+    }
+
     func forward(_ coordinate: Coordinate3D) -> Coordinate3D {
         Self.helmert.transform(wgs84ToDatum: coordinate, projection: projection)
     }

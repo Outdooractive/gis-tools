@@ -503,6 +503,31 @@ extension WKBCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> Coordinate3D {
+        // Single-coordinate path (Point): project directly.
+        try decodeRawCoordinate(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: byteOrder,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection,
+            decodeZ: decodeZ,
+            decodeM: decodeM)
+            .projected(to: targetProjection)
+    }
+
+    /// Decodes a coordinate in the source projection, without projecting it:
+    /// used by the coordinate-list decoders so that the list can be batch
+    /// converted once at the end (one conversion setup per geometry instead
+    /// of per coordinate).
+    private static func decodeRawCoordinate(
+        bytes: [UInt8],
+        offset: inout Int,
+        byteOrder: ByteOrder,
+        sourceProjection: Projection?,
+        targetProjection: Projection,
+        decodeZ: Bool,
+        decodeM: Bool
+    ) throws -> Coordinate3D {
         guard let sourceProjection else { throw WKBCoderError.unknownSRID }
 
         let x = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
@@ -523,10 +548,10 @@ extension WKBCoder {
             if m?.isFinite == false { m = nil }
         }
 
-        // WKB always stores x (longitude/easting) first, then y (latitude/northing).
-        // noSRID coordinates are copied verbatim by `projected(to:)`.
+        // WKB always stores x (longitude/easting) first, then y
+        // (latitude/northing). The projection stays at the source SRID:
+        // `projected(to:)` performs the conversion.
         return Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection)
-            .projected(to: targetProjection)
     }
 
     private static func decodePoint(
@@ -582,10 +607,11 @@ extension WKBCoder {
         var coordinates: [Coordinate3D] = []
 
         try count.times {
-            try coordinates.append(decodeCoordinate(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
+            try coordinates.append(decodeRawCoordinate(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
         }
 
-        return LineString(coordinates) ?? LineString()
+        // Batch conversion: one conversion setup for the whole geometry.
+        return LineString(coordinates.projected(to: targetProjection)) ?? LineString()
     }
 
     private static func decodeMultiLineString(

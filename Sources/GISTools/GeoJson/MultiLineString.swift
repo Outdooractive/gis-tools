@@ -214,7 +214,7 @@ extension MultiLineString {
         guard newProjection != projection else { return self }
 
         var lineString = MultiLineString(
-            unchecked: coordinates.map({ $0.map({ $0.projected(to: newProjection) }) }),
+            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
             calculateBoundingBox: (boundingBox != nil))
         lineString.foreignMembers = foreignMembers
         return lineString

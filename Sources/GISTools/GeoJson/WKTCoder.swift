@@ -639,14 +639,15 @@ extension WKTCoder {
             if z?.isFinite == false { z = nil }
             if m?.isFinite == false { m = nil }
 
-            // WKT always stores x (longitude/easting) first, then y (latitude/northing).
-            // noSRID coordinates are copied verbatim by `projected(to:)`.
+            // WKT always stores x (longitude/easting) first, then y
+            // (latitude/northing). Coordinates stay in the source projection
+            // while scanning; the list is batch converted once at the end
+            // (noSRID values are copied verbatim by `projected(to:)`).
             coordinates.append(
-                Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection)
-                    .projected(to: targetProjection))
+                Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection))
         }
 
-        return coordinates.nilIfEmpty
+        return coordinates.projected(to: targetProjection).nilIfEmpty
     }
 
 }

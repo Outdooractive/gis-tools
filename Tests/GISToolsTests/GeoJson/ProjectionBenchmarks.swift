@@ -59,6 +59,31 @@ struct ProjectionBenchmarks {
 
     // MARK: - Benchmark blocks
 
+    /// Runs the batch block on the whole array `iterations` times and
+    /// returns the median elapsed time in ms (the batch API converts the
+    /// array in one call, so this is the natural unit).
+    private static func timePerBatch (
+        _ coordinates: [Coordinate3D],
+        _ block: ([Coordinate3D]) -> [Coordinate3D]
+    ) -> Double {
+        let clock = ContinuousClock()
+        let _ = block(coordinates) // warmup
+
+        var durations: [Duration] = []
+        durations.reserveCapacity(iterations)
+        for _ in 0 ..< iterations {
+            let start = clock.now
+            let _ = block(coordinates)
+            durations.append(clock.now - start)
+        }
+
+        let sorted = durations.sorted()
+        let median = sorted[sorted.count / 2]
+        let components = median.components
+        return Double(components.seconds) * 1_000.0
+            + Double(components.attoseconds) / 1_000_000_000_000_000
+    }
+
     /// Projects every coordinate and returns the median elapsed time in ms.
     private static func timePerIteration(
         _ coordinates: [Coordinate3D],
@@ -145,6 +170,43 @@ struct ProjectionBenchmarks {
             let _ = coordinate.projected(to: .epsg4978).projected(to: .epsg4326)
         })
         print("[ProjectionBenchmark] registry 4326→4978→4326: \(String(format: "%.3f", duration))ms / 10k")
+    }
+
+    // Batch conversion, EPSG:4326 → EPSG:3857: hoists the conversion setup
+    // once for the whole batch (measures the amortization win over the
+    // per-coordinate path above).
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceBatch3857() {
+        let target: Projection = .epsg3857
+        let duration = Self.timePerBatch(Self.coordinates, { batch in
+            batch.projected(to: target)
+        })
+        print("[ProjectionBenchmark] batch 4326→3857: \(String(format: "%.3f", duration))ms / 10k")
+    }
+
+    // Batch conversion, EPSG:4326 → UTM zone 19N → EPSG:4326 (heaviest
+    // formula set; hoists the TM parameterization and zone origin per
+    // batch).
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceBatchUtmRoundTrip() {
+        let target: Projection = .epsg32619
+        let source: Projection = .epsg4326
+        let duration = Self.timePerBatch(Self.coordinates, { batch in
+            batch.projected(to: target).projected(to: source)
+        })
+        print("[ProjectionBenchmark] batch 4326→32619→4326: \(String(format: "%.3f", duration))ms / 10k")
+    }
+
+    // Batch conversion, EPSG:4326 → British National Grid: hoists both the
+    // Helmert matrices and the TM parameterization per batch (7-parameter
+    // datum chain).
+    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
+    func performanceBatch27700() {
+        let target: Projection = .epsg27700
+        let duration = Self.timePerBatch(Self.coordinates, { batch in
+            batch.projected(to: target)
+        })
+        print("[ProjectionBenchmark] batch 4326→27700: \(String(format: "%.3f", duration))ms / 10k")
     }
 
     // Registry path, EPSG:4326 → UTM zone 19N → EPSG:4326 (heaviest

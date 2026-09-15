@@ -133,6 +133,36 @@ struct UtmDefinition: ProjectionDefinition {
     // the UTM zones and other TM-based CRSs (EPSG:27700 etc.) on the same
     // implementation.
 
+    /// Hoisted batch conversion functions: the TM parameterization is
+    /// built once per batch instead of per coordinate.
+    var prepared: BatchPreparedTransforms {
+        let tm = transverseMercator
+        let projection = self.projection
+
+        return BatchPreparedTransforms(
+            forward: { coordinate in
+                let (easting, northing) = tm.forward(
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude)
+                return Coordinate3D(
+                    x: easting,
+                    y: northing,
+                    z: coordinate.altitude,
+                    m: coordinate.m,
+                    projection: projection)
+            },
+            inverse: { coordinate in
+                let (latitude, longitude) = tm.inverse(
+                    x: coordinate.longitude,
+                    y: coordinate.latitude)
+                return Coordinate3D(
+                    latitude: latitude,
+                    longitude: longitude,
+                    altitude: coordinate.altitude,
+                    m: coordinate.m)
+            })
+    }
+
     /// The Snyder transverse Mercator setup of the zone.
     var transverseMercator: TransverseMercatorMath {
         TransverseMercatorMath(

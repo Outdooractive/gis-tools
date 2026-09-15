@@ -165,11 +165,162 @@ public struct HelmertTransformation:
             targetProjection: .epsg4326)
     }
 
+    // MARK: - Batch
+
+    /// Batch entry point: applies an already-prepared step to a single
+    /// coordinate (the matrix construction is hoisted by the caller).
+    func transform(
+        wgs84ToDatum coordinate: Coordinate3D,
+        step: PreparedStep,
+        targetProjection: Projection? = nil
+    ) -> Coordinate3D {
+        Self.transform(coordinate, step: step, targetProjection: targetProjection ?? .epsg4326)
+    }
+
+    /// Batch entry point for the datum → WGS84 direction.
+    func transform(
+        datumToWgs84 coordinate: Coordinate3D,
+        step: PreparedStep,
+        targetProjection: Projection? = nil
+    ) -> Coordinate3D {
+        Self.transform(coordinate, step: step, targetProjection: targetProjection ?? .epsg4326)
+    }
+
+    // MARK: - Shared implementation
+
+    /// One hoisted Helmert application step: the full transformation
+    /// decision tree (matrix entries, scale, direction, ellipsoids) is
+    /// computed once for batch use.
+    struct PreparedStep: Sendable {
+
+        let dx: Double
+        let dy: Double
+        let dz: Double
+        let scale: Double
+        let transposed: Bool
+        let rxx: Double
+        let rxy: Double
+        let rxz: Double
+        let ryx: Double
+        let ryy: Double
+        let ryz: Double
+        let rzx: Double
+        let rzy: Double
+        let rzz: Double
+        let sourceEllipsoid: Ellipsoid
+        let targetEllipsoid: Ellipsoid
+
+    }
+
+    /// Builds both prepared steps (one per direction) once.
+    func prepared() -> (datumToWgs84: PreparedStep, wgs84ToDatum: PreparedStep) {
+        let rx = rx.arcSecondsToRadians
+        let ry = ry.arcSecondsToRadians
+        let rz = rz.arcSecondsToRadians
+
+        let forwardEntries = Self.rotationEntries(
+            rotationAboutX: rx,
+            rotationAboutY: ry,
+            rotationAboutZ: rz,
+            transposed: false)
+        let inverseEntries = Self.rotationEntries(
+            rotationAboutX: rx,
+            rotationAboutY: ry,
+            rotationAboutZ: rz,
+            transposed: true)
+
+        let toWgs84 = PreparedStep(
+            dx: dx,
+            dy: dy,
+            dz: dz,
+            scale: 1.0 + scalePpm / 1_000_000.0,
+            transposed: false,
+            rxx: forwardEntries.rxx,
+            rxy: forwardEntries.rxy,
+            rxz: forwardEntries.rxz,
+            ryx: forwardEntries.ryx,
+            ryy: forwardEntries.ryy,
+            ryz: forwardEntries.ryz,
+            rzx: forwardEntries.rzx,
+            rzy: forwardEntries.rzy,
+            rzz: forwardEntries.rzz,
+            sourceEllipsoid: datum.ellipsoid,
+            targetEllipsoid: Datum.wgs84.ellipsoid)
+
+        let scaleInverse = 1.0 / (1.0 + scalePpm / 1_000_000.0)
+        let toDatum = PreparedStep(
+            dx: dx,
+            dy: dy,
+            dz: dz,
+            scale: scaleInverse,
+            transposed: true,
+            rxx: inverseEntries.rxx,
+            rxy: inverseEntries.rxy,
+            rxz: inverseEntries.rxz,
+            ryx: inverseEntries.ryx,
+            ryy: inverseEntries.ryy,
+            ryz: inverseEntries.ryz,
+            rzx: inverseEntries.rzx,
+            rzy: inverseEntries.rzy,
+            rzz: inverseEntries.rzz,
+            sourceEllipsoid: Datum.wgs84.ellipsoid,
+            targetEllipsoid: datum.ellipsoid)
+
+        return (datumToWgs84: toWgs84, wgs84ToDatum: toDatum)
+    }
+
     // MARK: - Shared implementation
 
     /// Shared implementation: `coordinate` is in the frame of
-    /// `sourceEllipsoid`; `rotationIsForward` selects the datum → WGS84
-    /// direction of the stored parameters.
+    /// `step.sourceEllipsoid`; the prepared step carries the control flags
+    /// (entries, transposition, scale).
+    private static func transform(
+        _ coordinate: Coordinate3D,
+        step: PreparedStep,
+        targetProjection: Projection
+    ) -> Coordinate3D {
+        let phi = coordinate.latitude.degreesToRadians
+        let lambda = coordinate.longitude.degreesToRadians
+        let h = coordinate.altitude ?? 0.0
+
+        // Geodetic -> geocentric on the source ellipsoid.
+        let (x1, y1, z1) = geodeticToEcef(
+            latitude: phi,
+            longitude: lambda,
+            height: h,
+            ellipsoid: step.sourceEllipsoid)
+
+        // Position vector convention: E = d + s * R * X (datum → WGS84).
+        // The WGS84 → datum direction applies R^T and inverted shift/scale.
+        var ecef: (x: Double, y: Double, z: Double)
+        if step.transposed {
+            ecef.x = step.scale * (step.rxx * (x1 - step.dx) + step.rxy * (y1 - step.dy) + step.rxz * (z1 - step.dz))
+            ecef.y = step.scale * (step.ryx * (x1 - step.dx) + step.ryy * (y1 - step.dy) + step.ryz * (z1 - step.dz))
+            ecef.z = step.scale * (step.rzx * (x1 - step.dx) + step.rzy * (y1 - step.dy) + step.rzz * (z1 - step.dz))
+        }
+        else {
+            ecef.x = step.dx + step.scale * (step.rxx * x1 + step.rxy * y1 + step.rxz * z1)
+            ecef.y = step.dy + step.scale * (step.ryx * x1 + step.ryy * y1 + step.ryz * z1)
+            ecef.z = step.dz + step.scale * (step.rzx * x1 + step.rzy * y1 + step.rzz * z1)
+        }
+
+        // Geocentric -> geodetic on the target ellipsoid.
+        let (latitude, longitude, altitude) = ecefToGeodetic(
+            x: ecef.x,
+            y: ecef.y,
+            z: ecef.z,
+            ellipsoid: step.targetEllipsoid)
+
+        return Coordinate3D(
+            x: longitude,
+            y: latitude,
+            z: altitude,
+            m: coordinate.m,
+            projection: targetProjection)
+    }
+
+    /// Single-coordinate path: builds the prepared step on the fly (matrix
+    /// entries per call, identical to the previous per-call behavior).
     private static func transform(
         _ coordinate: Coordinate3D,
         sourceEllipsoid: Ellipsoid,

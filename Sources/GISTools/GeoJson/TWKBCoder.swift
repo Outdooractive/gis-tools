@@ -675,10 +675,11 @@ public enum TWKBCoder {
             let z: Double? = hasZ ? Double(baseZ) / scale : nil
             let m: Double? = hasM ? Double(baseM) / scale : nil
 
-            let coord = makeCoordinate(x: x, y: y, z: z, m: m, sourceProjection: sourceProjection)
-            coords.append(sourceProjection != targetProjection ? coord.projected(to: targetProjection) : coord)
+            coords.append(makeCoordinate(x: x, y: y, z: z, m: m, sourceProjection: sourceProjection))
         }
-        return coords
+
+        // Batch conversion: one conversion setup for the whole sequence.
+        return coords.projected(to: targetProjection)
     }
 
     // MARK: - Coordinate construction
