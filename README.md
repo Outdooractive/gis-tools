@@ -61,7 +61,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports the full [GeoJSON standard][6]
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
-- Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4277/27700 (OSGB 1936 / British National Grid) and all 120 UTM zones, plus user-definable custom projections
+- Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4277/27700 (OSGB 1936 / British National Grid), 2056/21781 (Swiss CH1903+/LV95 and CH1903/LV03), 29902/29903/2157 (Irish Grid and Irish Transverse Mercator) and all 120 UTM zones, plus user-definable custom projections
 - Supports WKT/WKB/TWKB, also with different projections
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
@@ -452,6 +452,15 @@ let projectedBack = mercator.projected(to: .epsg4326)
 print(coordinate.projection.description, coordinate.projection.srid)
 ```
 
+UTM zones can also be selected from a coordinate — including the EPSG Norway
+("32V") and Svalbard ("31X/32X/33X/35X/37X") banding exceptions:
+
+```swift
+let oslo = Coordinate3D(latitude: 59.91149, longitude: 10.75793)
+let utm = Projection.utmZone(for: oslo)   // EPSG:32632 (zone 32, the Norwegian exception)
+let osloUtm = oslo.projected(to: utm)
+```
+
 Densification, buffer, distance etc. automatically take the projection into account. Beyond the built-in projections listed below, custom projections can be registered - registration is add-only, applied for the whole process, typically at startup. Datums of built-in CRSs can be inspected via `Projection.epsg27700.datum` (== `Datum.osgb1936`, Airy 1830):
 
 ```swift
@@ -477,23 +486,28 @@ let customProjection = try Projection(srid: 900_001)
 | EPSG | Response | Coordinate units | Transformation | Source |
 | --- | --- | --- | --- | --- |
 | 4326 | WGS84 geodetic | degrees | pivot | `ProjectionDefinition.swift` |
-| 3857 | Web Mercator | meters | spherical Mercator | [Epsg3857Definition.swift][23] |
-| 4978 | WGS84 geocentric (ECEF) | meters | geodetic <-> geocentric (WGS84) | [Epsg4978Definition.swift][24] |
-| 3395 | WGS84 / World Mercator | meters | ellipsoidal Mercator | [Epsg3395Definition.swift][25] |
-| 32662 | WGS84 / Plate Carree | degrees | identity | [Epsg32662Definition.swift][26] |
-| 4258 | ETRS89 geodetic | degrees | identity (≈ WGS84) | [Etrs89Definition.swift][27] |
-| 4267 | NAD27 geodetic | degrees | Helmert "NAD27 to WGS 84 (4)", ~10 m | [Nad27Definition.swift][28] |
-| 4277 | OSGB 1936 geodetic | degrees | Helmert "OSGB 1936 to WGS 84 (6)", ~2 m | [Osgb1936Definition.swift][29] |
-| 27700 | OSGB 1936 / British National Grid | meters | Helmert + TM on Airy 1830 | [Osgb1936BngDefinition.swift][29] |
-| 32601–32660 | UTM zones 1N–60N | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][30] |
-| 32701–32760 | UTM zones 1S–60S | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][30] |
+| 3857 | Web Mercator | meters | spherical Mercator | [Epsg3857Definition.swift][290] |
+| 4978 | WGS84 geocentric (ECEF) | meters | geodetic <-> geocentric (WGS84) | [Epsg4978Definition.swift][291] |
+| 3395 | WGS84 / World Mercator | meters | ellipsoidal Mercator | [Epsg3395Definition.swift][292] |
+| 32662 | WGS84 / Plate Carree | degrees | identity | [Epsg32662Definition.swift][293] |
+| 4258 | ETRS89 geodetic | degrees | identity (≈ WGS84) | [Etrs89Definition.swift][294] |
+| 4267 | NAD27 geodetic | degrees | Helmert "NAD27 to WGS 84 (4)", ~10 m | [Nad27Definition.swift][295] |
+| 4277 | OSGB 1936 geodetic | degrees | Helmert "OSGB 1936 to WGS 84 (6)", ~2 m | [Osgb1936Definition.swift][297] |
+| 27700 | OSGB 1936 / British National Grid | meters | Helmert + TM on Airy 1830 | [Osgb1936BngDefinition.swift][296] |
+| 32601–32660 | UTM zones 1N–60N | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][298] |
+| 32701–32760 | UTM zones 1S–60S | meters | transverse Mercator (WGS84) | [UtmDefinition.swift][298] |
+| 2056 | CH1903+ / LV95 | meters | Helmert "CH1903+ to WGS 84 (1)" + Swiss oblique Mercator on Bessel 1841 | [Ch1903PlusLv95Definition.swift][285] |
+| 21781 | CH1903 / LV03 | meters | same projection, false easting/northing shifted | [Ch1903Lv03Definition.swift][286] |
+| 29902 | TM65 / Irish Grid | meters | Helmert "TM65 to WGS 84 (2)" + TM on Modified Airy | [IrishGridTM65Definition.swift][287] |
+| 29903 | TM75 / Irish Grid | meters | same projection, TM75 datum | [IrishGridTM75Definition.swift][288] |
+| 2157 | IRENET95 / Irish Transverse Mercator | meters | TM on GRS80 (≈ WGS84) | [IrishTransverseMercatorDefinition.swift][289] |
 
 Custom projections register through `Projection.register(CustomProjection)` (see [CustomProjection.swift][31]); the model types live in `Projection.swift`/`ProjectionKind.swift`/`ProjectionExtent.swift`/`Datum.swift` and the WKT matching / registry in `ProjectionRegistry.swift` resp. `ProjectionDefinition.swift` in `Sources/GISTools/Projections/`.
 
 All algorithms dispatch on the projection *kind* (geographic/planar/geocentric) and honor the definition's capabilities (wraparound extents, valid ranges, world bounding boxes), so custom projections work across the whole library like built-in ones.
 
 ### Datum accuracy note
-The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m). Sub-meter-centimeter accuracy for NAD27 (NADCON) or Great Britain (OSTN15, EPSG:7709) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized via `HelmertTransformation` for use in your own `CustomProjection` definitions.
+The datum-capable built-in projections (NAD27, OSGB 1936, British National Grid, Swiss LV95/LV03 and Irish Grid TM65/TM75) use the published EPSG Helmert transformations ("NAD27 to WGS 84 (4)", ~10 m; "OSGB 1936 to WGS 84 (6)" / EPSG:1314, ~2 m; "CH1903+ to WGS 84 (1)" / EPSG:1676, ~1 m; "TM65 to WGS 84 (2)" / EPSG:1641, ~1 m). Sub-meter-centimeter accuracy for NAD27 (NADCON), Great Britain (OSTN15, EPSG:7709) or Switzerland (CHENyx06a.gsb, EPSG:15486) requires grid shift files, which the library deliberately does not bundle (see [#248]). Datum transformations are parameterized via `HelmertTransformation` for use in your own `CustomProjection` definitions.
 
 Attribution: EPSG parameter values are based on the EPSG dataset (https://epsg.org) used under its terms; OS transform parameters reference the Ordnance Survey *Guide to Coordinate Systems in Great Britain*.
 
@@ -1058,28 +1072,8 @@ Thomas Rasch, Outdooractive
 [15]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/GeoJsonReader.swift
 [16]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Coordinate3D.swift
 [17]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/CoordinateTests.swift
-[18]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/BoundingBox.swift
-[19]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/BoundingBoxTests.swift
 [20]:	https://github.com/Outdooractive/gis-tools/tree/main/Sources/GISTools/Projections
-[21]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/PointTests.swift
-[22]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/MultiPoint.swift
-[23]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiPointTests.swift
-[24]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/LineString.swift
-[25]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/LineStringTests.swift
-[26]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/MultiLineString.swift
-[27]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiLineStringTests.swift
-[28]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Polygon.swift
-[29]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/PolygonTests.swift
-[30]:	https://www.rfc-editor.org/rfc/rfc7946#section-3.1.6 "3.1.6"
 [31]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/CustomProjection.swift
-[32]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/MultiPolygonTests.swift
-[33]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/GeometryCollection.swift
-[34]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/GeometryCollectionTests.swift
-[35]:	https://www.rfc-editor.org/rfc/rfc7946#section-3.1.8 "3.1.8"
-[36]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/Feature.swift
-[37]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/FeatureTests.swift
-[38]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/FeatureCollection.swift
-[39]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/FeatureCollectionTests.swift
 [40]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/WKBTests.swift
 [41]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/WKTTests.swift
 [42]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/RTreeTests.swift
@@ -1091,7 +1085,6 @@ Thomas Rasch, Outdooractive
 [48]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanClockwise.swift "BooleanClockwise"
 [49]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanClockwiseTests.swift "BooleanClockwiseTests"
 [50]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanCrosses.swift "BooleanCrosses"
-[51]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
 [52]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanOverlap.swift "BooleanOverlap"
 [53]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanOverlapTests.swift "BooleanOverlapTests"
 [54]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanParallel.swift "BooleanParallel"
@@ -1231,8 +1224,6 @@ Thomas Rasch, Outdooractive
 [188]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanContainsTests.swift "BooleanContainsTests"
 [189]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Sector.swift "Sector"
 [190]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/SectorTests.swift "SectorTests"
-[191]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Flip.swift "Flip"
-[192]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/FlipTests.swift "FlipTests"
 [193]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/BoundingBox.swift "BoundingBox"
 [194]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/GeoJson/BoundingBoxTests.swift "BoundingBoxTests"
 [195]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PolygonTangents.swift "PolygonTangents"
@@ -1326,16 +1317,23 @@ Thomas Rasch, Outdooractive
 [283]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+Convenience.swift "Graph+Convenience"
 [284]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/GraphExportTests.swift "GraphExportTests"
 
+[285]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Ch1903PlusLv95Definition.swift
+[286]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Ch1903Lv03Definition.swift
+[287]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishGridTM65Definition.swift
+[288]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishGridTM75Definition.swift
+[289]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/IrishTransverseMercatorDefinition.swift
+
+[290]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3857Definition.swift
+[291]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg4978Definition.swift
+[292]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3395Definition.swift
+[293]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg32662Definition.swift
+[294]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Etrs89Definition.swift
+[295]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Nad27Definition.swift
+[296]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936BngDefinition.swift
+[297]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936Definition.swift
+[298]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/UtmDefinition.swift
+
+[#248]:	https://github.com/Outdooractive/gis-tools/issues/248
+
 [image-1]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dswift-versions
 [image-2]:	https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FOutdooractive%2Fgis-tools%2Fbadge%3Ftype%3Dplatforms
-
-
-[23]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3857Definition.swift
-[24]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg4978Definition.swift
-[25]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg3395Definition.swift
-[26]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Epsg32662Definition.swift
-[27]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Etrs89Definition.swift
-[28]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Nad27Definition.swift
-[29]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Osgb1936BngDefinition.swift
-[30]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/UtmDefinition.swift
-[#248]:	https://github.com/Outdooractive/gis-tools/issues/248

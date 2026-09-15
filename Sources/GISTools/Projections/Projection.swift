@@ -41,6 +41,16 @@ public struct Projection:
     public static let epsg4277 = Projection.builtin(srid: 4277)
     /// EPSG:27700 - OSGB 1936 / British National Grid (https://epsg.io/27700).
     public static let epsg27700 = Projection.builtin(srid: 27_700)
+    /// EPSG:2056 - CH1903+ / LV95, Swiss grid (https://epsg.io/2056).
+    public static let epsg2056 = Projection.builtin(srid: 2056)
+    /// EPSG:21781 - CH1903 / LV03, Swiss grid (https://epsg.io/21781).
+    public static let epsg21781 = Projection.builtin(srid: 21_781)
+    /// EPSG:29902 - TM65 / Irish Grid (https://epsg.io/29902).
+    public static let epsg29902 = Projection.builtin(srid: 29_902)
+    /// EPSG:29903 - TM75 / Irish Grid (https://epsg.io/29903).
+    public static let epsg29903 = Projection.builtin(srid: 29_903)
+    /// EPSG:2157 - IRENET95 / Irish Transverse Mercator (https://epsg.io/2157).
+    public static let epsg2157 = Projection.builtin(srid: 2157)
     // UTM zones (northern EPSG:32601-32660, southern EPSG:32701-32760).
     /// EPSG:32601 - UTM zone 1N (https://epsg.io/32601).
     public static let epsg32601 = Projection.builtin(srid: 32601)

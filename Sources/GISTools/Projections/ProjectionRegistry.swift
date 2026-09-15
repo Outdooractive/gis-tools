@@ -23,6 +23,11 @@ enum ProjectionRegistry {
     private static let etrs89Definition = Etrs89Definition()
     private static let osgb1936Definition = Osgb1936Definition()
     private static let osgb1936BngDefinition = Osgb1936BngDefinition()
+    private static let ch1903PlusLv95Definition = Ch1903PlusLv95Definition()
+    private static let ch1903Lv03Definition = Ch1903Lv03Definition()
+    private static let irishGridTM65Definition = IrishGridTM65Definition()
+    private static let irishGridTM75Definition = IrishGridTM75Definition()
+    private static let irishTransverseMercatorDefinition = IrishTransverseMercatorDefinition()
 
     /// All built-in definitions: the 6 base definitions and all UTM zones,
     /// keyed by canonical SRID.
@@ -41,6 +46,11 @@ enum ProjectionRegistry {
             4267: nad27Definition,
             4277: osgb1936Definition,
             27700: osgb1936BngDefinition,
+            2056: ch1903PlusLv95Definition,
+            21_781: ch1903Lv03Definition,
+            29_902: irishGridTM65Definition,
+            29_903: irishGridTM75Definition,
+            2157: irishTransverseMercatorDefinition,
         ]
 
         for srid in 32_601 ... 32_660 {
@@ -67,6 +77,11 @@ enum ProjectionRegistry {
     private static let builtinWktDefinitions: [any ProjectionDefinition] = [
         epsg3857Definition,
         osgb1936BngDefinition,
+        ch1903PlusLv95Definition,
+        ch1903Lv03Definition,
+        irishGridTM75Definition,
+        irishGridTM65Definition,
+        irishTransverseMercatorDefinition,
         epsg3395Definition,
         epsg32662Definition,
         etrs89Definition,
