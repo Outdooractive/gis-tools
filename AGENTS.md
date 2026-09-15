@@ -173,7 +173,14 @@ When a function **call** is split across multiple lines, place each argument on 
 ## General instructions
 
 - DO NOT take any shortcuts while implementing an algorithm. Correctness is the highest priority
-- DO NOT commit changes unless the user tells you to do so, ALWAYS let the user review your changes
+
+## NEVER COMMIT OR PUSH WITHOUT THE USER'S EXPLICIT REVIEW — THIS IS THE HIGHEST PRIORITY RULE IN THIS FILE
+
+- **NEVER commit without the user having explicitly reviewed the changes.** Not once, not "just this once", not even when the user asks for a PR implicitly or you believe they'd want it. Zero exceptions without a direct instruction.
+- **NEVER push** to any remote without the user's explicit, per-action consent — this includes branch moves, force-pushes, and pushes done as part of "creating a PR".
+- **ALWAYS leave changes uncommitted** in the working tree for review. Let the user run `git add`/`git commit`/`git push` themselves, or explicitly grant permission.
+- **When in ANY doubt, ask first.** A wrongly published change cannot be unpublished; a delayed commit costs nothing. This has caused real problems before (public review-bypass, lost user control); treat every `git commit`, `git push`, and `gc` remote action as requiring an unambiguous "yes, commit/push" from the user.
+- An explicit user request to commit applies **only to that request** — never carry permission forward into follow-up turns; each new task starts back at "working tree only".
 - DO NOT create free functions (un-namespaced top-level functions). Always use a `private enum` namespace or extensions on existing types.
 - Code MUST compile cleanly, with no warnings
 - New algorithms and bug fixes MUST include tests for all projections (EPSG:4326, EPSG:3857, EPSG:4978, noSRID)
