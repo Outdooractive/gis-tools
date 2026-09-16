@@ -230,6 +230,42 @@ def lambert93():
         0.001)
 
 
+def dhdn_gk(zone):
+    """German DHDN Gauss-Krueger (EPSG:31466-31469, zones 2-5)."""
+    return Crs(
+        31464 + zone, f"EPSG:{31464 + zone}",
+        f"+proj=tmerc +lat_0=0 +lon_0={zone * 3} +k=1 "
+        f"+x_0={zone * 1_000_000 + 500_000} +y_0=0 +ellps=bessel "
+        "+towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +units=m +no_defs",
+        (46.0, zone * 3 - 3.5, 55.5, zone * 3 + 3.5),
+        # The Helmert ordering difference (geocentric-domain vs PROJ's
+        # geodetic approximation; measured worst ~1 mm).
+        0.001,
+        datum_budget=0.002)
+
+
+def mgi_gk(srid):
+    """Austrian MGI Gauss-Krueger (EPSG:31255-31259)."""
+    parameters = {
+        31255: (13 + 20.0 / 60.0, 0.0),
+        31256: (16 + 20.0 / 60.0, 0.0),
+        31257: (10 + 20.0 / 60.0, 150_000.0),
+        31258: (13 + 20.0 / 60.0, 450_000.0),
+        31259: (16 + 20.0 / 60.0, 750_000.0),
+    }
+    lon0, x0 = parameters[srid]
+    return Crs(
+        srid, f"EPSG:{srid}",
+        f"+proj=tmerc +lat_0=0 +lon_0={lon0!r} +k=1 +x_0={x0} +y_0=-5000000 "
+        "+ellps=bessel "
+        "+towgs84=577.326,90.129,463.919,5.137,1.474,5.297,2.4232 +units=m +no_defs",
+        (45.5, lon0 - 3.5, 49.5, lon0 + 3.5),
+        # The PROJ geodetic-domain approximation vs the library's exact
+        # XYZ Helmert shows up at ~1.9 mm for MGI's 5" rotations.
+        0.002,
+        datum_budget=0.002)
+
+
 def rd_new():
     return Crs(
         28992, "EPSG:28992",
@@ -277,6 +313,10 @@ def all_crs():
             rd_new(),
         ] if crs is not None
     ]
+    for zone in range(2, 6):
+        crs_list.append(dhdn_gk(zone))
+    for srid in range(31255, 31260):
+        crs_list.append(mgi_gk(srid))
     for zone in range(1, 61):
         crs_list.append(utm_zone(zone, south=False))
         crs_list.append(utm_zone(zone, south=True))

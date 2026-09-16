@@ -70,6 +70,12 @@ enum ProjectionRegistry {
         for srid in 25_831 ... 25_837 {
             map[srid] = Etrs89UtmDefinition.definition(forSrid: srid)
         }
+        for srid in 31_466 ... 31_469 {
+            map[srid] = DhdnGkDefinition.definition(forSrid: srid)
+        }
+        for srid in 31_255 ... 31_259 {
+            map[srid] = MgiGkDefinition.definition(forSrid: srid)
+        }
 
         return map
     }()

@@ -152,6 +152,25 @@ public struct Datum:
         realization: "Dutch national triangulation (1850-1985)",
         ellipsoid: .bessel1841)
 
+    /// Deutsches Hauptdreiecksnetz (DHDN), the classical German triangulation
+    /// datum on the Bessel 1841 ellipsoid (EPSG:4314; used by EPSG:31466–31469,
+    /// the Gauss-Krüger zones). Transformations use the published
+    /// "DHDN to WGS 84 (2)" parameters (stated accuracy approximately 3 m).
+    public static let dhdn = Datum(
+        name: "DHDN",
+        realization: "Deutsches Hauptdreiecksnetz (German principal triangulation network)",
+        ellipsoid: .bessel1841)
+
+    /// Militär-Geographisches Institut (MGI), the classical Austrian
+    /// triangulation datum on the Bessel 1841 ellipsoid (EPSG:4312; used by
+    /// EPSG:31255–31259, the Austrian Gauss-Krüger zones). Transformations
+    /// use the published "MGI to WGS 84 (2)" parameters (stated accuracy
+    /// approximately 1.5 m).
+    public static let mgi = Datum(
+        name: "MGI",
+        realization: "Militaer-Geographisches Institut (Austrian military-geographic institute triangulation)",
+        ellipsoid: .bessel1841)
+
     /// A human readable datum name.
     public let name: String
 

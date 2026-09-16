@@ -31,7 +31,7 @@ public struct Projection:
     public static let epsg3395 = Projection.builtin(srid: 3395)
     /// EPSG:32662 - WGS 84 / Plate Carree, equirectangular
     /// (https://epsg.io/32662).
-    public static let epsg32662 = Projection.builtin(srid: 32_662)
+    public static let epsg32662 = Projection.builtin(srid: 32662)
     /// EPSG:4258 - ETRS89 geodetic degrees (https://epsg.io/4258).
     /// Effectively coincides with WGS84 at meter accuracy.
     public static let epsg4258 = Projection.builtin(srid: 4258)
@@ -40,15 +40,15 @@ public struct Projection:
     /// EPSG:4277 - OSGB 1936 geodetic degrees (https://epsg.io/4277).
     public static let epsg4277 = Projection.builtin(srid: 4277)
     /// EPSG:27700 - OSGB 1936 / British National Grid (https://epsg.io/27700).
-    public static let epsg27700 = Projection.builtin(srid: 27_700)
+    public static let epsg27700 = Projection.builtin(srid: 27700)
     /// EPSG:2056 - CH1903+ / LV95, Swiss grid (https://epsg.io/2056).
     public static let epsg2056 = Projection.builtin(srid: 2056)
     /// EPSG:21781 - CH1903 / LV03, Swiss grid (https://epsg.io/21781).
-    public static let epsg21781 = Projection.builtin(srid: 21_781)
+    public static let epsg21781 = Projection.builtin(srid: 21781)
     /// EPSG:29902 - TM65 / Irish Grid (https://epsg.io/29902).
-    public static let epsg29902 = Projection.builtin(srid: 29_902)
+    public static let epsg29902 = Projection.builtin(srid: 29902)
     /// EPSG:29903 - TM75 / Irish Grid (https://epsg.io/29903).
-    public static let epsg29903 = Projection.builtin(srid: 29_903)
+    public static let epsg29903 = Projection.builtin(srid: 29903)
     /// EPSG:2157 - IRENET95 / Irish Transverse Mercator (https://epsg.io/2157).
     public static let epsg2157 = Projection.builtin(srid: 2157)
     /// EPSG:3035 - ETRS89-LAEA Europe, the EU-wide equal-area grid
@@ -62,22 +62,42 @@ public struct Projection:
     public static let epsg2154 = Projection.builtin(srid: 2154)
     /// EPSG:28992 - Amersfoort / RD New, the official Dutch grid
     /// (https://epsg.io/28992).
-    public static let epsg28992 = Projection.builtin(srid: 28_992)
+    public static let epsg28992 = Projection.builtin(srid: 28992)
     /// EPSG:25831 - ETRS89 / UTM zone 31N (https://epsg.io/25831).
-    public static let epsg25831 = Projection.builtin(srid: 25_831)
+    public static let epsg25831 = Projection.builtin(srid: 25831)
     /// EPSG:25832 - ETRS89 / UTM zone 32N (https://epsg.io/25832).
-    public static let epsg25832 = Projection.builtin(srid: 25_832)
+    public static let epsg25832 = Projection.builtin(srid: 25832)
     /// EPSG:25833 - ETRS89 / UTM zone 33N (https://epsg.io/25833).
-    public static let epsg25833 = Projection.builtin(srid: 25_833)
+    public static let epsg25833 = Projection.builtin(srid: 25833)
     /// EPSG:25834 - ETRS89 / UTM zone 34N (https://epsg.io/25834).
-    public static let epsg25834 = Projection.builtin(srid: 25_834)
+    public static let epsg25834 = Projection.builtin(srid: 25834)
     /// EPSG:25835 - ETRS89 / UTM zone 35N (https://epsg.io/25835).
-    public static let epsg25835 = Projection.builtin(srid: 25_835)
+    public static let epsg25835 = Projection.builtin(srid: 25835)
     /// EPSG:25836 - ETRS89 / UTM zone 36N (https://epsg.io/25836).
-    public static let epsg25836 = Projection.builtin(srid: 25_836)
+    public static let epsg25836 = Projection.builtin(srid: 25836)
     /// EPSG:25837 - ETRS89 / UTM zone 37N (https://epsg.io/25837).
-    public static let epsg25837 = Projection.builtin(srid: 25_837)
-    // UTM zones (northern EPSG:32601-32660, southern EPSG:32701-32760).
+    public static let epsg25837 = Projection.builtin(srid: 25837)
+    /// German DHDN Gauss-Krueger zones (EPSG:31466-31469).
+    /// EPSG:31466 - DHDN / Gauss-Krueger zone 2 (https://epsg.io/31466).
+    public static let epsg31466 = Projection.builtin(srid: 31466)
+    /// EPSG:31467 - DHDN / Gauss-Krueger zone 3 (https://epsg.io/31467).
+    public static let epsg31467 = Projection.builtin(srid: 31467)
+    /// EPSG:31468 - DHDN / Gauss-Krueger zone 4 (https://epsg.io/31468).
+    public static let epsg31468 = Projection.builtin(srid: 31468)
+    /// EPSG:31469 - DHDN / Gauss-Krueger zone 5 (https://epsg.io/31469).
+    public static let epsg31469 = Projection.builtin(srid: 31469)
+    /// Austrian MGI Gauss-Krueger zones (EPSG:31255-31259).
+    /// EPSG:31255 - MGI / Austria GK Central (https://epsg.io/31255).
+    public static let epsg31255 = Projection.builtin(srid: 31255)
+    /// EPSG:31256 - MGI / Austria GK East (https://epsg.io/31256).
+    public static let epsg31256 = Projection.builtin(srid: 31256)
+    /// EPSG:31257 - MGI / Austria GK M28 (https://epsg.io/31257).
+    public static let epsg31257 = Projection.builtin(srid: 31257)
+    /// EPSG:31258 - MGI / Austria GK M31 (https://epsg.io/31258).
+    public static let epsg31258 = Projection.builtin(srid: 31258)
+    /// EPSG:31259 - MGI / Austria GK M34 (https://epsg.io/31259).
+    public static let epsg31259 = Projection.builtin(srid: 31259)
+    /// UTM zones (northern EPSG:32601-32660, southern EPSG:32701-32760).
     /// EPSG:32601 - UTM zone 1N (https://epsg.io/32601).
     public static let epsg32601 = Projection.builtin(srid: 32601)
     /// EPSG:32602 - UTM zone 2N (https://epsg.io/32602).
@@ -328,7 +348,7 @@ public struct Projection:
     /// Constructing arbitrary combinations is a programming error: the
     /// SRID and the definition must describe the same projection so that
     /// the registry's identity guarantees hold.
-    internal init(uncheckedSrid srid: Int, definition: any ProjectionDefinition) {
+    init(uncheckedSrid srid: Int, definition: any ProjectionDefinition) {
         self.sridStorage = srid
         self.definition = definition
     }
@@ -336,16 +356,17 @@ public struct Projection:
     /// The definition carrying this projection's transform math and
     /// metadata - captured at construction so that hot paths resolve
     /// without registry lookups.
-    internal let definition: any ProjectionDefinition
+    let definition: any ProjectionDefinition
 
     /// Creates a built-in projection by canonical SRID.
     ///
     /// Internal factory for the built-in static constants; asserts that
     /// the SRID is registered.
-    internal static func builtin(srid: Int) -> Projection {
+    static func builtin(srid: Int) -> Projection {
         guard let definition = ProjectionRegistry.definition(forSrid: srid) else {
             preconditionFailure("Built-in projection \(srid) is not registered")
         }
+
         return Projection(uncheckedSrid: srid, definition: definition)
     }
 
@@ -356,13 +377,15 @@ public struct Projection:
     /// - Returns: A `Projection`, or `nil` if the SRID is not supported
     public init?(srid: Int) {
         guard let canonical = Self.registeredSrid(for: srid) else { return nil }
+
         self = Projection.builtin(srid: canonical)
     }
 
     /// Maps an SRID (or one of the known aliases) to the canonical SRID.
-    internal static func registeredSrid(for srid: Int) -> Int? {
+    static func registeredSrid(for srid: Int) -> Int? {
         let canonical = sridAliases[srid] ?? srid
         guard ProjectionRegistry.isRegisteredSrid(canonical) else { return nil }
+
         return canonical
     }
 
@@ -400,13 +423,24 @@ public struct Projection:
             guard let utmProjection = UtmWktIdentification.projection(in: wkt) else {
                 return nil
             }
+
             self = utmProjection
+            return
+        }
+
+        if GaussKruegerWktIdentification.hasGaussKruegerToken(in: wkt) {
+            guard let gkProjection = GaussKruegerWktIdentification.projection(in: wkt) else {
+                return nil
+            }
+
+            self = gkProjection
             return
         }
 
         guard let definition = ProjectionRegistry.definition(matchingWkt: wkt) else {
             return nil
         }
+
         self = definition.projection
     }
 
@@ -419,7 +453,7 @@ public struct Projection:
     public init?(utmZone: Int, hemisphere: UtmHemisphere) {
         guard utmZone >= 1, utmZone <= 60 else { return nil }
 
-        let srid = hemisphere == .north ? 32_600 + utmZone : 32_700 + utmZone
+        let srid = hemisphere == .north ? 32600 + utmZone : 32700 + utmZone
         self.init(srid: srid)
     }
 
@@ -461,6 +495,7 @@ public struct Projection:
                     codingPath: decoder.codingPath,
                     debugDescription: "Unknown projection SRID \(srid)"))
         }
+
         self = projection
     }
 
@@ -557,16 +592,16 @@ private enum UtmWktIdentification {
         let etrsRegex = /(?i)ETRS[\s_]*(?:89|1989)/
 
         guard let zoneMatch = wkt.firstMatch(of: zoneRegex) else { return nil }
-
         guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
+
         let isSouthern = zoneMatch.2.uppercased() == "S"
 
         // The ETRS89 belt: EPSG:25831–25837 (Northern only).
         if wkt.firstMatch(of: etrsRegex) != nil, !isSouthern, (31 ... 37).contains(zone) {
-            return Projection(srid: 25_800 + zone)
+            return Projection(srid: 25800 + zone)
         }
 
-        let srid = isSouthern ? 32_700 + zone : 32_600 + zone
+        let srid = isSouthern ? 32700 + zone : 32600 + zone
 
         if let meridianMatch = wkt.firstMatch(of: centralMeridianRegex) {
             let expected = Double((zone - 1) * 6 - 180 + 3)
@@ -583,6 +618,140 @@ private enum UtmWktIdentification {
     static func hasUtmZoneToken(in wkt: String) -> Bool {
         let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*\d/
         return wkt.firstMatch(of: zoneRegex) != nil
+    }
+
+}
+
+/// Gauss-Krüger zone identification for the German (DHDN, EPSG:31466–31469)
+/// and Austrian (MGI, EPSG:31255–31259) zone belts. Like the UTM matcher,
+/// these strings carry a zone in the name (`... zone 4`, `..._DHDN_4`,
+/// `... Austria M31`) and/or a `Central_Meridian` parameter the fragment
+/// matching cannot extract, so they are identified directly.
+///
+/// A zone token is cross-validated against a present `Central_Meridian`
+/// parameter, and the MGI belt's five zones are distinguished by the
+/// `False_Easting` (x₀ 0/150_000/450_000/750_000; the two west variants
+/// share the central meridians with the modern pair).
+private enum GaussKruegerWktIdentification {
+
+    /// Returns the Gauss-Krüger projection identified in the string, or
+    /// `nil`.
+    static func projection(in wkt: String) -> Projection? {
+        // A Gauss-Krüger token: the projection name (also abbreviated
+        // "GK" in EPSG-style names) or the ESRI `PROJECTION["Gauss_Kruger"]`
+        // parameter.
+        let gkRegex = /(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]/
+        guard wkt.firstMatch(of: gkRegex) != nil else { return nil }
+
+        let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
+        let falseEastingRegex = /(?i)False[\s_]*Easting["]?\s*,\s*(-?\d+(?:\.\d+)?)/
+        let centralMeridian = wkt.firstMatch(of: centralMeridianRegex).flatMap { Double(String($0.1)) }
+        let falseEasting = wkt.firstMatch(of: falseEastingRegex).flatMap { Double(String($0.1)) }
+
+        // The datum token selects the belt.
+        let dhdnRegex = /(?i)DHDN|Deutsches[\s_]*Hauptdreiecksnetz/
+        if wkt.firstMatch(of: dhdnRegex) != nil {
+            return dhdnZone(wkt: wkt, centralMeridian: centralMeridian, falseEasting: falseEasting)
+        }
+
+        let mgiRegex = /(?i)MGI|Militar[\s_-]*Geographische[\s_-]*Institut/
+        if wkt.firstMatch(of: mgiRegex) != nil {
+            return mgiZone(wkt: wkt, centralMeridian: centralMeridian, falseEasting: falseEasting)
+        }
+
+        return nil
+    }
+
+    /// `true` when the string carries a Gauss-Krüger token.
+    static func hasGaussKruegerToken(in wkt: String) -> Bool {
+        let gkRegex = /(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]/
+        return wkt.firstMatch(of: gkRegex) != nil
+    }
+
+    /// The DHDN zone: from the zone token (`zone N`, `_DHDN_N`), the
+    /// central meridian (N * 3 degrees) or the false easting
+    /// (N * 1_000_000 + 500_000).
+    private static func dhdnZone(
+        wkt: String,
+        centralMeridian: Double?,
+        falseEasting: Double?
+    ) -> Projection? {
+        let zoneRegex = /(?i)(?:zone|DHDN)[\s_-]*(\d{1,2})/
+        let zoneFromToken = wkt.firstMatch(of: zoneRegex).flatMap { Int(String($0.1)) }
+
+        var candidates: [(Int, Double, Double)] = []
+        for zone in 2 ... 5 {
+            candidates.append(candidate(zone))
+        }
+
+        if let zone = zoneFromToken, (2 ... 5).contains(zone) {
+            candidates = [candidate(zone)]
+        }
+        else if let centralMeridian {
+            candidates = candidates.filter { abs($0.1 - centralMeridian) < 0.001 }
+        }
+        else if let falseEasting {
+            candidates = candidates.filter { abs($0.2 - falseEasting) < 0.5 }
+        }
+
+        guard candidates.count == 1, let match = candidates.first else { return nil }
+
+        return Projection(srid: match.0)
+    }
+
+    private static func candidate(_ zone: Int) -> (Int, Double, Double) {
+        (31464 + zone, Double(zone * 3), Double(zone * 1_000_000 + 500_000))
+    }
+
+    /// The MGI zone: from the zone token (`M28`/`M31`/`M34`, the historic
+    /// Ferro-based numbering; 28 → 31257, 31 → 31258, 34 → 31259), or from
+    /// the parameters. The five zones are distinguished by (central
+    /// meridian, false easting) pairs; the two x₀ = 0 variants share the CM
+    /// with a modern zone, so the false easting is required to
+    /// disambiguate. Without zone token and parameters the zone is
+    /// ambiguous.
+    private static func mgiZone(
+        wkt: String,
+        centralMeridian: Double?,
+        falseEasting: Double?
+    ) -> Projection? {
+        // (srid, central meridian degrees, false easting).
+        let zones: [(Int, Double, Double)] = [
+            (31255, 13 + 20.0 / 60.0, 0.0),
+            (31256, 16 + 20.0 / 60.0, 0.0),
+            (31257, 10 + 20.0 / 60.0, 150_000.0),
+            (31258, 13 + 20.0 / 60.0, 450_000.0),
+            (31259, 16 + 20.0 / 60.0, 750_000.0),
+        ]
+
+        // The zone token: `M28`/`M31`/`M34` in the name (the Ferro-based
+        // historic numbering: 28°/31°/34° minus the Ferro offset 17°40').
+        let zoneTokenRegex = /(?i)M(28|31|34)/
+        if let zoneMatch = wkt.firstMatch(of: zoneTokenRegex),
+           let token = Int(String(zoneMatch.1))
+        {
+            let srid = 31257 + (token - 28) / 3
+            return Projection(srid: srid)
+        }
+
+        var candidates = zones
+        if let centralMeridian, let falseEasting {
+            candidates = zones.filter {
+                abs($0.1 - centralMeridian) < 0.001 && abs($0.2 - falseEasting) < 0.5
+            }
+        }
+        else if let falseEasting {
+            candidates = zones.filter { abs($0.2 - falseEasting) < 0.5 }
+        }
+        else if let centralMeridian {
+            // CM alone matches the x₀ = 0 variant AND the modern zone.
+            let filtered = zones.filter { abs($0.1 - centralMeridian) < 0.001 }
+            candidates = filtered.count == 1 ? filtered : []
+        }
+
+        guard candidates.count == 1, let match = candidates.first else { return nil }
+
+        return Projection(srid: match.0)
     }
 
 }

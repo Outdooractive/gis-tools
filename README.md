@@ -61,7 +61,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports the full [GeoJSON standard][6]
 - Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
-- Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4277/27700 (OSGB 1936 / British National Grid), 2056/21781 (Swiss CH1903+/LV95 and CH1903/LV03), 29902/29903/2157 (Irish Grid and Irish Transverse Mercator), 25831–25837 (ETRS89/UTM), 3035/3034 (EU-wide LAEA and LCC), 2154 (French Lambert-93), 28992 (Dutch RD New) and all 120 UTM zones, plus user-definable custom projections
+- Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4277/27700 (OSGB 1936 / British National Grid), 2056/21781 (Swiss CH1903+/LV95 and CH1903/LV03), 29902/29903/2157 (Irish Grid and Irish Transverse Mercator), 25831–25837 (ETRS89/UTM), 3035/3034 (EU-wide LAEA and LCC), 2154 (French Lambert-93), 28992 (Dutch RD New), 31466–31469 (German DHDN/Gauss-Krüger), 31255–31259 (Austrian MGI/Gauss-Krüger) and all 120 UTM zones, plus user-definable custom projections
 - Supports WKT/WKB/TWKB, also with different projections
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
@@ -506,6 +506,8 @@ let customProjection = try Projection(srid: 900_001)
 | 3034 | ETRS89-LCC Europe | meters | Lambert conformal conic 35°/65° (GRS80, ≈ WGS84) | [Etrs89LccDefinition.swift][301] |
 | 2154 | RGF93 / Lambert-93 | meters | Lambert conformal conic 49°/44° (GRS80, ≈ WGS84) | [Lambert93Definition.swift][302] |
 | 28992 | Amersfoort / RD New | meters | Helmert "Amersfoort to WGS 84 (4)" + oblique stereographic on Bessel 1841 | [RdNewDefinition.swift][303] |
+| 31466–31469 | DHDN / Gauss-Krüger zones 2–5 | meters | Helmert "DHDN to WGS 84 (2)", ~3 m + transverse Mercator, Karney series (Bessel 1841) | [DhdnGkDefinition.swift][304] |
+| 31255–31259 | MGI / Austria Gauss-Krüger | meters | Helmert "MGI to WGS 84 (2)", ~1.5 m + transverse Mercator, Karney series (Bessel 1841) | [MgiGkDefinition.swift][305] |
 
 Custom projections register through `Projection.register(CustomProjection)` (see [CustomProjection.swift][31]); the model types live in `Projection.swift`/`ProjectionKind.swift`/`ProjectionExtent.swift`/`Datum.swift` and the WKT matching / registry in `ProjectionRegistry.swift` resp. `ProjectionDefinition.swift` in `Sources/GISTools/Projections/`.
 
@@ -1337,6 +1339,8 @@ Thomas Rasch, Outdooractive
 [296]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936BngDefinition.swift
 [297]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936Definition.swift
 [298]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/UtmDefinition.swift
+[304]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/DhdnGkDefinition.swift
+[305]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/MgiGkDefinition.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 
