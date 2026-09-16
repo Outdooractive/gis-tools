@@ -230,6 +230,61 @@ def lambert93():
         0.001)
 
 
+def nad83():
+    return Crs(
+        4269, "EPSG:4269",
+        "+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs",
+        (7.0, 168.0, 84.0, -52.0),
+        0.00000001)
+
+
+def conus_albers():
+    return Crs(
+        5070, "EPSG:5070",
+        "+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 "
+        "+y_0=0 +ellps=GRS80 +towgs84=0,0,0 +units=m +no_defs",
+        (-90.0, -180.0, 84.0, 0.0),
+        0.001)
+
+
+def bc_albers():
+    return Crs(
+        3005, "EPSG:3005",
+        "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 "
+        "+y_0=0 +ellps=GRS80 +towgs84=0,0,0 +units=m +no_defs",
+        (30.0, -150.0, 84.0, -100.0),
+        0.001)
+
+
+def canada_lambert(srid):
+    if srid == 3347:
+        return Crs(
+            srid, "EPSG:3347",
+            "+proj=lcc +lat_0=63.390675 +lon_0=-91.8666666666667 +lat_1=49 "
+            "+lat_2=77 +x_0=6200000 +y_0=3000000 +ellps=GRS80 "
+            "+towgs84=0,0,0 +units=m +no_defs",
+            (15.0, -140.0, 84.0, -40.0),
+            0.001)
+    return Crs(
+        srid, "EPSG:3978",
+        "+proj=lcc +lat_0=49 +lon_0=-95 +lat_1=49 +lat_2=77 +x_0=0 +y_0=0 "
+        "+ellps=GRS80 +towgs84=0,0,0 +units=m +no_defs",
+        (15.0, -140.0, 84.0, -40.0),
+        0.001)
+
+
+def nad83_utm_zone(zone):
+    """The NAD83 UTM zone belt (EPSG:26901-26960)."""
+    lon0 = (zone - 1) * 6 - 180 + 3
+    return Crs(
+        26900 + zone,
+        f"EPSG:{26900 + zone}",
+        f"+proj=tmerc +lat_0=0 +lon_0={lon0} +k=0.9996 +x_0=500000 "
+        f"+y_0=0 +ellps=GRS80 +towgs84=0,0,0 +units=m +no_defs",
+        (35.0, lon0 - 3.0, 84.0, lon0 + 3.0),
+        0.001)
+
+
 def dhdn_gk(zone):
     """German DHDN Gauss-Krueger (EPSG:31466-31469, zones 2-5)."""
     return Crs(
@@ -308,11 +363,15 @@ def all_crs():
     crs_list = [
         crs for crs in [
             wgs84(), ecef(), web_mercator(), world_mercator(), plate_carree(),
-            etrs89(), nad27(), osgb36(), bng(), ch1903plus(), ch1903(),
+            etrs89(), nad27(), nad83(), conus_albers(), bc_albers(),
+            canada_lambert(3347), canada_lambert(3978),
+            osgb36(), bng(), ch1903plus(), ch1903(),
             tm65(), tm75(), itm(), laea_europe(), lcc_europe(), lambert93(),
             rd_new(),
         ] if crs is not None
     ]
+    for zone in range(1, 61):
+        crs_list.append(nad83_utm_zone(zone))
     for zone in range(2, 6):
         crs_list.append(dhdn_gk(zone))
     for srid in range(31255, 31260):

@@ -32,6 +32,11 @@ enum ProjectionRegistry {
     private static let etrs89LccDefinition = Etrs89LccDefinition()
     private static let lambert93Definition = Lambert93Definition()
     private static let rdNewDefinition = RdNewDefinition()
+    private static let nad83Definition = Nad83Definition()
+    private static let epsg5070Definition = Epsg5070Definition()
+    private static let epsg3005Definition = Epsg3005Definition()
+    private static let epsg3347Definition = Epsg3347Definition()
+    private static let epsg3978Definition = Epsg3978Definition()
 
     /// All built-in definitions: the base definitions and all UTM zone
     /// belts, keyed by canonical SRID.
@@ -59,6 +64,11 @@ enum ProjectionRegistry {
             3034: etrs89LccDefinition,
             2154: lambert93Definition,
             28992: rdNewDefinition,
+            4269: nad83Definition,
+            5070: epsg5070Definition,
+            3005: epsg3005Definition,
+            3347: epsg3347Definition,
+            3978: epsg3978Definition,
         ]
 
         for srid in 32_601 ... 32_660 {
@@ -69,6 +79,9 @@ enum ProjectionRegistry {
         }
         for srid in 25_831 ... 25_837 {
             map[srid] = Etrs89UtmDefinition.definition(forSrid: srid)
+        }
+        for srid in 26_901 ... 26_960 {
+            map[srid] = Nad83UtmDefinition.definition(forSrid: srid)
         }
         for srid in 31_466 ... 31_469 {
             map[srid] = DhdnGkDefinition.definition(forSrid: srid)
@@ -107,6 +120,11 @@ enum ProjectionRegistry {
         epsg32662Definition,
         etrs89Definition,
         nad27Definition,
+        nad83Definition,
+        epsg5070Definition,
+        epsg3005Definition,
+        epsg3347Definition,
+        epsg3978Definition,
         osgb1936Definition,
         epsg4978Definition,
         epsg4326Definition,

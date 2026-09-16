@@ -96,6 +96,15 @@ public struct Datum:
         realization: "European Terrestrial Reference System 1989",
         ellipsoid: .grs80)
 
+    /// North American Datum 1983. Computed positions effectively coincide
+    /// with WGS84 at meter accuracy (the NAD83⇄WGS84 difference is plate
+    /// motion, 1–2 m at the transformation's stated accuracy; no simple
+    /// Helmert exists).
+    public static let nad83 = Datum(
+        name: "NAD83",
+        realization: "North American Datum of 1983",
+        ellipsoid: .grs80)
+
     /// The classical North American datum (Clarke 1866), defined through
     /// triangulation.
     public static let nad27 = Datum(

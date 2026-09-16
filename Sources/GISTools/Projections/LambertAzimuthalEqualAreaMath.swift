@@ -54,7 +54,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
 
     private let mode: Mode
     private let qPole: Double
-    private let authalicSeries: [Double]
+    private let authalicLatitude: AuthalicLatitude
     private let radiusQ: Double
     private let sinB1: Double
     private let cosB1: Double
@@ -94,7 +94,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         }
 
         self.qPole = Self.qsfn(1.0, e, oneEs)
-        self.authalicSeries = Self.authalicSeries(n: Self.thirdFlattening(es))
+        self.authalicLatitude = AuthalicLatitude(ellipsoid: ellipsoid)
 
         switch mode {
         case .northPole, .southPole:
@@ -237,7 +237,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
                 meridian = rho * cosC
             }
             let lambda = atan2(dx, meridian)
-            let phi = authalicLatitude(asin(authalic))
+            let phi = authalicLatitude.geographicLatitude(fromAuthalic: asin(authalic))
             return (
                 phi * 180.0 / .pi,
                 longitudeOfOrigin + lambda * 180.0 / .pi
@@ -255,7 +255,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
                 ? -(1.0 - q / qPole)
                 : 1.0 - q / qPole
             let lambda = atan2(dx, dy)
-            let phi = authalicLatitude(asin(authalic))
+            let phi = authalicLatitude.geographicLatitude(fromAuthalic: asin(authalic))
             return (
                 phi * 180.0 / .pi,
                 longitudeOfOrigin + lambda * 180.0 / .pi
@@ -274,101 +274,6 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             return .infinity
         }
         return oneEs * (sinPhi / div1 - (0.5 / e) * log((1.0 - con) / div2))
-    }
-
-    // MARK: - Authalic latitude conversion
-
-    /// The third flattening n = f / (2 - f) from the eccentricity squared.
-    private static func thirdFlattening(_ es: Double) -> Double {
-        let f = 1.0 - sqrt(1.0 - es)
-        return f / (2.0 - f)
-    }
-
-    /// The auxlat-series coefficients (Karney 2024, PROJ's
-    /// `pj_auxlat_coeffs` for `AuxLat::AUTHALIC` → `AuxLat::GEOGRAPHIC`):
-    /// a Fourier series in the authalic latitude whose coefficients are
-    /// Taylor polynomials in the third flattening n, truncated at order 6.
-    /// Row l multiplies sin((2l+2) * xi) and carries the polynomial in n
-    /// starting at n^(l+1).
-    ///
-    /// This conversion reaches full double precision (the paper's Table 5:
-    /// relative error < 2⁻⁵³ for |f| ≤ 1/150); the legacy 3-term Snyder
-    /// series it replaces loses about a millimeter at large distances from
-    /// the projection origin.
-    private static func authalicSeries(n: Double) -> [Double] {
-        // The constant-matrix rows from PROJ's generated table, in
-        // ascending power order per row (rows have 6, 5, 4, 3, 2, 1 terms).
-        let rows: [[Double]] = [
-            [
-                4.0 / 3,
-                4.0 / 45,
-                -16.0 / 35,
-                -2582.0 / 14175,
-                60136.0 / 467_775,
-                28_112_932.0 / 212_837_625,
-            ],
-            [
-                46.0 / 45,
-                152.0 / 945,
-                -11966.0 / 14175,
-                -21016.0 / 51975,
-                251_310_128.0 / 638_512_875,
-            ],
-            [
-                3044.0 / 2835,
-                3802.0 / 14175,
-                -94388.0 / 66825,
-                -8_797_648.0 / 10_945_935,
-            ],
-            [
-                6059.0 / 4725,
-                41072.0 / 93555,
-                -1_472_637_812.0 / 638_512_875,
-            ],
-            [
-                768_272.0 / 467_775,
-                455_935_736.0 / 638_512_875,
-            ],
-            [
-                4_210_684_958.0 / 1_915_538_625,
-            ],
-        ]
-
-        var series: [Double] = []
-        series.reserveCapacity(rows.count)
-        var factor = n
-        for row in rows {
-            // PROJ's pj_polyval: ascending coefficients, Horner evaluation.
-            var polynomial = 0.0
-            for coefficient in row.reversed() {
-                polynomial = polynomial * n + coefficient
-            }
-            series.append(factor * polynomial)
-            factor *= n
-        }
-        return series
-    }
-
-    /// PROJ's `pj_auxlat_convert` for the authalic → geographic direction:
-    /// `phi = xi + sum F[l] sin((2l+2) xi)`, evaluated with the Clenshaw
-    /// recurrence over the Chebyshev argument 2 cos(2 xi).
-    private func authalicLatitude(_ beta: Double) -> Double {
-        let sinBeta = sin(beta)
-        let cosBeta = cos(beta)
-
-        // The Clenshaw argument X = 2 cos(2 beta).
-        let argument = 2.0 * (cosBeta - sinBeta) * (cosBeta + sinBeta)
-
-        var u0 = 0.0
-        var u1 = 0.0
-        for coefficient in authalicSeries.reversed() {
-            let next = argument * u0 - u1 + coefficient
-            u1 = u0
-            u0 = next
-        }
-
-        // sin(2 beta) * u0.
-        return beta + 2.0 * sinBeta * cosBeta * u0
     }
 
 }

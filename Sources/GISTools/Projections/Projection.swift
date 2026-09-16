@@ -77,6 +77,27 @@ public struct Projection:
     public static let epsg25836 = Projection.builtin(srid: 25836)
     /// EPSG:25837 - ETRS89 / UTM zone 37N (https://epsg.io/25837).
     public static let epsg25837 = Projection.builtin(srid: 25837)
+    /// North American NAD83 CRSs.
+    /// EPSG:4269 - NAD83 geodetic degrees (https://epsg.io/4269).
+    /// Effectively coincides with WGS84 at meter accuracy.
+    public static let epsg4269 = Projection.builtin(srid: 4269)
+    /// EPSG:5070 - NAD83 / Conus Albers (https://epsg.io/5070).
+    public static let epsg5070 = Projection.builtin(srid: 5070)
+    /// EPSG:3005 - NAD83 / BC Albers (https://epsg.io/3005).
+    public static let epsg3005 = Projection.builtin(srid: 3005)
+    /// EPSG:3347 - NAD83 / Statistics Canada Lambert (https://epsg.io/3347).
+    public static let epsg3347 = Projection.builtin(srid: 3347)
+    /// EPSG:3978 - NAD83 / Canada Atlas Lambert (https://epsg.io/3978).
+    public static let epsg3978 = Projection.builtin(srid: 3978)
+    /// NAD83 UTM zones (northern EPSG:26901-26960).
+    /// EPSG:26901 - NAD83 / UTM zone 1N (https://epsg.io/26901).
+    public static let epsg26901 = Projection.builtin(srid: 26901)
+    /// EPSG:26910 - NAD83 / UTM zone 10N (https://epsg.io/26910).
+    public static let epsg26910 = Projection.builtin(srid: 26910)
+    /// EPSG:26918 - NAD83 / UTM zone 18N (https://epsg.io/26918).
+    public static let epsg26918 = Projection.builtin(srid: 26918)
+    /// EPSG:26960 - NAD83 / UTM zone 60N (https://epsg.io/26960).
+    public static let epsg26960 = Projection.builtin(srid: 26960)
     /// German DHDN Gauss-Krueger zones (EPSG:31466-31469).
     /// EPSG:31466 - DHDN / Gauss-Krueger zone 2 (https://epsg.io/31466).
     public static let epsg31466 = Projection.builtin(srid: 31466)
@@ -590,6 +611,8 @@ private enum UtmWktIdentification {
         let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
         // An ETRS89 datum token, e.g. `ETRS89` or the ESRI `ETRS_1989`.
         let etrsRegex = /(?i)ETRS[\s_]*(?:89|1989)/
+        // An NAD83 datum token, e.g. `NAD83` or the ESRI `NAD_1983`.
+        let nad83Regex = /(?i)NAD[\s_]*(?:83|1983)/
 
         guard let zoneMatch = wkt.firstMatch(of: zoneRegex) else { return nil }
         guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
@@ -599,6 +622,11 @@ private enum UtmWktIdentification {
         // The ETRS89 belt: EPSG:25831–25837 (Northern only).
         if wkt.firstMatch(of: etrsRegex) != nil, !isSouthern, (31 ... 37).contains(zone) {
             return Projection(srid: 25800 + zone)
+        }
+
+        // The NAD83 belt: EPSG:26901–26960 (Northern only).
+        if wkt.firstMatch(of: nad83Regex) != nil, !isSouthern {
+            return Projection(srid: 26900 + zone)
         }
 
         let srid = isSouthern ? 32700 + zone : 32600 + zone
