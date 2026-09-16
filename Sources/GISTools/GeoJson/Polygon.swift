@@ -191,7 +191,7 @@ extension Polygon {
         guard newProjection != projection else { return self }
 
         var polygon = Polygon(
-            unchecked: coordinates.map({ $0.map({ $0.projected(to: newProjection) }) }),
+            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
             calculateBoundingBox: (boundingBox != nil))
         polygon.foreignMembers = foreignMembers
         return polygon

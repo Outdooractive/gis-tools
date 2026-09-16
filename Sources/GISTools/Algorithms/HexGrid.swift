@@ -45,7 +45,7 @@ private enum HexGrid {
     ) -> FeatureCollection {
         let projection = bbox.projection
         guard projection != .noSRID else { return FeatureCollection() }
-        let coordinatesAreInMeters = projection == .epsg3857 || projection == .epsg4978
+        let coordinatesAreInMeters = !projection.isGeographic
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude

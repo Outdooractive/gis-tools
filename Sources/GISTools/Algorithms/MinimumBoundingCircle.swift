@@ -117,8 +117,8 @@ private enum MinimumBoundingCircle {
         // short path across the date line. Only applies to EPSG:4326.
         let minLon = hullCoords.map(\.longitude).min() ?? 0
         let maxLon = hullCoords.map(\.longitude).max() ?? 0
-        let is4326 = hullCoords.first?.projection == .epsg4326
-        if is4326, (maxLon - minLon) > 180.0 {
+        let isGeographic = hullCoords.first?.projection.isGeographic ?? false
+        if isGeographic, (maxLon - minLon) > 180.0 {
             hullCoords = hullCoords.map { coord in
                 Coordinate3D(
                     latitude: coord.latitude,

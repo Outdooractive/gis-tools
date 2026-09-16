@@ -18,7 +18,7 @@ extension LineString {
     public func offset(
         by distance: CLLocationDistance
     ) -> LineString? {
-        let coordinatesAreInMeters = projection == .epsg3857
+        let coordinatesAreInMeters = projection.isPlanar
 
         let offsetInCRS: Double
         if coordinatesAreInMeters {
@@ -31,11 +31,9 @@ extension LineString {
             return self
         }
 
-        let workingCoords: [Coordinate3D] = coordinatesAreInMeters
+        let workingCoords: [Coordinate3D] = coordinatesAreInMeters || projection.isGeographic
             ? self.coordinates
-            : projection == .epsg4326
-                ? self.coordinates
-                : self.coordinates.map { $0.projected(to: .epsg4326) }
+            : self.coordinates.map { $0.projected(to: .epsg4326) }
 
         guard workingCoords.count >= 2 else { return nil }
 
@@ -75,7 +73,7 @@ extension LineString {
 
         guard let result = LineString(finalCoords) else { return nil }
 
-        if coordinatesAreInMeters || projection == .epsg4326 {
+        if coordinatesAreInMeters || projection.isGeographic {
             return result
         }
         return result.projected(to: projection)

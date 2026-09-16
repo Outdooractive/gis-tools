@@ -9,16 +9,17 @@ extension Coordinate3D {
 
     /// Calculates the distance along a rhumb line between two coordinates, in meters.
     ///
+    /// For projections other than EPSG:4326 the computation is performed
+    /// in EPSG:4326.
+    ///
     /// - Parameter other: The other coordinate
     ///
     /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
-        switch projection {
-        case .epsg4326:
-            return _rhumbDistance(from: other.projected(to: .epsg4326))
-        case .epsg3857, .epsg4978:
+        switch projection.kind {
+        case .geographic, .planar, .geocentric:
             return projected(to: .epsg4326)._rhumbDistance(from: other.projected(to: .epsg4326))
-        case .noSRID:
+        case .undefined:
             let dx = longitude - other.longitude
             let dy = latitude - other.latitude
             return sqrt(dx * dx + dy * dy)

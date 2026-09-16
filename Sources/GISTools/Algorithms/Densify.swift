@@ -33,12 +33,7 @@ private enum Densify {
 
     /// Converts meter tolerance to CRS units based on coordinate projection.
     static func crsTolerance(from meters: CLLocationDistance, projection: Projection) -> Double {
-        switch projection {
-        case .epsg4326:
-            return meters / 111_325.0
-        case .epsg3857, .epsg4978, .noSRID:
-            return meters
-        }
+        projection.crsLength(fromMeters: meters)
     }
 
     static func densify(geoJson: GeoJson, maxSegmentLength: CLLocationDistance) -> GeoJson? {

@@ -13,7 +13,7 @@ extension Ring {
     public var isClockwise: Bool {
         guard coordinates.isNotEmpty else { return false }
 
-        if projection == .noSRID {
+        if !projection.hasSRID {
             var sum: Double = 0.0
             for i in 1 ..< coordinates.count {
                 sum += (coordinates[i].longitude - coordinates[i - 1].longitude)
@@ -22,7 +22,7 @@ extension Ring {
             return sum > 0
         }
 
-        let coords = if projection == .epsg4326 {
+        let coords = if projection.isGeographic {
             coordinates
         }
         else {

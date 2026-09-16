@@ -43,10 +43,7 @@ private enum BooleanConcave {
         guard ring.count > 4 else { return false }
 
         let coords: [Coordinate3D]
-        if polygon.projection == .noSRID {
-            coords = ring
-        }
-        else if polygon.projection == .epsg4326 {
+        if polygon.projection.isGeographic || !polygon.projection.hasSRID {
             coords = ring
         }
         else {

@@ -59,10 +59,7 @@ extension GeoJson {
 extension PointGeometry {
 
     fileprivate func isPointDisjoint(with other: GeoJson) -> Bool {
-        switch projection {
-        case .epsg4326, .epsg3857, .noSRID:
-            break
-        case .epsg4978:
+        if projection.isGeocentric {
             return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
         }
 
@@ -125,10 +122,7 @@ extension LineStringGeometry {
     }
 
     fileprivate func isLineStringDisjoint(with other: GeoJson) -> Bool {
-        switch projection {
-        case .epsg4326, .epsg3857, .noSRID:
-            break
-        case .epsg4978:
+        if projection.isGeocentric {
             return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
         }
 
@@ -187,10 +181,7 @@ extension LineStringGeometry {
 extension PolygonGeometry {
 
     fileprivate func isPolygonDisjoint(with other: GeoJson) -> Bool {
-        switch projection {
-        case .epsg4326, .epsg3857, .noSRID:
-            break
-        case .epsg4978:
+        if projection.isGeocentric {
             return projected(to: .epsg4326).isDisjoint(with: other.projected(to: .epsg4326))
         }
 

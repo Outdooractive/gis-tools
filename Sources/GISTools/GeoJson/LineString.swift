@@ -216,7 +216,7 @@ extension LineString {
         guard newProjection != projection else { return self }
 
         var lineString = LineString(
-            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
+            unchecked: coordinates.projected(to: newProjection),
             calculateBoundingBox: (boundingBox != nil))
         lineString.foreignMembers = foreignMembers
         return lineString

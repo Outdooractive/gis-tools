@@ -22,23 +22,16 @@ extension Polygon {
         gridSize: Double? = nil
     ) -> Point? {
         // Convert meter precision to CRS units
-        let crsPrecision: Double = {
-            switch projection {
-            case .epsg4326:
-                return precision / 111_325.0
-            case .epsg3857, .epsg4978, .noSRID:
-                return precision
-            }
-        }()
+        let crsPrecision: Double = projection.crsLength(fromMeters: precision)
 
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
         guard let outerRing = snappedSelf.outerRing else { return nil }
 
-        // The antimeridian cross check only makes sense for EPSG:4326.
-        // For other projections the longitude values are not in degrees,
-        // so a span > 180° does not indicate a date-line crossing.
-        if projection == .epsg4326, snappedSelf.crossesAntimeridian {
+        // The antimeridian cross check only makes sense for projections with
+        // degree-based longitudes. For other projections the longitude values
+        // are not in degrees, so a span > 180° does not indicate a date-line crossing.
+        if projection.isGeographic, snappedSelf.crossesAntimeridian {
             // Shift negative longitudes to [0, 360) so the polygon is
             // contiguous and the grid-search algorithm works correctly.
             let normalizedRings = snappedSelf.coordinates.map { ring in

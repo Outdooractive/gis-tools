@@ -99,12 +99,12 @@ extension LineString {
         projection: Projection
     ) -> Coordinate3D {
         var result: Coordinate3D
-        switch projection {
-        case .epsg4326:
+        switch projection.kind {
+        case .geographic:
             // Go from coord back toward prev by |overshot| meters.
             let bearing = coord.bearing(to: prev)
             result = coord.destination(distance: -overshot, bearing: bearing)
-        default:
+        case .planar, .geocentric, .undefined:
             // Straight‑line interpolation.
             let segmentLength = coord.distance(from: prev)
             let weight = 1.0 + overshot / segmentLength

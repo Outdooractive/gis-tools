@@ -24,7 +24,7 @@ extension GeoJson {
         // units (meters for 3857/4978) and a span > 180° does not indicate
         // a date-line crossing.
         let spansAntimeridian: Bool
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let minLon = unique.map(\.longitude).min() ?? 0
             let maxLon = unique.map(\.longitude).max() ?? 0
             spansAntimeridian = (maxLon - minLon) > 180.0

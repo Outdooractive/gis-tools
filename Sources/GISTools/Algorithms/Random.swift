@@ -118,24 +118,11 @@ extension BoundingBox {
 
     /// The world bounding box projected to the given CRS.
     private static func worldBox(projection: Projection) -> BoundingBox {
-        switch projection {
-        case .epsg4326:
+        guard let worldBox = projection.definition.worldBoundingBox else {
+            // No defined world extent: fall back to the EPSG:4326 world box.
             return BoundingBox.world
-        case .epsg3857:
-            let s = GISTool.originShift
-            return BoundingBox(
-                southWest: Coordinate3D(x: -s, y: -s, projection: .epsg3857),
-                northEast: Coordinate3D(x: s, y: s, projection: .epsg3857))
-        case .epsg4978:
-            let r = GISTool.equatorialRadius
-            return BoundingBox(
-                southWest: Coordinate3D(x: -r, y: -r, z: -r, projection: .epsg4978),
-                northEast: Coordinate3D(x: r, y: r, z: r, projection: .epsg4978))
-        case .noSRID:
-            return BoundingBox(
-                southWest: Coordinate3D(x: -180.0, y: -90.0, projection: .noSRID),
-                northEast: Coordinate3D(x: 180.0, y: 90.0, projection: .noSRID))
         }
+        return worldBox
     }
 
     /// A random position within the world bounding box.

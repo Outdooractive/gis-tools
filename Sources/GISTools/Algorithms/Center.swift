@@ -42,7 +42,7 @@ extension GeoJson {
         // in degrees. For other projections (3857, 4978, noSRID), longitude values
         // are in projection units and should not be wrapped.
         let spansAntimeridian: Bool
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let minLon = allCoordinates.map(\.longitude).min() ?? 0
             let maxLon = allCoordinates.map(\.longitude).max() ?? 0
             spansAntimeridian = (maxLon - minLon) > 180.0
@@ -210,14 +210,7 @@ extension FeatureCollection {
             projection: projection)
 
         // Convert meter tolerance to CRS units
-        let crsTolerance: Double = {
-            switch projection {
-            case .epsg4326:
-                return tolerance / 111_325.0
-            case .epsg3857, .epsg4978, .noSRID:
-                return tolerance
-            }
-        }()
+        let crsTolerance: Double = projection.crsLength(fromMeters: tolerance)
 
         guard var result = findMedian(
             candidate: initialCandidate,

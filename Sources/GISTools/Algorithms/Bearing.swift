@@ -10,9 +10,9 @@ extension Coordinate3D {
     /// Finds the geographic bearing between the receiver and another coordinate,
     /// i.e. the angle measured in degrees from the north line (0 degrees).
     ///
-    /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the value is
-    /// computed by projecting both points to ``Projection/epsg4326`` first.
-    /// This produces a correct geographic bearing for Earth-surface points.
+    /// For projections other than EPSG:4326 the value is computed by
+    /// projecting both points to ``Projection/epsg4326`` first. This produces
+    /// a correct geographic bearing for Earth-surface points.
     /// Any altitude difference between the coordinates is ignored.
     ///
     /// - Parameter other: The end point
@@ -23,12 +23,10 @@ extension Coordinate3D {
         to other: Coordinate3D,
         final: Bool = false
     ) -> CLLocationDegrees {
-        switch projection {
-        case .epsg4326:
-            return _bearing(to: other.projected(to: .epsg4326), final: final)
-        case .epsg3857, .epsg4978:
+        switch projection.kind {
+        case .geographic, .planar, .geocentric:
             return projected(to: .epsg4326)._bearing(to: other.projected(to: .epsg4326), final: final)
-        case .noSRID:
+        case .undefined:
             let dx = other.longitude - longitude
             let dy = other.latitude - latitude
             return atan2(dx, dy).radiansToDegrees

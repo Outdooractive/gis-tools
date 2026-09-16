@@ -38,7 +38,7 @@ extension Polygon {
         // values are already in projection units (meters).
         let spansAntimeridian: Bool
         let pointOnFarSide: Bool
-        if projection == .epsg4326 {
+        if projection.isGeographic {
             let minLon = vertices.map(\.longitude).min() ?? 0
             let maxLon = vertices.map(\.longitude).max() ?? 0
             let centroidLon = (minLon + maxLon) / 2.0

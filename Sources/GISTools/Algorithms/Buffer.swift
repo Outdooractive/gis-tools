@@ -531,7 +531,7 @@ extension GeoJson {
     ) -> Polygon? {
         let proj = curr.projection
 
-        if proj == .epsg4326 {
+        if proj.isGeographic {
             let bearingAB = prev.bearing(to: curr)
             let bearingBC = curr.bearing(to: next)
             var turnAngle = (bearingBC - bearingAB)

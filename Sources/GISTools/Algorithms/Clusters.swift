@@ -124,7 +124,8 @@ extension FeatureCollection {
 
         // Build projection-specific squared-distance function
         let distSq: (Coordinate3D, Coordinate3D) -> Double
-        if proj == .epsg4326 {
+        switch proj.kind {
+        case .geographic:
             distSq = { a, b in
                 let dLat = (b.latitude - a.latitude).degreesToRadians
                 let dLon = (b.longitude - a.longitude).degreesToRadians
@@ -136,16 +137,14 @@ extension FeatureCollection {
                 // h is in [0, 1]; return squared chord length
                 return h
             }
-        }
-        else if proj == .epsg4978 {
+        case .geocentric:
             distSq = { a, b in
                 let dx = a.longitude - b.longitude
                 let dy = a.latitude - b.latitude
                 let dz = (a.altitude ?? 0.0) - (b.altitude ?? 0.0)
                 return dx * dx + dy * dy + dz * dz
             }
-        }
-        else {
+        case .planar, .undefined:
             distSq = { a, b in
                 let dx = a.longitude - b.longitude
                 let dy = a.latitude - b.latitude
@@ -262,10 +261,10 @@ extension FeatureCollection {
         let center = point.coordinate
 
         let delta: Double
-        switch center.projection {
-        case .epsg4326:
+        switch center.projection.kind {
+        case .geographic:
             delta = maxDistance / 111_000.0
-        case .epsg3857, .epsg4978, .noSRID:
+        case .planar, .geocentric, .undefined:
             delta = maxDistance
         }
         let bbox = BoundingBox(

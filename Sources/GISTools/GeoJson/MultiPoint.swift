@@ -168,7 +168,7 @@ extension MultiPoint {
         guard newProjection != projection else { return self }
 
         var multiPoint = MultiPoint(
-            unchecked: coordinates.map({ $0.projected(to: newProjection) }),
+            unchecked: coordinates.projected(to: newProjection),
             calculateBoundingBox: (boundingBox != nil))
         multiPoint.foreignMembers = foreignMembers
         return multiPoint
