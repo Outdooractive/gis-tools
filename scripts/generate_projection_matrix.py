@@ -48,23 +48,11 @@ class Crs:
     window: tuple
     tolerance: float
     is_global: bool = False
-    # Pairs with these SRIDs are excluded from the matrix for this CRS.
-    # Unused since issue #251 was fixed (the Helmert height handling).
-    excludes: tuple = ()
     # Extra pair-level budget for conversions that pass through this CRS's
     # datum shift, in METERS (the library applies the Helmert in the
     # geocentric domain while PROJ's +towgs84 offsets lat/lon directly;
     # the ordering difference lands at the few-centimeter level).
     datum_budget: float = 0.0
-    # Extra pair-level budget for conversions sourced from this CRS, in
-    # METERS (precision differences between the library's transcribed
-    # inverse and PROJ's). Zero for all current CRSs: EPSG:3035's
-    # authalic-latitude conversion was upgraded to the Karney auxlat
-    # series (the fix for issue #252), removing the only one.
-    pair_budget: float = 0.0
-
-    def excludes_pair(self, other) -> bool:
-        return other.srid in self.excludes or self.srid in other.excludes
 
 
 def wgs84():
@@ -437,7 +425,7 @@ def emit(crs_list, points, csv_path, test_path):
         for crs_def in members:
             x, y, z = coordinates_in(crs_def, point.lat, point.lon, point.altitude)
             crs_here.append((crs_def.srid, x, y, z, crs_def.tolerance,
-                             crs_def.datum_budget, crs_def.pair_budget))
+                             crs_def.datum_budget))
         if len(crs_here) >= 2:
             rows.append((point, crs_here))
 
@@ -451,7 +439,7 @@ def emit(crs_list, points, csv_path, test_path):
         ]
         for source in members:
             for target in members:
-                if source.srid == target.srid or source.excludes_pair(target):
+                if source.srid == target.srid:
                     continue
                 total_pairs += 1
     print(f"crs rows: {total_rows}, ordered pairs: {total_pairs}")
@@ -463,11 +451,11 @@ def emit(crs_list, points, csv_path, test_path):
     with open(csv_path, "w") as f:
         f.write(CSV_HEADER)
         for point, crs_here in rows:
-            for srid, x, y, z, tol, budget, pair_budget in crs_here:
+            for srid, x, y, z, tol, budget in crs_here:
                 f.write(
                     f"{point.name},{point.lat},{point.lon},{point.altitude},"
                     f"{srid},{swift_number(x)},{swift_number(y)},"
-                    f"{swift_number(z)},{tol},{budget},{pair_budget}\n")
+                    f"{swift_number(z)},{tol},{budget}\n")
 
     with open(test_path, "w") as f:
         f.write(TESTS)
@@ -475,7 +463,7 @@ def emit(crs_list, points, csv_path, test_path):
 
 CSV_HEADER = (
     "name,latitude,longitude,altitude,"
-    "srid,x,y,z,tolerance,datumBudget,pairBudget\n")
+    "srid,x,y,z,tolerance,datumBudget\n")
 
 TESTS = '''import Foundation
 @testable import GISTools
@@ -533,13 +521,6 @@ struct ProjectionMatrixTests {
         /// shift, in meters.
         let datumBudget: Double
 
-        /// Extra budget for conversions sourced from this CRS (inverse
-        /// precision differences against PROJ), in meters. Zero for all
-        /// current CRSs: EPSG:3035's authalic-latitude conversion was
-        /// upgraded to the Karney auxlat series (the fix for issue
-        /// #252), removing the only such budget.
-        let pairBudget: Double
-
     }
 
     private struct MatrixPoint {
@@ -579,7 +560,7 @@ struct ProjectionMatrixTests {
 
         for line in lines {
             let fields = line.split(separator: ",", omittingEmptySubsequences: false)
-            guard fields.count == 11,
+            guard fields.count == 10,
                   let latitude = Double(fields[1]),
                   let longitude = Double(fields[2]),
                   let srid = Int(fields[4]),
@@ -587,8 +568,7 @@ struct ProjectionMatrixTests {
                   let y = Double(fields[6]),
                   let z = Double(fields[7]),
                   let tolerance = Double(fields[8]),
-                  let datumBudget = Double(fields[9]),
-                  let pairBudget = Double(fields[10])
+                  let datumBudget = Double(fields[9])
             else { continue }
 
             let name = String(fields[0])
@@ -605,8 +585,7 @@ struct ProjectionMatrixTests {
                 y: y,
                 z: z,
                 tolerance: tolerance,
-                datumBudget: datumBudget,
-                pairBudget: pairBudget))
+                datumBudget: datumBudget))
         }
         flush()
 
@@ -622,7 +601,7 @@ struct ProjectionMatrixTests {
     /// The budgets are meter-valued; degree-unit rows (tolerance below
     /// 1e-5 degrees) divide by the meridian arc per degree.
     private static func pairTolerance(_ source: MatrixRow, _ target: MatrixRow) -> Double {
-        let budget = source.datumBudget + target.datumBudget + source.pairBudget
+        let budget = source.datumBudget + target.datumBudget
         let tolerance = max(source.tolerance, target.tolerance)
         guard budget > 0.0 else { return tolerance }
 
