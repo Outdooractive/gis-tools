@@ -7,19 +7,29 @@ import Foundation
 /// and projection origin.
 ///
 /// Faithful port of the PROJ `laea` implementation (Snyder's ellipsoidal
-/// equal-area formulas with the authalic latitude series; see PROJ's
-/// `src/projections/laea.cpp`, `src/auth.cpp` and `src/qsfn.cpp`). Used by
-/// the pan-European EPSG:3035 definition and available publicly through
+/// equal-area formulas; see PROJ's `src/projections/laea.cpp` and
+/// `src/qsfn.cpp`). Used by the pan-European EPSG:3035 definition and
+/// available publicly through
 /// ``CustomProjection/lambertAzimuthalEqualArea(datum:helmert:)``.
+///
+/// The inverse converts the authalic latitude through PROJ 9's auxlat
+/// series (C. F. F. Karney, *On auxiliary latitudes*, Survey Review 2024,
+/// arXiv:2212.05818; coefficients generated from PROJ's
+/// `pj_auxlat_coeffs` for `AUTHALIC` → `GEOGRAPHIC`), evaluated with
+/// Clenshaw summation — full double precision for |f| ≤ 1/150, versus the
+/// legacy 3-term Snyder series' ~1 mm loss at large distances from the
+/// projection origin.
 struct LambertAzimuthalEqualAreaMath: Sendable {
 
-    // The mapping modes of PROJ's laea implementation, keyed by which of
-    // the four domains the projection origin falls into.
+    /// The mapping modes of PROJ's laea implementation, keyed by which of
+    /// the four domains the projection origin falls into.
     private enum Mode {
+
         case northPole
         case southPole
         case equatorial
         case oblique
+
     }
 
     /// The ellipsoid the projection is computed on.
@@ -44,7 +54,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
 
     private let mode: Mode
     private let qPole: Double
-    private let authalicSeries: (Double, Double, Double)
+    private let authalicSeries: [Double]
     private let radiusQ: Double
     private let sinB1: Double
     private let cosB1: Double
@@ -74,40 +84,42 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
 
         // PROJ's mode selection guard (EPS10: ±90° origins are polar).
         if abs(abs(phi0) - Double.pi / 2.0) < 0.0000000001 {
-            mode = phi0 < 0.0 ? .southPole : .northPole
+            self.mode = phi0 < 0.0 ? .southPole : .northPole
         }
         else if abs(phi0) < 0.0000000001 {
-            mode = .equatorial
+            self.mode = .equatorial
         }
         else {
-            mode = .oblique
+            self.mode = .oblique
         }
 
-        qPole = Self.qsfn(1.0, e, oneEs)
-        authalicSeries = Self.authSet(es)
+        self.qPole = Self.qsfn(1.0, e, oneEs)
+        self.authalicSeries = Self.authalicSeries(n: Self.thirdFlattening(es))
 
         switch mode {
         case .northPole, .southPole:
-            radiusQ = 0.0
-            sinB1 = 0.0
-            cosB1 = 0.0
-            dD = 1.0
-            xmf = 0.0
-            ymf = 0.0
+            self.radiusQ = 0.0
+            self.sinB1 = 0.0
+            self.cosB1 = 0.0
+            self.dD = 1.0
+            self.xmf = 0.0
+            self.ymf = 0.0
+
         case .equatorial:
-            radiusQ = sqrt(0.5 * qPole)
-            sinB1 = 0.0
-            cosB1 = 0.0
-            dD = 1.0 / radiusQ
-            xmf = 1.0
-            ymf = 0.5 * qPole
+            self.radiusQ = sqrt(0.5 * qPole)
+            self.sinB1 = 0.0
+            self.cosB1 = 0.0
+            self.dD = 1.0 / radiusQ
+            self.xmf = 1.0
+            self.ymf = 0.5 * qPole
+
         case .oblique:
-            radiusQ = sqrt(0.5 * qPole)
-            sinB1 = Self.qsfn(sin(phi0), e, oneEs) / qPole
-            cosB1 = sqrt(1.0 - sinB1 * sinB1)
-            dD = cos(phi0) / (sqrt(1.0 - es * sin(phi0) * sin(phi0)) * radiusQ * cosB1)
-            xmf = radiusQ * dD
-            ymf = radiusQ / dD
+            self.radiusQ = sqrt(0.5 * qPole)
+            self.sinB1 = Self.qsfn(sin(phi0), e, oneEs) / qPole
+            self.cosB1 = sqrt(1.0 - sinB1 * sinB1)
+            self.dD = cos(phi0) / (sqrt(1.0 - es * sin(phi0) * sin(phi0)) * radiusQ * cosB1)
+            self.xmf = radiusQ * dD
+            self.ymf = radiusQ / dD
         }
     }
 
@@ -144,19 +156,22 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         case .oblique:
             let b = 1.0 + sinB1 * sinB + cosB1 * cosB * cosLambda
             scalingOpt = abs(b) < 0.0000000001 ? nil : b
+
         case .equatorial:
             let b = 1.0 + cosB * cosLambda
             scalingOpt = abs(b) < 0.0000000001 ? nil : 1.0 + cosB * cosLambda
+
         case .northPole:
             // PROJ rewrites q and only guards |b| for a real zero (which
             // cannot happen for the polar branches).
             scalingOpt = 1.0
+
         case .southPole:
             scalingOpt = 1.0
         }
 
         guard let _ = scalingOpt else {
-            return (Double.nan, Double.nan)  // outside the projection domain
+            return (Double.nan, Double.nan) // outside the projection domain
         }
 
         switch mode {
@@ -164,7 +179,8 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             let scaling = sqrt(2.0 / scalingOpt!)
             let x = ellipsoid.semiMajorAxis * scaleFactor * xmf * scaling * cosB * sinLambda
             let y = ellipsoid.semiMajorAxis * scaleFactor * ymf * scaling * (
-                cosB1 * sinB - sinB1 * cosB * cosLambda)
+                cosB1 * sinB - sinB1 * cosB * cosLambda
+            )
             return (falseEasting + x, falseNorthing + y)
 
         case .equatorial:
@@ -195,7 +211,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         y: Double
     ) -> (latitude: Double, longitude: Double) {
         switch mode {
-        case .oblique, .equatorial:
+        case .equatorial, .oblique:
             var dx = (x - falseEasting) / (ellipsoid.semiMajorAxis * dD)
             let dy = (y - falseNorthing) * dD / ellipsoid.semiMajorAxis
             let rho = hypot(dx, dy)
@@ -203,8 +219,9 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
                 return (latitudeOfOrigin, longitudeOfOrigin)
             }
             guard 0.5 * rho / radiusQ <= 1.0 else {
-                return (Double.nan, Double.nan)   // outside the projection domain
+                return (Double.nan, Double.nan) // outside the projection domain
             }
+
             let cAngle = 2.0 * asin(0.5 * rho / radiusQ)
             let cosC = cos(cAngle)
             let sinC = sin(cAngle)
@@ -259,35 +276,99 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         return oneEs * (sinPhi / div1 - (0.5 / e) * log((1.0 - con) / div2))
     }
 
-    /// PROJ's `pj_authset`: the three coefficient series for the authalic
-    /// (equal-area) latitude transformation.
-    private static func authSet(_ es: Double) -> (Double, Double, Double) {
-        let p00 = 0.33333333333333333333
-        let p01 = 0.17222222222222222222
-        let p02 = 0.10257936507936507937
-        let p10 = 0.06388888888888888888
-        let p11 = 0.06640211640211640212
-        let p20 = 0.01677689594356261023
+    // MARK: - Authalic latitude conversion
 
-        var first = es * p00
-        var second = 0.0
-        var t = es * es
-        first += t * p01
-        second += t * p10
-        t *= es
-        first += t * p02
-        second += t * p11
-        let third = t * p20
-
-        return (first, second, third)
+    /// The third flattening n = f / (2 - f) from the eccentricity squared.
+    private static func thirdFlattening(_ es: Double) -> Double {
+        let f = 1.0 - sqrt(1.0 - es)
+        return f / (2.0 - f)
     }
 
-    /// PROJ's `pj_authlat`: latitude from the authalic latitude `beta`.
+    /// The auxlat-series coefficients (Karney 2024, PROJ's
+    /// `pj_auxlat_coeffs` for `AuxLat::AUTHALIC` → `AuxLat::GEOGRAPHIC`):
+    /// a Fourier series in the authalic latitude whose coefficients are
+    /// Taylor polynomials in the third flattening n, truncated at order 6.
+    /// Row l multiplies sin((2l+2) * xi) and carries the polynomial in n
+    /// starting at n^(l+1).
+    ///
+    /// This conversion reaches full double precision (the paper's Table 5:
+    /// relative error < 2⁻⁵³ for |f| ≤ 1/150); the legacy 3-term Snyder
+    /// series it replaces loses about a millimeter at large distances from
+    /// the projection origin.
+    private static func authalicSeries(n: Double) -> [Double] {
+        // The constant-matrix rows from PROJ's generated table, in
+        // ascending power order per row (rows have 6, 5, 4, 3, 2, 1 terms).
+        let rows: [[Double]] = [
+            [
+                4.0 / 3,
+                4.0 / 45,
+                -16.0 / 35,
+                -2582.0 / 14175,
+                60136.0 / 467_775,
+                28_112_932.0 / 212_837_625,
+            ],
+            [
+                46.0 / 45,
+                152.0 / 945,
+                -11966.0 / 14175,
+                -21016.0 / 51975,
+                251_310_128.0 / 638_512_875,
+            ],
+            [
+                3044.0 / 2835,
+                3802.0 / 14175,
+                -94388.0 / 66825,
+                -8_797_648.0 / 10_945_935,
+            ],
+            [
+                6059.0 / 4725,
+                41072.0 / 93555,
+                -1_472_637_812.0 / 638_512_875,
+            ],
+            [
+                768_272.0 / 467_775,
+                455_935_736.0 / 638_512_875,
+            ],
+            [
+                4_210_684_958.0 / 1_915_538_625,
+            ],
+        ]
+
+        var series: [Double] = []
+        series.reserveCapacity(rows.count)
+        var factor = n
+        for row in rows {
+            // PROJ's pj_polyval: ascending coefficients, Horner evaluation.
+            var polynomial = 0.0
+            for coefficient in row.reversed() {
+                polynomial = polynomial * n + coefficient
+            }
+            series.append(factor * polynomial)
+            factor *= n
+        }
+        return series
+    }
+
+    /// PROJ's `pj_auxlat_convert` for the authalic → geographic direction:
+    /// `phi = xi + sum F[l] sin((2l+2) xi)`, evaluated with the Clenshaw
+    /// recurrence over the Chebyshev argument 2 cos(2 xi).
     private func authalicLatitude(_ beta: Double) -> Double {
-        let t = beta + beta
-        return beta + authalicSeries.0 * sin(t)
-            + authalicSeries.1 * sin(t + t)
-            + authalicSeries.2 * sin(t + t + t)
+        let sinBeta = sin(beta)
+        let cosBeta = cos(beta)
+
+        // The Clenshaw argument X = 2 cos(2 beta).
+        let argument = 2.0 * (cosBeta - sinBeta) * (cosBeta + sinBeta)
+
+        var u0 = 0.0
+        var u1 = 0.0
+        for coefficient in authalicSeries.reversed() {
+            let next = argument * u0 - u1 + coefficient
+            u1 = u0
+            u0 = next
+        }
+
+        // sin(2 beta) * u0.
+        return beta + 2.0 * sinBeta * cosBeta * u0
     }
 
 }

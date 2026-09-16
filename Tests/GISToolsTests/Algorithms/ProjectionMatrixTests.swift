@@ -55,10 +55,10 @@ struct ProjectionMatrixTests {
         let datumBudget: Double
 
         /// Extra budget for conversions sourced from this CRS (inverse
-        /// precision differences against PROJ), in meters. Currently only
-        /// EPSG:3035 carries one: its transcribed legacy authalic series
-        /// loses ~1-2 mm at large distances (PROJ 9.8 uses the Karney
-        /// auxlat series; upgrade tracked as issue #252).
+        /// precision differences against PROJ), in meters. Zero for all
+        /// current CRSs: EPSG:3035's authalic-latitude conversion was
+        /// upgraded to the Karney auxlat series (the fix for issue
+        /// #252), removing the only such budget.
         let pairBudget: Double
 
     }

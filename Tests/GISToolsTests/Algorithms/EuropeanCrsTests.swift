@@ -45,6 +45,51 @@ struct EuropeanCrsTests {
         }
     }
 
+    // Validates the auxlat-series authalic latitude conversion of the laea
+    // inverse (Karney 2024, PROJ 9's `pj_auxlat_coeffs` for AUTHALIC ->
+    // GEOGRAPHIC; issue #252): the series reaches full double precision,
+    // so the round trips are sub-micrometer even at the farthest corners
+    // of the EPSG:3035 domain — measured worst 0.6 um against pyproj/PROJ
+    // 9.8 (the legacy 3-term Snyder series lost ~1.3 mm at Cairo's
+    // distance). The reference values are pyproj round trips at PROJ's
+    // own series precision.
+    @Test
+    func laeaAuxlatSeriesRoundTrips() throws {
+        let projection = try #require(Projection(srid: 3035))
+
+        // (lat, lon, x, y): pyproj/PROJ 9.8 forward values, full precision.
+        let fixtures: [(lat: Double, lon: Double, x: Double, y: Double)] = [
+            (52.0, 10.0, 4_321_000.000000000, 3_210_000.000000000),
+            (50.0, 8.0, 4_177_612.521121177, 2_989_464.314838307),
+            (60.0, 15.0, 4_600_451.874746643, 4_109_791.659876869),
+            (30.04425, 31.23568, 6_378_371.692019264, 1_066_020.182666041),
+            (28.29339, -16.62464, 1_708_968.279021428, 1_041_235.042661348),
+            (68.0, 25.0, 4_948_738.512438167, 5_055_028.416669874),
+            (71.0, 35.0, 5_218_155.207532424, 5_483_772.560573562),
+            (35.0, -10.0, 2_498_537.999600947, 1_565_571.766022666),
+            (0.0, 10.0, 4_321_000.000000000, -2_360_911.257874457),
+            (10.0, -20.0, 878_363.840956741, -731_245.023989615),
+            (-20.0, 10.0, 4_321_000.000000000, -4_257_767.512893031),
+            (-35.0, 15.0, 4_948_546.966053404, -5_523_972.273195663),
+            (73.0, 46.0, 5_449_803.807291598, 5_846_214.864111062),
+            (27.0, -32.0, 272_241.736256454, 1_568_920.529576781),
+            (72.9, -31.9, 3_027_279.092778229, 5_943_590.137293485),
+        ]
+
+        for fixture in fixtures {
+            let projected = Coordinate3D(
+                latitude: fixture.lat,
+                longitude: fixture.lon)
+                .projected(to: projection)
+            #expect(abs(projected.x - fixture.x) < 0.000001, "(\(fixture.lat), \(fixture.lon))")
+            #expect(abs(projected.y - fixture.y) < 0.000001, "(\(fixture.lat), \(fixture.lon))")
+
+            let roundTripped = projected.projected(to: .epsg4326)
+            #expect(abs(roundTripped.latitude - fixture.lat) < 0.000000001, "(\(fixture.lat), \(fixture.lon))")
+            #expect(abs(roundTripped.longitude - fixture.lon) < 0.000000001, "(\(fixture.lat), \(fixture.lon))")
+        }
+    }
+
     // MARK: - EPSG:3034 (LCC Europe)
 
     @Test

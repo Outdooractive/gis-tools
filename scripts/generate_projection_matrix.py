@@ -57,7 +57,9 @@ class Crs:
     datum_budget: float = 0.0
     # Extra pair-level budget for conversions sourced from this CRS, in
     # METERS (precision differences between the library's transcribed
-    # inverse and PROJ's; see the laea note below).
+    # inverse and PROJ's). Zero for all current CRSs: EPSG:3035's
+    # authalic-latitude conversion was upgraded to the Karney auxlat
+    # series (the fix for issue #252), removing the only one.
     pair_budget: float = 0.0
 
     def excludes_pair(self, other) -> bool:
@@ -216,20 +218,15 @@ def itm():
 
 
 def laea_europe():
-    # The pair budget covers the library's laea inverse: it transcribes
-    # PROJ's legacy 3-term authalic series, which loses ~1-2 mm at
-    # distances far from the projection origin (PROJ 9.8 itself switched
-    # to the Karney auxlat series). Upgrading the series is tracked as
-    # issue #252; the 2 mm budget (measured worst: 1.59 mm at ~3800 km
-    # from the origin) keeps the matrix honest about the remaining
-    # precision tier.
+    # The inverse converts the authalic latitude through the Karney auxlat
+    # series (the fix for issue #252), matching PROJ 9.8 to sub-micrometer
+    # level; no pair budget is needed.
     return Crs(
         3035, "EPSG:3035",
         "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 "
         "+ellps=GRS80 +towgs84=0,0,0 +units=m +no_defs",
         (27.0, -32.0, 73.0, 47.0),
-        0.001,
-        pair_budget=0.002)
+        0.001)
 
 
 def lcc_europe():
@@ -542,10 +539,10 @@ struct ProjectionMatrixTests {
         let datumBudget: Double
 
         /// Extra budget for conversions sourced from this CRS (inverse
-        /// precision differences against PROJ), in meters. Currently only
-        /// EPSG:3035 carries one: its transcribed legacy authalic series
-        /// loses ~1-2 mm at large distances (PROJ 9.8 uses the Karney
-        /// auxlat series; upgrade tracked as issue #252).
+        /// precision differences against PROJ), in meters. Zero for all
+        /// current CRSs: EPSG:3035's authalic-latitude conversion was
+        /// upgraded to the Karney auxlat series (the fix for issue
+        /// #252), removing the only such budget.
         let pairBudget: Double
 
     }
