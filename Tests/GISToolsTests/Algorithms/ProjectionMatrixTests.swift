@@ -136,31 +136,6 @@ struct ProjectionMatrixTests {
 
     // MARK: - Pair rules
 
-    /// Pairs excluded from the matrix: EPSG:4978 with the geodetic datum
-    /// CRSs. The library's Helmert applies the full 3D translation (the
-    /// datum's vertical offset shifts the height, which the EPSG:4326
-    /// pivot then carries into ECEF as an altitude), while PROJ's
-    /// `+towgs84` pipeline preserves the nominal z. This makes
-    /// 4326 -> datum CRS -> 4978 differ from the direct 4326 -> 4978 by
-    /// the datum's vertical offset (e.g. ~26 m for Amersfoort) — a
-    /// library-level z-semantics inconsistency tracked for a follow-up
-    /// fix of the Helmert height handling (issue #251).
-    private static let geodeticDatumSrids: Set<Int> = [
-        4267,
-        4277,
-        27700,
-        2056,
-        21781,
-        29902,
-        29903,
-        28992,
-    ]
-
-    private static func isExcludedPair(_ a: Int, _ b: Int) -> Bool {
-        (a == 4978 && geodeticDatumSrids.contains(b))
-            || (b == 4978 && geodeticDatumSrids.contains(a))
-    }
-
     /// The effective pair tolerance: the larger of the two rows' row
     /// tolerances, plus each side's datum budget (conversions through a
     /// datum shift pick up the Helmert-vs-PROJ ordering difference,
@@ -196,8 +171,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     let sourceProjection = try #require(Projection(srid: source.srid))
                     let targetProjection = try #require(Projection(srid: target.srid))
 
@@ -240,8 +213,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     let sourceProjection = try #require(Projection(srid: source.srid))
                     let targetProjection = try #require(Projection(srid: target.srid))
 
@@ -277,8 +248,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     // A deterministic sparse subset keeps the batch test
                     // fast: pairs where both SRIDs are even.
                     guard source.srid % 2 == 0, target.srid % 2 == 0 else { continue }

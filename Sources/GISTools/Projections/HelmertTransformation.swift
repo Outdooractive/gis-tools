@@ -14,6 +14,13 @@ import Foundation
 /// The transformation operates on geocentric (ECEF) coordinates, so the
 /// datum's ``Datum/ellipsoid`` must be correct: the geocentric legs use it.
 ///
+/// The **height passes through unchanged** in both directions: the
+/// transformation is horizontal, preserving the nominal z (a height of 0
+/// stays 0). This matches the semantics of PROJ's `+towgs84` pipeline and
+/// keeps the EPSG:4326 pivot a true WGS84 coordinate: converting
+/// `4326 → datum CRS → 4978` equals the direct `4326 → 4978` instead of
+/// carrying the datum's vertical offset as an altitude.
+///
 /// - Note: Well-known transformations for NAD27 and OSGB 1936 are provided
 ///   (``nad27``/``osgb1936``), sourced from the EPSG registry. Sub-meter
 ///   datum accuracy requires grid shift files (NADCON/OSTN15), which the
@@ -24,7 +31,7 @@ import Foundation
 /// ```swift
 /// let helmert = HelmertTransformation.osgb1936
 /// let coordinate = Coordinate3D(latitude: 51.4778, longitude: -0.0015, altitude: 46.0)
-/// let osgb = helmert.transform(wgs84ToDatum: coordinate)  // OSGB36 lat/lon
+/// let osgb = helmert.transform(wgs84ToDatum: coordinate)  // OSGB36 lat/lon, h = 46
 /// ```
 public struct HelmertTransformation:
     Sendable,
@@ -129,6 +136,8 @@ public struct HelmertTransformation:
     /// Transforms WGS84 coordinates into the datum's geographic coordinate
     /// system.
     ///
+    /// The height passes through unchanged (see the type documentation).
+    ///
     /// - Parameters:
     ///     - coordinate: A coordinate in EPSG:4326
     ///     - projection: The projection label carried by the result.
@@ -152,6 +161,8 @@ public struct HelmertTransformation:
     }
 
     /// Transforms datum-frame coordinates into WGS84.
+    ///
+    /// The height passes through unchanged (see the type documentation).
     ///
     /// - Parameter coordinate: A coordinate in the datum's frame
     /// - Returns: A coordinate in EPSG:4326
@@ -304,8 +315,10 @@ public struct HelmertTransformation:
             ecef.z = step.dz + step.scale * (step.rzx * x1 + step.rzy * y1 + step.rzz * z1)
         }
 
-        // Geocentric -> geodetic on the target ellipsoid.
-        let (latitude, longitude, altitude) = ecefToGeodetic(
+        // Geocentric -> geodetic on the target ellipsoid. The height
+        // passes through unchanged (the Helmert is horizontal; see the
+        // type documentation), matching PROJ's `+towgs84` pipeline.
+        let (latitude, longitude, _) = ecefToGeodetic(
             x: ecef.x,
             y: ecef.y,
             z: ecef.z,
@@ -314,7 +327,7 @@ public struct HelmertTransformation:
         return Coordinate3D(
             x: longitude,
             y: latitude,
-            z: altitude,
+            z: coordinate.altitude,
             m: coordinate.m,
             projection: targetProjection)
     }
@@ -367,8 +380,10 @@ public struct HelmertTransformation:
             ecef.z = scale * (rzx * (x1 - helmert.dx) + rzy * (y1 - helmert.dy) + rzz * (z1 - helmert.dz))
         }
 
-        // Geocentric -> geodetic on the target ellipsoid.
-        let (latitude, longitude, altitude) = ecefToGeodetic(
+        // Geocentric -> geodetic on the target ellipsoid. The height
+        // passes through unchanged (the Helmert is horizontal; see the
+        // type documentation), matching PROJ's `+towgs84` pipeline.
+        let (latitude, longitude, _) = ecefToGeodetic(
             x: ecef.x,
             y: ecef.y,
             z: ecef.z,
@@ -377,7 +392,7 @@ public struct HelmertTransformation:
         return Coordinate3D(
             x: longitude,
             y: latitude,
-            z: altitude,
+            z: coordinate.altitude,
             m: coordinate.m,
             projection: targetProjection)
     }
@@ -454,7 +469,7 @@ public struct HelmertTransformation:
         }
 
         var phi = atan2(z, p * (1.0 - e2))
-        var height: Double = 0.0
+        var height = 0.0
         for _ in 0 ..< 10 {
             let sinPhi = sin(phi)
             let cosPhi = cos(phi)

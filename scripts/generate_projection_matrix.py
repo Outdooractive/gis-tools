@@ -49,7 +49,8 @@ class Crs:
     tolerance: float
     is_global: bool = False
     # Pairs with these SRIDs are excluded from the matrix for this CRS.
-    excludes: tuple = ()  # EPSG:4978: see issue #251
+    # Unused since issue #251 was fixed (the Helmert height handling).
+    excludes: tuple = ()
     # Extra pair-level budget for conversions that pass through this CRS's
     # datum shift, in METERS (the library applies the Helmert in the
     # geocentric domain while PROJ's +towgs84 offsets lat/lon directly;
@@ -75,25 +76,16 @@ def wgs84():
         is_global=True)
 
 
-GEODETIC_DATUM_SRIDS = (4267, 4277, 27700, 2056, 21781, 29902, 29903, 28992)
-
-
 def ecef():
-    # Pairs with the geodetic datum CRSs are excluded: the library's
-    # Helmert applies the full 3D translation (shifting the height by
-    # the datum's vertical offset, ~40 m for Amersfoort on Bessel 1841),
-    # which the EPSG:4326 pivot then carries into ECEF as an altitude;
-    # PROJ's +towgs84 pipeline preserves the nominal z instead. The
-    # 26 m discrepancy is a library-level z-semantics inconsistency
-    # (4326 -> datum CRS -> 4978 differs from the direct 4326 -> 4978),
-    # tracked for a follow-up fix of the Helmert z handling (issue #251).
+    # The Helmert height handling matches PROJ's +towgs84 pipeline since
+    # the fix for issue #251 (nominal height passthrough), so EPSG:4978
+    # pairs with the geodetic datum CRSs are part of the matrix.
     return Crs(
         4978, "EPSG:4978",
         "+proj=geocent +datum=WGS84 +units=m +no_defs",
         (-90.0, -180.0, 90.0, 180.0),
         0.001,
-        is_global=True,
-        excludes=GEODETIC_DATUM_SRIDS)
+        is_global=True)
 
 
 def web_mercator():
@@ -138,7 +130,8 @@ def nad27():
         (15.0, -170.0, 75.0, -50.0),
         # The library applies the Helmert translation in the geocentric
         # domain while PROJ's +towgs84 offsets lat/lon directly; the
-        # ordering difference shows up at the few-centimeter level.
+        # ordering difference shows up at the decimeter level (measured
+        # worst 49-71 mm, the dominant residual after the #251 height fix).
         0.000001,
         datum_budget=0.1)
 
@@ -150,6 +143,8 @@ def osgb36():
         "+towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +no_defs",
         (49.5, -9.0, 61.5, 2.5),
         0.000001,
+        # Same geocentric-domain Helmert ordering as NAD27 (measured worst
+        # 77 mm).
         datum_budget=0.1)
 
 
@@ -620,31 +615,6 @@ struct ProjectionMatrixTests {
 
     // MARK: - Pair rules
 
-    /// Pairs excluded from the matrix: EPSG:4978 with the geodetic datum
-    /// CRSs. The library's Helmert applies the full 3D translation (the
-    /// datum's vertical offset shifts the height, which the EPSG:4326
-    /// pivot then carries into ECEF as an altitude), while PROJ's
-    /// `+towgs84` pipeline preserves the nominal z. This makes
-    /// 4326 -> datum CRS -> 4978 differ from the direct 4326 -> 4978 by
-    /// the datum's vertical offset (e.g. ~26 m for Amersfoort) — a
-    /// library-level z-semantics inconsistency tracked for a follow-up
-    /// fix of the Helmert height handling (issue #251).
-    private static let geodeticDatumSrids: Set<Int> = [
-        4267,
-        4277,
-        27700,
-        2056,
-        21781,
-        29902,
-        29903,
-        28992,
-    ]
-
-    private static func isExcludedPair(_ a: Int, _ b: Int) -> Bool {
-        (a == 4978 && geodeticDatumSrids.contains(b))
-            || (b == 4978 && geodeticDatumSrids.contains(a))
-    }
-
     /// The effective pair tolerance: the larger of the two rows' row
     /// tolerances, plus each side's datum budget (conversions through a
     /// datum shift pick up the Helmert-vs-PROJ ordering difference,
@@ -680,8 +650,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     let sourceProjection = try #require(Projection(srid: source.srid))
                     let targetProjection = try #require(Projection(srid: target.srid))
 
@@ -724,8 +692,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     let sourceProjection = try #require(Projection(srid: source.srid))
                     let targetProjection = try #require(Projection(srid: target.srid))
 
@@ -761,8 +727,6 @@ struct ProjectionMatrixTests {
         for point in try Self.points() {
             for source in point.rows {
                 for target in point.rows where target.srid != source.srid {
-                    guard !Self.isExcludedPair(source.srid, target.srid) else { continue }
-
                     // A deterministic sparse subset keeps the batch test
                     // fast: pairs where both SRIDs are even.
                     guard source.srid % 2 == 0, target.srid % 2 == 0 else { continue }
