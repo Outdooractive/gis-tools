@@ -1126,7 +1126,7 @@ Thomas Rasch, Outdooractive
 [77]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineArcTests.swift "LineArcTests"
 [78]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineChunk.swift "LineChunk"
 [79]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineChunkTests.swift "LineChunkTests"
-[80]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineIntersect.swift "LineIntersect"
+[80]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineIntersection.swift "LineIntersection"
 [81]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineIntersectionTests.swift "LineIntersectionTests"
 [82]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/LineOverlap.swift "LineOverlap"
 [83]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/LineOverlapTests.swift "LineOverlapTests"
@@ -1175,7 +1175,7 @@ Thomas Rasch, Outdooractive
 [126]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanDisjoint.swift "BooleanDisjoint"
 [127]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanDisjointTests.swift "BooleanDisjointTests"
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"
-[129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PoygonToLine.swift "PoygonToLine"
+[129]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PolygonToLine.swift "PolygonToLine"
 [130]:  https://github.com/Outdooractive/mvt-postgis
 [131]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/AntimeridianCutting.swift "AntimeridianCutting"
 [132]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/AntimeridianCuttingTests.swift "AntimeridianCuttingTests"
@@ -1345,6 +1345,11 @@ Thomas Rasch, Outdooractive
 [296]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936BngDefinition.swift
 [297]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Osgb1936Definition.swift
 [298]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/UtmDefinition.swift
+[299]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Etrs89UtmDefinition.swift
+[300]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Etrs89LaeaDefinition.swift
+[301]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Etrs89LccDefinition.swift
+[302]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Lambert93Definition.swift
+[303]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/RdNewDefinition.swift
 [304]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/DhdnGkDefinition.swift
 [305]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/MgiGkDefinition.swift
 [306]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Nad83Definition.swift
