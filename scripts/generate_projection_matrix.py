@@ -13,7 +13,7 @@ routing.
 Output:
 - `Tests/GISToolsTests/TestData/ProjectionMatrix/matrix.csv` — the data
   (one row per test point and projection, with the reference values)
-- `Tests/GISToolsTests/Algorithms/ProjectionMatrixTests.swift` — the test
+- `Tests/GISToolsTests/Projections/ProjectionMatrixTests.swift` — the test
   logic, which loads the CSV at runtime
 
 Run again with `--check` to verify the committed fixture is up to date.
@@ -750,7 +750,7 @@ def main():
         help="the reference data output path")
     parser.add_argument(
         "--output",
-        default="Tests/GISToolsTests/Algorithms/ProjectionMatrixTests.swift",
+        default="Tests/GISToolsTests/Projections/ProjectionMatrixTests.swift",
         help="the test logic output path")
     args = parser.parse_args()
 
