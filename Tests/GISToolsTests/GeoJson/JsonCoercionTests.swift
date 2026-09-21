@@ -268,4 +268,74 @@ struct JsonCoercionTests {
         #expect(JsonCoercion.double(true) == nil)
     }
 
+    // MARK: - Array coercion (fast path)
+
+    // Validates that an array of trap-prone dictionaries is coerced without
+    // invoking the trapping whole-dictionary upcast, and that each element
+    // survives as a usable dictionary.
+    @Test
+    func arrayOfTrapProneDictionaries() throws {
+        let trapProne: NSDictionary = [
+            "n": NSNumber(value: 42),
+            "b": true,
+            "null": NSNull(),
+            "nested": ["a": [1, 2], "b": true, "c": NSNull()],
+            "inhomogeneous": [1, "two", 3.0],
+        ]
+
+        let json: NSDictionary = [
+            "type": "Feature",
+            "properties": ["items": NSArray(array: [trapProne])],
+            "geometry": ["type": "Point", "coordinates": [1.0, 2.0]],
+        ]
+        let feature = try #require(Feature(json: json))
+
+        let items: [Sendable]? = feature.properties["items"] as? [Sendable]
+        #expect(items?.count == 1)
+
+        let first = try #require(items?.first as? [String: Sendable])
+        #expect(first["n"] as? Int == 42)
+        #expect(first["b"] as? Bool == true)
+        #expect(first["null"] is NSNull)
+        #expect((first["inhomogeneous"] as? [Any])?.count == 3)
+    }
+
+    // Validates that nested coordinate arrays keep the element runtime types
+    // that downstream concrete casts (`as? [Double?]`, `as? [[Any]]`) rely on.
+    @Test
+    func nestedArrayElementTypesArePreserved() throws {
+        let json: NSDictionary = [
+            "type": "LineString",
+            "coordinates": [
+                [NSNumber(value: 1.0), NSNumber(value: 2.0)],
+                [NSNumber(value: 3.0), NSNumber(value: 4.0), NSNull()],
+            ],
+        ]
+        let lineString = try #require(LineString(json: json))
+
+        #expect(lineString.coordinates.count == 2)
+        #expect(lineString.coordinates[0].longitude == 1.0)
+        #expect(lineString.coordinates[0].latitude == 2.0)
+        #expect(lineString.coordinates[1].longitude == 3.0)
+        #expect(lineString.coordinates[1].latitude == 4.0)
+        #expect(lineString.coordinates[1].altitude == nil)
+    }
+
+    // Validates that a large coordinate array parses without trapping and
+    // preserves every coordinate.
+    @Test
+    func largeCoordinateArrayParses() throws {
+        let count = 20000
+        let coordinates = (0 ..< count).map { index in
+            [NSNumber(value: 10.0 + (Double(index) * 0.0001)),
+             NSNumber(value: 47.0 + (Double(index) * 0.0001))]
+        }
+        let json: NSDictionary = ["type": "LineString", "coordinates": NSArray(array: coordinates)]
+
+        let lineString = try #require(LineString(json: json))
+
+        #expect(lineString.coordinates.count == count)
+        #expect(lineString.coordinates[count - 1].longitude == 10.0 + (Double(count - 1) * 0.0001))
+    }
+
 }

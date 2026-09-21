@@ -262,12 +262,26 @@ enum JsonCoercion {
     ///            dictionary, or `nil` if the value is not JSON-compatible
     private static func sendable(_ value: Any) -> Sendable? {
         // Dictionaries: recurse element-wise. This is where the trapping
-        // upcast lives, so nested dictionaries must never be whole-cast.
+        // `_dictionaryUpCast` lives, so bridged dictionaries must never be
+        // whole-cast.
         if let nsDictionary = value as? NSDictionary {
             return dictionary(from: nsDictionary)
         }
         if let nativeDictionary = value as? [String: Any] {
             return dictionary(nativeDictionary)
+        }
+
+        // Arrays: a single whole-array cast. Casting an array to `[Sendable]`
+        // only checks element conformance and never invokes
+        // `_dictionaryUpCast`, so it is safe. Elements keep their runtime
+        // representation (bridged `NSNumber`/`NSArray`/`NSDictionary`), which
+        // downstream concrete casts (`as? [Double?]`, `as? [Any]`, …) and
+        // ``dictionary(_:)`` rely on. Coercing element by element here would
+        // run a dynamic-cast cascade per element and dominate parsing time for
+        // large coordinate arrays. Native Swift arrays bridge to `NSArray`,
+        // so both representations are covered here.
+        if let nsArray = value as? NSArray {
+            return nsArray as? [Sendable]
         }
 
         // Strings (including toll-free bridged `NSString`).
@@ -311,20 +325,6 @@ enum JsonCoercion {
             return NSNull()
         }
 
-        // Arrays: coerce element-wise, preserving each element's runtime
-        // representation (numbers stay `NSNumber`). The boxed `[Sendable]`
-        // array still satisfies all downstream dynamic reads
-        // (`as? [Double?]`, `as? [Any]`, `as? [[Any]]`, …) because those
-        // perform element-wise casts. The raw `NSArray` cannot be stored
-        // directly: its `Sendable` conformance is unavailable in Swift 6 mode
-        // on Darwin.
-        if let array = value as? [Any] {
-            return sendableArray(from: array)
-        }
-        if let array = value as? NSArray {
-            return sendableArray(from: array.map { $0 })
-        }
-
         // Tolerate common non-JSON but hashable value types (e.g. `Data`) the
         // same way the previous whole-dictionary cast did: keep them, wrapped.
         if let data = value as? Data {
@@ -332,22 +332,6 @@ enum JsonCoercion {
         }
 
         return nil
-    }
-
-    /// Element-wise coercion of an array's elements into a `[Sendable]` box.
-    ///
-    /// - Parameter elements: The array elements
-    /// - Returns: The coerced array, or `nil` if any element is not JSON-compatible
-    private static func sendableArray(from elements: [Any]) -> [Sendable]? {
-        var result: [Sendable] = []
-        result.reserveCapacity(elements.count)
-
-        for element in elements {
-            guard let coerced = sendable(element) else { return nil }
-            result.append(coerced)
-        }
-
-        return result
     }
 
 }
