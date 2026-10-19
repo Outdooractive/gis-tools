@@ -36,6 +36,61 @@ struct ReaderTests {
         #expect(castedPoint.asJsonString(prettyPrinted: true) == point.asJsonString(prettyPrinted: true))
     }
 
+    // Validates reading a GeoJson object from a file URL.
+    @Test
+    func loadContentsOfUrl() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test_reader_\(UUID().uuidString).geojson")
+        try Data(pointJson.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let someGeoJson = try #require(GeoJsonReader.geoJsonFrom(contentsOf: url))
+        let point = try #require(someGeoJson as? Point)
+
+        #expect(point.type == .point)
+        #expect(point.projection == .epsg4326)
+        #expect(point.coordinate == Coordinate3D(latitude: 0.0, longitude: 100.0))
+    }
+
+    // Validates reading a FeatureCollection from a file URL.
+    @Test
+    func loadFeatureCollectionFromContentsOfUrl() async throws {
+        let collection = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 1.0, longitude: 2.0))),
+            Feature(Point(Coordinate3D(latitude: 3.0, longitude: 4.0))),
+        ])
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test_reader_\(UUID().uuidString).geojson")
+        let json = try #require(collection.asJsonString())
+        try Data(json.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let someGeoJson = try #require(GeoJsonReader.geoJsonFrom(contentsOf: url))
+        let parsedCollection = try #require(someGeoJson as? FeatureCollection)
+
+        #expect(parsedCollection.features.count == 2)
+        #expect(parsedCollection == collection)
+    }
+
+    // Validates that a missing file URL returns nil.
+    @Test
+    func loadContentsOfUrlWithMissingFile() async throws {
+        let url = URL(fileURLWithPath: "/nonexistent/reader_test.geojson")
+
+        #expect(GeoJsonReader.geoJsonFrom(contentsOf: url) == nil)
+    }
+
+    // Validates that a file without valid GeoJSON returns nil.
+    @Test
+    func loadContentsOfUrlWithInvalidContent() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test_reader_\(UUID().uuidString).geojson")
+        try Data("not json".utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        #expect(GeoJsonReader.geoJsonFrom(contentsOf: url) == nil)
+    }
+
     // MARK: - Geometry auto-detection
 
     // A PostGIS EWKB LINESTRING with embedded SRID 3857 (Web Mercator).

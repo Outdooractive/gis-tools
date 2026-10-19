@@ -21,7 +21,8 @@ public enum GeoJsonReader {
     /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(contentsOf url: URL) -> GeoJson? {
-        geoJsonFrom(json: try? Data(contentsOf: url))
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return geoJsonFrom(jsonData: data)
     }
 
     /// Try to initialize a GeoJSON object from a data object.
