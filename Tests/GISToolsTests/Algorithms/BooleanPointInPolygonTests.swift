@@ -219,6 +219,65 @@ struct BooleanPointInPolygonTests {
         #expect(fc.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
+    // MARK: - GeometryCollection
+
+    // Validates that `Feature.contains` handles features whose geometry is a `GeometryCollection`.
+    @Test
+    func featureContainsGeometryCollection() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let feature = Feature(GeometryCollection([polygon]))
+
+        #expect(feature.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        #expect(feature.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
+    }
+
+    // Validates that `FeatureCollection.contains` finds features whose geometry is a `GeometryCollection`.
+    @Test
+    func featureCollectionContainsGeometryCollection() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let fc = FeatureCollection([Feature(GeometryCollection([polygon]))])
+
+        #expect(fc.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        #expect(fc.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
+    }
+
+    // Validates that nested `GeometryCollection`s resolve to their polygon members.
+    @Test
+    func geometryCollectionContainsNestedCollection() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let outer = GeometryCollection([GeometryCollection([polygon])])
+
+        #expect(outer.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        #expect(outer.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
+        #expect(Feature(outer).contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+    }
+
+    // Validates that a `GeometryCollection` containing only non-polygon geometries contains nothing.
+    @Test
+    func geometryCollectionContainsNonPolygon() async throws {
+        let feature = Feature(GeometryCollection([Point(Coordinate3D(latitude: 5.0, longitude: 5.0))]))
+
+        #expect(feature.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)) == false)
+    }
+
     // MARK: - Grid size
 
     // Validates that `contains(gridSize:)` on Polygon matches manual pre-snapping.
@@ -311,6 +370,57 @@ struct BooleanPointInPolygonTests {
         ]]))
         let point = Point(Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978))
         #expect(polygon.contains(point))
+    }
+
+    // Feature with a GeometryCollection in EPSG:3857.
+    @Test
+    func featureContainsGeometryCollection3857() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let feature = Feature(GeometryCollection([polygon]))
+
+        #expect(feature.contains(Coordinate3D(x: 500.0, y: 500.0)))
+        #expect(feature.contains(Coordinate3D(x: 2_000.0, y: 500.0)) == false)
+    }
+
+    // Feature with a GeometryCollection in EPSG:4978.
+    @Test
+    func featureContainsGeometryCollection4978() throws {
+        let ring = [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ].map { $0.projected(to: .epsg4978) }
+        let polygon = try #require(Polygon([ring]))
+        let feature = Feature(GeometryCollection([polygon]))
+        let inside = Coordinate3D(x: 500.0, y: 500.0).projected(to: .epsg4978)
+        let outside = Coordinate3D(x: 5_000.0, y: 500.0).projected(to: .epsg4978)
+
+        #expect(feature.contains(inside))
+        #expect(feature.contains(outside) == false)
+    }
+
+    // Feature with a GeometryCollection in noSRID.
+    @Test
+    func featureContainsGeometryCollectionNoSRID() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let feature = Feature(GeometryCollection([polygon]))
+
+        #expect(feature.contains(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID)))
+        #expect(feature.contains(Coordinate3D(x: 2_000.0, y: 500.0, projection: .noSRID)) == false)
     }
 
     // MARK: - Antimeridian
