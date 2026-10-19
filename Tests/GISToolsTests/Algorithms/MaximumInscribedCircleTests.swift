@@ -43,7 +43,7 @@ struct MaximumInscribedCircleTests {
         let circle = try #require(polygon.maximumInscribedCircle())
         // Every vertex of the circle polygon should be inside the source polygon
         for coord in circle.outerRing?.coordinates ?? [] {
-            #expect(polygon.contains(coord, ignoringBoundary: true) || polygon.covers(Point(coord)))
+            #expect(polygon.contains(coord) || polygon.covers(Point(coord)))
         }
     }
 
@@ -85,7 +85,7 @@ struct MaximumInscribedCircleTests {
         #expect(radius > 0.0)
         #expect(circle.isValid)
         for coord in circle.outerRing?.coordinates ?? [] {
-            #expect(polygon.contains(coord, ignoringBoundary: true) || polygon.covers(Point(coord)))
+            #expect(polygon.contains(coord) || polygon.covers(Point(coord)))
         }
     }
 

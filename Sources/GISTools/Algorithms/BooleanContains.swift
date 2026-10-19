@@ -13,6 +13,11 @@ extension GeoJson {
     /// "A contains B" means that no points of B lie in the exterior of A, and
     /// at least one point of B lies in the interior of A.
     ///
+    /// - Note: The point-based overloads on geometry types (`Polygon.contains(_:)`
+    ///   etc.) are OGC-aligned. This geometry-to-geometry overload still uses
+    ///   boundary-inclusive point checks for line and polygon operands; the
+    ///   interior-only split is planned as a follow-up.
+    ///
     /// Projection handling varies by geometry type:
     /// - **Polygon / MultiPolygon**: ``Projection/epsg4978`` (ECEF) coordinates
     ///   are projected to ``Projection/epsg4326`` first; ``Projection/epsg3857``
@@ -122,7 +127,7 @@ extension BooleanContains {
             return lineStringGeometry.checkIsOnLine(coordinate)
 
         case let polygonGeometry as PolygonGeometry:
-            return polygonGeometry.contains(coordinate, ignoringBoundary: false, gridSize: nil)
+            return polygonGeometry.covers(coordinate, gridSize: nil)
 
         case let geometryCollection as GeometryCollection:
             return geometryCollection.geometries.contains { isCoordinateInGeometry(coordinate, $0) }
@@ -290,10 +295,10 @@ extension BooleanContains {
     ) -> Bool {
         switch geom {
         case let point as Point:
-            return polygon.contains(point, ignoringBoundary: false)
+            return polygon.covers(point)
 
         case let multiPoint as MultiPoint:
-            return multiPoint.points.allSatisfy { polygon.contains($0, ignoringBoundary: false) }
+            return multiPoint.points.allSatisfy { polygon.covers($0) }
 
         case let line as LineString:
             return allCoordinatesInGeometry(of: line, inside: polygon)
@@ -331,10 +336,10 @@ extension BooleanContains {
     ) -> Bool {
         switch geom {
         case let point as Point:
-            return multiPolygon.contains(point, ignoringBoundary: false)
+            return multiPolygon.covers(point)
 
         case let multiPoint as MultiPoint:
-            return multiPoint.points.allSatisfy { multiPolygon.contains($0, ignoringBoundary: false) }
+            return multiPoint.points.allSatisfy { multiPolygon.covers($0) }
 
         case let line as LineString:
             return multiPolygonContainsLineStringOrMultiPoint(multiPolygon, line)

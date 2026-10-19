@@ -154,7 +154,7 @@ struct ConcaveHullTests {
         let polygon = try #require(hull.polygons.first)
 
         for point in inputPoints {
-            #expect(polygon.contains(point, ignoringBoundary: false))
+            #expect(polygon.covers(point))
         }
     }
 

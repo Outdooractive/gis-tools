@@ -79,8 +79,8 @@ enum Difference {
         let b = Array(polygons3857.dropFirst())
 
         let boundaryTest = Overlay.makeBoundaryTest { point, _ in
-            a.contains(point, ignoringBoundary: true)
-                && !b.contains { $0.contains(point, ignoringBoundary: true) }
+            a.contains(point)
+                && !b.contains { $0.contains(point) }
         }
 
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {

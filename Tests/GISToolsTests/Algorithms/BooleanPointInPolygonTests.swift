@@ -32,7 +32,7 @@ struct BooleanPointInPolygonTests {
         #expect(ring.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
     }
 
-    // Validates that `Ring.contains` returns true for a coordinate on the boundary by default, and false when ignoring the boundary.
+    // Validates the OGC boundary semantics of `Ring.contains` and `Ring.covers`.
     @Test
     func ringContainsCoordinateOnBoundary() async throws {
         let ring = try #require(Ring([
@@ -42,10 +42,23 @@ struct BooleanPointInPolygonTests {
             Coordinate3D(latitude: 10.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]))
-        // Default: on boundary → true
-        #expect(ring.contains(Coordinate3D(latitude: 0.0, longitude: 5.0)))
-        // ignoringBoundary: on boundary → false
-        #expect(ring.contains(Coordinate3D(latitude: 0.0, longitude: 5.0), ignoringBoundary: true) == false)
+        let onBoundary = Coordinate3D(latitude: 0.0, longitude: 5.0)
+        let inside = Coordinate3D(latitude: 5.0, longitude: 5.0)
+        let outside = Coordinate3D(latitude: 20.0, longitude: 5.0)
+
+        // OGC contains: interior only.
+        #expect(ring.contains(onBoundary) == false)
+        #expect(ring.contains(inside))
+        #expect(ring.contains(outside) == false)
+
+        // OGC covers: boundary included.
+        #expect(ring.covers(onBoundary))
+        #expect(ring.covers(inside))
+        #expect(ring.covers(outside) == false)
+
+        #expect(ring.locate(onBoundary) == .boundary)
+        #expect(ring.locate(inside) == .interior)
+        #expect(ring.locate(outside) == .exterior)
     }
 
     // Validates that `Ring.contains` works correctly with `Point` instances.
@@ -136,6 +149,100 @@ struct BooleanPointInPolygonTests {
         #expect(polygon.contains(Coordinate3D(latitude: 15.0, longitude: 5.0)) == false)
     }
 
+    // A 10×10 square with a 4..6 square hole, in EPSG:4326.
+    private func polygonWithHole4326() throws -> Polygon {
+        try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+            ],
+        ]))
+    }
+
+    // Validates that a point on a hole's boundary is treated as a boundary point,
+    // not as a point inside the hole (issue #257).
+    @Test
+    func polygonWithHoleBoundarySemantics() async throws {
+        let polygon = try polygonWithHole4326()
+
+        let interior = Coordinate3D(latitude: 2.0, longitude: 2.0)
+        let outerBoundary = Coordinate3D(latitude: 5.0, longitude: 0.0)
+        let outerVertex = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let holeInterior = Coordinate3D(latitude: 5.0, longitude: 5.0)
+        let holeBoundary = Coordinate3D(latitude: 4.0, longitude: 5.0)
+        let holeVertex = Coordinate3D(latitude: 4.0, longitude: 4.0)
+
+        // OGC covers: the hole boundary is part of the polygon.
+        #expect(polygon.covers(interior))
+        #expect(polygon.covers(outerBoundary))
+        #expect(polygon.covers(outerVertex))
+        #expect(polygon.covers(holeBoundary))
+        #expect(polygon.covers(holeVertex))
+        #expect(polygon.covers(holeInterior) == false)
+
+        // OGC contains: interior only, no boundary point is inside.
+        #expect(polygon.contains(interior))
+        #expect(polygon.contains(outerBoundary) == false)
+        #expect(polygon.contains(outerVertex) == false)
+        #expect(polygon.contains(holeBoundary) == false)
+        #expect(polygon.contains(holeVertex) == false)
+        #expect(polygon.contains(holeInterior) == false)
+
+        // The tri-state location makes the boundary cases explicit.
+        #expect(polygon.locate(interior) == .interior)
+        #expect(polygon.locate(outerBoundary) == .boundary)
+        #expect(polygon.locate(outerVertex) == .boundary)
+        #expect(polygon.locate(holeBoundary) == .boundary)
+        #expect(polygon.locate(holeVertex) == .boundary)
+        #expect(polygon.locate(holeInterior) == .exterior)
+    }
+
+    // Validates that neighbouring polygons with a shared hole boundary agree:
+    // both cover the shared edge, and neither contains it in the interior-only mode.
+    @Test
+    func polygonWithHoleMatchesEnclave() async throws {
+        let region = try polygonWithHole4326()
+        let enclave = try #require(Polygon([[
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 6.0),
+            Coordinate3D(latitude: 6.0, longitude: 6.0),
+            Coordinate3D(latitude: 6.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+        ]]))
+        let sharedBoundary = Coordinate3D(latitude: 4.0, longitude: 5.0)
+
+        #expect(region.covers(sharedBoundary))
+        #expect(enclave.covers(sharedBoundary))
+        #expect(region.contains(sharedBoundary) == false)
+        #expect(enclave.contains(sharedBoundary) == false)
+    }
+
+    // Validates the same hole boundary semantics when accessed through a Feature
+    // and a FeatureCollection.
+    @Test
+    func featureWithHoleBoundarySemantics() async throws {
+        let feature = Feature(try polygonWithHole4326())
+        let featureCollection = FeatureCollection([feature])
+        let holeBoundary = Coordinate3D(latitude: 4.0, longitude: 5.0)
+
+        #expect(feature.covers(holeBoundary))
+        #expect(featureCollection.covers(holeBoundary))
+        #expect(feature.contains(holeBoundary) == false)
+        #expect(featureCollection.contains(holeBoundary) == false)
+        #expect(feature.locate(holeBoundary) == .boundary)
+        #expect(featureCollection.locate(holeBoundary) == .boundary)
+    }
+
     // Validates that `Polygon.contains` works correctly with `Point` instances.
     @Test
     func polygonContainsPoint() async throws {
@@ -174,6 +281,21 @@ struct BooleanPointInPolygonTests {
         #expect(mp.contains(Coordinate3D(latitude: 2.0, longitude: 2.0)))
         #expect(mp.contains(Coordinate3D(latitude: 12.0, longitude: 2.0)))
         #expect(mp.contains(Coordinate3D(latitude: 7.0, longitude: 2.0)) == false)
+    }
+
+    // Validates hole boundary semantics for a MultiPolygon.
+    @Test
+    func multiPolygonWithHoleBoundarySemantics() async throws {
+        let polygon = try polygonWithHole4326()
+        let multiPolygon = try #require(MultiPolygon([polygon]))
+        let holeBoundary = Coordinate3D(latitude: 4.0, longitude: 5.0)
+
+        #expect(multiPolygon.covers(holeBoundary))
+        #expect(multiPolygon.contains(holeBoundary) == false)
+        #expect(multiPolygon.locate(holeBoundary) == .boundary)
+        #expect(multiPolygon.covers(Coordinate3D(latitude: 5.0, longitude: 5.0)) == false)
+        #expect(multiPolygon.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)) == false)
+        #expect(multiPolygon.locate(Coordinate3D(latitude: 5.0, longitude: 5.0)) == .exterior)
     }
 
     // MARK: - Feature
@@ -268,6 +390,8 @@ struct BooleanPointInPolygonTests {
         #expect(outer.contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
         #expect(outer.contains(Coordinate3D(latitude: 20.0, longitude: 5.0)) == false)
         #expect(Feature(outer).contains(Coordinate3D(latitude: 5.0, longitude: 5.0)))
+        #expect(outer.locate(Coordinate3D(latitude: 0.0, longitude: 5.0)) == .boundary)
+        #expect(outer.locate(Coordinate3D(latitude: 20.0, longitude: 5.0)) == .exterior)
     }
 
     // Validates that a `GeometryCollection` containing only non-polygon geometries contains nothing.
@@ -361,15 +485,18 @@ struct BooleanPointInPolygonTests {
     // Point in polygon in EPSG:4978.
     @Test
     func pointInPolygon4978() throws {
-        let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let point = Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))
+
         #expect(polygon.contains(point))
+        #expect(polygon.locate(point) == .interior)
     }
 
     // Feature with a GeometryCollection in EPSG:3857.
@@ -421,6 +548,89 @@ struct BooleanPointInPolygonTests {
 
         #expect(feature.contains(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID)))
         #expect(feature.contains(Coordinate3D(x: 2_000.0, y: 500.0, projection: .noSRID)) == false)
+    }
+
+    // Hole boundary semantics in EPSG:3857.
+    @Test
+    func polygonWithHoleBoundary3857() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0),
+                Coordinate3D(x: 0.0, y: 1_000.0),
+                Coordinate3D(x: 1_000.0, y: 1_000.0),
+                Coordinate3D(x: 1_000.0, y: 0.0),
+                Coordinate3D(x: 0.0, y: 0.0),
+            ],
+            [
+                Coordinate3D(x: 400.0, y: 400.0),
+                Coordinate3D(x: 400.0, y: 600.0),
+                Coordinate3D(x: 600.0, y: 600.0),
+                Coordinate3D(x: 600.0, y: 400.0),
+                Coordinate3D(x: 400.0, y: 400.0),
+            ],
+        ]))
+        let holeBoundary = Coordinate3D(x: 400.0, y: 500.0)
+
+        #expect(polygon.covers(holeBoundary))
+        #expect(polygon.contains(holeBoundary) == false)
+        #expect(polygon.locate(holeBoundary) == .boundary)
+        #expect(polygon.covers(Coordinate3D(x: 500.0, y: 500.0)) == false)
+    }
+
+    // Hole boundary semantics in noSRID.
+    @Test
+    func polygonWithHoleBoundaryNoSRID() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+                Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+                Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ],
+            [
+                Coordinate3D(x: 400.0, y: 400.0, projection: .noSRID),
+                Coordinate3D(x: 400.0, y: 600.0, projection: .noSRID),
+                Coordinate3D(x: 600.0, y: 600.0, projection: .noSRID),
+                Coordinate3D(x: 600.0, y: 400.0, projection: .noSRID),
+                Coordinate3D(x: 400.0, y: 400.0, projection: .noSRID),
+            ],
+        ]))
+        let holeBoundary = Coordinate3D(x: 400.0, y: 500.0, projection: .noSRID)
+
+        #expect(polygon.covers(holeBoundary))
+        #expect(polygon.contains(holeBoundary) == false)
+        #expect(polygon.locate(holeBoundary) == .boundary)
+        #expect(polygon.covers(Coordinate3D(x: 500.0, y: 500.0, projection: .noSRID)) == false)
+    }
+
+    // Hole semantics in EPSG:4978. Boundary points are not tested here because
+    // the projection round-trip does not preserve straight edges exactly.
+    @Test
+    func polygonWithHole4978() throws {
+        let outer = [
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ].map { $0.projected(to: .epsg4978) }
+        let hole = [
+            Coordinate3D(x: 400.0, y: 400.0),
+            Coordinate3D(x: 400.0, y: 600.0),
+            Coordinate3D(x: 600.0, y: 600.0),
+            Coordinate3D(x: 600.0, y: 400.0),
+            Coordinate3D(x: 400.0, y: 400.0),
+        ].map { $0.projected(to: .epsg4978) }
+        let polygon = try #require(Polygon([outer, hole]))
+        let interior = Coordinate3D(x: 200.0, y: 200.0).projected(to: .epsg4978)
+        let holeInterior = Coordinate3D(x: 500.0, y: 500.0).projected(to: .epsg4978)
+        let exterior = Coordinate3D(x: 2_000.0, y: 500.0).projected(to: .epsg4978)
+
+        #expect(polygon.contains(interior))
+        #expect(polygon.contains(holeInterior) == false)
+        #expect(polygon.covers(holeInterior) == false)
+        #expect(polygon.contains(exterior) == false)
     }
 
     // MARK: - Antimeridian

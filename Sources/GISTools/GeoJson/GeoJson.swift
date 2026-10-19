@@ -273,29 +273,63 @@ public protocol PolygonGeometry: GeoJsonGeometry {
     /// The receiver's coordinates converted to `Polygon`s.
     var polygons: [Polygon] { get }
 
-    /// Check if this `(Multi)Polygon` contains *Coordinate3D*.
+    /// Determines where *Coordinate3D* lies relative to this `(Multi)Polygon`.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to test
-    ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
     ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    /// - Returns: `true` if the coordinate lies within the polygon
+    /// - Returns: `.interior`, `.boundary` or `.exterior`.
+    func locate(_ coordinate: Coordinate3D, gridSize: Double?) -> PointLocation
+
+    /// Check if this `(Multi)Polygon` contains *Coordinate3D* in its interior.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to test
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: `true` if the coordinate lies in the interior of the polygon
     func contains(
         _ coordinate: Coordinate3D,
-        ignoringBoundary: Bool,
         gridSize: Double?
     ) -> Bool
 
-    /// Check if this `(Multi)Polygon` contains *Point*.
+    /// Check if this `(Multi)Polygon` covers *Coordinate3D*.
+    ///
+    /// - Parameters:
+    ///    - coordinate: The coordinate to test
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: `true` if the coordinate lies in the interior or on the boundary of the polygon
+    func covers(
+        _ coordinate: Coordinate3D,
+        gridSize: Double?
+    ) -> Bool
+
+    /// Determines where *Point* lies relative to this `(Multi)Polygon`.
     ///
     /// - Parameters:
     ///    - point: The point to test
-    ///    - ignoringBoundary: If `true`, points on the boundary are not considered inside
     ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
-    /// - Returns: `true` if the point lies within the polygon
+    /// - Returns: `.interior`, `.boundary` or `.exterior`.
+    func locate(_ point: Point, gridSize: Double?) -> PointLocation
+
+    /// Check if this `(Multi)Polygon` contains *Point* in its interior.
+    ///
+    /// - Parameters:
+    ///    - point: The point to test
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: `true` if the point lies in the interior of the polygon
     func contains(
         _ point: Point,
-        ignoringBoundary: Bool,
+        gridSize: Double?
+    ) -> Bool
+
+    /// Check if this `(Multi)Polygon` covers *Point*.
+    ///
+    /// - Parameters:
+    ///    - point: The point to test
+    ///    - gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
+    /// - Returns: `true` if the point lies in the interior or on the boundary of the polygon
+    func covers(
+        _ point: Point,
         gridSize: Double?
     ) -> Bool
 

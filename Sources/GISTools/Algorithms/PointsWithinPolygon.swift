@@ -13,10 +13,10 @@ extension PolygonGeometry {
     /// - Returns: The coordinates inside the polygon.
     public func coordinatesWithin(_ coordinates: [Coordinate3D], gridSize: Double? = nil) -> [Coordinate3D] {
         guard let gridSize else {
-            return coordinates.filter { contains($0, ignoringBoundary: false, gridSize: nil) }
+            return coordinates.filter { covers($0, gridSize: nil) }
         }
         let snappedSelf = self.snappedToGrid(tolerance: gridSize)
-        return coordinates.filter { snappedSelf.contains($0.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
+        return coordinates.filter { snappedSelf.covers($0.snappedToGrid(tolerance: gridSize), gridSize: nil) }
     }
 
     /// Finds *Point*s that fall within the receiver.
@@ -24,10 +24,10 @@ extension PolygonGeometry {
     /// - Returns: The points inside the polygon.
     public func pointsWithin(_ points: [Point], gridSize: Double? = nil) -> [Point] {
         guard let gridSize else {
-            return points.filter { contains($0.coordinate, ignoringBoundary: false, gridSize: nil) }
+            return points.filter { covers($0.coordinate, gridSize: nil) }
         }
         let snappedSelf = self.snappedToGrid(tolerance: gridSize)
-        return points.filter { snappedSelf.contains($0.coordinate.snappedToGrid(tolerance: gridSize), ignoringBoundary: false, gridSize: nil) }
+        return points.filter { snappedSelf.covers($0.coordinate.snappedToGrid(tolerance: gridSize), gridSize: nil) }
     }
 
 }

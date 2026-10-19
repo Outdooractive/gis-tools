@@ -126,7 +126,7 @@ struct PoleOfInaccessibilityTests {
         let parts = polygon.cutAtAntimeridian()
         let isInsidePart = parts.features.contains { feature in
             guard let partPolygon = feature.geometry as? Polygon else { return false }
-            return partPolygon.contains(pole.coordinate, ignoringBoundary: true)
+            return partPolygon.contains(pole.coordinate)
         }
         #expect(isInsidePart)
     }
