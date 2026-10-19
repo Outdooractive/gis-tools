@@ -262,9 +262,16 @@ extension GeometryCollection {
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 
         return snappedSelf.geometries.contains { (geometry) -> Bool in
-            guard let polygonGeometry = geometry as? PolygonGeometry else { return false }
+            switch geometry {
+            case let polygonGeometry as PolygonGeometry:
+                return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
 
-            return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
+            case let geometryCollection as GeometryCollection:
+                return geometryCollection.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
+
+            default:
+                return false
+            }
         }
     }
 
@@ -287,9 +294,16 @@ extension Feature {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
 
-        guard let polygonGeometry = snappedSelf.geometry as? PolygonGeometry else { return false }
+        switch snappedSelf.geometry {
+        case let polygonGeometry as PolygonGeometry:
+            return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
 
-        return polygonGeometry.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
+        case let geometryCollection as GeometryCollection:
+            return geometryCollection.contains(snappedCoordinate, ignoringBoundary: ignoringBoundary, gridSize: nil)
+
+        default:
+            return false
+        }
     }
 
 }
