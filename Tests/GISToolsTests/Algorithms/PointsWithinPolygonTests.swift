@@ -118,15 +118,15 @@ struct PointsWithinPolygonTests {
     @Test
     func pointsWithinPolygon3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let candidates = [
-            Coordinate3D(x: 50_000.0, y: 50_000.0),
-            Coordinate3D(x: 200_000.0, y: 200_000.0),
+            Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .epsg3857),
+            Coordinate3D(x: 200_000.0, y: 200_000.0, projection: .epsg3857),
         ]
         let result = polygon.coordinatesWithin(candidates)
         #expect(result.count == 1)

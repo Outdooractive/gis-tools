@@ -239,11 +239,11 @@ struct MultiPolygonTests {
     @Test
     func init3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let multiPolygon = try #require(MultiPolygon([polygon]))
 
@@ -284,18 +284,18 @@ struct MultiPolygonTests {
     @Test
     func boundingBox3857() async throws {
         let polygonA = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 5.0, y: 0.0),
-            Coordinate3D(x: 5.0, y: 5.0),
-            Coordinate3D(x: 0.0, y: 5.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 5.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let polygonB = try #require(Polygon([[
-            Coordinate3D(x: 5.0, y: 5.0),
-            Coordinate3D(x: 10.0, y: 5.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 5.0, y: 10.0),
-            Coordinate3D(x: 5.0, y: 5.0),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 5.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 5.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857),
         ]]))
         let multiPolygon = try #require(MultiPolygon([polygonA, polygonB]))
 

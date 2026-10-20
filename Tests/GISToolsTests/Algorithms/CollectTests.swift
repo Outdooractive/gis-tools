@@ -93,15 +93,15 @@ struct CollectTests {
     @Test
     func collect3857() throws {
         let poly = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 200_000.0, y: 0.0),
-            Coordinate3D(x: 200_000.0, y: 200_000.0),
-            Coordinate3D(x: 0.0, y: 200_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200_000.0, y: 200_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 200_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        var point1 = Feature(Point(Coordinate3D(x: 50_000.0, y: 50_000.0)))
+        var point1 = Feature(Point(Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .epsg3857)))
         point1.properties = ["pop": 100]
-        var point2 = Feature(Point(Coordinate3D(x: 150_000.0, y: 150_000.0)))
+        var point2 = Feature(Point(Coordinate3D(x: 150_000.0, y: 150_000.0, projection: .epsg3857)))
         point2.properties = ["pop": 200]
 
         let polys = FeatureCollection([Feature(poly)])

@@ -64,11 +64,11 @@ struct SimplifyTests {
     @Test
     func simplify3857() async throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 250.0, y: 250.0),
-            Coordinate3D(x: 500.0, y: 0.0),
-            Coordinate3D(x: 750.0, y: 250.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 250.0, y: 250.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 750.0, y: 250.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
         ]))
         let simplified = lineString.simplified(tolerance: 100.0)
         #expect(simplified.coordinates.count <= lineString.coordinates.count)
@@ -181,11 +181,11 @@ struct SimplifyTests {
     @Test
     func topologyPreserve3857() throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 50.0),
-            Coordinate3D(x: 200.0, y: 0.0),
-            Coordinate3D(x: 300.0, y: 50.0),
-            Coordinate3D(x: 400.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 50.0, projection: .epsg3857),
+            Coordinate3D(x: 200.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 300.0, y: 50.0, projection: .epsg3857),
+            Coordinate3D(x: 400.0, y: 0.0, projection: .epsg3857),
         ]))
         let result = try #require(ls.topologyPreservedSimplified(tolerance: 50.0))
         #expect(result.coordinates.count < ls.coordinates.count)
@@ -226,11 +226,11 @@ struct SimplifyTests {
     @Test
     func polygonHull3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let result = try #require(polygon.polygonHullSimplified(tolerance: 10.0))
         #expect(result.isValid)
@@ -240,18 +240,18 @@ struct SimplifyTests {
     @Test
     func multiPolygonHullSimplified() throws {
         let p1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 500.0, y: 1_500.0),
-            Coordinate3D(x: 1_500.0, y: 1_500.0),
-            Coordinate3D(x: 1_500.0, y: 500.0),
-            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 1_500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 1_500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.polygonHullSimplified(tolerance: 10.0))
@@ -293,18 +293,18 @@ struct SimplifyTests {
     @Test
     func coverageSimplify3857() throws {
         let p1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.coverageSimplified(tolerance: 50.0))

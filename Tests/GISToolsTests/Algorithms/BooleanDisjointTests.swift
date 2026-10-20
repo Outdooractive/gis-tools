@@ -118,14 +118,14 @@ struct BooleanDisjointTests {
     @Test
     func isDisjointEPSG3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0))
-        let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
+        let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))
+        let pointOutside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857))
         #expect(!polygon.isDisjoint(with: pointInside))
         #expect(polygon.isDisjoint(with: pointOutside))
     }
@@ -151,14 +151,14 @@ struct BooleanDisjointTests {
     @Test
     func disjointMultiPointPolygonEPSG3857() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 2_000.0, y: 2_000.0)]))
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857)]))
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(!mp.isDisjoint(with: polygon))
     }

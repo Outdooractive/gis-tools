@@ -311,11 +311,11 @@ struct CenterTests {
     @Test
     func polygonCentroid3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let centroid = polygon.centroid
         #expect(centroid != nil)
@@ -328,11 +328,11 @@ struct CenterTests {
     @Test
     func polygonCenterOfMass3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let com = try #require(polygon.centerOfMass)
         #expect(abs(com.coordinate.x - 500.0) < 1.0)
@@ -544,11 +544,11 @@ struct CenterTests {
     @Test
     func centroidEPSG3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let c = try #require(polygon.centroid)
         #expect(c.coordinate.projection == .epsg3857)

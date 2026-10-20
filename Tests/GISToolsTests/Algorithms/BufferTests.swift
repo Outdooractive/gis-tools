@@ -596,11 +596,11 @@ struct BufferTests {
     @Test
     func bufferedPolygon3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let result = try #require(polygon.buffered(by: 1.0))
         #expect(result.polygons.count >= 1)
@@ -614,7 +614,7 @@ struct BufferTests {
     // Verifies buffer around a point in EPSG:3857 produces a valid polygon.
     @Test
     func bufferedPoint3857() throws {
-        let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
         let result = try #require(point.buffered(by: 100.0))
         #expect(result.polygons.count == 1)
         #expect(result.polygons[0].area > 0.0)
@@ -774,9 +774,9 @@ struct BufferTests {
     @Test
     func bevelJoin3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
         ]))
         let bevel = try #require(line.buffered(
             by: 1.0, endType: .butt, joinType: .bevel))
@@ -820,11 +820,11 @@ struct BufferTests {
     @Test
     func bevelJoinOnPolygon3857() throws {
         let poly = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let bevel = try #require(poly.buffered(
             by: 1.0, joinType: .bevel))
@@ -915,9 +915,9 @@ struct BufferTests {
     @Test
     func miterJoin3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
         ]))
         let miter = try #require(line.buffered(
             by: 1.0, endType: .butt, joinType: .miter()))

@@ -23,17 +23,34 @@ struct CoordinateTests {
     /// Validates the ``Coordinate3D.description`` string for EPSG:3857 coordinates with various optional components.
     @Test
     func coordinateXYDescription() async throws {
-        let coordinate = Coordinate3D(x: 10.0, y: 15.0)
+        let coordinate = Coordinate3D(x: 10.0, y: 15.0, projection: .epsg3857)
         #expect(coordinate.description == "Coordinate3D<EPSG:3857>(x: 10.0, y: 15.0)")
 
-        let coordinateZ = Coordinate3D(x: 10.0, y: 15.0, z: 500.0)
+        let coordinateZ = Coordinate3D(x: 10.0, y: 15.0, z: 500.0, projection: .epsg3857)
         #expect(coordinateZ.description == "Coordinate3D<EPSG:3857>(x: 10.0, y: 15.0, z: 500.0)")
 
-        let coordinateM = Coordinate3D(x: 10.0, y: 15.0, m: 1234)
+        let coordinateM = Coordinate3D(x: 10.0, y: 15.0, m: 1234, projection: .epsg3857)
         #expect(coordinateM.description == "Coordinate3D<EPSG:3857>(x: 10.0, y: 15.0, m: 1234.0)")
 
-        let coordinateZM = Coordinate3D(x: 10.0, y: 15.0, z: 500.0, m: 1234)
+        let coordinateZM = Coordinate3D(x: 10.0, y: 15.0, z: 500.0, m: 1234, projection: .epsg3857)
         #expect(coordinateZM.description == "Coordinate3D<EPSG:3857>(x: 10.0, y: 15.0, z: 500.0, m: 1234.0)")
+    }
+
+    /// Validates the explicit projection factories.
+    @Test
+    func projectedFactories() async throws {
+        let webMercator = Coordinate3D.epsg3857(x: 1.0, y: 2.0)
+        #expect(webMercator.projection == .epsg3857)
+        #expect(webMercator.x == 1.0)
+        #expect(webMercator.y == 2.0)
+
+        let ecef = Coordinate3D.epsg4978(x: 3.0, y: 4.0, z: 5.0)
+        #expect(ecef.projection == .epsg4978)
+        #expect(ecef.z == 5.0)
+
+        let noSRID = Coordinate3D.noSRID(x: 6.0, y: 7.0)
+        #expect(noSRID.projection == .noSRID)
+        #expect(noSRID.x == 6.0)
     }
 
     /// Validates JSON encoding of a ``Coordinate3D`` produces the expected array.
@@ -266,7 +283,7 @@ struct CoordinateTests {
     @Test
     func normalizedEPSG3857() async throws {
         let shift = GISTool.originShift
-        let a = Coordinate3D(x: shift * 3.0, y: 10.0)
+        let a = Coordinate3D(x: shift * 3.0, y: 10.0, projection: .epsg3857)
         let n = a.normalized()
         #expect(abs(n.x - shift) < 0.000001)
     }
@@ -348,7 +365,7 @@ struct CoordinateTests {
     @Test
     func clampedEPSG3857() async throws {
         let shift = GISTool.originShift
-        let a = Coordinate3D(x: shift * 3.0, y: shift * 4.0)
+        let a = Coordinate3D(x: shift * 3.0, y: shift * 4.0, projection: .epsg3857)
         let c = a.clamped()
         #expect(c.x == shift)
         #expect(c.y == shift)
@@ -453,15 +470,15 @@ struct CoordinateTests {
     @Test
     func equalityProjectionMismatch() async throws {
         let epsg4326 = Coordinate3D(latitude: 10.0, longitude: 20.0)
-        let epsg3857 = Coordinate3D(x: 20.0, y: 10.0)
+        let epsg3857 = Coordinate3D(x: 20.0, y: 10.0, projection: .epsg3857)
         #expect(epsg4326 != epsg3857)
     }
 
     /// Validates ``Coordinate3D.equals(other:includingAltitude:equalityDelta:altitudeDelta:)`` with a custom delta across projections.
     @Test
     func equalityCustomDeltaProjection() async throws {
-        let a = Coordinate3D(x: 1000.0, y: 2000.0)
-        let b = Coordinate3D(x: 1000.000_001, y: 2000.0)
+        let a = Coordinate3D(x: 1000.0, y: 2000.0, projection: .epsg3857)
+        let b = Coordinate3D(x: 1000.000_001, y: 2000.0, projection: .epsg3857)
         #expect(a.equals(other: b, equalityDelta: 0.001))
         #expect(a.equals(other: b, equalityDelta: GISTool.equalityDelta) == false)
     }
@@ -470,7 +487,7 @@ struct CoordinateTests {
     @Test
     func equalityProjected() async throws {
         let a = Coordinate3D(latitude: 10.0, longitude: 20.0)
-        let b = Coordinate3D(x: 2226389.0, y: 1118889.0)
+        let b = Coordinate3D(x: 2226389.0, y: 1118889.0, projection: .epsg3857)
         #expect(a.equals(other: b, equalityDelta: 0.5))
     }
 

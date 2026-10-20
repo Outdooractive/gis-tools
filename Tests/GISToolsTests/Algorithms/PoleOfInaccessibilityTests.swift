@@ -155,11 +155,11 @@ struct PoleOfInaccessibilityTests {
     @Test
     func poleOfInaccessibility3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let pole = try #require(polygon.poleOfInaccessibility(precision: 1_000.0))
         #expect(pole.coordinate.longitude.isFinite)

@@ -40,7 +40,7 @@ struct EllipseTests {
     // Tests ellipse generation in EPSG:3857.
     @Test
     func ellipse3857() async throws {
-        let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
         let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
         #expect(ellipse.isValid)
     }

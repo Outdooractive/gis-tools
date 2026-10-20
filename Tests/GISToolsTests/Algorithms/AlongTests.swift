@@ -41,9 +41,9 @@ struct AlongTests {
     @Test
     func along3857() async throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 500_000.0, y: 500_000.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let coordinate = lineString.coordinateAlong(distance: 500_000.0)
         #expect(coordinate.x.isFinite)

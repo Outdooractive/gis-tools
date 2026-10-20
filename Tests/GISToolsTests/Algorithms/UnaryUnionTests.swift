@@ -66,18 +66,18 @@ struct UnaryUnionTests {
     @Test
     func unaryUnion3857() throws {
         let p1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 500.0, y: 1_500.0),
-            Coordinate3D(x: 1_500.0, y: 1_500.0),
-            Coordinate3D(x: 1_500.0, y: 500.0),
-            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 1_500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 1_500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.unaryUnion())
@@ -167,18 +167,18 @@ struct UnaryUnionTests {
     @Test
     func coverageUnion3857() throws {
         let p1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.coverageUnion())
@@ -432,11 +432,11 @@ struct UnaryUnionTests {
         ]
         let p1 = try #require(Polygon([coords4326.map { $0.projected(to: .epsg3857) }]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.coverageUnion())
@@ -447,18 +447,18 @@ struct UnaryUnionTests {
     @Test
     func coverageIsValid3857() throws {
         let p1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         #expect(mp.coverageIsValid())

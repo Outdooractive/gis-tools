@@ -68,10 +68,10 @@ struct FlattenTests {
     // Tests flattening in EPSG:3857.
     @Test
     func flatten3857() async throws {
-        let a = Coordinate3D(x: 0.0, y: 0.0)
-        let b = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let a = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let b = Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857)
         let line = try #require(LineString([a, b]))
-        let point = Point(Coordinate3D(x: 100_000.0, y: 100_000.0))
+        let point = Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857))
         let collection = GeometryCollection([line, point])
 
         let flattened = try #require(collection.flattened)

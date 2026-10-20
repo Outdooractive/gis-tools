@@ -34,10 +34,10 @@ struct ValidityTests {
     @Test
     func coordinate3857() async throws {
         let shift = GISTool.originShift
-        #expect(Coordinate3D(x: 0.0, y: 0.0).isValid)
-        #expect(Coordinate3D(x: shift, y: shift).isValid)
-        #expect(!Coordinate3D(x: shift + 1.0, y: 0.0).isValid)
-        #expect(!Coordinate3D(x: 0.0, y: -shift - 1.0).isValid)
+        #expect(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857).isValid)
+        #expect(Coordinate3D(x: shift, y: shift, projection: .epsg3857).isValid)
+        #expect(!Coordinate3D(x: shift + 1.0, y: 0.0, projection: .epsg3857).isValid)
+        #expect(!Coordinate3D(x: 0.0, y: -shift - 1.0, projection: .epsg3857).isValid)
     }
 
     // Validates EPSG:4978 (unbounded extent: always valid) and noSRID.

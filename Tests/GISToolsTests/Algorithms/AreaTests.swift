@@ -7,11 +7,11 @@ struct AreaTests {
     @Test
     func areaWithNoHoles() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 100.0),
-            Coordinate3D(x: 0.0, y: 100.0),
-            Coordinate3D(x: 0.0, y: 0.0)
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         ]]))
         #expect(abs(polygon.area - 10000.0) < 0.1)
     }
@@ -20,17 +20,17 @@ struct AreaTests {
     @Test
     func areaWithSingleHole() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 100.0),
-            Coordinate3D(x: 0.0, y: 100.0),
-            Coordinate3D(x: 0.0, y: 0.0)
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         ], [
-            Coordinate3D(x: 25.0, y: 25.0),
-            Coordinate3D(x: 75.0, y: 25.0),
-            Coordinate3D(x: 75.0, y: 75.0),
-            Coordinate3D(x: 25.0, y: 75.0),
-            Coordinate3D(x: 25.0, y: 25.0)
+            Coordinate3D(x: 25.0, y: 25.0, projection: .epsg3857),
+            Coordinate3D(x: 75.0, y: 25.0, projection: .epsg3857),
+            Coordinate3D(x: 75.0, y: 75.0, projection: .epsg3857),
+            Coordinate3D(x: 25.0, y: 75.0, projection: .epsg3857),
+            Coordinate3D(x: 25.0, y: 25.0, projection: .epsg3857)
         ]]))
         #expect(abs(polygon.area - 7500.0) < 0.1)
     }
@@ -39,22 +39,22 @@ struct AreaTests {
     @Test
     func areaWithOverlappingHoles() async throws {
         let outerRing = try #require(Ring([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 0.0),
-            Coordinate3D(x: 100.0, y: 100.0),
-            Coordinate3D(x: 0.0, y: 100.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .epsg3857),
         ]))
         let hole1 = try #require(Ring([
-            Coordinate3D(x: 20.0, y: 20.0),
-            Coordinate3D(x: 60.0, y: 20.0),
-            Coordinate3D(x: 60.0, y: 60.0),
-            Coordinate3D(x: 20.0, y: 60.0),
+            Coordinate3D(x: 20.0, y: 20.0, projection: .epsg3857),
+            Coordinate3D(x: 60.0, y: 20.0, projection: .epsg3857),
+            Coordinate3D(x: 60.0, y: 60.0, projection: .epsg3857),
+            Coordinate3D(x: 20.0, y: 60.0, projection: .epsg3857),
         ]))
         let hole2 = try #require(Ring([
-            Coordinate3D(x: 40.0, y: 40.0),
-            Coordinate3D(x: 80.0, y: 40.0),
-            Coordinate3D(x: 80.0, y: 80.0),
-            Coordinate3D(x: 40.0, y: 80.0),
+            Coordinate3D(x: 40.0, y: 40.0, projection: .epsg3857),
+            Coordinate3D(x: 80.0, y: 40.0, projection: .epsg3857),
+            Coordinate3D(x: 80.0, y: 80.0, projection: .epsg3857),
+            Coordinate3D(x: 40.0, y: 80.0, projection: .epsg3857),
         ]))
         let polygon = try #require(Polygon([outerRing, hole1, hole2]))
         #expect(abs(polygon.area - 7200.0) < 0.1)

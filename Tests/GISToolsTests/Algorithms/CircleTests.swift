@@ -37,7 +37,7 @@ struct CircleTests {
     // Validates circle generation in EPSG:3857.
     @Test
     func circle3857() async throws {
-        let point = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
         let circle = try #require(point.circle(radius: 5000.0))
         #expect(circle.isValid)
     }

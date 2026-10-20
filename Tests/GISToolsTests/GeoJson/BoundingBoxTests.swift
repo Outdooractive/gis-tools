@@ -39,8 +39,8 @@ struct BoundingBoxTests {
     // Validates that initializing a bounding box with EPSG:3857 coordinates sets the correct projection.
     @Test
     func initWithCoordinatesEPSG3857() async throws {
-        let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514)
-        let coordinate2 = Coordinate3D(x: -10_859_458.446776, y: 4_235_169.496066)
+        let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, projection: .epsg3857)
+        let coordinate2 = Coordinate3D(x: -10_859_458.446776, y: 4_235_169.496066, projection: .epsg3857)
 
         let boundingBox: BoundingBox = try #require(BoundingBox(coordinates: [coordinate1, coordinate2]))
         #expect(boundingBox.projection == .epsg3857)

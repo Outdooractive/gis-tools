@@ -125,20 +125,20 @@ struct KinksTests {
     @Test
     func kinks3857() async throws {
         let simple = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(simple.kinks().points.isEmpty)
 
         let bowtie = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(bowtie.kinks().points.isNotEmpty)
     }

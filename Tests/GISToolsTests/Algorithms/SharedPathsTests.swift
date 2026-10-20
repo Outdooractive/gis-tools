@@ -48,12 +48,12 @@ struct SharedPathsTests {
     @Test
     func sharedPaths3857Projection() async throws {
         let a = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 500_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let b = try #require(LineString([
-            Coordinate3D(x: 500_000.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]))
         let result = a.sharedPaths(with: b)
         #expect(result != nil)
@@ -274,13 +274,13 @@ struct SharedPathsTests {
     @Test
     func sharedPaths3857() async throws {
         let a = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 500_000.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let b = try #require(LineString([
-            Coordinate3D(x: 500_000.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let result = a.sharedPaths(with: b)
         #expect(result != nil)

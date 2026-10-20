@@ -74,26 +74,77 @@ public struct Coordinate3D:
     }
 
     /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
-    /// Default projection will we *EPSG:3857* but can be overridden.
+    ///
+    /// The projection must be specified explicitly. Use
+    /// ``Coordinate3D/epsg3857(x:y:z:m:)``, ``Coordinate3D/epsg4978(x:y:z:m:)``
+    /// or ``Coordinate3D/noSRID(x:y:z:m:)`` for the common projected cases.
     ///
     /// - Parameters:
     ///    - x: The easting (or longitude)
     ///    - y: The northing (or latitude)
     ///    - z: The altitude in meters (optional)
     ///    - m: A generic value (optional)
-    ///    - projection: The coordinate projection (default `.epsg3857`)
+    ///    - projection: The coordinate projection
     public init(
         x: Double,
         y: Double,
         z: Double? = nil,
         m: Double? = nil,
-        projection: Projection = .epsg3857
+        projection: Projection
     ) {
         self.projection = projection
         self.longitude = x
         self.latitude = y
         self.altitude = z
         self.m = m
+    }
+
+    /// Create a coordinate in EPSG:3857 (Web Mercator).
+    ///
+    /// - Parameters:
+    ///    - x: The easting
+    ///    - y: The northing
+    ///    - z: The altitude in meters (optional)
+    ///    - m: A generic value (optional)
+    public static func epsg3857(
+        x: Double,
+        y: Double,
+        z: Double? = nil,
+        m: Double? = nil
+    ) -> Coordinate3D {
+        Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg3857)
+    }
+
+    /// Create a coordinate in EPSG:4978 (WGS84 geocentric/ECEF).
+    ///
+    /// - Parameters:
+    ///    - x: The ECEF X coordinate
+    ///    - y: The ECEF Y coordinate
+    ///    - z: The ECEF Z coordinate (optional)
+    ///    - m: A generic value (optional)
+    public static func epsg4978(
+        x: Double,
+        y: Double,
+        z: Double? = nil,
+        m: Double? = nil
+    ) -> Coordinate3D {
+        Coordinate3D(x: x, y: y, z: z, m: m, projection: .epsg4978)
+    }
+
+    /// Create a coordinate without an SRID.
+    ///
+    /// - Parameters:
+    ///    - x: The easting (or longitude)
+    ///    - y: The northing (or latitude)
+    ///    - z: The altitude in meters (optional)
+    ///    - m: A generic value (optional)
+    public static func noSRID(
+        x: Double,
+        y: Double,
+        z: Double? = nil,
+        m: Double? = nil
+    ) -> Coordinate3D {
+        Coordinate3D(x: x, y: y, z: z, m: m, projection: .noSRID)
     }
 
     /// A boolean value indicating if this coordinate is (0.0, 0.0) aka Null Island.

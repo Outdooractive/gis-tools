@@ -199,8 +199,8 @@ struct LineStringTests {
     @Test
     func init3857() throws {
         let coords: [Coordinate3D] = [
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
         ]
         let lineString = try #require(LineString(coords))
 
@@ -259,11 +259,11 @@ struct LineStringTests {
     @Test
     func boundingBox3857() async throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]))
 
         let bbox = try #require(lineString.calculateBoundingBox())

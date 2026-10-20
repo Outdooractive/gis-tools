@@ -262,8 +262,8 @@ struct TileCoverTests {
     @Test
     func tileCover3857() async throws {
         let bbox = BoundingBox(
-            southWest: Coordinate3D(x: 0.0, y: 0.0),
-            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857))
         let tiles = bbox.tileCover(atZoom: 2)
         #expect(!tiles.isEmpty)
     }

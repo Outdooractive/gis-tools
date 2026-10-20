@@ -249,10 +249,10 @@ struct BooleanParallelTests {
     // Parallel check in EPSG:3857.
     @Test
     func parallelEPSG3857() {
-        let a = Coordinate3D(x: 0.0, y: 0.0)
-        let b = Coordinate3D(x: 0.0, y: 10.0)
-        let c = Coordinate3D(x: 5.0, y: 0.0)
-        let d = Coordinate3D(x: 5.0, y: 10.0)
+        let a = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let b = Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857)
+        let c = Coordinate3D(x: 5.0, y: 0.0, projection: .epsg3857)
+        let d = Coordinate3D(x: 5.0, y: 10.0, projection: .epsg3857)
         let s1 = LineSegment(first: a, second: b)
         let s2 = LineSegment(first: c, second: d)
         #expect(s1.isParallel(to: s2))

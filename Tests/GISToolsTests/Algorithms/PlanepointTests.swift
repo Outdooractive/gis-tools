@@ -88,13 +88,13 @@ struct PlanepointTests {
     func planepoint3857() async throws {
         let triangle = try #require(Polygon([
             [
-                Coordinate3D(x: 0.0, y: 0.0, z: 10.0),
-                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 10.0),
-                Coordinate3D(x: 0.0, y: 100_000.0, z: 10.0),
-                Coordinate3D(x: 0.0, y: 0.0, z: 10.0),
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0, projection: .epsg3857),
+                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 10.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 10.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 0.0, z: 10.0, projection: .epsg3857),
             ],
         ]))
-        let point = Coordinate3D(x: 30_000.0, y: 50_000.0)
+        let point = Coordinate3D(x: 30_000.0, y: 50_000.0, projection: .epsg3857)
         let z = triangle.planepoint(point)
         #expect(z != nil)
         #expect(z!.isFinite)
@@ -191,18 +191,18 @@ struct PlanepointTests {
     func tinToPointCloud3857() async throws {
         let triangle1 = try #require(Polygon([
             [
-                Coordinate3D(x: 0.0, y: 0.0, z: 0.0),
-                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
-                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0),
-                Coordinate3D(x: 0.0, y: 0.0, z: 0.0),
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg3857),
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg3857),
             ],
         ]))
         let triangle2 = try #require(Polygon([
             [
-                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
-                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 200.0),
-                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0),
-                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0),
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0, projection: .epsg3857),
+                Coordinate3D(x: 100_000.0, y: 100_000.0, z: 200.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 100_000.0, z: 50.0, projection: .epsg3857),
+                Coordinate3D(x: 100_000.0, y: 0.0, z: 100.0, projection: .epsg3857),
             ],
         ]))
         let fc = FeatureCollection([Feature(triangle1), Feature(triangle2)])

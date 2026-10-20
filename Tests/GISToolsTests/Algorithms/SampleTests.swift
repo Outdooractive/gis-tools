@@ -67,9 +67,9 @@ struct SampleTests {
     @Test
     func sample3857() async throws {
         let features = [
-            Feature(Point(Coordinate3D(x: 0.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 100_000.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 0.0, y: 100_000.0))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857))),
         ]
         let fc = FeatureCollection(features)
         let result = fc.sample(size: 2)

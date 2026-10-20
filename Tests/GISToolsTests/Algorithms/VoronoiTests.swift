@@ -196,14 +196,14 @@ struct VoronoiTests {
     @Test
     func voronoi3857() throws {
         let points = [
-            Feature(Point(Coordinate3D(x: 500.0, y: 500.0))),
-            Feature(Point(Coordinate3D(x: 1500.0, y: 500.0))),
-            Feature(Point(Coordinate3D(x: 1000.0, y: 1500.0))),
+            Feature(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 1500.0, y: 500.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 1000.0, y: 1500.0, projection: .epsg3857))),
         ]
         let fc = FeatureCollection(points)
         let bbox = BoundingBox(
-            southWest: Coordinate3D(x: 0.0, y: 0.0),
-            northEast: Coordinate3D(x: 2000.0, y: 2000.0))
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: 2000.0, y: 2000.0, projection: .epsg3857))
 
         let result = fc.voronoiDiagram(boundingBox: bbox)
         #expect(result.features.count == 3)

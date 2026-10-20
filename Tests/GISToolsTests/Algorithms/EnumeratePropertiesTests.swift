@@ -48,7 +48,7 @@ struct EnumeratePropertiesTests {
 
     // Tests property enumeration in EPSG:3857.
     @Test func enumerateProperties3857() async throws {
-        let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0))
+        let point = Point(Coordinate3D(x: 100_000.0, y: 200_000.0, projection: .epsg3857))
         let feature1 = Feature(point, properties: ["name": "Alpha", "value": 1])
         let feature2 = Feature(point, properties: ["name": "Beta", "value": 2])
         let collection = FeatureCollection([feature1, feature2])

@@ -64,10 +64,10 @@ struct LineSplitTests {
     @Test
     func lineSplit3857() async throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
-        let splitter = Point(Coordinate3D(x: 500_000.0, y: 0.0))
+        let splitter = Point(Coordinate3D(x: 500_000.0, y: 0.0, projection: .epsg3857))
         let result = line.lineSplit(with: splitter)
         #expect(result.features.count == 2)
     }

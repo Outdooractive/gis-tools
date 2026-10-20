@@ -67,8 +67,8 @@ struct PointGridTests {
     @Test
     func pointGrid3857() async throws {
         let bbox = BoundingBox(
-            southWest: Coordinate3D(x: 0.0, y: 0.0),
-            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0))
+            southWest: Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857))
         let grid = bbox.pointGrid(cellSide: 500_000.0)
         #expect(grid.features.count > 0)
     }
@@ -77,8 +77,8 @@ struct PointGridTests {
     @Test
     func pointGrid3857CrossOrigin() async throws {
         let bbox = BoundingBox(
-            southWest: Coordinate3D(x: -10_000.0, y: -10_000.0),
-            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0))
+            southWest: Coordinate3D(x: -10_000.0, y: -10_000.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: 10_000.0, y: 10_000.0, projection: .epsg3857))
         let grid = bbox.pointGrid(cellSide: 1_000.0)
         #expect(grid.features.count > 0)
     }

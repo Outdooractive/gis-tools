@@ -464,13 +464,22 @@ init(latitude: CLLocationDegrees,
      m: Double? = nil)
 
 /// Create a coordinate with ``x``, ``y``, ``z`` and ``m``.
-/// Default projection will we EPSG:3857 but can be overridden.
+/// The projection must be specified explicitly.
 init(
     x: Double,
     y: Double,
     z: Double? = nil,
     m: Double? = nil,
-    projection: Projection = .epsg3857)
+    projection: Projection)
+
+/// Create a coordinate in EPSG:3857 (Web Mercator).
+static func epsg3857(x: Double, y: Double, z: Double? = nil, m: Double? = nil) -> Coordinate3D
+
+/// Create a coordinate in EPSG:4978 (WGS84 geocentric/ECEF).
+static func epsg4978(x: Double, y: Double, z: Double? = nil, m: Double? = nil) -> Coordinate3D
+
+/// Create a coordinate without an SRID.
+static func noSRID(x: Double, y: Double, z: Double? = nil, m: Double? = nil) -> Coordinate3D
 
 /// Reproject this coordinate.
 func projected(to newProjection: Projection) -> Coordinate3D
@@ -480,6 +489,10 @@ Example:
 ```swift
 let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
 print(coordinate.isZero)
+
+// Projected coordinates always state their CRS:
+let webMercator = Coordinate3D.epsg3857(x: 1_000_000.0, y: 2_000_000.0)
+let ecef = Coordinate3D.epsg4978(x: 4_000_000.0, y: 1_000_000.0, z: 4_500_000.0)
 ```
 
 ## Feature

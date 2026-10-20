@@ -97,11 +97,11 @@ struct CleanTests {
     @Test
     func clean3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 200_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let cleaned = line.cleaned(removeDuplicates: true, removeCollinear: true)
         #expect(cleaned.coordinates.count == 2)

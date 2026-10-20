@@ -322,12 +322,12 @@ struct LineIntersectionTests {
     @Test
     func lineIntersection3857() async throws {
         let line1 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857),
         ]))
         let line2 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 1_000_000.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 1_000_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let feature1 = Feature(line1)
         let feature2 = Feature(line2)

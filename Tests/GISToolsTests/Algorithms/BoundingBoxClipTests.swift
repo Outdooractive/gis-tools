@@ -101,12 +101,12 @@ struct BoundingBoxClipTests {
     @Test
     func boundingBoxClip3857() async throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857),
         ]))
         let boundingBox = BoundingBox(
-            southWest: Coordinate3D(x: -100_000.0, y: -100_000.0),
-            northEast: Coordinate3D(x: 500_000.0, y: 500_000.0))
+            southWest: Coordinate3D(x: -100_000.0, y: -100_000.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: 500_000.0, y: 500_000.0, projection: .epsg3857))
         let clipped = lineString.clipped(to: boundingBox)
         #expect(clipped != nil)
     }
@@ -145,7 +145,7 @@ struct BoundingBoxClipTests {
     @Test
     func worldBoundingBoxClip4978() async throws {
         let world = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4978)
-        let point = Feature(Point(Coordinate3D(x: 0.0, y: 0.0).projected(to: .epsg4978)))
+        let point = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857).projected(to: .epsg4978)))
         let result = try #require(point.clipped(to: world))
 
         #expect(result == point)

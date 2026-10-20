@@ -296,18 +296,18 @@ struct MinkowskiSumTests {
     @Test
     func minkowskiSum3857() async throws {
         let a = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let b = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 200.0, y: 0.0),
-            Coordinate3D(x: 200.0, y: 200.0),
-            Coordinate3D(x: 0.0, y: 200.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200.0, y: 200.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 200.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
 
         let result = a.minkowskiSum(with: b)

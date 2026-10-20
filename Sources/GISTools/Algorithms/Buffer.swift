@@ -360,7 +360,7 @@ extension GeoJson {
             let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
             guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
             let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
-            return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1))
+            return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), projection: .epsg3857)
         }
 
         var newOuter: [Coordinate3D] = []
@@ -373,10 +373,10 @@ extension GeoJson {
                   let n1 = inwardNormal(curr, next)
             else { return nil }
 
-            let oa1 = Coordinate3D(x: prev.x + distance * n0.dx, y: prev.y + distance * n0.dy)
-            let oa2 = Coordinate3D(x: curr.x + distance * n0.dx, y: curr.y + distance * n0.dy)
-            let ob1 = Coordinate3D(x: curr.x + distance * n1.dx, y: curr.y + distance * n1.dy)
-            let ob2 = Coordinate3D(x: next.x + distance * n1.dx, y: next.y + distance * n1.dy)
+            let oa1 = Coordinate3D(x: prev.x + distance * n0.dx, y: prev.y + distance * n0.dy, projection: .epsg3857)
+            let oa2 = Coordinate3D(x: curr.x + distance * n0.dx, y: curr.y + distance * n0.dy, projection: .epsg3857)
+            let ob1 = Coordinate3D(x: curr.x + distance * n1.dx, y: curr.y + distance * n1.dy, projection: .epsg3857)
+            let ob2 = Coordinate3D(x: next.x + distance * n1.dx, y: next.y + distance * n1.dy, projection: .epsg3857)
             guard let intersection = intersect(oa1, oa2, ob1, ob2) else { return nil }
 
             newOuter.append(intersection)
@@ -402,10 +402,10 @@ extension GeoJson {
                           let n1 = outwardNormal(curr, next, hole.isClockwise)
                     else { return nil }
 
-                    let oa1 = Coordinate3D(x: prev.x + distance * n0.dx, y: prev.y + distance * n0.dy)
-                    let oa2 = Coordinate3D(x: curr.x + distance * n0.dx, y: curr.y + distance * n0.dy)
-                    let ob1 = Coordinate3D(x: curr.x + distance * n1.dx, y: curr.y + distance * n1.dy)
-                    let ob2 = Coordinate3D(x: next.x + distance * n1.dx, y: next.y + distance * n1.dy)
+                    let oa1 = Coordinate3D(x: prev.x + distance * n0.dx, y: prev.y + distance * n0.dy, projection: .epsg3857)
+                    let oa2 = Coordinate3D(x: curr.x + distance * n0.dx, y: curr.y + distance * n0.dy, projection: .epsg3857)
+                    let ob1 = Coordinate3D(x: curr.x + distance * n1.dx, y: curr.y + distance * n1.dy, projection: .epsg3857)
+                    let ob2 = Coordinate3D(x: next.x + distance * n1.dx, y: next.y + distance * n1.dy, projection: .epsg3857)
                     guard let intersection = intersect(oa1, oa2, ob1, ob2) else { return nil }
 
                     newHole.append(intersection)
@@ -670,7 +670,7 @@ extension GeoJson {
         let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
         let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
-        return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1))
+        return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), projection: .epsg3857)
     }
 
     /// Creates a miter polygon at a vertex, extending the offset edges

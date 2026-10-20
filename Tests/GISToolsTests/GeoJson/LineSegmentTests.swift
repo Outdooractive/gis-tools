@@ -59,8 +59,8 @@ struct LineSegmentTests {
     // Validates projection detection for EPSG:3857 coordinates.
     @Test
     func projection3857() async throws {
-        let a3857 = Coordinate3D(x: 0.0, y: 0.0)
-        let b3857 = Coordinate3D(x: 111_319.5, y: 0.0)
+        let a3857 = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let b3857 = Coordinate3D(x: 111_319.5, y: 0.0, projection: .epsg3857)
         let segment = LineSegment(first: a3857, second: b3857)
 
         #expect(segment.projection == .epsg3857)

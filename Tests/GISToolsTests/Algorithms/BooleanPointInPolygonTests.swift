@@ -472,13 +472,13 @@ struct BooleanPointInPolygonTests {
     @Test
     func pointInPolygon3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        let point = Point(Coordinate3D(x: 500.0, y: 500.0))
+        let point = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))
         #expect(polygon.contains(point))
     }
 
@@ -503,32 +503,32 @@ struct BooleanPointInPolygonTests {
     @Test
     func featureContainsGeometryCollection3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let feature = Feature(GeometryCollection([polygon]))
 
-        #expect(feature.contains(Coordinate3D(x: 500.0, y: 500.0)))
-        #expect(feature.contains(Coordinate3D(x: 2_000.0, y: 500.0)) == false)
+        #expect(feature.contains(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857)))
+        #expect(feature.contains(Coordinate3D(x: 2_000.0, y: 500.0, projection: .epsg3857)) == false)
     }
 
     // Feature with a GeometryCollection in EPSG:4978.
     @Test
     func featureContainsGeometryCollection4978() throws {
         let ring = [
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ].map { $0.projected(to: .epsg4978) }
         let polygon = try #require(Polygon([ring]))
         let feature = Feature(GeometryCollection([polygon]))
-        let inside = Coordinate3D(x: 500.0, y: 500.0).projected(to: .epsg4978)
-        let outside = Coordinate3D(x: 5_000.0, y: 500.0).projected(to: .epsg4978)
+        let inside = Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857).projected(to: .epsg4978)
+        let outside = Coordinate3D(x: 5_000.0, y: 500.0, projection: .epsg3857).projected(to: .epsg4978)
 
         #expect(feature.contains(inside))
         #expect(feature.contains(outside) == false)
@@ -555,26 +555,26 @@ struct BooleanPointInPolygonTests {
     func polygonWithHoleBoundary3857() throws {
         let polygon = try #require(Polygon([
             [
-                Coordinate3D(x: 0.0, y: 0.0),
-                Coordinate3D(x: 0.0, y: 1_000.0),
-                Coordinate3D(x: 1_000.0, y: 1_000.0),
-                Coordinate3D(x: 1_000.0, y: 0.0),
-                Coordinate3D(x: 0.0, y: 0.0),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+                Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+                Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             ],
             [
-                Coordinate3D(x: 400.0, y: 400.0),
-                Coordinate3D(x: 400.0, y: 600.0),
-                Coordinate3D(x: 600.0, y: 600.0),
-                Coordinate3D(x: 600.0, y: 400.0),
-                Coordinate3D(x: 400.0, y: 400.0),
+                Coordinate3D(x: 400.0, y: 400.0, projection: .epsg3857),
+                Coordinate3D(x: 400.0, y: 600.0, projection: .epsg3857),
+                Coordinate3D(x: 600.0, y: 600.0, projection: .epsg3857),
+                Coordinate3D(x: 600.0, y: 400.0, projection: .epsg3857),
+                Coordinate3D(x: 400.0, y: 400.0, projection: .epsg3857),
             ],
         ]))
-        let holeBoundary = Coordinate3D(x: 400.0, y: 500.0)
+        let holeBoundary = Coordinate3D(x: 400.0, y: 500.0, projection: .epsg3857)
 
         #expect(polygon.covers(holeBoundary))
         #expect(polygon.contains(holeBoundary) == false)
         #expect(polygon.locate(holeBoundary) == .boundary)
-        #expect(polygon.covers(Coordinate3D(x: 500.0, y: 500.0)) == false)
+        #expect(polygon.covers(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857)) == false)
     }
 
     // Hole boundary semantics in noSRID.
@@ -609,23 +609,23 @@ struct BooleanPointInPolygonTests {
     @Test
     func polygonWithHole4978() throws {
         let outer = [
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ].map { $0.projected(to: .epsg4978) }
         let hole = [
-            Coordinate3D(x: 400.0, y: 400.0),
-            Coordinate3D(x: 400.0, y: 600.0),
-            Coordinate3D(x: 600.0, y: 600.0),
-            Coordinate3D(x: 600.0, y: 400.0),
-            Coordinate3D(x: 400.0, y: 400.0),
+            Coordinate3D(x: 400.0, y: 400.0, projection: .epsg3857),
+            Coordinate3D(x: 400.0, y: 600.0, projection: .epsg3857),
+            Coordinate3D(x: 600.0, y: 600.0, projection: .epsg3857),
+            Coordinate3D(x: 600.0, y: 400.0, projection: .epsg3857),
+            Coordinate3D(x: 400.0, y: 400.0, projection: .epsg3857),
         ].map { $0.projected(to: .epsg4978) }
         let polygon = try #require(Polygon([outer, hole]))
-        let interior = Coordinate3D(x: 200.0, y: 200.0).projected(to: .epsg4978)
-        let holeInterior = Coordinate3D(x: 500.0, y: 500.0).projected(to: .epsg4978)
-        let exterior = Coordinate3D(x: 2_000.0, y: 500.0).projected(to: .epsg4978)
+        let interior = Coordinate3D(x: 200.0, y: 200.0, projection: .epsg3857).projected(to: .epsg4978)
+        let holeInterior = Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857).projected(to: .epsg4978)
+        let exterior = Coordinate3D(x: 2_000.0, y: 500.0, projection: .epsg3857).projected(to: .epsg4978)
 
         #expect(polygon.contains(interior))
         #expect(polygon.contains(holeInterior) == false)
@@ -723,14 +723,14 @@ struct BooleanPointInPolygonTests {
     @Test
     func onEdge3857AndNoSRID() throws {
         let polygon3857 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        let edge3857 = Coordinate3D(x: 500.0, y: 0.0)
-        let inside3857 = Coordinate3D(x: 500.0, y: 0.000000000001)
+        let edge3857 = Coordinate3D(x: 500.0, y: 0.0, projection: .epsg3857)
+        let inside3857 = Coordinate3D(x: 500.0, y: 0.000000000001, projection: .epsg3857)
 
         #expect(polygon3857.locate(edge3857) == .boundary)
         #expect(polygon3857.locate(inside3857) == .interior)
