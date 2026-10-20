@@ -75,12 +75,10 @@ enum Difference {
             : polygons.map { $0.projected(to: .epsg3857) }
 
         // polygon[0] = A (positive), polygon[1...] = B (negative / to subtract)
-        let a = polygons3857[0]
-        let b = Array(polygons3857.dropFirst())
-
-        let boundaryTest = Overlay.makeBoundaryTest { point, _ in
-            a.contains(point)
-                && !b.contains { $0.contains(point) }
+        let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
+            guard let first = polygons.first else { return false }
+            return first.contains(point)
+                && !polygons.dropFirst().contains { $0.contains(point) }
         }
 
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {

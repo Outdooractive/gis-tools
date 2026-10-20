@@ -56,6 +56,19 @@ mod-2 rule).
 The predicates operate in the receiver's projection and project the other
 geometry into it. Antimeridian-crossing geometries are cut at ±180° first.
 
+#### Antimeridian overlay support
+
+Overlay operations (intersection, union, difference, symmetric difference)
+now unwrap antimeridian-crossing polygons into a continuous frame before
+computing, and wrap the result back afterwards. The normalized polygons are
+also passed to the overlay boundary test, so edges and containment checks
+always use the same frame.
+
+Point-in-polygon wraps at the projection's `wraparoundExtent` (EPSG:4326 at
+±180°, EPSG:3857 at ±`originShift`), so raw crossing polygons now work in
+Web Mercator as well. Polygons with a deliberately world-spanning edge are
+left unchanged; that case is ambiguous per RFC 7946.
+
 ### Fixed
 
 - Points on a polygon hole boundary are now reported as boundary points
@@ -65,4 +78,7 @@ geometry into it. Antimeridian-crossing geometries are cut at ±180° first.
   points of A; `covers` remains boundary-inclusive.
 - Coverage and containment now detect segments that leave a concave container
   or cross a hole, instead of only checking vertices.
+- Overlaying identical antimeridian-crossing polygons no longer emits both
+  copies of each coincident edge, which previously produced a ring and an
+  identical hole.
 

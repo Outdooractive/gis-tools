@@ -698,22 +698,15 @@ struct BooleanPointInPolygonTests {
         #expect(polygon.contains(exterior) == false)
     }
 
-    // Hole semantics in EPSG:3857. A raw antimeridian-crossing polygon is first
-    // cut at ±180° (the supported representation for projected CRSs), then
-    // projected to Web Mercator.
+    // Hole semantics for an antimeridian-crossing polygon in EPSG:3857.
     @Test
     func antimeridianHole3857() throws {
-        let parts = try antimeridianPolygonWithHole().cutAtAntimeridian()
-        let eastPart = try #require(
-            parts.features
-                .compactMap { $0.geometry as? Polygon }
-                .first { ($0.outerRing?.coordinates.first?.longitude ?? 0.0) >= 0.0 })
-        let polygon = eastPart.projected(to: .epsg3857)
+        let polygon = try antimeridianPolygonWithHole().projected(to: .epsg3857)
 
-        let interior = Coordinate3D(latitude: 2.0, longitude: 178.0).projected(to: .epsg3857)
+        let interior = Coordinate3D(latitude: 2.0, longitude: 180.0).projected(to: .epsg3857)
         let outerBoundary = Coordinate3D(latitude: 0.0, longitude: 180.0).projected(to: .epsg3857)
         let holeBoundary = Coordinate3D(latitude: 5.0, longitude: 180.0).projected(to: .epsg3857)
-        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 178.0).projected(to: .epsg3857)
+        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 180.0).projected(to: .epsg3857)
         let exterior = Coordinate3D(latitude: 10.0, longitude: 160.0).projected(to: .epsg3857)
 
         #expect(polygon.locate(interior) == .interior)
@@ -724,6 +717,22 @@ struct BooleanPointInPolygonTests {
 
         #expect(polygon.covers(holeBoundary))
         #expect(polygon.contains(holeBoundary) == false)
+        #expect(polygon.contains(interior))
+    }
+
+    // MultiPolygon hole semantics for raw crossing polygons in EPSG:3857.
+    @Test
+    func antimeridianMultiPolygon3857() throws {
+        let polygon = try antimeridianPolygonWithHole().projected(to: .epsg3857)
+        let multiPolygon = try #require(MultiPolygon([polygon]))
+
+        let interior = Coordinate3D(latitude: 2.0, longitude: 180.0).projected(to: .epsg3857)
+        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 180.0).projected(to: .epsg3857)
+        let exterior = Coordinate3D(latitude: 10.0, longitude: 160.0).projected(to: .epsg3857)
+
+        #expect(multiPolygon.locate(interior) == .interior)
+        #expect(multiPolygon.locate(holeInterior) == .exterior)
+        #expect(multiPolygon.locate(exterior) == .exterior)
     }
 
     // Hole semantics for an antimeridian-crossing polygon in EPSG:4978.

@@ -29,6 +29,35 @@ enum Overlay {
         let distanceAlong: Double
     }
 
+    /// A coordinate frame in which no ring crosses the wraparound axis.
+    /// Overlay operates on these polygons and wraps the result back afterwards.
+    struct AntimeridianFrame {
+        let polygons: [Polygon]
+        let width: Double?
+        let extent: Double?
+
+        func denormalize(_ result: MultiPolygon) -> MultiPolygon {
+            guard let width, let extent else { return result }
+
+            let polygons = result.polygons.map { polygon in
+                let rings = polygon.coordinates.map { ring in
+                    ring.map { coordinate in
+                        var x = coordinate.x
+                        while x > extent {
+                            x -= width
+                        }
+                        while x < -extent {
+                            x += width
+                        }
+                        return Overlay.coordinate(coordinate, x: x)
+                    }
+                }
+                return Polygon(unchecked: rings, calculateBoundingBox: false)
+            }
+            return MultiPolygon(unchecked: polygons)
+        }
+    }
+
     // MARK: - Public API
 
     /// Perform a polygon overlay operation.
@@ -36,6 +65,11 @@ enum Overlay {
     /// The overlay algorithm operates on native XY values. Inputs are
     /// expected in EPSG:3857 for consistent meter-scale tolerances
     /// (callers such as ``Union.unionPolygons`` handle projection).
+    ///
+    /// Antimeridian-crossing inputs are unwrapped into a continuous
+    /// coordinate frame before the overlay and wrapped back afterwards. The
+    /// normalized polygons are also passed to `boundaryTest`, so the test
+    /// always sees the same frame as the edges.
     ///
     /// - Parameters:
     ///   - polygons: The input polygons.
@@ -46,9 +80,15 @@ enum Overlay {
         boundaryTest: (Edge, [Polygon]) -> Bool
     ) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
-        guard polygons.count > 1 else { return MultiPolygon(unchecked: polygons) }
 
-        let allEdges = extractEdges(from: polygons)
+        let frame = antimeridianFrame(for: polygons)
+        let normalized = frame.polygons
+
+        guard normalized.count > 1 else {
+            return frame.denormalize(MultiPolygon(unchecked: normalized))
+        }
+
+        let allEdges = extractEdges(from: normalized)
         guard allEdges.isNotEmpty else { return nil }
 
         let intersections = findIntersections(between: allEdges)
@@ -56,7 +96,7 @@ enum Overlay {
         guard splitEdges.isNotEmpty else { return nil }
 
         let boundary = splitEdges.filter { edge in
-            boundaryTest(edge, polygons)
+            boundaryTest(edge, normalized)
         }
         guard boundary.isNotEmpty else { return nil }
 
@@ -67,7 +107,7 @@ enum Overlay {
         let result = assemblePolygons(from: rings)
         guard result.isNotEmpty else { return nil }
 
-        return MultiPolygon(unchecked: result)
+        return frame.denormalize(MultiPolygon(unchecked: result))
     }
 
     // MARK: - Boundary test helpers
@@ -156,6 +196,114 @@ private struct IndexedEdge: BoundingBoxRepresentable {
 }
 
 private extension Overlay {
+
+    // MARK: - Antimeridian normalization
+
+    /// Returns a frame in which no ring crosses the wraparound axis.
+    ///
+    /// Only invoked when at least one ring crosses the seam. Each ring is
+    /// unwrapped by taking the shortest path across the seam, and then every
+    /// polygon is aligned to the first polygon's frame by whole world-width
+    /// shifts. Polygons with a deliberately world-spanning edge are left
+    /// untouched, since cutting them is ambiguous (RFC 7946). Two separate
+    /// polygons on opposite sides of the seam that do not themselves cross it
+    /// are not joined; they are treated as far apart.
+    static func antimeridianFrame(for polygons: [Polygon]) -> AntimeridianFrame {
+        guard let extent = polygons.first?.projection.wraparoundExtent else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let width = 2.0 * extent
+        let hasCrossingRing = polygons.contains { $0.crossesAntimeridian }
+        let hasWorldSpanningEdge = polygons.contains { polygon in
+            polygon.rings.contains { ring in
+                zip(ring.coordinates, ring.coordinates.dropFirst()).contains { pair in
+                    abs(pair.1.x - pair.0.x) >= (width - GISTool.intersectionEpsilon)
+                }
+            }
+        }
+
+        guard hasCrossingRing, !hasWorldSpanningEdge else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let unwrapped = polygons.map { unwrap($0, width: width, extent: extent) }
+        guard let first = unwrapped.first else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let reference = centerX(of: first)
+        let aligned = unwrapped.map { polygon in
+            let shift = ((reference - centerX(of: polygon)) / width).rounded() * width
+            return translate(polygon, by: shift)
+        }
+
+        return AntimeridianFrame(polygons: aligned, width: width, extent: extent)
+    }
+
+    static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
+        let rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        return Polygon(unchecked: rings, calculateBoundingBox: false)
+    }
+
+    static func unwrapRing(_ ring: [Coordinate3D], width: Double, extent: Double) -> [Coordinate3D] {
+        guard let first = ring.first else { return ring }
+
+        var result: [Coordinate3D] = [first]
+        var previous = first
+
+        for coordinate in ring.dropFirst() {
+            var x = coordinate.x
+            var dx = x - previous.x
+
+            while dx > extent {
+                x -= width
+                dx = x - previous.x
+            }
+            while dx < -extent {
+                x += width
+                dx = x - previous.x
+            }
+
+            let unwrapped = Self.coordinate(coordinate, x: x)
+            result.append(unwrapped)
+            previous = unwrapped
+        }
+
+        // A ring may end one world-width away from its start after unwrapping.
+        if let last = result.last, result.count > 1 {
+            let worlds = ((last.x - first.x) / width).rounded()
+            if abs(worlds) >= 1.0 {
+                let offset = worlds * width
+                result = result.map { Self.coordinate($0, x: $0.x - offset) }
+            }
+        }
+
+        return result
+    }
+
+    static func centerX(of polygon: Polygon) -> Double {
+        let xs = polygon.allCoordinates.map(\.x)
+        guard let minX = xs.min(), let maxX = xs.max() else { return 0.0 }
+        return (minX + maxX) / 2.0
+    }
+
+    static func translate(_ polygon: Polygon, by offset: Double) -> Polygon {
+        guard offset != 0.0 else { return polygon }
+        let rings = polygon.coordinates.map { ring in
+            ring.map { Self.coordinate($0, x: $0.x + offset) }
+        }
+        return Polygon(unchecked: rings, calculateBoundingBox: false)
+    }
+
+    static func coordinate(_ coordinate: Coordinate3D, x: Double) -> Coordinate3D {
+        Coordinate3D(
+            x: x,
+            y: coordinate.y,
+            z: coordinate.altitude,
+            m: coordinate.m,
+            projection: coordinate.projection)
+    }
 
     // MARK: - Edge extraction
 
@@ -302,6 +450,15 @@ private extension Overlay {
             var merged = false
             for j in (i + 1)..<edges.count {
                 guard !used.contains(j) else { continue }
+
+                // Coincident edges from identical (or overlapping) polygons
+                // represent the same boundary; keep only one.
+                if edges[i].start == edges[j].start,
+                   edges[i].end == edges[j].end
+                {
+                    used.insert(j)
+                    continue
+                }
 
                 if edges[i].start == edges[j].end,
                    edges[i].end == edges[j].start
