@@ -34,8 +34,8 @@ extension GeoJsonReadable {
     ///    - jsonData: The JSON data
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonData: Data) {
-        guard let json = try? JSONSerialization.jsonObject(with: jsonData) else { return nil }
-        self.init(json: json)
+        guard let value = JSONValue(jsonData: jsonData) else { return nil }
+        self.init(json: value.asSendable)
     }
 
     /// Try to initialize a GeoJSON object from a string.
@@ -44,10 +44,8 @@ extension GeoJsonReadable {
     ///    - jsonString: The JSON string
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonString: String) {
-        guard let data = jsonString.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data)
-        else { return nil }
-        self.init(json: json)
+        guard let value = JSONValue(jsonString: jsonString) else { return nil }
+        self.init(json: value.asSendable)
     }
 
 }
@@ -68,28 +66,38 @@ extension GeoJsonWritable {
 
     /// Dump the object as JSON data.
     ///
+    /// Uses `JSONEncoder` and the shortest round-trip representation for
+    /// numbers, so coordinates written by the library read back bit-exactly.
+    ///
     /// - Parameters:
-    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
+    ///    - prettyPrinted: When `true`, format the output with indentation
+    ///    - sortedKeys: When `true` (default), sort object keys for stable output
     /// - Returns: The JSON data, or `nil` if serialization failed
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public func asJsonData(prettyPrinted: Bool = false) -> Data? {
-        var options: JSONSerialization.WritingOptions = []
-        if prettyPrinted {
-            options.insert(.prettyPrinted)
-            options.insert(.sortedKeys)
-        }
-
-        return try? JSONSerialization.data(withJSONObject: asJson, options: options)
+    public func asJsonData(
+        prettyPrinted: Bool = false,
+        sortedKeys: Bool = true
+    ) -> Data? {
+        JSONValue(value: asJson)?.asJsonData(
+            prettyPrinted: prettyPrinted,
+            sortedKeys: sortedKeys)
     }
 
     /// Dump the object as a JSON string.
     ///
     /// - Parameters:
-    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
+    ///    - prettyPrinted: When `true`, format the output with indentation
+    ///    - sortedKeys: When `true` (default), sort object keys for stable output
     /// - Returns: The JSON string, or `nil` if serialization failed
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
-    public func asJsonString(prettyPrinted: Bool = false) -> String? {
-        guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
+    public func asJsonString(
+        prettyPrinted: Bool = false,
+        sortedKeys: Bool = true
+    ) -> String? {
+        guard let data = asJsonData(
+            prettyPrinted: prettyPrinted,
+            sortedKeys: sortedKeys)
+        else { return nil }
 
         return String(data: data, encoding: .utf8)
     }
@@ -98,11 +106,19 @@ extension GeoJsonWritable {
     ///
     /// - Parameters:
     ///    - url: The file URL to write to
-    ///    - prettyPrinted: When `true`, format the output with indentation and sorted keys
+    ///    - prettyPrinted: When `true`, format the output with indentation
+    ///    - sortedKeys: When `true` (default), sort object keys for stable output
     /// - Returns: `true` if the write succeeded, `false` if serialization failed.
     @discardableResult
-    public func write(to url: URL, prettyPrinted: Bool = false) -> Bool {
-        guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return false }
+    public func write(
+        to url: URL,
+        prettyPrinted: Bool = false,
+        sortedKeys: Bool = true
+    ) -> Bool {
+        guard let data = asJsonData(
+            prettyPrinted: prettyPrinted,
+            sortedKeys: sortedKeys)
+        else { return false }
 
         do {
             try data.write(to: url)
