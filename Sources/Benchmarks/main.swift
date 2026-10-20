@@ -366,17 +366,35 @@ private func runCoders() {
         _ = polygon.asWKT
     }
 
-    run("coder/geojson-encode-compact/100k", iterations: 2) {
-        _ = polygon.asJsonData()
-    }
+    runGeoJsonCoder("point", geoJson: Point(Coordinate3D(latitude: 47.0, longitude: 11.0)))
+    runGeoJsonCoder("multipoint/10k", geoJson: MultiPoint(unchecked: (0 ..< 10_000).map { index in
+        Coordinate3D(latitude: 47.0 + Double(index) * 0.0001, longitude: 11.0)
+    }))
+    runGeoJsonCoder("linestring/100k", geoJson: makeLineString(vertices: 100_000))
+    runGeoJsonCoder("multilinestring/10x1k", geoJson: MultiLineString(unchecked: (0 ..< 10).map { _ in
+        makeLineString(vertices: 1_000).coordinates
+    }))
+    runGeoJsonCoder("polygon/100k", geoJson: polygon)
+    runGeoJsonCoder("multipolygon/10x10k", geoJson: MultiPolygon(unchecked: (0 ..< 10).map { _ in
+        makeCirclePolygon(vertices: 10_000)
+    }))
+    runGeoJsonCoder("geometrycollection", geoJson: GeometryCollection([
+        makeLineString(vertices: 100_000),
+        polygon,
+    ]))
+
+    let properties = Dictionary(uniqueKeysWithValues: (0 ..< 1_000).map { index in
+        ("property\(index)", index)
+    })
+    runGeoJsonCoder("feature/properties-1k", geoJson: Feature(
+        Point(Coordinate3D(latitude: 47.0, longitude: 11.0)),
+        properties: properties))
+    runGeoJsonCoder("featurecollection/100x1k", geoJson: FeatureCollection((0 ..< 100).map { _ in
+        Feature(makeLineString(vertices: 1_000))
+    }))
+
     run("coder/geojson-encode-pretty/100k", iterations: 2) {
         _ = polygon.asJsonData(prettyPrinted: true)
-    }
-    if let data = polygon.asJsonData() {
-        print("size/geojson=\(data.count)")
-        run("coder/geojson-decode/100k", iterations: 3) {
-            _ = Polygon(jsonData: data)
-        }
     }
 
     run("coder/codable-encode/100k", iterations: 2) {
@@ -386,6 +404,19 @@ private func runCoders() {
         run("coder/codable-decode/100k", iterations: 3) {
             _ = try? JSONDecoder().decode(Polygon.self, from: data)
         }
+    }
+}
+
+private func runGeoJsonCoder(_ name: String, geoJson: any GeoJson) {
+    guard let data = geoJson.asJsonData() else { return }
+
+    print("size/geojson/\(name)=\(data.count)")
+
+    run("coder/geojson-encode/\(name)", iterations: 2) {
+        _ = geoJson.asJsonData()
+    }
+    run("coder/geojson-decode/\(name)", iterations: 3) {
+        _ = GeoJsonReader.geoJsonFrom(jsonData: data)
     }
 }
 

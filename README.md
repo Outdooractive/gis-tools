@@ -315,7 +315,7 @@ let featureCollection = FeatureCollection(jsonData: data)!
 
 Important note: Import and export will always be done in EPSG:4326, with one exception: GeoJSON objects with no SRID will be exported as-is.
 
-`Codable` encoding and decoding go through ``JSONValue``, so booleans, numbers, nested arrays/objects and JSON `null` are preserved instead of being coerced or dropped. `asJsonData()`/`asJsonString()` use `JSONEncoder` with the shortest round-trip number representation, so coordinates read back bit-exactly, and object keys are sorted by default (`sortedKeys: false` opts out).
+`Codable` encoding writes the `asJson` representation directly to the encoder, and decoding goes through ``JSONValue``, so booleans, numbers, nested arrays/objects and JSON `null` are preserved instead of being coerced or dropped. `asJsonData()`/`asJsonString()` use `JSONEncoder` with the shortest round-trip number representation, so coordinates read back bit-exactly, and object keys are sorted by default (`sortedKeys: false` opts out).
 
 ## GeoJsonReader
 [Implementation][15]

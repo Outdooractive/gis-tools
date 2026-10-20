@@ -99,9 +99,18 @@ extension GeoJsonWritable {
         prettyPrinted: Bool = false,
         sortedKeys: Bool = true
     ) -> Data? {
-        JSONValue(value: asJson)?.asJsonData(
-            prettyPrinted: prettyPrinted,
-            sortedKeys: sortedKeys)
+        let encoder = JSONEncoder()
+
+        var options: JSONEncoder.OutputFormatting = []
+        if prettyPrinted {
+            options.insert(.prettyPrinted)
+        }
+        if sortedKeys {
+            options.insert(.sortedKeys)
+        }
+        encoder.outputFormatting = options
+
+        return try? encoder.encode(EncodableGeoJson(json: asJson))
     }
 
     /// Dump the object as a JSON string.

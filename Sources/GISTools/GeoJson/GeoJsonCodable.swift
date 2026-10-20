@@ -40,14 +40,7 @@ extension GeoJson {
     /// - Parameters:
     ///    - encoder: The encoder to write data to
     public func encode(to encoder: Encoder) throws {
-        guard let value = JSONValue(value: asJson) else {
-            throw EncodingError.invalidValue(asJson, EncodingError.Context(
-                codingPath: encoder.codingPath,
-                debugDescription: "GeoJSON contains values that are not JSON-compatible",
-                underlyingError: nil))
-        }
-
-        try value.encode(to: encoder)
+        try GeoJsonEncoder.encode(asJson, to: encoder)
     }
 
 }
@@ -169,3 +162,159 @@ public final class GeoJsonTransformer: ValueTransformer {
 
 }
 #endif
+
+
+// MARK: - Direct encoding
+
+/// Encodes the `[String: Sendable]` representation directly into an encoder.
+///
+/// This avoids the `asJson -> JSONValue -> JSONEncoder` round trip, which
+/// dominates GeoJSON encoding for large coordinate arrays.
+struct EncodableGeoJson: Encodable {
+
+    let json: [String: Sendable]
+
+    func encode(to encoder: Encoder) throws {
+        try GeoJsonEncoder.encode(json, to: encoder)
+    }
+
+}
+
+private enum GeoJsonEncoder {
+
+    struct Key: CodingKey {
+        let stringValue: String
+        var intValue: Int? { nil }
+
+        init?(stringValue: String) {
+            self.stringValue = stringValue
+        }
+
+        init?(intValue: Int) {
+            nil
+        }
+    }
+
+    static func encode(_ dictionary: [String: Sendable], to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: Key.self)
+
+        for (key, value) in dictionary {
+            guard let codingKey = Key(stringValue: key) else { continue }
+            try encode(value, into: &container, forKey: codingKey)
+        }
+    }
+
+    private static func encode(
+        _ value: Sendable,
+        into container: inout KeyedEncodingContainer<Key>,
+        forKey key: Key
+    ) throws {
+        if let dictionary = value as? [String: Sendable] {
+            var nested = container.nestedContainer(keyedBy: Key.self, forKey: key)
+            for (nestedKey, nestedValue) in dictionary {
+                guard let codingKey = Key(stringValue: nestedKey) else { continue }
+                try encode(nestedValue, into: &nested, forKey: codingKey)
+            }
+            return
+        }
+
+        let valueType = type(of: value)
+        if valueType == [Double?].self || valueType == [Double].self,
+           let doubles = value as? [Double?] {
+            var nested = container.nestedUnkeyedContainer(forKey: key)
+            try encode(doubles, into: &nested)
+            return
+        }
+
+        if let array = value as? [Sendable] {
+            var nested = container.nestedUnkeyedContainer(forKey: key)
+            try encode(array, into: &nested)
+            return
+        }
+
+        if isNil(value) {
+            try container.encodeNil(forKey: key)
+            return
+        }
+
+        if let json = JSONValue(value: value) {
+            try container.encode(json, forKey: key)
+            return
+        }
+
+        throw EncodingError.invalidValue(value, EncodingError.Context(
+            codingPath: container.codingPath + [key],
+            debugDescription: "GeoJSON contains values that are not JSON-compatible",
+            underlyingError: nil))
+    }
+
+    private static func encode(
+        _ array: [Sendable],
+        into container: inout UnkeyedEncodingContainer
+    ) throws {
+        for value in array {
+            // Only fast-path native coordinate arrays. NSNumber arrays (for
+            // example parsed JSON numbers) must keep their original type.
+            let valueType = type(of: value)
+            if valueType == [Double?].self || valueType == [Double].self,
+               let doubles = value as? [Double?] {
+                var nested = container.nestedUnkeyedContainer()
+                try encode(doubles, into: &nested)
+                continue
+            }
+
+            if let dictionary = value as? [String: Sendable] {
+                var nested = container.nestedContainer(keyedBy: Key.self)
+                for (key, nestedValue) in dictionary {
+                    guard let codingKey = Key(stringValue: key) else { continue }
+                    try encode(nestedValue, into: &nested, forKey: codingKey)
+                }
+                continue
+            }
+
+            if let nestedArray = value as? [Sendable] {
+                var nested = container.nestedUnkeyedContainer()
+                try encode(nestedArray, into: &nested)
+                continue
+            }
+
+            if isNil(value) {
+                try container.encodeNil()
+                continue
+            }
+
+            if let json = JSONValue(value: value) {
+                try container.encode(json)
+                continue
+            }
+
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: container.codingPath,
+                debugDescription: "GeoJSON contains values that are not JSON-compatible",
+                underlyingError: nil))
+        }
+    }
+
+    private static func encode(
+        _ doubles: [Double?],
+        into container: inout UnkeyedEncodingContainer
+    ) throws {
+        for double in doubles {
+            if let double {
+                try container.encode(double)
+            } else {
+                try container.encodeNil()
+            }
+        }
+    }
+
+    private static func isNil(_ value: Sendable) -> Bool {
+        if value is NSNull {
+            return true
+        }
+
+        let mirror = Mirror(reflecting: value)
+        return mirror.displayStyle == .optional && mirror.children.isEmpty
+    }
+
+}
