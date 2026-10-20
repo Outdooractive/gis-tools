@@ -94,6 +94,8 @@ Migration:
 
 ### Added
 
+- `GeoJson.closestPoint(to:)` returns the point on the receiver closest to
+  another geometry, following OGC/PostGIS `ST_ClosestPoint` (#287).
 - ``GeoJsonParser`` for non-silent parsing:
   - `.lenient` returns the parsed object plus every malformed or skipped
     element as a ``GeoJsonParseIssue`` with a JSON Pointer path.
