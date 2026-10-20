@@ -22,14 +22,16 @@ struct BooleanContainsTests {
         #expect(point1.contains(point2) == false)
     }
 
-    // Point does not contain other geometry types.
+    // A point does not contain geometries with points outside it. An equal
+    // MultiPoint is contained, since OGC contains is reflexive for equal
+    // (point) geometries.
     @Test
-    func pointDoesNotContainOtherTypes() async throws {
+    func pointContainsOtherTypes() async throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let multiPoint = try #require(MultiPoint([Coordinate3D(latitude: 5.0, longitude: 5.0)]))
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 10.0, longitude: 10.0)]))
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
-        #expect(point.contains(multiPoint) == false)
+        #expect(point.contains(multiPoint))
         #expect(point.contains(line) == false)
         #expect(point.contains(polygon) == false)
     }
@@ -125,6 +127,22 @@ struct BooleanContainsTests {
             Coordinate3D(latitude: 5.0, longitude: 5.0),
         ]))
         #expect(outer.contains(inner))
+    }
+
+    // LineString does not contain its boundary endpoints (OGC contains), but
+    // covers them.
+    @Test
+    func lineStringContainsEndpoint() async throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+        let start = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let middle = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
+
+        #expect(line.contains(start) == false)
+        #expect(line.covers(start))
+        #expect(line.contains(middle))
     }
 
     // MARK: - MultiLineString contains
@@ -251,6 +269,64 @@ struct BooleanContainsTests {
         ]))
         let pointInHole = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         #expect(polygon.contains(pointInHole) == false)
+    }
+
+    // Polygon contains a chord whose endpoints lie on its boundary.
+    @Test
+    func polygonContainsChord() async throws {
+        let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
+        let chord = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+
+        #expect(polygon.covers(chord))
+        #expect(polygon.contains(chord))
+    }
+
+    // A polygon does not contain a line that lies entirely on its boundary.
+    @Test
+    func polygonDoesNotContainBoundaryLine() async throws {
+        let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
+        let boundaryLine = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+
+        #expect(polygon.covers(boundaryLine))
+        #expect(polygon.contains(boundaryLine) == false)
+    }
+
+    // A polygon does not cover a polygon that fills one of its holes.
+    @Test
+    func polygonDoesNotCoverPolygonAroundHole() async throws {
+        let polygon = try #require(Polygon([
+            [Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)],
+            [Coordinate3D(latitude: 4.0, longitude: 4.0), Coordinate3D(latitude: 4.0, longitude: 6.0), Coordinate3D(latitude: 6.0, longitude: 6.0), Coordinate3D(latitude: 6.0, longitude: 4.0), Coordinate3D(latitude: 4.0, longitude: 4.0)],
+        ]))
+        let aroundHole = try #require(Polygon([[
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+            Coordinate3D(latitude: 3.0, longitude: 7.0),
+            Coordinate3D(latitude: 7.0, longitude: 7.0),
+            Coordinate3D(latitude: 7.0, longitude: 3.0),
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+        ]]))
+
+        #expect(polygon.covers(aroundHole) == false)
+        #expect(polygon.contains(aroundHole) == false)
+    }
+
+    // A polygon does not contain a MultiPoint that lies entirely on its boundary.
+    @Test
+    func polygonDoesNotContainBoundaryMultiPoint() async throws {
+        let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
+        let boundaryPoints = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+        ]))
+
+        #expect(polygon.covers(boundaryPoints))
+        #expect(polygon.contains(boundaryPoints) == false)
     }
 
     // MARK: - MultiPolygon contains
@@ -433,11 +509,12 @@ struct BooleanContainsTests {
     // LineString contains point in EPSG:4978.
     @Test
     func lineStringContainsPointEPSG4978() async throws {
-        // Short ECEF segment at Z=0 so 2D XY check is exact.
+        // Short ECEF segment at Z=0 so the 2D XY check is exact.
         let line = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 100.0, y: 100.0, z: 0.0, projection: .epsg4978)]))
         #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978))))
+        #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 60.0, z: 0.0, projection: .epsg4978))) == false)
         #expect(line.contains(Point(Coordinate3D(x: 50.0, y: 60.0, z: 0.0, projection: .epsg4978))) == false)
     }
 
@@ -693,6 +770,55 @@ struct BooleanContainsTests {
         let pointOffLine = Point(Coordinate3D(latitude: 5.0, longitude: -175.0))
         #expect(line.contains(pointOnLine))
         #expect(line.contains(pointOffLine) == false)
+    }
+
+    // Line endpoint containment in EPSG:3857.
+    @Test
+    func lineStringContainsEndpoint3857() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+        ]))
+        let start = Point(Coordinate3D(x: 0.0, y: 0.0))
+        let middle = Point(Coordinate3D(x: 500.0, y: 500.0))
+
+        #expect(line.covers(start))
+        #expect(line.contains(start) == false)
+        #expect(line.contains(middle))
+    }
+
+    // Line endpoint containment in EPSG:4978.
+    @Test
+    func lineStringContainsEndpoint4978() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100.0, y: 100.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let start = Point(Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978))
+        let middle = Point(Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978))
+
+        #expect(line.covers(start))
+        #expect(line.contains(start) == false)
+        #expect(line.contains(middle))
+    }
+
+    // Polygon contains a chord in noSRID.
+    @Test
+    func polygonContainsChordNoSRID() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let chord = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+        ]))
+
+        #expect(polygon.covers(chord))
+        #expect(polygon.contains(chord))
     }
 
     // MARK: - Empty / degenerate

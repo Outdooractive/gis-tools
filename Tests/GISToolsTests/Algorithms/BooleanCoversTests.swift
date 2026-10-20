@@ -37,6 +37,29 @@ struct BooleanCoversTests {
         #expect(polygon.covers(line))
     }
 
+    // A concave polygon does not cover a line whose endpoints are inside but
+    // whose segment leaves the polygon through the notch.
+    @Test
+    func polygonDoesNotCoverLineLeavingConcaveShape() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 6.0),
+            Coordinate3D(latitude: 6.0, longitude: 6.0),
+            Coordinate3D(latitude: 6.0, longitude: 4.0),
+            Coordinate3D(latitude: 2.0, longitude: 4.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 6.0, longitude: 2.0),
+            Coordinate3D(latitude: 6.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 1.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]))
+
+        #expect(polygon.covers(line) == false)
+    }
+
     // Validates that a polygon covers an identical polygon.
     @Test
     func polygonCoversIdentical() async throws {
