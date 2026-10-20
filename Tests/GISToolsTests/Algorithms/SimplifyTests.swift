@@ -345,4 +345,35 @@ struct SimplifyTests {
         #expect(result.projection == .epsg4326)
     }
 
+    // MARK: - Tolerance conversion
+
+    // Validates that the metre-to-degree tolerance conversion depends on the
+    // latitude, not on the longitude, of the geometry (regression test).
+    @Test
+    func toleranceConversionIsIndependentOfLongitude() throws {
+        // A zigzag line with 100 points spread over a few kilometres.
+        func zigzag(longitude: Double) throws -> LineString {
+            let coordinates = (0 ..< 100).map { i in
+                Coordinate3D(
+                    latitude: 40.0 + (Double(i) * 0.0005),
+                    longitude: longitude + (i.isMultiple(of: 2) ? 0.0 : 0.001))
+            }
+            return try #require(LineString(coordinates))
+        }
+
+        let atGreenwich = try zigzag(longitude: 0.0)
+        let atMinus90 = try zigzag(longitude: -90.0)
+        let atMinus111 = try zigzag(longitude: -111.0)
+
+        let simplifiedAtGreenwich = atGreenwich.simplified(tolerance: 10.0)
+        let simplifiedAtMinus90 = atMinus90.simplified(tolerance: 10.0)
+        let simplifiedAtMinus111 = atMinus111.simplified(tolerance: 10.0)
+
+        // The zigzag amplitude (~85m) is far above the tolerance, so most
+        // vertices must survive regardless of the meridian.
+        #expect(simplifiedAtGreenwich.coordinates.count > 50)
+        #expect(simplifiedAtMinus90.coordinates.count == simplifiedAtGreenwich.coordinates.count)
+        #expect(simplifiedAtMinus111.coordinates.count == simplifiedAtGreenwich.coordinates.count)
+    }
+
 }
