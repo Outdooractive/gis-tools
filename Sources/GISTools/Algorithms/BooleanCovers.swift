@@ -10,6 +10,11 @@ extension GeoJson {
     /// "A covers B" means that no points of B lie in the exterior of A.
     /// Unlike ``contains(_:)``, points on the boundary are considered covered.
     ///
+    /// - Note: This geometry-to-geometry overload currently delegates to the same
+    ///   boundary-inclusive check as ``contains(_:)``. The interior-only split is
+    ///   planned as a follow-up; the point-based `covers(_:)` overloads are
+    ///   already OGC-aligned.
+    ///
     /// For ``Projection/epsg3857`` and ``Projection/epsg4978`` the geometries
     /// are projected to ``Projection/epsg4326`` first. Altitude differences
     /// are ignored.

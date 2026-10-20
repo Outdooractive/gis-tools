@@ -179,12 +179,15 @@ struct BooleanContainsTests {
         #expect(polygon.contains(point) == false)
     }
 
-    // Polygon contains a point on its boundary.
+    // A polygon does not contain a boundary point (OGC contains), but covers it.
     @Test
     func polygonContainsPointOnBoundary() async throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 5.0))
-        #expect(polygon.contains(point))
+
+        #expect(polygon.contains(point) == false)
+        #expect(polygon.covers(point))
+        #expect(polygon.locate(point) == .boundary)
     }
 
     // Polygon contains a MultiPoint of interior points.

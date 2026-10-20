@@ -82,7 +82,7 @@ extension PointGeometry {
 
         case let otherPolygon as PolygonGeometry:
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
+                if otherPolygon.covers(coordinate, gridSize: nil) {
                     return false
                 }
             }
@@ -146,7 +146,7 @@ extension LineStringGeometry {
         case let otherPolygon as PolygonGeometry:
             // Any point inside the polygon
             for coordinate in allCoordinates {
-                if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
+                if otherPolygon.covers(coordinate, gridSize: nil) {
                     return false
                 }
             }
@@ -210,7 +210,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if otherPolygon.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
+                    if otherPolygon.covers(coordinate, gridSize: nil) {
                         return false
                     }
                 }
@@ -222,7 +222,7 @@ extension PolygonGeometry {
                 }
 
                 for coordinate in coordinates {
-                    if self.contains(coordinate, ignoringBoundary: false, gridSize: nil) {
+                    if self.covers(coordinate, gridSize: nil) {
                         return false
                     }
                 }

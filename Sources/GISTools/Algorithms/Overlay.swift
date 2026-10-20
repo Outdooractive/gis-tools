@@ -443,7 +443,7 @@ private extension Overlay {
 
             var assigned = false
             for (i, _) in result.enumerated() {
-                if result[i].contains(testPoint, ignoringBoundary: false) {
+                if result[i].covers(testPoint) {
                     let poly = Polygon(unchecked: [result[i].outerRing!] + (result[i].innerRings ?? []) + [ring])
                     result[i] = poly
                     assigned = true

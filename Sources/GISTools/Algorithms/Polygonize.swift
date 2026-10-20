@@ -350,7 +350,7 @@ private enum Polygonize {
         func contains(outer: [Coordinate3D], inner: [Coordinate3D]) -> Bool {
             guard let firstPt = inner.first else { return false }
             let ring = Ring(outer)
-            return ring?.contains(firstPt, ignoringBoundary: true) ?? false
+            return ring?.contains(firstPt) ?? false
         }
 
         // CW rings are outer rings (in shapefile convention / our implementation)

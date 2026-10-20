@@ -150,7 +150,7 @@ struct PointOnFeatureTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
         ]]))
         let result = try #require(polygon.coordinateOnFeature)
-        #expect(polygon.contains(result, ignoringBoundary: true))
+        #expect(polygon.contains(result))
     }
 
     // Tests point on feature for a polygon crossing the antimeridian.
@@ -173,7 +173,7 @@ struct PointOnFeatureTests {
         let parts = polygon.cutAtAntimeridian()
         let isInsidePart = parts.features.contains { feature in
             guard let partPolygon = feature.geometry as? Polygon else { return false }
-            return partPolygon.contains(result, ignoringBoundary: true)
+            return partPolygon.contains(result)
         }
         #expect(isInsidePart)
     }

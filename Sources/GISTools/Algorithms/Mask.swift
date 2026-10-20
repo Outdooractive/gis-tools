@@ -13,7 +13,7 @@ extension PolygonGeometry {
     /// If no outer polygon is provided, the world bounding box `(-180, -90, 180, 90)` is used.
     ///
     /// All projections are supported. The containment check delegates to
-    /// ``PolygonGeometry/contains(_:ignoringBoundary:gridSize:)`` which handles
+    /// ``PolygonGeometry/contains(_:gridSize:)`` which handles
     /// 4978→4326 projection. The antimeridian normalisation only applies
     /// to EPSG:4326.
     ///
@@ -55,13 +55,13 @@ extension PolygonGeometry {
 
             containedHoles = holes.filter { hole in
                 guard let pt = hole.coordinates.first else { return false }
-                return shiftedOuter.contains(shiftCoord(pt), ignoringBoundary: true)
+                return shiftedOuter.contains(shiftCoord(pt))
             }
         }
         else {
             containedHoles = holes.filter { hole in
                 guard let pt = hole.coordinates.first else { return false }
-                return outer.contains(pt, ignoringBoundary: true)
+                return outer.contains(pt)
             }
         }
 

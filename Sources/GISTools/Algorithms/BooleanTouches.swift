@@ -205,7 +205,7 @@ extension BooleanTouches {
                     foundTouchingPoint = true
                 }
             }
-            if polygon.contains(point.coordinate, ignoringBoundary: true) {
+            if polygon.contains(point.coordinate) {
                 return false
             }
         }
@@ -226,7 +226,7 @@ extension BooleanTouches {
                         foundTouchingPoint = true
                     }
                 }
-                if polygon.contains(point.coordinate, ignoringBoundary: true) {
+                if polygon.contains(point.coordinate) {
                     return false
                 }
             }
@@ -321,7 +321,7 @@ extension BooleanTouches {
                     foundTouchingPoint = true
                 }
             }
-            if polygon.contains(coordinate, ignoringBoundary: true) {
+            if polygon.contains(coordinate) {
                 return false
             }
         }
@@ -342,7 +342,7 @@ extension BooleanTouches {
                         foundTouchingPoint = true
                     }
                 }
-                if polygon.contains(coordinate, ignoringBoundary: true) {
+                if polygon.contains(coordinate) {
                     return false
                 }
             }
@@ -422,7 +422,7 @@ extension BooleanTouches {
                     foundTouchingPoint = true
                 }
             }
-            if polygon.contains(coordinate, ignoringBoundary: true) {
+            if polygon.contains(coordinate) {
                 return false
             }
         }
@@ -443,7 +443,7 @@ extension BooleanTouches {
                         foundTouchingPoint = true
                     }
                 }
-                if polygon.contains(coordinate, ignoringBoundary: true) {
+                if polygon.contains(coordinate) {
                     return false
                 }
             }
@@ -500,7 +500,7 @@ extension BooleanTouches {
             if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
                 foundTouchingPoint = true
             }
-            if polygon2.contains(coordinate, ignoringBoundary: true) {
+            if polygon2.contains(coordinate) {
                 return false
             }
         }
@@ -525,7 +525,7 @@ extension BooleanTouches {
                 if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
                     foundTouchingPoint = true
                 }
-                if p2.contains(coordinate, ignoringBoundary: true) {
+                if p2.contains(coordinate) {
                     return false
                 }
             }
@@ -590,7 +590,7 @@ extension BooleanTouches {
                     if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
                         foundTouchingPoint = true
                     }
-                    if p2.contains(coordinate, ignoringBoundary: true) {
+                    if p2.contains(coordinate) {
                         return false
                     }
                 }

@@ -103,7 +103,7 @@ enum Union {
             : polygons.map { $0.projected(to: .epsg3857) }
 
         let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
-            polygons.contains { $0.contains(point, ignoringBoundary: true) }
+            polygons.contains { $0.contains(point) }
         }
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {
             return nil

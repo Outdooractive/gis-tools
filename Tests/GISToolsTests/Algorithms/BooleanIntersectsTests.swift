@@ -110,16 +110,19 @@ struct BooleanIntersectsTests {
     // Intersects check in EPSG:4978.
     @Test
     func intersectsEPSG4978() throws {
-        let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let pointInside = Point(Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let pointInside = Point(Coordinate3D(latitude: 0.5, longitude: 0.5).projected(to: .epsg4978))
+        let pointOutside = Point(Coordinate3D(latitude: 2.0, longitude: 2.0).projected(to: .epsg4978))
+
         #expect(polygon.intersects(pointInside))
-        #expect(!polygon.intersects(Point(Coordinate3D(x: 2_000.0, y: 2_000.0, z: 0.0, projection: .epsg4978))))
+        #expect(polygon.intersects(pointOutside) == false)
     }
 
     // LineString–Polygon intersects in EPSG:4978.

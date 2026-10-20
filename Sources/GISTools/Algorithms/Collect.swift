@@ -36,7 +36,7 @@ extension FeatureCollection {
 
             let collected: [Sendable] = pointFeatures.compactMap { pointFeature in
                 guard let point = pointFeature.geometry as? Point,
-                      polygon.contains(point.coordinate, ignoringBoundary: false, gridSize: gridSize)
+                      polygon.covers(point.coordinate, gridSize: gridSize)
                 else { return nil }
 
                 return pointFeature.properties[inProperty]

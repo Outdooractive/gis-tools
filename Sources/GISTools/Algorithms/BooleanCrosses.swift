@@ -135,7 +135,7 @@ extension GeoJson {
         var foundExtPoint = false
 
         for point in multiPoint.points {
-            if polygonGeometry.contains(point.coordinate, ignoringBoundary: false, gridSize: nil) {
+            if polygonGeometry.covers(point.coordinate, gridSize: nil) {
                 foundIntPoint = true
             }
             else {
