@@ -81,6 +81,8 @@ left unchanged; that case is ambiguous per RFC 7946.
 - Overlaying identical antimeridian-crossing polygons no longer emits both
   copies of each coincident edge, which previously produced a ring and an
   identical hole.
-- Overlay now splits collinear overlapping edges at each other's endpoints,
-  so unions of polygons that share part of an edge produce closed rings.
+- Overlay now splits collinear and near-collinear overlapping edges at each
+  other's endpoints, and matches edges with the same quantized vertex keys as
+  ring assembly, so unions of polygons that share part of an edge produce
+  closed rings on all platforms.
 

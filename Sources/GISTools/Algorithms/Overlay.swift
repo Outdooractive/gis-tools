@@ -349,8 +349,32 @@ private extension Overlay {
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
 
-                guard segI.intersects(segJ, epsilon: GISTool.intersectionEpsilon) else {
-                    continue
+                // Overlay coordinates are metres. Use a micron-scale tolerance
+                // for near-collinearity: tight enough not to disturb dense
+                // buffer geometry, loose enough to absorb projection rounding
+                // differences between platforms.
+                let tolerance = 0.000001
+
+                // Split each edge at the other edge's endpoints. This covers
+                // collinear overlaps (where there is no single intersection
+                // point) and near-collinear overlaps caused by projection
+                // rounding differences between platforms.
+                for point in [edges[j].start, edges[j].end]
+                    where pointLiesOnEdge(point, edges[i], tolerance: tolerance)
+                {
+                    let dI = distanceAlong(edges[i], at: point)
+                    if dI > splitEps && dI < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: i, distanceAlong: dI))
+                    }
+                }
+
+                for point in [edges[i].start, edges[i].end]
+                    where pointLiesOnEdge(point, edges[j], tolerance: tolerance)
+                {
+                    let dJ = distanceAlong(edges[j], at: point)
+                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: j, distanceAlong: dJ))
+                    }
                 }
 
                 if let raw = segI.intersection(segJ, epsilon: GISTool.intersectionEpsilon) {
@@ -362,29 +386,6 @@ private extension Overlay {
                     let dJ = distanceAlong(edges[j], at: raw)
                     if dJ > splitEps && dJ < 1.0 - splitEps {
                         result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
-                    }
-
-                    continue
-                }
-
-                // Collinear overlap produces no single intersection point.
-                // Split each edge at the other edge's endpoints so that the
-                // shared portion can be matched and merged afterwards.
-                for point in [edges[j].start, edges[j].end]
-                    where segI.checkIsOnSegment(point)
-                {
-                    let dI = distanceAlong(edges[i], at: point)
-                    if dI > splitEps && dI < 1.0 - splitEps {
-                        result.append(SplitPoint(coordinate: point, edgeIndex: i, distanceAlong: dI))
-                    }
-                }
-
-                for point in [edges[i].start, edges[i].end]
-                    where segJ.checkIsOnSegment(point)
-                {
-                    let dJ = distanceAlong(edges[j], at: point)
-                    if dJ > splitEps && dJ < 1.0 - splitEps {
-                        result.append(SplitPoint(coordinate: point, edgeIndex: j, distanceAlong: dJ))
                     }
                 }
             }
@@ -401,6 +402,28 @@ private extension Overlay {
             }
         }
         return deduped
+    }
+
+    /// Returns `true` when `point` lies on `edge` within the given tolerance
+    /// (in the edge's coordinate units, i.e. metres for overlay).
+    static func pointLiesOnEdge(
+        _ point: Coordinate3D,
+        _ edge: Edge,
+        tolerance: Double
+    ) -> Bool {
+        let dx = edge.end.x - edge.start.x
+        let dy = edge.end.y - edge.start.y
+        let length = hypot(dx, dy)
+        guard length > 0.0 else { return false }
+
+        let offsetX = point.x - edge.start.x
+        let offsetY = point.y - edge.start.y
+        let cross = abs((offsetX * dy) - (offsetY * dx)) / length
+        guard cross <= tolerance else { return false }
+
+        let dot = (offsetX * dx) + (offsetY * dy)
+        return dot >= (-tolerance * length)
+            && dot <= ((length * length) + (tolerance * length))
     }
 
     /// Returns the signed parameter t along the edge, where t=0 is start and t=1 is end.
@@ -468,22 +491,24 @@ private extension Overlay {
         for i in 0..<edges.count {
             guard !used.contains(i) else { continue }
 
+            let startI = vertexKey(edges[i].start)
+            let endI = vertexKey(edges[i].end)
+
             var merged = false
             for j in (i + 1)..<edges.count {
                 guard !used.contains(j) else { continue }
 
+                let startJ = vertexKey(edges[j].start)
+                let endJ = vertexKey(edges[j].end)
+
                 // Coincident edges from identical (or overlapping) polygons
                 // represent the same boundary; keep only one.
-                if edges[i].start == edges[j].start,
-                   edges[i].end == edges[j].end
-                {
+                if startI == startJ, endI == endJ {
                     used.insert(j)
                     continue
                 }
 
-                if edges[i].start == edges[j].end,
-                   edges[i].end == edges[j].start
-                {
+                if startI == endJ, endI == startJ {
                     result.append(edges[i])
                     used.insert(i)
                     used.insert(j)

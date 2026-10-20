@@ -100,6 +100,22 @@ struct OverlayAntimeridianTests {
         #expect(result.coversCoordinate(Coordinate3D(latitude: 2.0, longitude: 180.0)))
     }
 
+    // Union of nearly collinear polygons. Projection rounding can make the
+    // shared longitude differ by tiny amounts between inputs.
+    @Test
+    func unionNearCollinearEdges() throws {
+        let a = try crossingPolygon(latitude: 0.0 ... 10.0)
+        let b = try crossingPolygon(
+            latitude: 5.0 ... 15.0,
+            westLongitude: 170.00000001,
+            eastLongitude: -169.99999999)
+        let result = try #require(a.union(with: b))
+
+        #expect(result.coversCoordinate(Coordinate3D(latitude: 2.0, longitude: 172.0)))
+        #expect(result.coversCoordinate(Coordinate3D(latitude: 12.0, longitude: 172.0)))
+        #expect(result.coversCoordinate(Coordinate3D(latitude: 20.0, longitude: 180.0)) == false)
+    }
+
     // Difference removes a crossing polygon from the crossing polygon.
     @Test
     func differenceInner() throws {
