@@ -96,7 +96,7 @@ struct RhumbDestinationTests {
     // Tests rhumb destination in EPSG:3857.
     @Test
     func rhumbDestination3857() async throws {
-        let origin = Coordinate3D(x: 0.0, y: 0.0)
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         let dest = origin.rhumbDestination(distance: 100_000.0, bearing: 45.0)
         #expect(dest.projection == .epsg3857)
         #expect(dest.longitude.isFinite)
@@ -125,7 +125,7 @@ struct RhumbDestinationTests {
     // Tests that altitude and m are preserved in EPSG:3857.
     @Test
     func rhumbDestinationPreservesAltitudeAndM3857() async throws {
-        let origin = Coordinate3D(x: 0.0, y: 0.0, z: 500.0, m: 1234.0)
+        let origin = Coordinate3D(x: 0.0, y: 0.0, z: 500.0, m: 1234.0, projection: .epsg3857)
         let result = origin.rhumbDestination(distance: 10_000.0, bearing: 90.0)
         #expect(result.altitude == 500.0)
         #expect(result.m == 1234.0)

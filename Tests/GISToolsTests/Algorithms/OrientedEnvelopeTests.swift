@@ -106,11 +106,11 @@ struct OrientedEnvelopeTests {
     @Test
     func orientedEnvelope3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let envelope = polygon.orientedEnvelope()
         #expect(envelope != nil)

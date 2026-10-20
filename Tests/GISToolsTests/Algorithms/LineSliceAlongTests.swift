@@ -98,8 +98,8 @@ struct LineSliceAlongTests {
     @Test
     func lineSliceAlong3857() async throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let sliced = try #require(lineString.sliceAlong(startDistance: 100_000.0, stopDistance: 500_000.0))
         #expect(sliced.coordinates.count >= 2)

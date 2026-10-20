@@ -536,18 +536,18 @@ struct BooleanTouchesTests {
     func touchesEPSG3857() throws {
         // Two squares touching at a single vertex in EPSG:3857.
         let poly1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let poly2 = try #require(Polygon([[
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 0.0),
-            Coordinate3D(x: 2_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(poly1.touches(poly2))
         #expect(poly2.touches(poly1))

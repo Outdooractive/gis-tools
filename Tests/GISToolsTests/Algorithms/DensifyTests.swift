@@ -127,8 +127,8 @@ struct DensifyTests {
     @Test
     func densify3857() async throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857),
         ]))
         let densified = ls.densified(maxSegmentLength: 200_000.0)
         #expect(densified.coordinates.count > 2)

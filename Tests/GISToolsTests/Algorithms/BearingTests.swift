@@ -34,8 +34,8 @@ struct BearingTests {
     // Tests bearing calculation in EPSG:3857 (Web Mercator).
     @Test
     func bearing3857() async throws {
-        let origin = Coordinate3D(x: 0.0, y: 0.0)
-        let target = Coordinate3D(x: 100_000.0, y: 100_000.0)
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let target = Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857)
 
         let bearing: CLLocationDegrees = origin.bearing(to: target)
         #expect(abs(bearing - 45.0) < 0.01)

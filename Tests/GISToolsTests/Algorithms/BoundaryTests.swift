@@ -226,11 +226,11 @@ struct BoundaryTests {
     @Test
     func boundary3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 100_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let boundary = try #require(polygon.boundary)
         #expect(boundary.isClosed)

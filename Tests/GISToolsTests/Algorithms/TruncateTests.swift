@@ -93,8 +93,8 @@ struct TruncateTests {
     func truncate3857() async throws {
         let lineString = try #require(LineString(
             [
-                Coordinate3D(x: 100_000.123456, y: 200_000.654321),
-                Coordinate3D(x: 300_000.987654, y: 400_000.111111),
+                Coordinate3D(x: 100_000.123456, y: 200_000.654321, projection: .epsg3857),
+                Coordinate3D(x: 300_000.987654, y: 400_000.111111, projection: .epsg3857),
             ],
             calculateBoundingBox: true))
 

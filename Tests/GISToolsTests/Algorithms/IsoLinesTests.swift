@@ -76,7 +76,7 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for lat in stride(from: 0.0, through: 4.0, by: 1.0) {
             for lon in stride(from: 0.0, through: 4.0, by: 1.0) {
-                let coord = Coordinate3D(x: lon, y: lat, z: 42.0)  // all same value
+                let coord = Coordinate3D(x: lon, y: lat, z: 42.0, projection: .epsg3857)  // all same value
                 let feature = Feature(Point(coord))
                 features.append(feature)
             }
@@ -110,7 +110,7 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for (lon, lat, z) in [(0.0, 0.0, 0.0), (1.0, 0.0, 1.0),
                                (0.0, 1.0, 1.0), (1.0, 1.0, 2.0)] {
-            let coord = Coordinate3D(x: lon, y: lat, z: z)
+            let coord = Coordinate3D(x: lon, y: lat, z: z, projection: .epsg3857)
             let feature = Feature(Point(coord))
             features.append(feature)
         }
@@ -125,9 +125,9 @@ struct IsoLinesTests {
     @Test
     func testTooFewPoints() {
         var features: [Feature] = []
-        features.append(Feature(Point(Coordinate3D(x: 0, y: 0))))
-        features.append(Feature(Point(Coordinate3D(x: 1, y: 0))))
-        features.append(Feature(Point(Coordinate3D(x: 0, y: 1))))
+        features.append(Feature(Point(Coordinate3D(x: 0, y: 0, projection: .epsg3857))))
+        features.append(Feature(Point(Coordinate3D(x: 1, y: 0, projection: .epsg3857))))
+        features.append(Feature(Point(Coordinate3D(x: 0, y: 1, projection: .epsg3857))))
         let grid = FeatureCollection(features)
         let result = grid.isolines(breaks: [1.0])
         #expect(result.features.isEmpty)
@@ -144,7 +144,7 @@ struct IsoLinesTests {
                 let dx = (lon + 0.3) - 2.0
                 let dy = (lat + 0.3) - 2.0
                 let z = sqrt(dx * dx + dy * dy)
-                let coord = Coordinate3D(x: lon + 0.3, y: lat + 0.3, z: z)
+                let coord = Coordinate3D(x: lon + 0.3, y: lat + 0.3, z: z, projection: .epsg3857)
                 let feature = Feature(Point(coord))
                 features.append(feature)
             }
@@ -171,7 +171,7 @@ struct IsoLinesTests {
         var features: [Feature] = []
         for lat in stride(from: 0.0, through: 4.0, by: 1.0) {
             for lon in stride(from: 0.0, through: 4.0, by: 1.0) {
-                let coord = Coordinate3D(x: lon, y: lat)  // no z
+                let coord = Coordinate3D(x: lon, y: lat, projection: .epsg3857)  // no z
                 let feature = Feature(Point(coord))
                 features.append(feature)
             }

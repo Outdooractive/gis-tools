@@ -69,7 +69,7 @@ struct WKTTests {
     // Validates decoding WKT Point with reprojection from EPSG:3857 to EPSG:4326.
     @Test
     func pointDecoding3857To4326() async throws {
-        let expected = Coordinate3D(x: 1, y: 2).projected(to: .epsg4326)
+        let expected = Coordinate3D(x: 1, y: 2, projection: .epsg3857).projected(to: .epsg4326)
 
         let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
         #expect(point.coordinate.longitude == expected.longitude)

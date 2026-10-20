@@ -125,18 +125,18 @@ struct DissolveTests {
     @Test
     func dissolve3857() async throws {
         let p1 = Feature(try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]])), properties: ["group": "a"])
         let p2 = Feature(try #require(Polygon([[
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 2000.0, y: 0.0),
-            Coordinate3D(x: 2000.0, y: 1000.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
         ]])), properties: ["group": "a"])
 
         let dissolved = FeatureCollection([p1, p2]).dissolved(by: "group")

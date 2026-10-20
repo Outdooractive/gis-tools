@@ -148,7 +148,7 @@ struct ProjectionBenchmarks {
     func performanceRegistryInverse3857() {
         let mercatorCoordinates: [Coordinate3D] = Self.coordinates.compactMap   { coordinate in
             let (x, y) = Self.baselineForward3857(coordinate)
-            return Coordinate3D(x: x, y: y)
+            return Coordinate3D(x: x, y: y, projection: .epsg3857)
         }
 
         let duration = Self.timePerIteration(mercatorCoordinates, { coordinate in

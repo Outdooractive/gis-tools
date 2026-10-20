@@ -41,22 +41,22 @@ struct ProjectionTests {
     /// Tests coordinate projection from EPSG:3857 to EPSG:4326, including coordinates crossing the 180th meridian.
     @Test
     func convertTo4326() async throws {
-        let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514)
+        let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, projection: .epsg3857)
         let result1 = coordinate1.projected(to: .epsg4326)
         #expect(abs(result1.latitude - 41.0) < 0.000001)
         #expect(abs(result1.longitude - -71.0) < 0.000001)
 
-        let coordinate1b = Coordinate3D(x: -10_859_458.446776, y: 4_235_169.496066)
+        let coordinate1b = Coordinate3D(x: -10_859_458.446776, y: 4_235_169.496066, projection: .epsg3857)
         let result1b = coordinate1b.projected(to: .epsg4326)
         #expect(abs(result1b.latitude - 35.522895) < 0.000001)
         #expect(abs(result1b.longitude - -97.552175) < 0.000001)
 
-        let coordinate2 = Coordinate3D(x: 12_601_714.231207296, y: -2_700_367.3352587065)
+        let coordinate2 = Coordinate3D(x: 12_601_714.231207296, y: -2_700_367.3352587065, projection: .epsg3857)
         let result2 = coordinate2.projected(to: .epsg4326)
         #expect(abs(result2.latitude - -23.563987128451217) < 0.000001)
         #expect(abs(result2.longitude - 113.203125) < 0.000001)
 
-        let coordinate3 = Coordinate3D(x: -8_179_373.522740139, y: 1_271_912.1506653326)
+        let coordinate3 = Coordinate3D(x: -8_179_373.522740139, y: 1_271_912.1506653326, projection: .epsg3857)
         let result3 = coordinate3.projected(to: .epsg4326)
         #expect(abs(result3.latitude - 11.350796722383672) < 0.000001)
         #expect(abs(result3.longitude - -73.476562) < 0.000001)
@@ -96,7 +96,7 @@ struct ProjectionTests {
         #expect(abs((back3.altitude ?? 0.0) - 500.0) < 0.001)
 
         // EPSG:3857 → EPSG:4978 via chaining matches 4326 → 4978
-        let merc = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514)
+        let merc = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, projection: .epsg3857)
         let via3857 = merc.projected(to: .epsg4978)
         let direct4326 = merc.projected(to: .epsg4326)
         let directEcef = direct4326.projected(to: .epsg4978)
@@ -409,7 +409,7 @@ struct ProjectionTests {
     /// and matches the chained manual conversion.
     @Test
     func pivotRouting3857To4978() async throws {
-        let mercator = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 100.0, m: 3.0)
+        let mercator = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 100.0, m: 3.0, projection: .epsg3857)
 
         let ecef = mercator.projected(to: .epsg4978)
         let chained = mercator.projected(to: .epsg4326).projected(to: .epsg4978)
@@ -465,7 +465,7 @@ struct ProjectionTests {
     func perAxisHelpersMatchProjection() async throws {
         let sources: [Coordinate3D] = [
             Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 10.0),
-            Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 10.0),
+            Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 10.0, projection: .epsg3857),
             Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 0.0).projected(to: .epsg4978),
         ]
         let targets: [Projection] = [.epsg4326, .epsg3857, .epsg4978]

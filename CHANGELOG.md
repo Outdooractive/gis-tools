@@ -75,6 +75,23 @@ properties and foreign members instead of being dropped.
 
 Strict parsing diagnostics are available through ``GeoJsonParser``.
 
+#### Explicit projection for projected coordinates
+
+`Coordinate3D(x:y:z:m:)` no longer defaults to EPSG:3857. The `projection:`
+argument is required, so lon/lat code can no longer accidentally compile and
+be treated as meters.
+
+Migration:
+
+| Before | After |
+|---|---|
+| `Coordinate3D(x: x, y: y)` | `Coordinate3D(x: x, y: y, projection: .epsg3857)` |
+| `Coordinate3D(x: x, y: y)` (Web Mercator) | `Coordinate3D.epsg3857(x: x, y: y)` |
+| `Coordinate3D(x: x, y: y, projection: .epsg4978)` | `Coordinate3D.epsg4978(x: x, y: y)` |
+| `Coordinate3D(x: x, y: y, projection: .noSRID)` | `Coordinate3D.noSRID(x: x, y: y)` |
+
+`Coordinate3D(latitude:longitude:…)` remains the EPSG:4326 initializer.
+
 ### Added
 
 - ``GeoJsonParser`` for non-silent parsing:

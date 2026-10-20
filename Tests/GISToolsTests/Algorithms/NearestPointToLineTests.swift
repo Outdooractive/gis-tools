@@ -52,15 +52,15 @@ struct NearestPointToLineTests {
     @Test
     func nearestCoordinateFrom3857() async throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 100_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857),
         ]))
         let candidates = [
-            Coordinate3D(x: 50_000.0, y: 50_000.0),
-            Coordinate3D(x: 0.0, y: 10_000.0),
+            Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10_000.0, projection: .epsg3857),
         ]
         let result = try #require(ls.nearestCoordinate(from: candidates))
-        #expect(result.coordinate == Coordinate3D(x: 0.0, y: 10_000.0))
+        #expect(result.coordinate == Coordinate3D(x: 0.0, y: 10_000.0, projection: .epsg3857))
     }
 
     // Verifies nearest coordinate to a line in EPSG:4978.

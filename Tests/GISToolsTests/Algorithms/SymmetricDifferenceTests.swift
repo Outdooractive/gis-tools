@@ -230,18 +230,18 @@ struct SymmetricDifferenceTests {
     @Test
     func symmetricDifference3857() async throws {
         let a = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 0.0),
-            Coordinate3D(x: 1000.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 1000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let b = try #require(Polygon([[
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 1500.0, y: 500.0),
-            Coordinate3D(x: 1500.0, y: 1500.0),
-            Coordinate3D(x: 500.0, y: 1500.0),
-            Coordinate3D(x: 500.0, y: 500.0),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 1500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 1500.0, y: 1500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 1500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
         ]]))
 
         let result = a.symmetricDifference(with: b)

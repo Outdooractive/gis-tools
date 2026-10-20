@@ -129,6 +129,7 @@ private enum HexGrid {
                         rx: radius,
                         ry: cellHeight / 2.0,
                         angles: angles,
+                        projection: projection,
                         coordinatesAreInMeters: coordinatesAreInMeters)
                     for tri in triFeatures {
                         if let mask {
@@ -148,6 +149,7 @@ private enum HexGrid {
                         rx: radius,
                         ry: cellHeight / 2.0,
                         angles: angles,
+                        projection: projection,
                         coordinatesAreInMeters: coordinatesAreInMeters)
                     if let mask {
                         if mask.intersects(hex) {
@@ -172,11 +174,12 @@ private enum HexGrid {
         rx: Double,
         ry: Double,
         angles: [(cos: Double, sin: Double)],
+        projection: Projection,
         coordinatesAreInMeters: Bool
     ) -> Polygon {
         let vertices = angles.map { angle in
             if coordinatesAreInMeters {
-                Coordinate3D(x: centerX + rx * angle.cos, y: centerY + ry * angle.sin)
+                Coordinate3D(x: centerX + rx * angle.cos, y: centerY + ry * angle.sin, projection: projection)
             }
             else {
                 Coordinate3D(
@@ -193,11 +196,12 @@ private enum HexGrid {
         rx: Double,
         ry: Double,
         angles: [(cos: Double, sin: Double)],
+        projection: Projection,
         coordinatesAreInMeters: Bool
     ) -> [Polygon] {
         let center: Coordinate3D
         if coordinatesAreInMeters {
-            center = Coordinate3D(x: centerX, y: centerY)
+            center = Coordinate3D(x: centerX, y: centerY, projection: projection)
         }
         else {
             center = Coordinate3D(latitude: centerY, longitude: centerX)
@@ -209,8 +213,8 @@ private enum HexGrid {
             let p1: Coordinate3D
             let p2: Coordinate3D
             if coordinatesAreInMeters {
-                p1 = Coordinate3D(x: centerX + rx * angles[i].cos, y: centerY + ry * angles[i].sin)
-                p2 = Coordinate3D(x: centerX + rx * angles[nextI].cos, y: centerY + ry * angles[nextI].sin)
+                p1 = Coordinate3D(x: centerX + rx * angles[i].cos, y: centerY + ry * angles[i].sin, projection: projection)
+                p2 = Coordinate3D(x: centerX + rx * angles[nextI].cos, y: centerY + ry * angles[nextI].sin, projection: projection)
             }
             else {
                 p1 = Coordinate3D(

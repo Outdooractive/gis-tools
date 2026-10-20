@@ -112,7 +112,7 @@ struct FeatureCollectionTests {
     @Test
     func addFeatures() async throws {
         let feature4326 = Feature(Point(.zero))
-        let feature3857 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0)))
+        let feature3857 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
 
         var featureCollection = FeatureCollection()
         #expect(featureCollection.projection == .noSRID)

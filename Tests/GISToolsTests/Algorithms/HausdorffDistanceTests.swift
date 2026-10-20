@@ -178,8 +178,8 @@ struct HausdorffDistanceTests {
     // Tests Hausdorff distance in EPSG:3857.
     @Test
     func hausdorff3857() async throws {
-        let a = Point(Coordinate3D(x: 0.0, y: 0.0))
-        let b = Point(Coordinate3D(x: 0.0, y: 1000.0))
+        let a = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
+        let b = Point(Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857))
         let dist = a.hausdorffDistance(from: b)
         #expect(abs(dist - 1000.0) < 0.001)
     }

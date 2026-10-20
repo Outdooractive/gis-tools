@@ -415,14 +415,14 @@ struct BooleanContainsTests {
     @Test
     func containsEPSG3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        let inside = Point(Coordinate3D(x: 500.0, y: 500.0))
-        let outside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0))
+        let inside = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))
+        let outside = Point(Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857))
         #expect(polygon.contains(inside))
         #expect(polygon.contains(outside) == false)
         #expect(inside.isWithin(polygon))
@@ -467,11 +467,11 @@ struct BooleanContainsTests {
     @Test
     func multiPointContainsPointEPSG3857() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0)]))
-        #expect(mp.contains(Point(Coordinate3D(x: 0.0, y: 0.0))))
-        #expect(mp.contains(Point(Coordinate3D(x: 1_000.0, y: 1_000.0))))
-        #expect(mp.contains(Point(Coordinate3D(x: 500.0, y: 500.0))) == false)
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857)]))
+        #expect(mp.contains(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))))
+        #expect(mp.contains(Point(Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857))))
+        #expect(mp.contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))) == false)
     }
 
     // MultiPoint contains point in EPSG:4978.
@@ -500,10 +500,10 @@ struct BooleanContainsTests {
     @Test
     func lineStringContainsPointEPSG3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0)]))
-        #expect(line.contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
-        #expect(line.contains(Point(Coordinate3D(x: 600.0, y: 500.0))) == false)
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857)]))
+        #expect(line.contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))))
+        #expect(line.contains(Point(Coordinate3D(x: 600.0, y: 500.0, projection: .epsg3857))) == false)
     }
 
     // LineString contains point in EPSG:4978.
@@ -532,20 +532,20 @@ struct BooleanContainsTests {
     @Test
     func multiLineStringContainsPointEPSG3857() throws {
         let ml1 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 500.0, y: 500.0)
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857)
         ]))
         let ml2 = try #require(LineString([
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_500.0, y: 500.0)
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 500.0, projection: .epsg3857)
         ]))
         let ml = try #require(MultiLineString([
             ml1,
             ml2,
         ]))
-        #expect(ml.contains(Point(Coordinate3D(x: 250.0, y: 250.0))))
-        #expect(ml.contains(Point(Coordinate3D(x: 1_250.0, y: 250.0))))
-        #expect(ml.contains(Point(Coordinate3D(x: 750.0, y: 750.0))) == false)
+        #expect(ml.contains(Point(Coordinate3D(x: 250.0, y: 250.0, projection: .epsg3857))))
+        #expect(ml.contains(Point(Coordinate3D(x: 1_250.0, y: 250.0, projection: .epsg3857))))
+        #expect(ml.contains(Point(Coordinate3D(x: 750.0, y: 750.0, projection: .epsg3857))) == false)
     }
 
     // MultiLineString contains point in EPSG:4978.
@@ -618,13 +618,13 @@ struct BooleanContainsTests {
     @Test
     func featureContainsPointEPSG3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
+        #expect(Feature(polygon).contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))))
     }
 
     // Feature contains point in EPSG:4978.
@@ -657,13 +657,13 @@ struct BooleanContainsTests {
     @Test
     func featureCollectionContainsPointEPSG3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        #expect(FeatureCollection([Feature(polygon)]).contains(Point(Coordinate3D(x: 500.0, y: 500.0))))
+        #expect(FeatureCollection([Feature(polygon)]).contains(Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))))
     }
 
     // FeatureCollection contains point in EPSG:4978.
@@ -776,11 +776,11 @@ struct BooleanContainsTests {
     @Test
     func lineStringContainsEndpoint3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
         ]))
-        let start = Point(Coordinate3D(x: 0.0, y: 0.0))
-        let middle = Point(Coordinate3D(x: 500.0, y: 500.0))
+        let start = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
+        let middle = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))
 
         #expect(line.covers(start))
         #expect(line.contains(start) == false)

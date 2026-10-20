@@ -155,8 +155,8 @@ struct TransformTranslateTests {
     @Test
     func transformTranslate3857() async throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let result = line.translated(distance: 500.0, direction: 90.0)
         #expect(result.allCoordinates.count == 2)

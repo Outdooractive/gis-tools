@@ -268,11 +268,11 @@ struct PolygonTests {
     @Test
     func init3857() throws {
         let coords: [[Coordinate3D]] = [[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]
         let polygon = try #require(Polygon(coords))
 
@@ -338,11 +338,11 @@ struct PolygonTests {
     @Test
     func boundingBox3857() async throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 10.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
 
         let bbox = try #require(polygon.calculateBoundingBox())

@@ -128,12 +128,12 @@ struct ClustersTests {
     func dbscanEpsg3857() async throws {
         // Two clusters ~1 km apart in projected meters
         let points: [Feature] = [
-            Feature(Point(Coordinate3D(x: 0.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 500.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 0.0, y: 500.0))),
-            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0))),
-            Feature(Point(Coordinate3D(x: 100_500.0, y: 100_000.0))),
-            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_500.0))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 500.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 500.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_500.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_500.0, projection: .epsg3857))),
         ]
         let fc = FeatureCollection(points)
         let result = fc.dbscanClusters(maxDistance: 1000.0, minPoints: 2)
@@ -149,10 +149,10 @@ struct ClustersTests {
     @Test
     func kmeansEpsg3857() async throws {
         let points: [Feature] = [
-            Feature(Point(Coordinate3D(x: 0.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 1000.0, y: 0.0))),
-            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0))),
-            Feature(Point(Coordinate3D(x: 101_000.0, y: 100_000.0))),
+            Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 101_000.0, y: 100_000.0, projection: .epsg3857))),
         ]
         let fc = FeatureCollection(points)
         let result = fc.kmeansClusters(numberOfClusters: 2)
@@ -249,13 +249,13 @@ struct ClustersTests {
     /// Validates weighted K-means with EPSG:3857.
     @Test
     func kmeansWeightedEpsg3857() async throws {
-        var f1 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0)))
+        var f1 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
         f1.properties = ["pop": 1000.0]
-        var f2 = Feature(Point(Coordinate3D(x: 100.0, y: 0.0)))
+        var f2 = Feature(Point(Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857)))
         f2.properties = ["pop": 1.0]
-        var f3 = Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0)))
+        var f3 = Feature(Point(Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857)))
         f3.properties = ["pop": 1000.0]
-        var f4 = Feature(Point(Coordinate3D(x: 100_100.0, y: 100_000.0)))
+        var f4 = Feature(Point(Coordinate3D(x: 100_100.0, y: 100_000.0, projection: .epsg3857)))
         f4.properties = ["pop": 1.0]
         let points = [f1, f2, f3, f4]
         let fc = FeatureCollection(points)
@@ -423,10 +423,10 @@ struct ClustersTests {
     /// Weighted K-means changes cluster assignment (EPSG:3857, meters).
     @Test
     func weightedKmeansChangesAssignmentEpsg3857() async throws {
-        var p0 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0)))
-        let p1 = Feature(Point(Coordinate3D(x: 9000.0, y: 0.0)))
-        let p2 = Feature(Point(Coordinate3D(x: 10_000.0, y: 0.0)))
-        let p3 = Feature(Point(Coordinate3D(x: 19_000.0, y: 0.0)))
+        var p0 = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)))
+        let p1 = Feature(Point(Coordinate3D(x: 9000.0, y: 0.0, projection: .epsg3857)))
+        let p2 = Feature(Point(Coordinate3D(x: 10_000.0, y: 0.0, projection: .epsg3857)))
+        let p3 = Feature(Point(Coordinate3D(x: 19_000.0, y: 0.0, projection: .epsg3857)))
         p0.properties["w"] = 10_000.0
         let points = [p0, p1, p2, p3]
 

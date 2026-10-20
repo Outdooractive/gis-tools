@@ -85,9 +85,9 @@ struct FlipTests {
     @Test
     func flip3857() async throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 100_000.0, y: 100_000.0),
-            Coordinate3D(x: 200_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857),
+            Coordinate3D(x: 200_000.0, y: 0.0, projection: .epsg3857),
         ]))
         let flipped = line.flipped()
         #expect(flipped.coordinates.count == 3)
@@ -118,7 +118,7 @@ struct FlipTests {
     // Validates flip preserves the input projection.
     @Test
     func flipPointPreservesProjection() throws {
-        let point3857 = Point(Coordinate3D(x: 10.0, y: 20.0))
+        let point3857 = Point(Coordinate3D(x: 10.0, y: 20.0, projection: .epsg3857))
         #expect(point3857.flipped().coordinate.projection == .epsg3857)
 
         let point4978 = Point(Coordinate3D(x: 10.0, y: 20.0, z: 0.0, projection: .epsg4978))

@@ -71,7 +71,7 @@ struct DestinationTests {
     // Validates destination in EPSG:3857 projection.
     @Test
     func destination3857() async throws {
-        let coordinate = Coordinate3D(x: 0.0, y: 0.0)
+        let coordinate = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         let dest = coordinate.destination(distance: 100_000.0, bearing: 45.0)
         #expect(dest.projection == .epsg3857)
         #expect(dest.latitude.isFinite)

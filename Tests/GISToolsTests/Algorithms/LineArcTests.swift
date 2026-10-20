@@ -35,7 +35,7 @@ struct LineArcTests {
     // Tests line arc generation in EPSG:3857.
     @Test
     func lineArc3857() async throws {
-        let point = Point(Coordinate3D(x: 5_000_000.0, y: 5_000_000.0))
+        let point = Point(Coordinate3D(x: 5_000_000.0, y: 5_000_000.0, projection: .epsg3857))
         let lineArc = try #require(point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0))
         #expect(lineArc.coordinates.count > 2)
     }

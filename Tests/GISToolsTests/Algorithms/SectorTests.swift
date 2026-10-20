@@ -92,7 +92,7 @@ struct SectorTests {
     // Tests sector in EPSG:3857 (Web Mercator).
     @Test
     func sector3857() async throws {
-        let center = Coordinate3D(x: 0.0, y: 0.0)
+        let center = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(sector.isValid)
         #expect(sector.projection == .epsg3857)

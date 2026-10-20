@@ -142,8 +142,8 @@ struct MultiLineStringTests {
     @Test
     func init3857() throws {
         let lineString = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
         ]))
         let multiLineString = try #require(MultiLineString([lineString]))
 
@@ -178,12 +178,12 @@ struct MultiLineStringTests {
     @Test
     func boundingBox3857() async throws {
         let lineStringA = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 5.0, y: 5.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857),
         ]))
         let lineStringB = try #require(LineString([
-            Coordinate3D(x: 5.0, y: 5.0),
-            Coordinate3D(x: 10.0, y: 10.0),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
         ]))
         let multiLineString = try #require(MultiLineString([lineStringA, lineStringB]))
 

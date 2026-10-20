@@ -110,10 +110,10 @@ struct NearestPointOnFeatureTests {
     @Test
     func nearestOnLineString3857() throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
         ]))
-        let ref = Coordinate3D(x: 500.0, y: 500.0)
+        let ref = Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857)
         let result = try #require(ls.nearestCoordinateOnFeature(from: ref))
         #expect(result.distance > 0.0)
         #expect(result.coordinate.x == 0.0)
@@ -124,13 +124,13 @@ struct NearestPointOnFeatureTests {
     @Test
     func nearestOnPolygonInside3857() throws {
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
-        let ref = Coordinate3D(x: 500.0, y: 500.0)
+        let ref = Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857)
         let result = try #require(polygon.nearestCoordinateOnFeature(from: ref))
         #expect(result.coordinate == ref)
         #expect(result.distance == 0.0)

@@ -342,12 +342,12 @@ struct BooleanCrossesTests {
     func crossesEPSG3857() throws {
         // Diagonal crossing in EPSG:3857.
         let line1 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
         ]))
         let line2 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
         ]))
         #expect(line1.crosses(line2))
         #expect(line2.crosses(line1))
@@ -387,11 +387,11 @@ struct BooleanCrossesTests {
     @Test
     func crossesMultiPointLineStringEPSG3857() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 2_000.0, y: 2_000.0)]))
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857)]))
         let line = try #require(LineString([
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 1_500.0, y: 1_500.0)]))
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_500.0, y: 1_500.0, projection: .epsg3857)]))
         #expect(mp.crosses(line))
     }
 
@@ -411,14 +411,14 @@ struct BooleanCrossesTests {
     @Test
     func crossesLineStringPolygonEPSG3857() throws {
         let line = try #require(LineString([
-            Coordinate3D(x: 500.0, y: -500.0),
-            Coordinate3D(x: 500.0, y: 1_500.0)]))
+            Coordinate3D(x: 500.0, y: -500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 1_500.0, projection: .epsg3857)]))
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(line.crosses(polygon))
     }
@@ -445,14 +445,14 @@ struct BooleanCrossesTests {
     @Test
     func crossesMultiPointPolygonEPSG3857() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 500.0, y: 500.0),
-            Coordinate3D(x: 2_000.0, y: 2_000.0)]))
+            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857)]))
         let polygon = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 1_000.0),
-            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         #expect(mp.crosses(polygon))
     }

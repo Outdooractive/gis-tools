@@ -97,10 +97,10 @@ struct NearestPointTests {
     @Test
     func nearestPointLineString3857() throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
         ]))
-        let ref = Coordinate3D(x: 0.0, y: 1_000.0)
+        let ref = Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857)
         let result = try #require(ls.nearestCoordinate(from: ref))
         #expect(result.distance > 0.0)
         #expect(result.coordinate.x == 0.0)
@@ -111,11 +111,11 @@ struct NearestPointTests {
     @Test
     func nearestPointFeature3857() throws {
         let ls = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
         ]))
         let feature = Feature(ls)
-        let ref = Point(Coordinate3D(x: 0.0, y: 1_000.0))
+        let ref = Point(Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857))
         let result = try #require(feature.nearestPoint(from: ref))
         #expect(result.point.coordinate.x == 0.0)
         #expect(result.point.coordinate.y == 0.0)

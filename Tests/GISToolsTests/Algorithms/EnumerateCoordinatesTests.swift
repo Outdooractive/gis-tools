@@ -81,10 +81,10 @@ struct EnumerateCoordinatesTests {
 
     // Tests coordinate enumeration in EPSG:3857.
     @Test func enumerateCoordinates3857() throws {
-        let a = Coordinate3D(x: 0.0, y: 0.0)
-        let b = Coordinate3D(x: 100_000.0, y: 0.0)
-        let c = Coordinate3D(x: 100_000.0, y: 100_000.0)
-        let d = Coordinate3D(x: 0.0, y: 100_000.0)
+        let a = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let b = Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857)
+        let c = Coordinate3D(x: 100_000.0, y: 100_000.0, projection: .epsg3857)
+        let d = Coordinate3D(x: 0.0, y: 100_000.0, projection: .epsg3857)
         let polygon = try #require(Polygon([[a, b, c, d, a]]))
 
         var visited: [(Int, Coordinate3D)] = []

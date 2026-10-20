@@ -142,11 +142,11 @@ struct MaskTests {
     @Test
     func mask3857() throws {
         let maskPolygon = try #require(Polygon([[
-            Coordinate3D(x: -50_000.0, y: -50_000.0),
-            Coordinate3D(x: 50_000.0, y: -50_000.0),
-            Coordinate3D(x: 50_000.0, y: 50_000.0),
-            Coordinate3D(x: -50_000.0, y: 50_000.0),
-            Coordinate3D(x: -50_000.0, y: -50_000.0),
+            Coordinate3D(x: -50_000.0, y: -50_000.0, projection: .epsg3857),
+            Coordinate3D(x: 50_000.0, y: -50_000.0, projection: .epsg3857),
+            Coordinate3D(x: 50_000.0, y: 50_000.0, projection: .epsg3857),
+            Coordinate3D(x: -50_000.0, y: 50_000.0, projection: .epsg3857),
+            Coordinate3D(x: -50_000.0, y: -50_000.0, projection: .epsg3857),
         ]]))
         let result = maskPolygon.mask()
         #expect(result != nil)

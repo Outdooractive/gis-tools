@@ -150,12 +150,12 @@ struct LineOverlapTests {
     @Test
     func lineOverlap3857() async throws {
         let line1 = try #require(LineString([
-            Coordinate3D(x: 0.0, y: 0.0),
-            Coordinate3D(x: 200.0, y: 200.0),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 200.0, y: 200.0, projection: .epsg3857),
         ]))
         let line2 = try #require(LineString([
-            Coordinate3D(x: 50.0, y: 50.0),
-            Coordinate3D(x: 150.0, y: 150.0),
+            Coordinate3D(x: 50.0, y: 50.0, projection: .epsg3857),
+            Coordinate3D(x: 150.0, y: 150.0, projection: .epsg3857),
         ]))
         let overlappingSegments = line1.overlappingSegments(with: line2)
         #expect(overlappingSegments.count == 1)
