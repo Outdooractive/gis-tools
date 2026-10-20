@@ -240,7 +240,7 @@ extension GeoJsonParser {
     ]
 
     private static func validate(json: Any?, path: String) -> [GeoJsonParseIssue] {
-        guard let dictionary = JsonCoercion.dictionary(json) else {
+        guard let dictionary = JsonCoercion.rawDictionary(json) else {
             return [issue(path, "expected a JSON object")]
         }
 

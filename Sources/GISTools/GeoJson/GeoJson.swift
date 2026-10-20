@@ -373,7 +373,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON object from any JSON object.
     public static func tryCreate(json: Any?) -> GeoJson? {
-        if let geoJson = JsonCoercion.dictionary(json),
+        if let geoJson = JsonCoercion.rawDictionary(json),
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid
@@ -396,7 +396,7 @@ extension GeoJson {
 
     /// Try to create a GeoJSON geometry from any JSON object.
     public static func tryCreateGeometry(json: Any?) -> GeoJsonGeometry? {
-        if let geoJson = JsonCoercion.dictionary(json),
+        if let geoJson = JsonCoercion.rawDictionary(json),
            let typeString = geoJson["type"] as? String,
            let type = GeoJsonType(rawValue: typeString),
            type != .invalid

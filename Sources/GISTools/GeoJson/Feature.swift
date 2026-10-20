@@ -174,7 +174,7 @@ public struct Feature:
     ///    - calculateBoundingBox: When true, calculate the bounding box from the geometry
     /// - Returns: A feature, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = JsonCoercion.dictionary(json),
+        guard let geoJson = JsonCoercion.rawDictionary(json),
               Feature.isValid(geoJson: geoJson)
         else { return nil }
 
@@ -191,7 +191,17 @@ public struct Feature:
 
         self.geometry = geometry
         self.id = Identifier(value: geoJson["id"])
-        self.properties = JsonCoercion.dictionary(geoJson["properties"]) ?? [:]
+
+        if let rawProperties = geoJson["properties"], !(rawProperties is NSNull) {
+            guard let properties = JsonCoercion.dictionary(rawProperties) else {
+                return nil
+            }
+            self.properties = properties
+        }
+        else {
+            self.properties = [:]
+        }
+
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
 
         if calculateBoundingBox {

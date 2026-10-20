@@ -143,7 +143,14 @@ enum ProjectionRegistry {
     /// - Parameter srid: A canonical SRID (aliases are resolved by ``Projection``)
     /// - Returns: The definition, or `nil` if the SRID is not registered
     static func definition(forSrid srid: Int) -> (any ProjectionDefinition)? {
-        stateMutex.withLock { snapshot in
+        // Built-ins are immutable and can be read without the mutex. This is
+        // on the hot path for every `Projection.definition` access, so avoid
+        // locking for the common case.
+        if let builtin = builtinDefinitions[srid] {
+            return builtin
+        }
+
+        return stateMutex.withLock { snapshot in
             snapshot.definitions[srid]
         }
     }

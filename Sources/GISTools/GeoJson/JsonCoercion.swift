@@ -1,5 +1,9 @@
 import Foundation
 
+#if canImport(Darwin)
+import CoreFoundation
+#endif
+
 /// Element-wise JSON coercion helpers.
 ///
 /// GeoJSON parsing historically relied on whole-dictionary conditional casts
@@ -53,6 +57,39 @@ enum JsonCoercion {
         return nil
     }
 
+    /// Return a dictionary without recursively coercing its values.
+    ///
+    /// Inputs that already carry `Sendable` values (for example the result of
+    /// ``JSONValue/asSendable``) are returned as-is. Other inputs fall back to
+    /// ``dictionary(_:)`` so that callers always receive coerced values.
+    static func rawDictionary(_ value: Any?) -> [String: Sendable]? {
+        guard let value else { return nil }
+
+        // Only JSONValue's own dictionary representation takes the fast path.
+        // Bridged NSDictionary input still goes through the coercing path, so
+        // non-JSON values (NSObject, Data, …) are rejected as before.
+        if type(of: value) == [String: Sendable].self,
+           let dictionary = value as? [String: Sendable],
+           dictionary.values.allSatisfy({ isFastPathValue($0) })
+        {
+            return dictionary
+        }
+
+        return dictionary(value)
+    }
+
+    private static func isFastPathValue(_ value: Sendable) -> Bool {
+        value is NSNull
+            || value is String
+            || value is Bool
+            || value is NSNumber
+            || value is Int
+            || value is Double
+            || value is Float
+            || value is [Sendable]
+            || value is [String: Sendable]
+    }
+
     /// Element-wise coercion of a bridged dictionary.
     private static func dictionary(from nsDictionary: NSDictionary) -> [String: Sendable]? {
         var result: [String: Sendable] = [:]
@@ -75,12 +112,15 @@ enum JsonCoercion {
     static func array(_ value: Any?) -> [Any]? {
         guard let value else { return nil }
 
-        if let nsArray = value as? NSArray {
-            return nsArray.map { $0 }
-        }
-
+        // Prefer native arrays so their element types survive. Bridging a
+        // native `[Sendable]` to `NSArray` would box every dictionary element,
+        // defeating the raw-dictionary fast path during parsing.
         if let nativeArray = value as? [Any] {
             return nativeArray
+        }
+
+        if let nsArray = value as? NSArray {
+            return nsArray.map { $0 }
         }
 
         return nil
@@ -133,7 +173,11 @@ enum JsonCoercion {
         guard let value else { return false }
 
         if let number = value as? NSNumber {
+            #if canImport(Darwin)
+            return CFGetTypeID(number) == CFBooleanGetTypeID()
+            #else
             return String(cString: number.objCType) == "c"
+            #endif
         }
 
         return value is Bool

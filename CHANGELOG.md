@@ -123,6 +123,18 @@ Point-in-polygon wraps at the projection's `wraparoundExtent` (EPSG:4326 at
 Web Mercator as well. Polygons with a deliberately world-spanning edge are
 left unchanged; that case is ambiguous per RFC 7946.
 
+### Performance
+
+- `Coordinate3D` is now 56 bytes (stride 56) instead of 96, and `Projection`
+  is 8 bytes instead of 48. The projection definition is resolved from the
+  immutable built-in registry instead of being stored in every coordinate
+  (#254).
+- GeoJSON parsing no longer re-coerces the whole `JSONValue` document in the
+  feature and geometry initializers; already-`Sendable` dictionaries take a
+  fast path (#254).
+- A bounding-box miss in `Polygon.contains` is now O(1): the antimeridian flag
+  is cached when the bounding box is calculated (#254).
+
 ### Fixed
 
 - Points on a polygon hole boundary are now reported as boundary points

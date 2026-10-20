@@ -14,10 +14,9 @@ struct Coordinate3DMemoryTests {
         stride=\(MemoryLayout<Projection>.stride)
         """)
 
-        // Baseline guardrails. After boxing the projection definition these
-        // must be tightened to Projection <= 16 and Coordinate3D <= 64.
-        #expect(MemoryLayout<Projection>.stride <= 48)
-        #expect(MemoryLayout<Coordinate3D>.stride <= 96)
+        // 3.0 targets: projection definition boxing and a compact coordinate.
+        #expect(MemoryLayout<Projection>.stride <= 16)
+        #expect(MemoryLayout<Coordinate3D>.stride <= 64)
     }
 
     @Test
