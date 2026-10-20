@@ -91,10 +91,10 @@ extension GeoJson {
             return nearest(onGeometries: geometryCollection.geometries, from: otherProjected)
 
         case let feature as Feature:
-            return feature.geometry.nearestCoordinateOnFeature(from: otherProjected)
+            return feature.geometry?.nearestCoordinateOnFeature(from: otherProjected)
 
         case let featureCollection as FeatureCollection:
-            return nearest(onGeometries: featureCollection.features.map(\.geometry), from: otherProjected)
+            return nearest(onGeometries: featureCollection.features.compactMap(\.geometry), from: otherProjected)
 
         default:
             return nil

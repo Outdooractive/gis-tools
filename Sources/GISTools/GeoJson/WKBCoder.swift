@@ -153,9 +153,11 @@ extension Feature {
 
     /// Returns the receiver as WKB encoded data.
     ///
-    /// - Returns: The WKB encoded data, or `nil` if the geometry is empty.
+    /// - Returns: The WKB encoded data, or `nil` if the geometry is empty or
+    ///   the feature has no geometry.
     public var asWKB: Data? {
-        WKBCoder.encode(geometry: self.geometry)
+        guard let geometry else { return nil }
+        return WKBCoder.encode(geometry: geometry)
     }
 
 }
@@ -204,9 +206,11 @@ extension FeatureCollection {
 
     /// Returns the receiver as WKB encoded data.
     ///
-    /// - Returns: The WKB encoded data, or `nil` if the geometry is empty.
+    /// - Returns: The WKB encoded data, or `nil` if the geometry is empty or
+    ///   any feature has no geometry.
     public var asWKB: Data? {
-        WKBCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
+        guard features.allSatisfy({ $0.geometry != nil }) else { return nil }
+        return WKBCoder.encode(geometry: GeometryCollection(features.compactMap(\.geometry)))
     }
 
 }

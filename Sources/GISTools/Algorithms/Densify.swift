@@ -78,8 +78,8 @@ private enum Densify {
 
         case .feature:
             guard let f = geoJson as? Feature else { return nil }
-            let g = f.geometry
-            guard let densifiedG = densify(geoJson: g, maxSegmentLength: maxSegmentLength) as? GeoJsonGeometry
+            guard let g = f.geometry,
+                  let densifiedG = densify(geoJson: g, maxSegmentLength: maxSegmentLength) as? GeoJsonGeometry
             else { return f }
             return Feature(densifiedG, id: f.id, properties: f.properties)
 

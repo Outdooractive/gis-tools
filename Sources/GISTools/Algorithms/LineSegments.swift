@@ -69,7 +69,7 @@ extension GeoJson {
             return geometryCollection.geometries.flatMap { $0.lineSegments }
 
         case let feature as Feature:
-            return feature.geometry.lineSegments
+            return feature.geometry?.lineSegments ?? []
 
         case let featureCollection as FeatureCollection:
             return featureCollection.features.flatMap { $0.lineSegments }

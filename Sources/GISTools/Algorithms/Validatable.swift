@@ -10,10 +10,9 @@ public protocol ValidatableGeoJson {
 
     /// Check if the geometry is valid, i.e. it has enough coordinates to make sense.
     ///
-    /// - Note: RFC 7946 §3.2 allows a Feature with `"geometry": null`, but
-    ///   this library rejects those at parse time (``Feature.init?(json:)``
-    ///   returns `nil`). Every validatable type therefore always has a
-    ///   non-nil geometry.
+    /// - Note: RFC 7946 §3.2 allows a Feature with `"geometry": null`. Such an
+    ///   unlocated feature is considered structurally valid; its other members
+    ///   are still validated.
     var isValid: Bool { get }
 
     /// Returns `self` when ``isValid`` is `true`, otherwise `nil`.
@@ -34,8 +33,10 @@ extension ValidatableGeoJson {
 extension Feature: ValidatableGeoJson {
 
     /// Check if the Feature's geometry is valid, i.e. it has enough coordinates to make sense.
+    ///
+    /// An unlocated feature (`geometry == nil`) is structurally valid.
     public var isValid: Bool {
-        geometry.isValid
+        geometry?.isValid ?? true
     }
 
     /// Check if the GeoJson is a valid Feature.

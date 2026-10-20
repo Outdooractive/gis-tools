@@ -63,7 +63,7 @@ extension GeoJson {
             return geometryCollection.geometries.flatMap { $0.tileCover(atZoom: zoom) }
 
         case let feature as Feature:
-            return feature.geometry.tileCover(atZoom: zoom)
+            return feature.geometry?.tileCover(atZoom: zoom) ?? []
 
         case let featureCollection as FeatureCollection:
             return featureCollection.features.flatMap { $0.tileCover(atZoom: zoom) }

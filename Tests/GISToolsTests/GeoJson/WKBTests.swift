@@ -168,9 +168,9 @@ struct WKBTests {
         #expect(pointZ.coordinate.altitude == 3)
 
         let feature = pointZData.asFeature(sourceProjection: .epsg4326)
-        #expect(feature?.geometry.allCoordinates.first?.longitude == 1)
-        #expect(feature?.geometry.allCoordinates.first?.latitude == 2)
-        #expect(feature?.geometry.allCoordinates.first?.altitude == 3)
+        #expect(feature?.geometry?.allCoordinates.first?.longitude == 1)
+        #expect(feature?.geometry?.allCoordinates.first?.latitude == 2)
+        #expect(feature?.geometry?.allCoordinates.first?.altitude == 3)
     }
 
     // SELECT ST_ClipByBox2D(ToPoint('POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))'::geometry), ST_MakeEnvelope(0,0,0.2,0.2));

@@ -91,18 +91,20 @@ public struct Feature:
 
     /// The receiver's projection.
     public var projection: Projection {
-        geometry.projection
+        geometry?.projection ?? .noSRID
     }
 
     /// An arbitrary identifier.
     public var id: Identifier?
 
     /// The `Feature`s geometry object.
-    public private(set) var geometry: GeoJsonGeometry
+    ///
+    /// `nil` for an unlocated feature, which is valid per RFC 7946 §3.2.
+    public private(set) var geometry: GeoJsonGeometry?
 
     /// All of the receiver's coordinates.
     public var allCoordinates: [Coordinate3D] {
-        geometry.allCoordinates
+        geometry?.allCoordinates ?? []
     }
 
     /// Only 'Feature' objects may have properties.
@@ -136,6 +138,26 @@ public struct Feature:
         }
     }
 
+    /// Create an unlocated ``Feature`` without a geometry.
+    ///
+    /// RFC 7946 §3.2 allows a Feature whose geometry is `null`. Such a feature
+    /// keeps its identifier, properties and foreign members.
+    ///
+    /// - Parameters:
+    ///    - id: An optional identifier
+    ///    - properties: A dictionary of properties
+    ///    - foreignMembers: Additional JSON members
+    public init(
+        id: Identifier? = nil,
+        properties: [String: Sendable] = [:],
+        foreignMembers: [String: Sendable] = [:]
+    ) {
+        self.geometry = nil
+        self.id = id
+        self.properties = properties
+        self.foreignMembers = foreignMembers
+    }
+
     /// Try to initialize a Feature from any JSON object.
     ///
     /// - Parameters:
@@ -153,9 +175,19 @@ public struct Feature:
     /// - Returns: A feature, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson = JsonCoercion.dictionary(json),
-              Feature.isValid(geoJson: geoJson),
-              let geometry: GeoJsonGeometry = Feature.tryCreateGeometry(json: geoJson["geometry"])
+              Feature.isValid(geoJson: geoJson)
         else { return nil }
+
+        let geometry: GeoJsonGeometry?
+        if geoJson["geometry"] is NSNull {
+            geometry = nil
+        }
+        else {
+            guard let parsed: GeoJsonGeometry = Feature.tryCreateGeometry(json: geoJson["geometry"]) else {
+                return nil
+            }
+            geometry = parsed
+        }
 
         self.geometry = geometry
         self.id = Identifier(value: geoJson["id"])
@@ -183,7 +215,7 @@ public struct Feature:
         var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,
-            "geometry": geometry.asJson
+            "geometry": geometry?.asJson ?? (NSNull() as Sendable)
         ]
         if let id {
             result["id"] = id.asJson
@@ -209,7 +241,7 @@ extension Feature {
     public mutating func updateBoundingBox(
         onlyIfNecessary ifNecessary: Bool = true
     ) -> BoundingBox? {
-        geometry.updateBoundingBox(onlyIfNecessary: ifNecessary)
+        geometry?.updateBoundingBox(onlyIfNecessary: ifNecessary)
 
         if boundingBox != nil && ifNecessary { return boundingBox }
 
@@ -221,7 +253,7 @@ extension Feature {
     ///
     /// - Returns: The calculated bounding box, or `nil` if there is no geometry
     public func calculateBoundingBox() -> BoundingBox? {
-        geometry.boundingBox ?? geometry.calculateBoundingBox()
+        geometry?.boundingBox ?? geometry?.calculateBoundingBox()
     }
 
     /// Check if the receiver intersects with the given bounding box.
@@ -235,7 +267,7 @@ extension Feature {
             return false
         }
 
-        return geometry.intersects(otherBoundingBox)
+        return geometry?.intersects(otherBoundingBox) ?? false
     }
 
 }
@@ -253,8 +285,18 @@ extension Feature: Equatable {
         lhs: Feature,
         rhs: Feature
     ) -> Bool {
+        let geometriesEqual: Bool
+        switch (lhs.geometry, rhs.geometry) {
+        case (nil, nil):
+            geometriesEqual = true
+        case let (lhsGeometry?, rhsGeometry?):
+            geometriesEqual = lhsGeometry.isEqualTo(rhsGeometry)
+        default:
+            geometriesEqual = false
+        }
+
         return lhs.projection == rhs.projection
-            && lhs.geometry.isEqualTo(rhs.geometry)
+            && geometriesEqual
             && lhs.id == rhs.id
             && Feature.deepEqual(lhs.properties, rhs.properties)
     }
@@ -299,7 +341,7 @@ extension Feature: Hashable {
     /// JSON-compatible hash to a fixed bucket, matching the `==` fallback.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(projection)
-        if let hashableGeometry = geometry as? any Hashable {
+        if let geometry, let hashableGeometry = geometry as? any Hashable {
             hasher.combine(hashableGeometry)
         }
         hasher.combine(id)
@@ -317,10 +359,17 @@ extension Feature {
 
     /// Reproject the receiver.
     ///
+    /// Unlocated features have no CRS and are returned unchanged.
+    ///
     /// - Parameter newProjection: The target projection
     /// - Returns: A new feature in the requested projection
     public func projected(to newProjection: Projection) -> Feature {
         guard newProjection != projection else { return self }
+
+        guard let geometry else {
+            // An unlocated feature has no CRS to reproject.
+            return self
+        }
 
         var feature = Feature(
             geometry.projected(to: newProjection),

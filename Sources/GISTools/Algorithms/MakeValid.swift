@@ -49,7 +49,9 @@ extension GeoJson {
             return result as? Self
 
         case let feature as Feature:
-            guard let validGeometry = feature.geometry.madeValid(gridSize: gridSize) else { return nil }
+            guard let geometry = feature.geometry,
+                  let validGeometry = geometry.madeValid(gridSize: gridSize)
+            else { return nil }
             var newFeature = Feature(
                 validGeometry,
                 id: feature.id,

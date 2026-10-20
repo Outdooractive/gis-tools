@@ -36,7 +36,10 @@ extension GeoJson {
             return fc1.features.contains { $0.crosses(snappedOther, gridSize: nil) }
         }
         if let fc2 = snappedOther as? FeatureCollection {
-            return fc2.features.contains { snappedSelf.crosses($0.geometry, gridSize: nil) }
+            return fc2.features.contains { feature in
+                guard let geometry = feature.geometry else { return false }
+                return snappedSelf.crosses(geometry, gridSize: nil)
+            }
         }
 
         // Anything else

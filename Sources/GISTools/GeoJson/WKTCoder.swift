@@ -135,9 +135,11 @@ extension Feature {
 
     /// Returns the receiver as a WKT encoded string.
     ///
-    /// - Returns: A WKT string, or `nil` if encoding fails.
+    /// - Returns: A WKT string, or `nil` if encoding fails or the feature has
+    ///   no geometry.
     public var asWKT: String? {
-        WKTCoder.encode(geometry: self.geometry)
+        guard let geometry else { return nil }
+        return WKTCoder.encode(geometry: geometry)
     }
 
 }
@@ -196,9 +198,11 @@ extension FeatureCollection {
 
     /// Returns the receiver as a WKT encoded string.
     ///
-    /// - Returns: A WKT string, or `nil` if encoding fails.
+    /// - Returns: A WKT string, or `nil` if encoding fails or any feature has
+    ///   no geometry.
     public var asWKT: String? {
-        WKTCoder.encode(geometry: GeometryCollection(self.features.map(\.geometry)))
+        guard features.allSatisfy({ $0.geometry != nil }) else { return nil }
+        return WKTCoder.encode(geometry: GeometryCollection(features.compactMap(\.geometry)))
     }
 
 }

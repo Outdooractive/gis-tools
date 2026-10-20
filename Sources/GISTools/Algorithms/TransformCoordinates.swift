@@ -75,8 +75,17 @@ extension GeoJson {
             return newGeometryCollection as! Self
 
         case let feature as Feature:
+            guard let geometry = feature.geometry else {
+                var newFeature = Feature(
+                    id: feature.id,
+                    properties: feature.properties,
+                    foreignMembers: feature.foreignMembers)
+                newFeature.boundingBox = feature.boundingBox
+                return newFeature as! Self
+            }
+
             var newFeature = Feature(
-                feature.geometry.transformedCoordinates(transform),
+                geometry.transformedCoordinates(transform),
                 id: feature.id,
                 properties: feature.properties,
                 calculateBoundingBox: (feature.boundingBox != nil))

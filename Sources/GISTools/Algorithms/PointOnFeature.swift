@@ -122,11 +122,11 @@ extension GeoJson {
             }
 
         case let feature as Feature:
-            return feature.geometry.coordinateOnFeature(gridSize: nil)
+            return feature.geometry?.coordinateOnFeature(gridSize: nil)
 
         case let featureCollection as FeatureCollection:
             for feature in featureCollection.features {
-                if let coordinate = feature.geometry.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
+                if let coordinate = feature.geometry?.coordinateOnFeature(failOnMiss: true, gridSize: nil) {
                     return coordinate
                 }
             }

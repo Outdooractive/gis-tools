@@ -258,8 +258,17 @@ extension SnapToGrid {
     }
 
     private static func snap(feature: Feature, tolerance: Double) -> Feature {
+        guard let geometry = feature.geometry else {
+            var result = Feature(
+                id: feature.id,
+                properties: feature.properties,
+                foreignMembers: feature.foreignMembers)
+            result.boundingBox = feature.boundingBox
+            return result
+        }
+
         var result = Feature(
-            snap(feature.geometry, tolerance: tolerance) as! GeoJsonGeometry,
+            snap(geometry, tolerance: tolerance) as! GeoJsonGeometry,
             id: feature.id,
             properties: feature.properties,
             calculateBoundingBox: (feature.boundingBox != nil))
