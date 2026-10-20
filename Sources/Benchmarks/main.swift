@@ -433,6 +433,18 @@ private func runBuffer() {
     run("buffer/line/steps-32", iterations: 2) { _ = line.buffered(by: 1.0, steps: 32) }
     run("buffer/polygon/steps-8", iterations: 2) { _ = polygon.buffered(by: 1.0, steps: 8) }
     run("buffer/polygon/steps-32", iterations: 2) { _ = polygon.buffered(by: 1.0, steps: 32) }
+
+    let largeLine = makeLineString(vertices: 1_000)
+    let largePolygon = makeCirclePolygon(vertices: 1_000)
+    run("buffer/line/1k/steps-8", iterations: 1) { _ = largeLine.buffered(by: 0.01, steps: 8) }
+    run("buffer/line/1k/steps-32", iterations: 1) { _ = largeLine.buffered(by: 0.01, steps: 32) }
+    run("buffer/polygon/1k/steps-8", iterations: 1) { _ = largePolygon.buffered(by: 0.01, steps: 8) }
+    run("buffer/polygon/1k/steps-32", iterations: 1) { _ = largePolygon.buffered(by: 0.01, steps: 32) }
+
+    let veryLargeLine = makeLineString(vertices: 10_000)
+    let veryLargePolygon = makeCirclePolygon(vertices: 10_000)
+    run("buffer/line/10k/steps-8", iterations: 1) { _ = veryLargeLine.buffered(by: 0.001, steps: 8) }
+    run("buffer/polygon/10k/steps-8", iterations: 1) { _ = veryLargePolygon.buffered(by: 0.001, steps: 8) }
 }
 
 // MARK: - Simplify

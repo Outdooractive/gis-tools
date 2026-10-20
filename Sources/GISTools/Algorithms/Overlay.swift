@@ -58,6 +58,183 @@ enum Overlay {
         }
     }
 
+    /// A uniform-grid index over polygons for repeated point containment tests.
+    struct PolygonIndex: Sendable {
+
+        let polygons: [Polygon]
+
+        private let prepared: [PreparedPolygon]
+        private let grid: Grid
+
+        init(_ polygons: [Polygon]) {
+            self.polygons = polygons
+            self.prepared = polygons.map { PreparedPolygon(polygon: $0) }
+            self.grid = Grid(polygons: polygons)
+        }
+
+        /// Returns `true` if any indexed polygon contains the point.
+        func contains(_ point: Coordinate3D) -> Bool {
+            for index in grid.large where prepared[index].contains(point) {
+                return true
+            }
+
+            guard let cell = grid.cellIndex(for: point) else { return false }
+            return grid.cells[cell].contains { prepared[$0].contains(point) }
+        }
+
+        /// Returns `true` if the polygon at `index` contains the point.
+        func contains(_ point: Coordinate3D, polygonAt index: Int) -> Bool {
+            prepared.indices.contains(index) && prepared[index].contains(point)
+        }
+
+        /// Returns `true` if any indexed polygon except `index` contains the point.
+        func contains(_ point: Coordinate3D, excluding index: Int) -> Bool {
+            for candidate in grid.large where candidate != index && prepared[candidate].contains(point) {
+                return true
+            }
+
+            guard let cell = grid.cellIndex(for: point) else { return false }
+            return grid.cells[cell].contains {
+                $0 != index && prepared[$0].contains(point)
+            }
+        }
+
+        /// Returns `true` if every indexed polygon contains the point.
+        func containsAll(_ point: Coordinate3D) -> Bool {
+            prepared.indices.allSatisfy { contains(point, polygonAt: $0) }
+        }
+
+        /// A flat uniform grid of polygon indices, plus polygons too large to
+        /// index efficiently.
+        private struct Grid: Sendable {
+
+            private static let maxCellsPerPolygon = 256
+
+            let originX: Double
+            let originY: Double
+            let cellWidth: Double
+            let cellHeight: Double
+            let columns: Int
+            let rows: Int
+            let cells: [[Int]]
+            let large: [Int]
+
+            struct Box {
+                let minX: Double
+                let minY: Double
+                let maxX: Double
+                let maxY: Double
+            }
+
+            init(polygons: [Polygon]) {
+                var boxes: [(index: Int, box: Box)] = []
+                boxes.reserveCapacity(polygons.count)
+
+                for (index, polygon) in polygons.enumerated() {
+                    let coordinates = polygon.allCoordinates
+                    guard let first = coordinates.first else { continue }
+
+                    var minX = first.x
+                    var minY = first.y
+                    var maxX = first.x
+                    var maxY = first.y
+
+                    for coordinate in coordinates.dropFirst() {
+                        minX = min(minX, coordinate.x)
+                        minY = min(minY, coordinate.y)
+                        maxX = max(maxX, coordinate.x)
+                        maxY = max(maxY, coordinate.y)
+                    }
+
+                    boxes.append((index, Box(minX: minX, minY: minY, maxX: maxX, maxY: maxY)))
+                }
+
+                guard let first = boxes.first?.box else {
+                    self.originX = 0.0
+                    self.originY = 0.0
+                    self.cellWidth = 1.0
+                    self.cellHeight = 1.0
+                    self.columns = 1
+                    self.rows = 1
+                    self.cells = [[]]
+                    self.large = []
+                    return
+                }
+
+                let minX = boxes.reduce(first.minX) { min($0, $1.box.minX) }
+                let minY = boxes.reduce(first.minY) { min($0, $1.box.minY) }
+                let maxX = boxes.reduce(first.maxX) { max($0, $1.box.maxX) }
+                let maxY = boxes.reduce(first.maxY) { max($0, $1.box.maxY) }
+
+                let side = max(8, min(64, Int(sqrt(Double(max(polygons.count, 1))))))
+                let columns = side
+                let rows = side
+                let cellWidth = max((maxX - minX) / Double(columns), .leastNonzeroMagnitude)
+                let cellHeight = max((maxY - minY) / Double(rows), .leastNonzeroMagnitude)
+
+                var cells = Array(repeating: [Int](), count: columns * rows)
+                var large: [Int] = []
+
+                for (index, box) in boxes {
+                    let minColumn = Self.column(box.minX, origin: minX, cellSize: cellWidth, count: columns)
+                    let maxColumn = Self.column(box.maxX, origin: minX, cellSize: cellWidth, count: columns)
+                    let minRow = Self.row(box.minY, origin: minY, cellSize: cellHeight, count: rows)
+                    let maxRow = Self.row(box.maxY, origin: minY, cellSize: cellHeight, count: rows)
+
+                    let cellCount = (maxColumn - minColumn + 1) * (maxRow - minRow + 1)
+                    if cellCount > Self.maxCellsPerPolygon {
+                        large.append(index)
+                        continue
+                    }
+
+                    for row in minRow ... maxRow {
+                        for column in minColumn ... maxColumn {
+                            cells[row * columns + column].append(index)
+                        }
+                    }
+                }
+
+                self.originX = minX
+                self.originY = minY
+                self.cellWidth = cellWidth
+                self.cellHeight = cellHeight
+                self.columns = columns
+                self.rows = rows
+                self.cells = cells
+                self.large = large
+            }
+
+            func cellIndex(for point: Coordinate3D) -> Int? {
+                guard columns > 0, rows > 0 else { return nil }
+
+                let column = min(max(Int(floor((point.x - originX) / cellWidth)), 0), columns - 1)
+                let row = min(max(Int(floor((point.y - originY) / cellHeight)), 0), rows - 1)
+
+                return row * columns + column
+            }
+
+            private static func column(
+                _ value: Double,
+                origin: Double,
+                cellSize: Double,
+                count: Int
+            ) -> Int {
+                min(max(Int((value - origin) / cellSize), 0), count - 1)
+            }
+
+            private static func row(
+                _ value: Double,
+                origin: Double,
+                cellSize: Double,
+                count: Int
+            ) -> Int {
+                min(max(Int((value - origin) / cellSize), 0), count - 1)
+            }
+
+        }
+
+    }
+
     // MARK: - Public API
 
     /// Perform a polygon overlay operation.
@@ -67,9 +244,9 @@ enum Overlay {
     /// (callers such as ``Union.unionPolygons`` handle projection).
     ///
     /// Antimeridian-crossing inputs are unwrapped into a continuous
-    /// coordinate frame before the overlay and wrapped back afterwards. The
-    /// normalized polygons are also passed to `boundaryTest`, so the test
-    /// always sees the same frame as the edges.
+    /// coordinate frame before the overlay and wrapped back afterwards. A
+    /// ``PolygonIndex`` over the normalized polygons is passed to
+    /// `boundaryTest`, so the test always sees the same frame as the edges.
     ///
     /// - Parameters:
     ///   - polygons: The input polygons.
@@ -77,7 +254,7 @@ enum Overlay {
     /// - Returns: A MultiPolygon representing the overlay result, or `nil` if empty.
     static func overlayPolygons(
         _ polygons: [Polygon],
-        boundaryTest: (Edge, [Polygon]) -> Bool
+        boundaryTest: (Edge, PolygonIndex) -> Bool
     ) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
 
@@ -95,8 +272,9 @@ enum Overlay {
         let splitEdges = splitEdges(allEdges, at: intersections)
         guard splitEdges.isNotEmpty else { return nil }
 
+        let polygonIndex = PolygonIndex(normalized)
         let boundary = splitEdges.filter { edge in
-            boundaryTest(edge, normalized)
+            boundaryTest(edge, polygonIndex)
         }
         guard boundary.isNotEmpty else { return nil }
 
@@ -120,8 +298,8 @@ enum Overlay {
     ///   overlay result region.
     /// - Returns: A boundary test closure for ``overlayPolygons(_:boundaryTest:)``.
     static func makeBoundaryTest(
-        isInsideResult: @escaping (Coordinate3D, [Polygon]) -> Bool
-    ) -> (Edge, [Polygon]) -> Bool {
+        isInsideResult: @escaping (Coordinate3D, PolygonIndex) -> Bool
+    ) -> (Edge, PolygonIndex) -> Bool {
         { edge, polygons in
             let midLongitude = (edge.start.longitude + edge.end.longitude) * 0.5
             let midLatitude = (edge.start.latitude + edge.end.latitude) * 0.5
@@ -180,18 +358,17 @@ extension Overlay.Edge: BoundingBoxRepresentable {
 // MARK: - Private helpers
 
 private struct IndexedEdge: BoundingBoxRepresentable {
-    let edge: Overlay.Edge
     let index: Int
     var boundingBox: BoundingBox?
 
-    var projection: Projection { edge.projection }
+    var projection: Projection { boundingBox?.projection ?? .epsg3857 }
 
     func calculateBoundingBox() -> BoundingBox? {
-        edge.calculateBoundingBox()
+        boundingBox
     }
 
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
-        edge.boundingBox?.intersects(otherBoundingBox) ?? true
+        boundingBox?.intersects(otherBoundingBox) ?? false
     }
 }
 
@@ -332,7 +509,7 @@ private extension Overlay {
         let splitEps = GISTool.equalityDelta
 
         let indexedEdges = edges.enumerated().map { (i, e) in
-            IndexedEdge(edge: e, index: i, boundingBox: e.boundingBox)
+            IndexedEdge(index: i, boundingBox: e.boundingBox)
         }
         let tree = RTree(indexedEdges)
 
@@ -391,14 +568,21 @@ private extension Overlay {
             }
         }
 
+        var pointsByEdge = Array(repeating: [SplitPoint](), count: edges.count)
+        for splitPoint in result {
+            pointsByEdge[splitPoint.edgeIndex].append(splitPoint)
+        }
+
         var deduped: [SplitPoint] = []
-        for sp in result {
-            let isDup = deduped.contains { existing in
-                existing.edgeIndex == sp.edgeIndex
-                    && abs(existing.distanceAlong - sp.distanceAlong) < splitEps
-            }
-            if !isDup {
-                deduped.append(sp)
+        for var points in pointsByEdge {
+            guard points.isNotEmpty else { continue }
+
+            points.sort { $0.distanceAlong < $1.distanceAlong }
+
+            var previousDistance = -Double.infinity
+            for point in points where point.distanceAlong - previousDistance >= splitEps {
+                deduped.append(point)
+                previousDistance = point.distanceAlong
             }
         }
         return deduped
@@ -484,41 +668,28 @@ private extension Overlay {
 
     // MARK: - Duplicate removal
 
+    /// Removes duplicate and reverse-coincident boundary edges in one pass.
     static func mergeReversePairs(_ edges: [Edge]) -> [Edge] {
+        /// Two boundary edges are the same segment when their endpoints match,
+        /// regardless of direction. Keep the first occurrence in input order.
+        struct EdgeKey: Hashable {
+            let first: String
+            let second: String
+        }
+
+        var seen = Set<EdgeKey>()
         var result: [Edge] = []
-        var used = Set<Int>()
+        result.reserveCapacity(edges.count)
 
-        for i in 0..<edges.count {
-            guard !used.contains(i) else { continue }
+        for edge in edges {
+            let start = vertexKey(edge.start)
+            let end = vertexKey(edge.end)
+            let key = start < end
+                ? EdgeKey(first: start, second: end)
+                : EdgeKey(first: end, second: start)
 
-            let startI = vertexKey(edges[i].start)
-            let endI = vertexKey(edges[i].end)
-
-            var merged = false
-            for j in (i + 1)..<edges.count {
-                guard !used.contains(j) else { continue }
-
-                let startJ = vertexKey(edges[j].start)
-                let endJ = vertexKey(edges[j].end)
-
-                // Coincident edges from identical (or overlapping) polygons
-                // represent the same boundary; keep only one.
-                if startI == startJ, endI == endJ {
-                    used.insert(j)
-                    continue
-                }
-
-                if startI == endJ, endI == startJ {
-                    result.append(edges[i])
-                    used.insert(i)
-                    used.insert(j)
-                    merged = true
-                    break
-                }
-            }
-            if !merged {
-                result.append(edges[i])
-                used.insert(i)
+            if seen.insert(key).inserted {
+                result.append(edge)
             }
         }
 
@@ -660,6 +831,142 @@ private extension Overlay {
         }
 
         return result
+    }
+
+}
+
+
+// MARK: - Prepared point-in-polygon
+
+/// A point-in-polygon index that buckets ring edges by latitude.
+private struct PreparedPolygon: Sendable {
+
+    private let outerRing: PreparedRing?
+    private let innerRings: [PreparedRing]
+    /// Polygons with a world-spanning edge are left unchanged by antimeridian
+    /// normalization and need the robust wraparound-aware containment test.
+    private let fallback: Polygon?
+
+    init(polygon: Polygon) {
+        if polygon.crossesAntimeridian {
+            fallback = polygon
+            outerRing = nil
+            innerRings = []
+            return
+        }
+
+        fallback = nil
+        outerRing = polygon.outerRing.map { PreparedRing($0.coordinates) }
+        innerRings = polygon.innerRings?.map { PreparedRing($0.coordinates) } ?? []
+    }
+
+    func contains(_ point: Coordinate3D) -> Bool {
+        if let fallback {
+            return fallback.contains(point)
+        }
+
+        guard let outerRing,
+              outerRing.contains(point)
+        else { return false }
+
+        for ring in innerRings where ring.contains(point) {
+            return false
+        }
+
+        return true
+    }
+
+}
+
+private struct PreparedRing: Sendable {
+
+    private let coordinates: [Coordinate3D]
+    private let edgeCount: Int
+    private let minY: Double
+    private let maxY: Double
+    private let rowScale: Double
+    private let rowCount: Int
+    private let rows: [[Int]]
+
+    init(_ coordinates: [Coordinate3D]) {
+        let isClosed = coordinates.count > 1 && coordinates.first == coordinates.last
+        let edgeCount = isClosed ? coordinates.count - 1 : coordinates.count
+
+        self.coordinates = coordinates
+        self.edgeCount = max(edgeCount, 0)
+
+        guard edgeCount >= 3, let firstCoordinate = coordinates.first else {
+            self.minY = 0.0
+            self.maxY = 0.0
+            self.rowScale = 0.0
+            self.rowCount = 0
+            self.rows = []
+            return
+        }
+
+        var minY = firstCoordinate.y
+        var maxY = firstCoordinate.y
+        for coordinate in coordinates.dropFirst() {
+            minY = min(minY, coordinate.y)
+            maxY = max(maxY, coordinate.y)
+        }
+
+        guard maxY > minY else {
+            self.minY = 0.0
+            self.maxY = 0.0
+            self.rowScale = 0.0
+            self.rowCount = 0
+            self.rows = []
+            return
+        }
+
+        let rowCount = max(8, min(256, edgeCount / 4))
+        let span = maxY - minY
+        let rowScale = Double(rowCount) / span
+        var rows = Array(repeating: [Int](), count: rowCount)
+
+        for index in 0 ..< edgeCount {
+            let a = coordinates[index]
+            let b = coordinates[(index + 1) % edgeCount]
+            let low = min(a.y, b.y)
+            let high = max(a.y, b.y)
+            let startRow = min(max(Int((low - minY) * rowScale), 0), rowCount - 1)
+            let endRow = min(max(Int((high - minY) * rowScale), 0), rowCount - 1)
+
+            for row in startRow ... endRow {
+                rows[row].append(index)
+            }
+        }
+
+        self.minY = minY
+        self.maxY = maxY
+        self.rowScale = rowScale
+        self.rowCount = rowCount
+        self.rows = rows
+    }
+
+    func contains(_ point: Coordinate3D) -> Bool {
+        guard edgeCount >= 3,
+              point.y >= minY,
+              point.y <= maxY
+        else { return false }
+
+        let row = min(max(Int((point.y - minY) * rowScale), 0), rowCount - 1)
+        var inside = false
+
+        for index in rows[row] {
+            let a = coordinates[index]
+            let b = coordinates[(index + 1) % edgeCount]
+
+            if (a.y > point.y) != (b.y > point.y) {
+                let x = (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
+                if point.x < x {
+                    inside.toggle()
+                }
+            }
+        }
+
+        return inside
     }
 
 }

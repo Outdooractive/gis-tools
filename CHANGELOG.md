@@ -145,6 +145,11 @@ left unchanged; that case is ambiguous per RFC 7946.
   of building a full `JSONValue` tree first. A 100k-vertex polygon drops from
   1.55 s to about **0.04 s**; the `coders` benchmark now covers every geometry
   type and a large property set (#280).
+- Buffer boundary classification now uses a uniform grid with prepared
+  point-in-polygon tests, split-point deduplication is linear per edge, and
+  boundary edges are merged in one pass. A 1k-vertex line or polygon buffers
+  in about **0.3 s**; 10k vertices complete in about **5 s**, instead of the
+  previous >30 s timeout at 1k (#279).
 
 ### Fixed
 
