@@ -590,7 +590,7 @@ extension Coordinate3D: GeoJsonReadable {
             pAltitude = if pointArray.count >= 3 { pointArray[2] } else { nil }
             pM = if pointArray.count >= 4 { pointArray[3] } else { nil }
         }
-        else if let pointDictionary = JsonCoercion.dictionary(json) {
+        else if let pointDictionary = JsonCoercion.rawDictionary(json) {
             pLongitude = JsonCoercion.double(pointDictionary["x"])
             pLatitude = JsonCoercion.double(pointDictionary["y"])
             pAltitude = JsonCoercion.double(pointDictionary["z"]).map { CLLocationDistance($0) }

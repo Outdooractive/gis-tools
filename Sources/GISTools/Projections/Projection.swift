@@ -1,3 +1,5 @@
+// MARK: - Projection
+
 /// A coordinate reference system.
 ///
 /// Projections are value types identified by their ``srid``: equality,
@@ -371,13 +373,20 @@ public struct Projection:
     /// the registry's identity guarantees hold.
     init(uncheckedSrid srid: Int, definition: any ProjectionDefinition) {
         self.sridStorage = srid
-        self.definition = definition
     }
 
     /// The definition carrying this projection's transform math and
-    /// metadata - captured at construction so that hot paths resolve
-    /// without registry lookups.
-    let definition: any ProjectionDefinition
+    /// metadata, resolved from the registry.
+    ///
+    /// Not stored inline: an existential would make every ``Coordinate3D``
+    /// pay for three extra words. Built-in lookups use the immutable registry
+    /// map without locking.
+    var definition: any ProjectionDefinition {
+        guard let definition = ProjectionRegistry.definition(forSrid: srid) else {
+            preconditionFailure("Projection \(srid) has no registered definition")
+        }
+        return definition
+    }
 
     /// Creates a built-in projection by canonical SRID.
     ///

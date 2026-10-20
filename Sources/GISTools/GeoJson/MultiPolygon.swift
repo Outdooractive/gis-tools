@@ -119,7 +119,7 @@ public struct MultiPolygon:
     /// - important: The source is expected to be in EPSG:4326.
     /// - Returns: A multi polygon, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = JsonCoercion.dictionary(json),
+        guard let geoJson = JsonCoercion.rawDictionary(json),
               MultiPolygon.isValid(geoJson: geoJson),
               let coordinates: [[[Coordinate3D]]] = MultiPolygon.tryCreate(json: geoJson["coordinates"])
         else { return nil }

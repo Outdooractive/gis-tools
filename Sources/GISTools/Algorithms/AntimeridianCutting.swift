@@ -343,6 +343,10 @@ extension Polygon {
     /// wraparound extent. Returns `false` for projections without one
     /// (e.g. ``Projection/epsg4978`` and ``Projection/noSRID``).
     public var crossesAntimeridian: Bool {
+        if let crossesAntimeridianCache {
+            return crossesAntimeridianCache
+        }
+
         guard let extent = projection.wraparoundExtent else { return false }
         return rings.contains { AntimeridianCutting.coordinatesCrossMeridian($0.coordinates, extent: extent) }
     }

@@ -195,22 +195,7 @@ extension Polygon {
         {
             // Bounding box doesn't contain the point. If the polygon crosses the
             // antimeridian, the point may still be inside the wrapped side.
-            if let outerRing = snappedSelf.outerRing,
-               let wraparoundExtent = projection.wraparoundExtent
-            {
-                let coords = outerRing.coordinates
-                var crossesAM = false
-                for i in 1 ..< coords.count {
-                    let dLon = coords[i].longitude - coords[i - 1].longitude
-                    if abs(dLon) > wraparoundExtent, abs(dLon) < (2.0 * wraparoundExtent) {
-                        crossesAM = true
-                        break
-                    }
-                }
-                if !crossesAM {
-                    return .exterior
-                }
-            } else {
+            if !snappedSelf.crossesAntimeridian {
                 return .exterior
             }
         }

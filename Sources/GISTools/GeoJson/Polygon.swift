@@ -39,6 +39,10 @@ public struct Polygon:
     /// The receiver's bounding box.
     public var boundingBox: BoundingBox?
 
+    /// Cached result of ``crossesAntimeridian``, computed when a bounding box
+    /// is calculated. Keeps bounding-box misses O(1).
+    var crossesAntimeridianCache: Bool? = nil
+
     /// Foreign members not defined in the GeoJSON specification.
     public var foreignMembers: [String: Sendable] = [:]
 
@@ -138,13 +142,16 @@ public struct Polygon:
     ///    - calculateBoundingBox: When true, calculate the bounding box from the coordinates
     /// - important: The source is expected to be in EPSG:4326.
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
-        guard let geoJson = JsonCoercion.dictionary(json),
+        guard let geoJson = JsonCoercion.rawDictionary(json),
               Polygon.isValid(geoJson: geoJson),
               let coordinates: [[Coordinate3D]] = Polygon.tryCreate(json: geoJson["coordinates"])
         else { return nil }
 
         self.coordinates = coordinates
         self.boundingBox = Polygon.tryCreate(json: geoJson["bbox"])
+        if boundingBox != nil {
+            updateCrossesAntimeridianCache()
+        }
 
         if calculateBoundingBox {
             self.updateBoundingBox()
@@ -237,6 +244,35 @@ extension Polygon {
     public func calculateBoundingBox() -> BoundingBox? {
         guard let coordinates = outerRing?.coordinates else { return nil }
         return BoundingBox(coordinates: coordinates)
+    }
+
+    /// Update the bounding box and the cached anti-meridian flag.
+    ///
+    /// - Parameter ifNecessary: Only update if the receiver doesn't already have a bounding box
+    /// - Returns: The bounding box
+    @discardableResult
+    public mutating func updateBoundingBox(
+        onlyIfNecessary ifNecessary: Bool = true
+    ) -> BoundingBox? {
+        if boundingBox != nil && ifNecessary { return boundingBox }
+
+        boundingBox = calculateBoundingBox()
+        updateCrossesAntimeridianCache()
+        return boundingBox
+    }
+
+    /// Recompute ``crossesAntimeridianCache`` from the current coordinates.
+    private mutating func updateCrossesAntimeridianCache() {
+        guard boundingBox != nil,
+              let extent = projection.wraparoundExtent
+        else {
+            crossesAntimeridianCache = nil
+            return
+        }
+
+        crossesAntimeridianCache = coordinates.contains { ring in
+            AntimeridianCutting.coordinatesCrossMeridian(ring, extent: extent)
+        }
     }
 
     /// Check if the receiver intersects the other bounding box.
