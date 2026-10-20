@@ -90,4 +90,8 @@ left unchanged; that case is ambiguous per RFC 7946.
   `RayCrossingCounter` segment rules. Points exactly on an edge are now
   detected as boundary points instead of being classified as inside or
   outside (#258).
+- `Codable` encoding and decoding now go through ``JSONValue`` instead of
+  `[String: Any]` and `JSONSerialization`. Booleans stay booleans, numbers and
+  booleans inside arrays are preserved, and JSON `null` encodes and decodes
+  instead of being dropped or throwing (#255, #256).
 

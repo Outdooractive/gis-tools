@@ -195,6 +195,67 @@ struct GeoJsonConvertibleCodableTests {
         point.dump()
     }
 
+    // MARK: - Property value preservation (#255, #256)
+
+    private let propertiesJson = #"""
+    {"type":"Feature","geometry":{"type":"Point","coordinates":[1.5,2.5]},"properties":{"flag":true,"off":false,"arr":[1,2.5,"x",true],"nested":{"a":1,"b":[true]},"i":15,"d":17.5,"none":null}}
+    """#
+
+    // Encoding a parsed Feature must preserve booleans, numbers, nested
+    // values and JSON null instead of coercing or dropping them.
+    @Test
+    func codableEncodingPreservesPropertyValues() async throws {
+        let feature = try #require(Feature(jsonString: propertiesJson))
+        let data = try JSONEncoder().encode(feature)
+        let encoded = try #require(JSONValue(jsonData: data))
+
+        #expect(encoded["properties"]?["flag"] == .bool(true))
+        #expect(encoded["properties"]?["off"] == .bool(false))
+        #expect(encoded["properties"]?["arr"] == .array([.int(1), .number(2.5), .string("x"), .bool(true)]))
+        #expect(encoded["properties"]?["nested"] == .object([
+            "a": .int(1),
+            "b": .array([.bool(true)]),
+        ]))
+        #expect(encoded["properties"]?["i"] == .int(15))
+        #expect(encoded["properties"]?["d"] == .number(17.5))
+        #expect(encoded["properties"]?["none"] == .null)
+
+        let decoded = try JSONDecoder().decode(Feature.self, from: data)
+        #expect(decoded == feature)
+    }
+
+    // Decoding a Feature with a null property must not fail and must keep
+    // the value as NSNull.
+    @Test
+    func codableDecodingPreservesNullProperty() async throws {
+        let data = try #require(propertiesJson.data(using: .utf8))
+        let feature = try JSONDecoder().decode(Feature.self, from: data)
+
+        #expect(JSONValue(value: feature.properties["flag"]) == .bool(true))
+        #expect(JSONValue(value: feature.properties["off"]) == .bool(false))
+        #expect(JSONValue(value: feature.properties["none"]) == .null)
+        #expect(feature.properties["none"] is NSNull)
+        #expect(JSONValue(value: feature.properties["i"]) == .int(15))
+        #expect(JSONValue(value: feature.properties["d"]) == .number(17.5))
+    }
+
+    // A FeatureCollection with an unlocated feature ("geometry": null) still
+    // decodes; the unlocated feature is dropped, matching init?(json:).
+    @Test
+    func codableDecodingFeatureCollectionWithNullGeometry() async throws {
+        let json = #"""
+        {"type":"FeatureCollection","features":[
+          {"type":"Feature","geometry":null,"properties":{"a":1}},
+          {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"a":2}}
+        ]}
+        """#
+        let data = try #require(json.data(using: .utf8))
+        let collection = try JSONDecoder().decode(FeatureCollection.self, from: data)
+
+        #expect(collection.features.count == 1)
+        #expect(JSONValue(value: collection.features.first?.properties["a"]) == .int(2))
+    }
+
     // MARK: - Sequence asJson
 
     // Validates that Sequence of GeoJson produces correct JSON array.
@@ -255,6 +316,15 @@ struct GeoJsonConvertibleCodableTests {
         let decoded = try JSONDecoder().decode(Coordinate3D.self, from: data)
 
         #expect(decoded == coordinate)
+    }
+
+    // Validates decoding a coordinate written with integer literals.
+    @Test
+    func codableCoordinate3DFromIntegerJson() async throws {
+        let data = try #require("[10,15]".data(using: .utf8))
+        let decoded = try JSONDecoder().decode(Coordinate3D.self, from: data)
+
+        #expect(decoded == Coordinate3D(latitude: 15.0, longitude: 10.0))
     }
 
     // Validates BoundingBox round-trips through Codable.
