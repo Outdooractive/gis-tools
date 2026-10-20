@@ -349,22 +349,43 @@ private extension Overlay {
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
 
-                guard segI.intersects(segJ, epsilon: 0.000000000001) else {
+                guard segI.intersects(segJ, epsilon: GISTool.intersectionEpsilon) else {
                     continue
                 }
 
-                guard let raw = segI.intersection(segJ, epsilon: 0.000000000001) else {
+                if let raw = segI.intersection(segJ, epsilon: GISTool.intersectionEpsilon) {
+                    let dI = distanceAlong(edges[i], at: raw)
+                    if dI > splitEps && dI < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
+                    }
+
+                    let dJ = distanceAlong(edges[j], at: raw)
+                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
+                    }
+
                     continue
                 }
 
-                let dI = distanceAlong(edges[i], at: raw)
-                if dI > splitEps && dI < 1.0 - splitEps {
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
+                // Collinear overlap produces no single intersection point.
+                // Split each edge at the other edge's endpoints so that the
+                // shared portion can be matched and merged afterwards.
+                for point in [edges[j].start, edges[j].end]
+                    where segI.checkIsOnSegment(point)
+                {
+                    let dI = distanceAlong(edges[i], at: point)
+                    if dI > splitEps && dI < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: i, distanceAlong: dI))
+                    }
                 }
 
-                let dJ = distanceAlong(edges[j], at: raw)
-                if dJ > splitEps && dJ < 1.0 - splitEps {
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
+                for point in [edges[i].start, edges[i].end]
+                    where segJ.checkIsOnSegment(point)
+                {
+                    let dJ = distanceAlong(edges[j], at: point)
+                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: j, distanceAlong: dJ))
+                    }
                 }
             }
         }
