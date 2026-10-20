@@ -52,6 +52,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
   - [Merge](#merge)
   - [Export](#export)
   - [Graph algorithms](#graph-algorithms)
+- [Benchmarks](#benchmarks)
 - [Related packages](#related-packages)
 - [Contributing](#contributing)
 - [License](#license)
@@ -1169,6 +1170,23 @@ let fc = graph.toFeatureCollection()
 Currently only two:
 - [mvt-tools][125]: Vector tiles reader/writer for Swift
 - [mvt-postgis][130]: Creates vector tiles from Postgis databases
+
+# Benchmarks
+
+A separate release-mode executable covers loading, projection, spatial predicates, overlay, the R-tree, coders, buffer, simplify, hulls, line operations, tile cover, clipping, graph routing, the query DSL, clustering and memory layout.
+
+```bash
+# Run every suite and print a Markdown table
+scripts/benchmarks.sh
+
+# Run selected suites
+swift run -c release Benchmarks predicates overlay graph
+
+# List available suites
+swift run -c release Benchmarks
+```
+
+Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
 # Contributing
 Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.

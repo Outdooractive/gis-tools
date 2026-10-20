@@ -2,10 +2,10 @@ import Foundation
 @testable import GISTools
 import Testing
 
-/// Bounding-box miss benchmark for `Polygon.contains`.
+/// Correctness checks for bounding-box misses in `Polygon.contains`.
 ///
-/// Timing is printed for before/after comparisons; correctness is always
-/// checked. Timing runs are disabled in CI.
+/// Timing runs live in the `Benchmarks` executable:
+/// `swift run -c release Benchmarks predicates`.
 struct GeoJsonContainmentBenchmarks {
 
     private func makePolygon(vertices: Int) throws -> Polygon {
@@ -25,25 +25,6 @@ struct GeoJsonContainmentBenchmarks {
             let polygon = try makePolygon(vertices: vertices)
             let outside = Coordinate3D(latitude: 50.0, longitude: 50.0)
             #expect(polygon.contains(outside) == false)
-        }
-    }
-
-    @Test(.disabled(if: CIHelper.isRunningInCI, "Skipping performance test in CI"))
-    func boundingBoxMissTiming() throws {
-        let outside = Coordinate3D(latitude: 50.0, longitude: 50.0)
-
-        for vertices in [100, 1_000, 10_000, 100_000] {
-            let polygon = try makePolygon(vertices: vertices)
-
-            let start = DispatchTime.now().uptimeNanoseconds
-            for _ in 0 ..< 1_000 {
-                _ = polygon.contains(outside)
-            }
-            let elapsed = Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000.0
-            print(String(
-                format: "[GeoJsonContainmentBenchmark] bbox miss n=%d: %.3f µs/call",
-                vertices,
-                elapsed / 1_000.0))
         }
     }
 
