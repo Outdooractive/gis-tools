@@ -32,7 +32,8 @@ public enum GeoJsonReader {
     /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonData: Data) -> GeoJson? {
-        geoJsonFrom(json: try? JSONSerialization.jsonObject(with: jsonData))
+        guard let value = JSONValue(jsonData: jsonData) else { return nil }
+        return geoJsonFrom(json: value.asSendable)
     }
 
     /// Try to initialize a GeoJSON object from a string.
@@ -42,10 +43,8 @@ public enum GeoJsonReader {
     /// - Returns: A GeoJson object, or `nil` if parsing failed
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonString: String) -> GeoJson? {
-        guard let data = jsonString.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data)
-        else { return nil }
-        return geoJsonFrom(json: json)
+        guard let value = JSONValue(jsonString: jsonString) else { return nil }
+        return geoJsonFrom(json: value.asSendable)
     }
 
     // MARK: - Geometry auto-detection
@@ -70,7 +69,7 @@ public enum GeoJsonReader {
 
         // GeoJSON.
         if trimmed.hasPrefix("{") {
-            return Feature.tryCreateGeometry(json: try? JSONSerialization.jsonObject(with: Data(trimmed.utf8)))
+            return Feature.tryCreateGeometry(json: JSONValue(jsonString: trimmed)?.asSendable)
         }
 
         // WKT.
@@ -108,8 +107,8 @@ public enum GeoJsonReader {
         guard !data.isEmpty else { return nil }
 
         // GeoJSON.
-        if let json = try? JSONSerialization.jsonObject(with: data),
-           let geometry = Feature.tryCreateGeometry(json: json)
+        if let value = JSONValue(jsonData: data),
+           let geometry = Feature.tryCreateGeometry(json: value.asSendable)
         {
             return geometry
         }

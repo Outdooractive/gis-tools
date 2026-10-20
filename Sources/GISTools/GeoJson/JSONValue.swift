@@ -442,31 +442,46 @@ extension JSONValue: CustomStringConvertible, CustomDebugStringConvertible {
 
 extension JSONValue {
 
-    /// The receiver as JSON data (object keys sorted).
+    /// The receiver as JSON data.
     ///
-    /// - Parameter prettyPrinted: When `true`, format the output with indentation
+    /// - Parameters:
+    ///    - prettyPrinted: When `true`, format the output with indentation
+    ///    - sortedKeys: When `true` (default), sort object keys for stable output
     /// - Returns: The JSON data, or `nil` if the value cannot be represented
     ///            in JSON (e.g. `NaN`)
-    public func asJsonData(prettyPrinted: Bool = false) -> Data? {
+    public func asJsonData(
+        prettyPrinted: Bool = false,
+        sortedKeys: Bool = true
+    ) -> Data? {
         let encoder = JSONEncoder()
 
+        var options: JSONEncoder.OutputFormatting = []
         if prettyPrinted {
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            options.insert(.prettyPrinted)
         }
-        else {
-            encoder.outputFormatting = [.sortedKeys]
+        if sortedKeys {
+            options.insert(.sortedKeys)
         }
+        encoder.outputFormatting = options
 
         return try? encoder.encode(self)
     }
 
-    /// The receiver as a JSON string (object keys sorted).
+    /// The receiver as a JSON string.
     ///
-    /// - Parameter prettyPrinted: When `true`, format the output with indentation
+    /// - Parameters:
+    ///    - prettyPrinted: When `true`, format the output with indentation
+    ///    - sortedKeys: When `true` (default), sort object keys for stable output
     /// - Returns: The JSON string, or `nil` if the value cannot be represented
     ///            in JSON (e.g. `NaN`)
-    public func asJsonString(prettyPrinted: Bool = false) -> String? {
-        guard let data = asJsonData(prettyPrinted: prettyPrinted) else { return nil }
+    public func asJsonString(
+        prettyPrinted: Bool = false,
+        sortedKeys: Bool = true
+    ) -> String? {
+        guard let data = asJsonData(
+            prettyPrinted: prettyPrinted,
+            sortedKeys: sortedKeys)
+        else { return nil }
 
         return String(data: data, encoding: .utf8)
     }

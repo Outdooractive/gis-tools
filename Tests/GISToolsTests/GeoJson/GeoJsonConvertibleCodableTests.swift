@@ -258,6 +258,86 @@ struct GeoJsonConvertibleCodableTests {
         #expect(collection.features[1].geometry != nil)
     }
 
+    // MARK: - JSON text precision and key order (#261)
+
+    // Coordinates written by the library read back bit-exactly.
+    @Test
+    func jsonDataRoundTripsCoordinatesBitExactly() async throws {
+        let values = [-0.07, 0.1, 48.1362829626354, 0.3, 1.1]
+        let line = try #require(LineString(values.map {
+            Coordinate3D(latitude: 0.0, longitude: $0)
+        }))
+        let data = try #require(line.asJsonData())
+        let string = try #require(String(data: data, encoding: .utf8))
+
+        #expect(string.contains("-0.07"))
+        #expect(!string.contains("-0.070000000000000007"))
+
+        let reread = try #require(LineString(jsonData: data))
+        #expect(zip(values, reread.coordinates.map(\.longitude)).allSatisfy {
+            $0.bitPattern == $1.bitPattern
+        })
+
+        let viaDecoder = try JSONDecoder().decode([String: JSONValue].self, from: data)
+        let decoded = try #require(viaDecoder["coordinates"]?.arrayValue)
+            .map { $0[0]?.doubleValue }
+        #expect(zip(values, decoded).allSatisfy { value, decoded in
+            decoded.map { value.bitPattern == $0.bitPattern } ?? false
+        })
+    }
+
+    // Object keys are sorted by default and stable across calls.
+    @Test
+    func jsonKeysAreSortedAndStable() async throws {
+        let json = #"""
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"b":1,"a":2,"c":3}}
+        """#
+        let feature = try #require(Feature(jsonString: json))
+
+        let strings = try (0 ..< 3).map { _ in
+            try #require(feature.asJsonString())
+        }
+
+        #expect(Set(strings).count == 1)
+
+        let sorted = strings[0]
+        let a = try #require(sorted.range(of: "\"a\""))
+        let b = try #require(sorted.range(of: "\"b\""))
+        let c = try #require(sorted.range(of: "\"c\""))
+
+        #expect(a.lowerBound < b.lowerBound)
+        #expect(b.lowerBound < c.lowerBound)
+    }
+
+    // Sorting is independent of pretty printing.
+    @Test
+    func jsonSortedKeysIndependentOfPrettyPrinting() async throws {
+        let point = try #require(Point(jsonString: pointJson))
+
+        let compact = try #require(point.asJsonData(prettyPrinted: false))
+        let pretty = try #require(point.asJsonData(prettyPrinted: true))
+
+        #expect(compact.count < pretty.count)
+
+        let compactValue = try JSONDecoder().decode(JSONValue.self, from: compact)
+        let prettyValue = try JSONDecoder().decode(JSONValue.self, from: pretty)
+        #expect(compactValue == prettyValue)
+    }
+
+    // Disabling key sorting still produces valid, decodable JSON.
+    @Test
+    func jsonUnsortedKeysRoundTrip() async throws {
+        let feature = try #require(Feature(jsonString: #"""
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"b":1,"a":2}}
+        """#))
+
+        let string = try #require(feature.asJsonString(sortedKeys: false))
+        let data = try #require(string.data(using: .utf8))
+        let decoded = try JSONDecoder().decode(Feature.self, from: data)
+
+        #expect(decoded == feature)
+    }
+
     // MARK: - Sequence asJson
 
     // Validates that Sequence of GeoJson produces correct JSON array.

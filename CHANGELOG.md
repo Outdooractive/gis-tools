@@ -148,4 +148,8 @@ left unchanged; that case is ambiguous per RFC 7946.
   `[String: Any]` and `JSONSerialization`. Booleans stay booleans, numbers and
   booleans inside arrays are preserved, and JSON `null` encodes and decodes
   instead of being dropped or throwing (#255, #256).
+- `asJsonData()` / `asJsonString()` now use `JSONEncoder` with the shortest
+  round-trip number representation, so coordinates read back bit-exactly.
+  Object keys are sorted by default for stable output; `sortedKeys: false`
+  opts out. JSON input is read with `JSONDecoder` via ``JSONValue`` (#261).
 
