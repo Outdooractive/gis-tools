@@ -85,4 +85,9 @@ left unchanged; that case is ambiguous per RFC 7946.
   other's endpoints, and matches edges with the same quantized vertex keys as
   ring assembly, so unions of polygons that share part of an edge produce
   closed rings on all platforms.
+- Point-in-polygon boundary detection now uses the JTS/GEOS robust orientation
+  predicate (floating-point filter with a double-double fallback) and the
+  `RayCrossingCounter` segment rules. Points exactly on an edge are now
+  detected as boundary points instead of being classified as inside or
+  outside (#258).
 

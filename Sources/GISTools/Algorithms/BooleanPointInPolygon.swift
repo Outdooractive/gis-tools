@@ -55,33 +55,58 @@ extension Ring {
             testLon = testLon < 0.0 ? testLon + wraparoundWidth : testLon
         }
 
+        let py = coordinate.latitude
+
         var j = coordinatesCount - 1
         for i in 0 ..< coordinatesCount {
             defer {
                 j = i
             }
 
-            var xi = snappedCoordinates[i].longitude
-            let yi = snappedCoordinates[i].latitude
-            var xj = snappedCoordinates[j].longitude
-            let yj = snappedCoordinates[j].latitude
+            var x1 = snappedCoordinates[j].longitude
+            let y1 = snappedCoordinates[j].latitude
+            var x2 = snappedCoordinates[i].longitude
+            let y2 = snappedCoordinates[i].latitude
 
             if crossesAntimeridian {
-                xi = xi < 0.0 ? xi + wraparoundWidth : xi
-                xj = xj < 0.0 ? xj + wraparoundWidth : xj
+                x1 = x1 < 0.0 ? x1 + wraparoundWidth : x1
+                x2 = x2 < 0.0 ? x2 + wraparoundWidth : x2
             }
 
-            let onBoundary = (coordinate.latitude * (xi - xj) + yi * (xj - testLon) + yj * (testLon - xi) == 0.0)
-                && ((xi - testLon) * (xj - testLon) <= 0.0)
-                && ((yi - coordinate.latitude) * (yj - coordinate.latitude) <= 0.0)
-            if onBoundary {
+            // GEOS/JTS RayCrossingCounter. Segment endpoints are visited in
+            // ring order so every vertex is tested exactly once as `p2`.
+            if x1 < testLon, x2 < testLon {
+                continue
+            }
+
+            if x2 == testLon, y2 == py {
                 return .boundary
             }
 
-            let intersect = ((yi > coordinate.latitude) != (yj > coordinate.latitude))
-                && (testLon < (xj - xi) * (coordinate.latitude - yi) / (yj - yi) + xi)
-            if (intersect) {
-                isInside = !isInside
+            if y1 == py, y2 == py {
+                let minX = min(x1, x2)
+                let maxX = max(x1, x2)
+                if testLon >= minX, testLon <= maxX {
+                    return .boundary
+                }
+                continue
+            }
+
+            let crossesRay = (y1 > py && y2 <= py) || (y2 > py && y1 <= py)
+            guard crossesRay else { continue }
+
+            var orientation = PointInRing.orientationIndex(
+                x1, y1,
+                x2, y2,
+                testLon, py)
+            if orientation == 0 {
+                return .boundary
+            }
+            if y2 < y1 {
+                orientation = -orientation
+            }
+            if orientation > 0 {
+                isInside.toggle()
             }
         }
 
@@ -610,6 +635,149 @@ extension FeatureCollection {
     /// - Returns: `true` if the point is inside or on the boundary of one of the features, `false` otherwise.
     public func covers(_ point: Point, gridSize: Double? = nil) -> Bool {
         covers(point.coordinate, gridSize: gridSize)
+    }
+
+}
+
+// MARK: - Robust orientation
+
+/// Robust orientation and point-in-ring predicates, following JTS/GEOS.
+private enum PointInRing {
+
+    /// Returns `1` if `p1 → p2 → q` turns counter-clockwise, `-1` if it turns
+    /// clockwise, and `0` when the points are collinear.
+    ///
+    /// Uses a floating-point filter with a double-double fallback for
+    /// near-degenerate inputs, matching JTS `CGAlgorithmsDD.orientationIndex`.
+    static func orientationIndex(
+        _ p1x: Double, _ p1y: Double,
+        _ p2x: Double, _ p2y: Double,
+        _ qx: Double, _ qy: Double
+    ) -> Int {
+        let dx1 = p2x - p1x
+        let dy1 = p2y - p1y
+        let dx2 = qx - p2x
+        let dy2 = qy - p2y
+
+        let detLeft = dx1 * dy2
+        let detRight = dy1 * dx2
+        let det = detLeft - detRight
+
+        let detSum: Double
+        if detLeft > 0.0 {
+            if detRight <= 0.0 {
+                return sign(of: det)
+            }
+            detSum = detLeft + detRight
+        }
+        else if detLeft < 0.0 {
+            if detRight >= 0.0 {
+                return sign(of: det)
+            }
+            detSum = -detLeft - detRight
+        }
+        else {
+            return sign(of: det)
+        }
+
+        let errorBound = 0.000000000000001 * detSum
+        if det >= errorBound || -det >= errorBound {
+            return sign(of: det)
+        }
+
+        let ddx1 = DoubleDouble(p2x).subtracting(DoubleDouble(p1x))
+        let ddy1 = DoubleDouble(p2y).subtracting(DoubleDouble(p1y))
+        let ddx2 = DoubleDouble(qx).subtracting(DoubleDouble(p2x))
+        let ddy2 = DoubleDouble(qy).subtracting(DoubleDouble(p2y))
+        return ddx1.multiplying(ddy2).subtracting(ddy1.multiplying(ddx2)).signum
+    }
+
+    private static func sign(of value: Double) -> Int {
+        if value > 0.0 {
+            return 1
+        }
+        if value < 0.0 {
+            return -1
+        }
+        return 0
+    }
+
+}
+
+/// A minimal double-double value used for the exact orientation fallback.
+private struct DoubleDouble {
+
+    let hi: Double
+    let lo: Double
+
+    init(_ value: Double) {
+        hi = value
+        lo = 0.0
+    }
+
+    init(hi: Double, lo: Double) {
+        let sum = hi + lo
+        let error = lo - (sum - hi)
+        self.hi = sum
+        self.lo = error
+    }
+
+    var negated: DoubleDouble {
+        DoubleDouble(hi: -hi, lo: -lo)
+    }
+
+    var signum: Int {
+        if hi > 0.0 {
+            return 1
+        }
+        if hi < 0.0 {
+            return -1
+        }
+        if lo > 0.0 {
+            return 1
+        }
+        if lo < 0.0 {
+            return -1
+        }
+        return 0
+    }
+
+    func adding(_ other: DoubleDouble) -> DoubleDouble {
+        let (sHi, sLo) = DoubleDouble.twoSum(hi, other.hi)
+        let (tHi, tLo) = DoubleDouble.twoSum(lo, other.lo)
+        let (uHi, uLo) = DoubleDouble.twoSum(sHi, tHi)
+        return DoubleDouble(hi: uHi, lo: sLo + tLo + uLo)
+    }
+
+    func subtracting(_ other: DoubleDouble) -> DoubleDouble {
+        adding(other.negated)
+    }
+
+    func multiplying(_ other: DoubleDouble) -> DoubleDouble {
+        let (pHi, pLo) = DoubleDouble.twoProduct(hi, other.hi)
+        let error = (hi * other.lo) + (lo * other.hi) + pLo
+        return DoubleDouble(hi: pHi, lo: error + (lo * other.lo))
+    }
+
+    private static func twoSum(_ a: Double, _ b: Double) -> (Double, Double) {
+        let sum = a + b
+        let bb = sum - a
+        let error = (a - (sum - bb)) + (b - bb)
+        return (sum, error)
+    }
+
+    private static func twoProduct(_ a: Double, _ b: Double) -> (Double, Double) {
+        let product = a * b
+        let (aHi, aLo) = split(a)
+        let (bHi, bLo) = split(b)
+        let error = (((aHi * bHi) - product) + (aHi * bLo) + (aLo * bHi)) + (aLo * bLo)
+        return (product, error)
+    }
+
+    private static func split(_ value: Double) -> (Double, Double) {
+        let factor = 134_217_729.0 * value
+        let high = factor - (factor - value)
+        return (high, value - high)
     }
 
 }
