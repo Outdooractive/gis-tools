@@ -633,6 +633,136 @@ struct BooleanPointInPolygonTests {
         #expect(polygon.contains(exterior) == false)
     }
 
+    // MARK: - Robust on-boundary detection (#258)
+
+    // A point at the exact midpoint of a shared edge between two triangles must
+    // be on the boundary of both. This is the reproducer from #258: the plain
+    // cross-product test missed about 37% of these points.
+    @Test
+    func onEdgeMidpointsAreBoundary() throws {
+        var seed: UInt64 = 7
+        func random() -> Double {
+            seed = (seed &* 6_364_136_223_846_793_005) &+ 1_442_695_040_888_963_407
+            return Double(seed >> 11) / Double(1 << 53)
+        }
+
+        var checked = 0
+        var notDetected = 0
+        var insideBoth = 0
+
+        for _ in 0 ..< 10_000 {
+            let ax = random() * 2.0
+            let ay = random() * 2.0
+            let bx = ax + 1.0 + random()
+            let by = ay + 1.0 + random()
+
+            // Keep only cases where the midpoint is exactly representable.
+            guard (ax + bx) - bx == ax, (ay + by) - by == ay else { continue }
+
+            let a = Coordinate3D(latitude: ay, longitude: ax)
+            let b = Coordinate3D(latitude: by, longitude: bx)
+            let left = try #require(Polygon([[
+                a,
+                b,
+                Coordinate3D(latitude: ay + 3.0, longitude: ax - 3.0),
+                a,
+            ]]))
+            let right = try #require(Polygon([[
+                a,
+                Coordinate3D(latitude: ay - 3.0, longitude: ax + 3.0),
+                b,
+                a,
+            ]]))
+            let midpoint = Coordinate3D(
+                latitude: (ay + by) / 2.0,
+                longitude: (ax + bx) / 2.0)
+
+            checked += 1
+
+            let leftContains = left.contains(midpoint)
+            let rightContains = right.contains(midpoint)
+            if leftContains || rightContains {
+                notDetected += 1
+            }
+            if leftContains && rightContains {
+                insideBoth += 1
+            }
+            if !left.covers(midpoint) || !right.covers(midpoint) {
+                notDetected += 1
+            }
+            if left.locate(midpoint) != .boundary || right.locate(midpoint) != .boundary {
+                notDetected += 1
+            }
+        }
+
+        #expect(checked > 2_000)
+        #expect(notDetected == 0)
+        #expect(insideBoth == 0)
+    }
+
+    // Points just inside or outside a slanted edge are not boundary points.
+    @Test
+    func nearEdgePointsAreNotBoundary() throws {
+        let triangle = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        let onEdge = Coordinate3D(latitude: 5.0, longitude: 5.0)
+        let inside = Coordinate3D(latitude: 5.000000000001, longitude: 5.0)
+        let outside = Coordinate3D(latitude: 5.0, longitude: 5.000000000001)
+
+        #expect(triangle.locate(onEdge) == .boundary)
+        #expect(triangle.locate(inside) == .interior)
+        #expect(triangle.locate(outside) == .exterior)
+    }
+
+    // Boundary detection in EPSG:3857 and noSRID.
+    @Test
+    func onEdge3857AndNoSRID() throws {
+        let polygon3857 = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 0.0),
+            Coordinate3D(x: 1_000.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 1_000.0),
+            Coordinate3D(x: 0.0, y: 0.0),
+        ]]))
+        let edge3857 = Coordinate3D(x: 500.0, y: 0.0)
+        let inside3857 = Coordinate3D(x: 500.0, y: 0.000000000001)
+
+        #expect(polygon3857.locate(edge3857) == .boundary)
+        #expect(polygon3857.locate(inside3857) == .interior)
+
+        let polygonNoSRID = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let edgeNoSRID = Coordinate3D(x: 500.0, y: 0.0, projection: .noSRID)
+
+        #expect(polygonNoSRID.locate(edgeNoSRID) == .boundary)
+    }
+
+    // A projected polygon vertex is still a boundary point in EPSG:4978.
+    @Test
+    func onVertex4978() throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let vertex = try #require(polygon.outerRing?.coordinates.first)
+
+        #expect(polygon.locate(vertex) == .boundary)
+    }
+
     // MARK: - Antimeridian
 
     // A 20°×20° polygon crossing ±180° with a 10°×10° hole that also crosses it.
