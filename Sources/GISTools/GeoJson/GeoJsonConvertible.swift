@@ -34,8 +34,29 @@ extension GeoJsonReadable {
     ///    - jsonData: The JSON data
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonData: Data) {
-        guard let value = JSONValue(jsonData: jsonData) else { return nil }
-        self.init(json: value.asSendable)
+        if let object = GeoJsonDecoder.decode(jsonData: jsonData) {
+            if let typed = object as? Self {
+                self = typed
+                return
+            }
+
+            // FeatureCollection normalizes any GeoJSON object.
+            if let collection = FeatureCollection(object), let typed = collection as? Self {
+                self = typed
+                return
+            }
+
+            return nil
+        }
+
+        // Fall back to the lenient JSONValue path for input the typed decoder
+        // rejects, preserving the previous behaviour (BoundingBox and
+        // Coordinate3D always use this path).
+        guard let value = JSONValue(jsonData: jsonData),
+              let typed = Self(json: value.asSendable)
+        else { return nil }
+
+        self = typed
     }
 
     /// Try to initialize a GeoJSON object from a string.
