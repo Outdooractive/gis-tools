@@ -26,6 +26,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
   - [BoundingBoxRepresentable protocol](#boundingboxrepresentable-protocol)
   - [GeoJsonConvertible protocol / GeoJsonCodable](#geojsonconvertible-protocol--geojsoncodable)
   - [GeoJsonReader](#geojsonreader)
+  - [GeoJsonParser](#geojsonparser)
   - [Coordinate3D](#coordinate3d)
   - [BoundingBox](#boundingbox)
   - [Point](#point)
@@ -59,7 +60,8 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 ## Features
 
 - Supports the full [GeoJSON standard][6]
-- Load and write GeoJSON objects from and to `[String:Any]`, `URL`, `Data` and `String`
+- Supports unlocated features (`"geometry": null`) and strict/lenient parsing diagnostics with JSON Pointer paths
+- Load and write GeoJSON objects from and to `[String: Sendable]`, `URL`, `Data` and `String`
 - Supports `Codable` and `SwiftData` (see below)
 - Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4269 (NAD83), 4277/27700 (OSGB 1936 / British National Grid), 2056/21781 (Swiss CH1903+/LV95 and CH1903/LV03), 29902/29903/2157 (Irish Grid and Irish Transverse Mercator), 25831–25837 (ETRS89/UTM), 26901–26960 (NAD83/UTM), 3035/3034 (EU-wide LAEA and LCC), 5070 (US Conus Albers), 3005 (BC Albers), 3347/3978 (Canadian Lambert), 2154 (French Lambert-93), 28992 (Dutch RD New), 31466–31469 (German DHDN/Gauss-Krüger), 31255–31259 (Austrian MGI/Gauss-Krüger) and all 120 WGS84 UTM zones, plus user-definable custom projections
 - Supports WKT/WKB/TWKB, also with different projections
@@ -86,6 +88,10 @@ The `cutAtAntimeridian()` functions return a `FeatureCollection`
 with one `Feature` per cut geometry part. This makes iterating the results uniform regardless of the input type.
 Works natively for EPSG:4326 and EPSG:3857 (splits at ±180° and ±originShift respectively).
 For EPSG:4978 and noSRID, returns the original geometry unchanged (the antimeridian concept does not apply).
+
+> **Upgrading to 3.0?** The containment API and several Codable/parsing
+> behaviours changed. See [CHANGELOG.md](CHANGELOG.md) for the breaking changes
+> and migration mapping.
 
 ## Requirements
 
@@ -215,7 +221,7 @@ var allCoordinates: [Coordinate3D] { get }
 
 /// Any foreign members, i.e. keys in the JSON that are
 /// not part of the GeoJSON standard.
-var foreignMembers: [String: Any] { get set }
+var foreignMembers: [String: Sendable] { get set }
 
 /// Try to initialize a GeoJSON object from any JSON and calculate a bounding box if necessary.
 init?(json: Any?, calculateBoundingBox: Bool)
@@ -275,7 +281,7 @@ init(from decoder: Decoder) throws
 They can also be exported in several ways:
 ```swift
 /// Return the GeoJson object as Key/Value pairs.
-var asJson: [String: Any] { get }
+var asJson: [String: Sendable] { get }
 
 /// Dump the object as JSON data.
 func asJsonData(prettyPrinted: Bool = false) -> Data?
@@ -284,7 +290,8 @@ func asJsonData(prettyPrinted: Bool = false) -> Data?
 func asJsonString(prettyPrinted: Bool = false) -> String?
 
 /// Write the object in it's JSON represenation to a file.
-func write(to url: URL, prettyPrinted: Bool = false) throws
+@discardableResult
+func write(to url: URL, prettyPrinted: Bool = false) -> Bool
 
 /// Write the GeoJSON object to an Encoder.
 func encode(to encoder: Encoder) throws
@@ -306,6 +313,8 @@ let featureCollection = FeatureCollection(jsonData: data)!
 ```
 
 Important note: Import and export will always be done in EPSG:4326, with one exception: GeoJSON objects with no SRID will be exported as-is.
+
+`Codable` encoding and decoding go through ``JSONValue``, so booleans, numbers, nested arrays/objects and JSON `null` are preserved instead of being coerced or dropped.
 
 ## GeoJsonReader
 [Implementation][15]
@@ -381,6 +390,40 @@ default:
 
 Important note: Import will always be done in EPSG:4326.
 
+## GeoJsonParser
+[Implementation](https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GeoJson/GeoJsonParser.swift)
+
+The regular `init?(json:)` and `GeoJsonReader` APIs are lenient: malformed
+features or coordinates are dropped. Use `GeoJsonParser` when you need to know
+what was skipped, or when you want parsing to fail loudly.
+
+```swift
+// Lenient: return the object and report every malformed or skipped element.
+let result = try GeoJsonParser.parse(jsonString: json)
+print(result.issues)   // [ /features/0/geometry/coordinates/0: polygon ring requires at least four positions ]
+
+// Typed: require a concrete GeoJSON type.
+let (collection, issues) = try GeoJsonParser.parse(
+    jsonString: json,
+    as: FeatureCollection.self)
+
+// Strict: throw the first GeoJsonParsingError.
+let strict = try GeoJsonParser.parse(jsonData: data, mode: .strict)
+```
+
+A `GeoJsonParseIssue` contains a JSON Pointer `path` (for example
+`/features/0/geometry/coordinates/1/0`) and a human-readable `message`.
+`.strict` throws ``GeoJsonParsingError`` for the first issue or for a type
+mismatch.
+
+The `FeatureCollection` convenience initializers keep the normalizing
+behaviour while collecting issues:
+
+```swift
+var issues: [GeoJsonParseIssue] = []
+let collection = FeatureCollection(jsonString: json, issues: &issues)
+```
+
 ## Coordinate3D
 [Implementation][16] / [Coordinate test cases][17]
 
@@ -438,6 +481,58 @@ Example:
 let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
 print(coordinate.isZero)
 ```
+
+## Feature
+
+A `Feature` wraps a geometry together with an optional identifier, properties,
+a bounding box and foreign members.
+
+```swift
+let feature = Feature(Point(Coordinate3D(latitude: 48.1, longitude: 11.5)))
+feature.properties["name"] = "Munich"
+```
+
+### Unlocated features
+
+RFC 7946 §3.2 allows `"geometry": null`. `Feature.geometry` is therefore
+optional:
+
+```swift
+let unlocated = Feature(jsonString: #"""
+{"type":"Feature","geometry":null,"properties":{"name":"Unknown"}}
+"""#)!
+
+unlocated.geometry     // nil
+unlocated.projection   // .noSRID
+unlocated.allCoordinates // []
+
+// Programmatic creation:
+let other = Feature(properties: ["name": "Unknown"])
+```
+
+A missing `geometry` member is still invalid; only an explicit `null` creates
+an unlocated feature. Parsing a `FeatureCollection` keeps unlocated features
+and their properties.
+
+Geometry operations return `nil`, `false` or empty results for unlocated
+features. WKB/WKT encoding returns `nil` for an unlocated feature, and for a
+collection or array containing one.
+
+## FeatureCollection
+
+A `FeatureCollection` is an ordered list of features. `FeatureCollection(json:)`
+normalizes any GeoJSON object into a collection — a single `Feature` or a bare
+geometry becomes a one-feature collection.
+
+```swift
+let collection = FeatureCollection([locatedFeature, unlocatedFeature])
+
+collection.projection   // projection of the first located feature, else .noSRID
+collection.features     // both features are preserved
+```
+
+Use `GeoJsonParser` or `FeatureCollection(jsonString:issues:)` to find out
+which malformed elements were skipped.
 
 # Projections
 [Implementation][20]
@@ -847,6 +942,8 @@ dependencies: [
 Hint: Most algorithms are optimized for EPSG:4326. Using other projections will have a performance penalty due to added projections.<br>
 The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tolerances. This limits its usable latitude range to approximately ±85°.
 
+Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contains`), `covers` includes the boundary (`ST_Covers`), and `locate` returns `.interior`, `.boundary` or `.exterior`.
+
 | Name                        | Example                                                                                                                               |     | Source/Tests                 |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
 | along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                                                                        |     | [Source][43] / [Tests][44]   |
@@ -856,13 +953,13 @@ The union algorithm works in EPSG:3857 (Web Mercator) for uniform Cartesian tole
 | bezier-spline               | `let spline = lineString.bezierSpline()`                                                                                              |     | [Source][217] / [Tests][218] |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
 | boolean-concave             | `anyGeometry.isConcave()`                                                                                                             |     | [Source][177] / [Tests][178] |
-| boolean-contains/within     | `polygon.contains(lineString)` / `point.isWithin(polygon)`                                                                            |     | [Source][187] / [Tests][188] |
+| boolean-contains/within     | `polygon.contains(lineString)` / `polygon.covers(lineString)` / `point.isWithin(polygon)`                                              |     | [Source][187] / [Tests][188] |
 | boolean-crosses             | `lineString.crosses(otherLineString)`                                                                                                  |     | [Source][50] / [Tests][133]  |
 | boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
 | boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
-| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))`                                                                                                   |     | [Source][56] / [Tests][134]  |
+| boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))` / `covers(…)` / `locate(…)`                                                                       |     | [Source][56] / [Tests][134]  |
 | boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
 | boolean-touches             | `anyGeometry.touches(other)`                                                                                                          |     | [Source][159] / [Tests][160] |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
