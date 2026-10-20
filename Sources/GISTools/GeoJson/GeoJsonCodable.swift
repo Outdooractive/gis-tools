@@ -10,15 +10,22 @@ extension GeoJson {
     /// - Parameters:
     ///    - decoder: The decoder to read data from
     public init(from decoder: Decoder) throws {
-        let value = try JSONValue(from: decoder)
+        let object = try GeoJsonDecoder.decode(from: decoder)
 
-        guard let newObject = Self(json: value.asSendable) else {
-            throw DecodingError.dataCorrupted(DecodingError.Context(
-                codingPath: decoder.codingPath,
-                debugDescription: "Invalid JSON object"))
+        if let typed = object as? Self {
+            self = typed
+            return
         }
 
-        self = newObject
+        // FeatureCollection normalizes any GeoJSON object.
+        if let collection = FeatureCollection(object), let typed = collection as? Self {
+            self = typed
+            return
+        }
+
+        throw DecodingError.dataCorrupted(DecodingError.Context(
+            codingPath: decoder.codingPath,
+            debugDescription: "Invalid JSON object"))
     }
 
 }

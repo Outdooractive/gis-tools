@@ -134,6 +134,11 @@ left unchanged; that case is ambiguous per RFC 7946.
   fast path (#254).
 - A bounding-box miss in `Polygon.contains` is now O(1): the antimeridian flag
   is cached when the bounding box is calculated (#254).
+- GeoJSON `Data`/`String` loading now decodes directly with `JSONDecoder` into
+  `Coordinate3D` and the geometry types; `Codable` uses the same path. On the
+  640k-vertex benchmark, native loading drops from 7.73 s / 264 MB to
+  **0.23 s / 139 MB**, and Codable from 7.42 s / 316 MB to **0.23 s / 139 MB**
+  (#254).
 
 ### Fixed
 
