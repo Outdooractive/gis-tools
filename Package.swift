@@ -15,6 +15,10 @@ let package = Package(
             name: "GISTools",
             targets: ["GISTools"]
         ),
+        .executable(
+            name: "GeoJsonBenchmark",
+            targets: ["GeoJsonBenchmark"]
+        ),
     ],
     traits: [
         .trait(
@@ -28,6 +32,9 @@ let package = Package(
     targets: [
         .target(
             name: "GISTools"),
+        .executableTarget(
+            name: "GeoJsonBenchmark",
+            dependencies: ["GISTools"]),
         .testTarget(
             name: "GISToolsTests",
             dependencies: ["GISTools"],
