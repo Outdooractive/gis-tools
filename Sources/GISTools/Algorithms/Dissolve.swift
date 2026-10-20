@@ -29,7 +29,9 @@ extension FeatureCollection {
         let unknownSentinel = AnyHashable(DissolveUnknown())
 
         let dividedFeatures: [AnyHashable: [Feature]] = divideFeatures { feature in
-            guard feature.geometry.type.isIn([.polygon, .multiPolygon]) else { return nil }
+            guard let geometry = feature.geometry,
+                  geometry.type.isIn([.polygon, .multiPolygon])
+            else { return nil }
 
             if let value = feature.properties[property],
                let hashable = Self.hashableValue(from: value)

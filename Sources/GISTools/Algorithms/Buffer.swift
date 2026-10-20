@@ -261,11 +261,11 @@ extension GeoJson {
                 : MultiPolygon(buffered)
 
         case let feature as Feature:
-            return feature.geometry.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+            return feature.geometry?.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
 
         case let featureCollection as FeatureCollection:
             let buffered = featureCollection.features.compactMap {
-                $0.geometry.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+                $0.geometry?.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
             }.flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
             result = unionType == .overlapping
@@ -299,11 +299,11 @@ extension GeoJson {
             result = MultiPolygon(unchecked: insets)
 
         case let feature as Feature:
-            return feature.geometry.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
+            return feature.geometry?.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
 
         case let featureCollection as FeatureCollection:
             let buffered = featureCollection.features.compactMap {
-                $0.geometry.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
+                $0.geometry?.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
             }.flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
             result = unionType == .overlapping

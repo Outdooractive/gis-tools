@@ -56,6 +56,26 @@ mod-2 rule).
 The predicates operate in the receiver's projection and project the other
 geometry into it. Antimeridian-crossing geometries are cut at ±180° first.
 
+#### Unlocated features
+
+`Feature.geometry` is now optional. RFC 7946 §3.2 allows `"geometry": null`
+for an unlocated feature; such a feature is preserved with its identifier,
+properties and foreign members instead of being dropped.
+
+- A missing `"geometry"` member is still invalid; only an explicit `null`
+  creates an unlocated feature.
+- `Feature(id:properties:foreignMembers:)` creates an unlocated feature
+  programmatically.
+- `projection` is `.noSRID`, `allCoordinates` is empty and `calculateBoundingBox()`
+  returns `nil` for unlocated features.
+- WKB/WKT encoding returns `nil` for an unlocated feature, and for a
+  `FeatureCollection` or `[Feature]` that contains one.
+- Geometry algorithms return `nil`, `false` or empty results for unlocated
+  features.
+
+Strict parsing diagnostics for malformed features and coordinates are a
+follow-up.
+
 #### Antimeridian overlay support
 
 Overlay operations (intersection, union, difference, symmetric difference)

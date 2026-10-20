@@ -59,13 +59,13 @@ struct JsonCoercionTests {
         let featureCollection = try #require(FeatureCollection(jsonString: jsonString))
 
         #expect(featureCollection.features.count == 7)
-        #expect(featureCollection.features[0].geometry.type == .point)
-        #expect(featureCollection.features[1].geometry.type == .multiPoint)
-        #expect(featureCollection.features[2].geometry.type == .lineString)
-        #expect(featureCollection.features[3].geometry.type == .multiLineString)
-        #expect(featureCollection.features[4].geometry.type == .polygon)
-        #expect(featureCollection.features[5].geometry.type == .multiPolygon)
-        #expect(featureCollection.features[6].geometry.type == .geometryCollection)
+        #expect(featureCollection.features[0].geometry?.type == .point)
+        #expect(featureCollection.features[1].geometry?.type == .multiPoint)
+        #expect(featureCollection.features[2].geometry?.type == .lineString)
+        #expect(featureCollection.features[3].geometry?.type == .multiLineString)
+        #expect(featureCollection.features[4].geometry?.type == .polygon)
+        #expect(featureCollection.features[5].geometry?.type == .multiPolygon)
+        #expect(featureCollection.features[6].geometry?.type == .geometryCollection)
     }
 
     // MARK: - Bridged dictionary parsing (the crashing shapes)
@@ -97,7 +97,7 @@ struct JsonCoercionTests {
         #expect(feature.properties["n"] as? Int == 42)
         #expect(feature.properties["f"] as? Double == 3.14)
         #expect(feature.properties["b"] as? Bool == true)
-        #expect(feature.geometry.type == .point)
+        #expect(feature.geometry?.type == .point)
     }
 
     // Validates that NSNull property values degrade gracefully instead of crashing.

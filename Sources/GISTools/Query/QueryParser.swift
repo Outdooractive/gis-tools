@@ -309,7 +309,7 @@ public struct QueryParser {
 
             case let .near(coordinate, tolerance):
                 var result = false
-                if let centroid = feature.geometry.centroid {
+                if let centroid = feature.geometry?.centroid {
                     result = coordinate.distance(from: centroid.coordinate) <= tolerance
                 }
                 stack.insert(result, at: 0)

@@ -493,21 +493,26 @@ extension MultiPolygon {
 extension Feature {
 
     /// Whether the feature's geometry crosses the anti-meridian.
+    /// An unlocated feature never crosses.
     public var crossesAntimeridian: Bool {
-        geometry.crossesAntimeridian
+        geometry?.crossesAntimeridian ?? false
     }
 
     /// Cuts the feature's geometry at the anti-meridian.
     ///
     /// The feature's properties are preserved on every resulting feature.
     /// The original feature's identifier is kept on the first result
-    /// and cleared on subsequent parts.
+    /// and cleared on subsequent parts. An unlocated feature is returned
+    /// unchanged.
     public func cutAtAntimeridian() -> FeatureCollection {
+        guard let geometry else { return FeatureCollection([self]) }
+
         let fc = geometry.cutAtAntimeridian()
         var features: [Feature] = []
         for (index, cutFeature) in fc.features.enumerated() {
+            guard let cutGeometry = cutFeature.geometry else { continue }
             let featureId: Identifier? = (index == 0) ? id : nil
-            features.append(Feature(cutFeature.geometry, id: featureId, properties: properties))
+            features.append(Feature(cutGeometry, id: featureId, properties: properties))
         }
         return FeatureCollection(features)
     }

@@ -37,7 +37,7 @@ struct FeatureTests {
 
         #expect(feature.type == GeoJsonType.feature)
         #expect(feature.projection == .epsg4326)
-        #expect(feature.geometry.type == GeoJsonType.polygon)
+        #expect(feature.geometry?.type == GeoJsonType.polygon)
         #expect(feature.properties.count == 2)
         #expect(feature.properties.keys.sorted() == ["prop0", "prop1"])
         #expect(feature.property(for: "prop0") == "value0")
@@ -502,6 +502,95 @@ struct FeatureTests {
 
         #expect(feature4326 != feature3857)
         #expect(feature4326.hashValue != feature3857.hashValue)
+    }
+
+    // MARK: - Unlocated features (#260)
+
+    // A Feature with "geometry": null is valid and keeps its other members.
+    @Test
+    func unlocatedFeatureParsing() async throws {
+        let json = #"""
+        {"type":"Feature","id":7,"geometry":null,"properties":{"a":1},"other":"x"}
+        """#
+        let feature = try #require(Feature(jsonString: json))
+
+        #expect(feature.geometry == nil)
+        #expect(feature.properties["a"] as? Int == 1)
+        #expect(feature.id == .int(7))
+        #expect(feature.foreignMember(for: "other") == "x")
+        #expect(feature.projection == .noSRID)
+        #expect(feature.allCoordinates.isEmpty)
+        #expect(feature.isValid)
+        #expect(feature.boundingBox == nil)
+        #expect(feature.calculateBoundingBox() == nil)
+    }
+
+    // An unlocated Feature round-trips through its JSON dictionary.
+    @Test
+    func unlocatedFeatureRoundTrip() async throws {
+        let feature = Feature(
+            id: .string("region"),
+            properties: ["name": "Unknown", "rank": 3])
+
+        #expect(feature.asJson["geometry"] is NSNull)
+
+        let parsed = try #require(Feature(json: feature.asJson))
+
+        #expect(parsed == feature)
+        #expect(parsed.geometry == nil)
+    }
+
+    // An unlocated Feature round-trips through Codable.
+    @Test
+    func unlocatedFeatureCodableRoundTrip() async throws {
+        let feature = Feature(
+            id: .string("region"),
+            properties: ["name": "Unknown", "rank": 3])
+
+        let data = try JSONEncoder().encode(feature)
+        let decoded = try JSONDecoder().decode(Feature.self, from: data)
+
+        #expect(decoded == feature)
+        #expect(decoded.geometry == nil)
+    }
+
+    // A missing geometry member is invalid; only an explicit null is unlocated.
+    @Test
+    func missingGeometryIsInvalid() async throws {
+        let json = #"{"type":"Feature","properties":{}}"#
+
+        #expect(Feature(jsonString: json) == nil)
+    }
+
+    // A FeatureCollection keeps unlocated features and ignores them when
+    // determining its projection.
+    @Test
+    func unlocatedFeatureCollectionParsing() async throws {
+        let json = #"""
+        {"type":"FeatureCollection","features":[
+          {"type":"Feature","geometry":null,"properties":{"a":1}},
+          {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"a":2}}
+        ]}
+        """#
+        let collection = try #require(FeatureCollection(jsonString: json))
+
+        #expect(collection.features.count == 2)
+        #expect(collection.features[0].geometry == nil)
+        #expect(collection.features[1].geometry != nil)
+        #expect(collection.projection == .epsg4326)
+    }
+
+    // Geometry algorithms return nil/empty for unlocated features.
+    @Test
+    func unlocatedFeatureGeometryOperations() async throws {
+        let feature = Feature(properties: ["a": 1])
+
+        #expect(feature.centerOfMass == nil)
+        #expect(feature.pointOnFeature == nil)
+        #expect(feature.buffered(by: 10.0) == nil)
+        #expect(feature.asWKB == nil)
+        #expect(feature.asWKT == nil)
+        #expect(feature.crossesAntimeridian == false)
     }
 
 }

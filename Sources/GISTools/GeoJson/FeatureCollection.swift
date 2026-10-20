@@ -13,7 +13,7 @@ public struct FeatureCollection:
 
     /// The receiver's projection.
     public var projection: Projection {
-        features.first?.projection ?? .noSRID
+        features.first(where: { $0.geometry != nil })?.projection ?? .noSRID
     }
 
     /// The FeatureCollection's Feature objects.
@@ -211,7 +211,7 @@ extension FeatureCollection {
             return false
         }
 
-        return features.contains { $0.geometry.intersects(otherBoundingBox) }
+        return features.contains { $0.geometry?.intersects(otherBoundingBox) ?? false }
     }
 
 }

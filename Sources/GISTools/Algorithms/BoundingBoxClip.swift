@@ -226,7 +226,9 @@ extension Feature {
     public func clipped(to boundingBox: BoundingBox) -> Feature? {
         let boundingBox = boundingBox.projected(to: projection)
 
-        guard let clipped = geometry.clipped(to: boundingBox) else { return nil }
+        guard let geometry,
+              let clipped = geometry.clipped(to: boundingBox)
+        else { return nil }
 
         var feature = Feature(
             clipped,

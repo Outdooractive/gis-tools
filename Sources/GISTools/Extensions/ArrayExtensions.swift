@@ -93,8 +93,10 @@ extension Array where Element == GeoJsonGeometry {
 extension Array where Element == Feature {
 
     /// Extracts the geometries from the array of ``Feature`` values and creates a ``GeometryCollection``.
+    ///
+    /// Unlocated features are skipped, since they have no geometry.
     public var asGeometryCollection: GeometryCollection {
-        GeometryCollection(self.map(\.geometry))
+        GeometryCollection(self.compactMap(\.geometry))
     }
 
     /// Creates a ``FeatureCollection`` from the array of ``Feature`` values.
@@ -103,13 +105,19 @@ extension Array where Element == Feature {
     }
 
     /// Extracts geometries from the ``Feature`` array and encodes them as Well-Known Binary data.
+    ///
+    /// Returns `nil` when any feature has no geometry.
     public var asWKB: Data? {
-        asGeometryCollection.asWKB
+        guard allSatisfy({ $0.geometry != nil }) else { return nil }
+        return asGeometryCollection.asWKB
     }
 
     /// Extracts geometries from the ``Feature`` array and encodes them as a Well-Known Text string.
+    ///
+    /// Returns `nil` when any feature has no geometry.
     public var asWKT: String? {
-        asGeometryCollection.asWKT
+        guard allSatisfy({ $0.geometry != nil }) else { return nil }
+        return asGeometryCollection.asWKT
     }
 
 }
@@ -117,8 +125,10 @@ extension Array where Element == Feature {
 extension Array where Element == FeatureCollection {
 
     /// Extracts all geometries from the array of ``FeatureCollection`` values and creates a single ``GeometryCollection``.
+    ///
+    /// Unlocated features are skipped, since they have no geometry.
     public var asGeometryCollection: GeometryCollection {
-        GeometryCollection(self.flatMap({ $0.features.map(\.geometry) }))
+        GeometryCollection(self.flatMap({ $0.features.compactMap(\.geometry) }))
     }
 
     /// Merges all features from the array of ``FeatureCollection`` values into a single ``FeatureCollection``.
@@ -127,13 +137,19 @@ extension Array where Element == FeatureCollection {
     }
 
     /// Extracts all geometries from the ``FeatureCollection`` array and encodes them as Well-Known Binary data.
+    ///
+    /// Returns `nil` when any feature has no geometry.
     public var asWKB: Data? {
-        asGeometryCollection.asWKB
+        guard allSatisfy({ $0.features.allSatisfy { feature in feature.geometry != nil } }) else { return nil }
+        return asGeometryCollection.asWKB
     }
 
     /// Extracts all geometries from the ``FeatureCollection`` array and encodes them as a Well-Known Text string.
+    ///
+    /// Returns `nil` when any feature has no geometry.
     public var asWKT: String? {
-        asGeometryCollection.asWKT
+        guard allSatisfy({ $0.features.allSatisfy { feature in feature.geometry != nil } }) else { return nil }
+        return asGeometryCollection.asWKT
     }
 
 }

@@ -64,7 +64,19 @@ extension GeoJson {
             return newGeometryCollection as! Self
 
         case let feature as Feature:
-            var newFeature = Feature(feature.geometry.simplified(tolerance: tolerance, highQuality: highQuality), id: feature.id, properties: feature.properties)
+            guard let geometry = feature.geometry else {
+                var newFeature = Feature(
+                    id: feature.id,
+                    properties: feature.properties,
+                    foreignMembers: feature.foreignMembers)
+                newFeature.boundingBox = feature.boundingBox
+                return newFeature as! Self
+            }
+
+            var newFeature = Feature(
+                geometry.simplified(tolerance: tolerance, highQuality: highQuality),
+                id: feature.id,
+                properties: feature.properties)
             newFeature.boundingBox = feature.boundingBox
             newFeature.foreignMembers = feature.foreignMembers
             return newFeature as! Self

@@ -75,7 +75,7 @@ struct ReverseTests {
         ])
         let reversed = featureCollection.reversed
 
-        #expect(reversed.features.map(\.geometry.type) == [.point, .multiLineString, .point, .lineString])
+        #expect(reversed.features.compactMap { $0.geometry?.type } == [.point, .multiLineString, .point, .lineString])
 
         #expect(reversed.features[3].allCoordinates.map(\.latitude) == [5.0, 4.0, 3.0, 2.0, 1.0, 0.0])
         #expect(reversed.features[2].allCoordinates == [Coordinate3D(latitude: 20.0, longitude: 20.0)])

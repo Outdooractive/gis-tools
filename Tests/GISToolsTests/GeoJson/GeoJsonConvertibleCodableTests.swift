@@ -239,8 +239,8 @@ struct GeoJsonConvertibleCodableTests {
         #expect(JSONValue(value: feature.properties["d"]) == .number(17.5))
     }
 
-    // A FeatureCollection with an unlocated feature ("geometry": null) still
-    // decodes; the unlocated feature is dropped, matching init?(json:).
+    // A FeatureCollection with an unlocated feature ("geometry": null) keeps
+    // that feature and its properties.
     @Test
     func codableDecodingFeatureCollectionWithNullGeometry() async throws {
         let json = #"""
@@ -252,8 +252,10 @@ struct GeoJsonConvertibleCodableTests {
         let data = try #require(json.data(using: .utf8))
         let collection = try JSONDecoder().decode(FeatureCollection.self, from: data)
 
-        #expect(collection.features.count == 1)
-        #expect(JSONValue(value: collection.features.first?.properties["a"]) == .int(2))
+        #expect(collection.features.count == 2)
+        #expect(collection.features[0].geometry == nil)
+        #expect(JSONValue(value: collection.features[0].properties["a"]) == .int(1))
+        #expect(collection.features[1].geometry != nil)
     }
 
     // MARK: - Sequence asJson

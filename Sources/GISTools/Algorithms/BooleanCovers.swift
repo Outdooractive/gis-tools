@@ -86,13 +86,13 @@ enum BooleanCovers {
     static func parts(of geometry: GeoJsonGeometry) -> [GeoJsonGeometry] {
         switch geometry {
         case let polygon as Polygon:
-            return polygon.cutAtAntimeridian().features.map { $0.geometry }
+            return polygon.cutAtAntimeridian().features.compactMap(\.geometry)
 
         case let multiPolygon as MultiPolygon:
             return multiPolygon.polygons.flatMap { parts(of: $0) }
 
         case let lineString as LineString:
-            return lineString.cutAtAntimeridian().features.map { $0.geometry }
+            return lineString.cutAtAntimeridian().features.compactMap(\.geometry)
 
         case let multiLineString as MultiLineString:
             return multiLineString.lineStrings.flatMap { parts(of: $0) }

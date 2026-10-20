@@ -305,7 +305,7 @@ extension GeoJson {
     /// signed-area-weighted mean of all altitudes.
     public var centerOfMass: Point? {
         if let feature = self as? Feature {
-            return feature.geometry.centerOfMass
+            return feature.geometry?.centerOfMass
         }
 
         switch type {

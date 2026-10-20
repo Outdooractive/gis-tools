@@ -42,7 +42,7 @@ extension GeoJson {
             geometryCollection.geometries.allSatisfy { $0.isDisjoint(with: snappedOther) }
 
         case let feature as Feature:
-            feature.geometry.isDisjoint(with: snappedOther)
+            feature.geometry?.isDisjoint(with: snappedOther) ?? true
 
         case let featureCollection as FeatureCollection:
             featureCollection.features.allSatisfy { $0.isDisjoint(with: snappedOther) }
@@ -91,7 +91,7 @@ extension PointGeometry {
             return otherGeometryCollection.geometries.allSatisfy { $0.isDisjoint(with: self) }
 
         case let otherFeature as Feature:
-            return otherFeature.geometry.isDisjoint(with: self)
+            return otherFeature.geometry?.isDisjoint(with: self) ?? true
 
         case let otherFeatureCollection as FeatureCollection:
             return otherFeatureCollection.features.allSatisfy { $0.isDisjoint(with: self) }
@@ -164,7 +164,7 @@ extension LineStringGeometry {
             return otherGeometryCollection.geometries.allSatisfy { $0.isDisjoint(with: self) }
 
         case let otherFeature as Feature:
-            return otherFeature.geometry.isDisjoint(with: self)
+            return otherFeature.geometry?.isDisjoint(with: self) ?? true
 
         case let otherFeatureCollection as FeatureCollection:
             return otherFeatureCollection.features.allSatisfy { $0.isDisjoint(with: self) }
@@ -242,7 +242,7 @@ extension PolygonGeometry {
             return otherGeometryCollection.geometries.allSatisfy { $0.isDisjoint(with: self) }
 
         case let otherFeature as Feature:
-            return otherFeature.geometry.isDisjoint(with: self)
+            return otherFeature.geometry?.isDisjoint(with: self) ?? true
 
         case let otherFeatureCollection as FeatureCollection:
             return otherFeatureCollection.features.allSatisfy { $0.isDisjoint(with: self) }
