@@ -421,4 +421,87 @@ struct GeoJsonConvertibleCodableTests {
         #expect(decoded == box)
     }
 
+    // MARK: - Direct encoding (#280)
+
+    // The direct GeoJSON encoder must produce byte-identical output to the
+    // previous `asJson -> JSONValue -> JSONEncoder` path.
+    @Test
+    func directEncodingMatchesJSONValueEncoding() async throws {
+        let point = Point(Coordinate3D(latitude: 2.5, longitude: 1.5))
+        let pointWithAltitude = Point(Coordinate3D(
+            x: 1.5,
+            y: 2.5,
+            z: 100.0,
+            projection: .epsg4326))
+        let pointWithM = Point(Coordinate3D(
+            x: 1.5,
+            y: 2.5,
+            m: 42.0,
+            projection: .epsg4326))
+        let pointWithAltitudeAndM = Point(Coordinate3D(
+            x: 1.5,
+            y: 2.5,
+            z: 100.0,
+            m: 42.0,
+            projection: .epsg4326))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0, altitude: 10.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0, m: 20.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+        ]))
+        let feature = try #require(Feature(jsonString: propertiesJson))
+        let collection = FeatureCollection([feature])
+
+        let geoJsons: [any GeoJson] = [
+            point,
+            pointWithAltitude,
+            pointWithM,
+            pointWithAltitudeAndM,
+            line,
+            feature,
+            collection,
+        ]
+
+        for geoJson in geoJsons {
+            let expected = try #require(JSONValue(value: geoJson.asJson)?.asJsonData(
+                prettyPrinted: true,
+                sortedKeys: true))
+            let actual = try #require(geoJson.asJsonData(prettyPrinted: true))
+
+            #expect(actual == expected)
+        }
+    }
+
+    // Coordinate arrays use a fast path, while property arrays must keep
+    // their native integer, double and boolean types.
+    @Test
+    func directEncodingPreservesPropertyArrayTypes() async throws {
+        let json = #"""
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"ints":[1,2,3],"doubles":[1.5,2.5],"bools":[true,false],"strings":["a","b"],"empty":[]}}
+        """#
+        let feature = try #require(Feature(jsonString: json))
+        let data = try #require(feature.asJsonData())
+        let encoded = try #require(JSONValue(jsonData: data))
+
+        #expect(encoded["properties"]?["ints"] == .array([.int(1), .int(2), .int(3)]))
+        #expect(encoded["properties"]?["doubles"] == .array([.number(1.5), .number(2.5)]))
+        #expect(encoded["properties"]?["bools"] == .array([.bool(true), .bool(false)]))
+        #expect(encoded["properties"]?["strings"] == .array([.string("a"), .string("b")]))
+        #expect(encoded["properties"]?["empty"] == .array([]))
+    }
+
+    // A large coordinate array produces the same JSON through both paths.
+    @Test
+    func directEncodingLargeCoordinateArray() async throws {
+        let coordinates = (0 ..< 100).map { index in
+            Coordinate3D(latitude: Double(index), longitude: Double(index))
+        }
+        let line = try #require(LineString(coordinates))
+        let expected = try #require(JSONValue(value: line.asJson)?.asJsonData())
+        let actual = try #require(line.asJsonData())
+
+        #expect(actual == expected)
+    }
+
 }

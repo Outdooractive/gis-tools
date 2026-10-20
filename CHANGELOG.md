@@ -139,6 +139,10 @@ left unchanged; that case is ambiguous per RFC 7946.
   640k-vertex benchmark, native loading drops from 7.73 s / 264 MB to
   **0.23 s / 139 MB**, and Codable from 7.42 s / 316 MB to **0.23 s / 139 MB**
   (#254).
+- GeoJSON encoding writes coordinate arrays directly to the encoder instead
+  of building a full `JSONValue` tree first. A 100k-vertex polygon drops from
+  1.55 s to about **0.04 s**; the `coders` benchmark now covers every geometry
+  type and a large property set (#280).
 
 ### Fixed
 
@@ -161,10 +165,11 @@ left unchanged; that case is ambiguous per RFC 7946.
   `RayCrossingCounter` segment rules. Points exactly on an edge are now
   detected as boundary points instead of being classified as inside or
   outside (#258).
-- `Codable` encoding and decoding now go through ``JSONValue`` instead of
-  `[String: Any]` and `JSONSerialization`. Booleans stay booleans, numbers and
-  booleans inside arrays are preserved, and JSON `null` encodes and decodes
-  instead of being dropped or throwing (#255, #256).
+- `Codable` decoding goes through ``JSONValue``; encoding writes the `asJson`
+  tree directly instead of going through `[String: Any]` and
+  `JSONSerialization`. Booleans stay booleans, numbers and booleans inside
+  arrays are preserved, and JSON `null` encodes and decodes instead of being
+  dropped or throwing (#255, #256, #280).
 - `asJsonData()` / `asJsonString()` now use `JSONEncoder` with the shortest
   round-trip number representation, so coordinates read back bit-exactly.
   Object keys are sorted by default for stable output; `sortedKeys: false`
