@@ -984,6 +984,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | center/centroid/center-mean | `let center = polygon.center`                                                                                                         |     | [Source][62] / [Tests][137]  |
 | circle                      | `let circle = point.circle(radius: 5000.0)`                                                                                           |     | [Source][63] / [Tests][64]   |
 | clean                       | `let cleaned = lineString.cleaned()`                                                                                                  |     | [Source][207] / [Tests][208] |
+| closest-point               | `let point = anyGeometry.closestPoint(to: otherGeometry)`                                                                             |     | [Source][312] / [Tests][313] |
 | clusters-dbscan             | `let result = featureCollection.dbscanClusters(maxDistance: 100.0, minPoints: 3)`                                                     |     | [Source][156] / [Tests][157] |
 | clusters-kmeans             | `let result = featureCollection.kmeansClusters(numberOfClusters: 5)`                                                                  |     | [Source][156] / [Tests][157] |
 | collect                     | `let result = polygons.collect(from: points, inProperty: "p", outProperty: "vals")`                                                  |     | [Source][215] / [Tests][216] |
@@ -1486,6 +1487,8 @@ Thomas Rasch, Outdooractive
 [309]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3005Definition.swift
 [310]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3347Definition.swift
 [311]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3978Definition.swift
+[312]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/ClosestPoint.swift
+[313]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ClosestPointTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 
