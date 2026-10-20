@@ -73,9 +73,10 @@ enum SymmetricDifference {
             : polygons.map { $0.projected(to: .epsg3857) }
 
         // polygon[0...] = A (self), polygon[remaining] = B (other)
-        let boundaryTest = Overlay.makeBoundaryTest { point, _ in
-            let inA = polygons3857[0].contains(point)
-            let inB = polygons3857.dropFirst().contains { $0.contains(point) }
+        let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
+            guard let first = polygons.first else { return false }
+            let inA = first.contains(point)
+            let inB = polygons.dropFirst().contains { $0.contains(point) }
             return inA != inB
         }
 

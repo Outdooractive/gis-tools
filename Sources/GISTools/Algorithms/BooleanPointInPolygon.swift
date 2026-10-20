@@ -31,28 +31,28 @@ extension Ring {
             coordinatesCount -= 1
         }
 
-        // Detect antimeridian crossing (degree-based projections only): check if any edge
-        // jumps more than 180° in longitude, which indicates the ring wraps
-        // across ±180°. For projected systems (3857, 4978) the X values are
-        // in meters where a >180 jump is just a long edge.
+        // Detect antimeridian crossing for projections with a wraparound
+        // horizontal axis (EPSG:4326 at ±180°, EPSG:3857 at ±originShift).
+        // An edge jump larger than the half-width but smaller than twice the
+        // half-width indicates that the ring wraps around the seam. For
+        // projections without a wraparound axis the X values are just long
+        // edges and no adjustment is applied.
         var crossesAntimeridian = false
-        if projection.isGeographic {
+        if let wraparoundExtent = projection.wraparoundExtent {
             for i in 0 ..< coordinatesCount {
                 let j = (i + coordinatesCount - 1) % coordinatesCount
                 let dLon = snappedCoordinates[i].longitude - snappedCoordinates[j].longitude
-                // Edge jumps between 180° and 360° indicate antimeridian crossing.
-                // An edge with exactly 360° (e.g. world polygon from -180 to 180)
-                // spans the full globe and does NOT cross.
-                if abs(dLon) > 180.0, abs(dLon) < 360.0 {
+                if abs(dLon) > wraparoundExtent, abs(dLon) < (2.0 * wraparoundExtent) {
                     crossesAntimeridian = true
                     break
                 }
             }
         }
 
+        let wraparoundWidth = 2.0 * (projection.wraparoundExtent ?? 0.0)
         var testLon = coordinate.longitude
         if crossesAntimeridian {
-            testLon = testLon < 0 ? testLon + 360.0 : testLon
+            testLon = testLon < 0.0 ? testLon + wraparoundWidth : testLon
         }
 
         var j = coordinatesCount - 1
@@ -67,8 +67,8 @@ extension Ring {
             let yj = snappedCoordinates[j].latitude
 
             if crossesAntimeridian {
-                xi = xi < 0 ? xi + 360.0 : xi
-                xj = xj < 0 ? xj + 360.0 : xj
+                xi = xi < 0.0 ? xi + wraparoundWidth : xi
+                xj = xj < 0.0 ? xj + wraparoundWidth : xj
             }
 
             let onBoundary = (coordinate.latitude * (xi - xj) + yi * (xj - testLon) + yj * (testLon - xi) == 0.0)
@@ -171,13 +171,13 @@ extension Polygon {
             // Bounding box doesn't contain the point. If the polygon crosses the
             // antimeridian, the point may still be inside the wrapped side.
             if let outerRing = snappedSelf.outerRing,
-               projection.isGeographic
+               let wraparoundExtent = projection.wraparoundExtent
             {
                 let coords = outerRing.coordinates
                 var crossesAM = false
                 for i in 1 ..< coords.count {
                     let dLon = coords[i].longitude - coords[i - 1].longitude
-                    if abs(dLon) > 180.0, abs(dLon) < 360.0 {
+                    if abs(dLon) > wraparoundExtent, abs(dLon) < (2.0 * wraparoundExtent) {
                         crossesAM = true
                         break
                     }

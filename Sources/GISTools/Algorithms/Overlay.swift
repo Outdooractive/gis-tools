@@ -29,6 +29,35 @@ enum Overlay {
         let distanceAlong: Double
     }
 
+    /// A coordinate frame in which no ring crosses the wraparound axis.
+    /// Overlay operates on these polygons and wraps the result back afterwards.
+    struct AntimeridianFrame {
+        let polygons: [Polygon]
+        let width: Double?
+        let extent: Double?
+
+        func denormalize(_ result: MultiPolygon) -> MultiPolygon {
+            guard let width, let extent else { return result }
+
+            let polygons = result.polygons.map { polygon in
+                let rings = polygon.coordinates.map { ring in
+                    ring.map { coordinate in
+                        var x = coordinate.x
+                        while x > extent {
+                            x -= width
+                        }
+                        while x < -extent {
+                            x += width
+                        }
+                        return Overlay.coordinate(coordinate, x: x)
+                    }
+                }
+                return Polygon(unchecked: rings, calculateBoundingBox: false)
+            }
+            return MultiPolygon(unchecked: polygons)
+        }
+    }
+
     // MARK: - Public API
 
     /// Perform a polygon overlay operation.
@@ -36,6 +65,11 @@ enum Overlay {
     /// The overlay algorithm operates on native XY values. Inputs are
     /// expected in EPSG:3857 for consistent meter-scale tolerances
     /// (callers such as ``Union.unionPolygons`` handle projection).
+    ///
+    /// Antimeridian-crossing inputs are unwrapped into a continuous
+    /// coordinate frame before the overlay and wrapped back afterwards. The
+    /// normalized polygons are also passed to `boundaryTest`, so the test
+    /// always sees the same frame as the edges.
     ///
     /// - Parameters:
     ///   - polygons: The input polygons.
@@ -46,9 +80,15 @@ enum Overlay {
         boundaryTest: (Edge, [Polygon]) -> Bool
     ) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
-        guard polygons.count > 1 else { return MultiPolygon(unchecked: polygons) }
 
-        let allEdges = extractEdges(from: polygons)
+        let frame = antimeridianFrame(for: polygons)
+        let normalized = frame.polygons
+
+        guard normalized.count > 1 else {
+            return frame.denormalize(MultiPolygon(unchecked: normalized))
+        }
+
+        let allEdges = extractEdges(from: normalized)
         guard allEdges.isNotEmpty else { return nil }
 
         let intersections = findIntersections(between: allEdges)
@@ -56,7 +96,7 @@ enum Overlay {
         guard splitEdges.isNotEmpty else { return nil }
 
         let boundary = splitEdges.filter { edge in
-            boundaryTest(edge, polygons)
+            boundaryTest(edge, normalized)
         }
         guard boundary.isNotEmpty else { return nil }
 
@@ -67,7 +107,7 @@ enum Overlay {
         let result = assemblePolygons(from: rings)
         guard result.isNotEmpty else { return nil }
 
-        return MultiPolygon(unchecked: result)
+        return frame.denormalize(MultiPolygon(unchecked: result))
     }
 
     // MARK: - Boundary test helpers
@@ -157,6 +197,114 @@ private struct IndexedEdge: BoundingBoxRepresentable {
 
 private extension Overlay {
 
+    // MARK: - Antimeridian normalization
+
+    /// Returns a frame in which no ring crosses the wraparound axis.
+    ///
+    /// Only invoked when at least one ring crosses the seam. Each ring is
+    /// unwrapped by taking the shortest path across the seam, and then every
+    /// polygon is aligned to the first polygon's frame by whole world-width
+    /// shifts. Polygons with a deliberately world-spanning edge are left
+    /// untouched, since cutting them is ambiguous (RFC 7946). Two separate
+    /// polygons on opposite sides of the seam that do not themselves cross it
+    /// are not joined; they are treated as far apart.
+    static func antimeridianFrame(for polygons: [Polygon]) -> AntimeridianFrame {
+        guard let extent = polygons.first?.projection.wraparoundExtent else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let width = 2.0 * extent
+        let hasCrossingRing = polygons.contains { $0.crossesAntimeridian }
+        let hasWorldSpanningEdge = polygons.contains { polygon in
+            polygon.rings.contains { ring in
+                zip(ring.coordinates, ring.coordinates.dropFirst()).contains { pair in
+                    abs(pair.1.x - pair.0.x) >= (width - GISTool.intersectionEpsilon)
+                }
+            }
+        }
+
+        guard hasCrossingRing, !hasWorldSpanningEdge else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let unwrapped = polygons.map { unwrap($0, width: width, extent: extent) }
+        guard let first = unwrapped.first else {
+            return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
+        }
+
+        let reference = centerX(of: first)
+        let aligned = unwrapped.map { polygon in
+            let shift = ((reference - centerX(of: polygon)) / width).rounded() * width
+            return translate(polygon, by: shift)
+        }
+
+        return AntimeridianFrame(polygons: aligned, width: width, extent: extent)
+    }
+
+    static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
+        let rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        return Polygon(unchecked: rings, calculateBoundingBox: false)
+    }
+
+    static func unwrapRing(_ ring: [Coordinate3D], width: Double, extent: Double) -> [Coordinate3D] {
+        guard let first = ring.first else { return ring }
+
+        var result: [Coordinate3D] = [first]
+        var previous = first
+
+        for coordinate in ring.dropFirst() {
+            var x = coordinate.x
+            var dx = x - previous.x
+
+            while dx > extent {
+                x -= width
+                dx = x - previous.x
+            }
+            while dx < -extent {
+                x += width
+                dx = x - previous.x
+            }
+
+            let unwrapped = Self.coordinate(coordinate, x: x)
+            result.append(unwrapped)
+            previous = unwrapped
+        }
+
+        // A ring may end one world-width away from its start after unwrapping.
+        if let last = result.last, result.count > 1 {
+            let worlds = ((last.x - first.x) / width).rounded()
+            if abs(worlds) >= 1.0 {
+                let offset = worlds * width
+                result = result.map { Self.coordinate($0, x: $0.x - offset) }
+            }
+        }
+
+        return result
+    }
+
+    static func centerX(of polygon: Polygon) -> Double {
+        let xs = polygon.allCoordinates.map(\.x)
+        guard let minX = xs.min(), let maxX = xs.max() else { return 0.0 }
+        return (minX + maxX) / 2.0
+    }
+
+    static func translate(_ polygon: Polygon, by offset: Double) -> Polygon {
+        guard offset != 0.0 else { return polygon }
+        let rings = polygon.coordinates.map { ring in
+            ring.map { Self.coordinate($0, x: $0.x + offset) }
+        }
+        return Polygon(unchecked: rings, calculateBoundingBox: false)
+    }
+
+    static func coordinate(_ coordinate: Coordinate3D, x: Double) -> Coordinate3D {
+        Coordinate3D(
+            x: x,
+            y: coordinate.y,
+            z: coordinate.altitude,
+            m: coordinate.m,
+            projection: coordinate.projection)
+    }
+
     // MARK: - Edge extraction
 
     static func extractEdges(from polygons: [Polygon]) -> [Edge] {
@@ -201,22 +349,44 @@ private extension Overlay {
                 let segI = LineSegment(first: edges[i].start, second: edges[i].end)
                 let segJ = LineSegment(first: edges[j].start, second: edges[j].end)
 
-                guard segI.intersects(segJ, epsilon: 0.000000000001) else {
-                    continue
+                // Overlay coordinates are metres. Use a micron-scale tolerance
+                // for near-collinearity: tight enough not to disturb dense
+                // buffer geometry, loose enough to absorb projection rounding
+                // differences between platforms.
+                let tolerance = 0.000001
+
+                // Split each edge at the other edge's endpoints. This covers
+                // collinear overlaps (where there is no single intersection
+                // point) and near-collinear overlaps caused by projection
+                // rounding differences between platforms.
+                for point in [edges[j].start, edges[j].end]
+                    where pointLiesOnEdge(point, edges[i], tolerance: tolerance)
+                {
+                    let dI = distanceAlong(edges[i], at: point)
+                    if dI > splitEps && dI < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: i, distanceAlong: dI))
+                    }
                 }
 
-                guard let raw = segI.intersection(segJ, epsilon: 0.000000000001) else {
-                    continue
+                for point in [edges[i].start, edges[i].end]
+                    where pointLiesOnEdge(point, edges[j], tolerance: tolerance)
+                {
+                    let dJ = distanceAlong(edges[j], at: point)
+                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: point, edgeIndex: j, distanceAlong: dJ))
+                    }
                 }
 
-                let dI = distanceAlong(edges[i], at: raw)
-                if dI > splitEps && dI < 1.0 - splitEps {
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
-                }
+                if let raw = segI.intersection(segJ, epsilon: GISTool.intersectionEpsilon) {
+                    let dI = distanceAlong(edges[i], at: raw)
+                    if dI > splitEps && dI < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
+                    }
 
-                let dJ = distanceAlong(edges[j], at: raw)
-                if dJ > splitEps && dJ < 1.0 - splitEps {
-                    result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
+                    let dJ = distanceAlong(edges[j], at: raw)
+                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                        result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
+                    }
                 }
             }
         }
@@ -232,6 +402,28 @@ private extension Overlay {
             }
         }
         return deduped
+    }
+
+    /// Returns `true` when `point` lies on `edge` within the given tolerance
+    /// (in the edge's coordinate units, i.e. metres for overlay).
+    static func pointLiesOnEdge(
+        _ point: Coordinate3D,
+        _ edge: Edge,
+        tolerance: Double
+    ) -> Bool {
+        let dx = edge.end.x - edge.start.x
+        let dy = edge.end.y - edge.start.y
+        let length = hypot(dx, dy)
+        guard length > 0.0 else { return false }
+
+        let offsetX = point.x - edge.start.x
+        let offsetY = point.y - edge.start.y
+        let cross = abs((offsetX * dy) - (offsetY * dx)) / length
+        guard cross <= tolerance else { return false }
+
+        let dot = (offsetX * dx) + (offsetY * dy)
+        return dot >= (-tolerance * length)
+            && dot <= ((length * length) + (tolerance * length))
     }
 
     /// Returns the signed parameter t along the edge, where t=0 is start and t=1 is end.
@@ -299,13 +491,24 @@ private extension Overlay {
         for i in 0..<edges.count {
             guard !used.contains(i) else { continue }
 
+            let startI = vertexKey(edges[i].start)
+            let endI = vertexKey(edges[i].end)
+
             var merged = false
             for j in (i + 1)..<edges.count {
                 guard !used.contains(j) else { continue }
 
-                if edges[i].start == edges[j].end,
-                   edges[i].end == edges[j].start
-                {
+                let startJ = vertexKey(edges[j].start)
+                let endJ = vertexKey(edges[j].end)
+
+                // Coincident edges from identical (or overlapping) polygons
+                // represent the same boundary; keep only one.
+                if startI == startJ, endI == endJ {
+                    used.insert(j)
+                    continue
+                }
+
+                if startI == endJ, endI == startJ {
                     result.append(edges[i])
                     used.insert(i)
                     used.insert(j)

@@ -30,7 +30,9 @@ Migration:
 | `geometry.contains(coordinate)` (boundary included) | `geometry.covers(coordinate)` |
 
 The old default for `ignoringBoundary` was `false`, i.e. boundary-inclusive.
-That behaviour is now `covers(_:)`.
+That behaviour is now `covers(_:)`. The same split applies to geometry-to-
+geometry calls: `contains(_:)` is interior-only, `covers(_:)` is the
+boundary-inclusive predicate.
 
 #### Hole boundaries
 
@@ -41,15 +43,46 @@ boundary was ignored, and as outside when it was included.
 
 #### Geometry-level predicates
 
-`GeoJson.contains(_:)` / `GeoJson.covers(_:)` for line and polygon operands
-still use the previous boundary-inclusive implementation; only the point
-overloads are aligned in this release. The interior-only/boundary-inclusive
-split for the remaining geometry pairs is planned as a follow-up, together
-with segment-aware coverage checks.
+`GeoJson.contains(_:)` now implements OGC `ST_Contains`: the receiver must
+cover the other geometry and their interiors must intersect. `covers(_:)` is
+the boundary-inclusive predicate and no longer delegates to `contains`.
+
+Coverage is segment-aware: a segment is split at its intersections with the
+container's boundaries and every sub-segment is tested, so concave containers,
+holes and lines crossing a notch are handled correctly. Line boundaries follow
+OGC rules (endpoints are boundary, not interior; MultiLineStrings use the
+mod-2 rule).
+
+The predicates operate in the receiver's projection and project the other
+geometry into it. Antimeridian-crossing geometries are cut at ±180° first.
+
+#### Antimeridian overlay support
+
+Overlay operations (intersection, union, difference, symmetric difference)
+now unwrap antimeridian-crossing polygons into a continuous frame before
+computing, and wrap the result back afterwards. The normalized polygons are
+also passed to the overlay boundary test, so edges and containment checks
+always use the same frame.
+
+Point-in-polygon wraps at the projection's `wraparoundExtent` (EPSG:4326 at
+±180°, EPSG:3857 at ±`originShift`), so raw crossing polygons now work in
+Web Mercator as well. Polygons with a deliberately world-spanning edge are
+left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
 - Points on a polygon hole boundary are now reported as boundary points
   instead of being treated as inside the hole (or outside the polygon),
   matching JTS/GEOS and OGC (#257).
+- Geometry-level `contains` no longer treats boundary points of B as interior
+  points of A; `covers` remains boundary-inclusive.
+- Coverage and containment now detect segments that leave a concave container
+  or cross a hole, instead of only checking vertices.
+- Overlaying identical antimeridian-crossing polygons no longer emits both
+  copies of each coincident edge, which previously produced a ring and an
+  identical hole.
+- Overlay now splits collinear and near-collinear overlapping edges at each
+  other's endpoints, and matches edges with the same quantized vertex keys as
+  ring assembly, so unions of polygons that share part of an edge produce
+  closed rings on all platforms.
 
