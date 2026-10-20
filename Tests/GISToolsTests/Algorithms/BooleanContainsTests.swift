@@ -821,6 +821,50 @@ struct BooleanContainsTests {
         #expect(polygon.contains(chord))
     }
 
+    // Antimeridian-crossing container with an antimeridian-crossing hole.
+    @Test
+    func antimeridianPolygonWithHoleContains() throws {
+        let container = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 170.0),
+                Coordinate3D(latitude: 0.0, longitude: -170.0),
+                Coordinate3D(latitude: 20.0, longitude: -170.0),
+                Coordinate3D(latitude: 20.0, longitude: 170.0),
+                Coordinate3D(latitude: 0.0, longitude: 170.0),
+            ],
+            [
+                Coordinate3D(latitude: 5.0, longitude: 175.0),
+                Coordinate3D(latitude: 5.0, longitude: -175.0),
+                Coordinate3D(latitude: 15.0, longitude: -175.0),
+                Coordinate3D(latitude: 15.0, longitude: 175.0),
+                Coordinate3D(latitude: 5.0, longitude: 175.0),
+            ],
+        ]))
+        let aboveHole = try #require(Polygon([[
+            Coordinate3D(latitude: 16.0, longitude: 176.0),
+            Coordinate3D(latitude: 16.0, longitude: -176.0),
+            Coordinate3D(latitude: 19.0, longitude: -176.0),
+            Coordinate3D(latitude: 19.0, longitude: 176.0),
+            Coordinate3D(latitude: 16.0, longitude: 176.0),
+        ]]))
+        let aroundHole = try #require(Polygon([[
+            Coordinate3D(latitude: 3.0, longitude: 173.0),
+            Coordinate3D(latitude: 3.0, longitude: -173.0),
+            Coordinate3D(latitude: 17.0, longitude: -173.0),
+            Coordinate3D(latitude: 17.0, longitude: 173.0),
+            Coordinate3D(latitude: 3.0, longitude: 173.0),
+        ]]))
+        let throughHole = try #require(LineString([
+            Coordinate3D(latitude: 10.0, longitude: 172.0),
+            Coordinate3D(latitude: 10.0, longitude: -172.0),
+        ]))
+
+        #expect(container.contains(aboveHole))
+        #expect(container.contains(aroundHole) == false)
+        #expect(container.covers(throughHole) == false)
+        #expect(container.contains(throughHole) == false)
+    }
+
     // MARK: - Empty / degenerate
 
     // Empty polygon contains nothing.

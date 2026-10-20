@@ -635,6 +635,112 @@ struct BooleanPointInPolygonTests {
 
     // MARK: - Antimeridian
 
+    // A 20°×20° polygon crossing ±180° with a 10°×10° hole that also crosses it.
+    private func antimeridianPolygonWithHole() throws -> Polygon {
+        try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 170.0),
+                Coordinate3D(latitude: 0.0, longitude: -170.0),
+                Coordinate3D(latitude: 20.0, longitude: -170.0),
+                Coordinate3D(latitude: 20.0, longitude: 170.0),
+                Coordinate3D(latitude: 0.0, longitude: 170.0),
+            ],
+            [
+                Coordinate3D(latitude: 5.0, longitude: 175.0),
+                Coordinate3D(latitude: 5.0, longitude: -175.0),
+                Coordinate3D(latitude: 15.0, longitude: -175.0),
+                Coordinate3D(latitude: 15.0, longitude: 175.0),
+                Coordinate3D(latitude: 5.0, longitude: 175.0),
+            ],
+        ]))
+    }
+
+    // Hole boundaries of an antimeridian-crossing polygon are classified
+    // exactly like outer boundaries in EPSG:4326.
+    @Test
+    func antimeridianHoleBoundary4326() async throws {
+        let polygon = try antimeridianPolygonWithHole()
+
+        let interior = Coordinate3D(latitude: 2.0, longitude: 180.0)
+        let outerBoundary = Coordinate3D(latitude: 0.0, longitude: 180.0)
+        let holeEdge = Coordinate3D(latitude: 5.0, longitude: 180.0)
+        let holeVertex = Coordinate3D(latitude: 5.0, longitude: 175.0)
+        let holeVertexWest = Coordinate3D(latitude: 10.0, longitude: -175.0)
+        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 180.0)
+        let exterior = Coordinate3D(latitude: 10.0, longitude: 160.0)
+
+        // .boundary includes both +180 and -180 representations.
+        #expect(polygon.locate(Coordinate3D(latitude: 5.0, longitude: -180.0)) == .boundary)
+        #expect(polygon.locate(outerBoundary) == .boundary)
+        #expect(polygon.locate(holeEdge) == .boundary)
+        #expect(polygon.locate(holeVertex) == .boundary)
+        #expect(polygon.locate(holeVertexWest) == .boundary)
+        #expect(polygon.locate(interior) == .interior)
+        #expect(polygon.locate(holeInterior) == .exterior)
+        #expect(polygon.locate(exterior) == .exterior)
+
+        // OGC covers: boundaries count.
+        #expect(polygon.covers(outerBoundary))
+        #expect(polygon.covers(holeEdge))
+        #expect(polygon.covers(holeVertex))
+        #expect(polygon.covers(holeVertexWest))
+        #expect(polygon.covers(interior))
+        #expect(polygon.covers(holeInterior) == false)
+        #expect(polygon.covers(exterior) == false)
+
+        // OGC contains: interior only.
+        #expect(polygon.contains(interior))
+        #expect(polygon.contains(outerBoundary) == false)
+        #expect(polygon.contains(holeEdge) == false)
+        #expect(polygon.contains(holeVertex) == false)
+        #expect(polygon.contains(holeVertexWest) == false)
+        #expect(polygon.contains(holeInterior) == false)
+        #expect(polygon.contains(exterior) == false)
+    }
+
+    // Hole semantics in EPSG:3857. A raw antimeridian-crossing polygon is first
+    // cut at ±180° (the supported representation for projected CRSs), then
+    // projected to Web Mercator.
+    @Test
+    func antimeridianHole3857() throws {
+        let parts = try antimeridianPolygonWithHole().cutAtAntimeridian()
+        let eastPart = try #require(
+            parts.features
+                .compactMap { $0.geometry as? Polygon }
+                .first { ($0.outerRing?.coordinates.first?.longitude ?? 0.0) >= 0.0 })
+        let polygon = eastPart.projected(to: .epsg3857)
+
+        let interior = Coordinate3D(latitude: 2.0, longitude: 178.0).projected(to: .epsg3857)
+        let outerBoundary = Coordinate3D(latitude: 0.0, longitude: 180.0).projected(to: .epsg3857)
+        let holeBoundary = Coordinate3D(latitude: 5.0, longitude: 180.0).projected(to: .epsg3857)
+        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 178.0).projected(to: .epsg3857)
+        let exterior = Coordinate3D(latitude: 10.0, longitude: 160.0).projected(to: .epsg3857)
+
+        #expect(polygon.locate(interior) == .interior)
+        #expect(polygon.locate(outerBoundary) == .boundary)
+        #expect(polygon.locate(holeBoundary) == .boundary)
+        #expect(polygon.locate(holeInterior) == .exterior)
+        #expect(polygon.locate(exterior) == .exterior)
+
+        #expect(polygon.covers(holeBoundary))
+        #expect(polygon.contains(holeBoundary) == false)
+    }
+
+    // Hole semantics for an antimeridian-crossing polygon in EPSG:4978.
+    // Boundary points are not tested because the projection round-trip does
+    // not preserve straight edges exactly (see #258).
+    @Test
+    func antimeridianHole4978() throws {
+        let polygon = try antimeridianPolygonWithHole().projected(to: .epsg4978)
+        let interior = Coordinate3D(latitude: 2.0, longitude: 180.0).projected(to: .epsg4978)
+        let holeInterior = Coordinate3D(latitude: 10.0, longitude: 180.0).projected(to: .epsg4978)
+        let exterior = Coordinate3D(latitude: 10.0, longitude: 160.0).projected(to: .epsg4978)
+
+        #expect(polygon.locate(interior) == .interior)
+        #expect(polygon.locate(holeInterior) == .exterior)
+        #expect(polygon.locate(exterior) == .exterior)
+    }
+
     // Point in polygon near antimeridian.
     @Test
     func antimeridian() async throws {
