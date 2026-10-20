@@ -374,6 +374,15 @@ struct SimplifyTests {
         #expect(simplifiedAtGreenwich.coordinates.count > 50)
         #expect(simplifiedAtMinus90.coordinates.count == simplifiedAtGreenwich.coordinates.count)
         #expect(simplifiedAtMinus111.coordinates.count == simplifiedAtGreenwich.coordinates.count)
+
+        // The degree conversion only applies to geographic projections;
+        // planar projections (e.g. EPSG:3857) pass meters through directly.
+        let planarLine = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 250.0, y: 250.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 0.0, projection: .epsg3857),
+        ]))
+        #expect(planarLine.simplified(tolerance: 100.0).projection == .epsg3857)
     }
 
 }
