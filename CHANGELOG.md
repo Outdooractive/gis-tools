@@ -73,8 +73,25 @@ properties and foreign members instead of being dropped.
 - Geometry algorithms return `nil`, `false` or empty results for unlocated
   features.
 
-Strict parsing diagnostics for malformed features and coordinates are a
-follow-up.
+Strict parsing diagnostics are available through ``GeoJsonParser``.
+
+### Added
+
+- ``GeoJsonParser`` for non-silent parsing:
+  - `.lenient` returns the parsed object plus every malformed or skipped
+    element as a ``GeoJsonParseIssue`` with a JSON Pointer path.
+  - `.strict` throws the first ``GeoJsonParsingError``.
+  - Validates Feature and FeatureCollection members, geometry types, position
+    arrays (including altitude/`m` nulls), LineString/MultiPoint minimum
+    counts, polygon rings and nested GeometryCollections.
+  - Works from `Data`, `String`, or an already-parsed JSON object.
+  - Typed overloads (`GeoJsonParser.parse(..., as: FeatureCollection.self)`)
+    return the requested concrete type and report a type mismatch as an issue.
+  - `FeatureCollection(jsonData:issues:)`, `(jsonString:issues:)` and
+    `(json:issues:)` provide the existing normalization behaviour with
+    diagnostics.
+  - The existing `init?(json:)` initializers remain as the silent, lenient
+    convenience API.
 
 #### Antimeridian overlay support
 
