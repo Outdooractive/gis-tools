@@ -367,8 +367,9 @@ public enum Simplify {
 
         switch firstCoordinate.projection.kind {
         case .geographic:
-            let oneDegreeLongitudeDistanceInMeters: CLLocationDistance = (cos(firstCoordinate.latitude * .pi / 180.0) * 111.0) * 1000.0
-            let toleranceInDegrees: CLLocationDegrees = toleranceInMeters / oneDegreeLongitudeDistanceInMeters
+            let toleranceInDegrees = firstCoordinate.degrees(
+                fromMeters: toleranceInMeters
+            ).longitudeDegrees
 
             return simplify(
                 coordinates: coordinates,
