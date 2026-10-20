@@ -267,6 +267,7 @@ private func runPredicates() {
 
     for vertices in [1_000, 10_000, 100_000] {
         let polygon = makeCirclePolygon(vertices: vertices)
+        let prepared = polygon.prepared()
         let suffix = "\(vertices)"
 
         run("predicate/contains-inside/\(suffix)", iterations: 5) {
@@ -281,15 +282,53 @@ private func runPredicates() {
         run("predicate/locate-boundary/\(suffix)", iterations: 5) {
             _ = polygon.locate(boundary)
         }
+        run("predicate/prepared-contains-inside/\(suffix)", iterations: 5) {
+            _ = prepared.contains(inside)
+        }
+        run("predicate/prepared-locate-boundary/\(suffix)", iterations: 5) {
+            _ = prepared.locate(boundary)
+        }
+
+        var random = SeededRandom(seed: 31)
+        let queryPoints = (0 ..< 1_000).map { _ in
+            Coordinate3D(
+                latitude: random.next(in: -15.0 ... 15.0),
+                longitude: random.next(in: -15.0 ... 15.0))
+        }
+
+        run("predicate/contains-repeated/\(suffix)", iterations: 3) {
+            for point in queryPoints {
+                _ = polygon.contains(point)
+            }
+        }
+        run("predicate/prepared-contains-repeated/\(suffix)", iterations: 3) {
+            for point in queryPoints {
+                _ = prepared.contains(point)
+            }
+        }
     }
 
     let a = makeCirclePolygon(vertices: 1_000)
     let b = makeCirclePolygon(vertices: 1_000, radius: 5.0)
+    let preparedA = a.prepared()
     run("predicate/polygon-contains-polygon/1000", iterations: 3) {
         _ = a.contains(b)
     }
+    run("predicate/prepared-polygon-contains-polygon/1000", iterations: 3) {
+        _ = preparedA.contains(b)
+    }
     run("predicate/polygon-intersects-polygon/1000", iterations: 3) {
         _ = a.intersects(b)
+    }
+
+    let largeA = makeCirclePolygon(vertices: 10_000)
+    let largeB = makeCirclePolygon(vertices: 10_000, radius: 5.0)
+    let preparedLargeA = largeA.prepared()
+    run("predicate/polygon-contains-polygon/10000", iterations: 3) {
+        _ = largeA.contains(largeB)
+    }
+    run("predicate/prepared-polygon-contains-polygon/10000", iterations: 3) {
+        _ = preparedLargeA.contains(largeB)
     }
 }
 

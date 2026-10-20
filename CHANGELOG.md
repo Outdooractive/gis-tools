@@ -94,6 +94,9 @@ Migration:
 
 ### Added
 
+- ``PreparedPolygon`` and `Polygon/MultiPolygon.prepared()` for repeated
+  point and containment queries. The prepared index supports holes,
+  antimeridian crossing, all projections and grid snapping (#281).
 - `GeoJson.closestPoint(to:)` returns the point on the receiver closest to
   another geometry, following OGC/PostGIS `ST_ClosestPoint` (#287).
 - ``GeoJsonParser`` for non-silent parsing:
@@ -145,6 +148,11 @@ left unchanged; that case is ambiguous per RFC 7946.
   of building a full `JSONValue` tree first. A 100k-vertex polygon drops from
   1.55 s to about **0.04 s**; the `coders` benchmark now covers every geometry
   type and a large property set (#280).
+- Prepared point-in-polygon uses latitude-bucket ring indexes. Repeated
+  lookups improve by about 6× at 1k vertices, 50× at 10k and 200× at 100k.
+  Polygon coverage also reuses prepared point lookups and an R-tree over the
+  container boundary segments, reducing 1k/1k containment from about 76 ms to
+  about 10 ms (#281).
 - Buffer boundary classification now uses a uniform grid with prepared
   point-in-polygon tests, split-point deduplication is linear per edge, and
   boundary edges are merged in one pass. A 1k-vertex line or polygon buffers

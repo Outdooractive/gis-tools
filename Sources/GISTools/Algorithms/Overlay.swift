@@ -63,12 +63,12 @@ enum Overlay {
 
         let polygons: [Polygon]
 
-        private let prepared: [PreparedPolygon]
+        private let prepared: [OverlayPreparedPolygon]
         private let grid: Grid
 
         init(_ polygons: [Polygon]) {
             self.polygons = polygons
-            self.prepared = polygons.map { PreparedPolygon(polygon: $0) }
+            self.prepared = polygons.map { OverlayPreparedPolygon(polygon: $0) }
             self.grid = Grid(polygons: polygons)
         }
 
@@ -839,10 +839,10 @@ private extension Overlay {
 // MARK: - Prepared point-in-polygon
 
 /// A point-in-polygon index that buckets ring edges by latitude.
-private struct PreparedPolygon: Sendable {
+private struct OverlayPreparedPolygon: Sendable {
 
-    private let outerRing: PreparedRing?
-    private let innerRings: [PreparedRing]
+    private let outerRing: OverlayPreparedRing?
+    private let innerRings: [OverlayPreparedRing]
     /// Polygons with a world-spanning edge are left unchanged by antimeridian
     /// normalization and need the robust wraparound-aware containment test.
     private let fallback: Polygon?
@@ -856,8 +856,8 @@ private struct PreparedPolygon: Sendable {
         }
 
         fallback = nil
-        outerRing = polygon.outerRing.map { PreparedRing($0.coordinates) }
-        innerRings = polygon.innerRings?.map { PreparedRing($0.coordinates) } ?? []
+        outerRing = polygon.outerRing.map { OverlayPreparedRing($0.coordinates) }
+        innerRings = polygon.innerRings?.map { OverlayPreparedRing($0.coordinates) } ?? []
     }
 
     func contains(_ point: Coordinate3D) -> Bool {
@@ -878,7 +878,7 @@ private struct PreparedPolygon: Sendable {
 
 }
 
-private struct PreparedRing: Sendable {
+private struct OverlayPreparedRing: Sendable {
 
     private let coordinates: [Coordinate3D]
     private let edgeCount: Int

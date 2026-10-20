@@ -974,6 +974,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | boolean-overlap             | `lineString1.isOverlapping(with: lineString2)`                                                                                        |     | [Source][52] / [Tests][53]   |
 | boolean-parallel            | `lineString1.isParallel(to: lineString2)`                                                                                             |     | [Source][54] / [Tests][55]   |
 | boolean-point-in-polygon    | `polygon.contains(Coordinate3D(…))` / `covers(…)` / `locate(…)`                                                                       |     | [Source][56] / [Tests][134]  |
+| prepared-polygon            | `let prepared = polygon.prepared()` / `prepared.contains(Coordinate3D(…))`                                                           |     | [Source][314] / [Tests][315] |
 | boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
 | boolean-touches             | `anyGeometry.touches(other)`                                                                                                          |     | [Source][159] / [Tests][160] |
 | boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
@@ -1489,6 +1490,8 @@ Thomas Rasch, Outdooractive
 [311]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Projections/Definitions/Epsg3978Definition.swift
 [312]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/ClosestPoint.swift
 [313]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ClosestPointTests.swift
+[314]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PreparedPolygon.swift
+[315]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PreparedPolygonTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 

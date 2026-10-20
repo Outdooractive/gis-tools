@@ -627,7 +627,7 @@ extension FeatureCollection {
 // MARK: - Robust orientation
 
 /// Robust orientation and point-in-ring predicates, following JTS/GEOS.
-private enum PointInRing {
+enum PointInRing {
 
     /// Returns `1` if `p1 → p2 → q` turns counter-clockwise, `-1` if it turns
     /// clockwise, and `0` when the points are collinear.
