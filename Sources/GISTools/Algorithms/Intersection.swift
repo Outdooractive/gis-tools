@@ -74,7 +74,7 @@ enum Intersection {
             : polygons.map { $0.projected(to: .epsg3857) }
 
         let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
-            polygons.allSatisfy { $0.contains(point) }
+            polygons.containsAll(point)
         }
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {
             return nil
