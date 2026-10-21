@@ -13,7 +13,7 @@ extension LineString {
     /// a negative distance to the left side. The offset is computed in
     /// geographic (lon/lat) space using a degree approximation.
     ///
-    /// - Parameter distance: Distance to offset the line (in meters)
+    /// - Parameter distance: Distance to offset the line, in meters.
     /// - Returns: The offset line, or `nil` if the line has fewer than two coordinates
     public func offset(
         by distance: CLLocationDistance
@@ -85,7 +85,7 @@ extension MultiLineString {
 
     /// Takes a multi-line and returns a multi-line with each line offset by the specified distance.
     ///
-    /// - Parameter distance: Distance to offset each line (in meters)
+    /// - Parameter distance: Distance to offset each line, in meters.
     /// - Returns: The offset multi-line, or `nil` if the result could not be constructed
     public func offset(
         by distance: CLLocationDistance

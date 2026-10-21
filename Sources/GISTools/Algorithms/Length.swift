@@ -12,6 +12,14 @@ extension LineSegment {
         first.distance(from: second)
     }
 
+    /// Returns the segment's length converted to the requested unit.
+    ///
+    /// - Parameter unit: The target length unit
+    /// - Returns: The converted length, or `nil` if `unit` is not a length unit
+    public func length(in unit: GISTool.Unit) -> Double? {
+        GISTool.convert(length: length, from: .meters, to: unit)
+    }
+
 }
 
 extension GeoJson {
@@ -27,6 +35,14 @@ extension GeoJson {
     /// Everything else: returns the length of the contained geometries
     public var length: CLLocationDistance {
         lineSegments.reduce(0.0) { $0 + $1.length }
+    }
+
+    /// Returns the receiver's length converted to the requested unit.
+    ///
+    /// - Parameter unit: The target length unit
+    /// - Returns: The converted length, or `nil` if `unit` is not a length unit
+    public func length(in unit: GISTool.Unit) -> Double? {
+        GISTool.convert(length: length, from: .meters, to: unit)
     }
 
 }

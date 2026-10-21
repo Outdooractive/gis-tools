@@ -59,7 +59,7 @@ public struct Graph: Sendable {
 
         /// `tolerance` is in meters. Cell size is chosen so a `tolerance`-radius
         /// search is covered by the 3x3 neighborhood of cells.
-        init(tolerance: Double, referenceLatitude: Double) {
+        init(tolerance: CLLocationDistance, referenceLatitude: Double) {
             self.referenceLatitude = referenceLatitude.clamped(to: -89.0 ... 89.0)
             // meters -> degrees. 1 degree latitude ~= 111_320 m.
             cellLatDegrees = max(tolerance / 111_320.0, 0.0000001)

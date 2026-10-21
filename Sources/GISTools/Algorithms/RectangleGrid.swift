@@ -9,8 +9,8 @@ extension BoundingBox {
 
     /// Creates a grid of rectangular polygons.
     ///
-    /// - Parameter cellWidth: Width of each cell in meters (or native units for 3857/4978/noSRID).
-    /// - Parameter cellHeight: Height of each cell in meters (or native units for 3857/4978/noSRID).
+    /// - Parameter cellWidth: Width of each cell in meters for geographic CRS, or native units for EPSG:3857/4978/noSRID.
+    /// - Parameter cellHeight: Height of each cell in meters for geographic CRS, or native units for EPSG:3857/4978/noSRID.
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of rectangular polygon features.

@@ -136,7 +136,7 @@ extension GeoJson {
     ///            appear in the result only once.
     public func overlappingSegments(
         tolerance: CLLocationDistance,
-        segmentLength: Double? = nil,
+        segmentLength: CLLocationDistance? = nil,
         gridSize: Double? = nil
     ) -> MultiLineString? {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
@@ -248,7 +248,7 @@ extension GeoJson {
     /// - Returns: The length of all segments that overlap within `tolerance`.
     public func estimatedOverlap(
         tolerance: CLLocationDistance,
-        segmentLength: Double? = nil,
+        segmentLength: CLLocationDistance? = nil,
         gridSize: Double? = nil
     ) -> Double {
         guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength, gridSize: gridSize) else { return 0.0 }

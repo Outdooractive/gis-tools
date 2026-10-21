@@ -80,3 +80,45 @@ struct LengthTests {
     }
 
 }
+
+    // MARK: - Unit conversion
+
+    // Converts segment and geometry lengths through GISTool.convert.
+    @Test
+    func lengthInUnits() async throws {
+        let segment = LineSegment(
+            first: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            second: Coordinate3D(latitude: 0.0, longitude: 1.0))
+
+        let kilometers = try #require(segment.length(in: .kilometers))
+        let miles = try #require(segment.length(in: .miles))
+        #expect(abs(kilometers - (segment.length / 1_000.0)) < 0.000001)
+        #expect(abs(miles - GISTool.convert(length: segment.length, from: .meters, to: .miles)!) < 0.000001)
+        #expect(segment.length(in: .acres) == nil)
+
+        let lineString = try #require(LineString([segment.first, segment.second]))
+        #expect(abs(try #require(lineString.length(in: .kilometers)) - (lineString.length / 1_000.0)) < 0.000001)
+
+        let polygon = try #require(Polygon([[
+            segment.first,
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            segment.first,
+        ]]))
+        #expect(abs(try #require(polygon.length(in: .kilometers)) - (polygon.length / 1_000.0)) < 0.000001)
+        let degrees = GISTool.convert(length: polygon.length, from: .meters, to: .degrees)!
+        #expect(abs(try #require(polygon.length(in: .degrees)) - degrees) < 0.000001)
+    }
+
+    // Length conversion preserves the receiver's projection semantics.
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func lengthInUnitsAcrossProjections(projection: Projection) throws {
+        let lineString = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: projection),
+            Coordinate3D(x: 10.0, y: 0.0, projection: projection),
+        ]))
+
+        #expect(abs(try #require(lineString.length(in: .meters)) - lineString.length) < 0.000001)
+        #expect(abs(try #require(lineString.length(in: .kilometers)) - (lineString.length / 1_000.0)) < 0.000001)
+    }

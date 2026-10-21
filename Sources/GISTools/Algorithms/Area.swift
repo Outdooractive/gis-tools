@@ -30,6 +30,18 @@ extension Polygon {
         return outerArea
     }
 
+    /// Returns the polygon's area converted to the requested unit.
+    ///
+    /// The receiver's existing ``area`` value is in square meters. Use
+    /// ``GISTool/Unit/meters`` for square meters and
+    /// ``GISTool/Unit/kilometers`` for square kilometers.
+    ///
+    /// - Parameter unit: The target area unit
+    /// - Returns: The converted area, or `nil` if `unit` is not an area unit
+    public func area(in unit: GISTool.Unit) -> Double? {
+        GISTool.convert(area: area, from: .meters, to: unit)
+    }
+
 }
 
 extension MultiPolygon {
@@ -43,6 +55,14 @@ extension MultiPolygon {
     /// - Returns: The sum of all *Polygon*s areas, in square meters.
     public var area: Double {
         polygons.reduce(0.0, { $0 + $1.area })
+    }
+
+    /// Returns the multi-polygon's area converted to the requested unit.
+    ///
+    /// - Parameter unit: The target area unit
+    /// - Returns: The converted area, or `nil` if `unit` is not an area unit
+    public func area(in unit: GISTool.Unit) -> Double? {
+        GISTool.convert(area: area, from: .meters, to: unit)
     }
 
 }
@@ -128,6 +148,24 @@ extension Ring {
         }
 
         return area
+    }
+
+    /// Returns the ring's signed area converted to the requested unit.
+    ///
+    /// The sign follows ``area``: positive for clockwise rings and negative
+    /// for counter-clockwise rings.
+    ///
+    /// - Parameter unit: The target area unit
+    /// - Returns: The converted area, or `nil` if `unit` is not an area unit
+    public func area(in unit: GISTool.Unit) -> Double? {
+        let signedArea = area
+        guard let converted = GISTool.convert(
+            area: abs(signedArea),
+            from: .meters,
+            to: unit)
+        else { return nil }
+
+        return signedArea < 0.0 ? -converted : converted
     }
 
 }

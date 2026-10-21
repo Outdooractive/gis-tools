@@ -9,7 +9,7 @@ extension BoundingBox {
 
     /// Creates a grid of points within the bounding box.
     ///
-    /// - Parameter cellSide: Spacing between points in meters (or native units for 3857/4978/noSRID).
+    /// - Parameter cellSide: Spacing between points in meters for geographic CRS, or native units for EPSG:3857/4978/noSRID.
     /// - Parameter mask: If provided, only points intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of point features.

@@ -14,7 +14,7 @@ extension BoundingBox {
     /// in the same way (meter-space grid). ``Projection/noSRID`` is not supported
     /// because the coordinate units are unknown.
     ///
-    /// - Parameter cellSide: Length of the side of each hexagon in meters.
+    /// - Parameter cellSide: Length of the side of each hexagon in meters for geographic CRS, or native units for EPSG:3857/4978.
     /// - Parameter triangles: If `true`, returns triangles instead of hexagons (default `false`).
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
     ///
