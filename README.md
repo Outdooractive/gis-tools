@@ -1070,9 +1070,9 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | tesselate                   | `let triangles = polygon.tesselated()`                                                                                               |     | [Source][221] / [Tests][222] |
 | tin-to-point-cloud          | `let cloud = tin.tinToPointCloud()`                                                                                                  |     | [Source][201] / [Tests][202] |
 | transform-coordinates       | `let transformed = anyGeometry.transformCoordinates({ $0 })`                                                                          |     | [Source][114] / [Tests][115] |
-| transform-rotate            | `let transformed = anyGeometry. transformedRotate(angle: 25.0, pivot: Coordinate3D(…))`                                               |     | [Source][116] / [Tests][117] |
-| transform-scale             | `let transformed = anyGeometry. transformedScale(factor: 2.5, anchor: .center)`                                                       |     | [Source][118] / [Tests][119] |
-| transform-translate         | `let transformed = anyGeometry. transformedTranslate(distance: 1000.0, direction: 25.0)`                                              |     | [Source][120] / [Tests][121] |
+| transform-rotate            | `let transformed = anyGeometry.rotated(angle: 25.0, pivot: Coordinate3D(…))`                                                          |     | [Source][116] / [Tests][117] |
+| transform-scale             | `let transformed = anyGeometry.scaled(factor: 2.5, anchor: .center)`                                                                  |     | [Source][118] / [Tests][119] |
+| transform-translate         | `let transformed = anyGeometry.translated(distance: 1000.0, direction: 25.0)`                                                         |     | [Source][120] / [Tests][121] |
 | truncate                    | `let truncated = lineString.truncated(precision: 2, removeAltitude: true)`                                                            |     | [Source][122] / [Tests][123] |
 | union                       | `let combined = polygon.union(with: otherPolygon)`                                                                                     |     | [Source][124] / [Tests][153] |
 | unary-union                 | `let unioned = multiPolygon.unaryUnion()`                                                                                              |     | [Source][245] / [Tests][246] |

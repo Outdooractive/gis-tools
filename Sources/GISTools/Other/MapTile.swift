@@ -346,34 +346,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
     // MARK: - Conversion pixel to meters
 
-    /// Converts pixel coordinates in a given zoom level to a coordinate.
-    @available(*, deprecated, renamed: "GISTool.coordinate(fromPixelX:pixelY:zoom:tileSideLength:projection:)", message: "This method has been moved to the GISTool namespace")
-    public static func pixelCoordinate(
-        pixelX: Double,
-        pixelY: Double,
-        atZoom zoom: Int,
-        tileSideLength: Double = GISTool.tileSideLength,
-        projection: Projection = .epsg4326
-    ) -> Coordinate3D {
-        GISTool.coordinate(
-            fromPixelX: pixelX,
-            pixelY: pixelY,
-            zoom: zoom,
-            tileSideLength: tileSideLength,
-            projection: projection)
-    }
-
     // MARK: - Meters per pixel
-
-    /// Resolution (meters/pixel) for a given zoom level (measured at `latitude`, defaults to the equator).
-    @available(*, deprecated, renamed: "GISTool.metersPerPixel", message: "This method has been moved to the GISTool namespace")
-    public static func metersPerPixel(
-        at zoom: Int,
-        latitude: Double = 0.0, // equator
-        tileSideLength: Double = GISTool.tileSideLength
-    ) -> Double {
-        GISTool.metersPerPixel(atZoom: zoom, latitude: latitude, tileSideLength: tileSideLength)
-    }
 
     /// Resolution (meters/pixel) for a given zoom level measured at the tile center.
     ///

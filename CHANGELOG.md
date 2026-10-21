@@ -102,6 +102,24 @@ The linear-reference `m` value is no longer retained. GeoJSON bounding boxes
 have no `m` member, `asJson` never emitted it, and most construction paths
 already dropped it.
 
+#### Removed deprecated APIs
+
+The deprecated aliases from 2.x have been removed. Use the current names:
+
+| Removed | Replacement |
+|---|---|
+| `transformedTranslate(...)` / `transformTranslate(...)` | `translated(...)` / `translate(...)` |
+| `transformedScale(...)` / `transformScale(...)` | `scaled(...)` / `scale(...)` |
+| `transformedRotate(...)` / `transformRotate(...)` | `rotated(...)` / `rotate(...)` |
+| `MapTile.pixelCoordinate(...)` | `GISTool.coordinate(fromPixelX:...)` |
+| `MapTile.metersPerPixel(at:...)` | `GISTool.metersPerPixel(atZoom:...)` |
+| `GISTool.convertToCoordinate(...)` | `GISTool.coordinate(fromPixelX:...)` |
+| `GISTool.convertToDegrees(...)` | `GISTool.degrees(fromMeters:atLatitude:)` |
+| `BoundingBox(coordinates:paddingKilometers:)` / `(locations:paddingKilometers:)` | `init(coordinates:padding:)` / `init(locations:padding:)` |
+| `BoundingBox.with(padding:)` | `BoundingBox.padded(_:)` |
+| `BoundingBox.expand(...)` | `BoundingBox.expanded(...)` |
+| `BoundingBox.boundingBoxPolygon` | `BoundingBox.boundingBoxGeometry` |
+
 ### Added
 
 - ``PreparedPolygon`` and `Polygon/MultiPolygon.prepared()` for repeated

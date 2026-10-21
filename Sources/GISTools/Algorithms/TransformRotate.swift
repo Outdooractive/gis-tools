@@ -69,36 +69,4 @@ extension GeoJson {
         rotate(angle: angle, pivot: pivot?.coordinate)
     }
 
-    @available(*, deprecated, renamed: "rotated(angle:pivot:)")
-    public func transformedRotate(
-        angle: CLLocationDegrees,
-        pivot: Coordinate3D? = nil
-    ) -> Self {
-        rotated(angle: angle, pivot: pivot)
-    }
-
-    @available(*, deprecated, renamed: "rotated(angle:pivot:)")
-    public func transformedRotate(
-        angle: CLLocationDegrees,
-        pivot: Point? = nil
-    ) -> Self {
-        rotated(angle: angle, pivot: pivot)
-    }
-
-    @available(*, deprecated, renamed: "rotate(angle:pivot:)")
-    public mutating func transformRotate(
-        angle: CLLocationDegrees,
-        pivot: Coordinate3D? = nil
-    ) {
-        rotate(angle: angle, pivot: pivot)
-    }
-
-    @available(*, deprecated, renamed: "rotate(angle:pivot:)")
-    public mutating func transformRotate(
-        angle: CLLocationDegrees,
-        pivot: Point? = nil
-    ) {
-        rotate(angle: angle, pivot: pivot)
-    }
-
 }
