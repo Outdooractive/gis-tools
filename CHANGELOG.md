@@ -153,6 +153,10 @@ left unchanged; that case is ambiguous per RFC 7946.
   Polygon coverage also reuses prepared point lookups and an R-tree over the
   container boundary segments, reducing 1k/1k containment from about 76 ms to
   about 10 ms (#281).
+- Concave hull filters triangle edges using precomputed spherical vectors and
+  assembles the surviving triangle boundary directly instead of unioning every
+  triangle. A 10k-point hull drops from 2.8 s to about **0.12 s**; 1k/10k/50k
+  scaling cases are now in the hull benchmark (#282).
 - Buffer boundary classification now uses a uniform grid with prepared
   point-in-polygon tests, split-point deduplication is linear per edge, and
   boundary edges are merged in one pass. A 1k-vertex line or polygon buffers
