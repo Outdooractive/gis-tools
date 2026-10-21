@@ -8,7 +8,7 @@ struct EllipseTests {
     func ellipse() async throws {
         let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
         let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
         #expect(ellipse.outerRing?.coordinates.count == 65)
     }
 
@@ -31,7 +31,7 @@ struct EllipseTests {
     func rotated() async throws {
         let point = Point(Coordinate3D(latitude: 39.984, longitude: -75.343))
         let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0, angle: 45.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
         #expect(ellipse.outerRing?.coordinates.count == 65)
     }
 
@@ -42,7 +42,7 @@ struct EllipseTests {
     func ellipse3857() async throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
         let ellipse = try #require(point.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
     }
 
     // Tests ellipse generation in EPSG:4978.
@@ -51,7 +51,7 @@ struct EllipseTests {
         let center = Coordinate3D(
             latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let ellipse = try #require(center.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
     }
 
     // Tests ellipse generation with noSRID projection.
@@ -59,7 +59,7 @@ struct EllipseTests {
     func ellipseNoSRID() async throws {
         let center = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let ellipse = try #require(center.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
     }
 
     // MARK: - Antimeridian
@@ -69,7 +69,7 @@ struct EllipseTests {
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
         let ellipse = try #require(point.ellipse(xSemiAxis: 100_000.0, ySemiAxis: 50_000.0))
-        #expect(ellipse.isValid)
+        #expect(ellipse.isStructurallyValid)
     }
 
     // MARK: - Edge cases

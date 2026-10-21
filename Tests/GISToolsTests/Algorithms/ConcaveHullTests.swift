@@ -22,7 +22,7 @@ struct ConcaveHullTests {
 
         #expect(result.polygons.isNotEmpty, "\(fixture.name): hull has no polygons")
         for poly in result.polygons {
-            #expect(poly.isValid, "\(fixture.name): hull polygon is invalid")
+            #expect(poly.isStructurallyValid, "\(fixture.name): hull polygon is invalid")
         }
     }
 
@@ -182,7 +182,7 @@ struct ConcaveHullTests {
             return
         }
         #expect(hull.polygons.count >= 1)
-        #expect(hull.polygons[0].isValid)
+        #expect(hull.polygons[0].isStructurallyValid)
     }
 
     // Validates that `concaveHull(maxEdgeLength:gridSize:)` matches manual pre-snapping.
@@ -259,7 +259,7 @@ struct ConcaveHullTests {
         let hull = try #require(mp.concaveHull(maxEdgeLength: 2_000_000.0))
 
         #expect(hull.polygons.isNotEmpty)
-        #expect(hull.polygons.allSatisfy { $0.isValid })
+        #expect(hull.polygons.allSatisfy { $0.isStructurallyValid })
 
         for point in inputPoints {
             #expect(hull.polygons.contains { $0.covers(point) })

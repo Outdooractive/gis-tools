@@ -6,6 +6,20 @@ All notable changes to this project are documented in this file.
 
 ### Breaking changes
 
+#### Validity semantics
+
+`isValid` now means OGC/PostGIS topological validity, not merely “enough
+coordinates to make sense”. The previous structural check is available as
+`isStructurallyValid`.
+
+New properties:
+
+- `isValidReason` explains the first topological validity failure.
+- `isSimple` reports whether a geometry has no self-intersections.
+
+This also changes `validated`, which now accepts only topologically valid
+geometries.
+
 #### OGC/PostGIS-aligned point containment
 
 Point containment on `Ring`, `Polygon`, `MultiPolygon`, `GeometryCollection`,

@@ -110,17 +110,17 @@ private enum MakeValid {
         let unkinked = cleaned.unkinked(gridSize: gridSize)
         guard unkinked.isNotEmpty else {
             let rewinded = cleaned.withWindingOrder(.counterClockwise)
-            return rewinded.isValid ? rewinded : nil
+            return rewinded.isStructurallyValid ? rewinded : nil
         }
 
         // 3. Fix winding order on each result
         let valid = unkinked.compactMap { p -> Polygon? in
             let r = p.withWindingOrder(.counterClockwise)
-            return r.isValid ? r : nil
+            return r.isStructurallyValid ? r : nil
         }
         guard valid.isNotEmpty else {
             let rewinded = cleaned.withWindingOrder(.counterClockwise)
-            return rewinded.isValid ? rewinded : nil
+            return rewinded.isStructurallyValid ? rewinded : nil
         }
 
         // 4. Return the largest valid polygon (discards slivers from splitting)

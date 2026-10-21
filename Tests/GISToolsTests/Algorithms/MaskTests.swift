@@ -33,7 +33,7 @@ struct MaskTests {
             return
         }
 
-        #expect(result.isValid, "\(name): mask result is invalid")
+        #expect(result.isStructurallyValid, "\(name): mask result is invalid")
         let resultArea = result.polygons.reduce(0) { $0 + $1.area }
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
         if expectedArea > 0 {
