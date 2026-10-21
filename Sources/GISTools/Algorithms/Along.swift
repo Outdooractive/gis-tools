@@ -96,6 +96,28 @@ extension LineString {
         return travelled
     }
 
+    /// Returns the distance along the line in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - coordinate: A coordinate near the line
+    ///   - tolerance: Maximum distance from the line in meters (default `1.0`)
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distanceAlong(
+        to coordinate: Coordinate3D,
+        tolerance: CLLocationDistance = 1.0,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        guard let distance = distanceAlong(to: coordinate, tolerance: tolerance) else {
+            return nil
+        }
+
+        return DistanceUnitConverter.fromMeters(
+            distance,
+            projection: projection,
+            unit: unit)
+    }
+
     // MARK: - Private
 
     /// Interpolate between two segment endpoints.

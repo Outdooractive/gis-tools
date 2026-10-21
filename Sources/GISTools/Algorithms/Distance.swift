@@ -3,6 +3,34 @@ import CoreLocation
 #endif
 import Foundation
 
+// MARK: - Distance unit conversion
+
+enum DistanceUnitConverter {
+
+    /// Converts a distance returned by the library's meter-based distance APIs
+    /// into `unit`.
+    static func fromMeters(
+        _ distance: Double,
+        projection: Projection,
+        unit: GISTool.Unit
+    ) -> Double? {
+        guard projection != .noSRID else { return nil }
+        return GISTool.convert(length: distance, from: .meters, to: unit)
+    }
+
+    /// Converts a distance expressed in `unit` into meters for comparison with
+    /// the library's meter-based distance APIs.
+    static func toMeters(
+        _ distance: Double,
+        projection: Projection,
+        unit: GISTool.Unit
+    ) -> Double? {
+        guard projection != .noSRID else { return nil }
+        return GISTool.convert(length: distance, from: unit, to: .meters)
+    }
+
+}
+
 // Ported from https://github.com/Turfjs/turf/tree/master/packages/turf-distance
 
 extension Coordinate3D {
@@ -53,6 +81,39 @@ extension Coordinate3D {
         }
     }
 
+    /// Returns the distance to another coordinate in the requested unit.
+    ///
+    /// The underlying distance is in meters for EPSG:4326, EPSG:3857 and
+    /// EPSG:4978. For ``Projection/noSRID`` no physical unit is defined and
+    /// this returns `nil`.
+    ///
+    /// - Parameters:
+    ///   - other: The other coordinate
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distance(
+        to other: Coordinate3D,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        DistanceUnitConverter.fromMeters(
+            distance(to: other),
+            projection: projection,
+            unit: unit)
+    }
+
+    /// Returns the distance from another coordinate in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - other: The other coordinate
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distance(
+        from other: Coordinate3D,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        distance(to: other, in: unit)
+    }
+
     private func _distance(from other: Coordinate3D) -> CLLocationDistance {
         let dLatitude = (other.latitude - latitude).degreesToRadians
         let dLongitude = (other.longitude - longitude).degreesToRadians
@@ -91,6 +152,32 @@ extension Point {
     /// - Returns: The distance in meters.
     public func distance(to other: Point) -> CLLocationDistance {
         coordinate.distance(to: other.coordinate)
+    }
+
+    /// Returns the distance to another point in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - other: The other point
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distance(
+        to other: Point,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        coordinate.distance(to: other.coordinate, in: unit)
+    }
+
+    /// Returns the distance from another point in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - other: The other point
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distance(
+        from other: Point,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        coordinate.distance(from: other.coordinate, in: unit)
     }
 
 }

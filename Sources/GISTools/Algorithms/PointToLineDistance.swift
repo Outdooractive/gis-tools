@@ -23,6 +23,39 @@ extension LineSegment {
         distanceFrom(coordinate: point.coordinate, gridSize: gridSize)
     }
 
+    /// Returns the minimum distance to a coordinate in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - coordinate: The coordinate to measure from
+    ///   - gridSize: Snap coordinates to a grid before computing (default `nil`)
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distanceFrom(
+        coordinate: Coordinate3D,
+        gridSize: Double? = nil,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        DistanceUnitConverter.fromMeters(
+            distanceFrom(coordinate: coordinate, gridSize: gridSize),
+            projection: projection,
+            unit: unit)
+    }
+
+    /// Returns the minimum distance to a point in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - point: The point to measure from
+    ///   - gridSize: Snap coordinates to a grid before computing (default `nil`)
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distanceFrom(
+        point: Point,
+        gridSize: Double? = nil,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        distanceFrom(coordinate: point.coordinate, gridSize: gridSize, in: unit)
+    }
+
 }
 
 extension LineString {
@@ -51,6 +84,39 @@ extension LineString {
         }
 
         return bestDistance
+    }
+
+    /// Returns the minimum distance to a coordinate in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - coordinate: The coordinate to measure from
+    ///   - gridSize: Snap coordinates to a grid before computing (default `nil`)
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distanceFrom(
+        coordinate: Coordinate3D,
+        gridSize: Double? = nil,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        DistanceUnitConverter.fromMeters(
+            distanceFrom(coordinate: coordinate, gridSize: gridSize),
+            projection: projection,
+            unit: unit)
+    }
+
+    /// Returns the minimum distance to a point in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - point: The point to measure from
+    ///   - gridSize: Snap coordinates to a grid before computing (default `nil`)
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func distanceFrom(
+        point: Point,
+        gridSize: Double? = nil,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        distanceFrom(coordinate: point.coordinate, gridSize: gridSize, in: unit)
     }
 
 }
