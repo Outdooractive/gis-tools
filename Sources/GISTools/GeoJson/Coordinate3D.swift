@@ -753,7 +753,9 @@ extension Coordinate3D: Equatable {
         equalityDelta: Double = GISTool.equalityDelta,
         altitudeDelta: Double = 0.0
     ) -> Bool {
-        let other = other.projected(to: projection)
+        // Avoid a projection call when both coordinates are already in the
+        // same CRS.
+        let other = other.projection == projection ? other : other.projected(to: projection)
 
         if abs(latitude - other.latitude) > equalityDelta
             || abs(longitude - other.longitude) > equalityDelta
