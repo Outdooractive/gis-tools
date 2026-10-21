@@ -1197,6 +1197,8 @@ swift run -c release Benchmarks
 
 Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
+The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
+
 # Contributing
 Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.
 

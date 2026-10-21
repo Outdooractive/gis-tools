@@ -237,6 +237,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 - `Coordinate3D.equals` now avoids reprojecting when both coordinates already
   use the same projection. Repeated coincidence checks are about 4× faster in
   the cross-module benchmark (#284).
+- Graph routing now uses compact bitmaps (one bit per node) for visited and
+  settled state instead of hash sets or byte-per-node arrays. At 500k nodes a
+  single bitset is about 62.5 KB instead of 500 KB; bidirectional search drops
+  from roughly 1 MB to 125 KB of scratch state. A* caches heuristic values and
+  fully bidirectional graphs skip reverse-adjacency construction. On the new
+  deterministic 10k/100k/1M-edge grid benchmarks, Dijkstra improves from
+  0.115 s to **0.090 s** at 1M edges, bidirectional Dijkstra from 0.274 s to
+  **0.120 s**, and A* from 0.180 s to **0.130 s**. A*, bidirectional search and
+  contraction remain slower than plain Dijkstra on grid-like inputs, where many
+  routes have equal cost and few chains are contractible; this trade-off is
+  documented in DocC (#285). The bitmap change is performance-neutral within
+  benchmark noise; its win is lower per-query scratch memory.
 
 ### Fixed
 

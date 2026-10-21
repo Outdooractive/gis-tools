@@ -206,6 +206,7 @@ extension Graph {
             isDirected: isDirected,
             onewayProperty: onewayProperty)
         result.adjacencyList = edgeLists
+        result.hasDirectedEdges = hasDirectedEdges
         result.spatialIndex = SpatialIndex(
             tolerance: nodeTolerance,
             referenceLatitude: edgeLists.first?.node.coordinate.latitude ?? 0.0)

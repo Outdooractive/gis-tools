@@ -155,6 +155,7 @@ extension Graph {
             isDirected: isDirected,
             onewayProperty: onewayProperty)
         pruned.adjacencyList = edgeLists
+        pruned.hasDirectedEdges = hasDirectedEdges
         pruned.spatialIndex = SpatialIndex(
             tolerance: nodeTolerance,
             referenceLatitude: edgeLists.first?.node.coordinate.latitude ?? 0.0)

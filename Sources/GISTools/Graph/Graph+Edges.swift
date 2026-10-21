@@ -106,6 +106,10 @@ extension Graph {
     ) {
         let edge = Edge(from: from, to: to, feature: feature, isDirected: isDirected)
         adjacencyList[from.index].edges.append(edge)
+
+        if isDirected {
+            hasDirectedEdges = true
+        }
     }
 
     /// Removes a directed edge between two nodes.

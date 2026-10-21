@@ -37,6 +37,10 @@ extension Graph {
 
         private var storage: [Element] = []
 
+        init(minimumCapacity: Int = 0) {
+            storage.reserveCapacity(minimumCapacity)
+        }
+
         var isEmpty: Bool {
             storage.isEmpty
         }

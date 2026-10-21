@@ -164,26 +164,23 @@ private func makePropertyFeatures(count: Int) -> FeatureCollection {
 
 private func makeGridCollection(size: Int) -> FeatureCollection {
     var features: [Feature] = []
-    features.reserveCapacity(size * (size - 1) * 2)
+    features.reserveCapacity(size * 2)
 
+    // One LineString per row and column keeps the fixture compact while
+    // producing the same size × size grid: size² nodes and 2·size·(size−1)
+    // directed edge instances.
     for y in 0 ..< size {
-        for x in 0 ..< (size - 1) {
-            let line = LineString(unchecked: [
-                Coordinate3D(latitude: Double(y) * 0.001, longitude: Double(x) * 0.001),
-                Coordinate3D(latitude: Double(y) * 0.001, longitude: Double(x + 1) * 0.001),
-            ])
-            features.append(Feature(line))
+        let row = (0 ..< size).map { x in
+            Coordinate3D(latitude: Double(y) * 0.001, longitude: Double(x) * 0.001)
         }
+        features.append(Feature(LineString(unchecked: row)))
     }
 
     for x in 0 ..< size {
-        for y in 0 ..< (size - 1) {
-            let line = LineString(unchecked: [
-                Coordinate3D(latitude: Double(y) * 0.001, longitude: Double(x) * 0.001),
-                Coordinate3D(latitude: Double(y + 1) * 0.001, longitude: Double(x) * 0.001),
-            ])
-            features.append(Feature(line))
+        let column = (0 ..< size).map { y in
+            Coordinate3D(latitude: Double(y) * 0.001, longitude: Double(x) * 0.001)
         }
+        features.append(Feature(LineString(unchecked: column)))
     }
 
     return FeatureCollection(features)
@@ -599,36 +596,73 @@ private func runClip() {
 // MARK: - Graph
 
 private func runGraph() {
-    let collection = makeGridCollection(size: 100)
-    let graph = Graph(featureCollection: collection)
+    // size 71 → ~10k edges / 5k nodes
+    // size 224 → ~100k edges / 50k nodes
+    // size 708 → ~1M edges / 500k nodes
+    let cases: [(label: String, size: Int, iterations: Int)] = [
+        ("10k", 71, 3),
+        ("100k", 224, 3),
+        ("1M", 708, 1),
+    ]
 
-    run("graph/construction/100x100", iterations: 3) {
-        _ = Graph(featureCollection: collection)
-    }
+    for benchmark in cases {
+        let collection = makeGridCollection(size: benchmark.size)
+        let graph = Graph(featureCollection: collection)
 
-    guard let start = graph.nodes.first, let end = graph.nodes.last else { return }
+        run("graph/construction/\(benchmark.label)", iterations: benchmark.iterations) {
+            _ = Graph(featureCollection: collection)
+        }
 
-    run("graph/dijkstra/100x100", iterations: 3) {
-        _ = graph.shortestPath(from: start, to: end)
-    }
-    run("graph/a-star/100x100", iterations: 3) {
-        _ = graph.aStarPath(from: start, to: end)
-    }
-    run("graph/bidirectional/100x100", iterations: 3) {
-        _ = graph.bidirectionalShortestPath(from: start, to: end)
-    }
-    run("graph/bfs/100x100", iterations: 3) {
-        _ = graph.breadthFirstSearch(from: start)
-    }
-    run("graph/dfs/100x100", iterations: 3) {
-        _ = graph.depthFirstSearch(from: start)
-    }
-    run("graph/cycles/100x100", iterations: 1) {
-        _ = graph.cycles(
-            from: start,
-            maximumPathLength: 2_000.0,
-            maximumPathNodeCount: 10,
-            maximumFromSourceDistance: 2_000.0)
+        guard let start = graph.nodes.first, let end = graph.nodes.last else { continue }
+
+        run("graph/dijkstra/\(benchmark.label)", iterations: benchmark.iterations) {
+            _ = graph.shortestPath(from: start, to: end)
+        }
+        run("graph/a-star/\(benchmark.label)", iterations: benchmark.iterations) {
+            _ = graph.aStarPath(from: start, to: end)
+        }
+        run("graph/bidirectional/\(benchmark.label)", iterations: benchmark.iterations) {
+            _ = graph.bidirectionalShortestPath(from: start, to: end)
+        }
+
+        // Contraction is built once, then queried on the contracted graph.
+        // Grid interiors have degree 4, so only the four corners are degree-2
+        // candidates; this intentionally measures the no-benefit case.
+        if let contraction = graph.contracted() {
+            run("graph/contraction-build/\(benchmark.label)", iterations: 1) {
+                _ = graph.contracted()
+            }
+
+            let queryStartIndex = min(benchmark.size + 1, graph.nodeCount - 1)
+            let queryEndIndex = max(graph.nodeCount - benchmark.size - 2, 0)
+            if let queryStart = graph.node(withIndex: queryStartIndex),
+               let queryEnd = graph.node(withIndex: queryEndIndex),
+               let contractedStartIndex = contraction.contractedIndexOfOriginal[queryStart.index],
+               let contractedEndIndex = contraction.contractedIndexOfOriginal[queryEnd.index],
+               let contractedStart = contraction.graph.node(withIndex: contractedStartIndex),
+               let contractedEnd = contraction.graph.node(withIndex: contractedEndIndex)
+            {
+                run("graph/contraction-dijkstra/\(benchmark.label)", iterations: 1) {
+                    _ = contraction.graph.shortestPath(from: contractedStart, to: contractedEnd)
+                }
+            }
+        }
+
+        if benchmark.size <= 224 {
+            run("graph/bfs/\(benchmark.label)", iterations: benchmark.iterations) {
+                _ = graph.breadthFirstSearch(from: start)
+            }
+            run("graph/dfs/\(benchmark.label)", iterations: benchmark.iterations) {
+                _ = graph.depthFirstSearch(from: start)
+            }
+            run("graph/cycles/\(benchmark.label)", iterations: 1) {
+                _ = graph.cycles(
+                    from: start,
+                    maximumPathLength: 2_000.0,
+                    maximumPathNodeCount: 10,
+                    maximumFromSourceDistance: 2_000.0)
+            }
+        }
     }
 }
 

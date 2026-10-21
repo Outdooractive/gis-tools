@@ -32,30 +32,30 @@ extension Graph {
 
         if source == destination { return [source] }
 
-        let blocked = blockedNodes?.map(\.index) ?? []
-        let blockedSet: Set<Int> = Set(blocked)
+        let blockedSet: Set<Int>? = blockedNodes.map { Set($0.map(\.index)) }
 
         var distances: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
         var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
-        var visited: Set<Int> = []
+        var visited = NodeBitSet(count: adjacencyList.count)
 
         distances[source.index] = 0.0
 
         // Min-heap of (distance, index). O((V+E) log V).
-        var heap = MinHeap<HeapEntry>()
+        var heap = MinHeap<HeapEntry>(
+            minimumCapacity: min(adjacencyList.count, 16_384))
         heap.push(HeapEntry(distance: 0.0, index: source.index))
 
         while let entry = heap.pop() {
-            if visited.contains(entry.index) { continue }
+            if visited[entry.index] { continue }
             if entry.index == destination.index { break }
-            visited.insert(entry.index)
+            visited[entry.index] = true
 
             let currentDistance = entry.distance
 
             for edge in adjacencyList[entry.index].edges {
                 let neighborIndex = edge.to.index
 
-                if blockedSet.contains(neighborIndex) { continue }
+                if let blockedSet, blockedSet.contains(neighborIndex) { continue }
                 if let edgeFilter, !edgeFilter(edge) { continue }
 
                 let relaxed = currentDistance + edge.weight
