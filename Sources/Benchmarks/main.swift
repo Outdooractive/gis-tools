@@ -51,6 +51,20 @@ private func peakRSSMegabytes() -> Double {
     #endif
 }
 
+private func currentRSSMegabytes() -> Double {
+    #if os(Linux)
+    guard let statm = try? String(contentsOfFile: "/proc/self/statm", encoding: .utf8),
+          let residentPages = statm.split(separator: " ").dropFirst().first,
+          let pages = Double(residentPages)
+    else {
+        return peakRSSMegabytes()
+    }
+    return pages * Double(getpagesize()) / 1_048_576.0
+    #else
+    return peakRSSMegabytes()
+    #endif
+}
+
 // MARK: - Deterministic data
 
 private struct SeededRandom {
@@ -664,6 +678,42 @@ private func runMemory() {
     print("memory/FeatureCollection/stride=\(MemoryLayout<FeatureCollection>.stride)")
     print("memory/BoundingBox/stride=\(MemoryLayout<BoundingBox>.stride)")
     print("memory/CoordinateArray/100k=\(100_000 * MemoryLayout<Coordinate3D>.stride)")
+
+    let baseline = currentRSSMegabytes()
+
+    var pointFeatures: [Feature] = []
+    pointFeatures.reserveCapacity(100_000)
+    for index in 0 ..< 100_000 {
+        pointFeatures.append(Feature(Point(Coordinate3D(
+            latitude: Double(index % 1_000) / 100.0,
+            longitude: Double(index / 1_000) / 100.0))))
+    }
+    let pointCollection = FeatureCollection(pointFeatures)
+    let pointPeak = currentRSSMegabytes()
+
+    var polygonFeatures: [Feature] = []
+    polygonFeatures.reserveCapacity(10_000)
+    for index in 0 ..< 10_000 {
+        let x = Double(index % 100)
+        let y = Double(index / 100)
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: y, longitude: x),
+            Coordinate3D(latitude: y, longitude: x + 0.01),
+            Coordinate3D(latitude: y + 0.01, longitude: x + 0.01),
+            Coordinate3D(latitude: y + 0.01, longitude: x),
+            Coordinate3D(latitude: y, longitude: x),
+        ]])
+        polygonFeatures.append(Feature(polygon))
+    }
+    let polygonCollection = FeatureCollection(polygonFeatures)
+    let polygonPeak = currentRSSMegabytes()
+
+    print(String(format: "memory/point-features/100k/peak-mb=%.1f", pointPeak - baseline))
+    print(String(format: "memory/point-features/100k/bytes-per-feature=%.0f", (pointPeak - baseline) * 1_048_576.0 / 100_000.0))
+    print(String(format: "memory/polygon-features/10k/peak-mb=%.1f", polygonPeak - pointPeak))
+    print(String(format: "memory/polygon-features/10k/bytes-per-feature=%.0f", (polygonPeak - pointPeak) * 1_048_576.0 / 10_000.0))
+
+    withExtendedLifetime((pointCollection, polygonCollection)) {}
 }
 
 // MARK: - Entry point

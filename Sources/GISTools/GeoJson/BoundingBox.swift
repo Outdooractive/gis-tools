@@ -4,6 +4,10 @@ import CoreLocation
 import Foundation
 
 /// A GeoJSON bounding box.
+///
+/// Bounding boxes store X/Y bounds plus an optional altitude range. The
+/// linear-reference `m` value is not part of the GeoJSON bounding-box format
+/// and is not retained by `BoundingBox`.
 public struct BoundingBox:
     GeoJsonReadable,
     CustomStringConvertible,
@@ -25,19 +29,66 @@ public struct BoundingBox:
     /// The bounding box's `projection`.
     public let projection: Projection
 
+    // The bounds are stored as scalars so a bounding box stays small when it is
+    // embedded in every geometry wrapper. `m` is intentionally not stored;
+    // GeoJSON bounding boxes do not carry it and it is dropped it on almost
+    // every path anyway.
+    private(set) var minX: Double
+    private(set) var minY: Double
+    private(set) var maxX: Double
+    private(set) var maxY: Double
+    private var southWestAltitude: Double
+    private var northEastAltitude: Double
+    private var hasSouthWestAltitude: Bool
+    private var hasNorthEastAltitude: Bool
+
     /// The bounding boxes south-west (bottom-left) coordinate.
-    public private(set) var southWest: Coordinate3D
-    /// The bounding boxes north-east (upper-right) coordinate.
-    public private(set) var northEast: Coordinate3D
+    public var southWest: Coordinate3D {
+        Coordinate3D(
+            x: minX,
+            y: minY,
+            z: hasSouthWestAltitude ? southWestAltitude : nil,
+            projection: projection)
+    }
 
     /// The bounding boxes north-west (upper-left) coordinate.
     public var northWest: Coordinate3D {
-        Coordinate3D(x: southWest.longitude, y: northEast.latitude, projection: projection)
+        Coordinate3D(x: minX, y: maxY, projection: projection)
+    }
+
+    /// The bounding boxes north-east (upper-right) coordinate.
+    public var northEast: Coordinate3D {
+        Coordinate3D(
+            x: maxX,
+            y: maxY,
+            z: hasNorthEastAltitude ? northEastAltitude : nil,
+            projection: projection)
     }
 
     /// The bounding boxes south-east (bottom-right) coordinate.
     public var southEast: Coordinate3D {
-        Coordinate3D(x: northEast.longitude, y: southWest.latitude, projection: projection)
+        Coordinate3D(x: maxX, y: minY, projection: projection)
+    }
+
+    @usableFromInline
+    init(
+        projection: Projection,
+        minX: Double,
+        minY: Double,
+        maxX: Double,
+        maxY: Double,
+        southWestAltitude: Double?,
+        northEastAltitude: Double?
+    ) {
+        self.projection = projection
+        self.minX = minX
+        self.minY = minY
+        self.maxX = maxX
+        self.maxY = maxY
+        self.southWestAltitude = southWestAltitude ?? 0.0
+        self.northEastAltitude = northEastAltitude ?? 0.0
+        self.hasSouthWestAltitude = southWestAltitude != nil
+        self.hasNorthEastAltitude = northEastAltitude != nil
     }
 
     /// Create a bounding box from `coordinates` and an optional padding in kilometers.
@@ -52,26 +103,24 @@ public struct BoundingBox:
     ///    - coordinates: An array of coordinates for which to calculate the bounding box
     ///    - padding: The padding, in meters
     public init?(coordinates: [Coordinate3D], padding: CLLocationDistance = 0.0) {
-        guard !coordinates.isEmpty else { return nil }
+        guard let first = coordinates.first else { return nil }
 
-        self.projection = coordinates.first?.projection ?? .epsg4326
-
-        var southWest = Coordinate3D(x: .infinity, y: .infinity, projection: projection)
-        var northEast = Coordinate3D(x: -.infinity, y: -.infinity, projection: projection)
+        let projection = first.projection
+        var minX = Double.infinity
+        var minY = Double.infinity
+        var maxX = -Double.infinity
+        var maxY = -Double.infinity
         var minAltitude: Double?
         var maxAltitude: Double?
         var allHaveAltitude = true
 
-        for currentLocation in coordinates {
-            let currentLocationLatitude = currentLocation.latitude
-            let currentLocationLongitude = currentLocation.longitude
+        for coordinate in coordinates {
+            minX = min(minX, coordinate.longitude)
+            minY = min(minY, coordinate.latitude)
+            maxX = max(maxX, coordinate.longitude)
+            maxY = max(maxY, coordinate.latitude)
 
-            southWest.latitude = min(southWest.latitude, currentLocationLatitude)
-            southWest.longitude = min(southWest.longitude, currentLocationLongitude)
-            northEast.latitude = max(northEast.latitude, currentLocationLatitude)
-            northEast.longitude = max(northEast.longitude, currentLocationLongitude)
-
-            if let altitude = currentLocation.altitude {
+            if let altitude = coordinate.altitude {
                 minAltitude = minAltitude.map { min($0, altitude) } ?? altitude
                 maxAltitude = maxAltitude.map { max($0, altitude) } ?? altitude
             }
@@ -80,39 +129,39 @@ public struct BoundingBox:
             }
         }
 
-        if allHaveAltitude, let minAltitude, let maxAltitude {
-            southWest.altitude = minAltitude
-            northEast.altitude = maxAltitude
-        }
-
         if padding > 0.0 {
             switch projection.kind {
             case .planar, .geocentric:
-                southWest.latitude -= padding
-                northEast.latitude += padding
-                southWest.longitude -= padding
-                northEast.longitude += padding
+                minX -= padding
+                minY -= padding
+                maxX += padding
+                maxY += padding
 
             case .geographic:
-                let latLongDegrees = GISTool.degrees(fromMeters: padding, atLatitude: southWest.latitude)
+                let latLongDegrees = GISTool.degrees(fromMeters: padding, atLatitude: minY)
 
-                southWest.latitude -= latLongDegrees.latitudeDegrees
-                northEast.latitude += latLongDegrees.latitudeDegrees
-                southWest.longitude -= latLongDegrees.longitudeDegrees
-                northEast.longitude += latLongDegrees.longitudeDegrees
+                minX -= latLongDegrees.longitudeDegrees
+                minY -= latLongDegrees.latitudeDegrees
+                maxX += latLongDegrees.longitudeDegrees
+                maxY += latLongDegrees.latitudeDegrees
 
             case .undefined:
                 break // Don't know what to do -> ignore
             }
         }
 
-        self.southWest = southWest
-        self.northEast = northEast
+        let altitude = (allHaveAltitude ? minAltitude : nil, allHaveAltitude ? maxAltitude : nil)
+        self.init(
+            projection: projection,
+            minX: minX,
+            minY: minY,
+            maxX: maxX,
+            maxY: maxY,
+            southWestAltitude: altitude.0,
+            northEastAltitude: altitude.1)
 
         if projection.hasSRID {
-            let clamped = self.clamped()
-            self.southWest = clamped.southWest
-            self.northEast = clamped.northEast
+            self = self.clamped()
         }
     }
 
@@ -124,9 +173,14 @@ public struct BoundingBox:
     public init(southWest: Coordinate3D, northEast: Coordinate3D) {
         assert(southWest.projection == northEast.projection, "Projections must be the same")
 
-        self.projection = southWest.projection
-        self.southWest = southWest
-        self.northEast = northEast
+        self.init(
+            projection: southWest.projection,
+            minX: southWest.longitude,
+            minY: southWest.latitude,
+            maxX: northEast.longitude,
+            maxY: northEast.latitude,
+            southWestAltitude: southWest.altitude,
+            northEastAltitude: northEast.altitude)
     }
 
     /// Create a bounding box from other bounding boxes.
@@ -145,18 +199,29 @@ public struct BoundingBox:
     ///    - json: A GeoJSON bounding box value (an array of 4 or 6 doubles, or an array of 2 coordinate arrays)
     /// - Returns: A bounding box, or `nil` if the input is invalid
     public init?(json: Any?) {
-        self.projection = .epsg4326
+        let southWest: Coordinate3D
+        let northEast: Coordinate3D
 
         // GeoJSON
         if let geoJsonCoordinates = JsonCoercion.doubleArray(json) {
             if geoJsonCoordinates.count == 4 {
-                self.southWest = Coordinate3D(latitude: geoJsonCoordinates[1], longitude: geoJsonCoordinates[0])
-                self.northEast = Coordinate3D(latitude: geoJsonCoordinates[3], longitude: geoJsonCoordinates[2])
+                southWest = Coordinate3D(
+                    latitude: geoJsonCoordinates[1],
+                    longitude: geoJsonCoordinates[0])
+                northEast = Coordinate3D(
+                    latitude: geoJsonCoordinates[3],
+                    longitude: geoJsonCoordinates[2])
             }
             else if geoJsonCoordinates.count == 6 {
                 // With altitudes
-                self.southWest = Coordinate3D(latitude: geoJsonCoordinates[1], longitude: geoJsonCoordinates[0], altitude: geoJsonCoordinates[2])
-                self.northEast = Coordinate3D(latitude: geoJsonCoordinates[4], longitude: geoJsonCoordinates[3], altitude: geoJsonCoordinates[5])
+                southWest = Coordinate3D(
+                    latitude: geoJsonCoordinates[1],
+                    longitude: geoJsonCoordinates[0],
+                    altitude: geoJsonCoordinates[2])
+                northEast = Coordinate3D(
+                    latitude: geoJsonCoordinates[4],
+                    longitude: geoJsonCoordinates[3],
+                    altitude: geoJsonCoordinates[5])
             }
             else {
                 return nil
@@ -169,12 +234,14 @@ public struct BoundingBox:
             let coordinates = geoJsonCoordinates.compactMap { Coordinate3D(json: $0) }
             guard coordinates.count == 2 else { return nil }
 
-            self.southWest = coordinates[0]
-            self.northEast = coordinates[1]
+            southWest = coordinates[0]
+            northEast = coordinates[1]
         }
         else {
             return nil
         }
+
+        self.init(southWest: southWest, northEast: northEast)
     }
 
     /// Dump the bounding box as JSON.
@@ -549,8 +616,7 @@ extension BoundingBox {
                     height: diagonalLength * cos(bearingAngle.degreesToRadians))
 
         case .planar, .geocentric, .undefined:
-            return (width: northEast.longitude - southWest.longitude,
-                    height: northEast.latitude - southWest.latitude)
+            return (width: maxX - minX, height: maxY - minY)
         }
     }
 
@@ -570,23 +636,23 @@ extension BoundingBox {
         let coordinate = coordinate.projected(to: projection).normalized()
 
         // self crosses the date line
-        if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
+        if boundingBox.minX > boundingBox.maxX {
             guard let extent = projection.wraparoundExtent else { return false }
 
             let left = BoundingBox(
                 southWest: boundingBox.southWest,
-                northEast: Coordinate3D(x: extent, y: boundingBox.northEast.y, projection: projection))
+                northEast: Coordinate3D(x: extent, y: boundingBox.maxY, projection: projection))
             if left.contains(coordinate) { return true }
             let right = BoundingBox(
-                southWest: Coordinate3D(x: -extent, y: boundingBox.southWest.y, projection: projection),
+                southWest: Coordinate3D(x: -extent, y: boundingBox.minY, projection: projection),
                 northEast: boundingBox.northEast)
             return right.contains(coordinate)
         }
 
-        return coordinate.latitude >= boundingBox.southWest.latitude
-            && coordinate.latitude <= boundingBox.northEast.latitude
-            && coordinate.longitude >= boundingBox.southWest.longitude
-            && coordinate.longitude <= boundingBox.northEast.longitude
+        return coordinate.latitude >= boundingBox.minY
+            && coordinate.latitude <= boundingBox.maxY
+            && coordinate.longitude >= boundingBox.minX
+            && coordinate.longitude <= boundingBox.maxX
     }
 
     #if canImport(CoreLocation)
@@ -629,36 +695,36 @@ extension BoundingBox {
         let other = other.projected(to: projection).normalized()
 
         // self crosses date line
-        if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
+        if boundingBox.minX > boundingBox.maxX {
             guard let extent = projection.wraparoundExtent else { return false }
 
             let left = BoundingBox(
                 southWest: boundingBox.southWest,
-                northEast: Coordinate3D(x: extent, y: boundingBox.northEast.y, projection: projection))
+                northEast: Coordinate3D(x: extent, y: boundingBox.maxY, projection: projection))
             if left.intersects(other) { return true }
             let right = BoundingBox(
-                southWest: Coordinate3D(x: -extent, y: boundingBox.southWest.y, projection: projection),
+                southWest: Coordinate3D(x: -extent, y: boundingBox.minY, projection: projection),
                 northEast: boundingBox.northEast)
             return right.intersects(other)
         }
         // other crosses date line
-        else if other.southWest.longitude > other.northEast.longitude {
+        else if other.minX > other.maxX {
             guard let extent = projection.wraparoundExtent else { return false }
 
             let left = BoundingBox(
                 southWest: other.southWest,
-                northEast: Coordinate3D(x: extent, y: other.northEast.y, projection: projection))
+                northEast: Coordinate3D(x: extent, y: other.maxY, projection: projection))
             if self.intersects(left) { return true }
             let right = BoundingBox(
-                southWest: Coordinate3D(x: -extent, y: other.southWest.y, projection: projection),
+                southWest: Coordinate3D(x: -extent, y: other.minY, projection: projection),
                 northEast: other.northEast)
             return self.intersects(right)
         }
         else {
-            return boundingBox.southWest.longitude <= other.northEast.longitude
-                && boundingBox.northEast.longitude >= other.southWest.longitude
-                && boundingBox.southWest.latitude <= other.northEast.latitude
-                && boundingBox.northEast.latitude >= other.southWest.latitude
+            return boundingBox.minX <= other.maxX
+                && boundingBox.maxX >= other.minX
+                && boundingBox.minY <= other.maxY
+                && boundingBox.maxY >= other.minY
         }
     }
 
@@ -672,7 +738,7 @@ extension BoundingBox {
         let other = other.projected(to: projection).normalized()
 
         // self crosses date line
-        if boundingBox.southWest.longitude > boundingBox.northEast.longitude {
+        if boundingBox.minX > boundingBox.maxX {
             let left: BoundingBox
             let right: BoundingBox
 
@@ -703,7 +769,7 @@ extension BoundingBox {
             }
         }
         // other crosses date line
-        else if other.southWest.longitude > other.northEast.longitude {
+        else if other.minX > other.maxX {
             let left: BoundingBox
             let right: BoundingBox
 
@@ -734,19 +800,19 @@ extension BoundingBox {
             }
         }
         else {
-            if boundingBox.southWest.x <= other.northEast.x,
-               boundingBox.northEast.x >= other.southWest.x,
-               boundingBox.southWest.y <= other.northEast.y,
-               boundingBox.northEast.y >= other.southWest.y
+            if boundingBox.minX <= other.maxX,
+               boundingBox.maxX >= other.minX,
+               boundingBox.minY <= other.maxY,
+               boundingBox.maxY >= other.minY
             {
                 return BoundingBox(
                     southWest: Coordinate3D(
-                        x: max(boundingBox.southWest.x, other.southWest.x),
-                        y: max(boundingBox.southWest.y, other.southWest.y),
+                        x: max(boundingBox.minX, other.minX),
+                        y: max(boundingBox.minY, other.minY),
                         projection: projection),
                     northEast: Coordinate3D(
-                        x: min(boundingBox.northEast.x, other.northEast.x),
-                        y: min(boundingBox.northEast.y, other.northEast.y),
+                        x: min(boundingBox.maxX, other.maxX),
+                        y: min(boundingBox.maxY, other.maxY),
                         projection: projection))
             }
         }
@@ -758,7 +824,7 @@ extension BoundingBox {
     public var crossesAntiMeridian: Bool {
         let boundingBox = self.normalized()
 
-        return boundingBox.southWest.longitude > boundingBox.northEast.longitude
+        return boundingBox.minX > boundingBox.maxX
     }
 
 }
@@ -783,41 +849,44 @@ extension BoundingBox {
         case .geocentric:
             // Geocentric (ECEF) projections have no date line. An inverted box
             // (south-west > north-east) is treated as a min/max axis-aligned box.
-            let minX = min(southWest.longitude, northEast.longitude)
-            let maxX = max(southWest.longitude, northEast.longitude)
-            let minY = min(southWest.latitude, northEast.latitude)
-            let maxY = max(southWest.latitude, northEast.latitude)
+            let minX = min(self.minX, self.maxX)
+            let maxX = max(self.minX, self.maxX)
+            let minY = min(self.minY, self.maxY)
+            let maxY = max(self.minY, self.maxY)
 
             return BoundingBox(
-                southWest: Coordinate3D(
-                    x: minX,
-                    y: minY,
-                    z: southWest.altitude,
-                    m: southWest.m,
-                    projection: projection),
-                northEast: Coordinate3D(
-                    x: maxX,
-                    y: maxY,
-                    z: northEast.altitude,
-                    m: northEast.m,
-                    projection: projection))
+                projection: projection,
+                minX: minX,
+                minY: minY,
+                maxX: maxX,
+                maxY: maxY,
+                southWestAltitude: hasSouthWestAltitude ? southWestAltitude : nil,
+                northEastAltitude: hasNorthEastAltitude ? northEastAltitude : nil)
 
         case .geographic, .planar:
             guard let extent = projection.wraparoundExtent else {
-                return BoundingBox(
-                    southWest: southWest.normalized(),
-                    northEast: northEast.normalized())
+                return self
             }
 
-            guard northEast.longitude - southWest.longitude < (2.0 * extent) else {
+            guard maxX - minX < (2.0 * extent) else {
                 return BoundingBox(
-                    southWest: Coordinate3D(x: -extent, y: southWest.latitude, projection: projection),
-                    northEast: Coordinate3D(x: extent, y: northEast.latitude, projection: projection))
+                    projection: projection,
+                    minX: -extent,
+                    minY: minY,
+                    maxX: extent,
+                    maxY: maxY,
+                    southWestAltitude: hasSouthWestAltitude ? southWestAltitude : nil,
+                    northEastAltitude: hasNorthEastAltitude ? northEastAltitude : nil)
             }
 
             return BoundingBox(
-                southWest: southWest.normalized(),
-                northEast: northEast.normalized())
+                projection: projection,
+                minX: Self.normalizedLongitude(minX, extent: extent),
+                minY: minY,
+                maxX: Self.normalizedLongitude(maxX, extent: extent),
+                maxY: maxY,
+                southWestAltitude: hasSouthWestAltitude ? southWestAltitude : nil,
+                northEastAltitude: hasNorthEastAltitude ? northEastAltitude : nil)
         }
     }
 
@@ -830,9 +899,33 @@ extension BoundingBox {
     ///
     /// - Returns: A copy of this bounding box clamped to the valid coordinate range
     public func clamped() -> BoundingBox {
-        BoundingBox(
-            southWest: southWest.clamped(),
-            northEast: northEast.clamped())
+        let southWest = self.southWest.clamped()
+        let northEast = self.northEast.clamped()
+
+        return BoundingBox(
+            projection: projection,
+            minX: southWest.x,
+            minY: southWest.y,
+            maxX: northEast.x,
+            maxY: northEast.y,
+            southWestAltitude: southWest.altitude,
+            northEastAltitude: northEast.altitude)
+    }
+
+    private static func normalizedLongitude(
+        _ longitude: Double,
+        extent: Double
+    ) -> Double {
+        guard longitude < -extent || longitude > extent else { return longitude }
+
+        var longitude = longitude
+        while longitude < -extent {
+            longitude += (2.0 * extent)
+        }
+        while longitude > extent {
+            longitude -= (2.0 * extent)
+        }
+        return longitude
     }
 
 }
@@ -918,7 +1011,18 @@ extension BoundingBox: Equatable {
 
 // MARK: - Hashable
 
-extension BoundingBox: Hashable {}
+extension BoundingBox: Hashable {
+
+    /// The hash uses the same X/Y bounds and projection as `==`.
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(projection)
+        hasher.combine(minX)
+        hasher.combine(minY)
+        hasher.combine(maxX)
+        hasher.combine(maxY)
+    }
+
+}
 
 // MARK: - Validity
 

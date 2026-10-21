@@ -276,10 +276,10 @@ extension LineString {
 
         let boundingBoxSegments: [LineSegment] = otherBoundingBox.lineSegments
 
-        let minLongitude = otherBoundingBox.southWest.longitude
-        let minLatitude = otherBoundingBox.southWest.latitude
-        let maxLongitude = otherBoundingBox.northEast.longitude
-        let maxLatitude = otherBoundingBox.northEast.latitude
+        let minLongitude = otherBoundingBox.minX
+        let minLatitude = otherBoundingBox.minY
+        let maxLongitude = otherBoundingBox.maxX
+        let maxLatitude = otherBoundingBox.maxY
 
         for index in 0 ..< coordinates.count - 1 {
             let segment = LineSegment(
