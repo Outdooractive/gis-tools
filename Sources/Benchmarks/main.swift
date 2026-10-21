@@ -335,13 +335,23 @@ private func runPredicates() {
 // MARK: - Overlay
 
 private func runOverlay() {
-    let a = makeCirclePolygon(vertices: 1_000)
-    let b = makeCirclePolygon(vertices: 1_000, radius: 8.0)
+    for vertices in [1_000, 10_000, 100_000] {
+        let a = makeCirclePolygon(vertices: vertices)
+        let b = makeCirclePolygon(vertices: vertices, radius: 8.0)
+        let suffix = vertices == 1_000 ? "" : "/\(vertices)"
+        let iterations = vertices == 1_000 ? 3 : (vertices == 10_000 ? 2 : 1)
 
-    run("overlay/union", iterations: 3) { _ = a.union(with: b) }
-    run("overlay/intersection", iterations: 3) { _ = a.intersection(with: b) }
-    run("overlay/difference", iterations: 3) { _ = a.difference(with: b) }
-    run("overlay/symmetric-difference", iterations: 3) { _ = a.symmetricDifference(with: b) }
+        run("overlay/union\(suffix)", iterations: iterations) { _ = a.union(with: b) }
+        run("overlay/intersection\(suffix)", iterations: iterations) {
+            _ = a.intersection(with: b)
+        }
+        run("overlay/difference\(suffix)", iterations: iterations) {
+            _ = a.difference(with: b)
+        }
+        run("overlay/symmetric-difference\(suffix)", iterations: iterations) {
+            _ = a.symmetricDifference(with: b)
+        }
+    }
 }
 
 // MARK: - R-tree

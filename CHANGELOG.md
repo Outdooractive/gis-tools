@@ -162,6 +162,9 @@ left unchanged; that case is ambiguous per RFC 7946.
   boundary edges are merged in one pass. A 1k-vertex line or polygon buffers
   in about **0.3 s**; 10k vertices complete in about **5 s**, instead of the
   previous >30 s timeout at 1k (#279).
+- Overlay difference and symmetric difference now stay within about 1.3× of
+  union/intersection after the boundary-index and prepared-geometry work.
+  Added 1k/10k/100k scaling cases to the overlay benchmark (#283).
 
 ### Fixed
 
