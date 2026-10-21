@@ -26,6 +26,22 @@ extension Coordinate3D {
         }
     }
 
+    /// Returns the Rhumb distance to another coordinate in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - other: The other coordinate
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func rhumbDistance(
+        from other: Coordinate3D,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        DistanceUnitConverter.fromMeters(
+            rhumbDistance(from: other),
+            projection: projection,
+            unit: unit)
+    }
+
     private func _rhumbDistance(from other: Coordinate3D) -> CLLocationDistance {
         var otherLongitude = other.longitude
 
@@ -86,6 +102,19 @@ extension Point {
     /// - Returns: The distance in meters.
     public func rhumbDistance(from other: Point) -> CLLocationDistance {
         coordinate.rhumbDistance(from: other.coordinate)
+    }
+
+    /// Returns the Rhumb distance to another point in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - other: The other point
+    ///   - unit: The target unit
+    /// - Returns: The converted distance, or `nil` for noSRID or an invalid unit
+    public func rhumbDistance(
+        from other: Point,
+        in unit: GISTool.Unit
+    ) -> Double? {
+        coordinate.rhumbDistance(from: other.coordinate, in: unit)
     }
 
 }

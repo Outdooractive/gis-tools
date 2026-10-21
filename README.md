@@ -974,7 +974,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | boolean-contains/within     | `polygon.contains(lineString)` / `polygon.covers(lineString)` / `point.isWithin(polygon)`                                              |     | [Source][187] / [Tests][188] |
 | boolean-contains-properly   | `let result = polygon.containsProperly(innerPolygon)`                                                                                 |     | [Source][187] / [Tests][188] |
 | boolean-equals              | `let result = polygon.equals(otherPolygon)`                                                                                            |     | [Source][316] / [Tests][319] |
-| boolean-dwithin             | `let result = polygon.dWithin(otherPolygon, distance: 100.0)`                                                                          |     | [Source][318] / [Tests][320] |
+| boolean-dwithin             | `let result = polygon.dWithin(otherPolygon, distance: 100.0)` / `dWithin(…, in: .kilometers)`                                         |     | [Source][318] / [Tests][320] / [Tests][323] |
 | boolean-crosses             | `lineString.crosses(otherLineString)`                                                                                                  |     | [Source][50] / [Tests][133]  |
 | boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
@@ -1005,8 +1005,8 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | densify                     | `let dense = anyGeometry.densified(maxSegmentLength: 1.0)`                                                                             |     | [Source][233] / [Tests][234] |
 | destination                 | `let destination = coordinate.destination(distance: 1000.0, bearing: 173.0)`                                                          |     | [Source][66] / [Tests][67]   |
 | difference                  | `let diff = polygon.difference(with: other)`                                                                                          |     | [Source][227] / [Tests][228] |
-| distance                    | `let distance = coordinate1.distance(from: coordinate2)`                                                                              |     | [Source][68] / [Tests][69]   |
-| distance-along              | `let dist = lineString.distanceAlong(to: coordinate)`                                                                                 |     | [Source][213] / [Tests][214] |                                                                              |     | [Source][68] / [Tests][69]   |
+| distance                    | `let distance = coordinate1.distance(from: coordinate2)` / `distance(from:in:)`                                                       |     | [Source][68] / [Tests][69] / [Tests][323] |
+| distance-along              | `let dist = lineString.distanceAlong(to: coordinate)` / `distanceAlong(to:tolerance:in:)`                                             |     | [Source][213] / [Tests][214] / [Tests][323] |
 | ellipse                     | `let ellipse = coordinate.ellipse(xSemiAxis: 5000.0, ySemiAxis: 3000.0)`                                                              |     | [Source][183] / [Tests][184] |
 | flatten                     | `let featureCollection = anyGeometry.flattened`                                                                                       |     | [Source][70] / [Tests][71]   |
 | flip                        | `let flipped = anyGeometry.flipped()`                                                                                                 |     | [Source][189] / [Tests][190] |
@@ -1048,7 +1048,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | planepoint                  | `let z = triangle.planepoint(point)`                                                                                                  |     | [Source][201] / [Tests][202] |
 | point-on-feature            | `let coordinate = anyGeometry.coordinateOnFeature`                                                                                    |     | [Source][97] / [Tests][141]  |
 | points-within-polygon       | `let within = polygon.coordinatesWithin(coordinates)`                                                                                 |     | [Source][98] / [Tests][142]  |
-| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))`                                                                 |     | [Source][99] / [Tests][100]  |
+| point-to-line-distance      | `let distance = lineString.distanceFrom(coordinate: Coordinate3D(…))` / `distanceFrom(coordinate:in:)`                                |     | [Source][99] / [Tests][100] / [Tests][323] |
 | pole-of-inaccessibility     | `let pole = polygon.poleOfInaccessibility()`                                                                                           |     | [Source][101] / [Tests][152] |
 | polygon-smooth              | `let smoothed = polygon.smooth(iterations: 3)`                                                                                         |     | [Source][148] / [Tests][149] |
 | polygon-tangents            | `let tangents = polygon.tangentPoints(to: point)`                                                                                      |     | [Source][195] / [Tests][196] |
@@ -1505,6 +1505,7 @@ Thomas Rasch, Outdooractive
 [320]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanWithinTests.swift
 [321]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TopologicalValidityTests.swift
 [322]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/TopologicalValidity.swift
+[323]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DistanceUnitTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 

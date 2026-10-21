@@ -28,4 +28,29 @@ extension GeoJson {
         return closest.coordinate.distance(to: nearest.coordinate) <= distance
     }
 
+    /// Returns `true` if the receiver is within the given distance of `other`.
+    ///
+    /// The distance is converted to meters from `unit`. For
+    /// ``Projection/noSRID`` no physical unit is defined and this returns
+    /// `false`.
+    ///
+    /// - Parameters:
+    ///   - other: The other geometry
+    ///   - distance: The maximum distance in `unit`
+    ///   - unit: The unit of `distance`
+    /// - Returns: `true` if the minimum distance is at most `distance`
+    public func dWithin(
+        _ other: GeoJson,
+        distance: CLLocationDistance,
+        in unit: GISTool.Unit
+    ) -> Bool {
+        guard let meters = DistanceUnitConverter.toMeters(
+            distance,
+            projection: projection,
+            unit: unit)
+        else { return false }
+
+        return dWithin(other, distance: meters)
+    }
+
 }
