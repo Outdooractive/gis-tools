@@ -122,6 +122,12 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Unit-aware distance overloads: `distance(to:in:)`, `distance(from:in:)`,
+  `rhumbDistance(from:in:)`, `distanceAlong(to:tolerance:in:)`,
+  `distanceFrom(..., in:)` and `dWithin(_:distance:in:)`. They return `nil`
+  (or `false` for `dWithin`) for `noSRID`, where no physical unit is defined.
+  Existing meter-based methods are unchanged.
+
 - OGC predicate conveniences: `containsProperly(_:)`, topological
   `equals(_:)` and `dWithin(_:distance:)`. Polygon `isOverlapping` now
   follows `ST_Overlaps` instead of treating boundary contact as overlap. Its
