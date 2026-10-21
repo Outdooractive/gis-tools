@@ -7,36 +7,40 @@ import Foundation
 
 extension Coordinate3D {
 
-    /// Calculates the distance between two coordinates, in meters.
+    /// Calculates the distance between two coordinates.
     ///
-    /// The formula used depends on the receiver's projection kind:
-    /// - Geographic (e.g. ``Projection/epsg4326``): Haversine
-    ///   (geodesic great‑circle distance).
-    /// - Planar (e.g. ``Projection/epsg3857``) and ``Projection/noSRID``:
-    ///   2‑D Euclidean ``sqrt(dx² + dy²)``.
-    /// - Geocentric (e.g. ``Projection/epsg4978``, ECEF): 3‑D Euclidean
-    ///   ``sqrt(dx² + dy² + dz²)``.
+    /// The units follow the receiver's projection kind:
+    /// - Geographic (e.g. ``Projection/epsg4326``): meters, using the Haversine
+    ///   geodesic great-circle distance.
+    /// - Planar (e.g. ``Projection/epsg3857``): the projection's native units,
+    ///   using 2-D Euclidean distance (meters for Web Mercator).
+    /// - Geocentric (e.g. ``Projection/epsg4978``): meters, using 3-D Euclidean
+    ///   ECEF distance.
+    /// - ``Projection/noSRID``: raw coordinate units, using 2-D Euclidean
+    ///   distance.
     ///
     /// - Parameter other: The other coordinate
     ///
-    /// - Returns: The distance in meters.
+    /// - Returns: The distance in the units described above.
     public func distance(from other: Coordinate3D) -> CLLocationDistance {
         distance(to: other)
     }
 
-    /// Calculates the distance between two coordinates, in meters.
+    /// Calculates the distance between two coordinates.
     ///
-    /// The formula used depends on the receiver's projection kind:
-    /// - Geographic (e.g. ``Projection/epsg4326``): Haversine
-    ///   (geodesic great‑circle distance).
-    /// - Planar (e.g. ``Projection/epsg3857``) and ``Projection/noSRID``:
-    ///   2‑D Euclidean ``sqrt(dx² + dy²)``.
-    /// - Geocentric (e.g. ``Projection/epsg4978``, ECEF): 3‑D Euclidean
-    ///   ``sqrt(dx² + dy² + dz²)``.
+    /// The units follow the receiver's projection kind:
+    /// - Geographic (e.g. ``Projection/epsg4326``): meters, using the Haversine
+    ///   geodesic great-circle distance.
+    /// - Planar (e.g. ``Projection/epsg3857``): the projection's native units,
+    ///   using 2-D Euclidean distance (meters for Web Mercator).
+    /// - Geocentric (e.g. ``Projection/epsg4978``): meters, using 3-D Euclidean
+    ///   ECEF distance.
+    /// - ``Projection/noSRID``: raw coordinate units, using 2-D Euclidean
+    ///   distance.
     ///
     /// - Parameter other: The other coordinate
     ///
-    /// - Returns: The distance in meters.
+    /// - Returns: The distance in the units described above.
     public func distance(to other: Coordinate3D) -> CLLocationDistance {
         switch projection.kind {
         case .geographic:
@@ -69,26 +73,26 @@ extension Coordinate3D {
 
 extension Point {
 
-    /// Calculates the distance between two points, in meters.
+    /// Calculates the distance between two points.
     ///
-    /// The formula used depends on the receiver's coordinate projection
+    /// The units and formula follow the receiver's coordinate projection
     /// (see ``Coordinate3D/distance(to:)``).
     ///
     /// - Parameter other: The other point
     ///
-    /// - Returns: The distance in meters.
+    /// - Returns: The distance in the projection-dependent units.
     public func distance(from other: Point) -> CLLocationDistance {
         distance(to: other)
     }
 
-    /// Calculates the distance between two points, in meters.
+    /// Calculates the distance between two points.
     ///
-    /// The formula used depends on the receiver's coordinate projection
+    /// The units and formula follow the receiver's coordinate projection
     /// (see ``Coordinate3D/distance(to:)``).
     ///
     /// - Parameter other: The other point
     ///
-    /// - Returns: The distance in meters.
+    /// - Returns: The distance in the projection-dependent units.
     public func distance(to other: Point) -> CLLocationDistance {
         coordinate.distance(to: other.coordinate)
     }
