@@ -115,7 +115,7 @@ struct MinimumBoundingCircleTests {
         ]))
         let circle = mp.minimumBoundingCircle()
         #expect(circle != nil)
-        #expect(circle?.isValid == true)
+        #expect(circle?.isStructurallyValid == true)
         #expect(circle?.projection == .epsg3857)
     }
 
@@ -130,7 +130,7 @@ struct MinimumBoundingCircleTests {
         ]))
         let circle = mp.minimumBoundingCircle()
         #expect(circle != nil)
-        #expect(circle?.isValid == true)
+        #expect(circle?.isStructurallyValid == true)
         #expect(circle?.projection == .epsg4978)
 
         let radius = mp.minimumBoundingRadius()
@@ -150,7 +150,7 @@ struct MinimumBoundingCircleTests {
         ]))
         let circle = mp.minimumBoundingCircle()
         #expect(circle != nil)
-        #expect(circle?.isValid == true)
+        #expect(circle?.isStructurallyValid == true)
         #expect(circle?.projection == .noSRID)
 
         let radius = mp.minimumBoundingRadius()

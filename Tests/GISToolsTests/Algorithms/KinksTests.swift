@@ -209,7 +209,7 @@ struct KinksTests {
         let polygon = try #require(Polygon([coords]))
         let result = polygon.unkinked()
         #expect(result.count == 1)
-        #expect(result[0].isValid)
+        #expect(result[0].isStructurallyValid)
     }
 
     // Tests that a self-intersecting bow-tie polygon is split into simple polygons.
@@ -226,7 +226,7 @@ struct KinksTests {
         let result = polygon.unkinked()
         #expect(result.count >= 1)
         for p in result {
-            #expect(p.isValid)
+            #expect(p.isStructurallyValid)
         }
     }
 
@@ -253,7 +253,7 @@ struct KinksTests {
         let result = multi.unkinked()
         #expect(result.count >= 2)
         for p in result {
-            #expect(p.isValid)
+            #expect(p.isStructurallyValid)
         }
     }
 
@@ -292,7 +292,7 @@ struct KinksTests {
         let result = polygon.unkinked()
         #expect(result.count >= 1)
         for p in result {
-            #expect(p.isValid)
+            #expect(p.isStructurallyValid)
         }
     }
 

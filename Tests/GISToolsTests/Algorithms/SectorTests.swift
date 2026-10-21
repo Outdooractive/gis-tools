@@ -8,7 +8,7 @@ struct SectorTests {
     func sectorQuarter() async throws {
         let center = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.outerRing?.coordinates.count == 18) // center + 16 arc steps + center
         #expect(sector.projection == .epsg4326)
     }
@@ -56,7 +56,7 @@ struct SectorTests {
     func sectorFullCircle() async throws {
         let center = Coordinate3D(latitude: 39.984, longitude: -75.343)
         let sector = try #require(center.sector(radius: 5000.0, bearing1: 0.0, bearing2: 360.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
 
         // A full-circle sector should approximate a circle
         let circle = center.circle(radius: 5000.0)
@@ -84,7 +84,7 @@ struct SectorTests {
     func sectorFromPoint() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let sector = try #require(point.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
     }
 
     // MARK: - Projections
@@ -94,7 +94,7 @@ struct SectorTests {
     func sector3857() async throws {
         let center = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.projection == .epsg3857)
     }
 
@@ -103,7 +103,7 @@ struct SectorTests {
     func sectorNoSRID() async throws {
         let center = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.projection == .noSRID)
     }
 
@@ -113,7 +113,7 @@ struct SectorTests {
     func sector4978() async throws {
         let center = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.projection == .epsg4978)
     }
 
@@ -124,7 +124,7 @@ struct SectorTests {
     func sectorAntimeridian() async throws {
         let center = Coordinate3D(latitude: 0.0, longitude: 180.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.projection == .epsg4326)
     }
 
@@ -133,7 +133,7 @@ struct SectorTests {
     func sectorAntimeridianNegative() async throws {
         let center = Coordinate3D(latitude: 0.0, longitude: -180.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 180.0, bearing2: 270.0))
-        #expect(sector.isValid)
+        #expect(sector.isStructurallyValid)
         #expect(sector.projection == .epsg4326)
     }
 
