@@ -65,6 +65,62 @@ extension GeoJson {
 
 }
 
+// MARK: - Coverage container
+
+/// A geometry paired with the indexes used by coverage checks.
+struct CoverageContainer {
+
+    let geometry: GeoJsonGeometry
+    let pointIndex: PreparedPolygon.PointIndex?
+    let barriers: SegmentIndex
+
+    init(geometry: GeoJsonGeometry) {
+        self.geometry = geometry
+
+        if let polygon = geometry as? Polygon {
+            let prepared = PreparedPolygon(polygon)
+
+            // Geocentric inputs are prepared in EPSG:4326. Keep the original
+            // geometry and its segments when the prepared projection differs,
+            // so coordinate and barrier frames stay consistent.
+            if prepared.projection == polygon.projection,
+               let part = prepared.coverageContainers.first
+            {
+                self.pointIndex = part.pointIndex
+                self.barriers = part.barriers
+                return
+            }
+        }
+
+        self.pointIndex = nil
+        self.barriers = SegmentIndex(geometry.lineSegments)
+    }
+
+    init(
+        geometry: GeoJsonGeometry,
+        pointIndex: PreparedPolygon.PointIndex,
+        barriers: SegmentIndex
+    ) {
+        self.geometry = geometry
+        self.pointIndex = pointIndex
+        self.barriers = barriers
+    }
+
+    func location(of coordinate: Coordinate3D) -> PointLocation {
+        if let pointIndex {
+            return pointIndex.locate(coordinate)
+        }
+        return BooleanCovers.location(of: coordinate, in: geometry)
+    }
+
+    func splitParameters(of segment: LineSegment) -> [Double] {
+        BooleanCovers.splitParameters(
+            of: segment,
+            against: barriers.candidates(for: segment))
+    }
+
+}
+
 // MARK: - BooleanCovers namespace
 
 enum BooleanCovers {
@@ -76,8 +132,10 @@ enum BooleanCovers {
         _ containers: [GeoJsonGeometry],
         _ others: [GeoJsonGeometry]
     ) -> Bool {
-        others.allSatisfy { other in
-            containers.contains { covers($0, other) }
+        let preparedContainers = containers.map { CoverageContainer(geometry: $0) }
+
+        return others.allSatisfy { other in
+            preparedContainers.contains { covers($0, other) }
         }
     }
 
@@ -113,7 +171,14 @@ enum BooleanCovers {
         _ container: GeoJsonGeometry,
         _ other: GeoJsonGeometry
     ) -> Bool {
-        if let bbox1 = container.boundingBox,
+        covers(CoverageContainer(geometry: container), other)
+    }
+
+    static func covers(
+        _ container: CoverageContainer,
+        _ other: GeoJsonGeometry
+    ) -> Bool {
+        if let bbox1 = container.geometry.boundingBox,
            let bbox2 = other.boundingBox,
            !bbox1.contains(bbox2)
         {
@@ -122,11 +187,11 @@ enum BooleanCovers {
 
         switch other {
         case let point as Point:
-            return location(of: point.coordinate, in: container) != .exterior
+            return container.location(of: point.coordinate) != .exterior
 
         case let multiPoint as MultiPoint:
             return multiPoint.points.allSatisfy {
-                location(of: $0.coordinate, in: container) != .exterior
+                container.location(of: $0.coordinate) != .exterior
             }
 
         case let lineString as LineString:
@@ -146,6 +211,20 @@ enum BooleanCovers {
 
         default:
             return false
+        }
+    }
+
+    /// Coverage against a prepared polygonal geometry.
+    static func covers(
+        _ prepared: PreparedPolygon,
+        _ other: PolygonGeometry
+    ) -> Bool {
+        let projected = other.projected(to: prepared.projection)
+        let otherParts = parts(of: projected)
+        let containers = prepared.coverageContainers
+
+        return otherParts.allSatisfy { otherPart in
+            containers.contains { covers($0, otherPart) }
         }
     }
 
@@ -261,12 +340,11 @@ extension BooleanCovers {
 
     private static func lineStringsCovered(
         _ lineStrings: [LineString],
-        by container: GeoJsonGeometry
+        by container: CoverageContainer
     ) -> Bool {
-        let barriers = container.lineSegments
-        return lineStrings.allSatisfy { lineString in
+        lineStrings.allSatisfy { lineString in
             lineString.lineSegments.allSatisfy {
-                segmentCovered($0, barriers: barriers, container: container)
+                segmentCovered($0, container: container)
             }
         }
     }
@@ -276,14 +354,13 @@ extension BooleanCovers {
     /// its midpoint inside or on the container.
     private static func segmentCovered(
         _ segment: LineSegment,
-        barriers: [LineSegment],
-        container: GeoJsonGeometry
+        container: CoverageContainer
     ) -> Bool {
-        guard location(of: segment.first, in: container) != .exterior,
-              location(of: segment.second, in: container) != .exterior
+        guard container.location(of: segment.first) != .exterior,
+              container.location(of: segment.second) != .exterior
         else { return false }
 
-        let parameters = splitParameters(of: segment, against: barriers)
+        let parameters = container.splitParameters(of: segment)
 
         for index in 1 ..< parameters.count {
             let lower = parameters[index - 1]
@@ -291,7 +368,7 @@ extension BooleanCovers {
             guard (upper - lower) > GISTool.intersectionEpsilon else { continue }
 
             let middle = point(on: segment, at: (lower + upper) / 2.0)
-            if location(of: middle, in: container) == .exterior {
+            if container.location(of: middle) == .exterior {
                 return false
             }
         }
@@ -307,30 +384,30 @@ extension BooleanCovers {
 
     private static func polygonsCovered(
         _ polygons: [Polygon],
-        by container: GeoJsonGeometry
+        by container: CoverageContainer
     ) -> Bool {
-        let barriers = container.lineSegments
+        polygons.allSatisfy { polygon in
+            let preparedPolygon = PreparedPolygon(polygon)
 
-        return polygons.allSatisfy { polygon in
             // The whole boundary must be covered.
             guard polygon.rings.allSatisfy({ ring in
                 ring.lineSegments.allSatisfy {
-                    segmentCovered($0, barriers: barriers, container: container)
+                    segmentCovered($0, container: container)
                 }
             })
             else { return false }
 
             // The interior must be covered as well.
             guard let interior = interiorPoint(of: polygon),
-                  location(of: interior, in: container) != .exterior
+                  container.location(of: interior) != .exterior
             else { return false }
 
             // A hole or a gap between container components must not fall
             // inside the polygon, otherwise the polygon's interior contains
             // points in the container's exterior.
-            if let polygonal = container as? PolygonGeometry {
+            if let polygonal = container.geometry as? PolygonGeometry {
                 for coordinate in polygonal.allCoordinates
-                    where location(of: coordinate, in: polygon) == .interior
+                    where preparedPolygon.contains(coordinate)
                 {
                     return false
                 }
