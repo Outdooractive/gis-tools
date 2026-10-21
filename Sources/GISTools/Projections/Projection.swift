@@ -1,3 +1,7 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
+
 // MARK: - Projection
 
 /// A coordinate reference system.
