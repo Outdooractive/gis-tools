@@ -707,12 +707,19 @@ private extension Overlay {
     }
 
     static func buildRings(from edges: [Edge]) -> [[Coordinate3D]] {
+        buildRings(from: edges) { vertexKey($0) }
+    }
+
+    static func buildRings(
+        from edges: [Edge],
+        key: (Coordinate3D) -> String
+    ) -> [[Coordinate3D]] {
         guard edges.isNotEmpty else { return [] }
 
         var adj: [String: [Int]] = [:]
         for (i, edge) in edges.enumerated() {
-            let sk = vertexKey(edge.start)
-            let ek = vertexKey(edge.end)
+            let sk = key(edge.start)
+            let ek = key(edge.end)
             adj[sk, default: []].append(i)
             adj[ek, default: []].append(i)
         }
@@ -725,8 +732,8 @@ private extension Overlay {
         for startIdx in edges.indices where !used.contains(startIdx) {
             var ring: [Coordinate3D] = [edges[startIdx].start, edges[startIdx].end]
             used.insert(startIdx)
-            let startKey = vertexKey(edges[startIdx].start)
-            var currentKey = vertexKey(edges[startIdx].end)
+            let startKey = key(edges[startIdx].start)
+            var currentKey = key(edges[startIdx].end)
 
             func currentCoord() -> Coordinate3D {
                 guard let last = ring.last else { return edges[startIdx].start }
@@ -738,8 +745,8 @@ private extension Overlay {
                 var found = false
                 for ci in candidates where !used.contains(ci) {
                     let e = edges[ci]
-                    let sk = vertexKey(e.start)
-                    let ek = vertexKey(e.end)
+                    let sk = key(e.start)
+                    let ek = key(e.end)
                     if ek == currentKey {
                         ring.append(e.start)
                         currentKey = sk
@@ -775,11 +782,11 @@ private extension Overlay {
                         let e = edges[best.ci]
                         if best.useEnd {
                             ring.append(e.start)
-                            currentKey = vertexKey(e.start)
+                            currentKey = key(e.start)
                         }
                         else {
                             ring.append(e.end)
-                            currentKey = vertexKey(e.end)
+                            currentKey = key(e.end)
                         }
                         found = true
                     }
@@ -967,6 +974,31 @@ private struct OverlayPreparedRing: Sendable {
         }
 
         return inside
+    }
+
+}
+
+
+// MARK: - Boundary assembly
+
+extension Overlay {
+
+    /// Build polygons from a set of directed boundary edges.
+    ///
+    /// Coordinates are matched exactly, which is suitable for meshes whose
+    /// vertices originate from the same triangulation.
+    static func polygons(
+        fromBoundaryEdges edges: [(start: Coordinate3D, end: Coordinate3D)]
+    ) -> [Polygon] {
+        let overlayEdges = edges.map {
+            Edge(start: $0.start, end: $0.end, polygonIndex: 0)
+        }
+        let rings = buildRings(from: overlayEdges) { coordinate in
+            let x = coordinate.x == 0.0 ? 0.0 : coordinate.x
+            let y = coordinate.y == 0.0 ? 0.0 : coordinate.y
+            return "\(x),\(y)"
+        }
+        return assemblePolygons(from: rings)
     }
 
 }

@@ -235,3 +235,33 @@ struct ConcaveHullTests {
     }
 
 }
+
+    // A larger mesh exercises the direct triangle-boundary assembly path.
+    @Test
+    func concaveHullLargeMesh() throws {
+        struct Random {
+            var state: UInt64 = 123
+
+            mutating func next(in range: ClosedRange<Double>) -> Double {
+                state = (state &* 6_364_136_223_846_793_005) &+ 1_442_695_040_888_963_407
+                let value = Double(state >> 11) / Double(1 << 53)
+                return range.lowerBound + value * (range.upperBound - range.lowerBound)
+            }
+        }
+
+        var random = Random()
+        let inputPoints = (0 ..< 1_000).map { _ in
+            Coordinate3D(
+                latitude: random.next(in: 0.0 ... 10.0),
+                longitude: random.next(in: 0.0 ... 10.0))
+        }
+        let mp = try #require(MultiPoint(inputPoints))
+        let hull = try #require(mp.concaveHull(maxEdgeLength: 2_000_000.0))
+
+        #expect(hull.polygons.isNotEmpty)
+        #expect(hull.polygons.allSatisfy { $0.isValid })
+
+        for point in inputPoints {
+            #expect(hull.polygons.contains { $0.covers(point) })
+        }
+    }

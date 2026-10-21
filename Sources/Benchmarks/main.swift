@@ -509,8 +509,23 @@ private func runHulls() {
     let points = makePointCloud(count: 10_000)
     let polygon = makeCirclePolygon(vertices: 10_000)
 
+    let points1k = makePointCloud(count: 1_000)
+    let points50k = makePointCloud(count: 50_000)
+    let concaveMaxEdge = 200_000.0
+
     run("hulls/convex/10k", iterations: 3) { _ = points.convexHull() }
-    run("hulls/concave/10k", iterations: 2) { _ = points.concaveHull(maxEdgeLength: 1_000.0) }
+    run("hulls/concave/1k", iterations: 3) {
+        _ = points1k.concaveHull(maxEdgeLength: concaveMaxEdge)
+    }
+    run("hulls/concave/10k", iterations: 2) {
+        _ = points.concaveHull(maxEdgeLength: concaveMaxEdge)
+    }
+    run("hulls/concave/50k", iterations: 1) {
+        _ = points50k.concaveHull(maxEdgeLength: concaveMaxEdge)
+    }
+    run("hulls/concave/filter-only/10k", iterations: 2) {
+        _ = points.concaveHull(maxEdgeLength: 1_000.0)
+    }
     run("hulls/minimum-bounding-circle/10k", iterations: 3) { _ = points.minimumBoundingCircle() }
     run("hulls/oriented-envelope/10k", iterations: 3) { _ = points.orientedEnvelope() }
     run("hulls/pole-of-inaccessibility/10k", iterations: 3) { _ = polygon.poleOfInaccessibility() }
