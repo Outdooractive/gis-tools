@@ -54,7 +54,10 @@ struct CustomProjectionTests {
     // Validates a basic registration and end-to-end projections.
     @Test
     func registrationAndRoundTrip() async throws {
-        let srid = Self.nextSrid()
+        // Reserve two SRIDs: the next one is checked as unregistered below.
+        // Reserving only one can race with another parallel test registering
+        // the following SRID.
+        let srid = Self.nextSrid(2)
         let custom = Self.scaledDegrees(srid: srid)
         #expect(Projection.register(custom))
         #expect(Projection.register(custom) == false) // add-only
