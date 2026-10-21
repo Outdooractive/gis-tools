@@ -77,22 +77,6 @@ extension GeoJson {
         self = scaled(factor: factor, anchor: anchor)
     }
 
-    @available(*, deprecated, renamed: "scaled(factor:anchor:)")
-    public func transformedScale(
-        factor: Double,
-        anchor: ScaleAnchor = .centroid
-    ) -> Self {
-        scaled(factor: factor, anchor: anchor)
-    }
-
-    @available(*, deprecated, renamed: "scale(factor:anchor:)")
-    public mutating func transformScale(
-        factor: Double,
-        anchor: ScaleAnchor = .centroid
-    ) {
-        scale(factor: factor, anchor: anchor)
-    }
-
     // MARK: - Internal
 
     private func _scaledBy(

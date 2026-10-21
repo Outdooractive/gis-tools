@@ -49,22 +49,4 @@ extension GeoJson {
             zTranslation: zTranslation)
     }
 
-    @available(*, deprecated, renamed: "translated(distance:direction:zTranslation:)")
-    public func transformedTranslate(
-        distance: CLLocationDistance,
-        direction: CLLocationDegrees,
-        zTranslation: CLLocationDistance = 0.0
-    ) -> Self {
-        translated(distance: distance, direction: direction, zTranslation: zTranslation)
-    }
-
-    @available(*, deprecated, renamed: "translate(distance:direction:zTranslation:)")
-    public mutating func transformTranslate(
-        distance: CLLocationDistance,
-        direction: CLLocationDegrees,
-        zTranslation: CLLocationDistance = 0.0
-    ) {
-        translate(distance: distance, direction: direction, zTranslation: zTranslation)
-    }
-
 }

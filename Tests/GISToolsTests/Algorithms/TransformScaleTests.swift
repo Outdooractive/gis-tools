@@ -58,7 +58,7 @@ struct TransformScaleTests {
 
     // Validates scaling in EPSG:3857.
     @Test
-    func transformScale3857() async throws {
+    func scaled3857() async throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
@@ -73,7 +73,7 @@ struct TransformScaleTests {
 
     // Validates scaling in EPSG:4978.
     @Test
-    func transformScale4978() async throws {
+    func scaled4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let c10 = Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978)
         let c11 = Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978)
@@ -86,7 +86,7 @@ struct TransformScaleTests {
 
     // Validates scaling with noSRID.
     @Test
-    func transformScaleNoSRID() async throws {
+    func scaledNoSRID() async throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),

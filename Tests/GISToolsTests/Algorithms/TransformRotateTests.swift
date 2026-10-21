@@ -17,7 +17,7 @@ struct TransformRotateTests {
 
     // Validates rotation in EPSG:3857.
     @Test
-    func transformRotate3857() async throws {
+    func rotated3857() async throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
@@ -32,7 +32,7 @@ struct TransformRotateTests {
 
     // Validates rotation in EPSG:4978.
     @Test
-    func transformRotate4978() async throws {
+    func rotated4978() async throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let c10 = Coordinate3D(latitude: 0.009, longitude: 0.0).projected(to: .epsg4978)
         let c11 = Coordinate3D(latitude: 0.009, longitude: 0.009).projected(to: .epsg4978)
@@ -45,7 +45,7 @@ struct TransformRotateTests {
 
     // Validates rotation with noSRID.
     @Test
-    func transformRotateNoSRID() async throws {
+    func rotatedNoSRID() async throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),

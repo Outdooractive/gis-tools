@@ -164,29 +164,6 @@ extension GISTool {
 
 extension GISTool {
 
-    /// Converts pixel coordinates to a coordinate at the given zoom level.
-    ///
-    /// - Parameter pixelX: The x pixel coordinate.
-    /// - Parameter pixelY: The y pixel coordinate.
-    /// - Parameter zoom: The zoom level.
-    /// - Parameter tileSideLength: The tile side length in pixels.
-    /// - Parameter projection: The projection to use.
-    /// - Returns: The coordinate for the pixel position.
-    @available(*, deprecated, renamed: "coordinate(fromPixelX:pixelY:zoom:tileSideLength:projection:)")
-    public static func convertToCoordinate(
-        fromPixelX pixelX: Double,
-        pixelY: Double,
-        atZoom zoom: Int,
-        tileSideLength: Double = GISTool.tileSideLength,
-        projection: Projection = .epsg4326
-    ) -> Coordinate3D {
-        coordinate(fromPixelX: pixelX,
-                   pixelY: pixelY,
-                   zoom: zoom,
-                   tileSideLength: tileSideLength,
-                   projection: projection)
-    }
-
     /// Converts pixel coordinates in a given zoom level to a coordinate.
     ///
     /// - Returns: The coordinate for the pixel position.
@@ -223,19 +200,6 @@ extension GISTool {
 // MARK: - Meters/latitude
 
 extension GISTool {
-
-    /// Converts a distance in meters to degrees at a given latitude.
-    ///
-    /// - Parameter meters: The distance in meters.
-    /// - Parameter latitude: The latitude at which to calculate the conversion.
-    /// - Returns: A tuple of latitude degrees and longitude degrees.
-    @available(*, deprecated, renamed: "degrees(fromMeters:atLatitude:)")
-    public static func convertToDegrees(
-        fromMeters meters: Double,
-        atLatitude latitude: CLLocationDegrees
-    ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
-        degrees(fromMeters: meters, atLatitude: latitude)
-    }
 
     /// Converts a distance in meters to degrees at a given latitude.
     ///

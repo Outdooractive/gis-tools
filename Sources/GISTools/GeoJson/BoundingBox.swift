@@ -91,12 +91,6 @@ public struct BoundingBox:
         self.hasNorthEastAltitude = northEastAltitude != nil
     }
 
-    /// Create a bounding box from `coordinates` and an optional padding in kilometers.
-    @available(*, deprecated, renamed: "init(coordinates:padding:)", message: "Padding is now expressed in meters")
-    public init?(coordinates: [Coordinate3D], paddingKilometers: Double) {
-        self.init(coordinates: coordinates, padding: paddingKilometers * 1000.0)
-    }
-
     /// Create a bounding box from `coordinates` and an optional padding.
     ///
     /// - Parameters:
@@ -266,14 +260,6 @@ public struct BoundingBox:
         return bottomLeft + topRight
     }
 
-    /// Returns a copy of the receiver with some padding in kilometers.
-    @available(*, deprecated, renamed: "padded(_:)", message: "Padding is now expressed in meters")
-    public func with(padding paddingKilometers: Double) -> BoundingBox {
-        BoundingBox(
-            coordinates: [southWest, northEast],
-            paddingKilometers: paddingKilometers)!
-    }
-
     /// Returns a copy of the receiver with some padding horizontally and vertically.
     ///
     /// - Parameters:
@@ -283,12 +269,6 @@ public struct BoundingBox:
             coordinates: [southWest, northEast],
             padding: padding)!
             .clamped()
-    }
-
-    /// Returns a copy of the receiver expanded by `degrees`.
-    @available(*, deprecated, renamed: "expanded(byDegrees:)", message: "Renamed to expanded(byDegrees:)")
-    public func expand(_ degrees: CLLocationDegrees) -> BoundingBox {
-        expanded(byDegrees: degrees)
     }
 
     /// Returns a copy of the receiver expanded by `degrees` horizontally and vertically.
@@ -340,12 +320,6 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver expanded by `distance` diagonally.
-    @available(*, deprecated, renamed: "expanded(byDistance:)", message: "Renamed to expanded(byDistance:)")
-    public func expand(distance: CLLocationDistance) -> BoundingBox {
-        expanded(byDistance: distance)
-    }
-
-    /// Returns a copy of the receiver expanded by `distance` diagonally.
     ///
     /// - Parameters:
     ///    - distance: The distance from the receiver, in meters
@@ -379,24 +353,12 @@ public struct BoundingBox:
     }
 
     /// Returns a copy of the receiver that also includes `coordinate`.
-    @available(*, deprecated, renamed: "expanded(byIncluding:)", message: "Renamed to expanded(byIncluding:)")
-    public func expand(including coordinate: Coordinate3D) -> BoundingBox {
-        expanded(byIncluding: coordinate)
-    }
-
-    /// Returns a copy of the receiver that also includes `coordinate`.
     ///
     /// - Parameters:
     ///    - coordinate: The coordinate to include
     /// - Returns: A new bounding box that encompasses both the receiver and the coordinate
     public func expanded(byIncluding coordinate: Coordinate3D) -> BoundingBox {
         BoundingBox(coordinates: [southWest, northEast, coordinate.projected(to: projection)])!.clamped()
-    }
-
-    /// Returns a copy of the receiver that also includes the other `boundingBox`.
-    @available(*, deprecated, renamed: "expanded(byIncluding:)", message: "Renamed to expanded(byIncluding:)")
-    public func expand(including boundingBox: BoundingBox) -> BoundingBox {
-        expanded(byIncluding: boundingBox)
     }
 
     /// Returns a copy of the receiver that also includes the other `boundingBox`.
@@ -444,12 +406,6 @@ extension BoundingBox: Projectable {
 #if canImport(CoreLocation)
 extension BoundingBox {
 
-    /// Create a bounding box from `coordinates` and an optional padding in kilometers.
-    @available(*, deprecated, renamed: "init(coordinates:padding:)", message: "Padding is now expressed in meters")
-    public init?(coordinates: [CLLocationCoordinate2D], paddingKilometers: Double) {
-        self.init(coordinates: coordinates.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
-    }
-
     /// Create a bounding box from `coordinates` and an optional padding.
     ///
     /// - Parameters:
@@ -466,12 +422,6 @@ extension BoundingBox {
     ///    - northEast: The north-east (upper-right) coordinate
     public init(southWest: CLLocationCoordinate2D, northEast: CLLocationCoordinate2D) {
         self.init(southWest: Coordinate3D(southWest), northEast: Coordinate3D(northEast))
-    }
-
-    /// Create a bounding box from `locations` and an optional padding in kilometers.
-    @available(*, deprecated, renamed: "init(locations:padding:)", message: "Padding is now expressed in meters")
-    public init?(locations: [CLLocation], paddingKilometers: Double = 0.0) {
-        self.init(coordinates: locations.map({ Coordinate3D($0) }), paddingKilometers: paddingKilometers)
     }
 
     /// Create a bounding box from `locations` and an optional padding.
@@ -502,15 +452,6 @@ extension BoundingBox {
     /// All of the bounding box's corner coordinates.
     var allCoordinates: [Coordinate3D] {
         [southWest, northWest, northEast, southEast]
-    }
-
-    /// Converts the bounding box to a `Polygon` object.
-    ///
-    /// The result may not be correct if the bounding box crosses the anti-meridian.
-    /// - Returns: A polygon representing the bounding box corners
-    @available(*, deprecated, message: "Use boundingBoxGeometry instead (handles antimeridian crossing)")
-    public var boundingBoxPolygon: Polygon {
-        Polygon([[southWest, northWest, northEast, southEast, southWest]])!
     }
 
     /// The bounding box as a GeoJSON geometry.
