@@ -972,6 +972,9 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
 | boolean-concave             | `anyGeometry.isConcave()`                                                                                                             |     | [Source][177] / [Tests][178] |
 | boolean-contains/within     | `polygon.contains(lineString)` / `polygon.covers(lineString)` / `point.isWithin(polygon)`                                              |     | [Source][187] / [Tests][188] |
+| boolean-contains-properly   | `let result = polygon.containsProperly(innerPolygon)`                                                                                 |     | [Source][187] / [Tests][188] |
+| boolean-equals              | `let result = polygon.equals(otherPolygon)`                                                                                            |     | [Source][316] / [Tests][319] |
+| boolean-dwithin             | `let result = polygon.dWithin(otherPolygon, distance: 100.0)`                                                                          |     | [Source][318] / [Tests][320] |
 | boolean-crosses             | `lineString.crosses(otherLineString)`                                                                                                  |     | [Source][50] / [Tests][133]  |
 | boolean-disjoint            | `let result = polygon.isDisjoint(with: lineString)`                                                                                   |     | [Source][126] / [Tests][127] |
 | boolean-intersects          | `let result = polygon.intersects(with: lineString)`                                                                                   |     | [Source][128]                |
@@ -1496,6 +1499,10 @@ Thomas Rasch, Outdooractive
 [313]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/ClosestPointTests.swift
 [314]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/PreparedPolygon.swift
 [315]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/PreparedPolygonTests.swift
+[316]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanEquals.swift
+[318]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanWithin.swift
+[319]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanEqualsTests.swift
+[320]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanWithinTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 

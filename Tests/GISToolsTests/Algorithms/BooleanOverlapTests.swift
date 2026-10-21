@@ -250,4 +250,39 @@ struct BooleanOverlapTests {
         #expect(emptyPolygon.isOverlapping(with: emptyPolygon) == false)
     }
 
+
+    // MARK: - OGC overlap semantics
+
+    @Test
+    func polygonOverlapSemantics() {
+        let a = square(minX: 0.0, minY: 0.0, maxX: 10.0, maxY: 10.0)
+        let partial = square(minX: 5.0, minY: 5.0, maxX: 15.0, maxY: 15.0)
+        let touchingEdge = square(minX: 10.0, minY: 0.0, maxX: 20.0, maxY: 10.0)
+        let touchingCorner = square(minX: 10.0, minY: 10.0, maxX: 20.0, maxY: 20.0)
+        let inner = square(minX: 2.0, minY: 2.0, maxX: 8.0, maxY: 8.0)
+        let equal = square(minX: 0.0, minY: 0.0, maxX: 10.0, maxY: 10.0)
+
+        #expect(a.isOverlapping(with: partial))
+        #expect(a.isOverlapping(with: touchingEdge) == false)
+        #expect(a.isOverlapping(with: touchingCorner) == false)
+        #expect(a.isOverlapping(with: inner) == false)
+        #expect(a.isOverlapping(with: equal) == false)
+    }
+
+    private func square(
+        minX: Double,
+        minY: Double,
+        maxX: Double,
+        maxY: Double,
+        projection: Projection = .epsg4326
+    ) -> Polygon {
+        Polygon(unchecked: [[
+            Coordinate3D(x: minX, y: minY, projection: projection),
+            Coordinate3D(x: maxX, y: minY, projection: projection),
+            Coordinate3D(x: maxX, y: maxY, projection: projection),
+            Coordinate3D(x: minX, y: maxY, projection: projection),
+            Coordinate3D(x: minX, y: minY, projection: projection),
+        ]])
+    }
+
 }

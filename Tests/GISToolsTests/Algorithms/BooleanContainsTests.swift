@@ -893,4 +893,57 @@ struct BooleanContainsTests {
         #expect(emptyMultiPoint.contains(point) == false)
     }
 
+    private func square(
+        minX: Double,
+        minY: Double,
+        maxX: Double,
+        maxY: Double,
+        projection: Projection = .epsg4326
+    ) -> Polygon {
+        Polygon(unchecked: [[
+            Coordinate3D(x: minX, y: minY, projection: projection),
+            Coordinate3D(x: maxX, y: minY, projection: projection),
+            Coordinate3D(x: maxX, y: maxY, projection: projection),
+            Coordinate3D(x: minX, y: maxY, projection: projection),
+            Coordinate3D(x: minX, y: minY, projection: projection),
+        ]])
+    }
+
+    // MARK: - containsProperly
+
+    @Test
+    func containsProperly() {
+        let container = square(minX: 0.0, minY: 0.0, maxX: 10.0, maxY: 10.0)
+        let inner = square(minX: 2.0, minY: 2.0, maxX: 8.0, maxY: 8.0)
+        let touching = square(minX: 10.0, minY: 2.0, maxX: 15.0, maxY: 8.0)
+
+        #expect(container.containsProperly(inner))
+        #expect(container.containsProperly(container) == false)
+        #expect(container.containsProperly(touching) == false)
+        #expect(container.containsProperly(Point(Coordinate3D(latitude: 5.0, longitude: 5.0))))
+        #expect(container.containsProperly(Point(Coordinate3D(latitude: 0.0, longitude: 5.0))) == false)
+    }
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func containsProperlyAcrossProjections(projection: Projection) {
+        let polygon: Polygon
+        let inner: Polygon
+
+        switch projection {
+        case .epsg4326:
+            polygon = square(minX: 0.0, minY: 0.0, maxX: 10.0, maxY: 10.0)
+            inner = square(minX: 2.0, minY: 2.0, maxX: 8.0, maxY: 8.0)
+        case .epsg4978:
+            polygon = square(minX: 0.0, minY: 0.0, maxX: 10.0, maxY: 10.0)
+                .projected(to: .epsg4978)
+            inner = square(minX: 2.0, minY: 2.0, maxX: 8.0, maxY: 8.0)
+                .projected(to: .epsg4978)
+        default:
+            polygon = square(minX: 0.0, minY: 0.0, maxX: 1_000.0, maxY: 1_000.0, projection: projection)
+            inner = square(minX: 200.0, minY: 200.0, maxX: 800.0, maxY: 800.0, projection: projection)
+        }
+
+        #expect(polygon.containsProperly(inner))
+    }
+
 }

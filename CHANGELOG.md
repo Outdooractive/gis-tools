@@ -122,6 +122,11 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- OGC predicate conveniences: `containsProperly(_:)`, topological
+  `equals(_:)` and `dWithin(_:distance:)`. Polygon `isOverlapping` now
+  follows `ST_Overlaps` instead of treating boundary contact as overlap. Its
+  unused `tolerance` parameter was removed; use `gridSize` for snapping.
+
 - `area(in:)` and `length(in:)` convert the existing metric area/length through
   ``GISTool/convert(area:from:to:)`` and
   ``GISTool/convert(length:from:to:)``. Invalid units return `nil` (#289).
