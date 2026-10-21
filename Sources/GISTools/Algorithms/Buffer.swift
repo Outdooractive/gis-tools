@@ -68,7 +68,7 @@ extension GeoJson {
     /// - Parameter gridSize: Snap coordinates to a grid before computing (default `nil`).
     /// - Returns: The buffered geometry, or `nil` if the buffer could not be computed.
     public func buffered(
-        by distance: Double,
+        by distance: CLLocationDistance,
         endType: BufferEndType = .round,
         joinType: BufferJoinType = .round,
         unionType: BufferUnionType = .individual,
@@ -86,7 +86,7 @@ extension GeoJson {
 
     private static func buffer(
         _ geometry: GeoJson,
-        by distance: Double,
+        by distance: CLLocationDistance,
         endType: BufferEndType,
         joinType: BufferJoinType,
         unionType: BufferUnionType,
@@ -281,7 +281,7 @@ extension GeoJson {
 
     private static func inset(
         _ geometry: GeoJson,
-        by distance: Double,
+        by distance: CLLocationDistance,
         endType: BufferEndType,
         unionType: BufferUnionType,
         steps: Int
@@ -328,7 +328,7 @@ extension GeoJson {
 
     private static func insetPolygon(
         _ polygon: Polygon,
-        by distance: Double
+        by distance: CLLocationDistance
     ) -> Polygon? {
         guard distance > 0.0 else { return polygon }
 
@@ -435,8 +435,8 @@ extension GeoJson {
     private static func addSquareEndCap(
         at coordinate: Coordinate3D,
         bearing: CLLocationDegrees,
-        tipDistance: Double,
-        width: Double,
+        tipDistance: CLLocationDistance,
+        width: CLLocationDistance,
         forward: Bool,
         to polygons: inout [Polygon]
     ) {
@@ -463,7 +463,7 @@ extension GeoJson {
         at prev: Coordinate3D,
         _ curr: Coordinate3D,
         _ next: Coordinate3D,
-        distance: Double,
+        distance: CLLocationDistance,
         to polygons: inout [Polygon]
     ) {
         guard let bevel = Self.bevelTriangle(from: prev, over: curr, to: next, distance: distance) else { return }
@@ -476,7 +476,7 @@ extension GeoJson {
         at prev: Coordinate3D,
         _ curr: Coordinate3D,
         _ next: Coordinate3D,
-        distance: Double,
+        distance: CLLocationDistance,
         limit: Double,
         to polygons: inout [Polygon]
     ) {
@@ -487,7 +487,7 @@ extension GeoJson {
     /// Adds bevel triangles for every vertex in a ring (polygon exterior or hole).
     private static func addRingBevels(
         for coordinates: [Coordinate3D],
-        distance: Double,
+        distance: CLLocationDistance,
         to polygons: inout [Polygon]
     ) {
         let n = coordinates.count - 1  // last coord is duplicate of first
@@ -503,7 +503,7 @@ extension GeoJson {
     /// Adds miter polygons for every vertex in a ring (polygon exterior or hole).
     private static func addRingMiters(
         for coordinates: [Coordinate3D],
-        distance: Double,
+        distance: CLLocationDistance,
         limit: Double,
         to polygons: inout [Polygon]
     ) {
@@ -527,7 +527,7 @@ extension GeoJson {
         from prev: Coordinate3D,
         over curr: Coordinate3D,
         to next: Coordinate3D,
-        distance: Double
+        distance: CLLocationDistance
     ) -> Polygon? {
         let proj = curr.projection
 
@@ -680,7 +680,7 @@ extension GeoJson {
         from prev: Coordinate3D,
         over curr: Coordinate3D,
         to next: Coordinate3D,
-        distance: Double,
+        distance: CLLocationDistance,
         limit: Double
     ) -> Polygon? {
         let proj = curr.projection
@@ -814,7 +814,7 @@ extension LineSegment {
     /// - Parameter gridSize: Snap coordinates to a grid before computing (default `nil`).
     /// - Returns: The buffered segment, or `nil` if it could not be computed.
     public func buffered(
-        by distance: Double,
+        by distance: CLLocationDistance,
         endType: BufferEndType = .round,
         unionType: BufferUnionType = .individual,
         steps: Int = 64,

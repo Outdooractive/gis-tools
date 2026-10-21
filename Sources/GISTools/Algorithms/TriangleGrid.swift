@@ -10,7 +10,7 @@ extension BoundingBox {
     /// Creates a grid of triangular polygons within the bounding box.
     /// Two triangles are created in each rectangular cell.
     ///
-    /// - Parameter cellSide: Dimension of each grid cell side in meters (or native units for 3857/4978/noSRID).
+    /// - Parameter cellSide: Dimension of each grid cell side in meters for geographic CRS, or native units for EPSG:3857/4978/noSRID.
     /// - Parameter mask: If provided, only triangles intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of triangular polygon features.

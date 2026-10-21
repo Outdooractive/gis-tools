@@ -40,7 +40,8 @@ public struct Edge: Hashable, Sendable {
     ///   - feature: An optional feature associated with this edge.
     ///   - isDirected: Whether this edge is one-way (default `false`).
     ///   - weight: An explicit weight; defaults to the geodesic distance
-    ///     between `from` and `to`.
+    ///     between `from` and `to`. The graph treats weights as opaque values;
+    ///     they are not converted or interpreted as a unit.
     public init(
         from: Node,
         to: Node,

@@ -9,7 +9,7 @@ extension BoundingBox {
 
     /// Creates a grid of square polygons.
     ///
-    /// - Parameter cellSide: Length of each cell side in meters (or native units for 3857/4978/noSRID).
+    /// - Parameter cellSide: Length of each cell side in meters for geographic CRS, or native units for EPSG:3857/4978/noSRID.
     /// - Parameter mask: If provided, only cells intersecting the mask geometry are returned.
     ///
     /// - Returns: A feature collection of square polygon features.

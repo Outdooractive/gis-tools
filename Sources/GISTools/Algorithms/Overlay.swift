@@ -1,3 +1,6 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
 import Foundation
 
 // MARK: - Shared overlay infrastructure
@@ -324,7 +327,7 @@ enum Overlay {
         midLatitude: Double,
         dx: Double,
         dy: Double,
-        distance: Double
+        distance: CLLocationDistance
     ) -> (left: Coordinate3D, right: Coordinate3D) {
         let len = sqrt(dx * dx + dy * dy)
         guard len > 0 else {

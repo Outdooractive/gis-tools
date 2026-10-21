@@ -1,3 +1,7 @@
+#if canImport(CoreLocation)
+import CoreLocation
+#endif
+
 // MARK: - Projection
 
 /// A coordinate reference system.
@@ -588,7 +592,7 @@ extension Projection {
     ///
     /// - Parameter meters: The length in meters
     /// - Returns: The length in the receiver's coordinate units
-    public func crsLength(fromMeters meters: Double) -> Double {
+    public func crsLength(fromMeters meters: CLLocationDistance) -> Double {
         isGeographic ? meters / 111_325.0 : meters
     }
 

@@ -966,7 +966,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
 | along                       | `let coordinate = lineString.coordinateAlong(distance: 100.0)`                                                                        |     | [Source][43] / [Tests][44]   |
 | antimeridian-cutting        | `let result = lineString.cutAtAntimeridian()`                                                                                         |     | [Source][131] / [Tests][132] |
-| area                        | `Polygon(…).area`                                                                                                                     |     | [Source][45]                 |
+| area                        | `Polygon(…).area` / `Polygon(…).area(in: .kilometers)`                                                                                |     | [Source][45]                 |
 | bearing                     | `Coordinate3D(…).bearing(to: Coordinate3D(…))`                                                                                        |     | [Source][46] / [Tests][47]   |
 | bezier-spline               | `let spline = lineString.bezierSpline()`                                                                                              |     | [Source][217] / [Tests][218] |
 | boolean-clockwise           | `Polygon(…).outerRing?.isClockwise`                                                                                                   |     | [Source][48] / [Tests][49]   |
@@ -1019,7 +1019,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | isolines                    | `let result = grid.isolines(breaks: [0, 100, 200])`                                                                   |     | [Source][219] / [Tests][220] |
 | kinks                       | `let intersections = anyGeometry.kinks()`                                                                                              |     | [Source][150] / [Tests][151] |
 | make-valid                  | `let valid = anyGeometry.madeValid()`                                                                                                 |     | [Source][243] / [Tests][244] |
-| length                      | `let length = lineString.length`                                                                                                      |     | [Source][74] / [Tests][75]   |
+| length                      | `let length = lineString.length` / `lineString.length(in: .kilometers)`                                                              |     | [Source][74] / [Tests][75]   |
 | line-arc                    | `let lineArc = point.lineArc(radius: 5000.0, bearing1: 20.0, bearing2: 60.0)`                                                         |     | [Source][76] / [Tests][77]   |
 | line-chunk                  | `let chunks = lineString.chunked(segmentLength: 1000.0).lineStrings` `let dividedLine = lineString.evenlyDivided(segmentLength: 1.0)` |     | [Source][78] / [Tests][79]   |
 | line-offset                 | `let offset = lineString.offset(by: 50.0)`                                                                                            |     | [Source][185] / [Tests][186] |

@@ -255,3 +255,48 @@ struct AreaTests {
     }
 
 }
+
+    // MARK: - Unit conversion
+
+    // Converts polygon and multi-polygon areas through GISTool.convert.
+    @Test
+    func areaInUnits() async throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+        ]]))
+
+        let squareMeters = try #require(polygon.area(in: .meters))
+        let squareKilometers = try #require(polygon.area(in: .kilometers))
+        let acres = try #require(polygon.area(in: .acres))
+
+        #expect(abs(squareMeters - polygon.area) < 0.000001)
+        #expect(abs(squareKilometers - (polygon.area / 1_000_000.0)) < 0.000001)
+        #expect(abs(acres - GISTool.convert(area: polygon.area, from: .meters, to: .acres)!) < 0.000001)
+        #expect(polygon.area(in: .radians) == nil)
+
+        let multiPolygon = MultiPolygon(unchecked: [polygon, polygon])
+        #expect(abs(try #require(multiPolygon.area(in: .kilometers)) - (multiPolygon.area / 1_000_000.0)) < 0.000001)
+
+        let ring = try #require(polygon.outerRing)
+        #expect(abs(try #require(ring.area(in: .kilometers)) - (ring.area / 1_000_000.0)) < 0.000001)
+    }
+
+    // Area conversion preserves the receiver's projection semantics.
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func areaInUnitsAcrossProjections(projection: Projection) throws {
+        let coordinates: [Coordinate3D] = [
+            Coordinate3D(x: 0.0, y: 0.0, projection: projection),
+            Coordinate3D(x: 10.0, y: 0.0, projection: projection),
+            Coordinate3D(x: 10.0, y: 10.0, projection: projection),
+            Coordinate3D(x: 0.0, y: 10.0, projection: projection),
+            Coordinate3D(x: 0.0, y: 0.0, projection: projection),
+        ]
+        let polygon = try #require(Polygon([coordinates]))
+
+        #expect(abs(try #require(polygon.area(in: .meters)) - polygon.area) < 0.000001)
+        #expect(abs(try #require(polygon.area(in: .kilometers)) - (polygon.area / 1_000_000.0)) < 0.000001)
+    }

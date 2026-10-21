@@ -19,7 +19,7 @@ extension PointGeometry {
     /// - Returns: `true` if the points overlap, `false` otherwise.
     public func isOverlapping(
         with other: PointGeometry,
-        tolerance: CLLocationDegrees = 0.0,
+        tolerance: CLLocationDistance = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
@@ -64,7 +64,7 @@ extension LineStringGeometry {
     /// - Returns: `true` if the lines overlap, `false` otherwise.
     public func isOverlapping(
         with other: LineStringGeometry,
-        tolerance: CLLocationDegrees = 0.0,
+        tolerance: CLLocationDistance = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
@@ -102,7 +102,7 @@ extension PolygonGeometry {
     /// - Returns: `true` if the polygons overlap, `false` otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
-        tolerance: CLLocationDegrees = 0.0,
+        tolerance: CLLocationDistance = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
@@ -140,7 +140,7 @@ extension Feature {
     /// - Returns: `true` if the features overlap, `false` otherwise.
     public func isOverlapping(
         with other: Feature,
-        tolerance: CLLocationDegrees = 0.0,
+        tolerance: CLLocationDistance = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self

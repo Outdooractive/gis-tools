@@ -122,6 +122,10 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- `area(in:)` and `length(in:)` convert the existing metric area/length through
+  ``GISTool/convert(area:from:to:)`` and
+  ``GISTool/convert(length:from:to:)``. Invalid units return `nil` (#289).
+
 - ``PreparedPolygon`` and `Polygon/MultiPolygon.prepared()` for repeated
   point and containment queries. The prepared index supports holes,
   antimeridian crossing, all projections and grid snapping (#281).
@@ -155,6 +159,14 @@ Point-in-polygon wraps at the projection's `wraparoundExtent` (EPSG:4326 at
 ±180°, EPSG:3857 at ±`originShift`), so raw crossing polygons now work in
 Web Mercator as well. Polygons with a deliberately world-spanning edge are
 left unchanged; that case is ambiguous per RFC 7946.
+
+### Changed
+
+- Public meter-based length parameters now consistently use
+  `CLLocationDistance`. This also corrects `BooleanOverlap` tolerances, which
+  were declared as `CLLocationDegrees` despite being documented and used as
+  meters. Projection-dependent APIs and native-unit parameters remain
+  documented in their respective code comments.
 
 ### Performance
 
