@@ -24,7 +24,7 @@ struct VoronoiTests {
         for (i, feature) in result.features.enumerated() {
             let cell = try #require(feature.geometry as? Polygon,
                                     "\(name): cell \(i) is not a polygon")
-            #expect(cell.isValid,
+            #expect(cell.isStructurallyValid,
                     "\(name): cell \(i) is invalid")
         }
     }

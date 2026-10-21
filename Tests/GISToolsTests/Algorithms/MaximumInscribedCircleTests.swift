@@ -24,7 +24,7 @@ struct MaximumInscribedCircleTests {
         // For a 10°×10° square the inscribed radius is ~5° ≈ 553 km
         #expect(radius > 500_000.0)
         #expect(radius < 600_000.0)
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
         #expect(circle.projection == polygon.projection)
         #expect(circle.outerRing?.coordinates.count ?? 0 >= 4)
     }
@@ -83,7 +83,7 @@ struct MaximumInscribedCircleTests {
         let radius = try #require(polygon.maximumInscribedRadius())
 
         #expect(radius > 0.0)
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
         for coord in circle.outerRing?.coordinates ?? [] {
             #expect(polygon.contains(coord) || polygon.covers(Point(coord)))
         }
@@ -129,7 +129,7 @@ struct MaximumInscribedCircleTests {
         #expect(radius < 400_000.0)
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // MARK: - Grid size
@@ -177,7 +177,7 @@ struct MaximumInscribedCircleTests {
         let circle = try #require(multi.maximumInscribedCircle())
         let radius = try #require(multi.maximumInscribedRadius())
         #expect(radius > 0.0)
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // MARK: - Projections
@@ -208,7 +208,7 @@ struct MaximumInscribedCircleTests {
         #expect(radius > 0.0)
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // Tests inscribed circle in noSRID projection.
@@ -227,7 +227,7 @@ struct MaximumInscribedCircleTests {
         #expect(radius > 0.0)
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // MARK: - Antimeridian
@@ -245,7 +245,7 @@ struct MaximumInscribedCircleTests {
         ]]))
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
         #expect(circle.projection == polygon.projection)
 
         let radius = try #require(polygon.maximumInscribedRadius())
@@ -274,7 +274,7 @@ struct MaximumInscribedCircleTests {
         #expect(polygon.projection == .epsg3857)
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
         #expect(circle.projection == polygon.projection)
 
         let radius = try #require(polygon.maximumInscribedRadius())
@@ -328,7 +328,7 @@ struct MaximumInscribedCircleTests {
         #expect(polygon.projection == .epsg4978)
 
         let circle = try #require(polygon.maximumInscribedCircle())
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
         #expect(circle.projection == polygon.projection)
 
         let radius = try #require(polygon.maximumInscribedRadius())

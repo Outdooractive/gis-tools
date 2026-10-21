@@ -5,15 +5,27 @@ import Foundation
 
 // (Partly) ported from https://github.com/Turfjs/turf/blob/master/packages/turf-boolean-valid
 
-/// Objects that can be validated, i.e. check that they are non-empty.
+/// Objects that can be checked for structural and topological validity.
 public protocol ValidatableGeoJson {
 
-    /// Check if the geometry is valid, i.e. it has enough coordinates to make sense.
+    /// Check if the geometry has enough coordinates to make structural sense.
+    ///
+    /// This is a structural check only. For OGC/PostGIS topology validity,
+    /// use ``isValid``.
     ///
     /// - Note: RFC 7946 §3.2 allows a Feature with `"geometry": null`. Such an
     ///   unlocated feature is considered structurally valid; its other members
     ///   are still validated.
+    var isStructurallyValid: Bool { get }
+
+    /// Check if the geometry is topologically valid according to OGC rules.
     var isValid: Bool { get }
+
+    /// A human-readable reason why ``isValid`` is `false`, or `nil` when valid.
+    var isValidReason: String? { get }
+
+    /// Whether the geometry is simple (no self-intersections).
+    var isSimple: Bool { get }
 
     /// Returns `self` when ``isValid`` is `true`, otherwise `nil`.
     var validated: Self? { get }
@@ -32,11 +44,11 @@ extension ValidatableGeoJson {
 
 extension Feature: ValidatableGeoJson {
 
-    /// Check if the Feature's geometry is valid, i.e. it has enough coordinates to make sense.
+    /// Check if the Feature's geometry is structurally valid.
     ///
     /// An unlocated feature (`geometry == nil`) is structurally valid.
-    public var isValid: Bool {
-        geometry?.isValid ?? true
+    public var isStructurallyValid: Bool {
+        geometry?.isStructurallyValid ?? true
     }
 
     /// Check if the GeoJson is a valid Feature.
@@ -50,9 +62,9 @@ extension Feature: ValidatableGeoJson {
 
 extension FeatureCollection: ValidatableGeoJson {
 
-    /// Check if the FeatureCollection's Feature is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
-        features.isEmpty || features.allSatisfy({ $0.isValid })
+    /// Check if every Feature is structurally valid.
+    public var isStructurallyValid: Bool {
+        features.isEmpty || features.allSatisfy({ $0.isStructurallyValid })
     }
 
     /// Check if the GeoJson is a valid FeatureCollection.
@@ -66,9 +78,9 @@ extension FeatureCollection: ValidatableGeoJson {
 
 extension GeometryCollection: ValidatableGeoJson {
 
-    /// Check if the geometries are valid, i.e. they have enough coordinates to make sense.
-    public var isValid: Bool {
-        geometries.isEmpty || geometries.allSatisfy({ $0.isValid })
+    /// Check if every geometry is structurally valid.
+    public var isStructurallyValid: Bool {
+        geometries.isEmpty || geometries.allSatisfy({ $0.isStructurallyValid })
     }
 
     /// Check if the GeoJson is a valid GeometryCollection.
@@ -82,8 +94,8 @@ extension GeometryCollection: ValidatableGeoJson {
 
 extension LineString: ValidatableGeoJson {
 
-    /// Check if the LineString is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
+    /// Check if the LineString has enough coordinates to make structural sense.
+    public var isStructurallyValid: Bool {
          coordinates.count >= 2
     }
 
@@ -98,8 +110,8 @@ extension LineString: ValidatableGeoJson {
 
 extension MultiLineString: ValidatableGeoJson {
 
-    /// Check if the MultiLineString is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
+    /// Check if the MultiLineString has enough coordinates to make structural sense.
+    public var isStructurallyValid: Bool {
         !coordinates.isEmpty
             && coordinates[0].count >= 2
     }
@@ -115,8 +127,8 @@ extension MultiLineString: ValidatableGeoJson {
 
 extension Point: ValidatableGeoJson {
 
-    /// Check if the Point is valid. Always `true`.
-    public var isValid: Bool {
+    /// Check if the Point is structurally valid. Always `true`.
+    public var isStructurallyValid: Bool {
         true
     }
 
@@ -131,8 +143,8 @@ extension Point: ValidatableGeoJson {
 
 extension MultiPoint: ValidatableGeoJson {
 
-    /// Check if the MultiPoint is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
+    /// Check if the MultiPoint has enough coordinates to make structural sense.
+    public var isStructurallyValid: Bool {
         !coordinates.isEmpty
     }
 
@@ -147,8 +159,8 @@ extension MultiPoint: ValidatableGeoJson {
 
 extension Polygon: ValidatableGeoJson {
 
-    /// Check if the Polygon is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
+    /// Check if the Polygon has enough coordinates to make structural sense.
+    public var isStructurallyValid: Bool {
         !coordinates.isEmpty
             && coordinates[0].count >= 3
     }
@@ -164,8 +176,8 @@ extension Polygon: ValidatableGeoJson {
 
 extension MultiPolygon: ValidatableGeoJson {
 
-    /// Check if the MultiPolygon is valid, i.e. it has enough coordinates to make sense.
-    public var isValid: Bool {
+    /// Check if the MultiPolygon has enough coordinates to make structural sense.
+    public var isStructurallyValid: Bool {
         !coordinates.isEmpty
             && !coordinates[0].isEmpty
             && coordinates[0][0].count >= 3

@@ -39,7 +39,7 @@ struct CircleTests {
     func circle3857() async throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
         let circle = try #require(point.circle(radius: 5000.0))
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // Validates circle generation in EPSG:4978.
@@ -48,7 +48,7 @@ struct CircleTests {
         let point = Point(Coordinate3D(
             latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
         let circle = try #require(point.circle(radius: 5000.0))
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // Validates circle generation in noSRID.
@@ -57,7 +57,7 @@ struct CircleTests {
         let point = Point(Coordinate3D(
             x: 0.0, y: 0.0, projection: .noSRID))
         let circle = try #require(point.circle(radius: 5000.0))
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // MARK: - Antimeridian
@@ -67,7 +67,7 @@ struct CircleTests {
     func antimeridian() async throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 180.0))
         let circle = try #require(point.circle(radius: 100_000.0))
-        #expect(circle.isValid)
+        #expect(circle.isStructurallyValid)
     }
 
     // MARK: - Edge cases

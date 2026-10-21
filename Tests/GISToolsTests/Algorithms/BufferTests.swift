@@ -431,7 +431,7 @@ struct BufferTests {
         let result = geometry.buffered(by: GISTool.convertToMeters(radius, .miles))
         guard let resultPolygon = result?.polygons.first else { return }
         #expect(resultPolygon.area < geometry.area)
-        #expect(resultPolygon.isValid)
+        #expect(resultPolygon.isStructurallyValid)
     }
 
     // Validates insetting a simple convex polygon reduces area and remains valid.
@@ -449,7 +449,7 @@ struct BufferTests {
         let result = polygon.buffered(by: -50_000.0)
         guard let inset = result?.polygons.first else { return }
         #expect(inset.area < polygon.area)
-        #expect(inset.isValid)
+        #expect(inset.isStructurallyValid)
         #expect(!inset.crossesAntimeridian)
         for coord in inset.allCoordinates {
             #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
@@ -513,7 +513,7 @@ struct BufferTests {
         let result = polygon.buffered(by: -50_000.0)
         guard let inset = result?.polygons.first else { return }
         #expect(inset.area < polygon.area)
-        #expect(inset.isValid)
+        #expect(inset.isStructurallyValid)
     }
 
     // Validates insetting each polygon in a multi-polygon independently reduces area.
@@ -545,8 +545,8 @@ struct BufferTests {
         #expect(resultPolygons.count == 2)
         #expect(resultPolygons[0].area < area1)
         #expect(resultPolygons[1].area < area2)
-        #expect(resultPolygons[0].isValid)
-        #expect(resultPolygons[1].isValid)
+        #expect(resultPolygons[0].isStructurallyValid)
+        #expect(resultPolygons[1].isStructurallyValid)
     }
 
     // Validates insetting a polygon crossing the antimeridian produces a valid non-crossing result.
@@ -565,7 +565,7 @@ struct BufferTests {
         let result = polygon.buffered(by: -50_000.0)
         guard let inset = result?.polygons.first else { return }
         #expect(inset.area < polygon.area)
-        #expect(inset.isValid)
+        #expect(inset.isStructurallyValid)
         #expect(!inset.crossesAntimeridian)
         for coord in inset.allCoordinates {
             #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
@@ -607,7 +607,7 @@ struct BufferTests {
         let totalArea = result.polygons.reduce(0) { $0 + $1.area }
         #expect(totalArea > polygon.area)
         for poly in result.polygons {
-            #expect(poly.isValid)
+            #expect(poly.isStructurallyValid)
         }
     }
 
@@ -618,7 +618,7 @@ struct BufferTests {
         let result = try #require(point.buffered(by: 100.0))
         #expect(result.polygons.count == 1)
         #expect(result.polygons[0].area > 0.0)
-        #expect(result.polygons[0].isValid)
+        #expect(result.polygons[0].isStructurallyValid)
     }
 
     // Verifies buffer around a polygon in noSRID produces a valid result.
@@ -634,7 +634,7 @@ struct BufferTests {
         let result = try #require(polygon.buffered(by: 1.0))
         #expect(result.polygons.count >= 1)
         for poly in result.polygons {
-            #expect(poly.isValid)
+            #expect(poly.isStructurallyValid)
         }
     }
 
@@ -644,7 +644,7 @@ struct BufferTests {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
         let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
         #expect(result.polygons.count >= 1)
-        #expect(result.polygons[0].isValid)
+        #expect(result.polygons[0].isStructurallyValid)
     }
 
     // Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
@@ -669,7 +669,7 @@ struct BufferTests {
         let totalArea = insetPolygons.reduce(0.0) { $0 + $1.area }
         #expect(totalArea < polygon.area * 3.0)
         for poly in insetPolygons {
-            #expect(poly.isValid)
+            #expect(poly.isStructurallyValid)
             #expect(!poly.crossesAntimeridian)
             for coord in poly.allCoordinates {
                 #expect(coord.longitude >= -180.0 && coord.longitude <= 180.0)
@@ -692,7 +692,7 @@ struct BufferTests {
         let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
         let squareArea = square.polygons.reduce(0) { $0 + $1.area }
         #expect(squareArea > buttArea)
-        #expect(square.isValid)
+        #expect(square.isStructurallyValid)
     }
 
     // Validates that square end buffer on a polygon falls back to polygon behavior.
@@ -707,7 +707,7 @@ struct BufferTests {
         ]]))
         let result = try #require(poly.buffered(by: 1_000.0, endType: .square))
         #expect(result.polygons.isNotEmpty)
-        #expect(result.polygons[0].isValid)
+        #expect(result.polygons[0].isStructurallyValid)
     }
 
     // Validates square end on a multi-line string.
@@ -742,7 +742,7 @@ struct BufferTests {
         let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
         // Polygon end should bridge the gap, making area visibly larger
         #expect(polyArea > buttArea)
-        #expect(polygon.isValid)
+        #expect(polygon.isStructurallyValid)
     }
 
     // MARK: - Bevel join tests
@@ -763,8 +763,8 @@ struct BufferTests {
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(bevel.isValid)
-        #expect(round.isValid)
+        #expect(bevel.isStructurallyValid)
+        #expect(round.isStructurallyValid)
         // Bevel should have less area than round (no arc filling the corner)
         #expect(bevelArea < roundArea,
                 "bevel=\(bevelArea), round=\(roundArea)")
@@ -786,8 +786,8 @@ struct BufferTests {
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(bevel.isValid)
-        #expect(round.isValid)
+        #expect(bevel.isStructurallyValid)
+        #expect(round.isStructurallyValid)
         #expect(bevelArea < roundArea,
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
@@ -810,8 +810,8 @@ struct BufferTests {
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(bevel.isValid)
-        #expect(round.isValid)
+        #expect(bevel.isStructurallyValid)
+        #expect(round.isStructurallyValid)
         #expect(bevelArea < roundArea,
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
@@ -834,8 +834,8 @@ struct BufferTests {
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(bevel.isValid)
-        #expect(round.isValid)
+        #expect(bevel.isStructurallyValid)
+        #expect(round.isStructurallyValid)
         #expect(bevelArea < roundArea,
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
@@ -858,8 +858,8 @@ struct BufferTests {
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(bevel.isValid)
-        #expect(round.isValid)
+        #expect(bevel.isStructurallyValid)
+        #expect(round.isStructurallyValid)
         #expect(bevelArea < roundArea,
                 "bevel=\(bevelArea), round=\(roundArea)")
     }
@@ -882,7 +882,7 @@ struct BufferTests {
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(miter.isValid)
+        #expect(miter.isStructurallyValid)
         #expect(miterArea > bevelArea,
                 "miter=\(miterArea), bevel=\(bevelArea)")
     }
@@ -904,7 +904,7 @@ struct BufferTests {
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(miter.isValid)
+        #expect(miter.isStructurallyValid)
         // With a tight limit the miter falls back to bevel — areas should match
         let ratio = miterArea / bevelArea
         #expect(ratio > 0.95 && ratio < 1.05,
@@ -927,7 +927,7 @@ struct BufferTests {
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(miter.isValid)
+        #expect(miter.isStructurallyValid)
         #expect(miterArea > bevelArea,
                 "miter=\(miterArea), bevel=\(bevelArea)")
     }
@@ -950,7 +950,7 @@ struct BufferTests {
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
-        #expect(miter.isValid)
+        #expect(miter.isStructurallyValid)
         #expect(miterArea > bevelArea,
                 "miter=\(miterArea), bevel=\(bevelArea)")
     }

@@ -984,7 +984,7 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | prepared-polygon            | `let prepared = polygon.prepared()` / `prepared.contains(Coordinate3D(…))`                                                           |     | [Source][314] / [Tests][315] |
 | boolean-point-on-line       | `lineString.checkIsOnLine(Coordinate3D(…))`                                                                                           |     | [Source][57] / [Tests][135]  |
 | boolean-touches             | `anyGeometry.touches(other)`                                                                                                          |     | [Source][159] / [Tests][160] |
-| boolean-valid               | `anyGeometry.isValid`                                                                                                                 |     | [Source][58] / [Tests][136]  |
+| boolean-valid               | `anyGeometry.isValid` / `.isStructurallyValid` / `.isSimple` / `.isValidReason`                                                       |     | [Source][58] / [Source][322] / [Tests][321] |
 | bbox-clip                   | `let clipped = lineString.clipped(to: boundingBox)`                                                                                   |     | [Source][59] / [Tests][60]   |
 | boundary                    | `let boundary = anyGeometry.boundary`                                                                                                 |     | [Source][199] / [Tests][200] |
 | buffer                      | `let buffered = lineString.buffered(by: 1000.meters)`                                                                                 |     | [Source][61] / [Tests][158]  |
@@ -1503,6 +1503,8 @@ Thomas Rasch, Outdooractive
 [318]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanWithin.swift
 [319]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanEqualsTests.swift
 [320]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanWithinTests.swift
+[321]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TopologicalValidityTests.swift
+[322]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/TopologicalValidity.swift
 [323]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DistanceUnitTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248

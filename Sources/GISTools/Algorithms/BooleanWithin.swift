@@ -7,9 +7,10 @@ extension GeoJson {
 
     /// Returns `true` if the receiver is within the given distance of `other`.
     ///
-    /// This is OGC `ST_DWithin`. The distance follows the same unit semantics
-    /// as ``Coordinate3D/distance(to:)``: meters for geographic projections,
-    /// native units for planar and noSRID coordinates.
+    /// This is OGC `ST_DWithin`. `distance` is in meters for EPSG:4326
+    /// (Haversine), EPSG:3857 and EPSG:4978 (planar/ECEF Euclidean distance).
+    /// For ``Projection/noSRID`` it is in the coordinate's raw units because
+    /// no unit is defined.
     ///
     /// - Parameters:
     ///   - other: The other geometry
