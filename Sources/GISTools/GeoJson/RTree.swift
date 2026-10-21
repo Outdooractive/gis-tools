@@ -90,31 +90,31 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
             validObjects.append(object)
             projectedBboxes.append(boundingBox)
 
-            if boundingBox.southWest.x < minX {
-                minX = boundingBox.southWest.x
+            if boundingBox.minX < minX {
+                minX = boundingBox.minX
             }
-            if boundingBox.southWest.y < minY {
-                minY = boundingBox.southWest.y
+            if boundingBox.minY < minY {
+                minY = boundingBox.minY
             }
-            if boundingBox.northEast.x > maxX {
-                maxX = boundingBox.northEast.x
+            if boundingBox.maxX > maxX {
+                maxX = boundingBox.maxX
             }
-            if boundingBox.northEast.y > maxY {
-                maxY = boundingBox.northEast.y
+            if boundingBox.maxY > maxY {
+                maxY = boundingBox.maxY
             }
         }
 
         // Sort input by latitude or longitude (keeping projectedBboxes in sync)
         if sortOption == .byLatitude {
             let sortedIndices = projectedBboxes.indices.sorted {
-                projectedBboxes[$0].southWest.latitude < projectedBboxes[$1].southWest.latitude
+                projectedBboxes[$0].minY < projectedBboxes[$1].minY
             }
             validObjects = sortedIndices.map { validObjects[$0] }
             projectedBboxes = sortedIndices.map { projectedBboxes[$0] }
         }
         else if sortOption == .byLongitude {
             let sortedIndices = projectedBboxes.indices.sorted {
-                projectedBboxes[$0].southWest.longitude < projectedBboxes[$1].southWest.longitude
+                projectedBboxes[$0].minX < projectedBboxes[$1].minX
             }
             validObjects = sortedIndices.map { validObjects[$0] }
             projectedBboxes = sortedIndices.map { projectedBboxes[$0] }
@@ -366,10 +366,10 @@ extension RTree {
                     let boundingBox = boundingBoxes[lowerBound]
                     lowerBound += 1
 
-                    nodeMinX = min(nodeMinX, boundingBox.southWest.x)
-                    nodeMinY = min(nodeMinY, boundingBox.southWest.y)
-                    nodeMaxX = max(nodeMaxX, boundingBox.northEast.x)
-                    nodeMaxY = max(nodeMaxY, boundingBox.northEast.y)
+                    nodeMinX = min(nodeMinX, boundingBox.minX)
+                    nodeMinY = min(nodeMinY, boundingBox.minY)
+                    nodeMaxX = max(nodeMaxX, boundingBox.maxX)
+                    nodeMaxY = max(nodeMaxY, boundingBox.maxY)
                 }
 
                 // Add the new node to the tree data
@@ -399,8 +399,8 @@ extension RTree {
         // Map bounding box centers into Hilbert coordinate space and calculate Hilbert values
         for i in 0 ..< count {
             let boundingBox = boundingBoxes[i]
-            let centerX = (boundingBox.southWest.x + boundingBox.northEast.x) * 0.5
-            let centerY = (boundingBox.southWest.y + boundingBox.northEast.y) * 0.5
+            let centerX = (boundingBox.minX + boundingBox.maxX) * 0.5
+            let centerY = (boundingBox.minY + boundingBox.maxY) * 0.5
             let x = UInt32(min(max((centerX - minX) * scaleX, 0.0), hilbertMax))
             let y = UInt32(min(max((centerY - minY) * scaleY, 0.0), hilbertMax))
             hilbertValues[i] = RTree.hilbert(x: x, y: y)

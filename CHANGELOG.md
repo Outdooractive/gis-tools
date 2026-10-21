@@ -92,6 +92,16 @@ Migration:
 
 `Coordinate3D(latitude:longitude:…)` remains the EPSG:4326 initializer.
 
+#### BoundingBox storage
+
+`BoundingBox` now stores scalar X/Y bounds plus optional altitude instead of two
+full coordinates. It is 64 bytes instead of 120, which also shrinks every
+geometry and feature wrapper that carries a bounding box.
+
+The linear-reference `m` value is no longer retained. GeoJSON bounding boxes
+have no `m` member, `asJson` never emitted it, and most construction paths
+already dropped it.
+
 ### Added
 
 - ``PreparedPolygon`` and `Polygon/MultiPolygon.prepared()` for repeated
@@ -165,6 +175,10 @@ left unchanged; that case is ambiguous per RFC 7946.
 - Overlay difference and symmetric difference now stay within about 1.3× of
   union/intersection after the boundary-index and prepared-geometry work.
   Added 1k/10k/100k scaling cases to the overlay benchmark (#283).
+- `BoundingBox` is now 64 bytes instead of 120. This reduces `Point` from 184
+  to 128 bytes, `Feature` from 200 to 144, and `LineString`/`Polygon`/
+  `FeatureCollection` from 136 to 80. The memory suite now measures 100k point
+  features and 10k small polygon features as well as layout sizes (#284).
 
 ### Fixed
 

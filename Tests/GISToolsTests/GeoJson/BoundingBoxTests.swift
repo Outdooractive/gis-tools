@@ -1210,3 +1210,42 @@ struct BoundingBoxTests {
     }
 
 }
+
+    // MARK: - Compact storage
+
+    // Bounding boxes retain altitude but intentionally drop `m`, matching the
+    // GeoJSON bbox format and the existing JSON encoding path.
+    @Test
+    func boundingBoxDropsM() {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(
+                latitude: 1.0,
+                longitude: 2.0,
+                altitude: 10.0,
+                m: 100.0),
+            northEast: Coordinate3D(
+                latitude: 3.0,
+                longitude: 4.0,
+                altitude: 20.0,
+                m: 200.0))
+
+        #expect(boundingBox.southWest.altitude == 10.0)
+        #expect(boundingBox.northEast.altitude == 20.0)
+        #expect(boundingBox.southWest.m == nil)
+        #expect(boundingBox.northEast.m == nil)
+        #expect(boundingBox.asJson == [2.0, 1.0, 10.0, 4.0, 3.0, 20.0])
+    }
+
+    // The smaller scalar storage still has value semantics for the public
+    // corner properties.
+    @Test
+    func boundingBoxCornerProperties() {
+        let boundingBox = BoundingBox(
+            southWest: Coordinate3D(latitude: 1.0, longitude: 2.0),
+            northEast: Coordinate3D(latitude: 3.0, longitude: 4.0))
+
+        #expect(boundingBox.southWest == Coordinate3D(latitude: 1.0, longitude: 2.0))
+        #expect(boundingBox.northEast == Coordinate3D(latitude: 3.0, longitude: 4.0))
+        #expect(boundingBox.northWest == Coordinate3D(latitude: 3.0, longitude: 2.0))
+        #expect(boundingBox.southEast == Coordinate3D(latitude: 1.0, longitude: 4.0))
+    }

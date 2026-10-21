@@ -258,6 +258,10 @@ mutating func updateBoundingBox(onlyIfNecessary ifNecessary: Bool) -> BoundingBo
 func intersects(_ otherBoundingBox: BoundingBox) -> Bool
 ```
 
+`BoundingBox` stores X/Y bounds and an optional altitude range. The linear-
+reference `m` value is not part of the GeoJSON bounding-box format and is not
+retained.
+
 ## GeoJsonConvertible protocol / GeoJsonCodable
 [Implementation][14]
 
