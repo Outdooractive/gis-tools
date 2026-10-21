@@ -196,3 +196,82 @@ extension BooleanContains {
     }
 
 }
+
+// MARK: - ContainsProperly
+
+extension GeoJson {
+
+    /// Returns `true` if the receiver contains `other` strictly in its interior.
+    ///
+    /// This is OGC `ST_ContainsProperly`: `other` must be covered by the
+    /// receiver and may not touch the receiver's boundary.
+    ///
+    /// - Parameter other: The geometry to test
+    /// - Returns: `true` if `other` is contained in the receiver's interior
+    public func containsProperly(_ other: GeoJson) -> Bool {
+        if let first = self as? PolygonGeometry,
+           let second = other as? PolygonGeometry
+        {
+            guard let intersectionArea = PolygonPredicateHelpers.intersectionArea(first, second),
+                  AreaComparison.areEqual(intersectionArea, PolygonPredicateHelpers.area(second))
+            else { return false }
+
+            guard let boundary = topologicalBoundary else { return true }
+            return !boundary.intersects(other)
+        }
+
+        guard contains(other) else { return false }
+        guard let boundary = topologicalBoundary else { return true }
+
+        return !boundary.intersects(other)
+    }
+
+    /// The topological boundary used by ``containsProperly(_:)``.
+    ///
+    /// Polygon boundaries include all rings, unlike ``Polygon/boundary`` which
+    /// exposes only the outer ring.
+    private var topologicalBoundary: GeoJsonGeometry? {
+        switch self {
+        case let point as Point:
+            return point.boundary
+
+        case let multiPoint as MultiPoint:
+            return multiPoint.boundary
+
+        case let lineString as LineString:
+            return lineString.boundary
+
+        case let multiLineString as MultiLineString:
+            return multiLineString.boundary
+
+        case let polygon as Polygon:
+            let lines = polygon.rings.map(\.lineString)
+            return lines.isEmpty ? nil : MultiLineString(unchecked: lines)
+
+        case let multiPolygon as MultiPolygon:
+            let lines = multiPolygon.polygons.flatMap { polygon in
+                polygon.rings.map(\.lineString)
+            }
+            return lines.isEmpty ? nil : MultiLineString(unchecked: lines)
+
+        case let geometryCollection as GeometryCollection:
+            let boundaries = geometryCollection.geometries.compactMap {
+                $0.topologicalBoundary
+            }
+            return boundaries.isEmpty ? nil : GeometryCollection(boundaries)
+
+        case let feature as Feature:
+            return feature.geometry?.topologicalBoundary
+
+        case let featureCollection as FeatureCollection:
+            let boundaries = featureCollection.features.compactMap {
+                $0.geometry?.topologicalBoundary
+            }
+            return boundaries.isEmpty ? nil : GeometryCollection(boundaries)
+
+        default:
+            return nil
+        }
+    }
+
+}

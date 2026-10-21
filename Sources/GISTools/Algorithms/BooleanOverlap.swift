@@ -92,17 +92,18 @@ extension LineStringGeometry {
 
 extension PolygonGeometry {
 
-    /// Compares two Polygon|MultiPolygon geometries and returns true if their intersection set results in a geometry
-    /// different from both but of the same dimension.
+    /// Compares two Polygon|MultiPolygon geometries using OGC `ST_Overlaps`.
+    ///
+    /// The result is `true` when the interiors intersect, neither geometry
+    /// contains the other, and the geometries are not equal. Boundary-only
+    /// contact does not count as overlap.
     ///
     /// - Parameter other: The other Polygon or MultiPolygon
-    /// - Parameter tolerance: The tolerance, in meters.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the polygons overlap, `false` otherwise.
     public func isOverlapping(
         with other: PolygonGeometry,
-        tolerance: CLLocationDistance = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
@@ -111,19 +112,41 @@ extension PolygonGeometry {
 
         guard !snappedSelf.isEqualTo(other) else { return false }
 
-        let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
+        // Overlay projects to EPSG:3857, which is not meaningful for ECEF
+        // coordinates near the origin. Keep the raw-XY boundary check for
+        // geocentric data.
+        if snappedSelf.projection.isGeocentric {
+            let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
 
-        for segment in other.lineSegments {
-            guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
+            for segment in other.lineSegments {
+                guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
-            for match in tree.search(inBoundingBox: boundingBox) {
-                if segment.intersects(match) {
+                for match in tree.search(inBoundingBox: boundingBox) where segment.intersects(match) {
                     return true
                 }
             }
+
+            return false
         }
 
-        return false
+        // OGC ST_Overlaps: equal interiors alone are not overlap. The
+        // geometries must have the same dimension, their interiors must
+        // intersect, neither may contain the other, and they must not be
+        // equal. Compare intersection and component areas so this also works
+        // in projected CRSs where the coverage predicate is not the right
+        // abstraction.
+        guard let intersection = Intersection.intersectPolygons(
+            snappedSelf.polygons + other.polygons)
+        else { return false }
+
+        let overlapArea = OverlapArea.of(intersection)
+        guard overlapArea > GISTool.equalityDelta else { return false }
+
+        let selfArea = snappedSelf.polygons.reduce(0.0) { $0 + $1.area }
+        let otherArea = other.polygons.reduce(0.0) { $0 + $1.area }
+
+        return !AreaComparison.areEqual(overlapArea, selfArea)
+            && !AreaComparison.areEqual(overlapArea, otherArea)
     }
 
 }
@@ -134,7 +157,8 @@ extension Feature {
     /// different from both but of the same dimension.
     ///
     /// - Parameter other: The other Feature
-    /// - Parameter tolerance: The tolerance, in meters.
+    /// - Parameter tolerance: The tolerance in meters for point and line
+    ///   geometry features. Polygon features use OGC area-based overlap.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///
     /// - Returns: `true` if the features overlap, `false` otherwise.
@@ -160,10 +184,26 @@ extension Feature {
         else if let first = snappedSelf.geometry as? PolygonGeometry,
                 let second = other.geometry as? PolygonGeometry
         {
-            return first.isOverlapping(with: second, tolerance: tolerance, gridSize: nil)
+            return first.isOverlapping(with: second, gridSize: nil)
         }
 
         return false
+    }
+
+}
+
+
+private enum OverlapArea {
+
+    static func of(_ geometry: PolygonGeometry) -> Double {
+        switch geometry {
+        case let polygon as Polygon:
+            return polygon.area
+        case let multiPolygon as MultiPolygon:
+            return multiPolygon.area
+        default:
+            return 0.0
+        }
     }
 
 }
