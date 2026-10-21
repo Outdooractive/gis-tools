@@ -716,6 +716,67 @@ private func runMemory() {
     withExtendedLifetime((pointCollection, polygonCollection)) {}
 }
 
+// MARK: - Inlining
+
+private func runInlining() {
+    let boxes = (0 ..< 100_000).map { index in
+        let x = Double(index % 1_000)
+        let y = Double(index / 1_000)
+        return BoundingBox(
+            southWest: Coordinate3D(latitude: y, longitude: x),
+            northEast: Coordinate3D(latitude: y + 1.0, longitude: x + 1.0))
+    }
+    let projectedPoints = (0 ..< 100_000).map { index in
+        Coordinate3D(
+            x: Double(index % 1_000),
+            y: Double(index / 1_000),
+            projection: .epsg3857)
+    }
+    let point = Coordinate3D(latitude: 0.5, longitude: 0.5)
+
+    var sink = 0.0
+
+    run("inline/bbox-corners/100k", iterations: 5) {
+        var sum = 0.0
+        for box in boxes {
+            sum += box.southWest.x
+                + box.southWest.y
+                + box.northEast.x
+                + box.northEast.y
+                + box.northWest.y
+                + box.southEast.x
+        }
+        sink += sum
+    }
+
+    run("inline/bbox-contains/100k", iterations: 5) {
+        var count = 0
+        for box in boxes where box.contains(point) {
+            count += 1
+        }
+        sink += Double(count)
+    }
+
+    run("inline/coordinate-isCoincident/100k", iterations: 5) {
+        var count = 0
+        for coordinate in projectedPoints where coordinate.isCoincident(to: projectedPoints[0]) {
+            count += 1
+        }
+        sink += Double(count)
+    }
+
+    run("inline/coordinate-distance/100k", iterations: 5) {
+        var sum = 0.0
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        for coordinate in projectedPoints {
+            sum += coordinate.distance(to: origin)
+        }
+        sink += sum
+    }
+
+    print(String(format: "inline/checksum=%.1f", sink))
+}
+
 // MARK: - Entry point
 
 let arguments = CommandLine.arguments
@@ -749,6 +810,7 @@ case "graph": runSuite("graph", runGraph)
 case "query": runSuite("query", runQuery)
 case "clusters": runSuite("clusters", runClusters)
 case "memory": runSuite("memory", runMemory)
+case "inlining": runSuite("inlining", runInlining)
 
 case "all":
     for (name, block) in [
@@ -768,11 +830,12 @@ case "all":
         ("query", runQuery),
         ("clusters", runClusters),
         ("memory", runMemory),
+        ("inlining", runInlining),
     ] {
         runSuite(name, block)
     }
 
 default:
-    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|graph|query|clusters|memory|all>")
+    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|graph|query|clusters|memory|inlining|all>")
     exit(1)
 }

@@ -1179,7 +1179,7 @@ Currently only two:
 
 # Benchmarks
 
-A separate release-mode executable covers loading, projection, spatial predicates, overlay, the R-tree, coders, buffer, simplify, hulls, line operations, tile cover, clipping, graph routing, the query DSL, clustering and memory layout.
+A separate release-mode executable covers loading, projection, spatial predicates, overlay, the R-tree, coders, buffer, simplify, hulls, line operations, tile cover, clipping, graph routing, the query DSL, clustering, memory layout and a small cross-module inlining suite.
 
 ```bash
 # Run every suite and print a Markdown table

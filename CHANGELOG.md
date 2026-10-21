@@ -179,6 +179,9 @@ left unchanged; that case is ambiguous per RFC 7946.
   to 128 bytes, `Feature` from 200 to 144, and `LineString`/`Polygon`/
   `FeatureCollection` from 136 to 80. The memory suite now measures 100k point
   features and 10k small polygon features as well as layout sizes (#284).
+- `Coordinate3D.equals` now avoids reprojecting when both coordinates already
+  use the same projection. Repeated coincidence checks are about 4× faster in
+  the cross-module benchmark (#284).
 
 ### Fixed
 
