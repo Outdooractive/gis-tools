@@ -249,6 +249,7 @@ extension Graph {
             isDirected: isDirected,
             onewayProperty: onewayProperty)
         partition.adjacencyList = edgeLists
+        partition.hasDirectedEdges = hasDirectedEdges
 
         if let firstCoord = edgeLists.first?.node.coordinate {
             partition.spatialIndex = SpatialIndex(

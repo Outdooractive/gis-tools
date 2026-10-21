@@ -24,9 +24,16 @@ extension Graph {
     /// node settled by both searches) is the classic provably-optimal rule
     /// for bidirectional Dijkstra.
     ///
-    /// For directed graphs the backward search follows one-way edges in
-    /// reverse (i.e. it finds nodes that can *reach* the current node), so
-    /// one-way restrictions are respected on the final path.
+    /// For fully bidirectional graphs the backward search reuses the forward
+    /// adjacency directly instead of building a reverse index. For directed
+    /// graphs it follows one-way edges in reverse (i.e. it finds nodes that
+    /// can *reach* the current node), so one-way restrictions are respected
+    /// on the final path.
+    ///
+    /// - Note: Grid-like graphs have many equal-cost routes, so the two
+    ///   frontiers can cover nearly the same total area as a single Dijkstra
+    ///   search. The graph benchmark measures this case at 10k/100k/1M edges;
+    ///   bidirectional search is not guaranteed to be faster there.
     ///
     /// - Parameters:
     ///   - source: The start node.
@@ -51,23 +58,24 @@ extension Graph {
 
         if source == destination { return [source] }
 
-        let blockedSet: Set<Int> = Set(blockedNodes?.map(\.index) ?? [])
+        let blockedSet: Set<Int>? = blockedNodes.map { Set($0.map(\.index)) }
 
-        // Reverse adjacency: for each stored edge `from -> to`, record that
-        // `to` can be reached backwards from `from`. The backward search uses
-        // this to walk edges in reverse while still respecting one-way
-        // direction (a one-way edge A->B lets the backward search step from B
-        // back to A, because A can reach B).
-        var reverseAdjacency: [[ReverseLink]] = Array(
-            repeating: [],
-            count: adjacencyList.count)
-        for edgeList in adjacencyList {
-            for edge in edgeList.edges {
-                reverseAdjacency[edge.to.index].append(
-                    ReverseLink(
-                        from: edge.from.index,
-                        weight: edge.weight,
-                        edge: edge))
+        // For a fully bidirectional graph the reverse adjacency is identical
+        // to the forward adjacency, so skip the O(E) rebuild. Only directed
+        // edges require a separate reverse index.
+        var reverseAdjacency: [[ReverseLink]] = []
+        if hasDirectedEdges {
+            reverseAdjacency = Array(
+                repeating: [],
+                count: adjacencyList.count)
+            for edgeList in adjacencyList {
+                for edge in edgeList.edges {
+                    reverseAdjacency[edge.to.index].append(
+                        ReverseLink(
+                            from: edge.from.index,
+                            weight: edge.weight,
+                            edge: edge))
+                }
             }
         }
 
@@ -75,8 +83,8 @@ extension Graph {
         var gBackward: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
         var predForward: [Int] = Array(repeating: -1, count: adjacencyList.count)
         var predBackward: [Int] = Array(repeating: -1, count: adjacencyList.count)
-        var settledForward: Set<Int> = []
-        var settledBackward: Set<Int> = []
+        var settledForward = NodeBitSet(count: adjacencyList.count)
+        var settledBackward = NodeBitSet(count: adjacencyList.count)
 
         gForward[source.index] = 0.0
         gBackward[destination.index] = 0.0
@@ -102,6 +110,30 @@ extension Graph {
             if combined < bestMeeting {
                 bestMeeting = combined
                 bestMeetingIndex = node
+            }
+        }
+
+        func relaxBackward(
+            from u: Int,
+            to v: Int,
+            weight: Double,
+            edge: Edge,
+            currentG: Double
+        ) {
+            if let blockedSet, blockedSet.contains(u) { return }
+            if let edgeFilter, !edgeFilter(edge) { return }
+
+            let relaxed = currentG + weight
+            if relaxed < gBackward[u] {
+                gBackward[u] = relaxed
+                // `u`'s successor toward the destination is `v`.
+                predBackward[u] = v
+                heapBackward.push(BidirectionalHeapEntry(gScore: relaxed, index: u))
+
+                // If the forward search has already reached `u`, the path
+                // source -> ... -> u -> v -> ... -> destination is a
+                // candidate for the best meeting.
+                if gForward[u] < .infinity { noteMeeting(u) }
             }
         }
 
@@ -132,16 +164,16 @@ extension Graph {
                let entry = heapForward.pop()
             {
                 let u = entry.index
-                if settledForward.contains(u) { continue }
-                settledForward.insert(u)
+                if settledForward[u] { continue }
+                settledForward[u] = true
 
                 // A node settled by both sides is a meeting candidate.
-                if settledBackward.contains(u) { noteMeeting(u) }
+                if settledBackward[u] { noteMeeting(u) }
 
                 let currentG = gForward[u]
                 for edge in adjacencyList[u].edges {
                     let v = edge.to.index
-                    if blockedSet.contains(v) { continue }
+                    if let blockedSet, blockedSet.contains(v) { continue }
                     if let edgeFilter, !edgeFilter(edge) { continue }
 
                     let relaxed = currentG + edge.weight
@@ -161,29 +193,31 @@ extension Graph {
                     let entry = heapBackward.pop()
             {
                 let v = entry.index
-                if settledBackward.contains(v) { continue }
-                settledBackward.insert(v)
+                if settledBackward[v] { continue }
+                settledBackward[v] = true
 
                 // A node settled by both sides is a meeting candidate.
-                if settledForward.contains(v) { noteMeeting(v) }
+                if settledForward[v] { noteMeeting(v) }
 
                 let currentG = gBackward[v]
-                for link in reverseAdjacency[v] {
-                    let u = link.from
-                    if blockedSet.contains(u) { continue }
-                    if let edgeFilter, !edgeFilter(link.edge) { continue }
-
-                    let relaxed = currentG + link.weight
-                    if relaxed < gBackward[u] {
-                        gBackward[u] = relaxed
-                        // `u`'s successor toward the destination is `v`.
-                        predBackward[u] = v
-                        heapBackward.push(BidirectionalHeapEntry(gScore: relaxed, index: u))
-
-                        // If the forward search has already reached `u`, the
-                        // path source -> ... -> u -> v -> ... -> destination
-                        // is a candidate for the best meeting.
-                        if gForward[u] < .infinity { noteMeeting(u) }
+                if hasDirectedEdges {
+                    for link in reverseAdjacency[v] {
+                        relaxBackward(
+                            from: link.from,
+                            to: v,
+                            weight: link.weight,
+                            edge: link.edge,
+                            currentG: currentG)
+                    }
+                }
+                else {
+                    for edge in adjacencyList[v].edges {
+                        relaxBackward(
+                            from: edge.to.index,
+                            to: v,
+                            weight: edge.weight,
+                            edge: edge,
+                            currentG: currentG)
                     }
                 }
             }

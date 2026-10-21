@@ -250,6 +250,7 @@ extension Graph {
             isDirected: isDirected,
             onewayProperty: onewayProperty)
         contracted.adjacencyList = edgeLists
+        contracted.hasDirectedEdges = hasDirectedEdges
         contracted.spatialIndex = SpatialIndex(
             tolerance: nodeTolerance,
             referenceLatitude: edgeLists.first?.node.coordinate.latitude ?? 0.0)
@@ -320,6 +321,11 @@ extension Graph {
     /// direct search on the full graph while typically exploring far fewer
     /// nodes — a meaningful speedup on dense road networks where most nodes
     /// are intermediate polyline vertices.
+    ///
+    /// - Note: Grid-like graphs have mostly degree-3/4 junctions and few
+    ///   degree-2 chains, so contraction removes little and its build cost can
+    ///   dominate the query. The graph benchmark includes 10k/100k/1M-edge
+    ///   grids with contraction build and contracted-query timings.
     ///
     /// - Parameters:
     ///   - source: The start node.

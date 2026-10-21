@@ -313,6 +313,21 @@ struct BidirectionalShortestPathTests {
   }
 
   @Test
+  func bidirectionalManualOnewayOnUndirectedGraph() {
+    // `isDirected` is false, but an explicitly added one-way edge must still
+    // be respected by the backward search.
+    var graph = Graph()
+    let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+    let b = graph.createNode(at: Coordinate3D(latitude: 10.1, longitude: 20.1))
+    graph.addDirectedEdge(from: a, to: b, isDirected: true)
+
+    let forward = graph.bidirectionalShortestPath(from: a, to: b)
+    #expect(forward.first == a)
+    #expect(forward.last == b)
+    #expect(graph.bidirectionalShortestPath(from: b, to: a).isEmpty)
+  }
+
+  @Test
   func bidirectionalDirectedMatchesDijkstra() {
     // Directed graph with mixed one-way and two-way edges; compare cost
     // (not necessarily node sequence) with unidirectional Dijkstra.

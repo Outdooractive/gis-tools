@@ -14,9 +14,15 @@ extension Graph {
     /// straight-line (great-circle for EPSG:4326, Euclidean for the planar
     /// projections) distance from each node to the destination, which is
     /// admissible and consistent because edge weights are computed with the
-    /// same distance function. This makes A* dramatically faster than
-    /// ``shortestPath(from:to:blockedNodes:edgeFilter:)`` for point-to-point
-    /// routing while still returning the optimal path.
+    /// same distance function. This makes A* faster than
+    /// ``shortestPath(from:to:blockedNodes:edgeFilter:)`` for many
+    /// point-to-point road-network queries while still returning the optimal
+    /// path.
+    ///
+    /// - Note: On grid-like graphs with many equal-cost routes, A* may settle
+    ///   as many nodes as Dijkstra while also paying for heuristic
+    ///   evaluations. The graph benchmark includes 10k/100k/1M-edge grids to
+    ///   make that trade-off visible; A* is not guaranteed to be faster there.
     ///
     /// - Parameters:
     ///   - source: The start node.
@@ -41,36 +47,50 @@ extension Graph {
 
         if source == destination { return [source] }
 
-        let blockedSet: Set<Int> = Set(blockedNodes?.map(\.index) ?? [])
+        let blockedSet: Set<Int>? = blockedNodes.map { Set($0.map(\.index)) }
         let destinationCoordinate = adjacencyList[destination.index].node
             .coordinate
 
         // Heuristic: straight-line distance from `index` to the destination.
+        // Cache values because a node can be relaxed more than once.
+        var heuristicCache = [Double](
+            repeating: .nan,
+            count: adjacencyList.count)
+
         func heuristic(_ index: Int) -> Double {
-            adjacencyList[index].node.coordinate.distance(from: destinationCoordinate)
+            let cached = heuristicCache[index]
+            if !cached.isNaN {
+                return cached
+            }
+
+            let value = adjacencyList[index].node.coordinate
+                .distance(from: destinationCoordinate)
+            heuristicCache[index] = value
+            return value
         }
 
         var gScore: [Double] = Array(repeating: .infinity, count: adjacencyList.count)
         var predecessors: [Int] = Array(repeating: -1, count: adjacencyList.count)
-        var visited: Set<Int> = []
+        var visited = NodeBitSet(count: adjacencyList.count)
 
         gScore[source.index] = 0.0
 
         // Min-heap ordered by f = g + h. O((V+E) log V).
-        var heap = MinHeap<AStarEntry>()
+        var heap = MinHeap<AStarEntry>(
+            minimumCapacity: min(adjacencyList.count, 16_384))
         heap.push(AStarEntry(fScore: heuristic(source.index), index: source.index))
 
         while let entry = heap.pop() {
-            if visited.contains(entry.index) { continue }
+            if visited[entry.index] { continue }
             if entry.index == destination.index { break }
-            visited.insert(entry.index)
+            visited[entry.index] = true
 
             let currentG = gScore[entry.index]
 
             for edge in adjacencyList[entry.index].edges {
                 let neighborIndex = edge.to.index
 
-                if blockedSet.contains(neighborIndex) { continue }
+                if let blockedSet, blockedSet.contains(neighborIndex) { continue }
                 if let edgeFilter, !edgeFilter(edge) { continue }
 
                 let relaxed = currentG + edge.weight

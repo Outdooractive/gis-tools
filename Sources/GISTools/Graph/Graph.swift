@@ -109,6 +109,14 @@ public struct Graph: Sendable {
     /// Whether the graph treats `oneway`-tagged edges as directed.
     public let isDirected: Bool
 
+    /// Whether any stored edge is one-way.
+    ///
+    /// This can be `true` even when ``isDirected`` is `false`, for example
+    /// after adding a one-way edge manually or taking a subgraph of a directed
+    /// graph. Routing uses it to avoid rebuilding reverse adjacency for fully
+    /// bidirectional graphs.
+    var hasDirectedEdges: Bool = false
+
     /// The feature property used to detect one-way edges when ``isDirected``
     /// is `true`. Default `"oneway"`.
     public let onewayProperty: String
