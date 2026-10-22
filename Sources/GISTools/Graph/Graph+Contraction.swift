@@ -29,6 +29,9 @@ extension Graph {
         /// removed.
         public let contractedIndexOfOriginal: [Int?]
 
+        /// Removed intermediate original-node indices for each contracted edge.
+        let chainIntermediates: [ContractedChainKey: [Node]]?
+
     }
 
     /// Removes degree-2 chain nodes by merging their two incident edges into
@@ -59,6 +62,12 @@ extension Graph {
         contracted(edgeCompatibility: nil)
     }
 
+    /// Builds a contraction result with optional chain intermediates for a
+    /// reusable routing index.
+    func contracted(cachingChains: Bool) -> ContractionResult? {
+        contracted(edgeCompatibility: nil, cachingChains: cachingChains)
+    }
+
     /// Removes degree-2 chain nodes by merging their edges, preserving
     /// boundaries where adjacent edges differ.
     ///
@@ -87,6 +96,15 @@ extension Graph {
     ///   mappings, or `nil` if the graph is empty.
     public func contracted(
         edgeCompatibility: ((Edge, Edge) -> Bool)?
+    ) -> ContractionResult? {
+        contracted(
+            edgeCompatibility: edgeCompatibility,
+            cachingChains: false)
+    }
+
+    private func contracted(
+        edgeCompatibility: ((Edge, Edge) -> Bool)?,
+        cachingChains: Bool
     ) -> ContractionResult? {
         guard adjacencyList.isNotEmpty else { return nil }
 
@@ -194,16 +212,24 @@ extension Graph {
         // skip an edge if it leads back to a kept node with a smaller index
         // (the smaller-index side will emit it).
         var emittedUndirected: Set<UndirectedEdgeKey> = []
+        var chainIntermediates: [ContractedChainKey: [Node]]? =
+            cachingChains ? [:] : nil
         for i in 0..<adjacencyList.count where keep[i] {
             let newFromIndex = newIndexForOld[i]!
             for edge in adjacencyList[i].edges {
                 let firstStepIsDirected = edge.isDirected
-                let (destOriginal, totalWeight, mergedFeature) = walkChain(
+                let (destOriginal, totalWeight, mergedFeature, intermediates) = walkChain(
                     from: i,
                     firstEdge: edge,
-                    keep: keep)
+                    keep: keep,
+                    collectIntermediates: cachingChains)
                 guard let dest = destOriginal, dest != i else { continue }
                 guard let newToIndex = newIndexForOld[dest] else { continue }
+
+                if chainIntermediates != nil {
+                    chainIntermediates?[ContractedChainKey(from: i, to: dest)] =
+                        intermediates.map { adjacencyList[$0].node }
+                }
 
                 if firstStepIsDirected {
                     // One-way chain: emit only in the forward direction.
@@ -263,7 +289,8 @@ extension Graph {
         return ContractionResult(
             graph: contracted,
             originalIndices: originalIndexForNew,
-            contractedIndexOfOriginal: newIndexForOld)
+            contractedIndexOfOriginal: newIndexForOld,
+            chainIntermediates: chainIntermediates)
     }
 
     /// Lifts a path of nodes from a contracted graph back to the original
@@ -294,12 +321,17 @@ extension Graph {
 
             if position < contractedPath.count - 1 {
                 let nextContracted = contractedPath[position + 1]
-                guard
-                    let intermediates = intermediateNodes(
+                guard nextContracted.index < result.originalIndices.count else {
+                    return nil
+                }
+                let nextOriginal = result.originalIndices[nextContracted.index]
+                let key = ContractedChainKey(from: originalIndex, to: nextOriginal)
+                let intermediates = result.chainIntermediates.flatMap { $0[key] }
+                    ?? intermediateNodes(
                         fromOriginal: originalIndex,
                         toContractedIndex: nextContracted.index,
                         result: result)
-                else { return nil }
+                guard let intermediates else { return nil }
                 expanded.append(contentsOf: intermediates)
             }
         }
@@ -634,21 +666,27 @@ extension Graph {
     private func walkChain(
         from: Int,
         firstEdge: Edge,
-        keep: [Bool]
-    ) -> (destination: Int?, weight: Double, feature: Feature?) {
+        keep: [Bool],
+        collectIntermediates: Bool
+    ) -> (destination: Int?, weight: Double, feature: Feature?, intermediates: [Int]) {
         // One-way edges are never part of a contracted chain; emit as-is.
         guard !firstEdge.isDirected else {
-            return (firstEdge.to.index, firstEdge.weight, firstEdge.feature)
+            return (firstEdge.to.index, firstEdge.weight, firstEdge.feature, [])
         }
 
         var totalWeight = firstEdge.weight
         var mergedFeature = firstEdge.feature
+        var intermediates: [Int] = []
         var previous = from
         var current = firstEdge.to.index
 
         // Follow the chain through removed undirected nodes, always taking the
         // edge that does not backtrack to `previous`.
         while !keep[current] {
+            if collectIntermediates {
+                intermediates.append(current)
+            }
+
             var nextEdge: Edge?
             for edge in adjacencyList[current].edges
             where edge.to.index != previous {
@@ -664,7 +702,7 @@ extension Graph {
 
             guard let edge = nextEdge else {
                 // Dead end or directed interruption; stop here.
-                return (current, totalWeight, mergedFeature)
+                return (current, totalWeight, mergedFeature, intermediates)
             }
 
             mergedFeature =
@@ -677,10 +715,10 @@ extension Graph {
             current = edge.to.index
 
             // Safety against infinite loops in malformed graphs.
-            if current == from { return (from, totalWeight, mergedFeature) }
+            if current == from { return (from, totalWeight, mergedFeature, intermediates) }
         }
 
-        return (current, totalWeight, mergedFeature)
+        return (current, totalWeight, mergedFeature, intermediates)
     }
 
     /// Reconstructs the intermediate removed nodes along the chain between
@@ -702,10 +740,11 @@ extension Graph {
         // collecting removed intermediate nodes. Try each outgoing edge; the
         // one whose chain ends at `toOriginal` is the path to expand.
         for edge in adjacencyList[fromOriginal].edges {
-            let (dest, _, _) = walkChain(
+            let (dest, _, _, _) = walkChain(
                 from: fromOriginal,
                 firstEdge: edge,
-                keep: result.contractedIndexOfOriginal.map { $0 != nil })
+                keep: result.contractedIndexOfOriginal.map { $0 != nil },
+                collectIntermediates: false)
             if dest == toOriginal {
                 return collectIntermediates(
                     from: fromOriginal,
@@ -729,10 +768,11 @@ extension Graph {
 
         // Find the first edge from `from` that begins the chain to `to`.
         let startEdge = adjacencyList[from].edges.first { edge in
-            let (dest, _, _) = walkChain(
+            let (dest, _, _, _) = walkChain(
                 from: from,
                 firstEdge: edge,
-                keep: contractedIndexOfOriginal.map { $0 != nil })
+                keep: contractedIndexOfOriginal.map { $0 != nil },
+                collectIntermediates: false)
             return dest == to
         }
         guard let edge = startEdge else { return intermediates }
@@ -762,6 +802,13 @@ extension Graph {
 
         let a: Int
         let b: Int
+
+    }
+
+    struct ContractedChainKey: Hashable {
+
+        let from: Int
+        let to: Int
 
     }
 
