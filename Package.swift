@@ -30,8 +30,16 @@ let package = Package(
     ],
     dependencies: [],
     targets: [
+        .systemLibrary(
+            name: "CZlib",
+            path: "Sources/CZlib",
+            providers: [
+                .apt(["zlib1g-dev"]),
+                .brew(["zlib"]),
+            ]),
         .target(
-            name: "GISTools"),
+            name: "GISTools",
+            dependencies: ["CZlib"]),
         .executableTarget(
             name: "Benchmarks",
             dependencies: ["GISTools"]),

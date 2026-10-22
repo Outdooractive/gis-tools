@@ -136,6 +136,12 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Transparent gzip support for GeoJSON data and file loading. The `contentsOf:`
+  and `jsonData:` entry points detect the gzip magic bytes and decompress with
+  the system zlib library; `GeoJsonReader`, `GeoJsonParser`, `JSONValue` and all
+  `GeoJsonReadable` types inherit the behavior. This is available on macOS,
+  iOS, watchOS and Linux.
+
 - Unit-aware distance overloads: `distance(to:in:)`, `distance(from:in:)`,
   `rhumbDistance(from:in:)`, `distanceAlong(to:tolerance:in:)`,
   `distanceFrom(..., in:)` and `dWithin(_:distance:in:)`. They return `nil`

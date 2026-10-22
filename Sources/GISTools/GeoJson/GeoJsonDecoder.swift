@@ -11,7 +11,9 @@ import Foundation
 enum GeoJsonDecoder {
 
     static func decode(jsonData: Data) -> GeoJson? {
-        guard let decoded = try? JSONDecoder().decode(DecodedGeoJson.self, from: jsonData) else {
+        guard let jsonData = Gzip.decompressIfNeeded(jsonData),
+              let decoded = try? JSONDecoder().decode(DecodedGeoJson.self, from: jsonData)
+        else {
             return nil
         }
         return decoded.asGeoJson

@@ -267,9 +267,11 @@ extension JSONValue {
     /// Integral numbers (including fractional input such as `3.0`) normalize
     /// to `.int`, like `init(from:)`.
     ///
-    /// - Parameter jsonData: The JSON data
+    /// - Parameter jsonData: The JSON data, optionally gzip-compressed
     public init?(jsonData: Data) {
-        guard let value = try? JSONDecoder().decode(JSONValue.self, from: jsonData) else { return nil }
+        guard let jsonData = Gzip.decompressIfNeeded(jsonData),
+              let value = try? JSONDecoder().decode(JSONValue.self, from: jsonData)
+        else { return nil }
 
         self = value
     }
