@@ -1088,6 +1088,9 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 
 # Graph
 
+> The graph API is opt-in behind the `EnableGraphAPI` package trait. Enable it in a dependency with
+> `traits: ["EnableGraphAPI"]`, or add `--traits EnableGraphAPI` to `swift build`, `swift run` and `swift test`.
+
 The package includes a `Graph` type for routing and network analysis on GeoJSON `LineString` / `MultiLineString` features. Nodes are created at each line-segment endpoint; coordinates within a configurable `nodeTolerance` (default 1 m) are merged into a single node via a spatial-hash index, giving near O(1) deduplication during construction. The graph supports both undirected and directed (`oneway`-tagged) edges, optional edge filters for mode-restricted routing (e.g. hiking / cycling), and works across all projections (EPSG:4326, EPSG:3857, EPSG:4978, noSRID), including geometries that cross the antimeridian.
 
 ## Construction
@@ -1195,10 +1198,10 @@ A separate release-mode executable covers loading, projection, spatial predicate
 scripts/benchmarks.sh
 
 # Run selected suites
-swift run -c release Benchmarks predicates overlay graph
+swift run -c release --traits EnableGraphAPI Benchmarks predicates overlay graph
 
 # Run the real-world graph benchmarks
-swift run -c release Benchmarks realworld
+swift run -c release --traits EnableGraphAPI Benchmarks realworld
 
 # List available suites
 swift run -c release Benchmarks
@@ -1206,7 +1209,7 @@ swift run -c release Benchmarks
 
 Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
-The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
+The `graph` and `realworld` suites require the `EnableGraphAPI` trait. The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
 
 The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries, ALT landmark queries and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
 

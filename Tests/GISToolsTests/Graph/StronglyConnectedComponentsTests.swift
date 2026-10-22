@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -332,3 +333,4 @@ struct StronglyConnectedComponentsTests {
     }
 
 }
+#endif

@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
@@ -163,3 +164,4 @@ enum GraphTestHelper {
     }
 
 }
+#endif

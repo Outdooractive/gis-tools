@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -279,3 +280,4 @@ struct TspTests {
     }
 
 }
+#endif

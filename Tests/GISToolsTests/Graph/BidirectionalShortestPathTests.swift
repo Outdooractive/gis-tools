@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -361,3 +362,4 @@ struct BidirectionalShortestPathTests {
   }
 
 }
+#endif

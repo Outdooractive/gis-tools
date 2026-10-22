@@ -595,6 +595,8 @@ private func runClip() {
     }
 }
 
+#if EnableGraphAPI
+
 // MARK: - Graph
 
 private func runGraph() {
@@ -1032,6 +1034,8 @@ private func runRealWorldGraph() {
     }
 }
 
+#endif
+
 // MARK: - Clusters
 
 private func runClusters() {
@@ -1206,15 +1210,17 @@ case "hulls": runSuite("hulls", runHulls)
 case "line": runSuite("line", runLineOperations)
 case "tile": runSuite("tile", runTileCover)
 case "clip": runSuite("clip", runClip)
+#if EnableGraphAPI
 case "graph": runSuite("graph", runGraph)
 case "realworld": runSuite("realworld", runRealWorldGraph)
+#endif
 case "query": runSuite("query", runQuery)
 case "clusters": runSuite("clusters", runClusters)
 case "memory": runSuite("memory", runMemory)
 case "inlining": runSuite("inlining", runInlining)
 
 case "all":
-    for (name, block) in [
+    var suites: [(String, () -> Void)] = [
         ("loading", runLoading),
         ("projection", runProjection),
         ("predicates", runPredicates),
@@ -1227,17 +1233,27 @@ case "all":
         ("line", runLineOperations),
         ("tile", runTileCover),
         ("clip", runClip),
-        ("graph", runGraph),
-        ("realworld", runRealWorldGraph),
         ("query", runQuery),
         ("clusters", runClusters),
         ("memory", runMemory),
         ("inlining", runInlining),
-    ] {
+    ]
+
+    #if EnableGraphAPI
+    suites.append(("graph", runGraph))
+    suites.append(("realworld", runRealWorldGraph))
+    #endif
+
+    for (name, block) in suites {
         runSuite(name, block)
     }
 
 default:
-    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|graph|realworld|query|clusters|memory|inlining|all>")
+    #if EnableGraphAPI
+    let graphSuites = "graph|realworld|"
+    #else
+    let graphSuites = ""
+    #endif
+    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|\(graphSuites)query|clusters|memory|inlining|all>")
     exit(1)
 }

@@ -6,6 +6,18 @@ All notable changes to this project are documented in this file.
 
 ### Breaking changes
 
+#### Graph API is opt-in
+
+The graph construction, routing and network-analysis API is now gated behind
+the `EnableGraphAPI` package trait. Consumers that use `Graph` must enable it:
+
+```swift
+.package(url: "https://github.com/Outdooractive/gis-tools", traits: ["EnableGraphAPI"])
+```
+
+For local package commands, pass `--traits EnableGraphAPI` to `swift build`,
+`swift run` or `swift test`.
+
 #### Validity semantics
 
 `isValid` now means OGC/PostGIS topological validity, not merely “enough

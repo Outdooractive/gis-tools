@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -638,3 +639,4 @@ struct GraphMergeTests {
     }
 
 }
+#endif

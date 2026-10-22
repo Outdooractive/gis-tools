@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -230,3 +231,4 @@ struct ArticulationPointTests {
     }
 
 }
+#endif

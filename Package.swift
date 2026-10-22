@@ -22,6 +22,9 @@ let package = Package(
     ],
     traits: [
         .trait(
+            name: "EnableGraphAPI",
+            description: "Enables graph construction, routing and network analysis APIs."),
+        .trait(
             name: "EnableMeterConversionExtensions",
             description: "Adds conversion properties that return raw Double values in meters."),
         .trait(

@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 
 // MARK: - Reusable routing index
@@ -175,3 +176,4 @@ extension Graph {
     }
 
 }
+#endif

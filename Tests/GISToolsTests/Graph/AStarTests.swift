@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -247,3 +248,4 @@ struct AStarTests {
   }
 
 }
+#endif

@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -232,3 +233,4 @@ struct MinimumSpanningTreeTests {
     }
 
 }
+#endif

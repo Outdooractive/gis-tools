@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -356,3 +357,4 @@ struct EulerianTests {
     }
 
 }
+#endif

@@ -14,9 +14,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 echo "Building release benchmarks..."
-swift build -c release --product Benchmarks >/dev/null
+swift build -c release --product Benchmarks --traits EnableGraphAPI >/dev/null
 
-BIN="$(swift build -c release --show-bin-path)/Benchmarks"
+BIN="$(swift build -c release --show-bin-path --traits EnableGraphAPI)/Benchmarks"
 if [[ ! -x "$BIN" ]]; then
     echo "Benchmark binary not found at $BIN" >&2
     exit 1

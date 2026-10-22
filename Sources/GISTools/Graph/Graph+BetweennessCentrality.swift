@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
@@ -108,3 +109,4 @@ extension Graph {
     }
 
 }
+#endif

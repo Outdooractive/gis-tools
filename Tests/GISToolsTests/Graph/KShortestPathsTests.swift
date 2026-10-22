@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -287,3 +288,4 @@ struct KShortestPathsTests {
   }
 
 }
+#endif

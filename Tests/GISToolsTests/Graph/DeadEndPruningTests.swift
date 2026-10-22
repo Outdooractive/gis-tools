@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -389,3 +390,4 @@ struct DeadEndPruningTests {
   }
 
 }
+#endif
