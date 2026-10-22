@@ -128,8 +128,28 @@ struct RealWorldRoutingTests {
             in: Self.allgaeuGraph,
             filter: Profiles.cycling,
             label: "Allgäu cycling",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 2)
+    }
+
+    @Test
+    func allgaeuHikingRoute() {
+        assertRoute(
+            in: Self.allgaeuGraph,
+            filter: Profiles.hiking,
+            label: "Allgäu hiking",
+            minimumLength: 20000.0,
+            waypointCount: 2)
+    }
+
+    @Test
+    func allgaeuCarRouteLeftToRight() {
+        assertRoute(
+            in: Self.allgaeuGraph,
+            filter: Profiles.car,
+            label: "Allgäu car left-to-right",
+            minimumLength: 10000.0,
+            westToEast: true)
     }
 
     @Test
@@ -138,7 +158,7 @@ struct RealWorldRoutingTests {
             in: Self.munichGraph,
             filter: Profiles.hiking,
             label: "Munich hiking",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
     }
 
@@ -148,7 +168,7 @@ struct RealWorldRoutingTests {
             in: Self.munichGraph,
             filter: Profiles.cycling,
             label: "Munich cycling",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
     }
 
@@ -158,7 +178,7 @@ struct RealWorldRoutingTests {
             in: Self.munichGraph,
             filter: Profiles.car,
             label: "Munich car",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
     }
 
@@ -168,7 +188,7 @@ struct RealWorldRoutingTests {
             in: Self.parisGraph,
             filter: Profiles.hiking,
             label: "Paris hiking",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
     }
 
@@ -178,7 +198,7 @@ struct RealWorldRoutingTests {
             in: Self.parisGraph,
             filter: Profiles.cycling,
             label: "Paris cycling",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
     }
 
@@ -188,8 +208,45 @@ struct RealWorldRoutingTests {
             in: Self.parisGraph,
             filter: Profiles.car,
             label: "Paris car",
-            minimumLength: 20_000.0,
+            minimumLength: 20000.0,
             waypointCount: 4)
+    }
+
+    private func largestFilteredComponent(
+        in graph: Graph,
+        filter: (Edge) -> Bool
+    ) -> (seed: Node, reachable: [Node])? {
+        var visited: Set<Int> = []
+        var best: (seed: Node, reachable: [Node])?
+
+        for node in graph.nodes where !visited.contains(node.index) {
+            visited.insert(node.index)
+
+            var component: [Node] = [node]
+            var queue: [Node] = [node]
+
+            while let current = queue.popLast() {
+                for edge in graph.edges(for: current) where filter(edge) {
+                    guard visited.insert(edge.to.index).inserted else { continue }
+
+                    queue.append(edge.to)
+                    component.append(edge.to)
+                }
+            }
+
+            if let current = best {
+                if component.count > current.reachable.count {
+                    best = (node, component)
+                }
+            }
+            else {
+                best = (node, component)
+            }
+        }
+
+        guard let best, best.reachable.count >= 2 else { return nil }
+
+        return best
     }
 
     private func assertRoute(
@@ -197,19 +254,30 @@ struct RealWorldRoutingTests {
         filter: @escaping (Edge) -> Bool,
         label: String,
         minimumLength: CLLocationDistance = 0.0,
-        waypointCount: Int = 0
+        waypointCount: Int = 0,
+        westToEast: Bool = false
     ) {
-        guard let (seed, reachable) = GraphTestHelper.largestFilteredComponent(
+        guard let (seed, reachable) = largestFilteredComponent(
             in: graph,
-            edgeFilter: filter,
-            maxSamples: 200)
+            filter: filter)
         else {
             Issue.record("\(label): filtered network is too small")
             return
         }
 
         var nodes: [Node] = [seed]
-        if waypointCount > 0 {
+        if westToEast {
+            let west = reachable.min {
+                $0.coordinate.longitude < $1.coordinate.longitude
+            }
+            let east = reachable.max {
+                $0.coordinate.longitude < $1.coordinate.longitude
+            }
+            if let west, let east, west != east {
+                nodes = [west, east]
+            }
+        }
+        else if waypointCount > 0 {
             let north = reachable.max {
                 $0.coordinate.latitude < $1.coordinate.latitude
             }
