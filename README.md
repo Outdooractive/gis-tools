@@ -1133,7 +1133,7 @@ let merged = Graph.merged([tile1, tile2, tile3])
 let merged = graph.merged(with: anotherGraph)
 ```
 
-Edges cut at tile boundaries become degree-2 chain nodes. Call `contracted()` on the merged result to collapse them into continuous edges.
+Dangling endpoints from clipped tiles are stitched to nearby, nearly collinear edges within `stitchingTolerance` (default: the first graph's `nodeTolerance`). Collinear overlapping edges are split at shared vertices and deduplicated. Pass `stitchingTolerance: 0.0` to disable this correctness pass. Remaining cut edges become degree-2 chain nodes; call `contracted()` on the merged result to collapse them into continuous edges.
 
 ## Export
 
@@ -1201,7 +1201,7 @@ swift run -c release Benchmarks
 
 Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
-The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
+The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
 
 # Contributing
 Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.

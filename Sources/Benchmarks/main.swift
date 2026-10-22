@@ -625,6 +625,20 @@ private func runGraph() {
             _ = graph.bidirectionalShortestPath(from: start, to: end)
         }
 
+        if benchmark.size <= 224 {
+            let lineGraphs = collection.features.map { feature in
+                Graph(featureCollection: FeatureCollection([feature]))
+            }
+            run("graph/merge/\(benchmark.label)", iterations: 1) {
+                _ = Graph.merged(
+                    lineGraphs,
+                    stitchingTolerance: 0.0)
+            }
+            run("graph/merge-stitched/\(benchmark.label)", iterations: 1) {
+                _ = Graph.merged(lineGraphs)
+            }
+        }
+
         // Contraction is built once, then queried on the contracted graph.
         // Grid interiors have degree 4, so only the four corners are degree-2
         // candidates; this intentionally measures the no-benefit case.

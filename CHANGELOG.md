@@ -243,6 +243,21 @@ left unchanged; that case is ambiguous per RFC 7946.
 - `Coordinate3D.equals` now avoids reprojecting when both coordinates already
   use the same projection. Repeated coincidence checks are about 4× faster in
   the cross-module benchmark (#284).
+- `Graph.merged(_:)` now uses integer edge keys and appends merged adjacency
+  directly instead of building string keys and recomputing undirected edge
+  weights twice. Without seam stitching, merging the 33 OSM navigation tiles
+  (~36.5k source nodes and ~70.6k directed edge instances) drops from roughly
+  **35 ms to 25 ms**; a synthetic 100k-edge merge drops from ~110 ms to
+  **~80 ms**. Manually added one-way edges now also make the merged graph
+  directed.
+- Clipped-tile seams are stitched and noded by default: dangling endpoints
+  within `stitchingTolerance` of a nearly collinear segment become graph nodes,
+  and collinear overlapping edges are split at shared vertices and
+  deduplicated. Pass `stitchingTolerance: 0.0` to disable this. The correctness
+  pass costs preprocessing time: the 33 tiles merge in about **250 ms** (versus
+  ~25 ms without noding), and the synthetic 100k-edge case in about **500 ms**
+  (versus ~80 ms).
+
 - Graph routing now uses compact bitmaps (one bit per node) for visited and
   settled state instead of hash sets or byte-per-node arrays. At 500k nodes a
   single bitset is about 62.5 KB instead of 500 KB; bidirectional search drops
