@@ -10,6 +10,8 @@ import Darwin
 // MARK: - Configuration and helpers
 
 private let fixturePath = "/tmp/gis-tools-benchmark.geojson"
+private let graphFixtureDirectory = ProcessInfo.processInfo.environment["GISTOOLS_GRAPH_FIXTURES"]
+    ?? "Tests/GISToolsTests/TestData/Graph"
 
 private func now() -> Double {
     Double(DispatchTime.now().uptimeNanoseconds) / 1_000_000_000.0
@@ -680,6 +682,212 @@ private func runGraph() {
     }
 }
 
+// MARK: - Real-world graphs
+
+private enum RealWorldProfile: String, CaseIterable {
+
+    case hiking
+    case cycling
+    case car
+
+    func accepts(_ edge: Edge) -> Bool {
+        guard let type: String = edge.feature?.property(for: "type") else { return false }
+        let access: String? = edge.feature?.property(for: "access")
+        let bicycle: String? = edge.feature?.property(for: "bicycle")
+        let foot: String? = edge.feature?.property(for: "foot")
+
+        switch self {
+        case .hiking:
+            guard ["footway", "path", "track", "pedestrian", "steps"].contains(type)
+            else { return false }
+            return foot != "no" && access != "no" && access != "private"
+
+        case .cycling:
+            if bicycle == "no" || bicycle == "private" || access == "no" || access == "private" {
+                return false
+            }
+            let roadTypes: Set<String> = [
+                "cycleway", "residential", "primary", "secondary", "tertiary",
+                "service", "living_street", "track", "unclassified", "path", "footway",
+            ]
+            guard roadTypes.contains(type) else { return false }
+            if type == "footway" || type == "path" {
+                return bicycle == "yes"
+                    || bicycle == "designated"
+                    || bicycle == "permissive"
+                    || bicycle == "official"
+            }
+            return true
+
+        case .car:
+            if access == "no" || access == "private" { return false }
+            let roadTypes: Set<String> = [
+                "motorway", "motorway_link", "trunk", "trunk_link",
+                "primary", "primary_link", "secondary", "secondary_link",
+                "tertiary", "tertiary_link", "residential", "service",
+                "living_street", "unclassified",
+            ]
+            return roadTypes.contains(type)
+        }
+    }
+
+}
+
+private struct RealWorldDataset {
+
+    let name: String
+    let prefix: String
+    let xRange: ClosedRange<Int>
+    let yRange: ClosedRange<Int>
+    let iterations: Int
+
+}
+
+private let realWorldDatasets: [RealWorldDataset] = [
+    RealWorldDataset(
+        name: "allgaeu",
+        prefix: "allgaeu_",
+        xRange: 8647 ... 8657,
+        yRange: 5723 ... 5725,
+        iterations: 2),
+    RealWorldDataset(
+        name: "munich",
+        prefix: "munich_",
+        xRange: 8717 ... 8719,
+        yRange: 5684 ... 5685,
+        iterations: 2),
+    RealWorldDataset(
+        name: "paris",
+        prefix: "paris_",
+        xRange: 8295 ... 8301,
+        yRange: 5632 ... 5639,
+        iterations: 1),
+]
+
+private func loadRealWorldCollections(_ dataset: RealWorldDataset) -> [FeatureCollection] {
+    var collections: [FeatureCollection] = []
+    collections.reserveCapacity(
+        (dataset.xRange.upperBound - dataset.xRange.lowerBound + 1)
+            * (dataset.yRange.upperBound - dataset.yRange.lowerBound + 1))
+
+    for x in dataset.xRange {
+        for y in dataset.yRange {
+            let path = "\(graphFixtureDirectory)/\(dataset.prefix)14_\(x)_\(y).geojson.gz"
+            let data = try! Data(contentsOf: URL(fileURLWithPath: path))
+            collections.append(FeatureCollection(jsonData: data)!)
+        }
+    }
+    return collections
+}
+
+private func makeRealWorldGraph(_ collections: [FeatureCollection]) -> Graph {
+    Graph.merged(
+        collections.map { Graph(featureCollection: $0) },
+        stitchingTolerance: 1.0)
+}
+
+private func realWorldEndpoints(
+    in graph: Graph,
+    filter: (Edge) -> Bool
+) -> (Node, Node)? {
+    var visited: Set<Int> = []
+    var best: (seed: Node, reachable: [Node])?
+
+    for node in graph.nodes where !visited.contains(node.index) {
+        visited.insert(node.index)
+
+        var component: [Node] = [node]
+        var queue: [Node] = [node]
+
+        while let current = queue.popLast() {
+            for edge in graph.edges(for: current) where filter(edge) {
+                guard visited.insert(edge.to.index).inserted else { continue }
+                queue.append(edge.to)
+                component.append(edge.to)
+            }
+        }
+
+        if best == nil || component.count > best!.reachable.count {
+            best = (node, component)
+        }
+    }
+
+    guard let best, best.reachable.count >= 2 else { return nil }
+    let seed = best.seed
+    let end = best.reachable.max {
+        $0.coordinate.distance(from: seed.coordinate)
+            < $1.coordinate.distance(from: seed.coordinate)
+    } ?? best.reachable[1]
+
+    return (seed, end)
+}
+
+private func runRealWorldGraph() {
+    for dataset in realWorldDatasets {
+        let firstPath = "\(graphFixtureDirectory)/\(dataset.prefix)14_\(dataset.xRange.lowerBound)_\(dataset.yRange.lowerBound).geojson.gz"
+        guard FileManager.default.fileExists(atPath: firstPath) else {
+            print("realworld/\(dataset.name) skipped: fixtures not found at \(graphFixtureDirectory)")
+            continue
+        }
+
+        run("graph/real/load/\(dataset.name)", iterations: 1) {
+            _ = loadRealWorldCollections(dataset)
+        }
+
+        let collections = loadRealWorldCollections(dataset)
+        run("graph/real/build-merge/\(dataset.name)", iterations: 1) {
+            _ = makeRealWorldGraph(collections)
+        }
+
+        let graph = makeRealWorldGraph(collections)
+
+        for profile in RealWorldProfile.allCases {
+            guard let (start, end) = realWorldEndpoints(
+                in: graph,
+                filter: { profile.accepts($0) })
+            else {
+                print("realworld/\(dataset.name)/\(profile.rawValue) skipped: no filtered component")
+                continue
+            }
+
+            run(
+                "graph/real/\(dataset.name)/\(profile.rawValue)/dijkstra",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.shortestPath(
+                    from: start,
+                    to: end,
+                    edgeFilter: { profile.accepts($0) })
+            }
+        }
+
+        if let cycling = RealWorldProfile(rawValue: "cycling"),
+           let (start, end) = realWorldEndpoints(
+            in: graph,
+            filter: { cycling.accepts($0) })
+        {
+            run(
+                "graph/real/\(dataset.name)/cycling/a-star",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.aStarPath(
+                    from: start,
+                    to: end,
+                    edgeFilter: { cycling.accepts($0) })
+            }
+            run(
+                "graph/real/\(dataset.name)/cycling/bidirectional",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.bidirectionalShortestPath(
+                    from: start,
+                    to: end,
+                    edgeFilter: { cycling.accepts($0) })
+            }
+        }
+    }
+}
+
 // MARK: - Clusters
 
 private func runClusters() {
@@ -855,6 +1063,7 @@ case "line": runSuite("line", runLineOperations)
 case "tile": runSuite("tile", runTileCover)
 case "clip": runSuite("clip", runClip)
 case "graph": runSuite("graph", runGraph)
+case "realworld": runSuite("realworld", runRealWorldGraph)
 case "query": runSuite("query", runQuery)
 case "clusters": runSuite("clusters", runClusters)
 case "memory": runSuite("memory", runMemory)
@@ -875,6 +1084,7 @@ case "all":
         ("tile", runTileCover),
         ("clip", runClip),
         ("graph", runGraph),
+        ("realworld", runRealWorldGraph),
         ("query", runQuery),
         ("clusters", runClusters),
         ("memory", runMemory),
@@ -884,6 +1094,6 @@ case "all":
     }
 
 default:
-    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|graph|query|clusters|memory|inlining|all>")
+    print("usage: Benchmarks <gen|loading|projection|predicates|overlay|rtree|coders|buffer|simplify|hulls|line|tile|clip|graph|realworld|query|clusters|memory|inlining|all>")
     exit(1)
 }

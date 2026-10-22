@@ -1195,6 +1195,9 @@ scripts/benchmarks.sh
 # Run selected suites
 swift run -c release Benchmarks predicates overlay graph
 
+# Run the real-world graph benchmarks
+swift run -c release Benchmarks realworld
+
 # List available suites
 swift run -c release Benchmarks
 ```
@@ -1202,6 +1205,8 @@ swift run -c release Benchmarks
 Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
 The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
+
+The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges them, and benchmarks hiking, cycling and car routes. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
 
 The Allgäu, Munich and Paris graph test fixtures are derived from
 OpenStreetMap data © OpenStreetMap contributors, available under the
