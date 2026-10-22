@@ -76,7 +76,7 @@ public enum GeoJsonParser {
     /// Parse GeoJSON data.
     ///
     /// - Parameters:
-    ///    - jsonData: The JSON data
+    ///    - jsonData: The JSON data, optionally gzip-compressed
     ///    - mode: `.strict` throws on the first issue, `.lenient` reports issues
     /// - Returns: The parsed object and any issues
     /// - Throws: ``GeoJsonParsingError`` for unreadable JSON, or for the first
@@ -85,7 +85,9 @@ public enum GeoJsonParser {
         jsonData: Data,
         mode: GeoJsonParsingMode = .lenient
     ) throws -> GeoJsonParseResult {
-        guard let json = try? JSONSerialization.jsonObject(with: jsonData) else {
+        guard let jsonData = Gzip.decompressIfNeeded(jsonData),
+              let json = try? JSONSerialization.jsonObject(with: jsonData)
+        else {
             throw GeoJsonParsingError(issue: GeoJsonParseIssue(
                 path: "",
                 message: "Invalid JSON data"))

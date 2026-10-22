@@ -1,0 +1,5 @@
+module GISToolsCZlib [system] {
+    header "shim.h"
+    link "z"
+    export *
+}

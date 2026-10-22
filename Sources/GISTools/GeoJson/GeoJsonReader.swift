@@ -19,6 +19,7 @@ public enum GeoJsonReader {
     /// - Parameters:
     ///    - url: The URL of the file to read
     /// - Returns: A GeoJson object, or `nil` if parsing failed
+    /// - Note: Gzip-compressed data is decompressed transparently.
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(contentsOf url: URL) -> GeoJson? {
         guard let data = try? Data(contentsOf: url) else { return nil }
@@ -28,8 +29,9 @@ public enum GeoJsonReader {
     /// Try to initialize a GeoJSON object from a data object.
     ///
     /// - Parameters:
-    ///    - jsonData: The JSON data
+    ///    - jsonData: The JSON data, optionally gzip-compressed
     /// - Returns: A GeoJson object, or `nil` if parsing failed
+    /// - Note: Gzip-compressed data is decompressed transparently.
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonData: Data) -> GeoJson? {
         if let object = GeoJsonDecoder.decode(jsonData: jsonData) {

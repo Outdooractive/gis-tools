@@ -283,6 +283,10 @@ init?(jsonString: String)
 init(from decoder: Decoder) throws
 ```
 
+`contentsOf:` and `jsonData:` transparently detect gzip-compressed input
+(magic bytes `1F 8B`) and decompress it before parsing. Gzip support uses the
+system zlib library on all supported platforms.
+
 They can also be exported in several ways:
 ```swift
 /// Return the GeoJson object as Key/Value pairs.

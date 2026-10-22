@@ -22,6 +22,7 @@ extension GeoJsonReadable {
     ///
     /// - Parameters:
     ///    - url: The URL of the file to read
+    /// - Note: Gzip-compressed data is decompressed transparently.
     /// - important: The source is expected to be in EPSG:4326.
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
@@ -31,7 +32,8 @@ extension GeoJsonReadable {
     /// Try to initialize a GeoJSON object from a data object.
     ///
     /// - Parameters:
-    ///    - jsonData: The JSON data
+    ///    - jsonData: The JSON data, optionally gzip-compressed
+    /// - Note: Gzip-compressed data is decompressed transparently.
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonData: Data) {
         if let object = GeoJsonDecoder.decode(jsonData: jsonData) {
