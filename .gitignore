@@ -6,6 +6,7 @@
 xcuserdata
 /Packages
 /.swiftpm
+/benchmark-fixtures
 *~
 \#*
 .\#*

@@ -1,43 +1,42 @@
 import Foundation
-import GISTools
-import struct GISTools.Polygon
+@testable import GISTools
 
 struct TestData {
 
     static func featureCollection(package: String, name: String) throws -> FeatureCollection {
-        try FeatureCollection(jsonString: stringFromFile(package: package, name: name))!
+        try FeatureCollection(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func feature(package: String, name: String) throws -> Feature {
-        try Feature(jsonString: stringFromFile(package: package, name: name))!
+        try Feature(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func geometryCollection(package: String, name: String) throws -> GeometryCollection {
-        try GeometryCollection(jsonString: stringFromFile(package: package, name: name))!
+        try GeometryCollection(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func point(package: String, name: String) throws -> Point {
-        try Point(jsonString: stringFromFile(package: package, name: name))!
+        try Point(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func multiPoint(package: String, name: String) throws -> MultiPoint {
-        try MultiPoint(jsonString: stringFromFile(package: package, name: name))!
+        try MultiPoint(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func lineString(package: String, name: String) throws -> LineString {
-        try LineString(jsonString: stringFromFile(package: package, name: name))!
+        try LineString(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func multiLineString(package: String, name: String) throws -> MultiLineString {
-        try MultiLineString(jsonString: stringFromFile(package: package, name: name))!
+        try MultiLineString(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func polygon(package: String, name: String) throws -> Polygon {
-        try Polygon(jsonString: stringFromFile(package: package, name: name))!
+        try Polygon(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func multiPolygon(package: String, name: String) throws -> MultiPolygon {
-        try MultiPolygon(jsonString: stringFromFile(package: package, name: name))!
+        try MultiPolygon(jsonData: dataFromFile(package: package, name: name))!
     }
 
     static func boundingBox(package: String, name: String) throws -> BoundingBox {
@@ -57,27 +56,34 @@ struct TestData {
     // MARK: -
 
     static func stringFromFile(package: String, name: String) throws -> String {
-        let path = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("TestData")
-            .appendingPathComponent(package)
-            .appendingPathComponent(name)
-            .appendingPathExtension("geojson")
-
-        return try String(contentsOf: path, encoding: .utf8)
+        let data = try dataFromFile(package: package, name: name)
+        guard let string = String(data: data, encoding: .utf8) else {
+            throw TestDataError.invalidUTF8
+        }
+        return string
     }
 
     static func dataFromFile(package: String, name: String) throws -> Data {
-        let path = URL(fileURLWithPath: #filePath)
+        let base = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("TestData")
             .appendingPathComponent(package)
             .appendingPathComponent(name)
-            .appendingPathExtension("geojson")
 
-        return try Data(contentsOf: path)
+        let gzipped = base
+            .appendingPathExtension("geojson")
+            .appendingPathExtension("gz")
+        let plain = base.appendingPathExtension("geojson")
+        let path = FileManager.default.fileExists(atPath: gzipped.path)
+            ? gzipped
+            : plain
+
+        let compressed = try Data(contentsOf: path)
+        guard let data = Gzip.decompressIfNeeded(compressed) else {
+            throw TestDataError.invalidGzip
+        }
+        return data
     }
 
     static func shapefileUrl(package: String, name: String) -> URL {
@@ -93,4 +99,6 @@ struct TestData {
 
 enum TestDataError: Error {
     case invalidBoundingBox
+    case invalidUTF8
+    case invalidGzip
 }

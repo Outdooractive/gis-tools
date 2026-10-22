@@ -29,7 +29,7 @@ fi
 
 SUITES=("$@")
 if [[ ${#SUITES[@]} -eq 0 ]]; then
-    SUITES=(loading projection predicates overlay rtree coders buffer simplify hulls line tile clip graph query clusters memory inlining)
+    SUITES=(loading projection predicates overlay rtree coders buffer simplify hulls line tile clip graph realworld query clusters memory inlining)
 fi
 
 printf '\n| Suite | Wall seconds | Peak RSS (MB) |\n'
