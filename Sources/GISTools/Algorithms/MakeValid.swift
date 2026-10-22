@@ -4,7 +4,8 @@ import Foundation
 
 extension GeoJson {
 
-    /// Repairs an invalid geometry, returning a valid geometry of the same type if possible.
+    /// Repairs an invalid geometry, returning a topologically valid geometry of
+    /// the same type if possible.
     ///
     /// For polygons, this:
     /// 1. Removes duplicate and collinear points
@@ -17,22 +18,29 @@ extension GeoJson {
     /// and rewind which all work for any CRS.
     ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before processing.
-    /// - Returns: A valid geometry of the same type, or `nil` if repair is impossible.
+    /// - Returns: A topologically valid geometry of the same type, or `nil` if
+    ///   the geometry cannot be repaired into a topologically valid result.
+    ///
+    /// Every non-`nil` result satisfies ``ValidatableGeoJson/isValid``. Invalid
+    /// points, lines and unrepaired holes return `nil` rather than preserving a
+    /// structurally valid but topologically invalid geometry.
     public func madeValid(
         gridSize: Double? = nil
     ) -> Self? {
         switch self {
         case let point as Point:
-            return point as? Self
+            return point.isValid ? point as? Self : nil
 
         case let multiPoint as MultiPoint:
-            return multiPoint as? Self
+            return multiPoint.isValid ? multiPoint as? Self : nil
 
         case let lineString as LineString:
-            return lineString.madeValidLineString(gridSize: gridSize) as? Self
+            let valid = lineString.madeValidLineString(gridSize: gridSize)
+            return valid.isValid ? valid as? Self : nil
 
         case let multiLineString as MultiLineString:
-            return multiLineString.madeValidMultiLineString(gridSize: gridSize) as? Self
+            let valid = multiLineString.madeValidMultiLineString(gridSize: gridSize)
+            return valid.isValid ? valid as? Self : nil
 
         case let polygon as Polygon:
             return MakeValid.makeValid(polygon, gridSize: gridSize) as? Self
@@ -40,18 +48,32 @@ extension GeoJson {
         case let multiPolygon as MultiPolygon:
             let valid = multiPolygon.polygons.compactMap { MakeValid.makeValid($0, gridSize: gridSize) }
             guard valid.isNotEmpty else { return nil }
-            let result = MultiPolygon(unchecked: valid, calculateBoundingBox: multiPolygon.boundingBox != nil)
+
+            let result = MultiPolygon(
+                unchecked: valid,
+                calculateBoundingBox: multiPolygon.boundingBox != nil)
+            guard result.isValid else { return nil }
+
             return result as? Self
 
         case let geometryCollection as GeometryCollection:
-            let valid = geometryCollection.geometries.compactMap { $0.madeValid(gridSize: gridSize) }
-            let result = GeometryCollection(valid, calculateBoundingBox: geometryCollection.boundingBox != nil)
+            let valid = geometryCollection.geometries.compactMap {
+                $0.madeValid(gridSize: gridSize)
+            }
+            guard valid.isNotEmpty || geometryCollection.geometries.isEmpty else {
+                return nil
+            }
+
+            let result = GeometryCollection(
+                valid,
+                calculateBoundingBox: geometryCollection.boundingBox != nil)
             return result as? Self
 
         case let feature as Feature:
             guard let geometry = feature.geometry,
                   let validGeometry = geometry.madeValid(gridSize: gridSize)
             else { return nil }
+
             var newFeature = Feature(
                 validGeometry,
                 id: feature.id,
@@ -63,6 +85,7 @@ extension GeoJson {
         case let featureCollection as FeatureCollection:
             let valid = featureCollection.features.compactMap { $0.madeValid(gridSize: gridSize) }
             guard valid.isNotEmpty else { return nil }
+
             var newCollection = FeatureCollection(
                 valid,
                 calculateBoundingBox: featureCollection.boundingBox != nil)
@@ -110,17 +133,17 @@ private enum MakeValid {
         let unkinked = cleaned.unkinked(gridSize: gridSize)
         guard unkinked.isNotEmpty else {
             let rewinded = cleaned.withWindingOrder(.counterClockwise)
-            return rewinded.isStructurallyValid ? rewinded : nil
+            return rewinded.isValid ? rewinded : nil
         }
 
         // 3. Fix winding order on each result
         let valid = unkinked.compactMap { p -> Polygon? in
             let r = p.withWindingOrder(.counterClockwise)
-            return r.isStructurallyValid ? r : nil
+            return r.isValid ? r : nil
         }
         guard valid.isNotEmpty else {
             let rewinded = cleaned.withWindingOrder(.counterClockwise)
-            return rewinded.isStructurallyValid ? rewinded : nil
+            return rewinded.isValid ? rewinded : nil
         }
 
         // 4. Return the largest valid polygon (discards slivers from splitting)

@@ -1086,6 +1086,8 @@ Containment follows OGC/PostGIS naming: `contains` is interior-only (`ST_Contain
 | unkink-polygon              | `let simplePolygons = polygon.unkinked(gridSize: 0.001)`                                                                              |     | [Source][150] / [Tests][151] |
 | voronoi                     | `let cells = points.voronoiDiagram(boundingBox: bbox)`                                                                                |     | [Source][223] / [Tests][224] |
 
+`madeValid()` follows the topological validity contract: every non-`nil` result satisfies `isValid`; if the geometry cannot be repaired into a topologically valid result, it returns `nil`.
+
 # Graph
 
 > The graph API is opt-in behind the `EnableGraphAPI` package trait. Enable it in a dependency with
