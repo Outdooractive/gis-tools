@@ -740,6 +740,7 @@ private struct RealWorldDataset {
     let xRange: ClosedRange<Int>
     let yRange: ClosedRange<Int>
     let iterations: Int
+    let isDirected: Bool
 
 }
 
@@ -749,19 +750,29 @@ private let realWorldDatasets: [RealWorldDataset] = [
         prefix: "allgaeu_",
         xRange: 8647 ... 8657,
         yRange: 5723 ... 5725,
-        iterations: 2),
+        iterations: 2,
+        isDirected: false),
     RealWorldDataset(
         name: "munich",
         prefix: "munich_",
         xRange: 8717 ... 8719,
         yRange: 5684 ... 5685,
-        iterations: 2),
+        iterations: 2,
+        isDirected: false),
+    RealWorldDataset(
+        name: "munich-directed",
+        prefix: "munich_",
+        xRange: 8717 ... 8719,
+        yRange: 5684 ... 5685,
+        iterations: 2,
+        isDirected: true),
     RealWorldDataset(
         name: "paris",
         prefix: "paris_",
         xRange: 8295 ... 8301,
         yRange: 5632 ... 5639,
-        iterations: 1),
+        iterations: 1,
+        isDirected: false),
 ]
 
 private func loadRealWorldCollections(_ dataset: RealWorldDataset) -> [FeatureCollection] {
@@ -780,9 +791,16 @@ private func loadRealWorldCollections(_ dataset: RealWorldDataset) -> [FeatureCo
     return collections
 }
 
-private func makeRealWorldGraph(_ collections: [FeatureCollection]) -> Graph {
+private func makeRealWorldGraph(
+    _ collections: [FeatureCollection],
+    isDirected: Bool
+) -> Graph {
     Graph.merged(
-        collections.map { Graph(featureCollection: $0) },
+        collections.map {
+            Graph(
+                featureCollection: $0,
+                isDirected: isDirected)
+        },
         stitchingTolerance: 1.0)
 }
 
@@ -836,10 +854,19 @@ private func runRealWorldGraph() {
 
         let collections = loadRealWorldCollections(dataset)
         run("graph/real/build-merge/\(dataset.name)", iterations: 1) {
-            _ = makeRealWorldGraph(collections)
+            _ = makeRealWorldGraph(
+                collections,
+                isDirected: dataset.isDirected)
         }
 
-        let graph = makeRealWorldGraph(collections)
+        let graph = makeRealWorldGraph(
+            collections,
+            isDirected: dataset.isDirected)
+        print(String(
+            format: "graph/real/memory/%@/rss-mb=%.1f peak-rss-mb=%.1f",
+            dataset.name,
+            currentRSSMegabytes(),
+            peakRSSMegabytes()))
 
         for profile in RealWorldProfile.allCases {
             guard let (start, end) = realWorldEndpoints(
@@ -884,6 +911,40 @@ private func runRealWorldGraph() {
                     to: end,
                     edgeFilter: { cycling.accepts($0) })
             }
+        }
+
+        guard let contraction = graph.contracted() else { continue }
+
+        run("graph/real/\(dataset.name)/contraction-build", iterations: 1) {
+            _ = graph.contracted()
+        }
+
+        let contractedEndpoints: (Node, Node)?
+        if let (queryStart, queryEnd) = realWorldEndpoints(
+            in: graph,
+            filter: { _ in true }),
+           let contractedStartIndex = contraction.contractedIndexOfOriginal[queryStart.index],
+           let contractedEndIndex = contraction.contractedIndexOfOriginal[queryEnd.index],
+           let contractedStart = contraction.graph.node(withIndex: contractedStartIndex),
+           let contractedEnd = contraction.graph.node(withIndex: contractedEndIndex)
+        {
+            contractedEndpoints = (contractedStart, contractedEnd)
+        }
+        else if let first = contraction.graph.nodes.first,
+                let last = contraction.graph.nodes.last
+        {
+            contractedEndpoints = (first, last)
+        }
+        else {
+            contractedEndpoints = nil
+        }
+
+        guard let contractedEndpoints else { continue }
+
+        run("graph/real/\(dataset.name)/contraction-dijkstra", iterations: 1) {
+            _ = contraction.graph.shortestPath(
+                from: contractedEndpoints.0,
+                to: contractedEndpoints.1)
         }
     }
 }
