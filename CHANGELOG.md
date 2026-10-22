@@ -201,6 +201,13 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Performance
 
+- Added ``Graph/RoutingIndex``, which precomputes the contraction once and
+  reuses it for repeated point-to-point queries. It also caches chain
+  intermediates during contraction, avoiding repeated chain walks when
+  expanding paths. On the Paris fixture, indexed A* routes take ~17 ms versus
+  ~40 ms for direct A*, after a ~1 s one-time index build. Indexed searches
+  with `blockedNodes` or `edgeFilter` fall back to the original graph (#308).
+
 - `Coordinate3D` is now 56 bytes (stride 56) instead of 96, and `Projection`
   is 8 bytes instead of 48. The projection definition is resolved from the
   immutable built-in registry instead of being stored in every coordinate

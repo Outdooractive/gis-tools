@@ -840,6 +840,25 @@ private func realWorldEndpoints(
     return (seed, end)
 }
 
+private func realWorldContractedEndpoints(
+    in graph: Graph
+) -> (Node, Node)? {
+    guard let contraction = graph.contracted() else { return nil }
+
+    let candidates = contraction.originalIndices.compactMap {
+        graph.node(withIndex: $0)
+    }
+    guard candidates.count >= 2 else { return nil }
+
+    let seed = candidates[0]
+    let end = candidates.max {
+        $0.coordinate.distance(from: seed.coordinate)
+            < $1.coordinate.distance(from: seed.coordinate)
+    } ?? candidates[1]
+
+    return (seed, end)
+}
+
 private func runRealWorldGraph() {
     for dataset in realWorldDatasets {
         let firstPath = "\(graphFixtureDirectory)/\(dataset.prefix)14_\(dataset.xRange.lowerBound)_\(dataset.yRange.lowerBound).geojson.gz"
@@ -867,6 +886,54 @@ private func runRealWorldGraph() {
             dataset.name,
             currentRSSMegabytes(),
             peakRSSMegabytes()))
+
+        if let (start, end) = realWorldContractedEndpoints(in: graph) {
+            run(
+                "graph/real/\(dataset.name)/unfiltered/dijkstra",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.shortestPath(from: start, to: end)
+            }
+            run(
+                "graph/real/\(dataset.name)/unfiltered/a-star",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.aStarPath(from: start, to: end)
+            }
+            run(
+                "graph/real/\(dataset.name)/unfiltered/bidirectional",
+                iterations: dataset.iterations
+            ) {
+                _ = graph.bidirectionalShortestPath(from: start, to: end)
+            }
+        }
+
+        guard let index = Graph.RoutingIndex(graph) else { continue }
+
+        run("graph/real/\(dataset.name)/index-build", iterations: 1) {
+            _ = Graph.RoutingIndex(graph)
+        }
+
+        if let (start, end) = realWorldContractedEndpoints(in: graph) {
+            run(
+                "graph/real/\(dataset.name)/index/dijkstra",
+                iterations: dataset.iterations
+            ) {
+                _ = index.shortestPath(from: start, to: end)
+            }
+            run(
+                "graph/real/\(dataset.name)/index/a-star",
+                iterations: dataset.iterations
+            ) {
+                _ = index.aStarPath(from: start, to: end)
+            }
+            run(
+                "graph/real/\(dataset.name)/index/bidirectional",
+                iterations: dataset.iterations
+            ) {
+                _ = index.bidirectionalShortestPath(from: start, to: end)
+            }
+        }
 
         for profile in RealWorldProfile.allCases {
             guard let (start, end) = realWorldEndpoints(
