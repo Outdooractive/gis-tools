@@ -253,7 +253,7 @@ struct RealWorldRoutingTests {
         in graph: Graph,
         filter: @escaping (Edge) -> Bool,
         label: String,
-        minimumLength: CLLocationDistance = 0.0,
+        minimumLength: Double = 0.0,
         waypointCount: Int = 0,
         westToEast: Bool = false
     ) {
