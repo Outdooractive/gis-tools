@@ -261,13 +261,14 @@ extension MakeValidTests {
     // Tests madeValid preserves EPSG:4978 projection.
     @Test
     func validPolygon4978() throws {
-        let polygon = try #require(Polygon([[
-            Coordinate3D(x: 6_000_000.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 6_000_100.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 6_000_100.0, y: 6_000_100.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 6_000_000.0, y: 6_000_100.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 6_000_000.0, y: 6_000_000.0, z: 0.0, projection: .epsg4978),
-        ]]))
+        let coordinates = [
+            Coordinate3D(latitude: 47.0, longitude: 10.0),
+            Coordinate3D(latitude: 47.0, longitude: 10.001),
+            Coordinate3D(latitude: 47.001, longitude: 10.001),
+            Coordinate3D(latitude: 47.001, longitude: 10.0),
+            Coordinate3D(latitude: 47.0, longitude: 10.0),
+        ].map { $0.projected(to: .epsg4978) }
+        let polygon = try #require(Polygon([coordinates]))
         let valid = polygon.madeValid()
         #expect(valid != nil)
         #expect(valid?.projection == .epsg4978)
@@ -391,3 +392,135 @@ extension MakeValidTests {
 
 }
 
+
+// MARK: - Topological repair contract
+
+extension MakeValidTests {
+
+    private func coordinate(
+        x: Double,
+        y: Double,
+        projection: Projection
+    ) -> Coordinate3D {
+        switch projection {
+        case .epsg4326:
+            return Coordinate3D(latitude: y, longitude: x)
+        case .epsg4978:
+            return Coordinate3D(
+                latitude: 47.0 + y * 0.0001,
+                longitude: 10.0 + x * 0.0001)
+                .projected(to: .epsg4978)
+        default:
+            return Coordinate3D(x: x, y: y, projection: projection)
+        }
+    }
+
+    private func square(
+        x: Double,
+        y: Double,
+        size: Double,
+        projection: Projection
+    ) -> [Coordinate3D] {
+        [
+            coordinate(x: x, y: y, projection: projection),
+            coordinate(x: x + size, y: y, projection: projection),
+            coordinate(x: x + size, y: y + size, projection: projection),
+            coordinate(x: x, y: y + size, projection: projection),
+            coordinate(x: x, y: y, projection: projection),
+        ]
+    }
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func rejectsHoleOutsideShell(projection: Projection) throws {
+        let polygon = try #require(Polygon([
+            square(x: 0.0, y: 0.0, size: 5.0, projection: projection),
+            square(x: 10.0, y: 10.0, size: 1.0, projection: projection),
+        ]))
+
+        #expect(polygon.isStructurallyValid)
+        #expect(!polygon.isValid)
+
+        if let valid = polygon.madeValid() {
+            #expect(valid.isValid)
+            #expect(valid.coordinates.count == 1, "The invalid hole should be removed")
+        }
+    }
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func rejectsHoleCrossingShell(projection: Projection) throws {
+        let polygon = try #require(Polygon([
+            square(x: 0.0, y: 0.0, size: 5.0, projection: projection),
+            square(x: 4.0, y: 4.0, size: 2.0, projection: projection),
+        ]))
+
+        #expect(polygon.isStructurallyValid)
+        #expect(!polygon.isValid)
+        #expect(polygon.madeValid() == nil)
+    }
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func rejectsOverlappingMultiPolygonComponents(projection: Projection) throws {
+        let first = try #require(Polygon([
+            square(x: 0.0, y: 0.0, size: 5.0, projection: projection),
+        ]))
+        let second = try #require(Polygon([
+            square(x: 3.0, y: 3.0, size: 5.0, projection: projection),
+        ]))
+        let multiPolygon = try #require(MultiPolygon([first, second]))
+
+        #expect(multiPolygon.isStructurallyValid)
+        #expect(!multiPolygon.isValid)
+        #expect(multiPolygon.madeValid() == nil)
+    }
+
+}
+
+extension MakeValidTests {
+
+    @Test
+    func rejectsPointOutsideProjectionExtent1() {
+        let point = Point(Coordinate3D(latitude: 100.0, longitude: 0.0))
+
+        #expect(point.isStructurallyValid)
+        #expect(!point.isValid)
+        #expect(point.madeValid() == nil)
+    }
+
+    @Test
+    func rejectsLineOutsideProjectionExtent() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 100.0, longitude: 0.0),
+        ]))
+
+        #expect(line.isStructurallyValid)
+        #expect(!line.isValid)
+        #expect(line.madeValid() == nil)
+    }
+
+    @Test
+    func rejectsMultiPointOutsideProjectionExtent() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 100.0, longitude: 0.0),
+        ]))
+
+        #expect(multiPoint.isStructurallyValid)
+        #expect(!multiPoint.isValid)
+        #expect(multiPoint.madeValid() == nil)
+    }
+
+    @Test
+    func rejectsMultiLineOutsideProjectionExtent() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 100.0, longitude: 0.0),
+        ]))
+        let multi = try #require(MultiLineString([line]))
+
+        #expect(multi.isStructurallyValid)
+        #expect(!multi.isValid)
+        #expect(multi.madeValid() == nil)
+    }
+
+}

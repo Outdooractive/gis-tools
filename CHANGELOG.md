@@ -298,6 +298,13 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- `madeValid` now accepts repaired results only when they satisfy topological
+  ``ValidatableGeoJson/isValid``, not merely structural validity. Invalid
+  points and lines return `nil`, invalid holes either fall back to a valid
+  shell or return `nil`, and overlapping `MultiPolygon` components are
+  rejected. Added regression coverage across EPSG:4326, EPSG:3857, EPSG:4978
+  and noSRID (#306).
+
 - Points on a polygon hole boundary are now reported as boundary points
   instead of being treated as inside the hole (or outside the polygon),
   matching JTS/GEOS and OGC (#257).
