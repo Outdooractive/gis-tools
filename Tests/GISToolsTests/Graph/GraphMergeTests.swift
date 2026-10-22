@@ -122,6 +122,199 @@ struct GraphMergeTests {
         #expect(path.count == 3, "Chain path should be 3 nodes: a→bc→d")
     }
 
+    // MARK: - Seam stitching
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978])
+    func stitchingDanglingEndpoint(projection: Projection) throws {
+        let a = Coordinate3D(latitude: 0.0, longitude: -0.00005)
+            .projected(to: projection)
+        let d = Coordinate3D(latitude: 0.0, longitude: 0.00005)
+            .projected(to: projection)
+        let c = Coordinate3D(latitude: 0.0, longitude: 0.0)
+            .projected(to: projection)
+        let e = Coordinate3D(latitude: 0.0, longitude: 0.0001)
+            .projected(to: projection)
+
+        var graph1 = Graph(nodeTolerance: 0.001)
+        let a1 = graph1.createNode(at: a)
+        let d1 = graph1.createNode(at: d)
+        graph1.addUndirectedEdge(from: a1, to: d1)
+
+        var graph2 = Graph(nodeTolerance: 0.001)
+        let c2 = graph2.createNode(at: c)
+        let e2 = graph2.createNode(at: e)
+        graph2.addUndirectedEdge(from: c2, to: e2)
+
+        let merged = Graph.merged(
+            [graph1, graph2],
+            stitchingTolerance: 1.0)
+
+        #expect(merged.nodeCount == 4)
+        #expect(merged.edges.count == 3)
+        #expect(merged.connectedComponents.count == 1)
+
+        let aNode = try #require(merged.node(at: a, tolerance: 5.0))
+        let dNode = try #require(merged.node(at: d, tolerance: 5.0))
+        let eNode = try #require(merged.node(at: e, tolerance: 5.0))
+
+        #expect(
+            merged.weight(from: aNode, to: dNode) == nil,
+            "The overlapping direct segment should be split and removed")
+        #expect(merged.shortestPath(from: aNode, to: eNode).isNotEmpty)
+    }
+
+    @Test
+    func stitchingNoSRIDDanglingEndpoint() throws {
+        let a = Coordinate3D(x: -5.0, y: 0.0, projection: .noSRID)
+        let d = Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID)
+        let c = Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID)
+        let e = Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID)
+
+        var graph1 = Graph(nodeTolerance: 0.1)
+        let a1 = graph1.createNode(at: a)
+        let d1 = graph1.createNode(at: d)
+        graph1.addUndirectedEdge(from: a1, to: d1)
+
+        var graph2 = Graph(nodeTolerance: 0.1)
+        let c2 = graph2.createNode(at: c)
+        let e2 = graph2.createNode(at: e)
+        graph2.addUndirectedEdge(from: c2, to: e2)
+
+        let merged = Graph.merged(
+            [graph1, graph2],
+            stitchingTolerance: 0.1)
+
+        #expect(merged.nodeCount == 4)
+        #expect(merged.edges.count == 3)
+        #expect(merged.connectedComponents.count == 1)
+
+        let aNode = try #require(merged.node(at: a, tolerance: 5.0))
+        let dNode = try #require(merged.node(at: d, tolerance: 5.0))
+        #expect(merged.weight(from: aNode, to: dNode) == nil)
+    }
+
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func deduplicatesMultipleOverlappingRoads(projection: Projection) {
+        func coordinate(_ distance: Double) -> Coordinate3D {
+            if projection == .noSRID {
+                return Coordinate3D(
+                    x: distance,
+                    y: 0.0,
+                    projection: .noSRID)
+            }
+
+            return Coordinate3D(
+                latitude: 0.0,
+                longitude: distance * 0.00001)
+                .projected(to: projection)
+        }
+
+        func makeGraph(_ segments: [(Double, Double)]) -> Graph {
+            let features = segments.map { start, end in
+                Feature(
+                    LineString(unchecked: [
+                        coordinate(start),
+                        coordinate(end),
+                    ]),
+                    properties: [
+                        "name": "Overlap Road",
+                        "original_id": 42,
+                    ])
+            }
+
+            return Graph(
+                featureCollection: FeatureCollection(features),
+                nodeTolerance: 0.001)
+        }
+
+        let merged = Graph.merged(
+            [
+                makeGraph([(0.0, 10.0)]),
+                makeGraph([(2.0, 12.0)]),
+                makeGraph([(0.0, 5.0), (5.0, 10.0)]),
+                makeGraph([(4.0, 8.0)]),
+            ],
+            stitchingTolerance: 0.1)
+
+        #expect(merged.nodeCount == 7)
+        #expect(merged.edges.count == 6)
+        #expect(
+            merged.directedEdgeCount == 12,
+            "Every undirected edge should be stored exactly twice")
+
+        #expect(
+            merged.edges.allSatisfy { edge in
+                let originalID: Int? = edge.feature?.property(for: "original_id")
+                let name: String? = edge.feature?.property(for: "name")
+                return originalID == 42 && name == "Overlap Road"
+            },
+            "Splitting and merging must preserve the shared road properties")
+
+        var seen: Set<String> = []
+        for edgeList in merged.adjacencyList {
+            for edge in edgeList.edges {
+                let key = "\(edge.from.index)->\(edge.to.index):\(edge.isDirected)"
+                #expect(
+                    seen.insert(key).inserted,
+                    "Duplicate directed edge instance \(key)")
+            }
+        }
+    }
+
+    @Test
+    func stitchingDoesNotJoinPerpendicularRoads() {
+        let a = Coordinate3D(latitude: 0.0, longitude: -0.00005)
+        let d = Coordinate3D(latitude: 0.0, longitude: 0.00005)
+        let c = Coordinate3D(latitude: -0.00005, longitude: 0.00005)
+        let e = Coordinate3D(latitude: 0.00005, longitude: 0.00005)
+
+        var graph1 = Graph(nodeTolerance: 0.001)
+        let a1 = graph1.createNode(at: a)
+        let d1 = graph1.createNode(at: d)
+        graph1.addUndirectedEdge(from: a1, to: d1)
+
+        var graph2 = Graph(nodeTolerance: 0.001)
+        let c2 = graph2.createNode(at: c)
+        let e2 = graph2.createNode(at: e)
+        graph2.addUndirectedEdge(from: c2, to: e2)
+
+        let stitched = Graph.merged(
+            [graph1, graph2],
+            stitchingTolerance: 1.0)
+        let unstitched = Graph.merged(
+            [graph1, graph2],
+            stitchingTolerance: 0.0)
+
+        #expect(stitched.connectedComponents.count == 2)
+        #expect(unstitched.connectedComponents.count == 2)
+        #expect(stitched.edges.count == 2)
+    }
+
+    @Test
+    func stitchingCanBeDisabled() {
+        let a = Coordinate3D(latitude: 0.0, longitude: -0.00005)
+        let d = Coordinate3D(latitude: 0.0, longitude: 0.00005)
+        let c = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let e = Coordinate3D(latitude: 0.0, longitude: 0.0001)
+
+        var graph1 = Graph(nodeTolerance: 0.001)
+        let a1 = graph1.createNode(at: a)
+        let d1 = graph1.createNode(at: d)
+        graph1.addUndirectedEdge(from: a1, to: d1)
+
+        var graph2 = Graph(nodeTolerance: 0.001)
+        let c2 = graph2.createNode(at: c)
+        let e2 = graph2.createNode(at: e)
+        graph2.addUndirectedEdge(from: c2, to: e2)
+
+        let merged = Graph.merged(
+            [graph1, graph2],
+            stitchingTolerance: 0.0)
+
+        #expect(merged.connectedComponents.count == 2)
+        #expect(merged.edges.count == 2)
+    }
+
     // MARK: - Real network merge
 
     @Test
@@ -219,6 +412,22 @@ struct GraphMergeTests {
 
         let merged = Graph.merged([undirected, directed])
         #expect(merged.isDirected, "Merged should be directed when one input is")
+    }
+
+    @Test
+    func mergingManuallyDirectedEdgesProducesDirectedGraph() {
+        var graph = Graph()
+        let a = graph.createNode(
+            at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(
+            at: Coordinate3D(latitude: 10.05, longitude: 20.05))
+        graph.addDirectedEdge(from: a, to: b, isDirected: true)
+
+        let merged = Graph.merged([graph, Graph()])
+
+        #expect(merged.isDirected)
+        #expect(merged.hasDirectedEdges)
+        #expect(merged.directedEdgeCount == 1)
     }
 
     // MARK: - Projection coverage
