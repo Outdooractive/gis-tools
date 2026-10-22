@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
@@ -66,3 +67,4 @@ struct EdgeQueryTests {
     }
 
 }
+#endif

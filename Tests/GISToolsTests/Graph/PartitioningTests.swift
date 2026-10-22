@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -323,3 +324,4 @@ struct PartitioningTests {
   }
 
 }
+#endif

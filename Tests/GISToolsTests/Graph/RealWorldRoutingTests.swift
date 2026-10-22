@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 @testable import GISTools
 import Testing
@@ -392,3 +393,4 @@ struct RealWorldRoutingTests {
     }
 
 }
+#endif

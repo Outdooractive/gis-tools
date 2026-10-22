@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 @testable import GISTools
 import Testing
 
@@ -54,3 +55,4 @@ struct NodeBitSetTests {
     }
 
 }
+#endif

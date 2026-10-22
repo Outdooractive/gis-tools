@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 extension Graph {
 
     /// A compact membership set for node indices.
@@ -46,3 +47,4 @@ extension Graph {
     }
 
 }
+#endif

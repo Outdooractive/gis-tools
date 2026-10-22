@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
@@ -42,3 +43,4 @@ struct GraphProjectionTests {
     }
 
 }
+#endif

@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 
 // MARK: - ALT landmark index
@@ -263,3 +264,4 @@ extension Graph {
     }
 
 }
+#endif

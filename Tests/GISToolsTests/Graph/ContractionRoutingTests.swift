@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -205,3 +206,4 @@ struct ContractionRoutingTests {
   }
 
 }
+#endif

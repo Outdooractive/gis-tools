@@ -1,3 +1,4 @@
+#if EnableGraphAPI
 import Foundation
 import Testing
 
@@ -301,3 +302,4 @@ struct BetweennessCentralityTests {
     }
 
 }
+#endif
