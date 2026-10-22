@@ -1,8 +1,0 @@
-{
-  "type": "Feature",
-  "properties": { "foo": "bar" },
-  "geometry": {
-    "type": "MultiLineString",
-    "coordinates": [[[100, 0], [101, 1]], [[102, 2], [103, 3]]]
-  }
-}
