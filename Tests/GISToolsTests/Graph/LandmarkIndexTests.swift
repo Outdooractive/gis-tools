@@ -11,13 +11,22 @@ struct LandmarkIndexTests {
     }
 
     @Test
-    func directedGraphHasNoIndex() {
+    func directedLandmarkPathMatchesAStar() throws {
         var graph = Graph(isDirected: true)
         let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
-        let b = graph.createNode(at: Coordinate3D(latitude: 10.1, longitude: 20.1))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.05, longitude: 20.05))
+        let c = graph.createNode(at: Coordinate3D(latitude: 10.1, longitude: 20.1))
         graph.addDirectedEdge(from: a, to: b, isDirected: true)
+        graph.addDirectedEdge(from: b, to: c, isDirected: true)
 
-        #expect(graph.landmarkIndex() == nil)
+        let index = try #require(graph.landmarkIndex(landmarkCount: 2))
+        let direct = graph.aStarPath(from: a, to: c)
+        let landmark = index.aStarPath(from: a, to: c)
+
+        #expect(landmark.first == a)
+        #expect(landmark.last == c)
+        #expect(abs(graph.length(ofPath: direct) - graph.length(ofPath: landmark)) < 0.001)
+        #expect(index.aStarPath(from: c, to: a).isEmpty)
     }
 
     @Test

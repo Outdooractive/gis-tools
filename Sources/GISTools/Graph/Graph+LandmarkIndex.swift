@@ -4,28 +4,29 @@ import Foundation
 
 extension Graph {
 
-    /// A reusable ALT (A*, landmarks, triangle inequality) index for
-    /// undirected graphs.
+    /// A reusable ALT (A*, landmarks, triangle inequality) index.
     ///
     /// The index precomputes shortest-path distances from a small set of
     /// landmark nodes. The maximum triangle-inequality difference is then used
     /// as an admissible A* heuristic.
     ///
-    /// Directed graphs are not supported because the ALT heuristic needs
-    /// symmetric distances; build a normal A* search for those.
+    /// Undirected graphs need one distance table per landmark. Directed graphs
+    /// also use distances measured against the reversed graph, so both
+    /// forward and backward triangle inequalities are available.
     public struct LandmarkIndex: Sendable {
 
         private let graph: Graph
-        private let landmarkDistances: [[Double]]
+        private let forwardDistances: [[Double]]
+        private let backwardDistances: [[Double]]?
 
         /// Builds an ALT index.
         ///
         /// - Parameters:
-        ///   - graph: An undirected graph.
+        ///   - graph: An undirected or directed graph.
         ///   - landmarkCount: Number of landmarks to precompute (default 4).
-        /// - Returns: `nil` for empty or directed graphs.
+        /// - Returns: `nil` for empty graphs.
         public init?(_ graph: Graph, landmarkCount: Int = 4) {
-            guard graph.nodeCount > 1, !graph.hasDirectedEdges else { return nil }
+            guard graph.nodeCount > 1 else { return nil }
 
             let component = graph.connectedComponents.max(by: { $0.count < $1.count })
                 ?? graph.nodes
@@ -54,15 +55,30 @@ extension Graph {
                 landmarks.append(bestNode)
             }
 
+            let reverseAdjacency = graph.hasDirectedEdges
+                ? Self.reversedAdjacency(of: graph)
+                : nil
+
             self.graph = graph
-            self.landmarkDistances = landmarks.map {
-                Self.distances(from: $0, in: graph)
+            self.forwardDistances = landmarks.map {
+                Self.distances(
+                    from: $0,
+                    in: graph,
+                    adjacency: nil)
+            }
+            self.backwardDistances = reverseAdjacency.map { reverse in
+                landmarks.map {
+                    Self.distances(
+                        from: $0,
+                        in: graph,
+                        adjacency: reverse)
+                }
             }
         }
 
         /// The number of precomputed landmarks.
         public var landmarkCount: Int {
-            landmarkDistances.count
+            forwardDistances.count
         }
 
         /// Finds a shortest path using ALT A*.
@@ -83,23 +99,37 @@ extension Graph {
             }
 
             let blockedSet: Set<Int>? = blockedNodes.map { Set($0.map(\.index)) }
-            let destinationDistances = landmarkDistances.map {
+            let forwardDestination = forwardDistances.map {
+                $0[destination.index]
+            }
+            let backwardDestination = backwardDistances?.map {
                 $0[destination.index]
             }
 
             func heuristic(_ index: Int) -> Double {
                 var value = 0.0
-                for (landmarkDistance, destinationDistance) in zip(
-                    landmarkDistances,
-                    destinationDistances)
-                {
-                    let nodeDistance = landmarkDistance[index]
-                    guard nodeDistance.isFinite, destinationDistance.isFinite
-                    else { continue }
 
-                    value = max(value, abs(nodeDistance - destinationDistance))
+                for landmark in forwardDistances.indices {
+                    let forwardNode = forwardDistances[landmark][index]
+                    let forwardTarget = forwardDestination[landmark]
+
+                    if forwardNode.isFinite, forwardTarget.isFinite {
+                        if let backwardDistances, let backwardDestination {
+                            let backwardNode = backwardDistances[landmark][index]
+                            let backwardTarget = backwardDestination[landmark]
+
+                            value = max(
+                                value,
+                                forwardTarget - forwardNode,
+                                backwardNode - backwardTarget)
+                        }
+                        else {
+                            value = max(value, abs(forwardNode - forwardTarget))
+                        }
+                    }
                 }
-                return value
+
+                return max(value, 0.0)
             }
 
             var gScore = [Double](repeating: .infinity, count: graph.nodeCount)
@@ -158,9 +188,30 @@ extension Graph {
 
         // MARK: - Private
 
+        private static func reversedAdjacency(
+            of graph: Graph
+        ) -> [[(to: Int, weight: Double)]] {
+            var result = [[(to: Int, weight: Double)]](
+                repeating: [],
+                count: graph.nodeCount
+            )
+
+            for edgeList in graph.adjacencyList {
+                for edge in edgeList.edges {
+                    result[edge.to.index].append((
+                        to: edge.from.index,
+                        weight: edge.weight
+                    ))
+                }
+            }
+
+            return result
+        }
+
         private static func distances(
             from source: Node,
-            in graph: Graph
+            in graph: Graph,
+            adjacency: [[(to: Int, weight: Double)]]?
         ) -> [Double] {
             var distances = [Double](repeating: .infinity, count: graph.nodeCount)
             var visited = [Bool](repeating: false, count: graph.nodeCount)
@@ -175,14 +226,28 @@ extension Graph {
                 }
                 visited[entry.index] = true
 
-                for edge in graph.adjacencyList[entry.index].edges {
-                    let neighbor = edge.to.index
-                    let relaxed = entry.distance + edge.weight
-                    if relaxed < distances[neighbor] {
-                        distances[neighbor] = relaxed
-                        heap.push(HeapEntry(
-                            distance: relaxed,
-                            index: neighbor))
+                if let adjacency {
+                    for link in adjacency[entry.index] {
+                        let neighbor = link.to
+                        let relaxed = entry.distance + link.weight
+                        if relaxed < distances[neighbor] {
+                            distances[neighbor] = relaxed
+                            heap.push(HeapEntry(
+                                distance: relaxed,
+                                index: neighbor))
+                        }
+                    }
+                }
+                else {
+                    for edge in graph.adjacencyList[entry.index].edges {
+                        let neighbor = edge.to.index
+                        let relaxed = entry.distance + edge.weight
+                        if relaxed < distances[neighbor] {
+                            distances[neighbor] = relaxed
+                            heap.push(HeapEntry(
+                                distance: relaxed,
+                                index: neighbor))
+                        }
                     }
                 }
             }
@@ -192,7 +257,7 @@ extension Graph {
 
     }
 
-    /// Builds an ALT landmark index for an undirected graph.
+    /// Builds an ALT landmark index.
     public func landmarkIndex(landmarkCount: Int = 4) -> LandmarkIndex? {
         LandmarkIndex(self, landmarkCount: landmarkCount)
     }
