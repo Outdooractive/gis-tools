@@ -1,4 +1,4 @@
-import CZlib
+import GISToolsCZlib
 import Foundation
 
 /// Transparent gzip decompression for GeoJSON `Data` entry points.
