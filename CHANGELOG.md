@@ -201,6 +201,12 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Performance
 
+- Added ``Graph/LandmarkIndex`` for ALT (A*, landmarks, triangle inequality)
+  routing on undirected graphs. Four precomputed landmarks reduce A* query
+  times to roughly **65 µs on Allgäu**, **44 µs on Munich** and **0.4 ms on
+  Paris**, after one-time builds of 41 ms, 54 ms and 654 ms respectively.
+  Directed graphs fall back to the regular A* implementation (#308).
+
 - Added ``Graph/RoutingIndex``, which precomputes the contraction once and
   reuses it for repeated point-to-point queries. It also caches chain
   intermediates during contraction, avoiding repeated chain walks when
