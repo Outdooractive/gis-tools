@@ -153,6 +153,24 @@ struct RealWorldRoutingTests {
     }
 
     @Test
+    func munichLandmarkMatchesAStar() throws {
+        let component = try #require(
+            Self.munichGraph.connectedComponents.max(by: { $0.count < $1.count }))
+        let start = component.first!
+        let end = component.last!
+        let index = try #require(Self.munichGraph.landmarkIndex(landmarkCount: 4))
+
+        let direct = Self.munichGraph.aStarPath(from: start, to: end)
+        let landmark = index.aStarPath(from: start, to: end)
+
+        #expect(landmark.first == start)
+        #expect(landmark.last == end)
+        #expect(
+            abs(Self.munichGraph.length(ofPath: direct)
+                - Self.munichGraph.length(ofPath: landmark)) < 5.0)
+    }
+
+    @Test
     func munichHikingRoute() {
         assertRoute(
             in: Self.munichGraph,
@@ -180,6 +198,24 @@ struct RealWorldRoutingTests {
             label: "Munich car",
             minimumLength: 20000.0,
             waypointCount: 4)
+    }
+
+    @Test
+    func parisLandmarkMatchesAStar() throws {
+        let component = try #require(
+            Self.parisGraph.connectedComponents.max(by: { $0.count < $1.count }))
+        let start = component.first!
+        let end = component.last!
+        let index = try #require(Self.parisGraph.landmarkIndex(landmarkCount: 4))
+
+        let direct = Self.parisGraph.aStarPath(from: start, to: end)
+        let landmark = index.aStarPath(from: start, to: end)
+
+        #expect(landmark.first == start)
+        #expect(landmark.last == end)
+        #expect(
+            abs(Self.parisGraph.length(ofPath: direct)
+                - Self.parisGraph.length(ofPath: landmark)) < 5.0)
     }
 
     @Test

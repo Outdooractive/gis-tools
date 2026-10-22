@@ -887,7 +887,9 @@ private func runRealWorldGraph() {
             currentRSSMegabytes(),
             peakRSSMegabytes()))
 
-        if let (start, end) = realWorldContractedEndpoints(in: graph) {
+        let unfilteredEndpoints = realWorldContractedEndpoints(in: graph)
+
+        if let (start, end) = unfilteredEndpoints {
             run(
                 "graph/real/\(dataset.name)/unfiltered/dijkstra",
                 iterations: dataset.iterations
@@ -914,7 +916,7 @@ private func runRealWorldGraph() {
             _ = Graph.RoutingIndex(graph)
         }
 
-        if let (start, end) = realWorldContractedEndpoints(in: graph) {
+        if let (start, end) = unfilteredEndpoints {
             run(
                 "graph/real/\(dataset.name)/index/dijkstra",
                 iterations: dataset.iterations
@@ -932,6 +934,20 @@ private func runRealWorldGraph() {
                 iterations: dataset.iterations
             ) {
                 _ = index.bidirectionalShortestPath(from: start, to: end)
+            }
+        }
+
+        if let (start, end) = unfilteredEndpoints,
+           let landmarkIndex = Graph.LandmarkIndex(graph, landmarkCount: 4)
+        {
+            run("graph/real/\(dataset.name)/landmark-build", iterations: 1) {
+                _ = Graph.LandmarkIndex(graph, landmarkCount: 4)
+            }
+            run(
+                "graph/real/\(dataset.name)/landmark/a-star",
+                iterations: dataset.iterations
+            ) {
+                _ = landmarkIndex.aStarPath(from: start, to: end)
             }
         }
 

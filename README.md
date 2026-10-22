@@ -1163,6 +1163,7 @@ let fc = graph.toFeatureCollection()
 | Connected component graphs | `graph.connectedComponentGraphs` | [Source][279] |
 | Contraction-accelerated routing | `graph.shortestPathViaContraction(from: a, to: b)` | [Source][257] / [Tests][259] |
 | Reusable routing index | `let index = graph.routingIndex()` / `index?.aStarPath(from: a, to: b)` | [Source][324] / [Tests][325] |
+| ALT landmark routing | `let index = graph.landmarkIndex()` / `index?.aStarPath(from: a, to: b)` | [Source][326] / [Tests][327] |
 | Cycle detection | `graph.cycles(from: node)` | [Source][278] |
 | Dead-end pruning | `graph.prunedDeadEnds()` | [Source][260] / [Tests][261] |
 | Eulerian path / circuit | `graph.eulerianPath()` | [Source][274] / [Tests][275] |
@@ -1207,7 +1208,7 @@ Each suite runs in its own process. Timing is the median of the executable's ite
 
 The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
 
-The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
+The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries, ALT landmark queries and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
 
 The Allgäu, Munich and Paris graph test fixtures are derived from
 OpenStreetMap data © OpenStreetMap contributors, available under the
@@ -1524,6 +1525,8 @@ Thomas Rasch, Outdooractive
 [323]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/DistanceUnitTests.swift
 [324]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+RoutingIndex.swift
 [325]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/RoutingIndexTests.swift
+[326]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+LandmarkIndex.swift
+[327]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/LandmarkIndexTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 
