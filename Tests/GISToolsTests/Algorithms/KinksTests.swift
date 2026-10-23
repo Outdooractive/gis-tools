@@ -378,4 +378,29 @@ extension KinksTests {
     }
 
 
+    @Test
+    func kinksAndUnkinkAcrossAntimeridian() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+            Coordinate3D(latitude: -1.0, longitude: -179.0),
+        ]))
+        let kinks = line.kinks()
+        #expect(kinks.coordinates.count == 1)
+        #expect(abs(abs(kinks.coordinates[0].longitude) - 180.0) < 0.5)
+
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+            Coordinate3D(latitude: -1.0, longitude: -179.0),
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+        ]]))
+        let unkinked = polygon.unkinked()
+        #expect(unkinked.count >= 2)
+        #expect(unkinked.allSatisfy { $0.isValid })
+    }
+
+
 }

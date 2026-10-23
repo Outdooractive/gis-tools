@@ -75,9 +75,20 @@ extension LineSegment {
         epsilon: Double = 0.0,
         gridSize: Double? = nil
     ) -> Bool {
-        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        var snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
-        let other = snappedOther.projected(to: snappedSelf.projection)
+        var other = snappedOther.projected(to: snappedSelf.projection)
+
+        if let extent = snappedSelf.projection.wraparoundExtent,
+           abs(snappedSelf.first.x - snappedSelf.second.x) > extent
+            || abs(other.first.x - other.second.x) > extent
+        {
+            let unwrapped = AntimeridianCutting.unwrapCoordinates(
+                [snappedSelf.first, snappedSelf.second, other.first, other.second],
+                extent: extent)
+            snappedSelf = LineSegment(first: unwrapped[0], second: unwrapped[1], index: snappedSelf.index)
+            other = LineSegment(first: unwrapped[2], second: unwrapped[3], index: other.index)
+        }
 
         let o1 = orientation(p: snappedSelf.first, q: snappedSelf.second, r: other.first, epsilon: epsilon)
         let o2 = orientation(p: snappedSelf.first, q: snappedSelf.second, r: other.second, epsilon: epsilon)
@@ -124,9 +135,20 @@ extension LineSegment {
         epsilon: Double = 0.0,
         gridSize: Double? = nil
     ) -> Coordinate3D? {
-        let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
+        var snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
-        let other = snappedOther.projected(to: snappedSelf.projection)
+        var other = snappedOther.projected(to: snappedSelf.projection)
+
+        if let extent = snappedSelf.projection.wraparoundExtent,
+           abs(snappedSelf.first.x - snappedSelf.second.x) > extent
+            || abs(other.first.x - other.second.x) > extent
+        {
+            let unwrapped = AntimeridianCutting.unwrapCoordinates(
+                [snappedSelf.first, snappedSelf.second, other.first, other.second],
+                extent: extent)
+            snappedSelf = LineSegment(first: unwrapped[0], second: unwrapped[1], index: snappedSelf.index)
+            other = LineSegment(first: unwrapped[2], second: unwrapped[3], index: other.index)
+        }
 
         let denominator: Double = ((other.second.latitude - other.first.latitude) * (snappedSelf.second.longitude - snappedSelf.first.longitude))
             - ((other.second.longitude - other.first.longitude) * (snappedSelf.second.latitude - snappedSelf.first.latitude))
@@ -154,7 +176,11 @@ extension LineSegment {
                 else {
                     altitude = nil
                 }
-                return Coordinate3D(x: longitude, y: latitude, z: altitude, projection: snappedSelf.projection)
+                return Coordinate3D(
+                    x: longitude,
+                    y: latitude,
+                    z: altitude,
+                    projection: snappedSelf.projection)
             }
             return nil
         }
@@ -236,7 +262,7 @@ extension GeoJson {
             }
         }
 
-        return result.map { Point($0) }
+        return result.map { Point($0.normalized()) }
     }
 
 }

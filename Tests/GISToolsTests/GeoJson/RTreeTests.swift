@@ -830,4 +830,28 @@ extension RTreeTests {
         #expect(tree.search(inBoundingBox: BoundingBox.world).count == 1)
     }
 
+
+    @Test
+    func seamCrossingPolygonIsFoundFromBothSides() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: -10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: -179.0),
+            Coordinate3D(latitude: -10.0, longitude: -179.0),
+            Coordinate3D(latitude: -10.0, longitude: 179.0),
+        ]], calculateBoundingBox: true)
+
+        let tree = RTree([polygon])
+        let east = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: 179.5),
+            northEast: Coordinate3D(latitude: 1.0, longitude: 180.0))
+        let west = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: -180.0),
+            northEast: Coordinate3D(latitude: 1.0, longitude: -179.5))
+
+        #expect(tree.search(inBoundingBox: east).count == 1)
+        #expect(tree.search(inBoundingBox: west).count == 1)
+    }
+
+
 }

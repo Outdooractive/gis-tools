@@ -304,6 +304,19 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Remaining antimeridian correctness in operations and indexes (#338):
+  `perpendicularFoot`/`nearestCoordinateOnLine`, `LineSegment.checkIsOnSegment`
+  and `LineSegment.intersection` now unwrap seam-crossing segments into a
+  continuous frame (intersections stay in the caller's working frame),
+  `Kinks` unwraps and aligns rings before detection/un-kinking and keys
+  vertices by a wrapped coordinate relation, overlay aligns holes into the
+  outer ring's world copy, and crossing geometries get a conservative
+  world-width bounding box so R-tree searches on either side of the seam find
+  them. `Coordinate3D` equality and hashing now treat `+extent` and `−extent`
+  as the same location consistently. Tests cover nearest-point, point-on-line,
+  line intersection, RTree/PreparedPolygon search, kinks/un-kink and union
+  with real `179 → −179` crossings.
+
 - Line and polygon construction regression coverage (#337): added independent
   expected-value tests for `LineChunk` collection/feature entry points,
   `Truncate` polygon/multi-polygon/collection/`removeM` paths, `SnapToGrid`
