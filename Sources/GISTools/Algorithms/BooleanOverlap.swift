@@ -26,28 +26,25 @@ extension PointGeometry {
         let snappedOther = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
         let other = snappedOther.projected(to: snappedSelf.projection)
 
-        guard !snappedSelf.isEqualTo(other) else { return false }
+        guard !snappedSelf.equals(other) else { return false }
 
-        if let point = snappedSelf as? Point {
-            if let otherPoint = other as? Point {
-                return point == otherPoint
+        func matches(_ first: Coordinate3D, _ second: Coordinate3D) -> Bool {
+            if tolerance > 0.0 {
+                return first.distance(from: second) <= tolerance
             }
-            else if let otherMultiPoint = other as? MultiPoint {
-                return otherMultiPoint.coordinates.contains(point.coordinate)
-            }
-        }
-        else if let multiPoint = snappedSelf as? MultiPoint {
-            if let otherPoint = other as? Point {
-                return multiPoint.coordinates.contains(otherPoint.coordinate)
-            }
-            else if let otherMultiPoint = other as? MultiPoint {
-                let first = Set(multiPoint.coordinates)
-                let second = Set(otherMultiPoint.coordinates)
-                return !first.isDisjoint(with: second)
-            }
+            return first.isCoincident(to: second)
         }
 
-        return false
+        let firstCoordinates = snappedSelf.allCoordinates
+        let secondCoordinates = other.allCoordinates
+        let commonCount = firstCoordinates.filter { first in
+            secondCoordinates.contains { second in matches(first, second) }
+        }
+        .count
+
+        return commonCount > 0
+            && commonCount < firstCoordinates.count
+            && commonCount < secondCoordinates.count
     }
 
 }
@@ -72,6 +69,11 @@ extension LineStringGeometry {
         let other = snappedOther.projected(to: snappedSelf.projection)
 
         guard !snappedSelf.isEqualTo(other) else { return false }
+        guard !snappedSelf.covers(other), !other.covers(snappedSelf) else { return false }
+
+        if snappedSelf.hasCollinearOverlap(with: other) {
+            return true
+        }
 
         let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
 
@@ -80,6 +82,33 @@ extension LineStringGeometry {
 
             for match in tree.search(inBoundingBox: boundingBox) {
                 if segment.compare(match, tolerance: tolerance) != .notEqual {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    fileprivate func hasCollinearOverlap(with other: LineStringGeometry) -> Bool {
+        let other = other.projected(to: projection)
+        let otherSegments = other.lineSegments
+
+        for segment in lineSegments {
+            for otherSegment in otherSegments {
+                let cross = ((segment.second.longitude - segment.first.longitude)
+                    * (otherSegment.second.latitude - otherSegment.first.latitude))
+                    - ((segment.second.latitude - segment.first.latitude)
+                        * (otherSegment.second.longitude - otherSegment.first.longitude))
+                guard abs(cross) <= GISTool.intersectionEpsilon else { continue }
+
+                func isInterior(_ coordinate: Coordinate3D) -> Bool {
+                    !coordinate.isCoincident(to: segment.first)
+                        && !coordinate.isCoincident(to: segment.second)
+                        && segment.checkIsOnSegment(coordinate)
+                }
+
+                if isInterior(otherSegment.first) || isInterior(otherSegment.second) {
                     return true
                 }
             }
@@ -116,17 +145,9 @@ extension PolygonGeometry {
         // coordinates near the origin. Keep the raw-XY boundary check for
         // geocentric data.
         if snappedSelf.projection.isGeocentric {
-            let tree: RTree<LineSegment> = RTree(snappedSelf.lineSegments)
-
-            for segment in other.lineSegments {
-                guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
-
-                for match in tree.search(inBoundingBox: boundingBox) where segment.intersects(match) {
-                    return true
-                }
-            }
-
-            return false
+            let first = snappedSelf.projected(to: .epsg4326)
+            let second = other.projected(to: .epsg4326)
+            return first.isOverlapping(with: second)
         }
 
         // OGC ST_Overlaps: equal interiors alone are not overlap. The
@@ -191,7 +212,6 @@ extension Feature {
     }
 
 }
-
 
 private enum OverlapArea {
 

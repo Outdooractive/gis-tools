@@ -12,7 +12,8 @@ extension GeoJson {
     /// When all coordinates have an ``altitude`` value, the result carries
     /// the midpoint altitude of the bounding box corners.
     public var center: Point? {
-        guard let boundingBox = self.boundingBox ?? calculateBoundingBox() else { return nil }
+        guard let boundingBox = boundingBox ?? calculateBoundingBox() else { return nil }
+
         return Point(boundingBox.center)
     }
 
@@ -28,7 +29,7 @@ extension GeoJson {
     /// When all coordinates have an ``altitude`` value, the result carries the
     /// arithmetic mean of all altitudes.
     public var centroid: Point? {
-        let allCoordinates = self.allCoordinates
+        let allCoordinates = centroidCoordinates
 
         guard allCoordinates.isNotEmpty else { return nil }
 
@@ -51,9 +52,9 @@ extension GeoJson {
             spansAntimeridian = false
         }
 
-        var sumX: Double = 0.0
-        var sumY: Double = 0.0
-        var sumZ: Double = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
         let n = allCoordinates.count - (allCoordinates.first == allCoordinates.last ? 1 : 0)
 
         for i in 0 ..< n {
@@ -69,7 +70,7 @@ extension GeoJson {
         }
 
         var resultX = sumX / Double(n)
-        if spansAntimeridian && resultX > 180.0 {
+        if spansAntimeridian, resultX > 180.0 {
             resultX -= 360.0
         }
 
@@ -96,14 +97,20 @@ extension FeatureCollection {
     ///
     /// - Returns: The mean center, or `nil`.
     public func centerMean(weightAttribute: String? = nil) -> Point? {
-        var sumLongitude: Double = 0.0
-        var sumLatitude: Double = 0.0
-        var sumAltitude: Double = 0.0
-        var sumWeights: Double = 0.0
+        var sumLongitude = 0.0
+        var sumLatitude = 0.0
+        var sumAltitude = 0.0
+        var sumWeights = 0.0
         var hasAltitude = true
 
+        let allCoordinates = features.flatMap(\.allCoordinates)
+        let minLongitude = allCoordinates.map(\.longitude).min() ?? 0.0
+        let maxLongitude = allCoordinates.map(\.longitude).max() ?? 0.0
+        let spansAntimeridian = projection.isGeographic
+            && (maxLongitude - minLongitude) > 180.0
+
         for feature in features {
-            var weight: Double = 1.0
+            var weight = 1.0
             if let weightAttribute = weightAttribute {
                 weight = feature.property(for: weightAttribute) ?? 1.0
             }
@@ -114,7 +121,10 @@ extension FeatureCollection {
                 if coordinate.altitude == nil {
                     hasAltitude = false
                 }
-                sumLongitude += coordinate.longitude * weight
+                let longitude = spansAntimeridian && coordinate.longitude < 0
+                    ? coordinate.longitude + 360.0
+                    : coordinate.longitude
+                sumLongitude += longitude * weight
                 sumLatitude += coordinate.latitude * weight
                 if hasAltitude, let alt = coordinate.altitude {
                     sumAltitude += alt * weight
@@ -125,9 +135,14 @@ extension FeatureCollection {
 
         guard sumWeights > 0.0 else { return nil }
 
+        var longitude = sumLongitude / sumWeights
+        if spansAntimeridian, longitude > 180.0 {
+            longitude -= 360.0
+        }
+
         return Point(
             Coordinate3D(
-                x: sumLongitude / sumWeights,
+                x: longitude,
                 y: sumLatitude / sumWeights,
                 z: hasAltitude ? sumAltitude / sumWeights : nil,
                 projection: projection))
@@ -168,7 +183,7 @@ extension FeatureCollection {
         for feature in features {
             guard let centroid = feature.centroid else { continue }
 
-            var weight: Double = 1.0
+            var weight = 1.0
             if let weightAttribute {
                 weight = feature.property(for: weightAttribute) ?? 1.0
             }
@@ -184,10 +199,11 @@ extension FeatureCollection {
 
         let minLon = centroids.map(\.coordinate.longitude).min() ?? 0.0
         let maxLon = centroids.map(\.coordinate.longitude).max() ?? 0.0
-        let spansAntimeridian = (maxLon - minLon) > 180.0
+        let spansAntimeridian = projection.isGeographic
+            && (maxLon - minLon) > 180.0
 
         if spansAntimeridian {
-            centroids = centroids.map { (coordinate, weight) in
+            centroids = centroids.map { coordinate, weight in
                 let adjustedLon = coordinate.longitude < 0
                     ? coordinate.longitude + 360.0
                     : coordinate.longitude
@@ -224,7 +240,7 @@ extension FeatureCollection {
             hasAltitude: hasAltitude)
         else { return nil }
 
-        if spansAntimeridian && result.coordinate.longitude > 180.0 {
+        if spansAntimeridian, result.coordinate.longitude > 180.0 {
             result = Point(Coordinate3D(
                 x: result.coordinate.longitude - 360.0,
                 y: result.coordinate.latitude,
@@ -244,10 +260,10 @@ extension FeatureCollection {
         counter: Int,
         hasAltitude: Bool
     ) -> Point? {
-        var sumX: Double = 0.0
-        var sumY: Double = 0.0
-        var sumZ: Double = 0.0
-        var sumK: Double = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
+        var sumK = 0.0
 
         for (coordinate, weight) in centroids {
             var distance = coordinate.distance(from: candidate)
@@ -277,7 +293,7 @@ extension FeatureCollection {
 
         let deltaX = abs(newCandidate.longitude - previousCandidate.longitude)
         let deltaY = abs(newCandidate.latitude - previousCandidate.latitude)
-        if deltaX < tolerance && deltaY < tolerance {
+        if deltaX < tolerance, deltaY < tolerance {
             return Point(newCandidate)
         }
 
@@ -313,7 +329,10 @@ extension GeoJson {
             return (self as? Point).map { Point($0.coordinate) }
 
         case .polygon:
-            return polygonCenterOfMass(allCoordinates: allCoordinates, projection: projection)
+            return (self as? Polygon).flatMap(polygonCenterOfMass)
+
+        case .multiPolygon:
+            return (self as? MultiPolygon).flatMap(multiPolygonCenterOfMass)
 
         default:
             if let hull = convexHull() {
@@ -323,73 +342,155 @@ extension GeoJson {
         }
     }
 
-    private func polygonCenterOfMass(
-        allCoordinates coords: [Coordinate3D],
-        projection: Projection
-    ) -> Point? {
-        guard coords.isNotEmpty else { return nil }
+    private func polygonCenterOfMass(_ polygon: Polygon) -> Point? {
+        guard polygon.rings.isNotEmpty else { return nil }
 
-        if coords.count == 1 {
-            return Point(coords[0])
-        }
+        var totalArea = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
+        var weightedAltitude = 0.0
 
-        let hasAltitude = coords.allSatisfy({ $0.altitude != nil })
+        for (index, ring) in polygon.rings.enumerated() {
+            let area = abs(ring.area)
+            guard area > GISTool.equalityDelta,
+                  let center = ringCenter(ring.coordinates)
+            else { continue }
 
-        // Compute centroid for neutralization (to reduce rounding errors)
-        var sumLat: Double = 0.0
-        var sumLon: Double = 0.0
-        var sumAlt: Double = 0.0
-        for coord in coords {
-            sumLat += coord.latitude
-            sumLon += coord.longitude
-            if hasAltitude {
-                sumAlt += coord.altitude!
-            }
-        }
-        let centerLat = sumLat / Double(coords.count)
-        let centerLon = sumLon / Double(coords.count)
-        let centerAlt = hasAltitude ? sumAlt / Double(coords.count) : nil
-
-        // Neutralized signed area computation
-        var sx: Double = 0.0
-        var sy: Double = 0.0
-        var sz: Double = 0.0
-        var sArea: Double = 0.0
-
-        for i in 0..<(coords.count - 1) {
-            let xi = coords[i].longitude - centerLon
-            let yi = coords[i].latitude - centerLat
-            let zi = hasAltitude ? (coords[i].altitude! - (centerAlt ?? 0.0)) : 0.0
-            let xj = coords[i + 1].longitude - centerLon
-            let yj = coords[i + 1].latitude - centerLat
-            let zj = hasAltitude ? (coords[i + 1].altitude! - (centerAlt ?? 0.0)) : 0.0
-
-            let a = xi * yj - xj * yi
-            sArea += a
-            sx += (xi + xj) * a
-            sy += (yi + yj) * a
-            if hasAltitude {
-                sz += (zi + zj) * a
+            let sign = index == 0 ? 1.0 : -1.0
+            totalArea += sign * area
+            sumX += sign * area * center.x
+            sumY += sign * area * center.y
+            if let altitude = center.z {
+                sumZ += sign * area * altitude
+                weightedAltitude += sign * area
             }
         }
 
-        // Shape has no area: fallback on centroid
-        if sArea == 0.0 {
-            return Point(Coordinate3D(
-                x: centerLon,
-                y: centerLat,
-                z: centerAlt,
-                projection: projection))
+        guard totalArea > GISTool.equalityDelta else {
+            return centroid
         }
-
-        let area = sArea * 0.5
-        let areaFactor = 1.0 / (6.0 * area)
 
         return Point(Coordinate3D(
-            x: centerLon + areaFactor * sx,
-            y: centerLat + areaFactor * sy,
-            z: hasAltitude ? (centerAlt ?? 0.0) + areaFactor * sz : nil,
-            projection: projection))
+            x: sumX / totalArea,
+            y: sumY / totalArea,
+            z: abs(weightedAltitude) > GISTool.equalityDelta ? sumZ / weightedAltitude : nil,
+            projection: polygon.projection))
+    }
+
+    private func multiPolygonCenterOfMass(_ multiPolygon: MultiPolygon) -> Point? {
+        var totalArea = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
+        var weightedAltitude = 0.0
+
+        for polygon in multiPolygon.polygons {
+            guard let center = polygonCenterOfMass(polygon) else { continue }
+
+            let area = polygon.area
+            guard area > GISTool.equalityDelta else { continue }
+
+            totalArea += area
+            sumX += area * center.coordinate.x
+            sumY += area * center.coordinate.y
+            if let altitude = center.coordinate.z {
+                sumZ += area * altitude
+                weightedAltitude += area
+            }
+        }
+
+        guard totalArea > GISTool.equalityDelta else {
+            return multiPolygon.centroid
+        }
+
+        return Point(Coordinate3D(
+            x: sumX / totalArea,
+            y: sumY / totalArea,
+            z: abs(weightedAltitude) > GISTool.equalityDelta ? sumZ / weightedAltitude : nil,
+            projection: multiPolygon.projection))
+    }
+
+    private func ringCenter(_ coordinates: [Coordinate3D]) -> Coordinate3D? {
+        guard coordinates.count >= 3 else { return nil }
+
+        var area = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumZ = 0.0
+        var hasAltitude = true
+
+        for index in 0 ..< (coordinates.count - 1) {
+            let first = coordinates[index]
+            let second = coordinates[index + 1]
+            let cross = (first.longitude * second.latitude)
+                - (second.longitude * first.latitude)
+            area += cross
+            sumX += (first.longitude + second.longitude) * cross
+            sumY += (first.latitude + second.latitude) * cross
+            if let firstAltitude = first.altitude,
+               let secondAltitude = second.altitude
+            {
+                sumZ += (firstAltitude + secondAltitude) * cross
+            }
+            else {
+                hasAltitude = false
+            }
+        }
+
+        guard abs(area) > GISTool.equalityDelta else { return nil }
+
+        return Coordinate3D(
+            x: sumX / (3.0 * area),
+            y: sumY / (3.0 * area),
+            z: hasAltitude ? sumZ / (3.0 * area) : nil,
+            projection: coordinates[0].projection)
+    }
+
+    /// Coordinates used by the vertex centroid, excluding one closing vertex
+    /// per polygon ring.
+    private var centroidCoordinates: [Coordinate3D] {
+        switch self {
+        case let point as Point:
+            return point.allCoordinates
+
+        case let multiPoint as MultiPoint:
+            return multiPoint.allCoordinates
+
+        case let lineString as LineString:
+            return lineString.allCoordinates
+
+        case let multiLineString as MultiLineString:
+            return multiLineString.allCoordinates
+
+        case let polygon as Polygon:
+            return polygon.rings.flatMap { ring in
+                ring.coordinates.first == ring.coordinates.last
+                    ? Array(ring.coordinates.dropLast())
+                    : ring.coordinates
+            }
+
+        case let multiPolygon as MultiPolygon:
+            return multiPolygon.polygons.flatMap { polygon in
+                polygon.rings.flatMap { ring in
+                    ring.coordinates.first == ring.coordinates.last
+                        ? Array(ring.coordinates.dropLast())
+                        : ring.coordinates
+                }
+            }
+
+        case let collection as GeometryCollection:
+            return collection.geometries.flatMap(\.centroidCoordinates)
+
+        case let feature as Feature:
+            return feature.geometry?.centroidCoordinates ?? []
+
+        case let collection as FeatureCollection:
+            return collection.features.flatMap { $0.geometry?.centroidCoordinates ?? [] }
+
+        default:
+            return allCoordinates
+        }
     }
 
 }

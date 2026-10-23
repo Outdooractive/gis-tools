@@ -59,6 +59,9 @@ private enum BooleanConcave {
             let dx2 = coords[i].longitude - coords[(i + 1) % n].longitude
             let dy2 = coords[i].latitude - coords[(i + 1) % n].latitude
             let zCrossProduct = dx1 * dy2 - dy1 * dx2
+            if abs(zCrossProduct) <= GISTool.equalityDelta {
+                continue
+            }
 
             if let s = sign {
                 if s != (zCrossProduct > 0) {

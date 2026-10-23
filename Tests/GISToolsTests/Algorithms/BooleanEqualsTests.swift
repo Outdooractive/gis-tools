@@ -57,3 +57,50 @@ struct BooleanEqualsTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanEqualsTests {
+
+    @Test
+    func pointSetsCompareByMembership() throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let multiPointA = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let multiPointB = try #require(MultiPoint([
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+
+        #expect(point.equals(multiPointA))
+        #expect(!point.equals(multiPointB))
+    }
+
+}
+
+// MARK: - Line decomposition regressions
+
+extension BooleanEqualsTests {
+
+    @Test
+    func decomposedLineEqualsWholeLine() throws {
+        let whole = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let first = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]))
+        let second = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let decomposed = try #require(MultiLineString([first, second]))
+
+        #expect(whole.equals(decomposed))
+        #expect(decomposed.equals(whole))
+    }
+
+}

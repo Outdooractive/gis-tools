@@ -96,7 +96,7 @@ extension LineString: ValidatableGeoJson {
 
     /// Check if the LineString has enough coordinates to make structural sense.
     public var isStructurallyValid: Bool {
-         coordinates.count >= 2
+        coordinates.count >= 2
     }
 
     /// Check if the GeoJson has a valid LineString geometry.
@@ -113,7 +113,7 @@ extension MultiLineString: ValidatableGeoJson {
     /// Check if the MultiLineString has enough coordinates to make structural sense.
     public var isStructurallyValid: Bool {
         !coordinates.isEmpty
-            && coordinates[0].count >= 2
+            && coordinates.allSatisfy { $0.count >= 2 }
     }
 
     /// Check if the GeoJson has a valid MultiLineString geometry.
@@ -162,7 +162,7 @@ extension Polygon: ValidatableGeoJson {
     /// Check if the Polygon has enough coordinates to make structural sense.
     public var isStructurallyValid: Bool {
         !coordinates.isEmpty
-            && coordinates[0].count >= 3
+            && coordinates.allSatisfy { $0.count >= 3 }
     }
 
     /// Check if the GeoJson has a valid Polygon geometry.
@@ -179,8 +179,9 @@ extension MultiPolygon: ValidatableGeoJson {
     /// Check if the MultiPolygon has enough coordinates to make structural sense.
     public var isStructurallyValid: Bool {
         !coordinates.isEmpty
-            && !coordinates[0].isEmpty
-            && coordinates[0][0].count >= 3
+            && coordinates.allSatisfy { polygon in
+                !polygon.isEmpty && polygon.allSatisfy { $0.count >= 3 }
+            }
     }
 
     /// Check if the GeoJson has a valid MultiPolygon geometry.
@@ -219,13 +220,58 @@ extension GeoJson {
 
         switch type {
         case .point:
-            guard let coordinates = JsonCoercion.array(geoJson["coordinates"]),
-                  !coordinates.isEmpty
-            else { return false }
-            return true
+            guard let coordinates = JsonCoercion.array(geoJson["coordinates"]) else {
+                return false
+            }
 
-        case .lineString, .multiLineString, .multiPoint, .multiPolygon, .polygon:
-            return geoJson["coordinates"] != nil
+            return coordinates.count >= 2
+
+        case .lineString:
+            guard let coordinates = JsonCoercion.array(geoJson["coordinates"]) else {
+                return false
+            }
+
+            return coordinates.count >= 2
+
+        case .multiPoint:
+            guard let coordinates = JsonCoercion.array(geoJson["coordinates"]) else {
+                return false
+            }
+
+            return coordinates.isNotEmpty
+
+        case .multiLineString:
+            guard let lines = JsonCoercion.array(geoJson["coordinates"]) else {
+                return false
+            }
+
+            return lines.isNotEmpty && lines.allSatisfy { line in
+                guard let positions = JsonCoercion.array(line) else { return false }
+
+                return positions.count >= 2
+            }
+
+        case .polygon:
+            guard let rings = JsonCoercion.array(geoJson["coordinates"]),
+                  let outer = rings.first,
+                  let positions = JsonCoercion.array(outer)
+            else { return false }
+
+            return positions.count >= 3
+
+        case .multiPolygon:
+            guard let polygons = JsonCoercion.array(geoJson["coordinates"]) else {
+                return false
+            }
+
+            return polygons.isNotEmpty && polygons.allSatisfy { polygon in
+                guard let rings = JsonCoercion.array(polygon),
+                      let outer = rings.first,
+                      let positions = JsonCoercion.array(outer)
+                else { return false }
+
+                return positions.count >= 3
+            }
 
         case .geometryCollection:
             return geoJson["geometries"] != nil

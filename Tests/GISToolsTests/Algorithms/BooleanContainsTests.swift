@@ -947,3 +947,69 @@ struct BooleanContainsTests {
     }
 
 }
+
+// MARK: - Projection and collection regressions
+
+extension BooleanContainsTests {
+
+    @Test
+    func containsPolygonIn3857And4978() throws {
+        let polygon3857 = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+        ]]))
+        let inner3857 = try #require(Polygon([[
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 900.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 900.0, y: 900.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 900.0, projection: .epsg3857),
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+        ]]))
+        #expect(polygon3857.contains(inner3857))
+
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.1),
+            Coordinate3D(latitude: 0.1, longitude: 0.1),
+            Coordinate3D(latitude: 0.1, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let polygon4978 = polygon4326.projected(to: .epsg4978)
+        let inner4978 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.02, longitude: 0.02),
+            Coordinate3D(latitude: 0.02, longitude: 0.08),
+            Coordinate3D(latitude: 0.08, longitude: 0.08),
+            Coordinate3D(latitude: 0.08, longitude: 0.02),
+            Coordinate3D(latitude: 0.02, longitude: 0.02),
+        ]])).projected(to: .epsg4978)
+        #expect(polygon4978.contains(inner4978))
+    }
+
+    @Test
+    func featureCollectionRequiresAllFeatures() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let inside = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 2.0, longitude: 2.0))),
+            Feature(Point(Coordinate3D(latitude: 8.0, longitude: 8.0))),
+        ])
+        let mixed = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 2.0, longitude: 2.0))),
+            Feature(Point(Coordinate3D(latitude: 20.0, longitude: 20.0))),
+        ])
+
+        #expect(polygon.contains(inside))
+        #expect(!polygon.contains(mixed))
+        #expect(polygon.covers(inside))
+        #expect(!polygon.covers(mixed))
+    }
+
+}

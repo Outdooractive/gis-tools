@@ -85,9 +85,11 @@ extension LineString {
 
         let segments1 = snappedSelf.lineSegments
         let segments2 = snappedOther.lineSegments
-        let count = min(segments1.count, segments2.count)
+        guard segments1.isNotEmpty, segments1.count == segments2.count else {
+            return false
+        }
 
-        for index in 0 ..< count {
+        for index in 0 ..< segments1.count {
             let segment1 = segments1[index]
             let segment2 = segments2[index]
 

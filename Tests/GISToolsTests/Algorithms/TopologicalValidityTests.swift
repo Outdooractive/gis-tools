@@ -205,3 +205,41 @@ struct TopologicalValidityTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension TopologicalValidityTests {
+
+    @Test
+    func zeroLengthLineIsInvalid() throws {
+        let coordinate = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let line = try #require(LineString([coordinate, coordinate]))
+
+        #expect(line.isStructurallyValid)
+        #expect(!line.isValid)
+        #expect(line.isValidReason?.contains("zero-length") == true)
+    }
+
+    @Test
+    func multiPolygonWithSharedEdgeIsInvalid() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([first, second]))
+
+        #expect(multiPolygon.isStructurallyValid)
+        #expect(!multiPolygon.isValid)
+    }
+
+}

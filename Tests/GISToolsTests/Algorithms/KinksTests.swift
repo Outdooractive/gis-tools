@@ -310,3 +310,24 @@ struct KinksTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension KinksTests {
+
+    @Test
+    func multiLineSharedEndpointIsNotAKink() throws {
+        let first = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let second = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+        ]))
+        let multi = try #require(MultiLineString([first, second]))
+
+        #expect(multi.kinks().coordinates.isEmpty)
+    }
+
+}

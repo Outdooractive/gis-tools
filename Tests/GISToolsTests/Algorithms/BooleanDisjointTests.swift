@@ -228,3 +228,18 @@ struct BooleanDisjointTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanDisjointTests {
+
+    @Test
+    func pointDisjointIgnoresAltitude() {
+        let first = Point(Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 0.0))
+        let second = Point(Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 100.0))
+
+        #expect(!first.isDisjoint(with: second))
+        #expect(!second.isDisjoint(with: first))
+    }
+
+}

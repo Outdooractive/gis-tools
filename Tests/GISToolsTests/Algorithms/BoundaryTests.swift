@@ -113,8 +113,9 @@ struct BoundaryTests {
             ],
         ]))
         let boundary = try #require(polygon.boundary)
-        #expect(boundary.coordinates.first == Coordinate3D(latitude: 0.0, longitude: 0.0))
-        #expect(boundary.isClosed)
+        #expect(boundary.lineStrings.count == 1)
+        #expect(boundary.lineStrings[0].coordinates.first == Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(boundary.lineStrings[0].isClosed)
     }
 
     // MARK: - MultiPolygon
@@ -233,7 +234,7 @@ struct BoundaryTests {
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let boundary = try #require(polygon.boundary)
-        #expect(boundary.isClosed)
+        #expect(boundary.lineStrings.allSatisfy({ $0.isClosed }))
     }
 
     // Polygon boundary in EPSG:4978.
@@ -247,7 +248,7 @@ struct BoundaryTests {
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
         ]]))
         let boundary = try #require(polygon.boundary)
-        #expect(boundary.isClosed)
+        #expect(boundary.lineStrings.allSatisfy({ $0.isClosed }))
     }
 
     // Polygon boundary in noSRID.
@@ -261,7 +262,7 @@ struct BoundaryTests {
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
         ]]))
         let boundary = try #require(polygon.boundary)
-        #expect(boundary.isClosed)
+        #expect(boundary.lineStrings.allSatisfy({ $0.isClosed }))
     }
 
     // MARK: - Antimeridian
@@ -292,9 +293,9 @@ struct BoundaryTests {
             ],
         ]))
         let boundary = try #require(polygon.boundary)
-        #expect(boundary.isClosed)
-        #expect(boundary.coordinates.count == 5)
-        #expect(boundary.coordinates.first == Coordinate3D(latitude: 0.0, longitude: 179.0))
+        #expect(boundary.lineStrings.allSatisfy({ $0.isClosed }))
+        #expect(boundary.lineStrings[0].coordinates.count == 5)
+        #expect(boundary.lineStrings[0].coordinates.first == Coordinate3D(latitude: 0.0, longitude: 179.0))
     }
 
     /// A closed MultiLineString crossing the antimeridian: shared endpoints cancel out.
@@ -312,6 +313,46 @@ struct BoundaryTests {
         let boundary = multiLine.boundary
         // Both endpoints appear twice → empty boundary
         #expect(boundary.coordinates.isEmpty)
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension BoundaryTests {
+
+    @Test
+    func polygonBoundaryIncludesHoles() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+            ],
+        ]))
+        let boundary = try #require(polygon.boundary)
+
+        #expect(boundary.lineStrings.count == 2)
+        #expect(boundary.lineStrings[1].coordinates.first == Coordinate3D(latitude: 4.0, longitude: 4.0))
+    }
+
+    @Test
+    func pointCollectionBoundaryIsEmpty() throws {
+        let collection = GeometryCollection([
+            Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+            Point(Coordinate3D(latitude: 1.0, longitude: 1.0)),
+        ])
+
+        #expect(collection.boundary == nil)
     }
 
 }

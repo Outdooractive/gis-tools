@@ -274,3 +274,23 @@ struct NearestCoordinateOnLineTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension NearestCoordinateOnLineTests {
+
+    @Test
+    func nearestLastVertexUsesLastSegmentIndex() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+        ]))
+        let nearest = try #require(line.nearestCoordinateOnLine(
+            from: Coordinate3D(latitude: 0.0, longitude: 2.01)))
+
+        #expect(nearest.index == 1)
+        #expect(nearest.coordinate == Coordinate3D(latitude: 0.0, longitude: 2.0))
+    }
+
+}

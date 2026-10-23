@@ -21,6 +21,9 @@ extension GeoJson {
     /// - Parameter other: The other geometry
     /// - Returns: `true` if the receiver contains the other geometry
     ///
+    /// - Note: A `FeatureCollection` is evaluated member-wise: the receiver must
+    ///   contain/cover every feature on the other side. A FeatureCollection
+    ///   receiver uses one of its features for the whole other geometry.
     /// - Note: A `GeometryCollection` contains `other` when each part of
     ///   `other` is covered by one of its members and the interiors of at
     ///   least one pair intersect (member-wise, not union-wise).
@@ -29,7 +32,7 @@ extension GeoJson {
             return fc1.features.contains { $0.contains(other) }
         }
         if let fc2 = other as? FeatureCollection {
-            return fc2.features.contains { self.contains($0) }
+            return fc2.features.allSatisfy { self.contains($0) }
         }
 
         let geom1: GeoJson = (self as? Feature)?.geometry ?? self
@@ -192,6 +195,7 @@ extension BooleanContains {
         _ container: GeoJsonGeometry
     ) -> Bool {
         guard container is PolygonGeometry else { return false }
+
         return polygons.contains { $0.area > 0.0 }
     }
 
@@ -215,8 +219,8 @@ extension GeoJson {
             guard let intersectionArea = PolygonPredicateHelpers.intersectionArea(first, second),
                   AreaComparison.areEqual(intersectionArea, PolygonPredicateHelpers.area(second))
             else { return false }
-
             guard let boundary = topologicalBoundary else { return true }
+
             return !boundary.intersects(other)
         }
 

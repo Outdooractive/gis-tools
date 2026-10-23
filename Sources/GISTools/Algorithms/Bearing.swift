@@ -15,6 +15,9 @@ extension Coordinate3D {
     /// a correct geographic bearing for Earth-surface points.
     /// Any altitude difference between the coordinates is ignored.
     ///
+    /// For ``Projection/noSRID`` the planar direction is returned; `final`
+    /// therefore has no additional effect.
+    ///
     /// - Parameter other: The end point
     /// - Parameter final: Calculates the final bearing (optional, default `false`)
     ///
@@ -24,7 +27,7 @@ extension Coordinate3D {
         final: Bool = false
     ) -> CLLocationDegrees {
         switch projection.kind {
-        case .geographic, .planar, .geocentric:
+        case .geocentric, .geographic, .planar:
             return projected(to: .epsg4326)._bearing(to: other.projected(to: .epsg4326), final: final)
         case .undefined:
             let dx = other.longitude - longitude
@@ -123,7 +126,7 @@ extension Point {
         to other: Point,
         final: Bool = false
     ) -> CLLocationDegrees {
-        self.coordinate.bearing(to: other.coordinate, final: final)
+        coordinate.bearing(to: other.coordinate, final: final)
     }
 
     /// Takes three *Point*s and returns the angle between them, i.e. from the

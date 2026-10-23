@@ -15,6 +15,7 @@ enum DistanceUnitConverter {
         unit: GISTool.Unit
     ) -> Double? {
         guard projection != .noSRID else { return nil }
+
         return GISTool.convert(length: distance, from: .meters, to: unit)
     }
 
@@ -26,6 +27,7 @@ enum DistanceUnitConverter {
         unit: GISTool.Unit
     ) -> Double? {
         guard projection != .noSRID else { return nil }
+
         return GISTool.convert(length: distance, from: unit, to: .meters)
     }
 
@@ -70,19 +72,36 @@ extension Coordinate3D {
     ///
     /// - Returns: The distance in the units described above.
     public func distance(to other: Coordinate3D) -> CLLocationDistance {
+        let other = other.projection == projection
+            ? other
+            : other.projected(to: projection)
+
         switch projection.kind {
         case .geographic:
-            return _distance(from: other.projected(to: .epsg4326))
+            return _distance(from: other)
+
         case .planar, .undefined:
-            let dx = longitude - other.longitude
+            let dx = wrappedDelta(other.longitude - longitude)
             let dy = latitude - other.latitude
             return sqrt(dx * dx + dy * dy)
+
         case .geocentric:
             let dx = longitude - other.longitude
             let dy = latitude - other.latitude
             let dz = (altitude ?? 0.0) - (other.altitude ?? 0.0)
             return sqrt(dx * dx + dy * dy + dz * dz)
         }
+    }
+
+    /// Returns the shortest horizontal delta for projections with a wrapping axis.
+    private func wrappedDelta(_ delta: Double) -> Double {
+        guard let extent = projection.wraparoundExtent,
+              abs(delta) > extent
+        else { return delta }
+
+        return delta > 0.0
+            ? delta - (2.0 * extent)
+            : delta + (2.0 * extent)
     }
 
     /// Returns the distance to another coordinate in the requested unit.

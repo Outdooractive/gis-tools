@@ -107,19 +107,19 @@ struct BooleanOverlapTests {
     @Test
     func isOverlappingEPSG4978() throws {
         let poly1 = try #require(Polygon([[
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-        ]]))
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])).projected(to: .epsg4978)
         let poly2 = try #require(Polygon([[
-            Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_500.0, y: 500.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 1_500.0, y: 1_500.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 500.0, y: 1_500.0, z: 0.0, projection: .epsg4978),
-            Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
-        ]]))
+            Coordinate3D(latitude: 0.005, longitude: 0.005),
+            Coordinate3D(latitude: 0.005, longitude: 0.015),
+            Coordinate3D(latitude: 0.015, longitude: 0.015),
+            Coordinate3D(latitude: 0.015, longitude: 0.005),
+            Coordinate3D(latitude: 0.005, longitude: 0.005),
+        ]])).projected(to: .epsg4978)
         #expect(poly1.isOverlapping(with: poly2))
     }
 
@@ -189,7 +189,7 @@ struct BooleanOverlapTests {
     func isOverlappingLineStringEPSG3857() throws {
         let l1 = try #require(LineString([Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857), Coordinate3D(x: 20.0, y: 20.0, projection: .epsg3857)]))
         let l2 = try #require(LineString([Coordinate3D(x: 5.0, y: 5.0, projection: .epsg3857), Coordinate3D(x: 15.0, y: 15.0, projection: .epsg3857)]))
-        #expect(l1.isOverlapping(with: l2))
+        #expect(!l1.isOverlapping(with: l2))
     }
 
     // LineString overlap in EPSG:4978.
@@ -201,7 +201,7 @@ struct BooleanOverlapTests {
         let l2 = try #require(LineString([
             Coordinate3D(x: 50.0, y: 50.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 150.0, y: 150.0, z: 0.0, projection: .epsg4978)]))
-        #expect(l1.isOverlapping(with: l2))
+        #expect(!l1.isOverlapping(with: l2))
     }
 
     // LineString overlap in noSRID.
@@ -213,7 +213,7 @@ struct BooleanOverlapTests {
         let l2 = try #require(LineString([
             Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
             Coordinate3D(x: 15.0, y: 15.0, projection: .noSRID)]))
-        #expect(l1.isOverlapping(with: l2))
+        #expect(!l1.isOverlapping(with: l2))
     }
 
     // MARK: - Antimeridian
@@ -229,7 +229,7 @@ struct BooleanOverlapTests {
             Coordinate3D(latitude: 5.0, longitude: 175.0),
             Coordinate3D(latitude: 5.0, longitude: -175.0),
         ]))
-        #expect(line1.isOverlapping(with: line2))
+        #expect(!line1.isOverlapping(with: line2))
     }
 
     // MARK: - Empty / degenerate
@@ -283,6 +283,83 @@ struct BooleanOverlapTests {
             Coordinate3D(x: minX, y: maxY, projection: projection),
             Coordinate3D(x: minX, y: minY, projection: projection),
         ]])
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension BooleanOverlapTests {
+
+    @Test
+    func pointSetOrderAndSubsetsDoNotOverlap() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ]))
+        let reordered = try #require(MultiPoint([
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let member = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+
+        #expect(!multiPoint.isOverlapping(with: reordered))
+        #expect(!multiPoint.isOverlapping(with: member))
+        #expect(!member.isOverlapping(with: multiPoint))
+    }
+
+    @Test
+    func reversedAndContainedLinesDoNotOverlap() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let reversed = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let contained = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 8.0),
+        ]))
+
+        #expect(!line.isOverlapping(with: reversed))
+        #expect(!line.isOverlapping(with: contained))
+    }
+
+    @Test
+    func partiallyOverlappingLinesOverlap() throws {
+        let first = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let second = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 15.0),
+        ]))
+
+        #expect(first.isOverlapping(with: second))
+        #expect(second.isOverlapping(with: first))
+    }
+
+    @Test
+    func touchingPolygonsDoNotOverlap() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]]))
+
+        #expect(!first.isOverlapping(with: second))
     }
 
 }

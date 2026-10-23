@@ -17,7 +17,8 @@ extension GeoJson {
     ///
     /// All projections are supported — the 2‑D segment‑intersection check
     /// operates on raw ``longitude``/``latitude`` values (ECEF X/Y
-    /// for EPSG:4978).
+    /// for EPSG:4978). Antimeridian-crossing inputs should be cut or unwrapped
+    /// first; this method does not normalise the seam.
     ///
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: A ``MultiPoint`` with one point for each
@@ -43,12 +44,12 @@ extension GeoJson {
 
         var intersectionPoints: Set<Coordinate3D> = []
 
-        for setIndex1 in 0..<coordSets.count {
+        for setIndex1 in 0 ..< coordSets.count {
             let line1 = coordSets[setIndex1]
-            for setIndex2 in setIndex1..<coordSets.count {
+            for setIndex2 in setIndex1 ..< coordSets.count {
                 let line2 = coordSets[setIndex2]
-                for i in 0..<(line1.count - 1) {
-                    for k in (setIndex1 == setIndex2 ? i : 0)..<(line2.count - 1) {
+                for i in 0 ..< (line1.count - 1) {
+                    for k in (setIndex1 == setIndex2 ? i : 0) ..< (line2.count - 1) {
                         if setIndex1 == setIndex2 {
                             // Adjacent segments share a vertex, not a kink
                             if abs(i - k) == 1 {
@@ -70,6 +71,12 @@ extension GeoJson {
                             second: line2[k + 1])
 
                         if let intersection = seg1.intersection(seg2) {
+                            if setIndex1 != setIndex2,
+                               isEndpoint(intersection, of: line1),
+                               isEndpoint(intersection, of: line2)
+                            {
+                                continue
+                            }
                             intersectionPoints.insert(intersection)
                         }
                     }
@@ -78,6 +85,12 @@ extension GeoJson {
         }
 
         return MultiPoint(unchecked: Array(intersectionPoints))
+    }
+
+    private func isEndpoint(_ coordinate: Coordinate3D, of coordinates: [Coordinate3D]) -> Bool {
+        guard let first = coordinates.first, let last = coordinates.last else { return false }
+
+        return coordinate.isCoincident(to: first) || coordinate.isCoincident(to: last)
     }
 
 }
@@ -153,6 +166,7 @@ extension MultiPolygon {
 }
 
 private struct UnkinkIsect: Hashable {
+
     let coordinate: Coordinate3D
     let ring0: Int
     let edge0: Int
@@ -160,9 +174,11 @@ private struct UnkinkIsect: Hashable {
     let ring1: Int
     let edge1: Int
     let frac1: Double
+
 }
 
 private struct UnkinkSegment: Hashable {
+
     let start: Coordinate3D
     let end: Coordinate3D
     let ringIndex: Int
@@ -177,6 +193,7 @@ private struct UnkinkSegment: Hashable {
             edgeIndex: edgeIndex,
             segIndex: segIndex)
     }
+
 }
 
 extension Polygon {
@@ -229,9 +246,15 @@ extension Polygon {
                     let startEdge2 = (ringIndex1 == ringIndex2) ? edge1 : 0
                     for edge2 in startEdge2 ..< numEdges2 {
                         if ringIndex1 == ringIndex2 {
-                            if abs(edge1 - edge2) == 1 { continue }
-                            if edge1 == 0, edge2 == numEdges1 - 1 { continue }
-                            if edge2 == 0, edge1 == numEdges1 - 1 { continue }
+                            if abs(edge1 - edge2) == 1 {
+                                continue
+                            }
+                            if edge1 == 0, edge2 == numEdges1 - 1 {
+                                continue
+                            }
+                            if edge2 == 0, edge1 == numEdges1 - 1 {
+                                continue
+                            }
                         }
                         if coords1[edge1] == coords2[edge2 + 1] || coords1[edge1 + 1] == coords2[edge2] {
                             continue
@@ -242,8 +265,12 @@ extension Polygon {
                             let frac1 = Self.fractionAlong(point: intersection, start: coords2[edge2], end: coords2[edge2 + 1])
                             let detail = UnkinkIsect(
                                 coordinate: intersection,
-                                ring0: ringIndex1, edge0: edge1, frac0: frac0,
-                                ring1: ringIndex2, edge1: edge2, frac1: frac1)
+                                ring0: ringIndex1,
+                                edge0: edge1,
+                                frac0: frac0,
+                                ring1: ringIndex2,
+                                edge1: edge2,
+                                frac1: frac1)
                             intersections.insert(detail)
                             intersectionCoords.insert(intersection)
                         }
@@ -299,11 +326,16 @@ extension Polygon {
                 for i in 0 ..< (splits.count - 1) {
                     let start = splits[i].coordinate
                     let end = splits[i + 1].coordinate
-                    if start == end { continue }
+                    if start == end {
+                        continue
+                    }
                     let segIndex = segments.count
                     let seg = UnkinkSegment(
-                        start: start, end: end,
-                        ringIndex: ringIndex, edgeIndex: edge, segIndex: i)
+                        start: start,
+                        end: end,
+                        ringIndex: ringIndex,
+                        edgeIndex: edge,
+                        segIndex: i)
                     segments.append(seg)
                     let sk = vertexKey(start)
                     let ek = vertexKey(end)
@@ -342,6 +374,7 @@ extension Polygon {
             arrivingForward: Bool
         ) -> [SegAtNode] {
             guard let candidates = nodeSegs[nodeKey] else { return [] }
+
             // Find the intersection info for this node
             guard let pair = isectEdgePairs[nodeKey] else { return [] }
 
@@ -410,7 +443,9 @@ extension Polygon {
                     // Fall back to any unused segment at this node
                     let candidates = adj[endKey] ?? []
                     for ci in candidates where !used.contains(ci) {
-                        if ci == currentSegIndex { continue }
+                        if ci == currentSegIndex {
+                            continue
+                        }
                         let seg = segments[ci]
                         nextSegIndex = ci
                         nextForward = vertexKey(seg.start) == endKey
@@ -428,7 +463,7 @@ extension Polygon {
                 currentForward = nextForward
             }
 
-            if ring.count >= 3 && vertexKey(ring.first!) == vertexKey(ring.last!) {
+            if ring.count >= 3, vertexKey(ring.first!) == vertexKey(ring.last!) {
                 outputRings.append(ring)
             }
             else if ring.count >= 3 {
@@ -437,8 +472,7 @@ extension Polygon {
         }
 
         // 7. Build simple polygons from output rings
-        let result = Self.buildSimplePolygons(rings: outputRings)
-        return result
+        return Self.buildSimplePolygons(rings: outputRings)
     }
 
     private static func buildSimplePolygons(rings: [[Coordinate3D]]) -> [Polygon] {
@@ -498,7 +532,8 @@ extension Polygon {
 
     private static func signedArea2D(_ ring: [Coordinate3D]) -> Double {
         guard ring.count >= 3 else { return 0.0 }
-        var sum: Double = 0.0
+
+        var sum = 0.0
         for i in 0 ..< (ring.count - 1) {
             sum += (ring[i].longitude * ring[i + 1].latitude - ring[i + 1].longitude * ring[i].latitude)
         }
@@ -513,6 +548,7 @@ extension Polygon {
         ring: [Coordinate3D]
     ) -> Bool {
         guard ring.count >= 4 else { return false }
+
         var inside = false
         for i in 0 ..< (ring.count - 1) {
             let a = ring[i]
@@ -536,6 +572,7 @@ extension Polygon {
         let dy = end.latitude - start.latitude
         let lenSq = dx * dx + dy * dy
         guard lenSq > 0 else { return 0.0 }
+
         return ((point.longitude - start.longitude) * dx + (point.latitude - start.latitude) * dy) / lenSq
     }
 

@@ -39,7 +39,9 @@ extension Polygon {
     /// - Parameter unit: The target area unit
     /// - Returns: The converted area, or `nil` if `unit` is not an area unit
     public func area(in unit: GISTool.Unit) -> Double? {
-        GISTool.convert(area: area, from: .meters, to: unit)
+        guard projection != .noSRID else { return nil }
+
+        return GISTool.convert(area: area, from: .meters, to: unit)
     }
 
 }
@@ -62,7 +64,9 @@ extension MultiPolygon {
     /// - Parameter unit: The target area unit
     /// - Returns: The converted area, or `nil` if `unit` is not an area unit
     public func area(in unit: GISTool.Unit) -> Double? {
-        GISTool.convert(area: area, from: .meters, to: unit)
+        guard projection != .noSRID else { return nil }
+
+        return GISTool.convert(area: area, from: .meters, to: unit)
     }
 
 }
@@ -82,6 +86,10 @@ extension Ring {
     /// Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
     /// Laboratory, Pasadena, CA, June 2007 https://trs.jpl.nasa.gov/handle/2014/41271
     public var area: Double {
+        if projection == .noSRID {
+            return rawSignedArea
+        }
+
         let projected = projection.isGeographic
             ? coordinates
             : coordinates.map({ $0.projected(to: .epsg4326) })
@@ -94,7 +102,7 @@ extension Ring {
         if n > 1 {
             let origLons = projected.map(\.longitude)
             var shifts = Array(repeating: 0.0, count: n)
-            for i in 1..<n {
+            for i in 1 ..< n {
                 shifts[i] = shifts[i - 1]
                 let origDelta = origLons[i] - origLons[i - 1]
                 if origDelta > 180.0 {
@@ -104,7 +112,7 @@ extension Ring {
                     shifts[i] += 360.0
                 }
             }
-            for i in 0..<n where shifts[i] != 0.0 {
+            for i in 0 ..< n where shifts[i] != 0.0 {
                 coordinates[i] = Coordinate3D(
                     latitude: projected[i].latitude,
                     longitude: origLons[i] + shifts[i],
@@ -117,27 +125,28 @@ extension Ring {
 
         if coordinatesCount > 2 {
             for index in 0 ..< coordinatesCount {
-                let controlPoints: (Coordinate3D, Coordinate3D, Coordinate3D) = if index == coordinatesCount - 2 {
-                    (
-                        coordinates[coordinatesCount - 2],
-                        coordinates[coordinatesCount - 1],
-                        coordinates[0]
-                    )
-                }
-                else if index == coordinatesCount - 1 {
-                    (
-                        coordinates[coordinatesCount - 1],
-                        coordinates[0],
-                        coordinates[1]
-                    )
-                }
-                else {
-                    (
-                        coordinates[index],
-                        coordinates[index + 1],
-                        coordinates[index + 2]
-                    )
-                }
+                let controlPoints: (Coordinate3D, Coordinate3D, Coordinate3D) =
+                    if index == coordinatesCount - 2 {
+                        (
+                            coordinates[coordinatesCount - 2],
+                            coordinates[coordinatesCount - 1],
+                            coordinates[0]
+                        )
+                    }
+                    else if index == coordinatesCount - 1 {
+                        (
+                            coordinates[coordinatesCount - 1],
+                            coordinates[0],
+                            coordinates[1]
+                        )
+                    }
+                    else {
+                        (
+                            coordinates[index],
+                            coordinates[index + 1],
+                            coordinates[index + 2]
+                        )
+                    }
 
                 let dLon = (controlPoints.2.longitude - controlPoints.0.longitude) * .pi / 180.0
                 let sinLat = sin(controlPoints.1.latitude * .pi / 180.0)
@@ -153,11 +162,13 @@ extension Ring {
     /// Returns the ring's signed area converted to the requested unit.
     ///
     /// The sign follows ``area``: positive for clockwise rings and negative
-    /// for counter-clockwise rings.
+    /// for counter-clockwise rings. Returns `nil` for ``Projection/noSRID``.
     ///
     /// - Parameter unit: The target area unit
     /// - Returns: The converted area, or `nil` if `unit` is not an area unit
     public func area(in unit: GISTool.Unit) -> Double? {
+        guard projection != .noSRID else { return nil }
+
         let signedArea = area
         guard let converted = GISTool.convert(
             area: abs(signedArea),
@@ -166,6 +177,27 @@ extension Ring {
         else { return nil }
 
         return signedArea < 0.0 ? -converted : converted
+    }
+
+    /// Planar shoelace area, with the same positive-clockwise sign convention as
+    /// the geographic implementation.
+    private var rawSignedArea: Double {
+        guard coordinates.count >= 3 else { return 0.0 }
+
+        var sum = 0.0
+        for index in 0 ..< (coordinates.count - 1) {
+            sum += (coordinates[index].longitude * coordinates[index + 1].latitude)
+                - (coordinates[index + 1].longitude * coordinates[index].latitude)
+        }
+
+        if coordinates.first != coordinates.last,
+           let first = coordinates.first,
+           let last = coordinates.last
+        {
+            sum += (last.longitude * first.latitude) - (first.longitude * last.latitude)
+        }
+
+        return -sum / 2.0
     }
 
 }

@@ -19,17 +19,66 @@ extension GeoJson {
     /// - Parameter other: The other geometry
     /// - Returns: `true` if both geometries cover each other
     public func equals(_ other: GeoJson) -> Bool {
+        if let first = self as? PointGeometry,
+           let second = other as? PointGeometry
+        {
+            let firstCoordinates = first.allCoordinates
+            let secondCoordinates = second.allCoordinates
+
+            guard firstCoordinates.count == secondCoordinates.count else { return false }
+
+            return firstCoordinates.allSatisfy { coordinate in
+                secondCoordinates.contains { $0.isCoincident(to: coordinate) }
+            }
+        }
+
+        if let first = self as? LineStringGeometry,
+           let second = other as? LineStringGeometry
+        {
+            let second = second.projected(to: first.projection)
+            return lineCovers(first, second) && lineCovers(second, first)
+        }
+
         if let first = self as? PolygonGeometry,
            let second = other as? PolygonGeometry
         {
             guard let intersectionArea = PolygonPredicateHelpers.intersectionArea(first, second) else {
                 return false
             }
+
             return AreaComparison.areEqual(intersectionArea, PolygonPredicateHelpers.area(first))
                 && AreaComparison.areEqual(intersectionArea, PolygonPredicateHelpers.area(second))
         }
 
         return covers(other) && other.covers(self)
+    }
+
+    private func lineCovers(
+        _ container: LineStringGeometry,
+        _ other: LineStringGeometry
+    ) -> Bool {
+        for segment in other.lineSegments {
+            let parameters = BooleanCovers.splitParameters(
+                of: segment,
+                against: container.lineSegments)
+
+            for index in 1 ..< parameters.count {
+                let lower = parameters[index - 1]
+                let upper = parameters[index]
+                guard (upper - lower) > GISTool.intersectionEpsilon else { continue }
+
+                let middle = BooleanCovers.point(
+                    on: segment,
+                    at: (lower + upper) / 2.0)
+                if !container.lineSegments.contains(where: {
+                    $0.checkIsOnSegment(middle)
+                }) {
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 
 }

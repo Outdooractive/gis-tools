@@ -68,7 +68,9 @@ extension PointGeometry {
         switch other {
         case let otherPoint as PointGeometry:
             for coordinate in allCoordinates {
-                if otherPoint.allCoordinates.contains(coordinate) {
+                if otherPoint.allCoordinates.contains(where: {
+                    $0.isCoincident(to: coordinate)
+                }) {
                     return false
                 }
             }
@@ -153,7 +155,7 @@ extension LineStringGeometry {
 
             // Any line crosses the polygon
             for lineString in lineStrings {
-                for otherLineString in otherPolygon.polygons.compactMap(\.outerRing?.lineString) {
+                for otherLineString in otherPolygon.polygons.flatMap({ $0.rings.map(\.lineString) }) {
                     if lineString.intersects(otherLineString) {
                         return false
                     }
@@ -205,11 +207,7 @@ extension PolygonGeometry {
         case let otherPolygon as PolygonGeometry:
             // Any point inside the polygon
             for polygon in polygons {
-                guard let coordinates = polygon.outerRing?.coordinates else {
-                    continue
-                }
-
-                for coordinate in coordinates {
+                for coordinate in polygon.rings.flatMap(\.coordinates) {
                     if otherPolygon.covers(coordinate, gridSize: nil) {
                         return false
                     }
@@ -217,24 +215,19 @@ extension PolygonGeometry {
             }
 
             for polygon in otherPolygon.polygons {
-                guard let coordinates = polygon.outerRing?.coordinates else {
-                    continue
-                }
-
-                for coordinate in coordinates {
-                    if self.covers(coordinate, gridSize: nil) {
+                for coordinate in polygon.rings.flatMap(\.coordinates) {
+                    if covers(coordinate, gridSize: nil) {
                         return false
                     }
                 }
             }
 
-            // Any line crosses the polygon
+            // Any boundary crosses the other polygon
             for polygon in polygons {
-                guard let lineString = polygon.outerRing?.lineString else {
-                    continue
-                }
-                guard lineString.isDisjoint(with: otherPolygon) else {
-                    return false
+                for lineString in polygon.rings.map(\.lineString) {
+                    guard lineString.isDisjoint(with: otherPolygon) else {
+                        return false
+                    }
                 }
             }
 

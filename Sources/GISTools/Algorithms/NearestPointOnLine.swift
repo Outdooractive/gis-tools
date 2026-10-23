@@ -13,6 +13,9 @@ extension LineSegment {
     /// carries a linearly interpolated altitude. Otherwise the result has no
     /// altitude.
     ///
+    /// - Note: The foot is computed in the segment's native XY plane. For
+    ///   EPSG:4326 this is a planar approximation to the geodesic foot.
+    ///
     /// - Parameter coordinate: The reference coordinate.
     /// - Parameter clampToEnds: If `true`, clamps the foot to the nearest endpoint
     ///   when the projection falls outside the segment (default `false`).
@@ -79,8 +82,12 @@ extension LineSegment {
         let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
 
         guard let foot: Coordinate3D = segment.perpendicularFoot(from: other, clampToEnds: true) else {
-            return (coordinate: segment.first, distance: 0.0)
+            return (
+                coordinate: segment.first,
+                distance: other.distance(from: segment.first)
+            )
         }
+
         let footDistance: CLLocationDistance = other.distance(from: foot)
 
         return (coordinate: foot, distance: footDistance)
@@ -118,6 +125,7 @@ extension LineString {
             guard let foot: Coordinate3D = segment.perpendicularFoot(from: otherProjected, clampToEnds: true) else {
                 continue
             }
+
             let footDistance: CLLocationDistance = otherProjected.distance(from: foot)
 
             if footDistance < bestDistance {
@@ -133,7 +141,7 @@ extension LineString {
             if lastDistance <= bestDistance {
                 bestCoordinate = lastCoordinate
                 bestDistance = lastDistance
-                bestIndex = lineString.coordinates.count - 1
+                bestIndex = lineString.lineSegments.count - 1
             }
         }
 
@@ -148,6 +156,7 @@ extension LineString {
         gridSize: Double? = nil
     ) -> (point: Point, index: Int, distance: CLLocationDistance)? {
         guard let result = nearestCoordinateOnLine(from: other.coordinate, gridSize: gridSize) else { return nil }
+
         return (point: Point(result.coordinate), index: result.index, distance: result.distance)
     }
 
@@ -171,6 +180,7 @@ extension Feature {
         let feature = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let other = gridSize.map { other.snappedToGrid(tolerance: $0) } ?? other
         guard let lineString = feature.geometry as? LineString else { return nil }
+
         return lineString.nearestCoordinateOnLine(from: other, gridSize: nil)
     }
 
@@ -183,6 +193,7 @@ extension Feature {
         gridSize: Double? = nil
     ) -> (point: Point, index: Int, distance: CLLocationDistance)? {
         guard let lineString = geometry as? LineString else { return nil }
+
         return lineString.nearestPointOnLine(from: other, gridSize: gridSize)
     }
 
