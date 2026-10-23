@@ -407,3 +407,75 @@ struct UnionTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension UnionTests {
+
+    @Test
+    func mixedProjectionUnion() throws {
+        let first4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let first3857 = first4326.projected(to: .epsg3857)
+        let result = try #require(first3857.union(with: first4326))
+
+        #expect(result.projection == .epsg3857)
+        #expect(abs(result.area - first3857.area) < 1.0)
+    }
+
+    @Test
+    func polygonsTouchingAtOneVertexProduceTwoParts() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]]))
+        let result = try #require(first.union(with: second))
+
+        #expect(result.polygons.count == 2)
+        #expect(abs(result.area - (first.area + second.area)) < 1.0)
+        #expect(result.isValid)
+    }
+
+}
+
+// MARK: - Overlay tolerance regression
+
+extension UnionTests {
+
+    @Test
+    func smallGapDoesNotMergePolygons() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(x: 10.04, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 20.04, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 20.04, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 10.04, y: 10.0, projection: .epsg3857),
+            Coordinate3D(x: 10.04, y: 0.0, projection: .epsg3857),
+        ]]))
+        let result = try #require(first.union(with: second))
+
+        #expect(result.polygons.count == 2)
+    }
+
+}

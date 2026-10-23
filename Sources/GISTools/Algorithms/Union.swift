@@ -19,10 +19,11 @@ extension Polygon {
     ) -> MultiPolygon? {
         let all: [Polygon]
         if let gridSize {
-            all = [self.snappedToGrid(tolerance: gridSize)]
+            all = [snappedToGrid(tolerance: gridSize)]
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
-        } else {
-            all = self.polygons + other.polygons
+        }
+        else {
+            all = polygons + other.polygons
         }
         return Union.unionPolygons(all)
     }
@@ -45,10 +46,11 @@ extension MultiPolygon {
     ) -> MultiPolygon? {
         let all: [Polygon]
         if let gridSize {
-            all = self.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+            all = polygons.map { $0.snappedToGrid(tolerance: gridSize) }
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
-        } else {
-            all = self.polygons + other.polygons
+        }
+        else {
+            all = polygons + other.polygons
         }
         return Union.unionPolygons(all)
     }
@@ -60,6 +62,7 @@ extension MultiPolygon {
         gridSize: Double? = nil
     ) {
         guard let merged = union(with: other, gridSize: gridSize) else { return }
+
         self = merged
     }
 
@@ -77,6 +80,7 @@ extension FeatureCollection {
             .compactMap { ($0.geometry as? PolygonGeometry)?.polygons }
             .flatMap { $0 }
         guard let result = Union.unionPolygons(geometries) else { return nil }
+
         return FeatureCollection(Feature(result))
     }
 
@@ -89,18 +93,18 @@ enum Union {
     /// - Note: The union algorithm works in EPSG:3857 (Web Mercator) for uniform
     ///   Cartesian tolerances. Inputs are automatically reprojected. This limits
     ///   the usable latitude range to approximately ±85°.
-    public static func unionPolygons(_ polygons: [Polygon]) -> MultiPolygon? {
+    static func unionPolygons(_ polygons: [Polygon]) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
-
         guard polygons.count > 1 else {
             return MultiPolygon(unchecked: polygons)
         }
 
         // Work in EPSG:3857 so all tolerances are uniform meters
         let originalProj = polygons.first?.projection ?? .epsg4326
-        let polygons3857 = originalProj == .epsg3857
-            ? polygons
-            : polygons.map { $0.projected(to: .epsg3857) }
+        let normalized = polygons.map {
+            $0.projection == originalProj ? $0 : $0.projected(to: originalProj)
+        }
+        let polygons3857 = normalized.map { $0.projected(to: .epsg3857) }
 
         let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
             polygons.contains(point)

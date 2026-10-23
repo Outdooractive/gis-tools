@@ -810,3 +810,24 @@ private struct SeededRandomNumberGenerator: RandomNumberGenerator {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension RTreeTests {
+
+    @Test
+    func emptyTreeWithSmallNodeSizeTerminates() {
+        let tree = RTree<Point>([], nodeSize: -100)
+        #expect(tree.count == 0)
+        #expect(tree.search(inBoundingBox: BoundingBox.world).isEmpty)
+    }
+
+    @Test
+    func singlePointWithZeroNodeSizeWorks() {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let tree = RTree<Point>([point], nodeSize: 0)
+        #expect(tree.count == 1)
+        #expect(tree.search(inBoundingBox: BoundingBox.world).count == 1)
+    }
+
+}

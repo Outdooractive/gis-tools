@@ -347,3 +347,61 @@ struct DifferenceTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension DifferenceTests {
+
+    @Test
+    func multipolygonDifferenceKeepsAllSelfParts() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]]))
+        let remote = try #require(Polygon([[
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 21.0),
+            Coordinate3D(latitude: 21.0, longitude: 21.0),
+            Coordinate3D(latitude: 21.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+        ]]))
+        let multi = try #require(MultiPolygon([first, second]))
+        let result = try #require(multi.difference(with: remote))
+
+        #expect(result.polygons.count == 2)
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - (first.area + second.area)) < 1.0)
+    }
+
+    @Test
+    func differenceHoleHasClockwiseWinding() throws {
+        let outer = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let inner = try #require(Polygon([[
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]]))
+        let result = try #require(outer.difference(with: inner))
+        let hole = try #require(result.polygons.first?.innerRings?.first)
+
+        #expect(hole.isClockwise)
+    }
+
+}

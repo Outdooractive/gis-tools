@@ -505,3 +505,41 @@ struct TileCoverTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension TileCoverTests {
+
+    @Test
+    func duplicateFeaturesProduceUniqueTiles() {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let collection = FeatureCollection([
+            Feature(point),
+            Feature(point),
+        ])
+
+        #expect(collection.tileCover(atZoom: 1).count == 1)
+    }
+
+    @Test
+    func negativeZoomReturnsNoTiles() {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+
+        #expect(point.tileCover(atZoom: -1).isEmpty)
+    }
+
+    @Test
+    func polarLineStaysWithinTileRange() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 89.9, longitude: 0.0),
+            Coordinate3D(latitude: 90.0, longitude: 0.0),
+        ]))
+
+        let maxIndex = (1 << 2) - 1
+        for tile in line.tileCover(atZoom: 2) {
+            #expect(tile.y >= 0)
+            #expect(tile.y <= maxIndex)
+        }
+    }
+
+}

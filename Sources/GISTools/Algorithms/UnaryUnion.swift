@@ -80,21 +80,71 @@ extension MultiPolygon {
             polys = polygons
         }
 
-        // 1. No overlaps: sum of areas ≈ union area
-        let sumAreas = polys.reduce(0.0) { $0 + $1.area }
-        guard let union = Union.unionPolygons(polys) else { return false }
-        let unionArea = union.area
+        // No overlaps or containment between distinct components.
+        for i in polys.indices {
+            for j in polys.indices where j > i {
+                guard let firstBox = polys[i].boundingBox ?? polys[i].calculateBoundingBox(),
+                      let secondBox = polys[j].boundingBox ?? polys[j].calculateBoundingBox(),
+                      firstBox.intersects(secondBox)
+                else { continue }
 
-        let maxArea = max(sumAreas, unionArea)
-        guard maxArea > 0 else { return sumAreas == 0 }
-        let relativeDiff = abs(sumAreas - unionArea) / maxArea
-        let coverageTolerance = 0.000001 // relative (0.0001 %)
-        guard relativeDiff <= coverageTolerance else { return false }
+                if polys[i].isOverlapping(with: polys[j])
+                    || polys[i].covers(polys[j])
+                    || polys[j].covers(polys[i])
+                {
+                    return false
+                }
+            }
+        }
 
-        // 2. No gaps: adjacent polygons share edges, so union merges them
-        //    into fewer parts. If the part count didn't drop, nothing is
-        //    connected and gaps exist between the parts.
-        return union.polygons.count < polys.count
+        // The coverage must be edge-connected. Build components using shared
+        // boundary segments; isolated polygons leave a gap.
+        var parent = Array(polys.indices)
+
+        func find(_ index: Int) -> Int {
+            var index = index
+            while parent[index] != index {
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            }
+            return index
+        }
+
+        func union(_ first: Int, _ second: Int) {
+            let firstRoot = find(first)
+            let secondRoot = find(second)
+            if firstRoot != secondRoot {
+                parent[secondRoot] = firstRoot
+            }
+        }
+
+        for i in polys.indices {
+            for j in polys.indices where j > i {
+                if Self.shareEdge(polys[i], polys[j]) {
+                    union(i, j)
+                }
+            }
+        }
+
+        let root = find(0)
+        return polys.indices.allSatisfy { find($0) == root }
+    }
+
+    private static func shareEdge(_ first: Polygon, _ second: Polygon) -> Bool {
+        for firstSegment in first.lineSegments {
+            for secondSegment in second.lineSegments {
+                let comparison = firstSegment.compare(
+                    secondSegment,
+                    tolerance: GISTool.equalityDelta)
+                if comparison == .equal
+                    || comparison == .thisOnOther
+                    || comparison == .otherOnThis
+                {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
 }

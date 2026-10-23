@@ -151,6 +151,8 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
+        #expect(result?.outerRing?.coordinates.count == 5)
+        #expect(result?.rings.count == 2)
     }
 
     // Tests masking in noSRID projection.
@@ -166,6 +168,7 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
+        #expect(result?.rings.count == 2)
     }
 
     // Tests masking in EPSG:4978 projection.

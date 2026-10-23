@@ -436,3 +436,25 @@ struct LineIntersectionTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension LineIntersectionTests {
+
+    @Test
+    func pointLineIntersectionIsSymmetric() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 5.0))
+
+        let fromPoint = point.intersections(with: line)
+        let fromLine = line.intersections(with: point)
+
+        #expect(fromPoint.count == 1)
+        #expect(fromLine.count == 1)
+        #expect(fromPoint.first?.coordinate == fromLine.first?.coordinate)
+    }
+
+}

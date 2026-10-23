@@ -325,3 +325,40 @@ struct SymmetricDifferenceTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension SymmetricDifferenceTests {
+
+    @Test
+    func multipolygonSymmetricDifferenceKeepsAllSelfParts() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]]))
+        let remote = try #require(Polygon([[
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 21.0),
+            Coordinate3D(latitude: 21.0, longitude: 21.0),
+            Coordinate3D(latitude: 21.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+        ]]))
+        let multi = try #require(MultiPolygon([first, second]))
+        let result = try #require(multi.symmetricDifference(with: remote))
+
+        #expect(result.polygons.count == 3)
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area }
+            - (first.area + second.area + remote.area)) < 1.0)
+    }
+
+}

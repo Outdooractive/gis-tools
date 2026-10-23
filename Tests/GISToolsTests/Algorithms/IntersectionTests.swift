@@ -375,3 +375,55 @@ struct IntersectionTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension IntersectionTests {
+
+    @Test
+    func multipolygonIntersectionUsesUnionOfParts() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 15.0),
+            Coordinate3D(latitude: 15.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]]))
+        let cover = try #require(Polygon([[
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 11.0),
+            Coordinate3D(latitude: 11.0, longitude: 11.0),
+            Coordinate3D(latitude: 11.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+        ]]))
+        let multi = try #require(MultiPolygon([first, second]))
+        let result = try #require(multi.intersection(with: cover))
+
+        #expect(result.polygons.count == 2)
+        #expect(result.polygons.allSatisfy { $0.area > 0.0 })
+    }
+
+    @Test
+    func mixedProjectionIntersection() throws {
+        let first4326 = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let first3857 = first4326.projected(to: .epsg3857)
+        let result = try #require(first3857.intersection(with: first4326))
+
+        #expect(result.projection == .epsg3857)
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - first3857.area) < 1.0)
+    }
+
+}

@@ -113,7 +113,10 @@ enum PolygonPredicateHelpers {
         _ first: PolygonGeometry,
         _ second: PolygonGeometry
     ) -> Double? {
-        Intersection.intersectPolygons(first.polygons + second.polygons).map(area)
+        Intersection.intersectPolygons(
+            first.polygons + second.polygons,
+            firstCount: first.polygons.count)
+            .map(area)
     }
 
 }

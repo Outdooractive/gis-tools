@@ -336,3 +336,22 @@ struct PreparedPolygonTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension PreparedPolygonTests {
+
+    @Test
+    func degenerateHorizontalRingDoesNotCrash() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        let prepared = polygon.prepared()
+
+        #expect(prepared.locate(Coordinate3D(latitude: 0.0, longitude: 5.0)) == .exterior)
+    }
+
+}

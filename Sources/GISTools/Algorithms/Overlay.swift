@@ -13,6 +13,7 @@ enum Overlay {
     // MARK: - Types
 
     struct Edge {
+
         let start: Coordinate3D
         let end: Coordinate3D
         let polygonIndex: Int
@@ -24,17 +25,21 @@ enum Overlay {
             self.polygonIndex = polygonIndex
             self.boundingBox = BoundingBox(coordinates: [start, end])
         }
+
     }
 
     struct SplitPoint {
+
         let coordinate: Coordinate3D
         let edgeIndex: Int
         let distanceAlong: Double
+
     }
 
     /// A coordinate frame in which no ring crosses the wraparound axis.
     /// Overlay operates on these polygons and wraps the result back afterwards.
     struct AntimeridianFrame {
+
         let polygons: [Polygon]
         let width: Double?
         let extent: Double?
@@ -59,6 +64,7 @@ enum Overlay {
             }
             return MultiPolygon(unchecked: polygons)
         }
+
     }
 
     /// A uniform-grid index over polygons for repeated point containment tests.
@@ -82,6 +88,7 @@ enum Overlay {
             }
 
             guard let cell = grid.cellIndex(for: point) else { return false }
+
             return grid.cells[cell].contains { prepared[$0].contains(point) }
         }
 
@@ -97,14 +104,15 @@ enum Overlay {
             }
 
             guard let cell = grid.cellIndex(for: point) else { return false }
+
             return grid.cells[cell].contains {
                 $0 != index && prepared[$0].contains(point)
             }
         }
 
-        /// Returns `true` if every indexed polygon contains the point.
-        func containsAll(_ point: Coordinate3D) -> Bool {
-            prepared.indices.allSatisfy { contains(point, polygonAt: $0) }
+        /// Returns `true` if any polygon in `range` contains the point.
+        func contains(_ point: Coordinate3D, in range: Range<Int>) -> Bool {
+            range.contains { contains(point, polygonAt: $0) }
         }
 
         /// A flat uniform grid of polygon indices, plus polygons too large to
@@ -123,10 +131,12 @@ enum Overlay {
             let large: [Int]
 
             struct Box {
+
                 let minX: Double
                 let minY: Double
                 let maxX: Double
                 let maxY: Double
+
             }
 
             init(polygons: [Polygon]) {
@@ -334,19 +344,23 @@ enum Overlay {
             let p = Coordinate3D.epsg3857(x: midLongitude, y: midLatitude)
             return (p, p)
         }
+
         let offsetX = -dy / len * distance
         let offsetY = dx / len * distance
         let left = Coordinate3D.epsg3857(x: midLongitude + offsetX, y: midLatitude + offsetY)
         let right = Coordinate3D.epsg3857(x: midLongitude - offsetX, y: midLatitude - offsetY)
         return (left, right)
     }
+
 }
 
 // MARK: - BoundingBoxRepresentable
 
 extension Overlay.Edge: BoundingBoxRepresentable {
 
-    var projection: Projection { start.projection }
+    var projection: Projection {
+        start.projection
+    }
 
     func calculateBoundingBox() -> BoundingBox? {
         BoundingBox(coordinates: [start, end])
@@ -361,10 +375,13 @@ extension Overlay.Edge: BoundingBoxRepresentable {
 // MARK: - Private helpers
 
 private struct IndexedEdge: BoundingBoxRepresentable {
+
     let index: Int
     var boundingBox: BoundingBox?
 
-    var projection: Projection { boundingBox?.projection ?? .epsg3857 }
+    var projection: Projection {
+        boundingBox?.projection ?? .epsg3857
+    }
 
     func calculateBoundingBox() -> BoundingBox? {
         boundingBox
@@ -373,9 +390,10 @@ private struct IndexedEdge: BoundingBoxRepresentable {
     func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         boundingBox?.intersects(otherBoundingBox) ?? false
     }
+
 }
 
-private extension Overlay {
+extension Overlay {
 
     // MARK: - Antimeridian normalization
 
@@ -388,7 +406,7 @@ private extension Overlay {
     /// untouched, since cutting them is ambiguous (RFC 7946). Two separate
     /// polygons on opposite sides of the seam that do not themselves cross it
     /// are not joined; they are treated as far apart.
-    static func antimeridianFrame(for polygons: [Polygon]) -> AntimeridianFrame {
+    fileprivate static func antimeridianFrame(for polygons: [Polygon]) -> AntimeridianFrame {
         guard let extent = polygons.first?.projection.wraparoundExtent else {
             return AntimeridianFrame(polygons: polygons, width: nil, extent: nil)
         }
@@ -421,12 +439,12 @@ private extension Overlay {
         return AntimeridianFrame(polygons: aligned, width: width, extent: extent)
     }
 
-    static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
+    fileprivate static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
         let rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
         return Polygon(unchecked: rings, calculateBoundingBox: false)
     }
 
-    static func unwrapRing(_ ring: [Coordinate3D], width: Double, extent: Double) -> [Coordinate3D] {
+    fileprivate static func unwrapRing(_ ring: [Coordinate3D], width: Double, extent: Double) -> [Coordinate3D] {
         guard let first = ring.first else { return ring }
 
         var result: [Coordinate3D] = [first]
@@ -462,21 +480,23 @@ private extension Overlay {
         return result
     }
 
-    static func centerX(of polygon: Polygon) -> Double {
+    fileprivate static func centerX(of polygon: Polygon) -> Double {
         let xs = polygon.allCoordinates.map(\.x)
         guard let minX = xs.min(), let maxX = xs.max() else { return 0.0 }
+
         return (minX + maxX) / 2.0
     }
 
-    static func translate(_ polygon: Polygon, by offset: Double) -> Polygon {
+    fileprivate static func translate(_ polygon: Polygon, by offset: Double) -> Polygon {
         guard offset != 0.0 else { return polygon }
+
         let rings = polygon.coordinates.map { ring in
             ring.map { Self.coordinate($0, x: $0.x + offset) }
         }
         return Polygon(unchecked: rings, calculateBoundingBox: false)
     }
 
-    static func coordinate(_ coordinate: Coordinate3D, x: Double) -> Coordinate3D {
+    fileprivate static func coordinate(_ coordinate: Coordinate3D, x: Double) -> Coordinate3D {
         Coordinate3D(
             x: x,
             y: coordinate.y,
@@ -487,13 +507,13 @@ private extension Overlay {
 
     // MARK: - Edge extraction
 
-    static func extractEdges(from polygons: [Polygon]) -> [Edge] {
+    fileprivate static func extractEdges(from polygons: [Polygon]) -> [Edge] {
         var edges: [Edge] = []
         for (pIndex, polygon) in polygons.enumerated() {
             let rings = polygon.rings
             for ring in rings {
                 let coords = ring.coordinates
-                for i in 0..<(coords.count - 1) {
+                for i in 0 ..< (coords.count - 1) {
                     let start = coords[i]
                     let end = coords[i + 1]
                     if start != end {
@@ -507,16 +527,16 @@ private extension Overlay {
 
     // MARK: - Intersection finding
 
-    static func findIntersections(between edges: [Edge]) -> [SplitPoint] {
+    fileprivate static func findIntersections(between edges: [Edge]) -> [SplitPoint] {
         var result: [SplitPoint] = []
         let splitEps = GISTool.equalityDelta
 
-        let indexedEdges = edges.enumerated().map { (i, e) in
+        let indexedEdges = edges.enumerated().map { i, e in
             IndexedEdge(index: i, boundingBox: e.boundingBox)
         }
         let tree = RTree(indexedEdges)
 
-        for i in 0..<edges.count {
+        for i in 0 ..< edges.count {
             guard let bbI = edges[i].boundingBox else { continue }
 
             let candidates = tree.search(inBoundingBox: bbI)
@@ -543,7 +563,7 @@ private extension Overlay {
                     where pointLiesOnEdge(point, edges[i], tolerance: tolerance)
                 {
                     let dI = distanceAlong(edges[i], at: point)
-                    if dI > splitEps && dI < 1.0 - splitEps {
+                    if dI > splitEps, dI < 1.0 - splitEps {
                         result.append(SplitPoint(coordinate: point, edgeIndex: i, distanceAlong: dI))
                     }
                 }
@@ -552,19 +572,19 @@ private extension Overlay {
                     where pointLiesOnEdge(point, edges[j], tolerance: tolerance)
                 {
                     let dJ = distanceAlong(edges[j], at: point)
-                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                    if dJ > splitEps, dJ < 1.0 - splitEps {
                         result.append(SplitPoint(coordinate: point, edgeIndex: j, distanceAlong: dJ))
                     }
                 }
 
                 if let raw = segI.intersection(segJ, epsilon: GISTool.intersectionEpsilon) {
                     let dI = distanceAlong(edges[i], at: raw)
-                    if dI > splitEps && dI < 1.0 - splitEps {
+                    if dI > splitEps, dI < 1.0 - splitEps {
                         result.append(SplitPoint(coordinate: raw, edgeIndex: i, distanceAlong: dI))
                     }
 
                     let dJ = distanceAlong(edges[j], at: raw)
-                    if dJ > splitEps && dJ < 1.0 - splitEps {
+                    if dJ > splitEps, dJ < 1.0 - splitEps {
                         result.append(SplitPoint(coordinate: raw, edgeIndex: j, distanceAlong: dJ))
                     }
                 }
@@ -593,7 +613,7 @@ private extension Overlay {
 
     /// Returns `true` when `point` lies on `edge` within the given tolerance
     /// (in the edge's coordinate units, i.e. metres for overlay).
-    static func pointLiesOnEdge(
+    fileprivate static func pointLiesOnEdge(
         _ point: Coordinate3D,
         _ edge: Edge,
         tolerance: Double
@@ -614,7 +634,7 @@ private extension Overlay {
     }
 
     /// Returns the signed parameter t along the edge, where t=0 is start and t=1 is end.
-    static func distanceAlong(
+    fileprivate static func distanceAlong(
         _ edge: Edge,
         at point: Coordinate3D
     ) -> Double {
@@ -631,7 +651,7 @@ private extension Overlay {
 
     // MARK: - Edge splitting
 
-    static func splitEdges(
+    fileprivate static func splitEdges(
         _ edges: [Edge],
         at splitPoints: [SplitPoint]
     ) -> [Edge] {
@@ -662,7 +682,8 @@ private extension Overlay {
                 if currentStart != edge.end {
                     result.append(Edge(start: currentStart, end: edge.end, polygonIndex: edge.polygonIndex))
                 }
-            } else {
+            }
+            else {
                 result.append(edge)
             }
         }
@@ -672,12 +693,14 @@ private extension Overlay {
     // MARK: - Duplicate removal
 
     /// Removes duplicate and reverse-coincident boundary edges in one pass.
-    static func mergeReversePairs(_ edges: [Edge]) -> [Edge] {
-        /// Two boundary edges are the same segment when their endpoints match,
-        /// regardless of direction. Keep the first occurrence in input order.
+    fileprivate static func mergeReversePairs(_ edges: [Edge]) -> [Edge] {
+        // Two boundary edges are the same segment when their endpoints match,
+        // regardless of direction. Keep the first occurrence in input order.
         struct EdgeKey: Hashable {
+
             let first: String
             let second: String
+
         }
 
         var seen = Set<EdgeKey>()
@@ -702,18 +725,18 @@ private extension Overlay {
     // MARK: - Ring construction
 
     /// Normalizes a coordinate to a fixed-precision key for use as dictionary keys.
-    static func vertexKey(_ coord: Coordinate3D) -> String {
-        let q = 0.1
+    fileprivate static func vertexKey(_ coord: Coordinate3D) -> String {
+        let q = 0.01
         let x = round(coord.x / q) * q
         let y = round(coord.y / q) * q
         return "\(x),\(y)"
     }
 
-    static func buildRings(from edges: [Edge]) -> [[Coordinate3D]] {
+    fileprivate static func buildRings(from edges: [Edge]) -> [[Coordinate3D]] {
         buildRings(from: edges) { vertexKey($0) }
     }
 
-    static func buildRings(
+    fileprivate static func buildRings(
         from edges: [Edge],
         key: (Coordinate3D) -> String
     ) -> [[Coordinate3D]] {
@@ -727,7 +750,7 @@ private extension Overlay {
             adj[ek, default: []].append(i)
         }
 
-        let snapEpsMeters = 0.5
+        let snapEpsMeters = 0.01
 
         var used = Set<Int>()
         var rings: [[Coordinate3D]] = []
@@ -740,6 +763,7 @@ private extension Overlay {
 
             func currentCoord() -> Coordinate3D {
                 guard let last = ring.last else { return edges[startIdx].start }
+
                 return last
             }
 
@@ -795,7 +819,9 @@ private extension Overlay {
                     }
                 }
 
-                if !found { break }
+                if !found {
+                    break
+                }
             }
 
             if ring.count >= 4 {
@@ -808,11 +834,12 @@ private extension Overlay {
 
     // MARK: - Polygon assembly
 
-    static func assemblePolygons(from rings: [[Coordinate3D]]) -> [Polygon] {
+    fileprivate static func assemblePolygons(from rings: [[Coordinate3D]]) -> [Polygon] {
         guard rings.isNotEmpty else { return [] }
 
         let candidates: [(coords: [Coordinate3D], area: Double)] = rings.compactMap { coords in
             guard coords.count >= 4 else { return nil }
+
             let ring = Ring(unchecked: coords)
             return (coords, ring.area)
         }
@@ -823,11 +850,13 @@ private extension Overlay {
         var result: [Polygon] = []
         for (coords, _) in sorted {
             let ring = Ring(unchecked: coords)
-            let testPoint = ring.coordinates.first!
+            let candidate = Polygon(unchecked: [ring])
+            let testPoint = candidate.poleOfInaccessibility()?.coordinate
+                ?? ring.coordinates.first!
 
             var assigned = false
             for (i, _) in result.enumerated() {
-                if result[i].covers(testPoint) {
+                if result[i].locate(testPoint, gridSize: nil) == .interior {
                     let poly = Polygon(unchecked: [result[i].outerRing!] + (result[i].innerRings ?? []) + [ring])
                     result[i] = poly
                     assigned = true
@@ -840,11 +869,10 @@ private extension Overlay {
             }
         }
 
-        return result
+        return result.map { $0.rewinded }
     }
 
 }
-
 
 // MARK: - Prepared point-in-polygon
 
@@ -859,15 +887,15 @@ private struct OverlayPreparedPolygon: Sendable {
 
     init(polygon: Polygon) {
         if polygon.crossesAntimeridian {
-            fallback = polygon
-            outerRing = nil
-            innerRings = []
+            self.fallback = polygon
+            self.outerRing = nil
+            self.innerRings = []
             return
         }
 
-        fallback = nil
-        outerRing = polygon.outerRing.map { OverlayPreparedRing($0.coordinates) }
-        innerRings = polygon.innerRings?.map { OverlayPreparedRing($0.coordinates) } ?? []
+        self.fallback = nil
+        self.outerRing = polygon.outerRing.map { OverlayPreparedRing($0.coordinates) }
+        self.innerRings = polygon.innerRings?.map { OverlayPreparedRing($0.coordinates) } ?? []
     }
 
     func contains(_ point: Coordinate3D) -> Bool {
@@ -957,6 +985,7 @@ private struct OverlayPreparedRing: Sendable {
 
     func contains(_ point: Coordinate3D) -> Bool {
         guard edgeCount >= 3,
+              rowCount > 0,
               point.y >= minY,
               point.y <= maxY
         else { return false }
@@ -980,7 +1009,6 @@ private struct OverlayPreparedRing: Sendable {
     }
 
 }
-
 
 // MARK: - Boundary assembly
 

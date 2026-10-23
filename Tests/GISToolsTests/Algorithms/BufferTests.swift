@@ -1289,3 +1289,45 @@ struct BufferTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BufferTests {
+
+    @Test
+    func noSRIDPointBufferHasArea() throws {
+        let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID))
+        let buffer = try #require(point.buffered(by: 10.0, steps: 16))
+
+        #expect(buffer.area > 0.0)
+        #expect(buffer.projection == .noSRID)
+    }
+
+    @Test
+    func noSRIDPolygonBufferExpands() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let buffer = try #require(polygon.buffered(by: 5.0, steps: 16))
+
+        #expect(buffer.area > polygon.area)
+    }
+
+    @Test
+    func overInsetReturnsNil() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        #expect(polygon.buffered(by: -10_000.0) == nil)
+    }
+
+}
