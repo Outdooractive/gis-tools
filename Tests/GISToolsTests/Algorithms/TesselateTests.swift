@@ -4,6 +4,28 @@ import Foundation
 
 struct TesselateTests {
 
+    // MARK: - Helpers
+
+    private func triangleAreaSum(_ collection: FeatureCollection) -> Double {
+        collection.features.reduce(0.0) { sum, feature in
+            sum + ((feature.geometry as? Polygon)?.area ?? 0.0)
+        }
+    }
+
+    private func expectAreaPreserved(
+        _ collection: FeatureCollection,
+        polygon: Polygon,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) {
+        let expected = polygon.area
+        let actual = triangleAreaSum(collection)
+        let tolerance = max(0.000001, abs(expected) * 0.000001)
+        #expect(
+            abs(actual - expected) <= tolerance,
+            "Triangle area sum \(actual) != polygon area \(expected)",
+            sourceLocation: sourceLocation)
+    }
+
     // MARK: - Reference tests
 
     private static let tessFixtures = [
@@ -25,8 +47,11 @@ struct TesselateTests {
             if let tri = feature.geometry as? Polygon {
                 #expect(tri.outerRing?.coordinates.count == 4,
                         "\(name): expected triangle with 4 coords, got \(tri.outerRing?.coordinates.count ?? 0)")
+                #expect(tri.area >= 0.0, "\(name): triangle must not be inverted")
             }
         }
+
+        expectAreaPreserved(result, polygon: polygon)
     }
 
     // Validates that a triangle (3 vertices) tessellates into a single triangle.
@@ -107,7 +132,10 @@ struct TesselateTests {
         ]))
 
         let result = polygon.tesselated()
+        // (5, 0) is collinear in lon/lat but not on the ellipsoid; it is
+        // kept so the spherical area is preserved.
         #expect(result.features.count == 4)
+        expectAreaPreserved(result, polygon: polygon)
     }
 
     // Validates that a polygon with a hole correctly bridges the hole and
@@ -140,6 +168,8 @@ struct TesselateTests {
             let tri = feature.geometry as! Polygon
             #expect(tri.coordinates[0].count == 4)
         }
+
+        expectAreaPreserved(result, polygon: polygon)
     }
 
     // Validates that a MultiPolygon tessellates each constituent polygon
@@ -288,7 +318,24 @@ struct TesselateTests {
         for feature in result.features {
             let tri = feature.geometry as! Polygon
             #expect(tri.coordinates[0].count == 4)
+
+            // Every triangle must stay on the 20°-wide short side.
+            let lons = tri.coordinates[0].map(\.longitude)
+            var unwrapped = lons
+            for index in 1 ..< unwrapped.count {
+                while unwrapped[index] - unwrapped[index - 1] > 180.0 {
+                    unwrapped[index] -= 360.0
+                }
+                while unwrapped[index - 1] - unwrapped[index] > 180.0 {
+                    unwrapped[index] += 360.0
+                }
+            }
+            #expect(
+                (unwrapped.max() ?? 0.0) - (unwrapped.min() ?? 0.0) <= 20.0,
+                "Triangle spans the long way around: \(lons)")
         }
+
+        expectAreaPreserved(result, polygon: polygon)
     }
 
     // Validates tessellation of a polygon with a hole that crosses the
@@ -321,6 +368,127 @@ struct TesselateTests {
             let tri = feature.geometry as! Polygon
             #expect(tri.coordinates[0].count == 4)
         }
+
+        expectAreaPreserved(result, polygon: polygon)
     }
+
+
+    // MARK: - Audit regressions
+
+    /// Multiple holes must all be bridged, not just the first one.
+    @Test
+    func multipleHoles() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 2.0, longitude: 2.0),
+                Coordinate3D(latitude: 2.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 2.0),
+                Coordinate3D(latitude: 2.0, longitude: 2.0),
+            ],
+            [
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 8.0),
+                Coordinate3D(latitude: 8.0, longitude: 8.0),
+                Coordinate3D(latitude: 8.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+            ],
+        ]))
+
+        let result = polygon.tesselated()
+        #expect(result.features.isNotEmpty)
+        expectAreaPreserved(result, polygon: polygon)
+    }
+
+    /// A polygon with a hole in a planar projection, ECEF and noSRID.
+    @Test(arguments: [Projection.epsg3857, .epsg4978, .noSRID])
+    func holeAcrossProjections(projection: Projection) throws {
+        func coordinate(_ latitude: Double, _ longitude: Double) -> Coordinate3D {
+            if projection == .noSRID {
+                return Coordinate3D(x: longitude, y: latitude, projection: projection)
+            }
+            return Coordinate3D(latitude: latitude, longitude: longitude)
+                .projected(to: projection)
+        }
+
+        let polygon = try #require(Polygon([
+            [
+                coordinate(0.0, 0.0),
+                coordinate(0.0, 10.0),
+                coordinate(10.0, 10.0),
+                coordinate(10.0, 0.0),
+                coordinate(0.0, 0.0),
+            ],
+            [
+                coordinate(3.0, 3.0),
+                coordinate(3.0, 7.0),
+                coordinate(7.0, 7.0),
+                coordinate(7.0, 3.0),
+                coordinate(3.0, 3.0),
+            ],
+        ]))
+
+        let result = polygon.tesselated()
+        #expect(result.features.isNotEmpty)
+        #expect(result.features.allSatisfy { ($0.geometry as? Polygon)?.projection == projection })
+        expectAreaPreserved(result, polygon: polygon)
+    }
+
+    /// EPSG:3857 polygons that cross the wraparound axis must also stay on the
+    /// short side and preserve area.
+    @Test
+    func antimeridianPolygon3857() throws {
+        func coordinate(_ latitude: Double, _ longitude: Double) -> Coordinate3D {
+            Coordinate3D(latitude: latitude, longitude: longitude)
+                .projected(to: .epsg3857)
+        }
+        let polygon = try #require(Polygon([[
+            coordinate(0.0, 170.0),
+            coordinate(0.0, 190.0),
+            coordinate(10.0, 190.0),
+            coordinate(10.0, 170.0),
+            coordinate(0.0, 170.0),
+        ]]))
+
+        let result = polygon.tesselated()
+        #expect(result.features.count == 2)
+        expectAreaPreserved(result, polygon: polygon)
+
+        for feature in result.features {
+            let triangle = try #require(feature.geometry as? Polygon)
+            #expect(triangle.projection == .epsg3857)
+            let xs = triangle.coordinates[0].map(\.longitude)
+            #expect(xs.allSatisfy { abs($0) <= GISTool.originShift + 0.001 })
+        }
+    }
+
+    /// A fully collinear ring has no area and must not emit inverted or
+    /// overlapping triangles.
+    @Test
+    func collinearRingProducesNoArea() {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+
+        let result = polygon.tesselated()
+        let area = triangleAreaSum(result)
+        #expect(abs(area) < 0.000001, "Collinear ring produced area \(area)")
+        for feature in result.features {
+            let triangle = feature.geometry as? Polygon
+            #expect((triangle?.area ?? 0.0) >= 0.0)
+        }
+    }
+
 
 }
