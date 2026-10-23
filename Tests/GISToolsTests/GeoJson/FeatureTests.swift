@@ -90,7 +90,7 @@ struct FeatureTests {
         let json = feature.asJson
         #expect(json["type"] as? String == "Feature")
         #expect(json["id"] as? Int == 5)
-        let geometry = json["geometry"] as! [String: Any]
+        let geometry = try #require(json["geometry"] as? [String: Sendable])
         #expect(geometry["type"] as? String == "Point")
         #expect(geometry["coordinates"] as? [Double] == [0.0, 0.0])
     }
@@ -591,6 +591,65 @@ struct FeatureTests {
         #expect(feature.asWKB == nil)
         #expect(feature.asWKT == nil)
         #expect(feature.crossesAntimeridian == false)
+    }
+
+}
+
+// MARK: - GeoJSON audit regressions
+
+extension FeatureTests {
+
+    /// The feature id is a standard member and must not leak into foreign members.
+    @Test
+    func featureIDIsNotAForeignMember() throws {
+        let json = #"""
+        {"type":"Feature","id":7,"geometry":{"type":"Point","coordinates":[1,2]},"properties":{},"other":"x"}
+        """#
+
+        let fromString = try #require(Feature(jsonString: json))
+        let fromData = try #require(Feature(jsonData: Data(json.utf8)))
+        let parsed = try #require(
+            GeoJsonParser.parse(jsonString: json).object as? Feature
+        )
+
+        #expect(fromString.foreignMembers.keys.sorted() == ["other"])
+        #expect(fromData.foreignMembers.keys.sorted() == ["other"])
+        #expect(parsed.foreignMembers.keys.sorted() == ["other"])
+        #expect(fromString.foreignMember(for: "other") == "x")
+        #expect(fromData.foreignMember(for: "other") == "x")
+        #expect(parsed.foreignMember(for: "other") == "x")
+    }
+
+    /// Removing a property returns the old value and is safe for missing keys.
+    @Test
+    func featurePropertyRemoval() {
+        var feature = Feature(
+            Point(Coordinate3D(latitude: 47.0, longitude: 10.0)),
+            properties: ["name": "Zürich", "rank": 3])
+
+        #expect(feature.removeProperty(for: "rank") as? Int == 3)
+        #expect(feature["rank"] == nil)
+        #expect(feature.removeProperty(for: "missing") == nil)
+    }
+
+}
+// MARK: - Audit regressions
+
+extension FeatureTests {
+
+    /// Foreign members on a Feature and its geometry survive a JSON round trip.
+    @Test
+    func featureForeignMembersSurviveJSONRoundTrip() throws {
+        let json = #"""
+        {"type":"Feature","id":"a","geometry":{"type":"Point","coordinates":[1,2],"custom":1},"properties":{"p":1},"source":"test","f":2}
+        """#
+        let feature = try JSONDecoder().decode(
+            Feature.self,
+            from: Data(json.utf8))
+
+        #expect(feature.foreignMember(for: "source") == "test")
+        #expect(feature.foreignMember(for: "f") == 2)
+        #expect((feature.geometry as? Point)?.foreignMember(for: "custom") == 1)
     }
 
 }

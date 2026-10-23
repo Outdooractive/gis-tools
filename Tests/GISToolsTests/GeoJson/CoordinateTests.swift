@@ -85,8 +85,8 @@ struct CoordinateTests {
         let coordinateData = try JSONEncoder().encode(coordinate)
         let decodedCoordinate = try JSONDecoder().decode(Coordinate3D.self, from: coordinateData)
 
-        #expect(abs(Double(decodedCoordinate.asJson[0]!) - 10.0) < 0.000001)
-        #expect(abs(Double(decodedCoordinate.asJson[1]!) - 15.0) < 0.000001)
+        #expect(abs(Double(decodedCoordinate.asJson[0]!) - 10.0) < 0.000000000001)
+        #expect(abs(Double(decodedCoordinate.asJson[1]!) - 15.0) < 0.000000000001)
     }
 
     /// Validates JSON decoding of a coordinate array.
@@ -630,6 +630,42 @@ struct CoordinateTests {
         let directMerc = geo.projected(to: .epsg3857)
         #expect(abs(merc.longitude - directMerc.longitude) < 0.001)
         #expect(abs(merc.latitude - directMerc.latitude) < 0.001)
+    }
+
+}
+
+// MARK: - GeoJSON audit regressions
+
+extension CoordinateTests {
+
+    /// Projection results are checked against independently known Web Mercator values.
+    @Test
+    func projectedCoordinatesAreKnown() throws {
+        let expectedX = 111_319.49079327357
+        let expectedY = 111_325.14286638486
+        let source = Coordinate3D(latitude: 1.0, longitude: 1.0)
+
+        let point = Point(source).projected(to: .epsg3857)
+        #expect(abs(point.coordinate.x - expectedX) < 0.00000001)
+        #expect(abs(point.coordinate.y - expectedY) < 0.00000001)
+
+        let line = try #require(LineString([.zero, source])).projected(to: .epsg3857)
+        #expect(abs(line.coordinates[1].x - expectedX) < 0.00000001)
+        #expect(abs(line.coordinates[1].y - expectedY) < 0.00000001)
+
+        let polygon = try #require(Polygon([[
+            .zero,
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            source,
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            .zero,
+        ]])).projected(to: .epsg3857)
+        #expect(abs(polygon.coordinates[0][1].x - expectedX) < 0.00000001)
+
+        let multiPoint = try #require(MultiPoint([.zero, source]))
+            .projected(to: .epsg3857)
+        #expect(abs(multiPoint.coordinates[1].x - expectedX) < 0.00000001)
+        #expect(abs(multiPoint.coordinates[1].y - expectedY) < 0.00000001)
     }
 
 }

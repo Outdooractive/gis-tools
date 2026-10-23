@@ -26,6 +26,7 @@ extension GeoJsonReadable {
     /// - important: The source is expected to be in EPSG:4326.
     public init?(contentsOf url: URL) {
         guard let data = try? Data(contentsOf: url) else { return nil }
+
         self.init(jsonData: data)
     }
 
@@ -67,8 +68,9 @@ extension GeoJsonReadable {
     ///    - jsonString: The JSON string
     /// - important: The source is expected to be in EPSG:4326.
     public init?(jsonString: String) {
-        guard let value = JSONValue(jsonString: jsonString) else { return nil }
-        self.init(json: value.asSendable)
+        guard let data = jsonString.data(using: .utf8) else { return nil }
+
+        self.init(jsonData: data)
     }
 
 }
@@ -165,7 +167,7 @@ extension GeoJsonWritable {
 
 // MARK: - Convenience
 
-// Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
+/// Helper extension to create a valid json array from a sequence of GeoJsonConvertible objects
 extension Sequence where Self.Iterator.Element: GeoJsonWritable {
 
     /// Returns all elements as an array of JSON objects
@@ -173,7 +175,7 @@ extension Sequence where Self.Iterator.Element: GeoJsonWritable {
     /// - Returns: An array of JSON dictionaries
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     public var asJson: [[String: Sendable]] {
-        self.map({ $0.asJson })
+        map({ $0.asJson })
     }
 
 }

@@ -53,7 +53,7 @@ public struct FeatureCollection:
         self.features = features
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
     }
 
@@ -66,7 +66,7 @@ public struct FeatureCollection:
         self.features = geometries.compactMap { Feature($0) }
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
     }
 
@@ -98,7 +98,7 @@ public struct FeatureCollection:
         }
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
     }
 
@@ -122,10 +122,11 @@ public struct FeatureCollection:
     /// - Returns: A feature collection, or `nil` if the input is invalid
     public init?(json: Any?, calculateBoundingBox: Bool = false) {
         guard let geoJson: GeoJson = FeatureCollection.tryCreate(json: json) else { return nil }
+
         self.init(geoJson, calculateBoundingBox: calculateBoundingBox)
     }
 
-    // To prevent an infinite recursion.
+    /// To prevent an infinite recursion.
     init?(geoJson: [String: Sendable], calculateBoundingBox: Bool = false) {
         guard FeatureCollection.isValid(geoJson: geoJson),
               let features: [Feature] = FeatureCollection.tryCreate(json: geoJson["features"])
@@ -135,7 +136,7 @@ public struct FeatureCollection:
         self.boundingBox = FeatureCollection.tryCreate(json: geoJson["bbox"])
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -153,13 +154,13 @@ public struct FeatureCollection:
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.featureCollection.rawValue,
-            "features": features.map { $0.asJson }
+            "features": features.map { $0.asJson },
         ]
         if let boundingBox = boundingBox {
             result["bbox"] = boundingBox.asJson
         }
-        result.merge(foreignMembers) { (current, new) in
-            return current
+        result.merge(foreignMembers) { current, new in
+            current
         }
         return result
     }
@@ -182,7 +183,9 @@ extension FeatureCollection {
             return feature
         }
 
-        if boundingBox != nil && ifNecessary { return boundingBox }
+        if boundingBox != nil, ifNecessary {
+            return boundingBox
+        }
 
         boundingBox = calculateBoundingBox()
         return boundingBox
@@ -193,10 +196,10 @@ extension FeatureCollection {
     /// - Returns: The calculated bounding box, or `nil` if there are no features
     public func calculateBoundingBox() -> BoundingBox? {
         let featureBoundingBoxes: [BoundingBox] = features.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
-        guard featureBoundingBoxes.isNotEmpty else { return nil}
+        guard featureBoundingBoxes.isNotEmpty else { return nil }
 
-        return featureBoundingBoxes.reduce(featureBoundingBoxes[0]) { (result, boundingBox) -> BoundingBox in
-            return result + boundingBox
+        return featureBoundingBoxes.reduce(featureBoundingBoxes[0]) { result, boundingBox -> BoundingBox in
+            result + boundingBox
         }
     }
 
@@ -219,7 +222,7 @@ extension FeatureCollection {
 extension FeatureCollection: Equatable {
 
     /// Two feature collections are equal when their projections and features are equal.
-    public static func ==(
+    public static func == (
         lhs: FeatureCollection,
         rhs: FeatureCollection
     ) -> Bool {
@@ -257,7 +260,7 @@ extension FeatureCollection {
 
         var featureCollection = FeatureCollection(
             features.map({ $0.projected(to: newProjection) }),
-            calculateBoundingBox: (boundingBox != nil))
+            calculateBoundingBox: boundingBox != nil)
         featureCollection.foreignMembers = foreignMembers
         return featureCollection
     }
@@ -270,7 +273,8 @@ extension FeatureCollection {
 
     /// Insert a Feature into the receiver.
     ///
-    /// - note: `feature` must be in the same projection as the receiver.
+    /// - note: A located `feature` must be in the same projection as the receiver.
+    ///   Unlocated features are always accepted.
     /// - Parameters:
     ///    - feature: The feature to insert
     ///    - index: The index at which to insert
@@ -278,14 +282,17 @@ extension FeatureCollection {
         _ feature: Feature,
         atIndex index: Int
     ) {
-        guard features.count == 0 || projection == feature.projection else { return }
+        guard index >= 0 else { return }
 
-        if index < features.count {
-            features.insert(feature, at: index)
+        if let currentProjection = features.first(where: { $0.geometry != nil })?.projection,
+           feature.geometry != nil,
+           currentProjection != feature.projection
+        {
+            return
         }
-        else {
-            features.append(feature)
-        }
+
+        let insertionIndex = min(index, features.count)
+        features.insert(feature, at: insertionIndex)
 
         if boundingBox != nil {
             updateBoundingBox(onlyIfNecessary: false)
@@ -294,11 +301,15 @@ extension FeatureCollection {
 
     /// Append a Feature to the receiver.
     ///
-    /// - note: `feature` must be in the same projection as the receiver.
+    /// - note: A located `feature` must be in the same projection as the receiver.
+    ///   Unlocated features are always accepted.
     /// - Parameters:
     ///    - feature: The feature to append
     public mutating func appendFeature(_ feature: Feature) {
-        guard features.count == 0 || projection == feature.projection else { return }
+        guard feature.geometry == nil
+            || features.allSatisfy({ $0.geometry == nil })
+            || projection == feature.projection
+        else { return }
 
         features.append(feature)
 

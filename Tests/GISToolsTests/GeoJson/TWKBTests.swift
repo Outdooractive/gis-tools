@@ -17,7 +17,7 @@ struct TWKBTests {
         let result = try TWKBCoder.decode(twkb: data)
         #expect(result is Point)
 
-        let point = result as! Point
+        let point = try #require(result as? Point)
         #expect(point.coordinate.latitude == 0.0)
         #expect(point.coordinate.longitude == 0.0)
     }
@@ -33,10 +33,8 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x01, 0x00, 0x18, 0x44]
         let data = Data(bytes)
 
-        let result = try TWKBCoder.decode(twkb: data)
-        let point = result as! Point
-        #expect(abs(point.coordinate.latitude - 34.0) < 0.0001)
-        #expect(abs(point.coordinate.longitude - 12.0) < 0.0001)
+        let point = try #require(try TWKBCoder.decode(twkb: data) as? Point)
+        #expect(point.coordinate == Coordinate3D(latitude: 34.0, longitude: 12.0))
     }
 
     // Validates decoding a TWKB LineString with two points.
@@ -52,51 +50,48 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x02, 0x00, 0x02, 0x00, 0x00, 0x02, 0x04]
         let data = Data(bytes)
 
-        let result = try TWKBCoder.decode(twkb: data)
-        #expect(result is LineString)
+        let lineString = try #require(try TWKBCoder.decode(twkb: data) as? LineString)
 
-        let ls = result as! LineString
-        #expect(ls.coordinates.count == 2)
-        #expect(ls.coordinates[0].latitude == 0.0)
-        #expect(ls.coordinates[0].longitude == 0.0)
-        #expect(abs(ls.coordinates[1].latitude - 2.0) < 0.0001)
-        #expect(abs(ls.coordinates[1].longitude - 1.0) < 0.0001)
+        #expect(lineString.coordinates == [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+        ])
     }
 
-    // Validates decoding a TWKB Polygon with one ring.
+    // Validates decoding a TWKB Polygon with one implicitly closed ring.
     @Test
     func decodePolygon() async throws {
-        // Polygon with 1 ring, 4 points: (0,0)→(10,0)→(10,10)→(0,0), precision 1
+        // Polygon with 1 ring, 3 points: (0,0)→(10,0)→(10,10), precision 1.
+        // TWKB rings are implicitly closed, so the decoded ring has 4 positions.
         // Header: type=3, precision=1 → 0x13
         // Metadata: 0x00
         // Ring count: 1 → 0x01
-        // Point count: 4 → 0x04
+        // Point count: 3 → 0x03
         // x0=0 → 0x00, y0=0 → 0x00
         // x1=100 (delta, scale 10): zigzag(100)=200 → varint(200) = 0xC8, 0x01
         // y1=0 (delta): zigzag(0)=0 → 0x00
         // x2=0 (delta from 100): zigzag(0)=0 → 0x00
         // y2=100 (delta from 0): zigzag(100)=200 → varint(200) = 0xC8, 0x01
-        // x3=-100 (delta from 100): zigzag(-100)=199 → varint(199) = 0xC7, 0x01
-        // y3=0 (delta from 100): zigzag(0)=0 → 0x00
         let bytes: [UInt8] = [
             0x13, 0x00,    // header + metadata
             0x01,          // ring count
-            0x04,          // point count
+            0x03,          // point count
             0x00, 0x00,    // x0, y0
             0xC8, 0x01,    // x1 = 100
             0x00,          // y1 = 0
             0x00,          // x2 = 0
             0xC8, 0x01,    // y2 = 100
-            0xC7, 0x01,    // x3 = -100
-            0xC7, 0x01,    // y3 = -100
         ]
         let data = Data(bytes)
 
-        let result = try TWKBCoder.decode(twkb: data)
-        #expect(result is Polygon)
+        let polygon = try #require(try TWKBCoder.decode(twkb: data) as? Polygon)
 
-        let poly = result as! Polygon
-        #expect(poly.outerRing?.coordinates.count == 5) // 4 points + closing
+        #expect(polygon.coordinates == [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
     }
 
     // Validates decoding a TWKB MultiPoint with two points.
@@ -111,8 +106,12 @@ struct TWKBTests {
         let bytes: [UInt8] = [0x04, 0x00, 0x02, 0x00, 0x00, 0x02, 0x04]
         let data = Data(bytes)
 
-        let result = try TWKBCoder.decode(twkb: data)
-        #expect(result is MultiPoint)
+        let multiPoint = try #require(try TWKBCoder.decode(twkb: data) as? MultiPoint)
+
+        #expect(multiPoint.coordinates == [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+        ])
     }
 
     // Validates that decoding an empty TWKB data throws an error.
@@ -370,6 +369,117 @@ struct TWKBTests {
     func dataAsFeatureCollectionFromTWKBBadData() async throws {
         let data = Data([0xFF, 0xFF])
         #expect(data.asFeatureCollectionFromTWKB(sourceProjection: .epsg4326) == nil)
+    }
+
+}
+
+// MARK: - GeoJSON audit regressions
+
+extension TWKBTests {
+
+    /// Extended Z dimensions use the extended precision byte.
+    @Test
+    func twkbPointWithZ() throws {
+        let data = Data([0x01, 0x08, 0x01, 0x02, 0x04, 0x06])
+        let point = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate == Coordinate3D(
+            latitude: 2.0,
+            longitude: 1.0,
+            altitude: 3.0))
+    }
+
+    /// Extended M dimensions use the extended precision byte.
+    @Test
+    func twkbPointWithM() throws {
+        let data = Data([0x01, 0x08, 0x02, 0x02, 0x04, 0x08])
+        let point = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate == Coordinate3D(
+            latitude: 2.0,
+            longitude: 1.0,
+            m: 4.0))
+    }
+
+    /// Bounding boxes in the TWKB metadata are skipped before the geometry data.
+    @Test
+    func twkbPointWithBoundingBox() throws {
+        let data = Data([0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04])
+        let point = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate == Coordinate3D(latitude: 2.0, longitude: 1.0))
+    }
+
+    /// Size metadata is skipped before the geometry data.
+    @Test
+    func twkbPointWithSize() throws {
+        let data = Data([0x01, 0x02, 0x02, 0x02, 0x04])
+        let point = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate == Coordinate3D(latitude: 2.0, longitude: 1.0))
+    }
+
+    /// ID lists in collections are skipped before the coordinate data.
+    @Test
+    func twkbMultiPointWithIDList() throws {
+        let data = Data([0x04, 0x04, 0x02, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04])
+        let multiPoint = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? MultiPoint)
+
+        #expect(multiPoint.coordinates == [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+        ])
+    }
+
+    /// Empty geometry metadata is reported as an error.
+    @Test
+    func twkbEmptyGeometryFails() {
+        let data = Data([0x02, 0x10])
+
+        #expect(throws: TWKBCoder.TWKBError.self) {
+            try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
+        }
+    }
+
+    /// Negative precision is stored with zigzag encoding in the type byte.
+    @Test
+    func twkbNegativePrecision() throws {
+        let data = Data([0xF1, 0x00, 0x14, 0x00])
+        let point = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate == Coordinate3D(latitude: 0.0, longitude: 100.0))
+    }
+
+    /// Overlong TWKB varints fail instead of overflowing the decoder.
+    @Test
+    func twkbOverlongVarIntFails() {
+        let data = Data([0x01, 0x00] + Array(repeating: 0x80, count: 11) + [0x00])
+
+        #expect(throws: TWKBCoder.TWKBError.self) {
+            try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
+        }
+    }
+
+    /// Trailing bytes are not silently ignored.
+    @Test
+    func twkbTrailingBytesFail() {
+        let data = Data([0x61, 0x00, 0x00, 0x00, 0x00])
+
+        #expect(throws: TWKBCoder.TWKBError.self) {
+            try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
+        }
     }
 
 }

@@ -20,6 +20,7 @@ extension GeoJsonGeometry {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -39,6 +40,7 @@ extension GeoJsonGeometry {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -107,6 +109,7 @@ extension Feature {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -130,6 +133,7 @@ extension Feature {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -139,6 +143,7 @@ extension Feature {
     ///   no geometry.
     public var asWKT: String? {
         guard let geometry else { return nil }
+
         return WKTCoder.encode(geometry: geometry)
     }
 
@@ -164,6 +169,7 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+
         if let geometryCollection = geometry as? GeometryCollection {
             self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
         }
@@ -188,6 +194,7 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKTCoder.decode(wkt: wkt, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+
         if let geometryCollection = geometry as? GeometryCollection {
             self.init(geometryCollection.geometries, calculateBoundingBox: calculateBoundingBox)
         }
@@ -202,6 +209,7 @@ extension FeatureCollection {
     ///   no geometry.
     public var asWKT: String? {
         guard features.allSatisfy({ $0.geometry != nil }) else { return nil }
+
         return WKTCoder.encode(geometry: GeometryCollection(features.compactMap(\.geometry)))
     }
 
@@ -313,6 +321,7 @@ extension String {
 public enum WKTCoder {
 
     enum WKTTypeCode: String {
+
         case point
         case lineString = "linestring"
         case linearRing = "linearring"
@@ -322,10 +331,12 @@ public enum WKTCoder {
         case multiPolygon = "multipolygon"
         case geometryCollection = "geometrycollection"
         case triangle
+
     }
 
     /// WKT errors.
     public enum WKTCoderError: Error {
+
         /// The WKT data is corrupted.
         case dataCorrupted
         /// The geometry is empty.
@@ -338,6 +349,7 @@ public enum WKTCoder {
         case unknownSRID
         /// The geometry type is unexpected.
         case unexpectedType
+
     }
 
 }
@@ -402,7 +414,16 @@ extension WKTCoder {
             throw WKTCoderError.targetProjectionMustBeNoSRID
         }
 
-        return try scanGeometry(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        let geometry = try scanGeometry(
+            scanner: scanner,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+
+        guard scanner.isAtEnd else {
+            throw WKTCoderError.dataCorrupted
+        }
+
+        return geometry
     }
 
     // MARK: -
@@ -421,35 +442,71 @@ extension WKTCoder {
 
         switch type {
         case .point:
-            guard let coordinate = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)?.first else {
+            guard let coordinates = try scanCoordinates(
+                scanner: scanner,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: decodeZ,
+                decodeM: decodeM),
+                coordinates.count == 1
+            else {
                 throw WKTCoderError.dataCorrupted
             }
-            return Point(coordinate)
+
+            return Point(coordinates[0])
 
         case .multiPoint:
             var points: [Point] = []
 
-            // Two options:
-            // - Array of points
-            // - Array of coordinates
-            let location = scanner.currentIndex
-            if scanner.scanString("((") != nil {
-                scanner.currentIndex = scanner.string.index(after: location)
+            guard scanner.scanString("(") != nil else {
+                throw WKTCoderError.dataCorrupted
+            }
 
-                while scanner.scanString(")") == nil {
-                    if let coordinates = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM) {
-                        points.append(contentsOf: coordinates.asPoints)
+            // Two syntaxes are valid:
+            // - MULTIPOINT ((1 2), (3 4))
+            // - MULTIPOINT (1 2, 3 4)
+            if scanner.scanString("(") != nil {
+                let coordinates = try scanCoordinateSequence(
+                    scanner: scanner,
+                    sourceProjection: sourceProjection,
+                    targetProjection: targetProjection,
+                    decodeZ: decodeZ,
+                    decodeM: decodeM) ?? []
+                points.append(contentsOf: coordinates.asPoints)
+
+                while scanner.scanString(",") != nil {
+                    guard let coordinates = try scanCoordinates(
+                        scanner: scanner,
+                        sourceProjection: sourceProjection,
+                        targetProjection: targetProjection,
+                        decodeZ: decodeZ,
+                        decodeM: decodeM)
+                    else {
+                        throw WKTCoderError.dataCorrupted
                     }
-                    _ = scanner.scanString(",")
+
+                    points.append(contentsOf: coordinates.asPoints)
+                }
+
+                guard scanner.scanString(")") != nil else {
+                    throw WKTCoderError.dataCorrupted
                 }
             }
             else {
-                if let coordinates = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM) {
-                    points.append(contentsOf: coordinates.asPoints)
-                }
+                let coordinates = try scanCoordinateSequence(
+                    scanner: scanner,
+                    sourceProjection: sourceProjection,
+                    targetProjection: targetProjection,
+                    decodeZ: decodeZ,
+                    decodeM: decodeM) ?? []
+                points.append(contentsOf: coordinates.asPoints)
             }
 
-            return MultiPoint(points) ?? MultiPoint()
+            guard let multiPoint = MultiPoint(points) else {
+                throw WKTCoderError.dataCorrupted
+            }
+
+            return multiPoint
 
         case .linearRing, .lineString:
             return try decodeLineString(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
@@ -466,7 +523,11 @@ extension WKTCoder {
                 _ = scanner.scanString(",")
             }
 
-            return MultiLineString(lineStrings) ?? MultiLineString()
+            guard let multiLineString = MultiLineString(lineStrings) else {
+                throw WKTCoderError.dataCorrupted
+            }
+
+            return multiLineString
 
         case .polygon, .triangle:
             return try decodePolygon(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
@@ -483,7 +544,11 @@ extension WKTCoder {
                 _ = scanner.scanString(",")
             }
 
-            return MultiPolygon(polygons) ?? MultiPolygon()
+            guard let multiPolygon = MultiPolygon(polygons) else {
+                throw WKTCoderError.dataCorrupted
+            }
+
+            return multiPolygon
 
         case .geometryCollection:
             var geometries: [GeoJsonGeometry] = []
@@ -508,13 +573,18 @@ extension WKTCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> LineString {
-        if let coordinates = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM) {
-            guard let lineString = LineString(coordinates) else {
-                throw WKTCoderError.dataCorrupted
-            }
-            return lineString
+        guard let coordinates = try scanCoordinates(
+            scanner: scanner,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection,
+            decodeZ: decodeZ,
+            decodeM: decodeM),
+            let lineString = LineString(coordinates)
+        else {
+            throw WKTCoderError.dataCorrupted
         }
-        return LineString()
+
+        return lineString
     }
 
     private static func decodePolygon(
@@ -531,22 +601,25 @@ extension WKTCoder {
         }
 
         while scanner.scanString(")") == nil {
-            if let coordinates = try scanCoordinates(scanner: scanner, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM) {
-                guard let ring = Ring(coordinates) else {
-                    throw WKTCoderError.dataCorrupted
-                }
-                rings.append(ring)
+            guard let coordinates = try scanCoordinates(
+                scanner: scanner,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: decodeZ,
+                decodeM: decodeM),
+                let ring = Ring(coordinates)
+            else {
+                throw WKTCoderError.dataCorrupted
             }
-            _ = scanner.scanString(",")
-        }
 
-        if rings.isEmpty {
-            return Polygon()
+            rings.append(ring)
+            _ = scanner.scanString(",")
         }
 
         guard let polygon = Polygon(rings) else {
             throw WKTCoderError.dataCorrupted
         }
+
         return polygon
     }
 
@@ -605,9 +678,30 @@ extension WKTCoder {
             throw WKTCoderError.dataCorrupted
         }
 
-        var coordinates: [Coordinate3D] = []
+        return try scanCoordinateSequence(
+            scanner: scanner,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection,
+            decodeZ: decodeZ,
+            decodeM: decodeM)
+    }
 
-        while scanner.scanString(")") == nil {
+    private static func scanCoordinateSequence(
+        scanner: Scanner,
+        sourceProjection: Projection,
+        targetProjection: Projection,
+        decodeZ: Bool,
+        decodeM: Bool
+    ) throws -> [Coordinate3D]? {
+        var coordinates: [Coordinate3D] = []
+        var closed = false
+
+        while true {
+            if scanner.scanString(")") != nil {
+                closed = true
+                break
+            }
+
             var vector: [Double] = []
 
             while scanner.scanString(",") == nil {
@@ -616,12 +710,13 @@ extension WKTCoder {
                 vector.append(number)
             }
 
-            if vector.isEmpty { break }
+            if vector.isEmpty {
+                break
+            }
 
             guard let x = vector.get(at: 0), let y = vector.get(at: 1) else {
                 throw WKTCoderError.dataCorrupted
             }
-
             guard x.isFinite, y.isFinite else {
                 throw WKTCoderError.invalidGeometry
             }
@@ -640,8 +735,12 @@ extension WKTCoder {
                 m = vector.get(at: 2)
             }
 
-            if z?.isFinite == false { z = nil }
-            if m?.isFinite == false { m = nil }
+            if z?.isFinite == false {
+                z = nil
+            }
+            if m?.isFinite == false {
+                m = nil
+            }
 
             // WKT always stores x (longitude/easting) first, then y
             // (latitude/northing). Coordinates stay in the source projection
@@ -649,6 +748,10 @@ extension WKTCoder {
             // (noSRID values are copied verbatim by `projected(to:)`).
             coordinates.append(
                 Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection))
+        }
+
+        guard closed else {
+            throw WKTCoderError.dataCorrupted
         }
 
         return coordinates.projected(to: targetProjection).nilIfEmpty
@@ -672,7 +775,11 @@ extension WKTCoder {
     ) -> String? {
         var result = ""
 
-        encode(geometry: geometry, targetProjection: targetProjection, to: &result)
+        encode(
+            geometry: geometry,
+            targetProjection: targetProjection ?? geometry.projection,
+            includeSRID: targetProjection != nil,
+            to: &result)
 
         return result.nilIfEmpty
     }
@@ -682,23 +789,24 @@ extension WKTCoder {
     private static func encode(
         geometry: GeoJsonGeometry,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
         switch geometry.type {
         case .point:
-            encode(geometry as! Point, targetProjection: targetProjection, to: &result)
+            encode(geometry as! Point, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiPoint:
-            encode(geometry as! MultiPoint, targetProjection: targetProjection, to: &result)
+            encode(geometry as! MultiPoint, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .lineString:
-            encode(geometry as! LineString, targetProjection: targetProjection, to: &result)
+            encode(geometry as! LineString, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiLineString:
-            encode(geometry as! MultiLineString, targetProjection: targetProjection, to: &result)
+            encode(geometry as! MultiLineString, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .polygon:
-            encode(geometry as! Polygon, targetProjection: targetProjection, to: &result)
+            encode(geometry as! Polygon, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiPolygon:
-            encode(geometry as! MultiPolygon, targetProjection: targetProjection, to: &result)
+            encode(geometry as! MultiPolygon, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .geometryCollection:
-            encode(geometry as! GeometryCollection, targetProjection: targetProjection, to: &result)
+            encode(geometry as! GeometryCollection, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .feature, .featureCollection, .invalid:
             // Feature and FeatureCollection can't happen
             break
@@ -708,36 +816,40 @@ extension WKTCoder {
     private static func encode(
         _ value: Point,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.point.rawValue, for: value.coordinate, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.point.rawValue, for: value.coordinate, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString(string(for: [value.coordinate], targetProjection: targetProjection), to: &result)
     }
 
     private static func encode(
         _ value: MultiPoint,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.multiPoint.rawValue, for: value.points.first?.coordinate, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.multiPoint.rawValue, for: value.points.first?.coordinate, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString(string(for: value.coordinates, targetProjection: targetProjection), to: &result)
     }
 
     private static func encode(
         _ value: LineString,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.lineString.rawValue, for: value.coordinates.first, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.lineString.rawValue, for: value.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString(string(for: value.coordinates, targetProjection: targetProjection), to: &result)
     }
 
     private static func encode(
         _ value: MultiLineString,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.multiLineString.rawValue, for: value.lineStrings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.multiLineString.rawValue, for: value.lineStrings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString("(", to: &result)
         appendString(value.lineStrings.map({ string(for: $0.coordinates, targetProjection: targetProjection) }).joined(separator: ","), to: &result)
         appendString(")", to: &result)
@@ -746,18 +858,20 @@ extension WKTCoder {
     private static func encode(
         _ value: Polygon,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString(string(for: value, targetProjection: targetProjection), to: &result)
     }
 
     private static func encode(
         _ value: MultiPolygon,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.multiPolygon.rawValue, for: value.polygons.first?.rings.first?.coordinates.first, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.multiPolygon.rawValue, for: value.polygons.first?.rings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString("(", to: &result)
         appendString(value.polygons.map({ string(for: $0, targetProjection: targetProjection) }).joined(separator: ","), to: &result)
         appendString(")", to: &result)
@@ -766,12 +880,17 @@ extension WKTCoder {
     private static func encode(
         _ value: GeometryCollection,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
-        appendTypeCode(WKTTypeCode.geometryCollection.rawValue, for: nil, targetProjection: targetProjection, to: &result)
+        appendTypeCode(WKTTypeCode.geometryCollection.rawValue, for: nil, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         appendString("(", to: &result)
         for (i, geometry) in value.geometries.enumerated() {
-            encode(geometry: geometry, targetProjection: nil, to: &result)
+            encode(
+                geometry: geometry,
+                targetProjection: targetProjection,
+                includeSRID: false,
+                to: &result)
             if i < (value.geometries.count - 1) {
                 appendString(",", to: &result)
             }
@@ -815,6 +934,7 @@ extension WKTCoder {
         _ typeCode: String,
         for coordinate: Coordinate3D? = nil,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to result: inout String
     ) {
         var typeCode = typeCode.uppercased()
@@ -827,25 +947,11 @@ extension WKTCoder {
             typeCode += "M"
         }
 
-        if let srid = targetProjection?.srid {
+        if includeSRID, let srid = targetProjection?.srid {
             typeCode = "SRID=\(srid);" + typeCode
         }
 
         appendString(typeCode, to: &result)
-    }
-
-    private static func appendUInt32(
-        _ value: UInt32,
-        to result: inout String
-    ) {
-        result += String(value)
-    }
-
-    private static func appendDouble(
-        _ value: Double,
-        to result: inout String
-    ) {
-        result += String(value)
     }
 
     private static func appendString(

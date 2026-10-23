@@ -298,6 +298,17 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- GeoJSON model and reader audit (#319): feature `id` is no longer exposed as a
+  foreign member, string and `Data` readers use the same fallback path, parser
+  validation continues after a missing geometry and checks ring closure and
+  foreign-member compatibility, and collection mutation no longer traps on
+  negative indices or rejects unlocated features in located collections.
+- WKB/WKT/TWKB audit (#319): explicit WKB source projections now consume an
+  embedded EWKB SRID, truncated WKB counts and invalid rings are rejected,
+  nested encoders use the requested projection, malformed WKT and trailing
+  bytes are rejected, and TWKB metadata (bbox, size, ID list, Z/M dimensions
+  and the empty-geometry flag) is parsed according to the specification.
+
 - `madeValid` now accepts repaired results only when they satisfy topological
   ``ValidatableGeoJson/isValid``, not merely structural validity. Invalid
   points and lines return `nil`, invalid holes either fall back to a valid

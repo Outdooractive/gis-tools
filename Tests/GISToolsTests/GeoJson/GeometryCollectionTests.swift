@@ -97,3 +97,76 @@ struct GeometryCollectionTests {
     }
 
 }
+
+// MARK: - GeoJSON audit regressions
+
+extension GeometryCollectionTests {
+
+    /// GeometryCollection mutation operations keep projections and bounding boxes consistent.
+    @Test
+    func geometryCollectionOperations() throws {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        var collection = GeometryCollection([point], calculateBoundingBox: true)
+
+        collection.appendGeometry(line)
+        collection.insertGeometry(point, atIndex: 0)
+
+        #expect(collection.geometries.count == 3)
+        #expect(collection.boundingBox?.southWest.longitude == 0.0)
+        #expect(collection.boundingBox?.northEast.longitude == 1.0)
+
+        let removed = collection.removeGeometry(at: 1)
+        #expect(removed?.type == .point)
+        #expect(collection.geometries.count == 2)
+        #expect(collection.boundingBox?.northEast.longitude == 1.0)
+
+        collection.mapGeometries { geometry in
+            geometry.type == .point
+                ? Point(Coordinate3D(latitude: 0.0, longitude: 2.0))
+                : geometry
+        }
+        #expect(collection.geometries.first?.allCoordinates.first?.longitude == 2.0)
+
+        collection.compactMapGeometries { geometry in
+            geometry.type == .point ? geometry : nil
+        }
+        #expect(collection.geometries.count == 1)
+
+        collection.filterGeometries { _ in false }
+        #expect(collection.geometries.isEmpty)
+    }
+
+}
+// MARK: - Audit regressions
+
+extension GeometryCollectionTests {
+
+    /// Negative geometry insertion indices are ignored instead of trapping.
+    @Test
+    func negativeGeometryInsertionIndexIsIgnored() {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        var geometryCollection = GeometryCollection([point])
+
+        geometryCollection.insertGeometry(point, atIndex: -1)
+
+        #expect(geometryCollection.geometries.count == 1)
+    }
+
+    /// Foreign members survive a GeometryCollection JSON round trip.
+    @Test
+    func geometryCollectionForeignMembersSurviveJSONRoundTrip() throws {
+        let json = #"""
+        {"type":"GeometryCollection","geometries":[{"type":"Point","coordinates":[1,2]}],"source":"test"}
+        """#
+        let geometry = try JSONDecoder().decode(
+            GeometryCollection.self,
+            from: Data(json.utf8))
+
+        #expect(geometry.foreignMember(for: "source") == "test")
+    }
+
+}

@@ -45,7 +45,7 @@ public struct GeometryCollection: GeoJsonGeometry {
         self.geometries = geometries
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
     }
 
@@ -76,7 +76,7 @@ public struct GeometryCollection: GeoJsonGeometry {
         self.boundingBox = GeometryCollection.tryCreate(json: geoJson["bbox"])
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
 
         if geoJson.count > 2 {
@@ -95,13 +95,13 @@ public struct GeometryCollection: GeoJsonGeometry {
     public var asJson: [String: Sendable] {
         var result: [String: Sendable] = [
             "type": GeoJsonType.geometryCollection.rawValue,
-            "geometries": geometries.map { $0.asJson }
+            "geometries": geometries.map { $0.asJson },
         ]
         if let boundingBox = boundingBox {
             result["bbox"] = boundingBox.asJson
         }
-        result.merge(foreignMembers) { (current, new) in
-            return current
+        result.merge(foreignMembers) { current, new in
+            current
         }
         return result
     }
@@ -124,7 +124,9 @@ extension GeometryCollection {
             return geometry
         }
 
-        if boundingBox != nil && ifNecessary { return boundingBox }
+        if boundingBox != nil, ifNecessary {
+            return boundingBox
+        }
 
         boundingBox = calculateBoundingBox()
         return boundingBox
@@ -137,8 +139,8 @@ extension GeometryCollection {
         let geometryBoundingBoxes: [BoundingBox] = geometries.compactMap({ $0.boundingBox ?? $0.calculateBoundingBox() })
         guard !geometryBoundingBoxes.isEmpty else { return nil }
 
-        return geometryBoundingBoxes.reduce(geometryBoundingBoxes[0]) { (result, boundingBox) -> BoundingBox in
-            return result + boundingBox
+        return geometryBoundingBoxes.reduce(geometryBoundingBoxes[0]) { result, boundingBox -> BoundingBox in
+            result + boundingBox
         }
     }
 
@@ -160,13 +162,13 @@ extension GeometryCollection {
 extension GeometryCollection: Equatable {
 
     /// Check if two GeometryCollections are equal.
-    public static func ==(
+    public static func == (
         lhs: GeometryCollection,
         rhs: GeometryCollection
     ) -> Bool {
         return lhs.projection == rhs.projection
-            && lhs.geometries.elementsEqual(rhs.geometries, by: { (left, right) -> Bool in
-                return left.isEqualTo(right)
+            && lhs.geometries.elementsEqual(rhs.geometries, by: { left, right -> Bool in
+                left.isEqualTo(right)
             })
     }
 
@@ -202,7 +204,7 @@ extension GeometryCollection {
 
         var geometryCollection = GeometryCollection(
             geometries.map({ $0.projected(to: newProjection) }),
-            calculateBoundingBox: (boundingBox != nil))
+            calculateBoundingBox: boundingBox != nil)
         geometryCollection.foreignMembers = foreignMembers
         return geometryCollection
     }
@@ -223,14 +225,11 @@ extension GeometryCollection {
         _ geometry: GeoJsonGeometry,
         atIndex index: Int
     ) {
-        guard geometries.count == 0 || projection == geometry.projection else { return }
+        guard index >= 0 else { return }
+        guard geometries.isEmpty || projection == geometry.projection else { return }
 
-        if index < geometries.count {
-            geometries.insert(geometry, at: index)
-        }
-        else {
-            geometries.append(geometry)
-        }
+        let insertionIndex = min(index, geometries.count)
+        geometries.insert(geometry, at: insertionIndex)
 
         if boundingBox != nil {
             updateBoundingBox(onlyIfNecessary: false)
@@ -243,7 +242,7 @@ extension GeometryCollection {
     /// - Parameters:
     ///    - geometry: The geometry to append
     public mutating func appendGeometry(_ geometry: GeoJsonGeometry) {
-        guard geometries.count == 0 || projection == geometry.projection else { return }
+        guard geometries.isEmpty || projection == geometry.projection else { return }
 
         geometries.append(geometry)
 
@@ -293,6 +292,5 @@ extension GeometryCollection {
     public mutating func filterGeometries(_ isIncluded: (GeoJsonGeometry) -> Bool) {
         geometries = geometries.filter(isIncluded)
     }
-
 
 }
