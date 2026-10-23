@@ -17,10 +17,47 @@ extension PolygonGeometry {
     /// 4978→4326 projection. The antimeridian normalisation only applies
     /// to EPSG:4326.
     ///
+    /// - Note: Because the result is a single `Polygon`, mask polygons with
+    ///   holes and masks crossing the outer boundary are reduced to their outer
+    ///   rings. Use ``PolygonGeometry/difference(with:gridSize:)`` when islands
+    ///   or clipped multi-part results are required.
+    ///
     /// - Parameter outerPolygon: The polygon to mask (defaults to the world bounding box).
     /// - Returns: A masked ``Polygon``, or `nil` if the geometry is empty.
     public func mask(outerPolygon: Polygon? = nil) -> Polygon? {
-        let outer = outerPolygon ?? Polygon.world.projected(to: projection)
+        let outer: Polygon
+        if let outerPolygon {
+            outer = outerPolygon
+        }
+        else if projection == .epsg4326 {
+            outer = Polygon.world
+        }
+        else if projection == .noSRID,
+                let box = calculateBoundingBox()
+        {
+            let dx = max((box.northEast.x - box.southWest.x) * 0.1, 1.0)
+            let dy = max((box.northEast.y - box.southWest.y) * 0.1, 1.0)
+            let minX = box.southWest.x - dx
+            let minY = box.southWest.y - dy
+            let maxX = box.northEast.x + dx
+            let maxY = box.northEast.y + dy
+            outer = Polygon(unchecked: [[
+                Coordinate3D(x: minX, y: minY, projection: .noSRID),
+                Coordinate3D(x: maxX, y: minY, projection: .noSRID),
+                Coordinate3D(x: maxX, y: maxY, projection: .noSRID),
+                Coordinate3D(x: minX, y: maxY, projection: .noSRID),
+                Coordinate3D(x: minX, y: minY, projection: .noSRID),
+            ]])
+        }
+        else if let world = projection.definition.worldBoundingBox,
+                let polygon = world.boundingBoxGeometry.polygons.first
+        {
+            outer = polygon
+        }
+        else {
+            outer = Polygon.world.projected(to: projection)
+        }
+
         guard let outerRing = outer.outerRing else { return nil }
 
         let holes: [Ring] = polygons.compactMap { $0.outerRing }
@@ -44,23 +81,27 @@ extension PolygonGeometry {
         let containedHoles: [Ring]
         if needShift {
             func shiftCoord(_ c: Coordinate3D) -> Coordinate3D {
-                Coordinate3D(latitude: c.latitude,
-                             longitude: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
-                             altitude: c.altitude, m: c.m)
+                Coordinate3D(
+                    latitude: c.latitude,
+                    longitude: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
+                    altitude: c.altitude,
+                    m: c.m)
             }
 
             let shiftedOuter = Polygon(unchecked: [
-                Ring(unchecked: outerCoords.map(shiftCoord))
+                Ring(unchecked: outerCoords.map(shiftCoord)),
             ])
 
             containedHoles = holes.filter { hole in
                 guard let pt = hole.coordinates.first else { return false }
+
                 return shiftedOuter.contains(shiftCoord(pt))
             }
         }
         else {
             containedHoles = holes.filter { hole in
                 guard let pt = hole.coordinates.first else { return false }
+
                 return outer.contains(pt)
             }
         }

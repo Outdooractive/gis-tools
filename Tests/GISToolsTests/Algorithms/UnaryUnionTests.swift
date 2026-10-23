@@ -351,33 +351,23 @@ struct UnaryUnionTests {
     // Validates coverageIsValid fails for map tiles with a gap.
     @Test
     func mapTilesWithGap() throws {
-        // Two tiles with a tile-sized gap between them
-        let tile1 = MapTile(x: 0, y: 0, z: 1)
-        let tile2 = MapTile(x: 3, y: 0, z: 1) // gap: tiles 1,2 are skipped
-
-        for tile in [tile1, tile2] {
-            let bbox = tile.boundingBox()
-            _ = bbox
-        }
-
-        let bbox1 = tile1.boundingBox()
-        let bbox2 = tile2.boundingBox()
-        let p1 = try #require(Polygon([[
-            bbox1.southWest,
-            Coordinate3D(latitude: bbox1.southWest.latitude, longitude: bbox1.northEast.longitude),
-            bbox1.northEast,
-            Coordinate3D(latitude: bbox1.northEast.latitude, longitude: bbox1.southWest.longitude),
-            bbox1.southWest,
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let p2 = try #require(Polygon([[
-            bbox2.southWest,
-            Coordinate3D(latitude: bbox2.southWest.latitude, longitude: bbox2.northEast.longitude),
-            bbox2.northEast,
-            Coordinate3D(latitude: bbox2.northEast.latitude, longitude: bbox2.southWest.longitude),
-            bbox2.southWest,
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 30.0),
+            Coordinate3D(latitude: 30.0, longitude: 30.0),
+            Coordinate3D(latitude: 30.0, longitude: 20.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
         ]]))
-        let mp = try #require(MultiPolygon([p1, p2]))
-        #expect(mp.coverageIsValid() == false)
+        let multi = try #require(MultiPolygon([first, second]))
+
+        #expect(!multi.coverageIsValid())
     }
 
     // MARK: - Antimeridian
@@ -487,6 +477,40 @@ struct UnaryUnionTests {
         let manual = try #require(snapped.unaryUnion())
         #expect(withGrid.polygons.count == manual.polygons.count)
         #expect(abs(withGrid.area - manual.area) < 1.0)
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension UnaryUnionTests {
+
+    @Test
+    func isolatedPolygonInvalidatesCoverage() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 20.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]]))
+        let isolated = try #require(Polygon([[
+            Coordinate3D(latitude: 100.0, longitude: 100.0),
+            Coordinate3D(latitude: 100.0, longitude: 110.0),
+            Coordinate3D(latitude: 110.0, longitude: 110.0),
+            Coordinate3D(latitude: 110.0, longitude: 100.0),
+            Coordinate3D(latitude: 100.0, longitude: 100.0),
+        ]]))
+        let multi = try #require(MultiPolygon([first, second, isolated]))
+
+        #expect(!multi.coverageIsValid())
     }
 
 }

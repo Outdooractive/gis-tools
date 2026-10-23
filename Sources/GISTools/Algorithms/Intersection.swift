@@ -19,12 +19,13 @@ extension Polygon {
     ) -> PolygonGeometry? {
         let all: [Polygon]
         if let gridSize {
-            all = [self.snappedToGrid(tolerance: gridSize)]
+            all = [snappedToGrid(tolerance: gridSize)]
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
-        } else {
-            all = self.polygons + other.polygons
         }
-        return Intersection.intersectPolygons(all)
+        else {
+            all = polygons + other.polygons
+        }
+        return Intersection.intersectPolygons(all, firstCount: 1)
     }
 
 }
@@ -46,12 +47,13 @@ extension MultiPolygon {
     ) -> PolygonGeometry? {
         let all: [Polygon]
         if let gridSize {
-            all = self.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+            all = polygons.map { $0.snappedToGrid(tolerance: gridSize) }
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
-        } else {
-            all = self.polygons + other.polygons
         }
-        return Intersection.intersectPolygons(all)
+        else {
+            all = polygons + other.polygons
+        }
+        return Intersection.intersectPolygons(all, firstCount: polygons.count)
     }
 
 }
@@ -63,18 +65,24 @@ enum Intersection {
     /// - Note: The intersection algorithm works in EPSG:3857 (Web Mercator) for uniform
     ///   Cartesian tolerances. Inputs are automatically reprojected. This limits
     ///   the usable latitude range to approximately ±85°.
-    static func intersectPolygons(_ polygons: [Polygon]) -> PolygonGeometry? {
+    static func intersectPolygons(
+        _ polygons: [Polygon],
+        firstCount: Int
+    ) -> PolygonGeometry? {
         guard polygons.isNotEmpty else { return nil }
         guard polygons.count > 1 else { return nil }
+        guard firstCount > 0, firstCount < polygons.count else { return nil }
 
         // Work in EPSG:3857 so all tolerances are uniform meters
         let originalProj = polygons.first?.projection ?? .epsg4326
-        let polygons3857 = originalProj == .epsg3857
-            ? polygons
-            : polygons.map { $0.projected(to: .epsg3857) }
+        let normalized = polygons.map {
+            $0.projection == originalProj ? $0 : $0.projected(to: originalProj)
+        }
+        let polygons3857 = normalized.map { $0.projected(to: .epsg3857) }
 
         let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
-            polygons.containsAll(point)
+            polygons.contains(point, in: 0 ..< firstCount)
+                && polygons.contains(point, in: firstCount ..< polygons.polygons.count)
         }
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {
             return nil

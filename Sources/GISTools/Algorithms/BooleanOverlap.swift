@@ -157,7 +157,8 @@ extension PolygonGeometry {
         // in projected CRSs where the coverage predicate is not the right
         // abstraction.
         guard let intersection = Intersection.intersectPolygons(
-            snappedSelf.polygons + other.polygons)
+            snappedSelf.polygons + other.polygons,
+            firstCount: snappedSelf.polygons.count)
         else { return false }
 
         let overlapArea = OverlapArea.of(intersection)

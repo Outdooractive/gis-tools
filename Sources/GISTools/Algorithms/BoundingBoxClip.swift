@@ -17,6 +17,7 @@ extension Point {
     /// - Returns: The point if is inside the bounding box, *nil* otherwise.
     public func clipped(to boundingBox: BoundingBox) -> Point? {
         guard boundingBox.contains(coordinate) else { return nil }
+
         return self
     }
 
@@ -38,7 +39,7 @@ extension MultiPoint {
 
         var multiPoint = MultiPoint(
             clipped,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         multiPoint?.foreignMembers = foreignMembers
         return multiPoint
     }
@@ -60,7 +61,7 @@ extension LineString {
 
         var lineString = MultiLineString(
             boundingBox.clipLine(coordinates: coordinates),
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         lineString?.foreignMembers = foreignMembers
         return lineString
     }
@@ -82,7 +83,7 @@ extension MultiLineString {
 
         var lineString = MultiLineString(
             coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }),
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         lineString?.foreignMembers = foreignMembers
         return lineString
     }
@@ -95,6 +96,11 @@ extension Polygon {
     ///
     /// All projections are supported — the 2‑D Sutherland–Hodgeman clipping
     /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    ///
+    /// - Note: A polygon clipped into multiple disconnected components, or a
+    ///   polygon clipped by an antimeridian-crossing bounding box, cannot be
+    ///   represented by the single `Polygon` returned here. Use overlay with a
+    ///   box polygon for those cases.
     ///
     /// - Parameter boundingBox: The bounding box
     ///
@@ -120,7 +126,7 @@ extension Polygon {
 
         var polygon = Polygon(
             result,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         polygon?.foreignMembers = foreignMembers
         return polygon
     }
@@ -145,7 +151,7 @@ extension MultiPolygon {
 
         var polygon = MultiPolygon(
             clipped,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         polygon?.foreignMembers = foreignMembers
         return polygon
     }
@@ -170,7 +176,7 @@ extension GeometryCollection {
 
         var geometryCollection = GeometryCollection(
             clipped,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         geometryCollection.foreignMembers = foreignMembers
         return geometryCollection
     }
@@ -207,6 +213,7 @@ extension GeoJsonGeometry {
         case let geometryCollection as GeometryCollection:
             let clipped = geometryCollection.geometries.compactMap({ $0.clipped(to: boundingBox) })
             guard clipped.isNotEmpty else { return nil }
+
             return GeometryCollection(clipped)
 
         default:
@@ -234,7 +241,7 @@ extension Feature {
             clipped,
             id: id,
             properties: properties,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         feature.foreignMembers = foreignMembers
         return feature
     }
@@ -256,7 +263,7 @@ extension FeatureCollection {
 
         var featureCollection = FeatureCollection(
             clipped,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: self.boundingBox != nil)
         featureCollection.foreignMembers = foreignMembers
         return featureCollection
     }
@@ -267,8 +274,8 @@ extension BoundingBox {
 
     // TODO: This is ugly Swift code
 
-    // Cohen-Sutherland line clipping algorithm, adapted to efficiently
-    // handle polylines rather than just segments.
+    /// Cohen-Sutherland line clipping algorithm, adapted to efficiently
+    /// handle polylines rather than just segments.
     fileprivate func clipLine(coordinates: [Coordinate3D]) -> [[Coordinate3D]] {
         guard coordinates.count > 1 else { return [] }
 
@@ -287,7 +294,7 @@ extension BoundingBox {
                 if (codeA | codeB) == 0 { // accept
                     part.append(a)
 
-                    if (codeB != lastCode) { // segment went outside
+                    if codeB != lastCode { // segment went outside
                         part.append(b)
 
                         if i < coordinates.count - 1 { // start a new line
@@ -308,6 +315,7 @@ extension BoundingBox {
                     guard let newA = intersect(a: a, b: b, edge: codeA) else {
                         break
                     }
+
                     a = newA
                     codeA = bitCode(for: a)
                 }
@@ -315,6 +323,7 @@ extension BoundingBox {
                     guard let newB = intersect(a: a, b: b, edge: codeB) else {
                         break
                     }
+
                     b = newB
                     codeB = bitCode(for: b)
                 }
@@ -330,7 +339,7 @@ extension BoundingBox {
         return result
     }
 
-    // Sutherland-Hodgeman polygon clipping algorithm
+    /// Sutherland-Hodgeman polygon clipping algorithm
     fileprivate func clipPolygon(coordinates: [Coordinate3D]) -> [Coordinate3D] {
         guard coordinates.count > 1 else { return [] }
 
@@ -371,7 +380,7 @@ extension BoundingBox {
         return result
     }
 
-    // intersect a segment against one of the 4 lines that make up the bbox
+    /// intersect a segment against one of the 4 lines that make up the bbox
     private func intersect(
         a: Coordinate3D,
         b: Coordinate3D,
@@ -405,26 +414,26 @@ extension BoundingBox {
         return nil
     }
 
-    // bit code reflects the point position relative to the bbox:
-    //
-    //         left  mid  right
-    //    top  1001  1000  1010
-    //    mid  0001  0000  0010
-    // bottom  0101  0100  0110
+    /// bit code reflects the point position relative to the bbox:
+    ///
+    ///         left  mid  right
+    ///    top  1001  1000  1010
+    ///    mid  0001  0000  0010
+    /// bottom  0101  0100  0110
     private func bitCode(for coordinate: Coordinate3D) -> UInt8 {
         var code: UInt8 = 0
 
-        if coordinate.x < self.southWest.x {
+        if coordinate.x < southWest.x {
             code |= 1 // left
         }
-        else if coordinate.x > self.northEast.x {
+        else if coordinate.x > northEast.x {
             code |= 2 // right
         }
 
-        if coordinate.y < self.southWest.y {
+        if coordinate.y < southWest.y {
             code |= 4 // bottom
         }
-        else if coordinate.y > self.northEast.y {
+        else if coordinate.y > northEast.y {
             code |= 8 // top
         }
 

@@ -10,12 +10,14 @@ extension LineSegment {
 
     /// The orientation of three ordered points.
     private enum Orientation: Sendable {
+
         /// Points are colinear.
         case colinear
         /// Points are oriented clockwise.
         case clockwise
         /// Points are oriented counter-clockwise.
         case counterClockwise
+
     }
 
     /// Determines the orientation of an ordered triplet of points.
@@ -100,17 +102,6 @@ extension LineSegment {
         }
 
         return false
-    }
-
-    /// Returns the parameter (0–1) of `point` projected onto this segment's direction.
-    private func parameter(of point: Coordinate3D) -> Double {
-        let dx = second.longitude - first.longitude
-        let dy = second.latitude - first.latitude
-        let lengthSq = dx * dx + dy * dy
-        guard lengthSq > 0 else { return 0.0 }
-        let px = point.longitude - first.longitude
-        let py = point.latitude - first.latitude
-        return (px * dx + py * dy) / lengthSq
     }
 
     /// Returns the intersection of two line segments with an epsilon tolerance.
@@ -223,6 +214,15 @@ extension GeoJson {
                     {
                         result.insert(coordinate)
                     }
+                }
+            }
+        }
+        else if let point = other as? PointGeometry {
+            for lineSegment in snappedSelf.lineSegments {
+                for coordinate in point.allCoordinates
+                    where lineSegment.checkIsOnSegment(coordinate)
+                {
+                    result.insert(coordinate)
                 }
             }
         }

@@ -78,7 +78,7 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         validObjects.reserveCapacity(objects.count)
         projectedBboxes.reserveCapacity(objects.count)
 
-        projection = objects.first?.projection ?? .noSRID
+        self.projection = objects.first?.projection ?? .noSRID
 
         // Set bounding boxes on all objects, collect valid ones,
         // and calculate the RTree bounding box in one pass
@@ -91,16 +91,16 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
             projectedBboxes.append(boundingBox)
 
             if boundingBox.minX < minX {
-                minX = boundingBox.minX
+                self.minX = boundingBox.minX
             }
             if boundingBox.minY < minY {
-                minY = boundingBox.minY
+                self.minY = boundingBox.minY
             }
             if boundingBox.maxX > maxX {
-                maxX = boundingBox.maxX
+                self.maxX = boundingBox.maxX
             }
             if boundingBox.maxY > maxY {
-                maxY = boundingBox.maxY
+                self.maxY = boundingBox.maxY
             }
         }
 
@@ -125,12 +125,12 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         self.nodeSize = Int(min(max(nodeSize, 4), 65535))
 
         // Don't build a tree if serial search would be faster
-        guard count > nodeSize else { return }
+        guard count > 0, count > self.nodeSize else { return }
 
         // Calculate the number of tree nodes
         var n = count
         var numberOfNodes = n
-        levelBounds = [n]
+        self.levelBounds = [n]
 
         repeat {
             n = Int(ceil(Double(n) / Double(self.nodeSize)))
@@ -139,11 +139,11 @@ public struct RTree<T: BoundingBoxRepresentable & Sendable>: Sendable {
         }
         while n != 1
 
-        boundingBoxes = projectedBboxes
+        self.boundingBoxes = projectedBboxes
         boundingBoxes.reserveCapacity(numberOfNodes)
-        indices = Array(0 ..< numberOfNodes)
+        self.indices = Array(0 ..< numberOfNodes)
 
-        position = boundingBoxes.count
+        self.position = boundingBoxes.count
 
         if sortOption == .hilbert {
             sortByHilbertValue()
@@ -162,7 +162,8 @@ extension RTree {
     /// A search result around a coordinate containing the object and its distance.
     public typealias AroundSearchResult = (
         object: T,
-        distance: CLLocationDistance)
+        distance: CLLocationDistance
+    )
 
     /// Search for objects inside a bounding box.
     ///
@@ -188,8 +189,9 @@ extension RTree {
 
         while let lowerBound = nodeIndex {
             // Find the end index of the node
-            let upperBound = min(lowerBound + nodeSize,
-                                 RTree.upperBound(of: lowerBound, in: levelBounds))
+            let upperBound = min(
+                lowerBound + nodeSize,
+                RTree.upperBound(of: lowerBound, in: levelBounds))
             let isLeafNode = lowerBound < count
 
             // Search through child nodes
@@ -269,8 +271,9 @@ extension RTree {
 
         while let lowerBound = nodeIndex {
             // Find the end index of the node
-            let upperBound = min(lowerBound + nodeSize,
-                                 RTree.upperBound(of: lowerBound, in: levelBounds))
+            let upperBound = min(
+                lowerBound + nodeSize,
+                RTree.upperBound(of: lowerBound, in: levelBounds))
             let isLeafNode = lowerBound < count
 
             // Search through child nodes
@@ -344,7 +347,7 @@ extension RTree {
 
 extension RTree {
 
-    // Generate nodes at each tree level, bottom-up
+    /// Generate nodes at each tree level, bottom-up
     private mutating func buildTree() {
         var lowerBound = 0
         for i in 0 ..< levelBounds.count - 1 {
@@ -388,8 +391,12 @@ extension RTree {
 
         var width = maxX - minX
         var height = maxY - minY
-        if width == 0.0 { width = 1.0 }
-        if height == 0.0 { height = 1.0 }
+        if width == 0.0 {
+            width = 1.0
+        }
+        if height == 0.0 {
+            height = 1.0
+        }
 
         var hilbertValues: [UInt32] = Array(repeating: 0, count: count)
         let hilbertMax = Double((1 << 16) - 1)
@@ -416,9 +423,9 @@ extension RTree {
             nodeSize: nodeSize)
     }
 
-    // Custom quicksort that partially sorts bbox data alongside the hilbert values.
-    // Sorting stops at node boundaries because the order inside a leaf node does not
-    // affect the packed R-tree structure.
+    /// Custom quicksort that partially sorts bbox data alongside the hilbert values.
+    /// Sorting stops at node boundaries because the order inside a leaf node does not
+    /// affect the packed R-tree structure.
     private static func sort(
         hilbertValues: inout [UInt32],
         boundingBoxes: inout [BoundingBox],
@@ -436,36 +443,47 @@ extension RTree {
         var j = high + 1
 
         while true {
-            repeat { i += 1 } while hilbertValues[i] < pivot
-            repeat { j -= 1 } while hilbertValues[j] > pivot
+            repeat {
+                i += 1
+            }
+            while hilbertValues[i] < pivot
+            repeat {
+                j -= 1
+            }
+            while hilbertValues[j] > pivot
 
-            if i >= j { break }
+            if i >= j {
+                break
+            }
 
             hilbertValues.swapAt(i, j)
             boundingBoxes.swapAt(i, j)
             indices.swapAt(i, j)
         }
 
-        sort(hilbertValues: &hilbertValues,
-             boundingBoxes: &boundingBoxes,
-             indices: &indices,
-             low: low,
-             high: j,
-             nodeSize: nodeSize)
-        sort(hilbertValues: &hilbertValues,
-             boundingBoxes: &boundingBoxes,
-             indices: &indices,
-             low: j + 1,
-             high: high,
-             nodeSize: nodeSize)
+        sort(
+            hilbertValues: &hilbertValues,
+            boundingBoxes: &boundingBoxes,
+            indices: &indices,
+            low: low,
+            high: j,
+            nodeSize: nodeSize)
+        sort(
+            hilbertValues: &hilbertValues,
+            boundingBoxes: &boundingBoxes,
+            indices: &indices,
+            low: j + 1,
+            high: high,
+            nodeSize: nodeSize)
     }
 
-    // Binary search for the first value in the array bigger than the given
+    /// Binary search for the first value in the array bigger than the given
     private static func upperBound(
         of value: Int,
         in array: [Int]
     ) -> Int {
-        var (i, j) = (0, array.count - 1)
+        var i = 0
+        var j = array.count - 1
 
         while i < j {
             let m = (i + j) >> 1
@@ -480,8 +498,8 @@ extension RTree {
         return array[i]
     }
 
-    // Fast Hilbert curve algorithm by http://threadlocalmutex.com/
-    // Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
+    /// Fast Hilbert curve algorithm by http://threadlocalmutex.com/
+    /// Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
     private static func hilbert(x: UInt32, y: UInt32) -> UInt32 {
         var a = x ^ y
         var b = 0xFFFF ^ a

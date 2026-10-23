@@ -97,11 +97,13 @@ extension GeoJson {
         switch geometry {
         case let point as Point:
             guard let circle = point.circle(radius: distance, steps: steps) else { return nil }
+
             result = MultiPolygon([circle])
 
         case let multiPoint as MultiPoint:
             let bufferedPoints = multiPoint.points.compactMap { $0.circle(radius: distance, steps: steps) }
             guard bufferedPoints.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(bufferedPoints)
                 : MultiPolygon(bufferedPoints)
@@ -145,12 +147,18 @@ extension GeoJson {
                 switch joinType {
                 case .bevel, .miter:
                     if case .round = endType {
-                        if coordinate != allCoords.first, coordinate != allCoords.last { continue }
+                        if coordinate != allCoords.first, coordinate != allCoords.last {
+                            continue
+                        }
                     }
-                    else { continue }
+                    else {
+                        continue
+                    }
+
                 default: break
                 }
                 guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
+
                 polygons.append(circle)
             }
 
@@ -171,7 +179,7 @@ extension GeoJson {
                     }
                 }
 
-            case .miter(let limit):
+            case let .miter(limit):
                 if endType == .polygon {
                     let n = allCoords.count
                     for i in 0 ..< n {
@@ -195,10 +203,13 @@ extension GeoJson {
                 : MultiPolygon(polygons)
 
         case let multiLineString as MultiLineString:
-            let buffered = multiLineString.lineStrings.compactMap {
-                $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = multiLineString.lineStrings
+                .compactMap {
+                    $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(buffered)
@@ -206,6 +217,7 @@ extension GeoJson {
         case let polygon as Polygon:
             let bufferCoordinates = polygon.allCoordinates
             guard bufferCoordinates.count >= 2 else { return nil }
+
             var polygons = polygon.lineSegments.flatMap { segment in
                 segment.buffered(by: distance, endType: .butt, unionType: .none)?.polygons ?? []
             }
@@ -220,7 +232,7 @@ extension GeoJson {
                     }
                 }
 
-            case .miter(let limit):
+            case let .miter(limit):
                 if let outerRing = polygon.outerRing {
                     Self.addRingMiters(for: outerRing.coordinates, distance: distance, limit: limit, to: &polygons)
                 }
@@ -233,6 +245,7 @@ extension GeoJson {
             default:
                 for coordinate in bufferCoordinates {
                     guard let circle = coordinate.circle(radius: distance, steps: steps) else { continue }
+
                     polygons.append(circle)
                 }
             }
@@ -243,19 +256,25 @@ extension GeoJson {
                 : MultiPolygon(polygons)
 
         case let multiPolygon as MultiPolygon:
-            let buffered = multiPolygon.polygons.compactMap {
-                $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = multiPolygon.polygons
+                .compactMap {
+                    $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(buffered)
 
         case let geometryCollection as GeometryCollection:
-            let buffered = geometryCollection.geometries.compactMap {
-                $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = geometryCollection.geometries
+                .compactMap {
+                    $0.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(buffered)
@@ -264,10 +283,13 @@ extension GeoJson {
             return feature.geometry?.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
 
         case let featureCollection as FeatureCollection:
-            let buffered = featureCollection.features.compactMap {
-                $0.geometry?.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = featureCollection.features
+                .compactMap {
+                    $0.geometry?.buffered(by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(buffered)
@@ -291,30 +313,38 @@ extension GeoJson {
         switch geometry {
         case let polygon as Polygon:
             guard let inset = Self.insetPolygon(polygon, by: distance) else { return nil }
+
             result = MultiPolygon([inset])
 
         case let multiPolygon as MultiPolygon:
             let insets = multiPolygon.polygons.compactMap { Self.insetPolygon($0, by: distance) }
             guard insets.isNotEmpty else { return nil }
+
             result = MultiPolygon(unchecked: insets)
 
         case let feature as Feature:
             return feature.geometry?.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
 
         case let featureCollection as FeatureCollection:
-            let buffered = featureCollection.features.compactMap {
-                $0.geometry?.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = featureCollection.features
+                .compactMap {
+                    $0.geometry?.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(unchecked: buffered)
 
         case let geometryCollection as GeometryCollection:
-            let buffered = geometryCollection.geometries.compactMap {
-                $0.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
-            }.flatMap(\.polygons)
+            let buffered = geometryCollection.geometries
+                .compactMap {
+                    $0.buffered(by: -distance, endType: endType, unionType: unionType, steps: steps)
+                }
+                .flatMap(\.polygons)
             guard buffered.isNotEmpty else { return nil }
+
             result = unionType == .overlapping
                 ? Union.unionPolygons(buffered)
                 : MultiPolygon(unchecked: buffered)
@@ -339,36 +369,51 @@ extension GeoJson {
         guard outerCoords.count >= 4 else { return nil }
 
         func inwardNormal(_ a: Coordinate3D, _ b: Coordinate3D) -> (dx: Double, dy: Double)? {
-            let vx = b.x - a.x, vy = b.y - a.y
+            let vx = b.x - a.x
+            let vy = b.y - a.y
             let len = sqrt(vx * vx + vy * vy)
             guard len > 0 else { return nil }
-            if outerRing.isClockwise { return (vy / len, -vx / len) }
+
+            if outerRing.isClockwise {
+                return (vy / len, -vx / len)
+            }
             return (-vy / len, vx / len)
         }
 
         func outwardNormal(_ a: Coordinate3D, _ b: Coordinate3D, _ hcw: Bool) -> (dx: Double, dy: Double)? {
-            let vx = b.x - a.x, vy = b.y - a.y
+            let vx = b.x - a.x
+            let vy = b.y - a.y
             let len = sqrt(vx * vx + vy * vy)
             guard len > 0 else { return nil }
-            if hcw { return (-vy / len, vx / len) }
+
+            if hcw {
+                return (-vy / len, vx / len)
+            }
             return (vy / len, -vx / len)
         }
 
         func intersect(_ a1: Coordinate3D, _ a2: Coordinate3D, _ b1: Coordinate3D, _ b2: Coordinate3D) -> Coordinate3D? {
-            let x1 = a1.x, y1 = a1.y, x2 = a2.x, y2 = a2.y
-            let x3 = b1.x, y3 = b1.y, x4 = b2.x, y4 = b2.y
+            let x1 = a1.x
+            let y1 = a1.y
+            let x2 = a2.x
+            let y2 = a2.y
+            let x3 = b1.x
+            let y3 = b1.y
+            let x4 = b2.x
+            let y4 = b2.y
             let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
             guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
+
             let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
             return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), projection: .epsg3857)
         }
 
         var newOuter: [Coordinate3D] = []
         let n = outerCoords.count - 1
-        for i in 0..<n {
-            let prev = outerCoords[(i + n - 1) % n],
-                curr = outerCoords[i],
-                next = outerCoords[(i + 1) % n]
+        for i in 0 ..< n {
+            let prev = outerCoords[(i + n - 1) % n]
+            let curr = outerCoords[i]
+            let next = outerCoords[(i + 1) % n]
             guard let n0 = inwardNormal(prev, curr),
                   let n1 = inwardNormal(curr, next)
             else { return nil }
@@ -385,7 +430,8 @@ extension GeoJson {
 
         guard let insetRing = Ring(newOuter),
               insetRing.area != 0.0,
-              abs(insetRing.area) < abs(outerRing.area)
+              abs(insetRing.area) < abs(outerRing.area),
+              insetRing.isClockwise == outerRing.isClockwise
         else { return nil }
 
         var insetHoles: [Ring] = []
@@ -396,8 +442,10 @@ extension GeoJson {
 
                 var newHole: [Coordinate3D] = []
                 let m = hc.count - 1
-                for j in 0..<m {
-                    let prev = hc[(j + m - 1) % m], curr = hc[j], next = hc[(j + 1) % m]
+                for j in 0 ..< m {
+                    let prev = hc[(j + m - 1) % m]
+                    let curr = hc[j]
+                    let next = hc[(j + 1) % m]
                     guard let n0 = outwardNormal(prev, curr, hole.isClockwise),
                           let n1 = outwardNormal(curr, next, hole.isClockwise)
                     else { return nil }
@@ -466,7 +514,8 @@ extension GeoJson {
         distance: CLLocationDistance,
         to polygons: inout [Polygon]
     ) {
-        guard let bevel = Self.bevelTriangle(from: prev, over: curr, to: next, distance: distance) else { return }
+        guard let bevel = bevelTriangle(from: prev, over: curr, to: next, distance: distance) else { return }
+
         polygons.append(bevel)
     }
 
@@ -480,7 +529,8 @@ extension GeoJson {
         limit: Double,
         to polygons: inout [Polygon]
     ) {
-        guard let miter = Self.miterFill(from: prev, over: curr, to: next, distance: distance, limit: limit) else { return }
+        guard let miter = miterFill(from: prev, over: curr, to: next, distance: distance, limit: limit) else { return }
+
         polygons.append(miter)
     }
 
@@ -490,8 +540,9 @@ extension GeoJson {
         distance: CLLocationDistance,
         to polygons: inout [Polygon]
     ) {
-        let n = coordinates.count - 1  // last coord is duplicate of first
+        let n = coordinates.count - 1 // last coord is duplicate of first
         guard n >= 3 else { return }
+
         for i in 0 ..< n {
             let prev = coordinates[(i + n - 1) % n]
             let curr = coordinates[i]
@@ -509,6 +560,7 @@ extension GeoJson {
     ) {
         let n = coordinates.count - 1
         guard n >= 3 else { return }
+
         for i in 0 ..< n {
             let prev = coordinates[(i + n - 1) % n]
             let curr = coordinates[i]
@@ -665,10 +717,17 @@ extension GeoJson {
         _ b1: Coordinate3D,
         _ b2: Coordinate3D
     ) -> Coordinate3D? {
-        let x1 = a1.x, y1 = a1.y, x2 = a2.x, y2 = a2.y
-        let x3 = b1.x, y3 = b1.y, x4 = b2.x, y4 = b2.y
+        let x1 = a1.x
+        let y1 = a1.y
+        let x2 = a2.x
+        let y2 = a2.y
+        let x3 = b1.x
+        let y3 = b1.y
+        let x4 = b2.x
+        let y4 = b2.y
         let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         guard abs(denom) > GISTool.intersectionEpsilon else { return nil }
+
         let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
         return Coordinate3D(x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), projection: .epsg3857)
     }
@@ -707,20 +766,26 @@ extension GeoJson {
         let d = distance
 
         // Outer side normals and opposite (inner) normals
-        let onx1: Double, ony1: Double, onx2: Double, ony2: Double
-        let inx1: Double, iny1: Double, inx2: Double, iny2: Double
+        let onx1: Double
+        let ony1: Double
+        let onx2: Double
+        let ony2: Double
+        let inx1: Double
+        let iny1: Double
+        let inx2: Double
+        let iny2: Double
 
         if cross > 0 {
-            onx1 = e1y;  ony1 = -e1x
-            onx2 = e2y;  ony2 = -e2x
+            onx1 = e1y; ony1 = -e1x
+            onx2 = e2y; ony2 = -e2x
             inx1 = -e1y; iny1 = e1x
             inx2 = -e2y; iny2 = e2x
         }
         else {
             onx1 = -e1y; ony1 = e1x
             onx2 = -e2y; ony2 = e2x
-            inx1 = e1y;  iny1 = -e1x
-            inx2 = e2y;  iny2 = -e2x
+            inx1 = e1y; iny1 = -e1x
+            inx2 = e2y; iny2 = -e2x
         }
 
         // Miter point = intersection of the two offset‑edge lines
@@ -856,7 +921,9 @@ extension LineSegment {
             polygons.append(secondCircle)
         }
 
-        if unionType == .none { return MultiPolygon(polygons) }
+        if unionType == .none {
+            return MultiPolygon(polygons)
+        }
         return Union.unionPolygons(polygons)
     }
 

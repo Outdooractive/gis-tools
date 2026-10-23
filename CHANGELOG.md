@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Overlay, buffer, clipping and indexing audit (#321): overlay operations now
+  treat each `MultiPolygon` as a union of parts, reproject mixed-projection
+  operands independently, keep vertex-touching components separate, rewind
+  difference holes, use finer topology tolerances, and validate coverage
+  connectivity. R-trees terminate with empty input and small node sizes;
+  tile covers deduplicate collections, reject negative zoom and clamp
+  Mercator rows; prepared rings no longer crash on degenerate horizontal
+  rings; point/line intersections are symmetric; noSRID buffers have area;
+  over-inset polygons return `nil`; and mask defaults are projection-aware.
+
 - Predicate, validity, distance and measurement audit (#320): coverage and
   containment now preserve the segment's CRS, mixed-projection distances
   project into the receiver's CRS, planar distances and lengths unwrap the

@@ -610,3 +610,36 @@ struct MapTileTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension MapTileTests {
+
+    @Test
+    func tmsRoundTrip() {
+        for zoom in [0, 1, 14] {
+            let height = 1 << zoom
+            let tile = MapTile(x: min(1, height - 1), y: min(1, height - 1), z: zoom)
+            let converted = MapTile(
+                column: tile.x,
+                tmsRow: tile.tmsRow(matrixHeight: height),
+                zoom: zoom,
+                matrixHeight: height)
+
+            #expect(converted == tile)
+        }
+    }
+
+    @Test
+    func containsUsesHalfOpenEdges() {
+        let tile = MapTile(x: 1, y: 1, z: 2)
+        let box = tile.boundingBox()
+
+        #expect(!tile.contains(box.southWest))
+        #expect(!tile.contains(box.northEast))
+        #expect(!tile.contains(Coordinate3D(
+            latitude: box.southEast.latitude,
+            longitude: box.southEast.longitude)))
+    }
+
+}

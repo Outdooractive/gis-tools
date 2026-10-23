@@ -151,6 +151,7 @@ public struct PreparedPolygon: Sendable {
         }
 
         guard covers(other) else { return false }
+
         return other.polygons.contains { $0.area > 0.0 }
     }
 
@@ -169,7 +170,7 @@ public struct PreparedPolygon: Sendable {
         return BooleanCovers.covers(self, other)
     }
 
-    internal var coverageContainers: [CoverageContainer] {
+    var coverageContainers: [CoverageContainer] {
         parts.map {
             CoverageContainer(
                 geometry: $0.polygon,
@@ -300,6 +301,7 @@ extension PreparedPolygon {
             let coordinates = crossesAntimeridian
                 ? sourceCoordinates.map { coordinate in
                     guard coordinate.longitude < 0.0 else { return coordinate }
+
                     return Self.coordinate(coordinate, x: coordinate.longitude + wraparoundWidth)
                 }
                 : sourceCoordinates
@@ -361,6 +363,7 @@ extension PreparedPolygon {
 
         func locate(_ coordinate: Coordinate3D) -> PointLocation {
             guard count >= 3,
+                  rowCount > 0,
                   coordinate.latitude >= minY,
                   coordinate.latitude <= maxY
             else { return .exterior }
@@ -403,9 +406,12 @@ extension PreparedPolygon {
                 guard crossesRay else { continue }
 
                 var orientation = PointInRing.orientationIndex(
-                    x1, y1,
-                    x2, y2,
-                    testLongitude, pointY)
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    testLongitude,
+                    pointY)
                 if orientation == 0 {
                     return .boundary
                 }

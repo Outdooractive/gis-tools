@@ -23,6 +23,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// The parent tile at the previous zoom level.
     public var parent: MapTile {
         guard z > 0 else { return self }
+
         return MapTile(
             x: x >> 1,
             y: y >> 1,
@@ -51,6 +52,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// At zoom level 0 there are no other tiles, so this returns an empty array.
     public var siblings: [MapTile] {
         guard z > 0 else { return [] }
+
         return parent.children.filter { $0.x != x || $0.y != y }
     }
 
@@ -59,15 +61,26 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// At zoom level 0 there are no other tiles, so this returns an empty array.
     public var neighbours: [MapTile] {
         guard z > 0 else { return [] }
+
         let maxXY = (1 << z) - 1
         guard x >= 0, x <= maxXY, y >= 0, y <= maxXY else { return [] }
+
         let offsets: [(dx: Int, dy: Int)] = [
-            (0, 0), (-1, -1), (0, -1), (1, -1),
-            (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
-        return offsets.compactMap { (dx, dy) -> MapTile? in
+            (0, 0),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+        ]
+        return offsets.compactMap { dx, dy -> MapTile? in
             let nx = x + dx
             let ny = y + dy
             guard nx >= 0, nx <= maxXY, ny >= 0, ny <= maxXY else { return nil }
+
             return MapTile(x: nx, y: ny, z: z)
         }
     }
@@ -102,7 +115,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
         self.z = zoom
     }
 
-    // Ported from https://github.com/mapbox/tilebelt/blob/master/index.js
+    /// Ported from https://github.com/mapbox/tilebelt/blob/master/index.js
     /// Initialize a tile from a bounding box.
     /// The resulting tile will have a zoom level in `0...maxZoom`.
     ///
@@ -199,7 +212,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
 
         // EPSG:3857, EPSG:4326
 
-        /// Tile bounds in EPSG:3857.
+        // Tile bounds in EPSG:3857.
         // Flip y
         let y = (1 << z) - 1 - y
 
@@ -261,11 +274,19 @@ public struct MapTile: CustomStringConvertible, Sendable {
             addECEF(lat: latMax, lon: lonMin)
             addECEF(lat: latMax, lon: lonMax)
 
-            if latMin <= 0.0, 0.0 <= latMax {
-                if lonMin <= 0.0, 0.0 <= lonMax { addECEF(lat: 0.0, lon: 0.0) }
-                if lonMin <= 180.0, 180.0 <= lonMax { addECEF(lat: 0.0, lon: 180.0) }
-                if lonMin <= 90.0, 90.0 <= lonMax { addECEF(lat: 0.0, lon: 90.0) }
-                if lonMin <= -90.0, -90.0 <= lonMax { addECEF(lat: 0.0, lon: -90.0) }
+            if latMin <= 0.0, latMax >= 0.0 {
+                if lonMin <= 0.0, lonMax >= 0.0 {
+                    addECEF(lat: 0.0, lon: 0.0)
+                }
+                if lonMin <= 180.0, lonMax >= 180.0 {
+                    addECEF(lat: 0.0, lon: 180.0)
+                }
+                if lonMin <= 90.0, lonMax >= 90.0 {
+                    addECEF(lat: 0.0, lon: 90.0)
+                }
+                if lonMin <= -90.0, lonMax >= -90.0 {
+                    addECEF(lat: 0.0, lon: -90.0)
+                }
             }
         }
 
@@ -329,11 +350,14 @@ public struct MapTile: CustomStringConvertible, Sendable {
             switch digit {
             case "1":
                 x = x | mask
+
             case "2":
                 y = y | mask
+
             case "3":
                 x = x | mask
                 y = y | mask
+
             default:
                 guard digit == "0" else { return nil }
             }
@@ -368,6 +392,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - Returns: `true` if this tile is an ancestor of `other`.
     public func isAncestorOf(_ other: MapTile) -> Bool {
         guard other.z > z else { return false }
+
         var tile = other
         while tile.z > z {
             tile = tile.parent
@@ -398,7 +423,9 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - Parameter other: The tile to check for a relationship.
     /// - Returns: `true` if the tiles are ancestors, descendants, or identical.
     public func isRelated(to other: MapTile) -> Bool {
-        if self == other { return true }
+        if self == other {
+            return true
+        }
         return isAncestorOf(other) || isDescendantOf(other)
     }
 
@@ -408,11 +435,14 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// At zoom level 0 this is an empty array.
     public var ancestors: [MapTile] {
         guard z > 0 else { return [] }
+
         var result: [MapTile] = []
         var tile = parent
         while tile.z >= 0 {
             result.append(tile)
-            if tile.z == 0 { break }
+            if tile.z == 0 {
+                break
+            }
             tile = tile.parent
         }
         return result
@@ -429,7 +459,10 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - Returns: An array of descendant tiles at the given zoom level.
     public func descendants(atZoom zoom: Int) -> [MapTile] {
         guard zoom >= z else { return [] }
-        if zoom == z { return [self] }
+
+        if zoom == z {
+            return [self]
+        }
 
         var tiles: [MapTile] = [self]
         for _ in z ..< zoom {
@@ -451,7 +484,19 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - Parameter coordinate: The geographic coordinate to test.
     /// - Returns: `true` if the coordinate is within this tile.
     public func contains(_ coordinate: Coordinate3D) -> Bool {
-        boundingBox().contains(coordinate.projected(to: .epsg4326))
+        let box = boundingBox()
+        let coordinate = coordinate.projected(to: .epsg4326)
+
+        guard box.contains(coordinate) else { return false }
+
+        // Keep the tile pyramid half-open on the east and south edges.
+        if coordinate.longitude == box.northEast.longitude
+            || coordinate.latitude == box.southEast.latitude
+        {
+            return false
+        }
+
+        return true
     }
 
     // MARK: - Private
@@ -462,7 +507,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// round-off at the edges), with longitudes beyond ±180 wrapped into
     /// range and latitudes clamped to the Web Mercator limits.
     static func normalizeCoordinate(_ coordinate: Coordinate3D) -> Coordinate3D {
-        var (latitude, longitude) = (coordinate.latitude, coordinate.longitude)
+        var latitude = coordinate.latitude
+        var longitude = coordinate.longitude
 
         longitude = longitude.truncatingRemainder(dividingBy: 360.0)
         if longitude > 180.0 {

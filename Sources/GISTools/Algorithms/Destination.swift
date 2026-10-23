@@ -23,10 +23,16 @@ extension Coordinate3D {
         bearing: CLLocationDegrees
     ) -> Coordinate3D {
         switch projection.kind {
-        case .geographic, .planar, .geocentric:
+        case .geocentric, .geographic, .planar:
             return projected(to: .epsg4326)._destination(distance: distance, bearing: bearing).projected(to: projection)
         case .undefined:
-            return self // Ignore
+            let bearingRadians = bearing.degreesToRadians
+            return Coordinate3D(
+                x: longitude + (distance * sin(bearingRadians)),
+                y: latitude + (distance * cos(bearingRadians)),
+                z: altitude,
+                m: m,
+                projection: projection)
         }
     }
 
@@ -64,8 +70,8 @@ extension Coordinate3D {
         return Coordinate3D(
             latitude: normalizedLatitude,
             longitude: normalizedLongitude,
-            altitude: self.altitude,
-            m: self.m)
+            altitude: altitude,
+            m: m)
     }
 
     /// Calculates the location of a coordinate on a straight line between

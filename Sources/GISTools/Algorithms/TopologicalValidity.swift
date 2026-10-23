@@ -129,7 +129,8 @@ private enum TopologicalValidity {
         for i in multiPolygon.polygons.indices {
             for j in multiPolygon.polygons.indices where j > i {
                 if let intersection = Intersection.intersectPolygons(
-                    multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons),
+                    multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons,
+                    firstCount: multiPolygon.polygons[i].polygons.count),
                     hasAreaOrLength(intersection)
                 {
                     return "MultiPolygon components overlap or share an edge"
@@ -230,7 +231,8 @@ private enum TopologicalValidity {
         for i in multiPolygon.polygons.indices {
             for j in multiPolygon.polygons.indices where j > i {
                 if let intersection = Intersection.intersectPolygons(
-                    multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons),
+                    multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons,
+                    firstCount: multiPolygon.polygons[i].polygons.count),
                     hasAreaOrLength(intersection)
                 {
                     return false

@@ -7,17 +7,21 @@ import Foundation
 /// geographic coordinates (degrees, possibly unwrapped across the
 /// anti-meridian) and the ring's tile-y range.
 private struct PreparedRing {
+
     var segments: [(lon0: Double, lat0: Double, lon1: Double, lat1: Double)]
     var minY: Int
     var maxY: Int
+
 }
 
 /// A segment in Web Mercator tile space (already multiplied by `2^zoom`).
 private struct TileSegment {
+
     var xa: Double
     var ya: Double
     var xb: Double
     var yb: Double
+
 }
 
 extension GeoJson {
@@ -47,10 +51,10 @@ extension GeoJson {
     /// - Parameter zoom: The zoom level of the map.
     /// - Returns: An array of ``MapTile`` instances.
     public func tileCover(atZoom zoom: Int) -> [MapTile] {
-        guard projection != .noSRID else { return [] }
+        guard projection != .noSRID, zoom >= 0, zoom <= 30 else { return [] }
 
         switch self {
-        case is Point, is MultiPoint:
+        case is MultiPoint, is Point:
             return coordinateTiles(atZoom: zoom)
 
         case let polygonGeometry as PolygonGeometry:
@@ -60,13 +64,17 @@ extension GeoJson {
             return lineTiles(atZoom: zoom, from: lineStringGeometry)
 
         case let geometryCollection as GeometryCollection:
-            return geometryCollection.geometries.flatMap { $0.tileCover(atZoom: zoom) }
+            return Array(Set(geometryCollection.geometries.flatMap {
+                $0.tileCover(atZoom: zoom)
+            }))
 
         case let feature as Feature:
             return feature.geometry?.tileCover(atZoom: zoom) ?? []
 
         case let featureCollection as FeatureCollection:
-            return featureCollection.features.flatMap { $0.tileCover(atZoom: zoom) }
+            return Array(Set(featureCollection.features.flatMap {
+                $0.tileCover(atZoom: zoom)
+            }))
 
         default:
             return coordinateTiles(atZoom: zoom)
@@ -102,6 +110,7 @@ extension GeoJson {
             let unwrapped = Self.unwrapLongitudes(coordinates.map { $0.projected(to: .epsg4326) })
             for (first, second, _) in unwrapped.overlappingPairs() {
                 guard let second else { continue }
+
                 walkSegment(
                     longitude0: first.longitude,
                     latitude0: first.latitude,
@@ -174,13 +183,15 @@ extension GeoJson {
             }
 
             guard segments.isNotEmpty else { continue }
+
             preparedRings.append(PreparedRing(segments: segments, minY: minY, maxY: maxY))
         }
 
         guard preparedRings.isNotEmpty else { return }
 
-        let fillMinY = preparedRings.map(\.minY).min() ?? 0
-        let fillMaxY = preparedRings.map(\.maxY).max() ?? 0
+        let fillMinY = max(0, preparedRings.map(\.minY).min() ?? 0)
+        let fillMaxY = min(scaleInt - 1, preparedRings.map(\.maxY).max() ?? 0)
+        guard fillMinY <= fillMaxY else { return }
 
         let clampX = { (x: Int) -> Int in
             ((x % scaleInt) + scaleInt) % scaleInt
@@ -289,7 +300,8 @@ extension GeoJson {
 
         func clampedTile(x: Int, y: Int) -> MapTile {
             let cx = ((x % scaleInt) + scaleInt) % scaleInt
-            return MapTile(x: cx, y: y, z: zoom)
+            let cy = min(max(y, 0), scaleInt - 1)
+            return MapTile(x: cx, y: cy, z: zoom)
         }
 
         let (lon0, lat0) = Self.mercatorNormalize(longitude: longitude0, latitude: latitude0)
@@ -371,7 +383,7 @@ extension GeoJson {
         var result: [Coordinate3D] = []
         result.reserveCapacity(coordinates.count)
 
-        var offset: Double = 0.0
+        var offset = 0.0
         var previous = coordinates[0]
 
         result.append(previous)

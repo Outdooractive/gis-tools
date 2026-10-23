@@ -17,13 +17,13 @@ extension Polygon {
     ) -> PolygonGeometry? {
         let all: [Polygon]
         if let gridSize {
-            all = [self.snappedToGrid(tolerance: gridSize)]
+            all = [snappedToGrid(tolerance: gridSize)]
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
         }
         else {
-            all = self.polygons + other.polygons
+            all = polygons + other.polygons
         }
-        return SymmetricDifference.symmetricDifferencePolygons(all)
+        return SymmetricDifference.symmetricDifferencePolygons(all, firstCount: 1)
     }
 
 }
@@ -45,13 +45,13 @@ extension MultiPolygon {
     ) -> PolygonGeometry? {
         let all: [Polygon]
         if let gridSize {
-            all = self.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
+            all = polygons.map { $0.snappedToGrid(tolerance: gridSize) }
                 + other.polygons.map { $0.snappedToGrid(tolerance: gridSize) }
         }
         else {
-            all = self.polygons + other.polygons
+            all = polygons + other.polygons
         }
-        return SymmetricDifference.symmetricDifferencePolygons(all)
+        return SymmetricDifference.symmetricDifferencePolygons(all, firstCount: polygons.count)
     }
 
 }
@@ -63,19 +63,23 @@ enum SymmetricDifference {
     /// - Note: The symmetric difference algorithm works in EPSG:3857 (Web Mercator)
     ///   for uniform Cartesian tolerances. Inputs are automatically reprojected.
     ///   This limits the usable latitude range to approximately ±85°.
-    static func symmetricDifferencePolygons(_ polygons: [Polygon]) -> PolygonGeometry? {
+    static func symmetricDifferencePolygons(
+        _ polygons: [Polygon],
+        firstCount: Int
+    ) -> PolygonGeometry? {
         guard polygons.isNotEmpty else { return nil }
         guard polygons.count > 1 else { return MultiPolygon(unchecked: polygons) }
+        guard firstCount > 0, firstCount < polygons.count else { return nil }
 
         let originalProj = polygons.first?.projection ?? .epsg4326
-        let polygons3857 = originalProj == .epsg3857
-            ? polygons
-            : polygons.map { $0.projected(to: .epsg3857) }
+        let normalized = polygons.map {
+            $0.projection == originalProj ? $0 : $0.projected(to: originalProj)
+        }
+        let polygons3857 = normalized.map { $0.projected(to: .epsg3857) }
 
-        // polygon[0...] = A (self), polygon[remaining] = B (other)
         let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
-            polygons.contains(point, polygonAt: 0)
-                != polygons.contains(point, excluding: 0)
+            polygons.contains(point, in: 0 ..< firstCount)
+                != polygons.contains(point, in: firstCount ..< polygons.polygons.count)
         }
 
         guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {
