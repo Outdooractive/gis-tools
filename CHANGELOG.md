@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Line and polygon constructor antimeridian handling (#336): added a shared
+  `AntimeridianCutting.unwrapCoordinates` helper that keeps a sequence
+  continuous across the wraparound axis. `BezierSpline` now interpolates in
+  the unwrapped frame and normalizes its output, so `179 → −179` control
+  points stay near the seam instead of sweeping through 0°; `ConcaveHull`
+  unwraps all input points before triangulation and normalizes the resulting
+  hull, so crossing hulls use the 20° short span and the correct area, and
+  ECEF hulls are computed in geographic space. Tests assert intermediate
+  seam spans, exact crossing-hull area and 4978 round trips.
+
 - Voronoi antimeridian and degenerate handling (#335): points and the clip
   bounding box are unwrapped around the projection's wraparound axis (a
   `170 ... -170` box becomes `170 ... 190`), the diagram is computed in the

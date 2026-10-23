@@ -264,4 +264,63 @@ struct ConcaveHullTests {
         for point in inputPoints {
             #expect(hull.polygons.contains { $0.covers(point) })
         }
+
+
+    }
+
+    /// A crossing hull uses the short seam span and preserves area.
+    @Test
+    func antimeridianHullUsesShortSpan() throws {
+        let mp = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: -170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+        ]))
+
+        let hull = try #require(mp.concaveHull(
+            maxEdgeLength: GISTool.convertToMeters(3_000, .kilometers)))
+        #expect(hull.polygons.count == 1)
+
+        var longitudes = hull.polygons[0].outerRing?.coordinates.map(\.longitude) ?? []
+        for index in 1 ..< longitudes.count {
+            while longitudes[index] - longitudes[index - 1] > 180.0 {
+                longitudes[index] -= 360.0
+            }
+            while longitudes[index - 1] - longitudes[index] > 180.0 {
+                longitudes[index] += 360.0
+            }
+        }
+        let span = (longitudes.max() ?? 0.0) - (longitudes.min() ?? 0.0)
+        #expect(abs(span - 20.0) < 0.001, "hull spans \(span)°, expected 20°")
+
+        let expected = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: 190.0),
+            Coordinate3D(latitude: 10.0, longitude: 190.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 0.0, longitude: 170.0),
+        ]]))
+        #expect(
+            abs(hull.area - expected.area) < max(0.001, expected.area * 0.000001),
+            "hull area \(hull.area), expected \(expected.area)")
+    }
+
+    /// ECEF inputs are computed in geographic space.
+    @Test
+    func concaveHull4978FourPoints() throws {
+        let coordinates = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+        ].map { $0.projected(to: .epsg4978) }
+        let mp = try #require(MultiPoint(coordinates))
+        let hull = try #require(mp.concaveHull(
+            maxEdgeLength: GISTool.convertToMeters(500, .kilometers)))
+
+        #expect(hull.polygons.count == 1)
+        #expect(hull.projection == .epsg4978)
+        let back = hull.projected(to: .epsg4326)
+        #expect(abs(back.area - 1.0 * 111_000.0 * 111_000.0) < 10_000_000_000.0)
     }
