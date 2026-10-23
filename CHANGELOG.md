@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- QueryParser nested grouping and prefix NOT (#349): nested parentheses no
+  longer reset the caller's pipeline, so `.a == 1 and (.b == 2 or .c == 3)`
+  preserves both operands and the connector; a pending boolean connector is
+  emitted after the completed group. Prefix `NOT` now negates the following
+  operand/group (including after `and`/`or`), while postfix `not` keeps
+  negating the accumulated expression. Incomplete pipelines (`.highway ==`,
+  `.foo and`, unclosed groups) are rejected by an RPN arity check, and exact
+  pipeline/evaluation tests cover nested groups, prefix/postfix negation and
+  mixed forms.
+
 - Eulerian and Chinese Postman parallel edges (#346): parity and traversal
   now use **edge multiplicity** over the undirected underlying graph instead
   of distinct neighbours. Hierholzer and the Chinese Postman augmentation are
