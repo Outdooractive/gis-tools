@@ -304,6 +304,13 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Mask result is cut at the antimeridian (#368): when the mask itself crosses
+  the seam, the assembled `MultiPolygon` is cut at ±180° (holes and islands
+  preserved) so the result never reports `crossesAntimeridian == true`.
+  Non-crossing masks keep the direct hole/island construction. Tests assert
+  the default world mask is non-crossing and a crossing mask with a custom
+  outer preserves the exact world-minus-mask area.
+
 - BoundingBoxClip line handling across the antimeridian (#367): line clipping
   now splits a crossing clip box into its projection-aware non-crossing
   windows, unwraps and shifts the line into each window's world copy, clips
