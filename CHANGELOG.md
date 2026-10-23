@@ -304,6 +304,15 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- LineMerge junction, metadata and seam endpoints (#332): junction
+  continuations are now paired by angle (straightest through-pair) instead of
+  input order, so reordering features produces the same geometry and a branch
+  is not merged into a through route. Merged lines inherit the `id`,
+  properties and foreign members of the earliest contributing input feature
+  (documented on `lineMerged`), and one `MultiLineString` copies its metadata
+  to every line it produces. `+180°` and `−180°` are treated as coincident
+  endpoints, so seam-crossing lines merge without duplicating the seam point.
+
 - Minkowski sum holes and projection handling (#331): polygons whose outer
   ring is convex but which have holes are now tessellated before the vertex
   sum, so hole vertices no longer fill the hole; the pattern is projected into
