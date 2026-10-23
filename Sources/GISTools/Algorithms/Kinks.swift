@@ -499,17 +499,10 @@ extension Polygon {
         var usedAsChild: Set<Int> = []
 
         for i in 0 ..< counted.count where counted[i].parentIndex == -1 {
-            var outerCoords = counted[i].coords
-            if outerCoords.count > 2, outerCoords.first! == outerCoords.last! {
-                outerCoords.removeLast()
-            }
+            let outerCoords = counted[i].coords
             var holes: [[Coordinate3D]] = []
             for h in 0 ..< counted.count where counted[h].parentIndex == i {
-                var hc = counted[h].coords
-                if hc.count > 2, hc.first! == hc.last! {
-                    hc.removeLast()
-                }
-                holes.append(hc)
+                holes.append(counted[h].coords)
                 usedAsChild.insert(h)
             }
             if let polygon = Polygon([outerCoords] + holes) {
@@ -518,11 +511,7 @@ extension Polygon {
         }
 
         for i in 0 ..< counted.count where counted[i].parentIndex != -1 && !usedAsChild.contains(i) {
-            var coords = counted[i].coords
-            if coords.count > 2, coords.first! == coords.last! {
-                coords.removeLast()
-            }
-            if let polygon = Polygon([coords]) {
+            if let polygon = Polygon([counted[i].coords]) {
                 result.append(polygon)
             }
         }

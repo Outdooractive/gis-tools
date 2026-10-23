@@ -144,4 +144,35 @@ extension LineSliceTests {
         #expect(slice.coordinates[0] != slice.coordinates[1])
     }
 
+
+    // MARK: - Audit coverage
+
+    @Test
+    func oneSidedSlicesAndFeatureVariant() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let end = Coordinate3D(x: 7.0, y: 0.0, projection: .noSRID)
+        let start = Coordinate3D(x: 3.0, y: 0.0, projection: .noSRID)
+
+        let fromStart = try #require(line.slice(end: end))
+        #expect(fromStart.coordinates.map(\.x) == [0.0, 5.0, 7.0])
+
+        let toEnd = try #require(line.slice(start: start))
+        #expect(toEnd.coordinates.map(\.x) == [3.0, 5.0, 10.0])
+
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "R"],
+            calculateBoundingBox: true)
+        let sliced = try #require(feature.slice(start: start, end: end))
+        #expect(sliced.id == .string("route"))
+        #expect(sliced.boundingBox != nil)
+        #expect((sliced.geometry as? LineString)?.coordinates.map(\.x) == [3.0, 5.0, 7.0])
+    }
+
+
 }

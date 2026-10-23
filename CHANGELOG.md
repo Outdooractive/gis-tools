@@ -304,6 +304,19 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Line and polygon construction regression coverage (#337): added independent
+  expected-value tests for `LineChunk` collection/feature entry points,
+  `Truncate` polygon/multi-polygon/collection/`removeM` paths, `SnapToGrid`
+  MultiPoint/MultiLineString/GeometryCollection dispatch, `LineSegments`
+  BoundingBox/Ring/Polygon/MultiPolygon/collection dispatch, `LineOverlap`
+  self-overlap/segmentLength/grid/MultiLineString/FeatureCollection inputs,
+  one-sided `LineSlice`/`LineSliceAlong` and Feature variants, `MakeValid`
+  `gridSize`, `MultiPolygon.kinks`/mutating `unkink`, exact noSRID/4978
+  `LineOffset` behaviour, and `PolygonToLine` coordinates/closure/order.
+  The audit found and fixed two bugs: `Truncate` copied stale bounding boxes
+  instead of recalculating them, and `unkinked` polygons could be returned with
+  open rings.
+
 - Line and polygon constructor antimeridian handling (#336): added a shared
   `AntimeridianCutting.unwrapCoordinates` helper that keeps a sequence
   continuous across the wraparound axis. `BezierSpline` now interpolates in
