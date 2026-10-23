@@ -26,15 +26,46 @@ extension FeatureCollection {
 
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
+        // ECEF is not a map plane: compute the diagram in geographic space and
+        // project the cells back into the source CRS.
+        if let sourceProjection = snapped.features
+            .compactMap({ ($0.geometry as? Point)?.coordinate.projection })
+            .first,
+            sourceProjection.isGeocentric
+        {
+            let geographicFeatures: [Feature] = snapped.features.map { feature in
+                guard let point = feature.geometry as? Point else { return feature }
+                return Feature(
+                    Point(point.coordinate.projected(to: .epsg4326)),
+                    id: feature.id,
+                    properties: feature.properties)
+            }
+            let geographicBox = boundingBox.projected(to: .epsg4326)
+            let geographicResult = FeatureCollection(geographicFeatures).voronoiDiagram(
+                boundingBox: geographicBox)
+
+            return FeatureCollection(geographicResult.features.map { feature in
+                guard let polygon = feature.geometry as? Polygon else { return feature }
+                return Feature(
+                    polygon.projected(to: sourceProjection),
+                    id: feature.id,
+                    properties: feature.properties)
+            })
+        }
+
         let points: [Coordinate3D] = snapped.features.compactMap { f in
             (f.geometry as? Point)?.coordinate
         }
         guard points.count >= 3 else { return FeatureCollection() }
 
-        return Voronoi.diagram(
-            features: snapped.features,
+        let (unwrappedPoints, unwrappedBox) = Voronoi.unwrapped(
             points: points,
             boundingBox: boundingBox)
+
+        return Voronoi.diagram(
+            features: snapped.features,
+            points: unwrappedPoints,
+            boundingBox: unwrappedBox)
     }
 
 }
@@ -97,8 +128,11 @@ private enum Voronoi {
 
             if let cell {
                 let source = inputFeatures[i]
+                let normalizedCell = Polygon(unchecked: cell.coordinates.map { ring in
+                    ring.map { $0.normalized() }
+                })
                 var feature = Feature(
-                    cell,
+                    normalizedCell,
                     id: source.id,
                     properties: source.properties)
                 feature.foreignMembers = source.foreignMembers
@@ -107,6 +141,60 @@ private enum Voronoi {
         }
 
         return FeatureCollection(features)
+    }
+
+    /// Unwraps the points and bounding box around the projection's wraparound
+    /// axis. A crossing bounding box such as `170 ... -170` becomes
+    /// `170 ... 190`; points on the far side are shifted by whole world copies
+    /// so the diagram uses the short span. Cell coordinates are normalized
+    /// back when emitted.
+    static func unwrapped(
+        points: [Coordinate3D],
+        boundingBox: BoundingBox
+    ) -> ([Coordinate3D], BoundingBox) {
+        guard let extent = (points.first?.projection ?? boundingBox.projection)
+            .wraparoundExtent,
+            extent > 0.0,
+            let first = points.first
+        else { return (points, boundingBox) }
+
+        let period = 2.0 * extent
+        var west = boundingBox.southWest.x
+        var east = boundingBox.northEast.x
+
+        if west > east {
+            east += period
+        }
+
+        // Align the box with the first point; this also keeps a world-spanning
+        // box stable while moving seam sites into the box's copy of the world.
+        let center = (west + east) / 2.0
+        let shift = ((first.x - center) / period).rounded() * period
+        west += shift
+        east += shift
+
+        let unwrappedPoints = points.map { point -> Coordinate3D in
+            let offset = ((center - point.x) / period).rounded() * period
+            return Coordinate3D(
+                x: point.x + offset,
+                y: point.y,
+                z: point.altitude,
+                m: point.m,
+                projection: point.projection)
+        }
+
+        let southWest = Coordinate3D(
+            x: west,
+            y: boundingBox.southWest.y,
+            projection: boundingBox.projection)
+        let northEast = Coordinate3D(
+            x: east,
+            y: boundingBox.northEast.y,
+            projection: boundingBox.projection)
+
+        return (unwrappedPoints, BoundingBox(
+            southWest: southWest,
+            northEast: northEast))
     }
 
     // MARK: - Cell computation

@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Voronoi antimeridian and degenerate handling (#335): points and the clip
+  bounding box are unwrapped around the projection's wraparound axis (a
+  `170 ... -170` box becomes `170 ... 190`), the diagram is computed in the
+  short span, and cells are normalized back, so seam-separated sites get
+  adjacent small cells instead of world-spanning ones. ECEF inputs are
+  computed in geographic space and projected back. One/two points consistently
+  return an empty collection (the documented minimum is three), `gridSize`
+  matches manual snapping, and tests assert site containment, bounding-box area
+  partition, short-side spans and metadata preservation.
+
 - Simplify topology and tolerance handling (#334): `polygonHullSimplified`
   now keeps inner rings (with winding) and the silently ignored `highQuality`
   parameter was removed from that API; `coverageSimplified` decomposes each
