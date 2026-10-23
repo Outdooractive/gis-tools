@@ -137,6 +137,7 @@ extension GeoJson {
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let s = snapped.simplified(tolerance: tolerance, highQuality: highQuality)
         guard let valid = s.madeValid() else { return nil }
+
         return valid
     }
 
@@ -174,6 +175,7 @@ extension Polygon {
 
         guard let result = Polygon([closed]) else { return nil }
         guard let valid = result.madeValid() else { return nil }
+
         return valid
     }
 
@@ -197,6 +199,7 @@ extension MultiPolygon {
             $0.polygonHullSimplified(tolerance: tolerance, highQuality: highQuality, gridSize: gridSize)
         }
         guard valid.isNotEmpty else { return nil }
+
         return MultiPolygon(unchecked: valid)
     }
 
@@ -232,7 +235,11 @@ extension MultiPolygon {
         }
 
         guard polys.count > 1 else {
-            return polys.first.map { MultiPolygon(unchecked: [$0]) }
+            return polys.first.map {
+                MultiPolygon(unchecked: [
+                    $0.simplified(tolerance: tolerance, highQuality: highQuality),
+                ])
+            }
         }
 
         var sharedEdges: [EdgeKey: [Coordinate3D]] = [:]
@@ -259,6 +266,7 @@ extension MultiPolygon {
             for ring in poly.rings {
                 var coords = ring.coordinates
                 guard coords.count >= 2 else { continue }
+
                 for i in 0 ..< coords.count - 1 {
                     let key = EdgeKey(coords[i], coords[i + 1])
                     if sharedKeys.contains(key), let original = sharedEdges[key] {
@@ -368,15 +376,15 @@ public enum Simplify {
         switch firstCoordinate.projection.kind {
         case .geographic:
             let toleranceInDegrees = firstCoordinate.degrees(
-                fromMeters: toleranceInMeters
-            ).longitudeDegrees
+                fromMeters: toleranceInMeters)
+                .longitudeDegrees
 
             return simplify(
                 coordinates: coordinates,
                 tolerance: toleranceInDegrees,
                 highQuality: highQuality)
 
-        case .planar, .geocentric, .undefined:
+        case .geocentric, .planar, .undefined:
             return simplify(
                 coordinates: coordinates,
                 tolerance: toleranceInMeters,
@@ -384,7 +392,7 @@ public enum Simplify {
         }
     }
 
-    // simplification using Ramer-Douglas-Peucker algorithm
+    /// simplification using Ramer-Douglas-Peucker algorithm
     private static func simplifyDouglasPeucker(
         coordinates: [Coordinate3D],
         tolerance: Double
@@ -442,7 +450,7 @@ public enum Simplify {
         guard last - first > 1 else { return }
 
         var maxSqDistance: Double = tolerance
-        var index: Int = 0
+        var index = 0
 
         for i in (first + 1) ..< last {
             let sqDist = getSQSegDist(
@@ -479,7 +487,7 @@ public enum Simplify {
         }
     }
 
-    // square distance from a point to a segment
+    /// square distance from a point to a segment
     private static func getSQSegDist(
         p: Coordinate3D,
         p1: Coordinate3D,
@@ -508,7 +516,7 @@ public enum Simplify {
         return (dLongitude * dLongitude) + (dLatitude * dLatitude)
     }
 
-    // square distance between 2 points
+    /// square distance between 2 points
     private static func getSqDist(
         p1: Coordinate3D,
         p2: Coordinate3D
@@ -560,10 +568,14 @@ public enum Simplify {
                     minIdx = i
                 }
             }
-            if minIdx < 0 { break }
+            if minIdx < 0 {
+                break
+            }
 
             let areaThreshold = abs(crsTolerance) * 2.0
-            if minArea > areaThreshold { break }
+            if minArea > areaThreshold {
+                break
+            }
 
             removed[minIdx] = true
             let p = prev[minIdx]
@@ -617,12 +629,12 @@ private struct EdgeKey: Hashable {
         if p1.longitude < p2.longitude
             || (p1.longitude == p2.longitude && p1.latitude < p2.latitude)
         {
-            a = p1.longitude * 1_000_000 + p1.latitude
-            b = p2.longitude * 1_000_000 + p2.latitude
+            self.a = p1.longitude * 1_000_000 + p1.latitude
+            self.b = p2.longitude * 1_000_000 + p2.latitude
         }
         else {
-            a = p2.longitude * 1_000_000 + p2.latitude
-            b = p1.longitude * 1_000_000 + p1.latitude
+            self.a = p2.longitude * 1_000_000 + p2.latitude
+            self.b = p1.longitude * 1_000_000 + p1.latitude
         }
     }
 

@@ -154,3 +154,24 @@ struct AlongTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension AlongTests {
+
+    @Test
+    func negativeDistanceClampsToStart() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+
+        #expect(line.coordinateAlong(distance: -100.0) == line.coordinates[0])
+    }
+
+    @Test
+    func emptyLineDoesNotTrap() {
+        #expect(LineString().coordinateAlong(distance: 10.0) == .zero)
+    }
+
+}

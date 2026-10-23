@@ -31,6 +31,7 @@ extension FeatureCollection {
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let lineStrings: [LineString] = snapped.features.compactMap { $0.geometry as? LineString }
         guard !lineStrings.isEmpty else { return FeatureCollection() }
+
         return Polygonize.polygonize(lineStrings: lineStrings)
     }
 
@@ -46,6 +47,7 @@ extension LineString {
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         return Polygonize.polygonize(lineStrings: [snapped])
     }
+
 }
 
 extension MultiLineString {
@@ -66,16 +68,20 @@ extension MultiLineString {
 private enum Polygonize {
 
     private struct Node {
+
         let coordinate: Coordinate3D
         var edges: [DirectedEdge] = []
         var visited: Set<Int> = []
+
     }
 
     private struct DirectedEdge {
+
         let from: Int
         let to: Int
         let fromCoord: Coordinate3D
         let toCoord: Coordinate3D
+
     }
 
     // MARK: - Public API
@@ -101,11 +107,12 @@ private enum Polygonize {
         if spansAntimeridian {
             normalised = lineStrings.map { ls in
                 let coords = ls.coordinates.map { c in
-                    Coordinate3D(x: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
-                                 y: c.latitude,
-                                 z: c.altitude,
-                                 m: c.m,
-                                 projection: projection)
+                    Coordinate3D(
+                        x: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
+                        y: c.latitude,
+                        z: c.altitude,
+                        m: c.m,
+                        projection: projection)
                 }
                 // Use unchecked init: the shifted coords are still the same shape
                 return LineString(unchecked: coords, calculateBoundingBox: ls.boundingBox != nil)
@@ -138,11 +145,12 @@ private enum Polygonize {
             unshifted = polygons.map { poly in
                 let coords = poly.coordinates.map { ring in
                     ring.map { c in
-                        Coordinate3D(x: c.longitude > 180.0 ? c.longitude - 360.0 : c.longitude,
-                                     y: c.latitude,
-                                     z: c.altitude,
-                                     m: c.m,
-                                     projection: projection)
+                        Coordinate3D(
+                            x: c.longitude > 180.0 ? c.longitude - 360.0 : c.longitude,
+                            y: c.latitude,
+                            z: c.altitude,
+                            m: c.m,
+                            projection: projection)
                     }
                 }
                 return Polygon(unchecked: coords, calculateBoundingBox: poly.boundingBox != nil)
@@ -168,8 +176,8 @@ private enum Polygonize {
         // Collect all split points for each segment
         var splitPoints: [Int: Set<Coordinate3D>] = [:]
 
-        for i in 0..<segments.count {
-            for j in (i + 1)..<segments.count {
+        for i in 0 ..< segments.count {
+            for j in (i + 1) ..< segments.count {
                 if let intersection = segments[i].intersection(segments[j]) {
                     splitPoints[i, default: []].insert(intersection)
                     splitPoints[j, default: []].insert(intersection)
@@ -192,8 +200,9 @@ private enum Polygonize {
             allPoints.sort { segment.first.distance(from: $0) < segment.first.distance(from: $1) }
 
             // Create sub-segments between consecutive points
-            for k in 0..<(allPoints.count - 1) {
+            for k in 0 ..< (allPoints.count - 1) {
                 guard allPoints[k] != allPoints[k + 1] else { continue }
+
                 result.append(LineSegment(first: allPoints[k], second: allPoints[k + 1]))
             }
         }
@@ -209,7 +218,9 @@ private enum Polygonize {
         var nodes: [Node] = []
 
         func index(for coord: Coordinate3D) -> Int {
-            if let existing = coordToIndex[coord] { return existing }
+            if let existing = coordToIndex[coord] {
+                return existing
+            }
             let idx = nodes.count
             coordToIndex[coord] = idx
             nodes.append(Node(coordinate: coord))
@@ -238,7 +249,7 @@ private enum Polygonize {
         }
 
         // Sort edges at each node by angle
-        for i in 0..<nodes.count {
+        for i in 0 ..< nodes.count {
             let coord = nodes[i].coordinate
             nodes[i].edges.sort { a, b in
                 angle(from: coord, to: a.toCoord) < angle(from: coord, to: b.toCoord)
@@ -261,8 +272,8 @@ private enum Polygonize {
         var rings: [[Coordinate3D]] = []
         var visitedEdges: Set<String> = []
 
-        for startNode in 0..<nodes.count {
-            for startEdgeIdx in 0..<nodes[startNode].edges.count {
+        for startNode in 0 ..< nodes.count {
+            for startEdgeIdx in 0 ..< nodes[startNode].edges.count {
                 guard !visitedEdges.contains("\(startNode)->\(nodes[startNode].edges[startEdgeIdx].to)") else { continue }
 
                 // Walk the graph always taking the sharpest left turn
@@ -292,9 +303,12 @@ private enum Polygonize {
 
                     for (idx, edge) in outgoing.enumerated() {
                         guard edge.to != prevNode else { continue }
+
                         let ea = normalise(angle(from: nodes[currNode].coordinate, to: nodes[edge.to].coordinate))
                         var diff = ea - baseAngle
-                        if diff < 0 { diff += 2.0 * .pi }
+                        if diff < 0 {
+                            diff += 2.0 * .pi
+                        }
                         if diff < bestDiff {
                             bestDiff = diff
                             bestIdx = idx
@@ -302,10 +316,13 @@ private enum Polygonize {
                     }
 
                     guard let nextIdx = bestIdx else { break }
+
                     let nextNode = outgoing[nextIdx].to
 
                     edgeKey = "\(currNode)->\(nextNode)"
-                    if visitedEdges.contains(edgeKey) { break }
+                    if visitedEdges.contains(edgeKey) {
+                        break
+                    }
                     visitedEdges.insert(edgeKey)
 
                     prevNode = currNode
@@ -334,11 +351,11 @@ private enum Polygonize {
     private static func assemblePolygons(from rings: [[Coordinate3D]]) -> [Polygon] {
         guard rings.isNotEmpty else { return [] }
 
-        // Compute signed area to determine clockwise vs counter-clockwise
+        /// Compute signed area to determine clockwise vs counter-clockwise
         func signedArea(_ ring: [Coordinate3D]) -> Double {
             let coords = ring
-            var area: Double = 0.0
-            for i in 0..<coords.count {
+            var area = 0.0
+            for i in 0 ..< coords.count {
                 let j = (i + 1) % coords.count
                 area += coords[i].longitude * coords[j].latitude
                 area -= coords[j].longitude * coords[i].latitude
@@ -346,14 +363,15 @@ private enum Polygonize {
             return area
         }
 
-        // Check if ring A contains ring B (using a point-in-polygon test)
+        /// Check if ring A contains ring B (using a point-in-polygon test)
         func contains(outer: [Coordinate3D], inner: [Coordinate3D]) -> Bool {
             guard let firstPt = inner.first else { return false }
+
             let ring = Ring(outer)
             return ring?.contains(firstPt) ?? false
         }
 
-        // CW rings are outer rings (in shapefile convention / our implementation)
+        // The ring graph yields clockwise face rings for the covered faces.
         let outerRings = rings.filter { signedArea($0) < 0 }
         let innerRings = rings.filter { signedArea($0) > 0 }
 
@@ -376,8 +394,7 @@ private enum Polygonize {
             polygons.append(polygon)
         }
 
-        // Handle case where there are only inner rings (CCW in our convention)
-        // — they form polygon shells
+        // Handle degenerate inputs where no CCW ring was produced.
         if polygons.isEmpty {
             for inner in innerRings {
                 if let polygon = Polygon([inner]) {
@@ -386,7 +403,7 @@ private enum Polygonize {
             }
         }
 
-        return polygons
+        return polygons.map { $0.rewinded }
     }
 
 }

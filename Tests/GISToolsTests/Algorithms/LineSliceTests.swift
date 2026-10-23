@@ -124,3 +124,24 @@ struct LineSliceTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension LineSliceTests {
+
+    @Test
+    func sliceStartingAtInteriorVertexHasNoDuplicate() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+        ]))
+        let slice = try #require(line.slice(
+            start: Coordinate3D(latitude: 0.0, longitude: 1.0),
+            end: Coordinate3D(latitude: 0.0, longitude: 2.0)))
+
+        #expect(slice.coordinates.count == 2)
+        #expect(slice.coordinates[0] != slice.coordinates[1])
+    }
+
+}

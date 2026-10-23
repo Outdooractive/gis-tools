@@ -17,6 +17,9 @@ extension LineString {
     ///
     /// - Returns: A *Coordinate3D* *distance* meters along the line.
     public func coordinateAlong(distance: CLLocationDistance) -> Coordinate3D {
+        guard let first = coordinates.first else { return .zero }
+
+        let distance = max(0.0, distance)
         var travelled: CLLocationDistance = 0.0
 
         for (index, coordinate) in coordinates.enumerated() {
@@ -41,7 +44,7 @@ extension LineString {
             }
         }
 
-        return coordinates[coordinates.count - 1]
+        return coordinates.last ?? first
     }
 
     /// Returns a `Point` at a specified distance along the line.
@@ -76,6 +79,7 @@ extension LineString {
 
         for (i, segment) in lineSegments.enumerated() {
             guard let foot = segment.perpendicularFoot(from: projected, clampToEnds: true) else { continue }
+
             let d = projected.distance(from: foot)
             if d < bestDistance {
                 bestDistance = d
@@ -88,7 +92,7 @@ extension LineString {
         else { return nil }
 
         var travelled: CLLocationDistance = 0.0
-        for i in 0..<segIndex {
+        for i in 0 ..< segIndex {
             travelled += coordinates[i].distance(from: coordinates[i + 1])
         }
 
@@ -140,7 +144,8 @@ extension LineString {
             // Go from coord back toward prev by |overshot| meters.
             let bearing = coord.bearing(to: prev)
             result = coord.destination(distance: -overshot, bearing: bearing)
-        case .planar, .geocentric, .undefined:
+
+        case .geocentric, .planar, .undefined:
             // Straight‑line interpolation.
             let segmentLength = coord.distance(from: prev)
             let weight = 1.0 + overshot / segmentLength

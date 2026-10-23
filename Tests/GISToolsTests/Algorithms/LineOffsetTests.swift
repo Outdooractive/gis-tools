@@ -192,3 +192,31 @@ struct LineOffsetTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension LineOffsetTests {
+
+    @Test
+    func utmOffsetKeepsProjection() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 15.0).projected(to: .epsg32633),
+            Coordinate3D(latitude: 0.0, longitude: 15.01).projected(to: .epsg32633),
+        ]))
+        let result = try #require(line.offset(by: 1_000.0))
+
+        #expect(result.projection == .epsg32633)
+    }
+
+    @Test
+    func antimeridianOffsetTakesShortPath() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+        ]))
+        let result = try #require(line.offset(by: 50_000.0))
+
+        #expect(result.coordinates.allSatisfy { $0.latitude < 0.0 })
+    }
+
+}

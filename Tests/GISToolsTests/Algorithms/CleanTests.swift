@@ -136,3 +136,37 @@ struct CleanTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension CleanTests {
+
+    @Test
+    func collinearityUsesPerpendicularDistance() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.001, longitude: 0.0005),
+            Coordinate3D(latitude: 0.0, longitude: 0.001),
+        ]))
+        let cleaned = line.coordinates.cleaned(
+            removeCollinear: true,
+            tolerance: 100.0)
+
+        #expect(cleaned.count == 3)
+    }
+
+    @Test
+    func polygonGridSizeSnapsAllRings() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 10.0001),
+            Coordinate3D(latitude: 10.0001, longitude: 0.0001),
+            Coordinate3D(latitude: 0.0001, longitude: 0.0001),
+        ]]))
+        let cleaned = polygon.cleaned(gridSize: 0.001)
+
+        #expect(cleaned.outerRing?.coordinates.first == Coordinate3D(latitude: 0.0, longitude: 0.0))
+    }
+
+}

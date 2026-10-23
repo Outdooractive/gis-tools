@@ -27,6 +27,7 @@ extension Array where Element == Coordinate3D {
         // For other projections the coordinates are in meters already.
         let crsTolerance: Double = {
             guard let projection = first?.projection else { return tolerance }
+
             return projection.crsLength(fromMeters: tolerance)
         }()
 
@@ -52,7 +53,7 @@ extension Array where Element == Coordinate3D {
             if let first = result.first,
                let last = result.last,
                abs(first.longitude - last.longitude) > crsTolerance
-                || abs(first.latitude - last.latitude) > crsTolerance
+               || abs(first.latitude - last.latitude) > crsTolerance
             {
                 result.append(first)
             }
@@ -79,7 +80,7 @@ extension LineString {
         removeCollinear: Bool = false,
         gridSize: Double? = nil
     ) -> LineString {
-        var coords = self.coordinates
+        var coords = coordinates
         if let gridSize {
             coords = coords.map { $0.snappedToGrid(tolerance: gridSize) }
         }
@@ -121,7 +122,14 @@ extension Polygon {
         gridSize: Double? = nil
     ) -> Polygon {
         let coords: [[Coordinate3D]] = rings.map { ring in
-            var cleaned = ring.coordinates.cleaned(
+            let coordinates =
+                if let gridSize {
+                    ring.coordinates.map { $0.snappedToGrid(tolerance: gridSize) }
+                }
+                else {
+                    ring.coordinates
+                }
+            var cleaned = coordinates.cleaned(
                 removeDuplicates: removeDuplicates,
                 removeCollinear: removeCollinear)
             if cleaned.count >= 3,
@@ -151,7 +159,7 @@ extension MultiPolygon {
                 removeDuplicates: removeDuplicates,
                 removeCollinear: removeCollinear,
                 gridSize: gridSize)
-            .coordinates
+                .coordinates
         }
         return MultiPolygon(unchecked: coords, calculateBoundingBox: boundingBox != nil)
     }
@@ -178,9 +186,10 @@ private enum CleanHelpers {
 
     static func removeCollinearPoints(_ coords: [Coordinate3D], tolerance: Double) -> [Coordinate3D] {
         guard coords.count >= 3 else { return coords }
+
         var result: [Coordinate3D] = [coords[0]]
 
-        for i in 1..<(coords.count - 1) {
+        for i in 1 ..< (coords.count - 1) {
             let prev = result[result.count - 1]
             let curr = coords[i]
             let next = coords[i + 1]
@@ -188,7 +197,15 @@ private enum CleanHelpers {
             let cross = (curr.longitude - prev.longitude) * (next.latitude - curr.latitude)
                 - (curr.latitude - prev.latitude) * (next.longitude - curr.longitude)
 
-            if abs(cross) > tolerance {
+            let span = hypot(
+                next.longitude - prev.longitude,
+                next.latitude - prev.latitude)
+            guard span > 0.0 else {
+                result.append(curr)
+                continue
+            }
+
+            if (abs(cross) / span) > tolerance {
                 result.append(curr)
             }
         }

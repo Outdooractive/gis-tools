@@ -159,3 +159,20 @@ struct LineSliceAlongTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension LineSliceAlongTests {
+
+    @Test
+    func negativeDistancesDoNotTrap() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+
+        #expect(line.sliceAlong(startDistance: -10.0, stopDistance: 10.0) != nil)
+        #expect(line.sliceAlong(startDistance: 10.0, stopDistance: -10.0) == nil)
+    }
+
+}

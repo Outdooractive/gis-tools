@@ -290,3 +290,30 @@ struct VoronoiTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension VoronoiTests {
+
+    @Test
+    func cellsPreserveFeatureMetadata() throws {
+        let features = [
+            Feature(
+                Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+                id: .string("a"),
+                properties: ["name": "A"]),
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 10.0))),
+            Feature(Point(Coordinate3D(latitude: 10.0, longitude: 5.0))),
+        ]
+        let collection = FeatureCollection(features)
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: -10.0),
+            northEast: Coordinate3D(latitude: 20.0, longitude: 20.0))
+        let result = collection.voronoiDiagram(boundingBox: bbox)
+        let first = try #require(result.features.first)
+
+        #expect(first.id == .string("a"))
+        #expect(first.property(for: "name") as String? == "A")
+    }
+
+}

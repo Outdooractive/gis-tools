@@ -21,12 +21,15 @@ extension Polygon {
     /// - Returns: A ``MultiPoint`` with the two tangent points, or `nil`
     public func tangentPoints(to point: Coordinate3D) -> MultiPoint? {
         guard let ring = outerRing else { return nil }
+
         let coords = ring.coordinates
 
         guard coords.count >= 3 else { return nil }
 
         // Project both to the same coordinate system
         let point = point.projected(to: projection)
+        guard locate(point, gridSize: nil) == .exterior else { return nil }
+
         let projectedCoords = coords.map { $0.projected(to: projection) }
 
         // Skip the closing coordinate (last == first)
@@ -84,16 +87,20 @@ extension Polygon {
         }
 
         guard !isInside(shiftedPoint, vertices: shiftedVertices) else { return nil }
-
         guard let rightIdx = findTangent(vertices: shiftedVertices, point: shiftedPoint, direction: 1),
               let leftIdx = findTangent(vertices: shiftedVertices, point: shiftedPoint, direction: -1)
         else { return nil }
 
-        // Unshift tangents back to original longitude range
+        /// Unshift tangents back to original longitude range
         func unshift(_ coord: Coordinate3D) -> Coordinate3D {
             guard shouldUnshift, abs(coord.longitude) > 180.0 else { return coord }
-            return Coordinate3D(x: coord.longitude - 360.0, y: coord.latitude,
-                                z: coord.altitude, m: coord.m, projection: projection)
+
+            return Coordinate3D(
+                x: coord.longitude - 360.0,
+                y: coord.latitude,
+                z: coord.altitude,
+                m: coord.m,
+                projection: projection)
         }
         return MultiPoint([unshift(shiftedVertices[rightIdx]), unshift(shiftedVertices[leftIdx])])
     }
@@ -107,12 +114,17 @@ extension Polygon {
     /// Checks if `point` is inside the convex polygon defined by `vertices`.
     private func isInside(_ point: Coordinate3D, vertices: [Coordinate3D]) -> Bool {
         guard vertices.count >= 3 else { return false }
+
         let sign = crossProduct(vertices[0], vertices[1], point) > 0.0
-        for i in 1..<vertices.count {
+        for i in 1 ..< vertices.count {
             let j = (i + 1) % vertices.count
             let s = crossProduct(vertices[i], vertices[j], point)
-            if s == 0.0 { continue }
-            if (s > 0.0) != sign { return false }
+            if s == 0.0 {
+                continue
+            }
+            if (s > 0.0) != sign {
+                return false
+            }
         }
         return true
     }
@@ -137,14 +149,14 @@ extension Polygon {
 
         let dir = Double(direction)
 
-        for i in 0..<n {
+        for i in 0 ..< n {
             let prev = (i - 1 + n) % n
             let next = (i + 1) % n
 
             let cpPrev = dir * crossProduct(point, vertices[i], vertices[prev])
             let cpNext = dir * crossProduct(point, vertices[i], vertices[next])
 
-            if cpPrev >= 0 && cpNext >= 0 {
+            if cpPrev >= 0, cpNext >= 0 {
                 return i
             }
         }

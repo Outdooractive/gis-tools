@@ -18,6 +18,8 @@ extension Polygon {
     /// - Returns: A new smoothed polygon.
     /// - Warning: May create degenerate polygons at high iteration counts.
     public func smooth(iterations: Int = 1) -> Polygon {
+        guard iterations > 0 else { return self }
+
         let spansAntimeridian = crossesAntimeridian
 
         let normalizedCoords: [[Coordinate3D]]
@@ -38,7 +40,7 @@ extension Polygon {
         }
 
         var resultCoords = normalizedCoords
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             resultCoords = smoothRings(resultCoords)
         }
 
@@ -66,10 +68,11 @@ extension Polygon {
                 output.append(ring)
                 continue
             }
+
             let hasAltitude = ring.allSatisfy({ $0.altitude != nil })
             var smoothed: [Coordinate3D] = []
             let n = ring.count - 1 // last == first
-            for i in 0..<n {
+            for i in 0 ..< n {
                 let p0 = ring[i]
                 let p1 = ring[(i + 1) % n]
                 // Chaikin: insert Q (3/4, 1/4) and R (1/4, 3/4)

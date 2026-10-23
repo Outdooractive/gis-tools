@@ -25,6 +25,10 @@ extension LineString {
     ) -> LineString? {
         guard coordinates.count >= 2 else { return nil }
 
+        let startDistance = max(0.0, startDistance)
+        let stopDistance = max(0.0, stopDistance)
+        guard stopDistance >= startDistance else { return nil }
+
         var slice: [Coordinate3D] = []
         var travelled: CLLocationDistance = 0.0
 
@@ -104,7 +108,8 @@ extension LineString {
             // Go from coord back toward prev by |overshot| meters.
             let bearing = coord.bearing(to: prev)
             result = coord.destination(distance: -overshot, bearing: bearing)
-        case .planar, .geocentric, .undefined:
+
+        case .geocentric, .planar, .undefined:
             // Straight‑line interpolation.
             let segmentLength = coord.distance(from: prev)
             let weight = 1.0 + overshot / segmentLength
@@ -147,15 +152,15 @@ extension Feature {
     ) -> Feature? {
         guard let lineString = geometry as? LineString,
               let lineSlice = lineString.sliceAlong(
-                startDistance: startDistance,
-                stopDistance: stopDistance)
+                  startDistance: startDistance,
+                  stopDistance: stopDistance)
         else { return nil }
 
         var newFeature = Feature(
             lineSlice,
             id: id,
             properties: properties,
-            calculateBoundingBox: (self.boundingBox != nil))
+            calculateBoundingBox: boundingBox != nil)
         newFeature.foreignMembers = foreignMembers
         return newFeature
     }

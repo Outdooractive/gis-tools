@@ -51,6 +51,10 @@ extension LineString {
             splitCoords = snapped.intersections(with: splitter, gridSize: gridSize).map(\.coordinate)
         }
 
+        if splitCoords.isEmpty {
+            return FeatureCollection([Feature(snapped)])
+        }
+
         // Include the start and end as implicit split points
         var splitPoints: [(coordinate: Coordinate3D, distance: CLLocationDistance)] = [
             (firstCoord, 0.0),
@@ -59,14 +63,17 @@ extension LineString {
 
         for coord in splitCoords {
             guard let distance = snapped.distanceAlong(to: coord) else { continue }
-            if splitPoints.contains(where: { abs($0.distance - distance) < tolerance }) { continue }
+
+            if splitPoints.contains(where: { abs($0.distance - distance) < tolerance }) {
+                continue
+            }
             splitPoints.append((coord, distance))
         }
 
         splitPoints.sort { $0.distance < $1.distance }
 
         var segments: [LineString] = []
-        for i in 0..<(splitPoints.count - 1) {
+        for i in 0 ..< (splitPoints.count - 1) {
             let startDist = splitPoints[i].distance
             let endDist = splitPoints[i + 1].distance
 

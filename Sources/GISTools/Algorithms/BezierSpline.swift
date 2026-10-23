@@ -76,7 +76,7 @@ private enum BezierSpline {
         steps: Int
     ) -> LineString {
         let n = points.count
-        guard n > 1 else {
+        guard n > 1, steps > 0 else {
             return LineString(unchecked: points)
         }
 
@@ -84,13 +84,13 @@ private enum BezierSpline {
         let hasAltitude = points.allSatisfy({ $0.altitude != nil })
 
         // Chord lengths
-        var chordLengths: [Double] = [0.0]
-        for i in 1..<n {
+        var chordLengths = [0.0]
+        for i in 1 ..< n {
             chordLengths.append(
                 chordLengths[i - 1]
-                + (hasAltitude
-                   ? distance3D(points[i - 1], points[i])
-                   : distance2D(points[i - 1], points[i])))
+                    + (hasAltitude
+                        ? distance3D(points[i - 1], points[i])
+                        : distance2D(points[i - 1], points[i])))
         }
 
         let totalLength = chordLengths[n - 1]
@@ -100,7 +100,7 @@ private enum BezierSpline {
         var tangents: [(dx: Double, dy: Double, dz: Double)] = []
         tangents.reserveCapacity(n)
 
-        for i in 0..<n {
+        for i in 0 ..< n {
             let tangent: (dx: Double, dy: Double, dz: Double)
             if i == 0 {
                 // Forward difference
@@ -132,7 +132,7 @@ private enum BezierSpline {
         // Build spline by interpolating each segment
         var splineCoords: [Coordinate3D] = [points[0]]
 
-        for i in 0..<(n - 1) {
+        for i in 0 ..< (n - 1) {
             let p0 = points[i]
             let p3 = points[i + 1]
 
@@ -150,7 +150,7 @@ private enum BezierSpline {
                 z: hasAltitude ? p3.altitude! - tangents[i + 1].dz * tension : nil,
                 projection: projection)
 
-            for s in 1..<steps {
+            for s in 1 ..< steps {
                 let u = Double(s) / Double(steps)
                 let u2 = u * u
                 let u3 = u2 * u

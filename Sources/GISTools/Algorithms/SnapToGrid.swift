@@ -49,6 +49,8 @@ extension Coordinate3D {
     /// - Parameter tolerance: Grid spacing in the CRS unit (must be > 0).
     /// - Returns: A new coordinate snapped to the nearest grid point.
     public func snappedToGrid(tolerance: Double) -> Coordinate3D {
+        guard tolerance > 0.0, tolerance.isFinite else { return self }
+
         var c = self
         c.longitude = round(c.longitude / tolerance) * tolerance
         c.latitude = round(c.latitude / tolerance) * tolerance
@@ -98,7 +100,7 @@ extension LineSegment {
             first: first.snappedToGrid(tolerance: tolerance),
             second: second.snappedToGrid(tolerance: tolerance),
             index: index,
-            calculateBoundingBox: (boundingBox != nil))
+            calculateBoundingBox: boundingBox != nil)
     }
 
     /// Snaps each coordinate to the nearest grid point, mutating in place.
@@ -194,7 +196,7 @@ extension SnapToGrid {
 
     private static func snap(point: Point, tolerance: Double) -> Point {
         let snapped = snapCoordinate(point.coordinate, tolerance: tolerance)
-        var result = Point(snapped, calculateBoundingBox: (point.boundingBox != nil))
+        var result = Point(snapped, calculateBoundingBox: point.boundingBox != nil)
         result.foreignMembers = point.foreignMembers
         return result
     }
@@ -202,8 +204,9 @@ extension SnapToGrid {
     private static func snap(multiPoint: MultiPoint, tolerance: Double) -> MultiPoint {
         guard var result = MultiPoint(
             multiPoint.coordinates.map({ snapCoordinate($0, tolerance: tolerance) }),
-            calculateBoundingBox: (multiPoint.boundingBox != nil))
+            calculateBoundingBox: multiPoint.boundingBox != nil)
         else { return multiPoint }
+
         result.foreignMembers = multiPoint.foreignMembers
         return result
     }
@@ -211,8 +214,9 @@ extension SnapToGrid {
     private static func snap(lineString: LineString, tolerance: Double) -> LineString {
         let snapped = lineString.coordinates.map({ snapCoordinate($0, tolerance: tolerance) })
         let cleaned = snapped.cleaned(removeDuplicates: true)
-        guard var result = LineString(cleaned, calculateBoundingBox: (lineString.boundingBox != nil))
+        guard var result = LineString(cleaned, calculateBoundingBox: lineString.boundingBox != nil)
         else { return lineString }
+
         result.foreignMembers = lineString.foreignMembers
         return result
     }
@@ -221,8 +225,9 @@ extension SnapToGrid {
         let snapped = multiLineString.coordinates.map({ line in
             line.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
         })
-        guard var result = MultiLineString(snapped, calculateBoundingBox: (multiLineString.boundingBox != nil))
+        guard var result = MultiLineString(snapped, calculateBoundingBox: multiLineString.boundingBox != nil)
         else { return multiLineString }
+
         result.foreignMembers = multiLineString.foreignMembers
         return result
     }
@@ -231,8 +236,9 @@ extension SnapToGrid {
         let snapped = polygon.coordinates.map({ ring in
             ring.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
         })
-        guard var result = Polygon(snapped, calculateBoundingBox: (polygon.boundingBox != nil))
+        guard var result = Polygon(snapped, calculateBoundingBox: polygon.boundingBox != nil)
         else { return polygon }
+
         result.foreignMembers = polygon.foreignMembers
         return result
     }
@@ -243,8 +249,9 @@ extension SnapToGrid {
                 ring.map({ snapCoordinate($0, tolerance: tolerance) }).cleaned(removeDuplicates: true)
             })
         })
-        guard var result = MultiPolygon(snapped, calculateBoundingBox: (multiPolygon.boundingBox != nil))
+        guard var result = MultiPolygon(snapped, calculateBoundingBox: multiPolygon.boundingBox != nil)
         else { return multiPolygon }
+
         result.foreignMembers = multiPolygon.foreignMembers
         return result
     }
@@ -252,7 +259,7 @@ extension SnapToGrid {
     private static func snap(geometryCollection: GeometryCollection, tolerance: Double) -> GeometryCollection {
         var result = GeometryCollection(
             geometryCollection.geometries.map({ snap($0, tolerance: tolerance) as! GeoJsonGeometry }),
-            calculateBoundingBox: (geometryCollection.boundingBox != nil))
+            calculateBoundingBox: geometryCollection.boundingBox != nil)
         result.foreignMembers = geometryCollection.foreignMembers
         return result
     }
@@ -271,7 +278,7 @@ extension SnapToGrid {
             snap(geometry, tolerance: tolerance) as! GeoJsonGeometry,
             id: feature.id,
             properties: feature.properties,
-            calculateBoundingBox: (feature.boundingBox != nil))
+            calculateBoundingBox: feature.boundingBox != nil)
         result.foreignMembers = feature.foreignMembers
         return result
     }
@@ -279,7 +286,7 @@ extension SnapToGrid {
     private static func snap(featureCollection: FeatureCollection, tolerance: Double) -> FeatureCollection {
         var result = FeatureCollection(
             featureCollection.features.map({ snap(feature: $0, tolerance: tolerance) }),
-            calculateBoundingBox: (featureCollection.boundingBox != nil))
+            calculateBoundingBox: featureCollection.boundingBox != nil)
         result.foreignMembers = featureCollection.foreignMembers
         return result
     }
