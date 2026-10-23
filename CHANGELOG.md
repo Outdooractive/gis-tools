@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Polygonize topology, dangles and collinear edges (#333): degree-1 dangles
+  and bridges (cut edges) are pruned recursively before ring finding;
+  collinear overlapping segments are noded at their endpoints and duplicate
+  noded edges are removed; bounded face rings are distinguished from the
+  unbounded face and classified by containment depth, so a separate inner ring
+  becomes a hole (with outer CCW / hole CW winding) instead of a second shell,
+  while nested islands stay separate polygons. Coordinates crossing the
+  projection wraparound axis are normalized generically (4326 antimeridian and
+  3857 `originShift`), and ECEF is polygonized in geographic space and
+  projected back. Tests assert coordinates, winding, hole counts, exact area,
+  input-order independence and all projections.
+
 - LineMerge junction, metadata and seam endpoints (#332): junction
   continuations are now paired by angle (straightest through-pair) instead of
   input order, so reordering features produces the same geometry and a branch

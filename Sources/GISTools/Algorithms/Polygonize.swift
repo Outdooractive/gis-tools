@@ -90,31 +90,43 @@ private enum Polygonize {
         // Determine projection from the first coordinate.
         let projection = lineStrings.first?.coordinates.first?.projection ?? .epsg4326
 
-        // Normalise antimeridian-crossing coordinates so that longitudes
-        // are contiguous (shift negative values by +360°).
-        // Only applies to EPSG:4326.
-        let spansAntimeridian: Bool
-        if projection.isGeographic {
-            let minLon = lineStrings.flatMap(\.coordinates).map(\.longitude).min() ?? 0
-            let maxLon = lineStrings.flatMap(\.coordinates).map(\.longitude).max() ?? 0
-            spansAntimeridian = (maxLon - minLon) > 180.0
-        }
-        else {
-            spansAntimeridian = false
+        // ECEF x/y/z are not a planar map: polygonize in geographic space and
+        // project the resulting polygons back into the source CRS.
+        if projection.isGeocentric {
+            let geographic = lineStrings.map { $0.projected(to: .epsg4326) }
+            let result = polygonize(lineStrings: geographic)
+            let features = result.features.compactMap { feature -> Feature? in
+                guard let polygon = feature.geometry as? Polygon else { return nil }
+                return Feature(polygon.projected(to: projection))
+            }
+            return FeatureCollection(features)
         }
 
+        // Normalise coordinates that cross the projection's wraparound axis
+        // (the antimeridian for EPSG:4326, ±originShift for EPSG:3857) so the
+        // graph sees a contiguous coordinate space.
+        let extent = projection.wraparoundExtent
+        var spansWraparound = false
+
+        if let extent, extent > 0.0 {
+            let xs = lineStrings.flatMap(\.coordinates).map(\.x)
+            if let minimum = xs.min(), let maximum = xs.max() {
+                spansWraparound = (maximum - minimum) > extent
+            }
+        }
+
+        let period = (extent ?? 0.0) * 2.0
         let normalised: [LineString]
-        if spansAntimeridian {
+        if spansWraparound, period > 0.0 {
             normalised = lineStrings.map { ls in
                 let coords = ls.coordinates.map { c in
                     Coordinate3D(
-                        x: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
-                        y: c.latitude,
+                        x: c.x < 0.0 ? c.x + period : c.x,
+                        y: c.y,
                         z: c.altitude,
                         m: c.m,
                         projection: projection)
                 }
-                // Use unchecked init: the shifted coords are still the same shape
                 return LineString(unchecked: coords, calculateBoundingBox: ls.boundingBox != nil)
             }
         }
@@ -129,9 +141,14 @@ private enum Polygonize {
         let splitSegments = splitAtIntersections(segments)
         guard splitSegments.isNotEmpty else { return FeatureCollection() }
 
-        // Step 2: build the graph
-        let nodes = buildGraph(from: splitSegments)
+        // Step 2: build the graph and remove edges that cannot border a face.
+        var nodes = buildGraph(from: splitSegments)
         guard nodes.isNotEmpty else { return FeatureCollection() }
+
+        prune(&nodes)
+        guard nodes.contains(where: { $0.edges.isNotEmpty }) else {
+            return FeatureCollection()
+        }
 
         // Step 3: find rings
         let rings = findRings(nodes: nodes, segments: splitSegments)
@@ -139,15 +156,15 @@ private enum Polygonize {
         // Step 4: assemble polygons
         let polygons = assemblePolygons(from: rings)
 
-        // Unshift coordinates back to original range
+        // Unshift coordinates back to the source range.
         let unshifted: [Polygon]
-        if spansAntimeridian {
+        if spansWraparound, let extent, period > 0.0 {
             unshifted = polygons.map { poly in
                 let coords = poly.coordinates.map { ring in
                     ring.map { c in
                         Coordinate3D(
-                            x: c.longitude > 180.0 ? c.longitude - 360.0 : c.longitude,
-                            y: c.latitude,
+                            x: c.x > extent ? c.x - period : c.x,
+                            y: c.y,
                             z: c.altitude,
                             m: c.m,
                             projection: projection)
@@ -182,32 +199,122 @@ private enum Polygonize {
                     splitPoints[i, default: []].insert(intersection)
                     splitPoints[j, default: []].insert(intersection)
                 }
+
+                // `LineSegment.intersection` returns nil for collinear
+                // segments. Without noded collinear overlaps, duplicate or
+                // partially overlapping edges are never split and produce
+                // duplicate faces.
+                for point in collinearOverlapPoints(segments[i], segments[j]) {
+                    splitPoints[i, default: []].insert(point)
+                    splitPoints[j, default: []].insert(point)
+                }
             }
         }
 
-        // Split segments at intersection points
+        // Split segments at intersection points and deduplicate the noded
+        // edges (collinear overlaps produce the same sub-segment from both
+        // inputs).
         var result: [LineSegment] = []
-        for (i, segment) in segments.enumerated() {
-            guard let points = splitPoints[i],
-                  points.isNotEmpty
-            else {
-                result.append(segment)
-                continue
-            }
+        var seen: Set<SegmentKey> = []
 
-            // Collect all points along this segment and sort by distance from start
+        for (i, segment) in segments.enumerated() {
+            let points = splitPoints[i] ?? []
             var allPoints = [segment.first, segment.second] + Array(points)
             allPoints.sort { segment.first.distance(from: $0) < segment.first.distance(from: $1) }
 
-            // Create sub-segments between consecutive points
             for k in 0 ..< (allPoints.count - 1) {
-                guard allPoints[k] != allPoints[k + 1] else { continue }
+                let first = allPoints[k]
+                let second = allPoints[k + 1]
+                guard first.distance(from: second) > GISTool.equalityDelta else { continue }
 
-                result.append(LineSegment(first: allPoints[k], second: allPoints[k + 1]))
+                let key = SegmentKey(first: first, second: second)
+                guard seen.insert(key).inserted else { continue }
+                result.append(LineSegment(first: first, second: second))
             }
         }
 
         return result
+    }
+
+    /// Points at which two collinear segments overlap. Each endpoint that lies
+    /// inside the other segment is a node point.
+    private static func collinearOverlapPoints(
+        _ first: LineSegment,
+        _ second: LineSegment
+    ) -> [Coordinate3D] {
+        let a = first.first
+        let b = first.second
+        let c = second.first
+        let d = second.second
+
+        let abx = b.x - a.x
+        let aby = b.y - a.y
+        let cdx = d.x - c.x
+        let cdy = d.y - c.y
+        let abLength = sqrt(abx * abx + aby * aby)
+        let cdLength = sqrt(cdx * cdx + cdy * cdy)
+        guard abLength > 0.0, cdLength > 0.0 else { return [] }
+
+        let cross = abx * cdy - aby * cdx
+        let crossTolerance = GISTool.intersectionEpsilon
+            * max(1.0, abLength * cdLength)
+        guard abs(cross) <= crossTolerance else { return [] }
+
+        // Parallel but offset lines are not collinear.
+        let offset = abs((c.x - a.x) * aby - (c.y - a.y) * abx) / abLength
+        guard offset <= GISTool.intersectionEpsilon * max(1.0, abLength) else {
+            return []
+        }
+
+        func parameter(of point: Coordinate3D, from start: Coordinate3D, dx: Double, dy: Double) -> Double {
+            let lengthSquared = dx * dx + dy * dy
+            guard lengthSquared > 0.0 else { return -1.0 }
+            return ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared
+        }
+
+        func contains(_ point: Coordinate3D, start: Coordinate3D, dx: Double, dy: Double) -> Bool {
+            let t = parameter(of: point, from: start, dx: dx, dy: dy)
+            return t >= -0.000000001 && t <= 1.000000001
+        }
+
+        var points: [Coordinate3D] = []
+        for point in [a, b, c, d] {
+            if contains(point, start: a, dx: abx, dy: aby),
+               contains(point, start: c, dx: cdx, dy: cdy),
+               !points.contains(where: { $0.distance(from: point) <= GISTool.equalityDelta })
+            {
+                points.append(point)
+            }
+        }
+        return points
+    }
+
+    private struct CoordinateKey: Hashable {
+        let x: Int64
+        let y: Int64
+
+        init(_ coordinate: Coordinate3D) {
+            x = Int64((coordinate.x / GISTool.equalityDelta).rounded())
+            y = Int64((coordinate.y / GISTool.equalityDelta).rounded())
+        }
+    }
+
+    private struct SegmentKey: Hashable {
+        let first: CoordinateKey
+        let second: CoordinateKey
+
+        init(first: Coordinate3D, second: Coordinate3D) {
+            let a = CoordinateKey(first)
+            let b = CoordinateKey(second)
+            if a.x < b.x || (a.x == b.x && a.y <= b.y) {
+                self.first = a
+                self.second = b
+            }
+            else {
+                self.first = b
+                self.second = a
+            }
+        }
     }
 
     // MARK: - Graph building
@@ -261,6 +368,90 @@ private enum Polygonize {
 
     private static func angle(from: Coordinate3D, to: Coordinate3D) -> Double {
         atan2(to.latitude - from.latitude, to.longitude - from.longitude)
+    }
+
+    // MARK: - Dangle and cut-edge pruning
+
+    /// Removes dangling edges (degree-1 chains) recursively and then every
+    /// bridge. None of those edges can bound a face; leaving them in the graph
+    /// lets the ring walk start on them and mark half-edges visited without
+    /// producing a ring.
+    private static func prune(_ nodes: inout [Node]) {
+        pruneDangles(&nodes)
+
+        let bridges = bridgeKeys(nodes)
+        guard bridges.isNotEmpty else { return }
+
+        for index in nodes.indices {
+            nodes[index].edges.removeAll { edge in
+                let key = BridgeKey(a: index, b: edge.to)
+                return bridges.contains(key)
+            }
+        }
+
+        pruneDangles(&nodes)
+    }
+
+    private static func pruneDangles(_ nodes: inout [Node]) {
+        var queue = nodes.indices.filter { nodes[$0].edges.count <= 1 }
+        while let index = queue.popLast() {
+            guard nodes[index].edges.count <= 1 else { continue }
+            let incident = nodes[index].edges
+            nodes[index].edges.removeAll()
+
+            for edge in incident {
+                nodes[edge.to].edges.removeAll { $0.to == index }
+                if nodes[edge.to].edges.count <= 1 {
+                    queue.append(edge.to)
+                }
+            }
+        }
+    }
+
+    private struct BridgeKey: Hashable {
+        let a: Int
+        let b: Int
+
+        init(a: Int, b: Int) {
+            self.a = min(a, b)
+            self.b = max(a, b)
+        }
+    }
+
+    /// Tarjan bridge detection over the undirected underlying graph.
+    private static func bridgeKeys(_ nodes: [Node]) -> Set<BridgeKey> {
+        var discovery = Array(repeating: -1, count: nodes.count)
+        var low = Array(repeating: 0, count: nodes.count)
+        var timer = 0
+        var bridges: Set<BridgeKey> = []
+
+        func visit(_ node: Int, parent: Int) {
+            discovery[node] = timer
+            low[node] = timer
+            timer += 1
+
+            for edge in nodes[node].edges {
+                let neighbor = edge.to
+                if neighbor == parent { continue }
+
+                if discovery[neighbor] == -1 {
+                    visit(neighbor, parent: node)
+                    low[node] = min(low[node], low[neighbor])
+                    if low[neighbor] > discovery[node] {
+                        bridges.insert(BridgeKey(a: node, b: neighbor))
+                    }
+                }
+                else {
+                    low[node] = min(low[node], discovery[neighbor])
+                }
+            }
+        }
+
+        for index in nodes.indices where discovery[index] == -1 {
+            visit(index, parent: -1)
+        }
+
+        return bridges
     }
 
     // MARK: - Ring finding
@@ -348,62 +539,106 @@ private enum Polygonize {
 
     // MARK: - Polygon assembly
 
+    /// Classifies the face rings by containment depth and assembles polygons.
+    ///
+    /// Depth is the number of strictly larger rings containing the ring:
+    /// even depths are shells, odd depths are holes. A hole is assigned to the
+    /// smallest containing shell, which keeps nested islands (depth 2) as
+    /// separate polygons instead of silently turning them into holes.
     private static func assemblePolygons(from rings: [[Coordinate3D]]) -> [Polygon] {
         guard rings.isNotEmpty else { return [] }
 
-        /// Compute signed area to determine clockwise vs counter-clockwise
-        func signedArea(_ ring: [Coordinate3D]) -> Double {
-            let coords = ring
-            var area = 0.0
-            for i in 0 ..< coords.count {
-                let j = (i + 1) % coords.count
-                area += coords[i].longitude * coords[j].latitude
-                area -= coords[j].longitude * coords[i].latitude
-            }
-            return area
+        // The half-edge walk visits each bounded face with negative planar
+        // area and the unbounded face with positive area (each face also
+        // appears with both orientations). Keep the bounded face rings and
+        // collapse duplicates by vertex set before classifying them.
+        var uniqueRings: [[Coordinate3D]] = []
+        var seen: Set<[CoordinateKey]> = []
+        for ring in rings {
+            guard ring.count >= 4,
+                  planarSignedArea(ring) < 0.0
+            else { continue }
+            let key = canonicalKey(ring)
+            guard seen.insert(key).inserted else { continue }
+            uniqueRings.append(ring)
         }
 
-        /// Check if ring A contains ring B (using a point-in-polygon test)
+        guard uniqueRings.isNotEmpty else { return [] }
+
+        let areas = uniqueRings.map { ring in
+            abs(Polygon(unchecked: [ring]).area)
+        }
+
         func contains(outer: [Coordinate3D], inner: [Coordinate3D]) -> Bool {
-            guard let firstPt = inner.first else { return false }
-
-            let ring = Ring(outer)
-            return ring?.contains(firstPt) ?? false
+            guard let point = inner.first,
+                  let ring = Ring(outer)
+            else { return false }
+            return ring.contains(point)
         }
 
-        // The ring graph yields clockwise face rings for the covered faces.
-        let outerRings = rings.filter { signedArea($0) < 0 }
-        let innerRings = rings.filter { signedArea($0) > 0 }
+        var depth = Array(repeating: 0, count: uniqueRings.count)
+        var containers = Array(repeating: [Int](), count: uniqueRings.count)
+
+        for index in uniqueRings.indices {
+            for other in uniqueRings.indices where other != index {
+                guard areas[other] > areas[index] * 1.000000001 else { continue }
+                if contains(outer: uniqueRings[other], inner: uniqueRings[index]) {
+                    containers[index].append(other)
+                }
+            }
+            depth[index] = containers[index].count
+        }
 
         var polygons: [Polygon] = []
-        for outer in outerRings {
-            // Find holes contained in this outer ring
-            let holes = innerRings.filter { contains(outer: outer, inner: $0) }
-
-            var allRings: [Ring] = []
-            if let outerRing = Ring(outer) {
-                allRings.append(outerRing)
+        for shellIndex in uniqueRings.indices where depth[shellIndex] % 2 == 0 {
+            let holeIndices = uniqueRings.indices.filter { index in
+                guard depth[index] % 2 == 1 else { return false }
+                let possibleShells = containers[index].filter { depth[$0] % 2 == 0 }
+                guard let assignedShell = possibleShells.min(by: {
+                    areas[$0] < areas[$1]
+                }) else { return false }
+                return assignedShell == shellIndex
             }
-            for hole in holes {
-                if let holeRing = Ring(hole) {
-                    allRings.append(holeRing)
+
+            var polygonRings: [Ring] = []
+            if let shell = Ring(uniqueRings[shellIndex]) {
+                polygonRings.append(shell)
+            }
+            for holeIndex in holeIndices {
+                if let hole = Ring(uniqueRings[holeIndex]) {
+                    polygonRings.append(hole)
                 }
             }
 
-            let polygon = Polygon(unchecked: allRings)
-            polygons.append(polygon)
+            guard let polygon = Polygon(polygonRings) else { continue }
+            polygons.append(polygon.rewinded)
         }
 
-        // Handle degenerate inputs where no CCW ring was produced.
-        if polygons.isEmpty {
-            for inner in innerRings {
-                if let polygon = Polygon([inner]) {
-                    polygons.append(polygon)
-                }
-            }
-        }
-
-        return polygons.map { $0.rewinded }
+        return polygons
     }
+
+    private static func planarSignedArea(_ ring: [Coordinate3D]) -> Double {
+        guard ring.count >= 3 else { return 0.0 }
+        var sum = 0.0
+        for index in 0 ..< (ring.count - 1) {
+            sum += ring[index].x * ring[index + 1].y
+                - ring[index + 1].x * ring[index].y
+        }
+        return sum / 2.0
+    }
+
+    private static func canonicalKey(_ ring: [Coordinate3D]) -> [CoordinateKey] {
+        var coordinates = ring
+        if coordinates.count > 1,
+           coordinates.first?.distance(from: coordinates.last ?? coordinates[0]) ?? 0.0
+            < GISTool.equalityDelta
+        {
+            coordinates.removeLast()
+        }
+        return coordinates.map(CoordinateKey.init).sorted {
+            $0.x < $1.x || ($0.x == $1.x && $0.y < $1.y)
+        }
+    }
+
 
 }
