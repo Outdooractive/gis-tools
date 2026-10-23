@@ -304,6 +304,15 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Minkowski sum holes and projection handling (#331): polygons whose outer
+  ring is convex but which have holes are now tessellated before the vertex
+  sum, so hole vertices no longer fill the hole; the pattern is projected into
+  the source CRS (mixed 4326/3857 inputs now match normalized inputs); ECEF
+  inputs are computed in geographic space and projected back; and differences
+  reflect the pattern in the working frame instead of in ECEF. Tests replace
+  non-`nil` assertions with exact areas (`[0,10]² ⊕ [0,1]² = [0,11]²`), a
+  preserved 84-area hole, mixed-CRS equality and 3857/4978 coverage.
+
 - Tesselate hole and antimeridian triangulation (#330): holes are now
   traversed in the opposite winding direction and bridged to a visible outer
   vertex with duplicated bridge endpoints, so polygons with one or many holes
