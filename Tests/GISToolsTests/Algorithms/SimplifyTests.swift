@@ -284,9 +284,16 @@ struct SimplifyTests {
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.coverageSimplified(tolerance: 10_000.0))
         #expect(result.polygons.count == 2)
-        let rightEdge = result.polygons[0].coordinates[0][1]
-        let leftEdge = result.polygons[1].coordinates[0][3]
+        // Shared chains may start at a different vertex after simplification;
+        // compare the shared boundary coordinates as sets.
+        let rightEdge = Set(result.polygons[0].coordinates[0]
+            .filter { $0.longitude == 0.0 }
+            .map { "\($0.longitude),\($0.latitude)" })
+        let leftEdge = Set(result.polygons[1].coordinates[0]
+            .filter { $0.longitude == 0.0 }
+            .map { "\($0.longitude),\($0.latitude)" })
         #expect(rightEdge == leftEdge)
+        #expect(rightEdge.count >= 2)
     }
 
     // Tests coverage simplify in EPSG:3857.
@@ -408,5 +415,125 @@ extension SimplifyTests {
 
         #expect(simplified.outerRing!.coordinates.count < polygon.outerRing!.coordinates.count)
     }
+
+
+    /// `polygonHullSimplified` keeps holes (and their winding) instead of
+    /// returning only the outer ring.
+    @Test
+    func polygonHullKeepsHoles() throws {
+        let outer: [Coordinate3D] = [
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10_000.0, y: 10_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]
+        let hole: [Coordinate3D] = [
+            Coordinate3D(x: 3_000.0, y: 3_000.0, projection: .noSRID),
+            Coordinate3D(x: 3_000.0, y: 7_000.0, projection: .noSRID),
+            Coordinate3D(x: 7_000.0, y: 7_000.0, projection: .noSRID),
+            Coordinate3D(x: 7_000.0, y: 3_000.0, projection: .noSRID),
+            Coordinate3D(x: 3_000.0, y: 3_000.0, projection: .noSRID),
+        ]
+        let polygon = try #require(Polygon([outer, hole]))
+        let result = try #require(polygon.polygonHullSimplified(tolerance: 100.0))
+
+        #expect(result.innerRings?.count == 1)
+        #expect(result.outerRing?.isCounterClockwise == true)
+        #expect(result.innerRings?.first?.isClockwise == true)
+        #expect(abs(result.area - 84_000_000.0) < 1.0)
+    }
+
+    /// Visvalingam-Whyatt threshold is a perpendicular-distance threshold:
+    /// the same 5 m spike is removed from a 1000 m base and a 50 m base with
+    /// a 10 m tolerance.
+    @Test
+    func visvalingamThresholdIsDimensionallyCorrect() throws {
+        func spikedRing(base: Double) throws -> Polygon {
+            try #require(Polygon([[
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: base / 2.0, y: 5.0, projection: .noSRID),
+                Coordinate3D(x: base, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: base, y: 1_000.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ]]))
+        }
+
+        for base in [1_000.0, 50.0] {
+            let polygon = try spikedRing(base: base)
+            let simplified = try #require(
+                polygon.polygonHullSimplified(tolerance: 10.0))
+            #expect(
+                simplified.outerRing?.coordinates.count == 5,
+                "base \(base): spike was not removed")
+        }
+
+        // A 20 m spike exceeds the same tolerance and must survive.
+        let tallSpike = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 500.0, y: 20.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let simplifiedTall = try #require(
+            tallSpike.polygonHullSimplified(tolerance: 10.0))
+        #expect(simplifiedTall.outerRing?.coordinates.count == 6)
+    }
+
+    /// A multi-vertex shared edge must be simplified once and reused by both
+    /// incident polygons, leaving no T-junction.
+    @Test
+    func coverageSimplifyMultiVertexSharedEdge() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+
+        let shared: [Coordinate3D] = [
+            coordinate(1_000.0, 0.0),
+            coordinate(1_000.0, 250.0),
+            coordinate(1_000.0, 500.0),
+            coordinate(1_000.0, 750.0),
+            coordinate(1_000.0, 1_000.0),
+        ]
+
+        let left = try #require(Polygon([[
+            coordinate(0.0, 0.0),
+            shared[0],
+            shared[1],
+            shared[2],
+            shared[3],
+            shared[4],
+            coordinate(0.0, 1_000.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let right = try #require(Polygon([[
+            shared.reversed()[0],
+            shared.reversed()[1],
+            shared.reversed()[2],
+            shared.reversed()[3],
+            shared.reversed()[4],
+            coordinate(2_000.0, 0.0),
+            coordinate(2_000.0, 1_000.0),
+            shared.reversed()[0],
+        ]]))
+
+        let coverage = try #require(MultiPolygon([left, right]))
+        let result = try #require(coverage.coverageSimplified(tolerance: 100.0))
+        #expect(result.polygons.count == 2)
+
+        let leftShared = result.polygons[0].coordinates[0]
+            .filter { $0.x == 1_000.0 }
+            .map { "\($0.x),\($0.y)" }
+        let rightShared = result.polygons[1].coordinates[0]
+            .filter { $0.x == 1_000.0 }
+            .map { "\($0.x),\($0.y)" }
+
+        #expect(Set(leftShared) == Set(rightShared))
+        #expect(leftShared.count >= 2)
+    }
+
 
 }

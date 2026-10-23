@@ -304,6 +304,17 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Simplify topology and tolerance handling (#334): `polygonHullSimplified`
+  now keeps inner rings (with winding) and the silently ignored `highQuality`
+  parameter was removed from that API; `coverageSimplified` decomposes each
+  ring into shared and nonshared runs, simplifies every shared chain exactly
+  once and reuses it for both incident polygons (including multi-vertex shared
+  edges), so no T-junctions are introduced; and the Visvalingam-Whyatt
+  threshold is now a perpendicular-distance threshold
+  (`0.5 · chordLength · tolerance`) instead of a unit-mixing constant, so
+  short and long segments behave consistently. Tests assert hole retention,
+  shared-coordinate equality, and equal spike removal on 50 m and 1000 m bases.
+
 - Polygonize topology, dangles and collinear edges (#333): degree-1 dangles
   and bridges (cut edges) are pruned recursively before ring finding;
   collinear overlapping segments are noded at their endpoints and duplicate
