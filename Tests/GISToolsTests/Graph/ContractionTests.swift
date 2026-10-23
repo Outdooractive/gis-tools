@@ -533,5 +533,110 @@ struct ContractionTests {
       "Property-aware contraction route cost should match original")
   }
 
+
+  // MARK: - Audit regressions
+
+  /// A node can look like a two-way degree-2 pass-through while being the
+  /// target of an incoming one-way edge (one-way edges are stored only at
+  /// their source). Removing it used to drop that edge, disconnecting routes
+  /// that need it.
+  @Test
+  func incomingOneWayTargetIsNotContracted() throws {
+    var graph = Graph(isDirected: true)
+    let source = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.0))
+    let middle = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.01))
+    let left = graph.createNode(at: Coordinate3D(latitude: 0.01, longitude: 0.01))
+    let right = graph.createNode(at: Coordinate3D(latitude: -0.01, longitude: 0.01))
+
+    graph.addUndirectedEdge(from: left, to: middle)
+    graph.addUndirectedEdge(from: middle, to: right)
+    graph.addDirectedEdge(from: source, to: middle, isDirected: true)
+
+    let result = try #require(graph.contracted())
+    #expect(
+      result.contractedIndexOfOriginal[middle.index] != nil,
+      "A node targeted by a one-way edge must be kept")
+
+    let path = graph.shortestPathViaContraction(from: source, to: left)
+    #expect(
+      path.map(\.index) == [source.index, middle.index, left.index],
+      "One-way edge into the chain must survive contraction: \(path.map(\.index))")
+  }
+
+  /// When a direct edge and a longer chain connect the same pair of kept
+  /// nodes, contraction must keep the cheaper edge, not whichever chain is
+  /// discovered first.
+  @Test
+  func contractionUsesCheapestParallelEdge() throws {
+    var graph = Graph()
+    let a = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.0))
+    let b = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.01))
+    let detour1 = graph.createNode(at: Coordinate3D(latitude: 0.01, longitude: 0.001))
+    let detour2 = graph.createNode(at: Coordinate3D(latitude: 0.01, longitude: 0.009))
+    // Anchors need a third edge so they are not themselves contraction
+    // candidates (otherwise the whole chain looks like a closed cycle).
+    let aLeaf = graph.createNode(at: Coordinate3D(latitude: -0.01, longitude: 0.0))
+    let bLeaf = graph.createNode(at: Coordinate3D(latitude: -0.01, longitude: 0.01))
+
+    // Add the longer chain first so a first-wins implementation keeps it.
+    graph.addUndirectedEdge(from: a, to: detour1)
+    graph.addUndirectedEdge(from: detour1, to: detour2)
+    graph.addUndirectedEdge(from: detour2, to: b)
+    graph.addUndirectedEdge(from: a, to: b)
+    graph.addUndirectedEdge(from: a, to: aLeaf)
+    graph.addUndirectedEdge(from: b, to: bLeaf)
+
+    let directWeight = try #require(graph.weight(from: a, to: b))
+    let result = try #require(graph.contracted())
+    #expect(result.contractedIndexOfOriginal[detour1.index] == nil)
+    #expect(result.contractedIndexOfOriginal[detour2.index] == nil)
+
+    let contractedA = try #require(result.contractedIndexOfOriginal[a.index])
+    let contractedB = try #require(result.contractedIndexOfOriginal[b.index])
+    let contractedWeight = try #require(result.graph.weight(
+      from: result.graph.node(withIndex: contractedA)!,
+      to: result.graph.node(withIndex: contractedB)!))
+    #expect(
+      abs(contractedWeight - directWeight) < 0.000001,
+      "Contraction kept the long chain (\(contractedWeight)) instead of the direct edge (\(directWeight))")
+
+    let forward = graph.shortestPathViaContraction(from: a, to: b)
+    let backward = graph.shortestPathViaContraction(from: b, to: a)
+    #expect(forward.map(\.index) == [a.index, b.index])
+    #expect(backward.map(\.index) == [b.index, a.index])
+  }
+
+  /// A one-way edge and a two-way chain can connect the same contracted pair.
+  /// Expansion must follow the edge the path actually used, in both
+  /// directions, including the intermediate order on the reverse traversal.
+  @Test
+  func directedEdgeAndUndirectedChainExpandInPathDirection() throws {
+    var graph = Graph(isDirected: true)
+    let a = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.0))
+    let b = graph.createNode(at: Coordinate3D(latitude: 0.0, longitude: 0.01))
+    let middle = graph.createNode(at: Coordinate3D(latitude: 0.01, longitude: 0.005))
+
+    graph.addDirectedEdge(from: a, to: b, isDirected: true)
+    graph.addUndirectedEdge(from: a, to: middle)
+    graph.addUndirectedEdge(from: middle, to: b)
+
+    let directWeight = try #require(graph.weight(from: a, to: b))
+    let chainWeight = try #require(graph.weight(from: a, to: middle))
+      + (try #require(graph.weight(from: middle, to: b)))
+
+    let forward = graph.shortestPathViaContraction(from: a, to: b)
+    #expect(forward.map(\.index) == [a.index, b.index])
+    #expect(
+      abs(graph.length(ofPath: forward) - directWeight) < 0.000001,
+      "Forward route must use the one-way edge")
+
+    let backward = graph.shortestPathViaContraction(from: b, to: a)
+    #expect(backward.map(\.index) == [b.index, middle.index, a.index])
+    #expect(
+      abs(graph.length(ofPath: backward) - chainWeight) < 0.000001,
+      "Reverse route must use the two-way chain in the correct order")
+  }
+
+
 }
 #endif

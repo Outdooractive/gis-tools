@@ -232,5 +232,100 @@ struct MinimumSpanningTreeTests {
 
     }
 
+
+    // MARK: - Audit regressions
+
+    /// Deterministic random graphs checked against the MST cycle property:
+    /// for every non-tree edge, its weight must be at least the heaviest edge
+    /// on the tree path between its endpoints. Together with the edge count
+    /// (one fewer than the node count per component) this proves minimality
+    /// without reusing the production Kruskal implementation as the oracle.
+    @Test
+    func randomGraphsSatisfyMSTCycleProperty() throws {
+        struct LCG {
+            var state: UInt64
+            mutating func next() -> UInt64 {
+                state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                return state
+            }
+            mutating func int(_ upperBound: Int) -> Int {
+                Int(next() % UInt64(upperBound))
+            }
+        }
+
+        for seed: UInt64 in 1 ... 30 {
+            var rng = LCG(state: seed)
+            var graph = Graph(nodeTolerance: 0.000001)
+            let nodeCount = 7 + Int(seed % 6)
+            var nodes: [Node] = []
+            for index in 0 ..< nodeCount {
+                nodes.append(graph.createNode(at: Coordinate3D(
+                    latitude: Double(index / 4) * 0.01,
+                    longitude: Double(index % 4) * 0.01)))
+            }
+
+            var pairs: Set<Int> = []
+            for index in 1 ..< nodeCount {
+                let other = rng.int(index)
+                pairs.insert(min(index, other) * 1_000 + max(index, other))
+                graph.addUndirectedEdge(from: nodes[index], to: nodes[other])
+            }
+            let targetEdgeCount = 8 + Int(seed % 8)
+            var attempts = 0
+            while pairs.count < targetEdgeCount, attempts < targetEdgeCount * 50 {
+                attempts += 1
+                let a = rng.int(nodeCount)
+                let b = rng.int(nodeCount)
+                guard a != b else { continue }
+                let key = min(a, b) * 1_000 + max(a, b)
+                guard pairs.insert(key).inserted else { continue }
+                graph.addUndirectedEdge(from: nodes[a], to: nodes[b])
+            }
+
+            let mst = graph.minimumSpanningTree()
+            #expect(
+                mst.count == nodeCount - graph.connectedComponents.count,
+                "seed \(seed): expected one MST edge per non-root node")
+
+            var treeNeighbors: [Int: [(Int, Double)]] = [:]
+            for edge in mst {
+                treeNeighbors[edge.from.index, default: []].append((edge.to.index, edge.weight))
+                treeNeighbors[edge.to.index, default: []].append((edge.from.index, edge.weight))
+            }
+            let treePairs = Set(mst.map {
+                min($0.from.index, $0.to.index) * 1_000 + max($0.from.index, $0.to.index)
+            })
+
+            for edge in graph.edges {
+                let key = min(edge.from.index, edge.to.index) * 1_000
+                    + max(edge.from.index, edge.to.index)
+                if treePairs.contains(key) { continue }
+
+                // Heaviest edge on the tree path between the endpoints.
+                var stack: [(node: Int, heaviest: Double, visited: Set<Int>)] = [
+                    (edge.from.index, 0.0, [edge.from.index]),
+                ]
+                var pathMaximum: Double?
+                while let (node, heaviest, visited) = stack.popLast() {
+                    if node == edge.to.index {
+                        pathMaximum = heaviest
+                        break
+                    }
+                    for (next, weight) in treeNeighbors[node] ?? [] where !visited.contains(next) {
+                        var nextVisited = visited
+                        nextVisited.insert(next)
+                        stack.append((next, max(heaviest, weight), nextVisited))
+                    }
+                }
+
+                let heaviest = try #require(pathMaximum, "seed \(seed): MST does not span the graph")
+                #expect(
+                    edge.weight >= heaviest - 0.000001,
+                    "seed \(seed): non-tree edge \(key) is lighter than the tree path maximum")
+            }
+        }
+    }
+
+
 }
 #endif

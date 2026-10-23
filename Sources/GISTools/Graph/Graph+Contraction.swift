@@ -31,7 +31,7 @@ extension Graph {
         public let contractedIndexOfOriginal: [Int?]
 
         /// Removed intermediate original-node indices for each contracted edge.
-        let chainIntermediates: [ContractedChainKey: [Node]]?
+        let chainIntermediates: [ContractedChainKey: [Node]]
 
     }
 
@@ -127,10 +127,25 @@ extension Graph {
         //   untouched — collapsing it would orphan the chain walk and destroy a
         //   cycle, with no routing benefit.
         var keep = Array(repeating: true, count: adjacencyList.count)
+
+        // A one-way edge is stored only at its source, so a node can look
+        // like a two-way degree-2 pass-through while still being the target
+        // of an incoming one-way edge. Removing such a node would drop that
+        // edge (the contraction walk from the source would end at a removed
+        // node and emit nothing), changing reachability. Keep every node
+        // that is the target of a one-way edge.
+        var incomingDirectedTargets: Set<Int> = []
+        for edgeList in adjacencyList {
+            for edge in edgeList.edges where edge.isDirected {
+                incomingDirectedTargets.insert(edge.to.index)
+            }
+        }
+
         var candidates = Set<Int>()
-        for i in 0..<adjacencyList.count where isContractionCandidate(
-            index: i,
-            edgeCompatibility: edgeCompatibility)
+        for i in 0..<adjacencyList.count where !incomingDirectedTargets.contains(i)
+            && isContractionCandidate(
+                index: i,
+                edgeCompatibility: edgeCompatibility)
         {
             candidates.insert(i)
         }
@@ -208,67 +223,81 @@ extension Graph {
         // removed nodes until reaching another kept node. Emit a merged edge
         // with summed weight. Each undirected pair is emitted in both
         // directions; directed one-way chains in only the permitted direction.
-        // To avoid emitting the same merged undirected edge twice from both
-        // ends, the forward walk from each kept node handles emission, and we
-        // skip an edge if it leads back to a kept node with a smaller index
-        // (the smaller-index side will emit it).
-        var emittedUndirected: Set<UndirectedEdgeKey> = []
-        var chainIntermediates: [ContractedChainKey: [Node]]? =
-            cachingChains ? [:] : nil
+        //
+        // Different chains can connect the same pair of kept nodes (a direct
+        // edge plus a longer chain through removed nodes, or two chains
+        // around a cycle). Emitting the first one encountered would make the
+        // contracted graph overestimate the shortest path. Collect the best
+        // (cheapest) candidate per pair instead, and remember the exact chain
+        // that produced it so path expansion cannot pick a different one.
+        var bestEdges: [ContractedEdgeKey: ContractedEdgeCandidate] = [:]
         for i in 0..<adjacencyList.count where keep[i] {
             let newFromIndex = newIndexForOld[i]!
             for edge in adjacencyList[i].edges {
-                let firstStepIsDirected = edge.isDirected
+                let isDirected = edge.isDirected
                 let (destOriginal, totalWeight, mergedFeature, intermediates) = walkChain(
                     from: i,
                     firstEdge: edge,
                     keep: keep,
-                    collectIntermediates: cachingChains)
+                    collectIntermediates: true)
                 guard let dest = destOriginal, dest != i else { continue }
                 guard let newToIndex = newIndexForOld[dest] else { continue }
 
-                if chainIntermediates != nil {
-                    chainIntermediates?[ContractedChainKey(from: i, to: dest)] =
-                        intermediates.map { adjacencyList[$0].node }
+                let key = ContractedEdgeKey(
+                    from: newFromIndex,
+                    to: newToIndex,
+                    isDirected: isDirected)
+                if let existing = bestEdges[key], existing.weight <= totalWeight {
+                    continue
                 }
 
-                if firstStepIsDirected {
-                    // One-way chain: emit only in the forward direction.
-                    let fromNode = edgeLists[newFromIndex].node
-                    let toNode = edgeLists[newToIndex].node
-                    edgeLists[newFromIndex].edges.append(
-                        Edge(
-                            from: fromNode,
-                            to: toNode,
-                            feature: mergedFeature,
-                            isDirected: true,
-                            weight: totalWeight))
-                }
-                else {
-                    // Undirected chain: emit both directions once.
-                    let key = UndirectedEdgeKey(
-                        a: min(newFromIndex, newToIndex),
-                        b: max(newFromIndex, newToIndex))
-                    guard emittedUndirected.insert(key).inserted else {
-                        continue
-                    }
-                    let fromNode = edgeLists[newFromIndex].node
-                    let toNode = edgeLists[newToIndex].node
-                    edgeLists[newFromIndex].edges.append(
-                        Edge(
-                            from: fromNode,
-                            to: toNode,
-                            feature: mergedFeature,
-                            isDirected: false,
-                            weight: totalWeight))
-                    edgeLists[newToIndex].edges.append(
-                        Edge(
-                            from: toNode,
-                            to: fromNode,
-                            feature: mergedFeature,
-                            isDirected: false,
-                            weight: totalWeight))
-                }
+                bestEdges[key] = ContractedEdgeCandidate(
+                    from: newFromIndex,
+                    to: newToIndex,
+                    weight: totalWeight,
+                    feature: mergedFeature,
+                    intermediates: intermediates.map { adjacencyList[$0].node },
+                    isDirected: isDirected)
+            }
+        }
+
+        // The chain intermediates are recorded for every emitted edge. They
+        // are needed to expand a contracted path unambiguously: two distinct
+        // chains can connect the same pair of kept nodes, and re-deriving the
+        // chain from the original adjacency later may pick the wrong one.
+        //
+        // A directed edge and a two-way chain can connect the same
+        // contracted pair. The key therefore includes the edge direction;
+        // expansion inspects the contracted adjacency to see which of the
+        // available edges the path used.
+        var chainIntermediates: [ContractedChainKey: [Node]] = [:]
+        for candidate in bestEdges.values {
+            chainIntermediates[ContractedChainKey(
+                from: candidate.from,
+                to: candidate.to,
+                isDirected: candidate.isDirected)] = candidate.intermediates
+        }
+
+        for candidate in bestEdges.values {
+            let fromNode = edgeLists[candidate.from].node
+            let toNode = edgeLists[candidate.to].node
+
+            edgeLists[candidate.from].edges.append(
+                Edge(
+                    from: fromNode,
+                    to: toNode,
+                    feature: candidate.feature,
+                    isDirected: candidate.isDirected,
+                    weight: candidate.weight))
+
+            if !candidate.isDirected {
+                edgeLists[candidate.to].edges.append(
+                    Edge(
+                        from: toNode,
+                        to: fromNode,
+                        feature: candidate.feature,
+                        isDirected: false,
+                        weight: candidate.weight))
             }
         }
 
@@ -325,13 +354,34 @@ extension Graph {
                 guard nextContracted.index < result.originalIndices.count else {
                     return nil
                 }
-                let nextOriginal = result.originalIndices[nextContracted.index]
-                let key = ContractedChainKey(from: originalIndex, to: nextOriginal)
-                let intermediates = result.chainIntermediates.flatMap { $0[key] }
-                    ?? intermediateNodes(
-                        fromOriginal: originalIndex,
-                        toContractedIndex: nextContracted.index,
-                        result: result)
+                // Several parallel contracted edges (a one-way edge plus a
+                // two-way chain) may connect the same pair. Routing uses the
+                // cheapest edge that exists in this direction; expansion must
+                // use the same one, otherwise it would expand a one-way edge
+                // as its cheaper two-way sibling (or vice versa).
+                let available = result.graph.adjacencyList[contractedNode.index].edges
+                    .filter { $0.to.index == nextContracted.index }
+                guard let usedEdge = available.min(by: { $0.weight < $1.weight }) else {
+                    return nil
+                }
+                let key = ContractedChainKey(
+                    from: contractedNode.index,
+                    to: nextContracted.index,
+                    isDirected: usedEdge.isDirected)
+                let reverseKey = ContractedChainKey(
+                    from: nextContracted.index,
+                    to: contractedNode.index,
+                    isDirected: usedEdge.isDirected)
+                let intermediates: [Node]?
+                if let direct = result.chainIntermediates[key] {
+                    intermediates = direct
+                }
+                else if let reverse = result.chainIntermediates[reverseKey] {
+                    intermediates = reverse.reversed()
+                }
+                else {
+                    intermediates = nil
+                }
                 guard let intermediates else { return nil }
                 expanded.append(contentsOf: intermediates)
             }
@@ -722,87 +772,40 @@ extension Graph {
         return (current, totalWeight, mergedFeature, intermediates)
     }
 
-    /// Reconstructs the intermediate removed nodes along the chain between
-    /// `fromOriginal` (a kept original node) and the contracted node at
-    /// `toContractedIndex`. Excludes both endpoints.
-    private func intermediateNodes(
-        fromOriginal: Int,
-        toContractedIndex: Int,
-        result: ContractionResult
-    ) -> [Node]? {
-        guard
-            let toOriginal =
-                result.originalIndices.indices.contains(toContractedIndex)
-                ? result.originalIndices[toContractedIndex]
-                : nil
-        else { return nil }
-
-        // Walk the original adjacency from `fromOriginal` toward `toOriginal`,
-        // collecting removed intermediate nodes. Try each outgoing edge; the
-        // one whose chain ends at `toOriginal` is the path to expand.
-        for edge in adjacencyList[fromOriginal].edges {
-            let (dest, _, _, _) = walkChain(
-                from: fromOriginal,
-                firstEdge: edge,
-                keep: result.contractedIndexOfOriginal.map { $0 != nil },
-                collectIntermediates: false)
-            if dest == toOriginal {
-                return collectIntermediates(
-                    from: fromOriginal,
-                    to: toOriginal,
-                    contractedIndexOfOriginal: result.contractedIndexOfOriginal)
-            }
-        }
-        return nil
-    }
-
-    /// Walks the chain from `from` to `to` and returns the intermediate
-    /// (removed) original nodes, excluding both endpoints.
-    private func collectIntermediates(
-        from: Int,
-        to: Int,
-        contractedIndexOfOriginal: [Int?]
-    ) -> [Node] {
-        var intermediates: [Node] = []
-        var previous = from
-        var current = -1
-
-        // Find the first edge from `from` that begins the chain to `to`.
-        let startEdge = adjacencyList[from].edges.first { edge in
-            let (dest, _, _, _) = walkChain(
-                from: from,
-                firstEdge: edge,
-                keep: contractedIndexOfOriginal.map { $0 != nil },
-                collectIntermediates: false)
-            return dest == to
-        }
-        guard let edge = startEdge else { return intermediates }
-        current = edge.to.index
-
-        while current != to {
-            if contractedIndexOfOriginal[current] == nil {
-                intermediates.append(adjacencyList[current].node)
-            }
-            var nextEdge: Edge?
-            for e in adjacencyList[current].edges where e.to.index != previous {
-                if e.isDirected { break }
-                nextEdge = e
-                break
-            }
-            guard let e = nextEdge else { break }
-            previous = current
-            current = e.to.index
-            if current == from { break }
-        }
-        return intermediates
-    }
-
     // MARK: - Contraction support types
 
-    struct UndirectedEdgeKey: Hashable {
+    /// Identity of a merged contracted edge: unordered for two-way edges and
+    /// ordered for one-way edges.
+    struct ContractedEdgeKey: Hashable {
 
-        let a: Int
-        let b: Int
+        let from: Int
+        let to: Int
+        let isDirected: Bool
+
+        init(from: Int, to: Int, isDirected: Bool) {
+            self.isDirected = isDirected
+            if isDirected {
+                self.from = from
+                self.to = to
+            }
+            else {
+                self.from = min(from, to)
+                self.to = max(from, to)
+            }
+        }
+
+    }
+
+    /// The cheapest merged edge found for a contracted pair, including the
+    /// original chain that produced it.
+    struct ContractedEdgeCandidate {
+
+        let from: Int
+        let to: Int
+        let weight: Double
+        let feature: Feature?
+        let intermediates: [Node]
+        let isDirected: Bool
 
     }
 
@@ -810,6 +813,7 @@ extension Graph {
 
         let from: Int
         let to: Int
+        let isDirected: Bool
 
     }
 
