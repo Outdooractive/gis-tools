@@ -304,6 +304,19 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- GeoJSON decoder validation agreement (#342): the typed `GeoJsonDecoder` now
+  validates through `GeoJsonParser` instead of constructing geometries with
+  `unchecked` initializers, so the `json`, `jsonData`, `jsonString`,
+  `GeoJsonReader` and `JSONDecoder` paths agree on malformed documents.
+  Feature/geometry collection decoding is lenient like the parser (malformed
+  members are dropped rather than throwing the whole document), the
+  `Decodable` path round-trips through the parser, and a concrete-type
+  mismatch falls back to the documented JSONValue coercion instead of failing
+  outright. Tests compare all entry points on short rings, non-numeric
+  coordinates, missing members, empty multi-geometries and valid documents;
+  the empty intersection fixture is now constructed directly because an empty
+  `MultiPolygon` is deliberately rejected as structurally invalid.
+
 - Mask and BoundingBoxClip correctness (#341): `PolygonGeometry.mask` now
   returns a `MultiPolygon`, so masks with holes become unmasked islands,
   partial masks are clipped to the outer boundary, and multi-part/seam

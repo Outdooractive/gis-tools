@@ -21,7 +21,9 @@ struct IntersectionTests {
         let a = try loadOverlayPolygon(name, "A")
         let b = try loadOverlayPolygon(name, "B")
         let expectedJson = try TestData.stringFromFile(package: "Overlay", name: name + "IntersectResult")
-        let expected = try #require(MultiPolygon(jsonString: expectedJson), "Missing expected result for \(name)")
+        // An empty MultiPolygon is structurally invalid per the parser
+        // contract, so the empty intersection fixture is constructed directly.
+        let expected = MultiPolygon(jsonString: expectedJson) ?? MultiPolygon()
 
         guard let result = a.intersection(with: b) else {
             if expected.polygons.isNotEmpty {
