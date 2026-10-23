@@ -304,6 +304,14 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip line handling across the antimeridian (#367): line clipping
+  now splits a crossing clip box into its projection-aware non-crossing
+  windows, unwraps and shifts the line into each window's world copy, clips
+  each part and normalizes the result back. Lines and multi-lines inside a
+  `175 → −175` box (or the EPSG:3857 `originShift` equivalent) are no longer
+  dropped. Polygon clipping also uses projection-aware split boxes, so a
+  crossing 3857 box and cross-projection 4978 clipping stay correct.
+
 - QueryParser nested grouping and prefix NOT (#349): nested parentheses no
   longer reset the caller's pipeline, so `.a == 1 and (.b == 2 or .c == 3)`
   preserves both operands and the connector; a pending boolean connector is

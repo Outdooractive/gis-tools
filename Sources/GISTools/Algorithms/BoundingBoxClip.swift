@@ -60,7 +60,7 @@ extension LineString {
         let boundingBox = boundingBox.projected(to: projection)
 
         var lineString = MultiLineString(
-            boundingBox.clipLine(coordinates: coordinates),
+            boundingBox.clipLineParts(coordinates: coordinates, projection: projection),
             calculateBoundingBox: self.boundingBox != nil)
         lineString?.foreignMembers = foreignMembers
         return lineString
@@ -82,7 +82,9 @@ extension MultiLineString {
         let boundingBox = boundingBox.projected(to: projection)
 
         var lineString = MultiLineString(
-            coordinates.flatMap({ boundingBox.clipLine(coordinates: $0) }),
+            coordinates.flatMap {
+                boundingBox.clipLineParts(coordinates: $0, projection: projection)
+            },
             calculateBoundingBox: self.boundingBox != nil)
         lineString?.foreignMembers = foreignMembers
         return lineString
@@ -107,13 +109,16 @@ extension Polygon {
     /// - Parameter boundingBox: The bounding box
     /// - Returns: The clipped parts, or `nil` if nothing remains.
     public func clipped(to boundingBox: BoundingBox) -> MultiPolygon? {
-        let clipGeometry = boundingBox.boundingBoxGeometry.projected(to: projection)
+        let sourceBoxes = boundingBox.clipBoxes(projection: boundingBox.projection)
+        let clipPolygons = sourceBoxes.flatMap { box in
+            box.boundingBoxGeometry.projected(to: projection).polygons
+        }
 
         // A crossing clip box is already split into non-crossing parts; clip
         // against each part independently so the overlay never merges them
         // into a seam-spanning result.
         var parts: [Polygon] = []
-        for clipPolygon in clipGeometry.polygons {
+        for clipPolygon in clipPolygons {
             guard let result = MultiPolygon(unchecked: [clipPolygon])
                 .intersection(with: self)
             else { continue }
@@ -273,6 +278,83 @@ extension FeatureCollection {
 extension BoundingBox {
 
     // TODO: This is ugly Swift code
+
+    /// Splits a crossing bounding box into its non-crossing world windows.
+    /// Uses the projection's wraparound extent (180° for EPSG:4326,
+    /// `originShift` for EPSG:3857), unlike `boundingBoxGeometry` which is
+    /// degree-specific.
+    fileprivate func clipBoxes(projection: Projection) -> [BoundingBox] {
+        guard let extent = projection.wraparoundExtent,
+              southWest.x > northEast.x
+        else { return [self] }
+
+        return [
+            BoundingBox(
+                southWest: Coordinate3D(
+                    x: southWest.x,
+                    y: southWest.y,
+                    projection: projection),
+                northEast: Coordinate3D(
+                    x: extent,
+                    y: northEast.y,
+                    projection: projection)),
+            BoundingBox(
+                southWest: Coordinate3D(
+                    x: -extent,
+                    y: southWest.y,
+                    projection: projection),
+                northEast: Coordinate3D(
+                    x: northEast.x,
+                    y: northEast.y,
+                    projection: projection)),
+        ]
+    }
+
+    /// Clips a line against a possibly antimeridian-crossing box by splitting
+    /// the box into its non-crossing parts and clipping against each one.
+    fileprivate func clipLineParts(
+        coordinates: [Coordinate3D],
+        projection: Projection
+    ) -> [[Coordinate3D]] {
+        let boxes = clipBoxes(projection: projection)
+        let extent = projection.wraparoundExtent
+        let period = (extent ?? 0.0) * 2.0
+        let unwrapped = extent.map {
+            AntimeridianCutting.unwrapCoordinates(coordinates, extent: $0)
+        } ?? coordinates
+        let lineCenter = unwrapped.reduce(0.0) { $0 + $1.x } / Double(max(unwrapped.count, 1))
+
+        var parts: [[Coordinate3D]] = []
+        var seen: Set<[Coordinate3D]> = []
+
+        for box in boxes {
+            var candidate = unwrapped
+            if period > 0.0 {
+                let boxCenter = (box.southWest.x + box.northEast.x) / 2.0
+                let shift = ((boxCenter - lineCenter) / period).rounded() * period
+                if shift != 0.0 {
+                    candidate = candidate.map {
+                        Coordinate3D(
+                            x: $0.x + shift,
+                            y: $0.y,
+                            z: $0.altitude,
+                            m: $0.m,
+                            projection: $0.projection)
+                    }
+                }
+            }
+
+            for part in box.clipLine(coordinates: candidate) {
+                let normalized = extent == nil
+                    ? part
+                    : part.map { $0.normalized() }
+                guard seen.insert(normalized).inserted else { continue }
+                parts.append(normalized)
+            }
+        }
+
+        return parts
+    }
 
     /// Cohen-Sutherland line clipping algorithm, adapted to efficiently
     /// handle polylines rather than just segments.
