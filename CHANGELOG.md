@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Remaining boolean, collection and prepared-geometry semantics (#339):
+  a `FeatureCollection` receiver and a multi-part `MultiPolygon` receiver are
+  now treated as the union of their parts for `contains`/`covers`, so a
+  geometry spanning adjacent features or prepared components is covered;
+  `PreparedPolygon` with multiple parts delegates to the union. `BooleanDisjoint`
+  is covered for lines through holes, lines crossing the shell and
+  boundary-touching lines. `Coordinate3D` equality and hashing were made
+  mutually consistent for the wraparound axis (shared with #338). Spherical
+  area now uses the same documented `GISTool.earthRadius` model as distance
+  and length; the 3857 small-square area expectations were updated accordingly
+  and an area-versus-distance consistency test was added.
+
 - Remaining antimeridian correctness in operations and indexes (#338):
   `perpendicularFoot`/`nearestCoordinateOnLine`, `LineSegment.checkIsOnSegment`
   and `LineSegment.intersection` now unwrap seam-crossing segments into a

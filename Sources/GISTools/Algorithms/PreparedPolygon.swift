@@ -146,6 +146,7 @@ public struct PreparedPolygon: Sendable {
         if sourceProjection.isGeocentric
             || crossesAntimeridian
             || other.crossesAntimeridian
+            || parts.count > 1
         {
             return originalGeometry.contains(other)
         }
@@ -163,6 +164,7 @@ public struct PreparedPolygon: Sendable {
         if sourceProjection.isGeocentric
             || crossesAntimeridian
             || other.crossesAntimeridian
+            || parts.count > 1
         {
             return originalGeometry.covers(other)
         }
