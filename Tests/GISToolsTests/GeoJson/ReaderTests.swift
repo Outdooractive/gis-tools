@@ -186,3 +186,36 @@ struct ReaderTests {
     }
 
 }
+
+// MARK: - GeoJSON audit regressions
+
+extension ReaderTests {
+
+    /// String and data readers must use the same fallback path.
+    @Test
+    func readerStringAndDataAgreeOnInvalidBBox() throws {
+        let json = #"""
+        {"type":"Point","coordinates":[1,2],"bbox":[0,0,1]}
+        """#
+
+        let fromString = try #require(GeoJsonReader.geoJsonFrom(jsonString: json))
+        let fromData = try #require(GeoJsonReader.geoJsonFrom(jsonData: Data(json.utf8)))
+        let point = try #require(fromString as? Point)
+
+        #expect(point.coordinate == Coordinate3D(latitude: 2.0, longitude: 1.0))
+        #expect(point.boundingBox == nil)
+        #expect(fromString.type == fromData.type)
+    }
+
+    @Test
+    func readerGeometryFromUsesTargetProjection() throws {
+        let geometry = try #require(GeoJsonReader.geometryFrom(
+            string: "POINT (1 1)",
+            targetProjection: .epsg3857))
+        let point = try #require(geometry as? Point)
+
+        #expect(abs(point.coordinate.x - 111_319.49079327357) < 0.000001)
+        #expect(abs(point.coordinate.y - 111_325.1428663851) < 0.000001)
+    }
+
+}

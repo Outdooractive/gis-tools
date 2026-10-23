@@ -237,9 +237,9 @@ struct FeatureCollectionTests {
         let featureCollection = try #require(FeatureCollection(jsonString: FeatureCollectionTests.featureCollectionJson))
 
         let expected: [(Int, [String: Sendable])] = [
-            (0, ["prop0": "value0"]),
-            (1, ["prop0": "value0", "prop1": 0]),
-            (2, ["prop0": "value0", "prop1": ["this": "that"]])
+            (0, ["prop0": "value0", "prop2": "a"]),
+            (1, ["prop0": "value0", "prop1": 0, "prop2": "a"]),
+            (2, ["prop0": "value0", "prop1": ["this": "that"], "prop2": "b"]),
         ]
 
         var result: [(Int, [String: Sendable])] = []
@@ -252,6 +252,7 @@ struct FeatureCollectionTests {
 
         for (lhs, rhs) in zip(result, expected) {
             #expect(lhs.0 == rhs.0)
+            #expect(JSONValue(value: lhs.1) == JSONValue(value: rhs.1))
         }
     }
 
@@ -479,6 +480,75 @@ struct FeatureCollectionTests {
         let jsonFeatureCollection = try #require(FeatureCollection(json: json))
 
         #expect(featureCollection == jsonFeatureCollection)
+    }
+
+}
+
+// MARK: - GeoJSON audit regressions
+
+extension FeatureCollectionTests {
+
+    /// A collection containing only unlocated features can still receive a located feature.
+    @Test
+    func unlocatedCollectionAcceptsLocatedFeature() {
+        var featureCollection = FeatureCollection([
+            Feature(properties: ["name": "unknown"]),
+        ])
+
+        #expect(featureCollection.projection == .noSRID)
+
+        featureCollection.appendFeature(Feature(Point(.zero)))
+
+        #expect(featureCollection.features.count == 2)
+        #expect(featureCollection.projection == .epsg4326)
+    }
+
+    /// Unlocated features can be added to a located collection.
+    @Test
+    func locatedCollectionAcceptsUnlocatedFeature() {
+        var featureCollection = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 47.0, longitude: 10.0))),
+        ])
+
+        featureCollection.appendFeature(Feature(properties: ["name": "unknown"]))
+        featureCollection.insertFeature(
+            Feature(properties: ["name": "unknown"]),
+            atIndex: 0)
+
+        #expect(featureCollection.features.count == 3)
+        #expect(featureCollection.features.first?.geometry == nil)
+        #expect(featureCollection.features[1].geometry != nil)
+        #expect(featureCollection.features.last?.geometry == nil)
+        #expect(featureCollection.projection == .epsg4326)
+    }
+
+}
+// MARK: - Audit regressions
+
+extension FeatureCollectionTests {
+
+    /// Negative feature insertion indices are ignored instead of trapping.
+    @Test
+    func negativeFeatureInsertionIndexIsIgnored() {
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        var featureCollection = FeatureCollection([Feature(point)])
+
+        featureCollection.insertFeature(Feature(point), atIndex: -1)
+
+        #expect(featureCollection.features.count == 1)
+    }
+
+    /// Foreign members survive a FeatureCollection JSON round trip.
+    @Test
+    func featureCollectionForeignMembersSurviveJSONRoundTrip() throws {
+        let json = #"""
+        {"type":"FeatureCollection","features":[],"source":"test"}
+        """#
+        let collection = try JSONDecoder().decode(
+            FeatureCollection.self,
+            from: Data(json.utf8))
+
+        #expect(collection.foreignMember(for: "source") == "test")
     }
 
 }

@@ -134,3 +134,23 @@ struct PointTests {
     }
 
 }
+
+// MARK: - GeoJSON audit regressions
+
+extension PointTests {
+
+    /// Foreign members can be set, read through the subscript and removed.
+    @Test
+    func foreignMemberMutation() {
+        var point = Point(Coordinate3D(latitude: 47.0, longitude: 10.0))
+
+        point.setForeignMember("first", for: "one")
+        point[foreignMember: "two"] = "second"
+
+        #expect(point.foreignMember(for: "one") == "first")
+        #expect(point[foreignMember: "two"] == "second")
+        #expect(point.removeForeignMember(for: "one") as? String == "first")
+        #expect(point.foreignMember(for: "one") == nil)
+    }
+
+}

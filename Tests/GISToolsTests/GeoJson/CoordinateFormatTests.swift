@@ -10,32 +10,44 @@ struct CoordinateFormatTests {
     @Test
     func dmsString() async throws {
         let coord = try #require(Coordinate3D(dms: "40°26'46\" N 79°58'56\" W"))
-        #expect(abs(coord.latitude - 40.44611) < 0.001)
-        #expect(abs(coord.longitude - (-79.98222)) < 0.001)
+        let expectedLatitude = 40.0 + 26.0 / 60.0 + 46.0 / 3600.0
+        let expectedLongitude = -(79.0 + 58.0 / 60.0 + 56.0 / 3600.0)
+
+        #expect(abs(coord.latitude - expectedLatitude) < GISTool.equalityDelta)
+        #expect(abs(coord.longitude - expectedLongitude) < GISTool.equalityDelta)
     }
 
     // Validates parsing a DMS string with space-separated values into a Coordinate3D.
     @Test
     func dmsStringSpaceSeparated() async throws {
         let coord = try #require(Coordinate3D(dms: "40 26 46 N 79 58 56 W"))
-        #expect(abs(coord.latitude - 40.44611) < 0.001)
-        #expect(abs(coord.longitude - (-79.98222)) < 0.001)
+        let expectedLatitude = 40.0 + 26.0 / 60.0 + 46.0 / 3600.0
+        let expectedLongitude = -(79.0 + 58.0 / 60.0 + 56.0 / 3600.0)
+
+        #expect(abs(coord.latitude - expectedLatitude) < GISTool.equalityDelta)
+        #expect(abs(coord.longitude - expectedLongitude) < GISTool.equalityDelta)
     }
 
     // Validates parsing a DMS string with Eastern hemisphere longitude into a Coordinate3D.
     @Test
     func dmsStringEast() async throws {
         let coord = try #require(Coordinate3D(dms: "51°30'26\" N 0°7'39\" E"))
-        #expect(coord.latitude > 50)
-        #expect(coord.longitude > 0)
+        let expectedLatitude = 51.0 + 30.0 / 60.0 + 26.0 / 3600.0
+        let expectedLongitude = 7.0 / 60.0 + 39.0 / 3600.0
+
+        #expect(abs(coord.latitude - expectedLatitude) < GISTool.equalityDelta)
+        #expect(abs(coord.longitude - expectedLongitude) < GISTool.equalityDelta)
     }
 
     // Validates parsing a DMS string with Southern and Eastern hemispheres into a Coordinate3D.
     @Test
     func dmsStringSouthWest() async throws {
         let coord = try #require(Coordinate3D(dms: "33°52'0\" S 151°12'0\" E"))
-        #expect(coord.latitude < 0)
-        #expect(coord.longitude > 0)
+        let expectedLatitude = -(33.0 + 52.0 / 60.0)
+        let expectedLongitude = 151.0 + 12.0 / 60.0
+
+        #expect(abs(coord.latitude - expectedLatitude) < GISTool.equalityDelta)
+        #expect(abs(coord.longitude - expectedLongitude) < GISTool.equalityDelta)
     }
 
     // MARK: - DMS components
@@ -48,8 +60,11 @@ struct CoordinateFormatTests {
             latitudeDirection: "N",
             longitudeDegrees: 79, longitudeMinutes: 58, longitudeSeconds: 56,
             longitudeDirection: "W"))
-        #expect(abs(coord.latitude - 40.44611) < 0.001)
-        #expect(abs(coord.longitude - (-79.98222)) < 0.001)
+        let expectedLatitude = 40.0 + 26.0 / 60.0 + 46.0 / 3600.0
+        let expectedLongitude = -(79.0 + 58.0 / 60.0 + 56.0 / 3600.0)
+
+        #expect(abs(coord.latitude - expectedLatitude) < GISTool.equalityDelta)
+        #expect(abs(coord.longitude - expectedLongitude) < GISTool.equalityDelta)
     }
 
     // MARK: - UTM
@@ -61,8 +76,8 @@ struct CoordinateFormatTests {
         let coord = try #require(Coordinate3D(
             easting: 583_960.0, northing: 4_504_896.0,
             zone: 18, hemisphere: "N"))
-        #expect(abs(coord.latitude - 40.68) < 0.2)
-        #expect(abs(coord.longitude - (-74.0)) < 0.5)
+        #expect(abs(coord.latitude - 40.69068691113357) < 0.000001)
+        #expect(abs(coord.longitude - (-74.00632127165716)) < 0.000001)
     }
 
     // Validates converting a UTM coordinate in the southern hemisphere to a Coordinate3D.
@@ -72,8 +87,8 @@ struct CoordinateFormatTests {
         let coord = try #require(Coordinate3D(
             easting: 334_895.0, northing: 6_253_780.0,
             zone: 56, hemisphere: "S"))
-        #expect(coord.latitude < -30)
-        #expect(coord.longitude > 150)
+        #expect(abs(coord.latitude - (-33.843355905446565)) < 0.000001)
+        #expect(abs(coord.longitude - 151.2155194510673) < 0.000001)
     }
 
     // Validates that UTM conversion returns nil for an invalid zone number.

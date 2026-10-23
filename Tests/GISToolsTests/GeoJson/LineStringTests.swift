@@ -190,8 +190,8 @@ struct LineStringTests {
         #expect(roundTripped.coordinates.count == 2)
         for (idx, coord) in roundTripped.coordinates.enumerated() {
             let original = lineString.coordinates[idx]
-            #expect(abs(coord.latitude - original.latitude) < 0.0001)
-            #expect(abs(coord.longitude - original.longitude) < 0.0001)
+            #expect(abs(coord.latitude - original.latitude) < 0.000000001)
+            #expect(abs(coord.longitude - original.longitude) < 0.000000001)
         }
     }
 

@@ -12,144 +12,146 @@ struct WKTTests {
     private let pointMData = "POINT M (1 2 4)"
     private let pointZMData = "POINTZM(1 2 3 4)"
 
-    // Validates decoding WKT Point types (XY, XYZ, XYM, XYZM).
+    /// Validates decoding WKT Point types (XY, XYZ, XYM, XYZM).
     @Test
-    func pointDecoding() async throws {
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+    func pointDecoding() throws {
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as? Point)
         #expect(point.coordinate.longitude == 1)
         #expect(point.coordinate.latitude == 2)
         #expect(point.coordinate.altitude == nil)
 
-        let pointZ = try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326) as! Point
+        let pointZ = try #require(try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326) as? Point)
         #expect(pointZ.coordinate.longitude == 1)
         #expect(pointZ.coordinate.latitude == 2)
         #expect(pointZ.coordinate.altitude == 3)
 
-        let pointM = try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326) as! Point
+        let pointM = try #require(try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326) as? Point)
         #expect(pointM.coordinate.longitude == 1)
         #expect(pointM.coordinate.latitude == 2)
         #expect(pointM.coordinate.m == 4)
         #expect(pointM.coordinate.altitude == nil)
 
-        let pointZM = try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326) as! Point
+        let pointZM = try #require(try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326) as? Point)
         #expect(pointZM.coordinate.longitude == 1)
         #expect(pointZM.coordinate.latitude == 2)
         #expect(pointZM.coordinate.altitude == 3)
         #expect(pointZM.coordinate.m == 4)
     }
 
-    // Validates decoding WKT Point with reprojection from EPSG:4326 to EPSG:3857.
+    /// Validates decoding WKT Point with reprojection from EPSG:4326 to EPSG:3857.
     @Test
-    func pointDecoding4326To3857() async throws {
-        let expected = Coordinate3D(latitude: 2, longitude: 1).projected(to: .epsg3857)
+    func pointDecoding4326To3857() throws {
+        let expectedX = 111_319.49079327357
+        let expectedY = 222_684.20850554455
 
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        #expect(point.coordinate.x == expected.x)
-        #expect(point.coordinate.y == expected.y)
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as? Point)
+        #expect(abs(point.coordinate.x - expectedX) < 0.00000001)
+        #expect(abs(point.coordinate.y - expectedY) < 0.00000001)
         #expect(point.coordinate.altitude == nil)
 
-        let pointZ = try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        #expect(pointZ.coordinate.x == expected.x)
-        #expect(pointZ.coordinate.y == expected.y)
+        let pointZ = try #require(try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as? Point)
+        #expect(abs(pointZ.coordinate.x - expectedX) < 0.00000001)
+        #expect(abs(pointZ.coordinate.y - expectedY) < 0.00000001)
         #expect(pointZ.coordinate.altitude == 3)
 
-        let pointM = try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        #expect(pointM.coordinate.x == expected.x)
-        #expect(pointM.coordinate.y == expected.y)
+        let pointM = try #require(try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as? Point)
+        #expect(abs(pointM.coordinate.x - expectedX) < 0.00000001)
+        #expect(abs(pointM.coordinate.y - expectedY) < 0.00000001)
         #expect(pointM.coordinate.m == 4)
         #expect(pointM.coordinate.altitude == nil)
 
-        let pointZM = try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as! Point
-        #expect(pointZM.coordinate.x == expected.x)
-        #expect(pointZM.coordinate.y == expected.y)
+        let pointZM = try #require(try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326, targetProjection: .epsg3857) as? Point)
+        #expect(abs(pointZM.coordinate.x - expectedX) < 0.00000001)
+        #expect(abs(pointZM.coordinate.y - expectedY) < 0.00000001)
         #expect(pointZM.coordinate.altitude == 3)
         #expect(pointZM.coordinate.m == 4)
     }
 
-    // Validates decoding WKT Point with reprojection from EPSG:3857 to EPSG:4326.
+    /// Validates decoding WKT Point with reprojection from EPSG:3857 to EPSG:4326.
     @Test
-    func pointDecoding3857To4326() async throws {
-        let expected = Coordinate3D(x: 1, y: 2, projection: .epsg3857).projected(to: .epsg4326)
+    func pointDecoding3857To4326() throws {
+        let expectedLongitude = 0.000008983152841195214
+        let expectedLatitude = 0.000017966305681987637
 
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        #expect(point.coordinate.longitude == expected.longitude)
-        #expect(point.coordinate.latitude == expected.latitude)
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as? Point)
+        #expect(abs(point.coordinate.longitude - expectedLongitude) < 0.000000000001)
+        #expect(abs(point.coordinate.latitude - expectedLatitude) < 0.000000000001)
         #expect(point.coordinate.altitude == nil)
 
-        let pointZ = try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        #expect(pointZ.coordinate.x == expected.x)
-        #expect(pointZ.coordinate.y == expected.y)
+        let pointZ = try #require(try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as? Point)
+        #expect(abs(pointZ.coordinate.longitude - expectedLongitude) < 0.000000000001)
+        #expect(abs(pointZ.coordinate.latitude - expectedLatitude) < 0.000000000001)
         #expect(pointZ.coordinate.altitude == 3)
 
-        let pointM = try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        #expect(pointM.coordinate.x == expected.x)
-        #expect(pointM.coordinate.y == expected.y)
+        let pointM = try #require(try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as? Point)
+        #expect(abs(pointM.coordinate.longitude - expectedLongitude) < 0.000000000001)
+        #expect(abs(pointM.coordinate.latitude - expectedLatitude) < 0.000000000001)
         #expect(pointM.coordinate.m == 4)
         #expect(pointM.coordinate.altitude == nil)
 
-        let pointZM = try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as! Point
-        #expect(pointZM.coordinate.x == expected.x)
-        #expect(pointZM.coordinate.y == expected.y)
+        let pointZM = try #require(try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg3857, targetProjection: .epsg4326) as? Point)
+        #expect(abs(pointZM.coordinate.longitude - expectedLongitude) < 0.000000000001)
+        #expect(abs(pointZM.coordinate.latitude - expectedLatitude) < 0.000000000001)
         #expect(pointZM.coordinate.altitude == 3)
         #expect(pointZM.coordinate.m == 4)
     }
 
-    // Validates decoding WKT Point with no SRID (noSRID).
+    /// Validates decoding WKT Point with no SRID (noSRID).
     @Test
-    func pointDecodingNoSRID() async throws {
+    func pointDecodingNoSRID() throws {
         let expected = Coordinate3D(x: 1, y: 2, projection: .noSRID)
 
         #expect(throws: WKTCoder.WKTCoderError.self) {
-            try WKTCoder.decode(wkt: pointData, sourceProjection: .noSRID) as! Point
+            try WKTCoder.decode(wkt: pointData, sourceProjection: .noSRID) as? Point
         }
 
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .noSRID, targetProjection: .noSRID) as? Point)
         #expect(point.coordinate.x == expected.x)
         #expect(point.coordinate.y == expected.y)
         #expect(point.coordinate.altitude == nil)
 
-        let pointZ = try WKTCoder.decode(wkt: pointZData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        let pointZ = try #require(try WKTCoder.decode(wkt: pointZData, sourceProjection: .noSRID, targetProjection: .noSRID) as? Point)
         #expect(pointZ.coordinate.x == expected.x)
         #expect(pointZ.coordinate.y == expected.y)
         #expect(pointZ.coordinate.altitude == 3)
 
-        let pointM = try WKTCoder.decode(wkt: pointMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        let pointM = try #require(try WKTCoder.decode(wkt: pointMData, sourceProjection: .noSRID, targetProjection: .noSRID) as? Point)
         #expect(pointM.coordinate.x == expected.x)
         #expect(pointM.coordinate.y == expected.y)
         #expect(pointM.coordinate.m == 4)
         #expect(pointM.coordinate.altitude == nil)
 
-        let pointZM = try WKTCoder.decode(wkt: pointZMData, sourceProjection: .noSRID, targetProjection: .noSRID) as! Point
+        let pointZM = try #require(try WKTCoder.decode(wkt: pointZMData, sourceProjection: .noSRID, targetProjection: .noSRID) as? Point)
         #expect(pointZM.coordinate.x == expected.x)
         #expect(pointZM.coordinate.y == expected.y)
         #expect(pointZM.coordinate.altitude == 3)
         #expect(pointZM.coordinate.m == 4)
     }
 
-    // Validates encoding a Point to WKT string.
+    /// Validates encoding a Point to WKT string.
     @Test
-    func pointEncoding() async throws {
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+    func pointEncoding() throws {
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as? Point)
         let encodedPoint = WKTCoder.encode(geometry: point, targetProjection: nil)
         #expect(encodedPoint == "POINT(1.0 2.0)")
 
-        let pointZ = try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326) as! Point
+        let pointZ = try #require(try WKTCoder.decode(wkt: pointZData, sourceProjection: .epsg4326) as? Point)
         let encodedPointZ = WKTCoder.encode(geometry: pointZ, targetProjection: nil)
         #expect(encodedPointZ == "POINTZ(1.0 2.0 3.0)")
 
-        let pointM = try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326) as! Point
+        let pointM = try #require(try WKTCoder.decode(wkt: pointMData, sourceProjection: .epsg4326) as? Point)
         let encodedPointM = WKTCoder.encode(geometry: pointM, targetProjection: nil)
         #expect(encodedPointM == "POINTM(1.0 2.0 4.0)")
 
-        let pointZM = try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326) as! Point
+        let pointZM = try #require(try WKTCoder.decode(wkt: pointZMData, sourceProjection: .epsg4326) as? Point)
         let encodedPointZM = WKTCoder.encode(geometry: pointZM, targetProjection: nil)
         #expect(encodedPointZM == "POINTZM(1.0 2.0 3.0 4.0)")
     }
 
-    // Validates encoding a Point to WKT with SRID prefix for target projections.
+    /// Validates encoding a Point to WKT with SRID prefix for target projections.
     @Test
-    func pointEncodingWithProjections() async throws {
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+    func pointEncodingWithProjections() throws {
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as? Point)
         let encodedPoint = WKTCoder.encode(geometry: point, targetProjection: .epsg4326)
         #expect(encodedPoint == "SRID=4326;POINT(\(point.coordinate.x) \(point.coordinate.y))")
 
@@ -165,19 +167,19 @@ struct WKTTests {
 
     private let multiPointData = "MULTIPOINT((0 0),(1 2))"
 
-    // Validates decoding a WKT MultiPoint.
+    /// Validates decoding a WKT MultiPoint.
     @Test
-    func multiPointDecoding() async throws {
-        let multiPoint = try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
+    func multiPointDecoding() throws {
+        let multiPoint = try #require(try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as? MultiPoint)
         #expect(multiPoint.coordinates.count == 2)
         #expect(multiPoint.coordinates[0] == Coordinate3D(latitude: 0, longitude: 0))
         #expect(multiPoint.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1))
     }
 
-    // Validates encoding a MultiPoint to WKT.
+    /// Validates encoding a MultiPoint to WKT.
     @Test
-    func multiPointEncoding() async throws {
-        let multiPoint = try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as! MultiPoint
+    func multiPointEncoding() throws {
+        let multiPoint = try #require(try WKTCoder.decode(wkt: multiPointData, sourceProjection: .epsg4326) as? MultiPoint)
         let encodedMultiPoint = WKTCoder.encode(geometry: multiPoint, targetProjection: nil)
         #expect(encodedMultiPoint == "MULTIPOINT(0.0 0.0,1.0 2.0)")
     }
@@ -186,19 +188,19 @@ struct WKTTests {
 
     private let multiPointZSRIDData = "SRID=4326;MULTIPOINTZ(0 0 0,1 2 1)"
 
-    // Validates decoding a WKT MultiPoint with SRID prefix.
+    /// Validates decoding a WKT MultiPoint with SRID prefix.
     @Test
-    func multiPointSRIDDecoding() async throws {
-        let multiPointZSRID = try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
+    func multiPointSRIDDecoding() throws {
+        let multiPointZSRID = try #require(try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as? MultiPoint)
         #expect(multiPointZSRID.coordinates.count == 2)
         #expect(multiPointZSRID.coordinates[0] == Coordinate3D(latitude: 0, longitude: 0, altitude: 0))
         #expect(multiPointZSRID.coordinates[1] == Coordinate3D(latitude: 2, longitude: 1, altitude: 1))
     }
 
-    // Validates encoding a MultiPoint with SRID back to WKT.
+    /// Validates encoding a MultiPoint with SRID back to WKT.
     @Test
-    func multiPointSRIDEncoding() async throws {
-        let multiPointZSRID = try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as! MultiPoint
+    func multiPointSRIDEncoding() throws {
+        let multiPointZSRID = try #require(try WKTCoder.decode(wkt: multiPointZSRIDData, sourceSrid: nil) as? MultiPoint)
         let encodedMultiPointZSRID = WKTCoder.encode(geometry: multiPointZSRID, targetProjection: .epsg4326)
         #expect(encodedMultiPointZSRID == "SRID=4326;MULTIPOINTZ(0.0 0.0 0.0,1.0 2.0 1.0)")
     }
@@ -211,41 +213,67 @@ struct WKTTests {
     private let lineStringZMData = "LINESTRING ZM (1 1 5 0, 1 2 5 0, 1 3 5 1, 2 2 5 0)"
     private let linearRingZData = "LINEARRING (0 0 0, 4 0 0, 4 4 0, 0 4 0, 0 0 0)"
 
-    // Validates decoding WKT LineString and LinearRing types.
+    /// Validates decoding WKT LineString and LinearRing types.
     @Test
-    func lineStringDecoding() async throws {
-        let lineString = try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as! LineString
-        #expect(lineString.coordinates.count == 4)
+    func lineStringDecoding() throws {
+        let lineString = try #require(try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as? LineString)
+        #expect(lineString.coordinates == [
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 3.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ])
 
-        let lineStringZ = try WKTCoder.decode(wkt: lineStringZData, sourceProjection: .epsg4326) as! LineString
-        #expect(lineStringZ.coordinates.count == 4)
+        let lineStringZ = try #require(try WKTCoder.decode(wkt: lineStringZData, sourceProjection: .epsg4326) as? LineString)
+        #expect(lineStringZ.coordinates == [
+            Coordinate3D(latitude: 1.0, longitude: 1.0, altitude: 5.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0, altitude: 5.0),
+            Coordinate3D(latitude: 3.0, longitude: 1.0, altitude: 5.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0, altitude: 5.0),
+        ])
 
-        let lineStringM = try WKTCoder.decode(wkt: lineStringMData, sourceProjection: .epsg4326) as! LineString
-        #expect(lineStringM.coordinates.count == 4)
+        let lineStringM = try #require(try WKTCoder.decode(wkt: lineStringMData, sourceProjection: .epsg4326) as? LineString)
+        #expect(lineStringM.coordinates == [
+            Coordinate3D(latitude: 1.0, longitude: 1.0, m: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0, m: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: 1.0, m: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0, m: 0.0),
+        ])
 
-        let lineStringZM = try WKTCoder.decode(wkt: lineStringZMData, sourceProjection: .epsg4326) as! LineString
-        #expect(lineStringZM.coordinates.count == 4)
+        let lineStringZM = try #require(try WKTCoder.decode(wkt: lineStringZMData, sourceProjection: .epsg4326) as? LineString)
+        #expect(lineStringZM.coordinates == [
+            Coordinate3D(latitude: 1.0, longitude: 1.0, altitude: 5.0, m: 0.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0, altitude: 5.0, m: 0.0),
+            Coordinate3D(latitude: 3.0, longitude: 1.0, altitude: 5.0, m: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0, altitude: 5.0, m: 0.0),
+        ])
 
-        let linearRingZ = try WKTCoder.decode(wkt: linearRingZData, sourceProjection: .epsg4326) as! LineString
-        #expect(linearRingZ.coordinates.count == 5)
+        let linearRingZ = try #require(try WKTCoder.decode(wkt: linearRingZData, sourceProjection: .epsg4326) as? LineString)
+        #expect(linearRingZ.coordinates == [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ])
     }
 
-    // Validates encoding a LineString to WKT.
+    /// Validates encoding a LineString to WKT.
     @Test
-    func lineStringEncoding() async throws {
-        let lineString = try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as! LineString
+    func lineStringEncoding() throws {
+        let lineString = try #require(try WKTCoder.decode(wkt: lineStringData, sourceProjection: .epsg4326) as? LineString)
         let encodedLineString = WKTCoder.encode(geometry: lineString, targetProjection: nil)
         #expect(encodedLineString == "LINESTRING(1.0 1.0,1.0 2.0,1.0 3.0,2.0 2.0)")
 
-        let lineStringZ = try WKTCoder.decode(wkt: lineStringZData, sourceProjection: .epsg4326) as! LineString
+        let lineStringZ = try #require(try WKTCoder.decode(wkt: lineStringZData, sourceProjection: .epsg4326) as? LineString)
         let encodedLineStringZ = WKTCoder.encode(geometry: lineStringZ, targetProjection: nil)
         #expect(encodedLineStringZ == "LINESTRINGZ(1.0 1.0 5.0,1.0 2.0 5.0,1.0 3.0 5.0,2.0 2.0 5.0)")
 
-        let lineStringM = try WKTCoder.decode(wkt: lineStringMData, sourceProjection: .epsg4326) as! LineString
+        let lineStringM = try #require(try WKTCoder.decode(wkt: lineStringMData, sourceProjection: .epsg4326) as? LineString)
         let encodedLineStringM = WKTCoder.encode(geometry: lineStringM, targetProjection: nil)
         #expect(encodedLineStringM == "LINESTRINGM(1.0 1.0 0.0,1.0 2.0 0.0,1.0 3.0 1.0,2.0 2.0 0.0)")
 
-        let lineStringZM = try WKTCoder.decode(wkt: lineStringZMData, sourceProjection: .epsg4326) as! LineString
+        let lineStringZM = try #require(try WKTCoder.decode(wkt: lineStringZMData, sourceProjection: .epsg4326) as? LineString)
         let encodedLineStringZM = WKTCoder.encode(geometry: lineStringZM, targetProjection: nil)
         #expect(encodedLineStringZM == "LINESTRINGZM(1.0 1.0 5.0 0.0,1.0 2.0 5.0 0.0,1.0 3.0 5.0 1.0,2.0 2.0 5.0 0.0)")
     }
@@ -254,17 +282,28 @@ struct WKTTests {
 
     private let multiLineStringData = "MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))"
 
-    // Validates decoding a WKT MultiLineString.
+    /// Validates decoding a WKT MultiLineString.
     @Test
-    func multiLineStringDecoding() async throws {
-        let multiLineString = try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
-        #expect(multiLineString.lineStrings.count == 2)
+    func multiLineStringDecoding() throws {
+        let multiLineString = try #require(try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as? MultiLineString)
+        #expect(multiLineString.coordinates == [
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+                Coordinate3D(latitude: 2.0, longitude: 1.0),
+            ],
+            [
+                Coordinate3D(latitude: 3.0, longitude: 2.0),
+                Coordinate3D(latitude: 2.0, longitude: 3.0),
+                Coordinate3D(latitude: 4.0, longitude: 5.0),
+            ],
+        ])
     }
 
-    // Validates encoding a MultiLineString to WKT.
+    /// Validates encoding a MultiLineString to WKT.
     @Test
-    func multiLineStringEncoding() async throws {
-        let multiLineString = try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as! MultiLineString
+    func multiLineStringEncoding() throws {
+        let multiLineString = try #require(try WKTCoder.decode(wkt: multiLineStringData, sourceProjection: .epsg4326) as? MultiLineString)
         let encodedMultiLineString = WKTCoder.encode(geometry: multiLineString, targetProjection: nil)
         #expect(encodedMultiLineString == "MULTILINESTRING((0.0 0.0,1.0 1.0,1.0 2.0),(2.0 3.0,3.0 2.0,5.0 4.0))")
     }
@@ -277,51 +316,73 @@ struct WKTTests {
     private let polygonZMData = "POLYGON ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 1 0 0 2, 0 0 0 2))"
     private let polygonWithHoleData = "POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))"
 
-    // Validates decoding WKT Polygon types (XY, XYZ, XYM, XYZM, with hole).
+    /// Validates decoding WKT Polygon types (XY, XYZ, XYM, XYZM, with hole).
     @Test
-    func polygonDecoding() async throws {
-        let polygon = try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as! Polygon
-        #expect(polygon.rings.count == 1)
-        #expect(polygon.outerRing!.coordinates.count == 5)
+    func polygonDecoding() throws {
+        let expectedOuter = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let polygon = try #require(try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(polygon.coordinates == [expectedOuter])
 
-        let polygonZ = try WKTCoder.decode(wkt: polygonZData, sourceProjection: .epsg4326) as! Polygon
-        #expect(polygonZ.rings.count == 1)
-        #expect(polygonZ.outerRing!.coordinates.count == 5)
+        let polygonZ = try #require(try WKTCoder.decode(wkt: polygonZData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(polygonZ.coordinates == [expectedOuter.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, altitude: 0.0)
+        }])
 
-        let polygonM = try WKTCoder.decode(wkt: polygonMData, sourceProjection: .epsg4326) as! Polygon
-        #expect(polygonM.rings.count == 1)
-        #expect(polygonM.outerRing!.coordinates.count == 5)
+        let polygonM = try #require(try WKTCoder.decode(wkt: polygonMData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(polygonM.coordinates == [expectedOuter.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, m: 2.0)
+        }])
 
-        let polygonZM = try WKTCoder.decode(wkt: polygonZMData, sourceProjection: .epsg4326) as! Polygon
-        #expect(polygonZM.rings.count == 1)
-        #expect(polygonZM.outerRing!.coordinates.count == 5)
+        let polygonZM = try #require(try WKTCoder.decode(wkt: polygonZMData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(polygonZM.coordinates == [expectedOuter.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, altitude: 0.0, m: 2.0)
+        }])
 
-        let polygonWithHole = try WKTCoder.decode(wkt: polygonWithHoleData, sourceProjection: .epsg4326) as! Polygon
-        #expect(polygonWithHole.rings.count == 2)
-        #expect(polygonWithHole.outerRing!.coordinates.count == 5)
-        #expect(polygonWithHole.innerRings![0].coordinates.count == 5)
+        let polygonWithHole = try #require(try WKTCoder.decode(wkt: polygonWithHoleData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(polygonWithHole.coordinates == [
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+                Coordinate3D(latitude: 2.0, longitude: 1.0),
+                Coordinate3D(latitude: 2.0, longitude: 2.0),
+                Coordinate3D(latitude: 1.0, longitude: 2.0),
+                Coordinate3D(latitude: 1.0, longitude: 1.0),
+            ],
+        ])
     }
 
-    // Validates encoding a Polygon to WKT.
+    /// Validates encoding a Polygon to WKT.
     @Test
-    func polygonEncoding() async throws {
-        let polygon = try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as! Polygon
+    func polygonEncoding() throws {
+        let polygon = try #require(try WKTCoder.decode(wkt: polygonData, sourceProjection: .epsg4326) as? Polygon)
         let encodedPolygon = WKTCoder.encode(geometry: polygon, targetProjection: nil)
         #expect(encodedPolygon == "POLYGON((0.0 0.0,0.0 1.0,1.0 1.0,1.0 0.0,0.0 0.0))")
 
-        let polygonZ = try WKTCoder.decode(wkt: polygonZData, sourceProjection: .epsg4326) as! Polygon
+        let polygonZ = try #require(try WKTCoder.decode(wkt: polygonZData, sourceProjection: .epsg4326) as? Polygon)
         let encodedPolygonZ = WKTCoder.encode(geometry: polygonZ, targetProjection: nil)
         #expect(encodedPolygonZ == "POLYGONZ((0.0 0.0 0.0,0.0 1.0 0.0,1.0 1.0 0.0,1.0 0.0 0.0,0.0 0.0 0.0))")
 
-        let polygonM = try WKTCoder.decode(wkt: polygonMData, sourceProjection: .epsg4326) as! Polygon
+        let polygonM = try #require(try WKTCoder.decode(wkt: polygonMData, sourceProjection: .epsg4326) as? Polygon)
         let encodedPolygonM = WKTCoder.encode(geometry: polygonM, targetProjection: nil)
         #expect(encodedPolygonM == "POLYGONM((0.0 0.0 2.0,0.0 1.0 2.0,1.0 1.0 2.0,1.0 0.0 2.0,0.0 0.0 2.0))")
 
-        let polygonZM = try WKTCoder.decode(wkt: polygonZMData, sourceProjection: .epsg4326) as! Polygon
+        let polygonZM = try #require(try WKTCoder.decode(wkt: polygonZMData, sourceProjection: .epsg4326) as? Polygon)
         let encodedPolygonZM = WKTCoder.encode(geometry: polygonZM, targetProjection: nil)
         #expect(encodedPolygonZM == "POLYGONZM((0.0 0.0 0.0 2.0,0.0 1.0 0.0 2.0,1.0 1.0 0.0 2.0,1.0 0.0 0.0 2.0,0.0 0.0 0.0 2.0))")
 
-        let polygonWithHole = try WKTCoder.decode(wkt: polygonWithHoleData, sourceProjection: .epsg4326) as! Polygon
+        let polygonWithHole = try #require(try WKTCoder.decode(wkt: polygonWithHoleData, sourceProjection: .epsg4326) as? Polygon)
         let encodedPolygonWithHole = WKTCoder.encode(geometry: polygonWithHole, targetProjection: nil)
         #expect(encodedPolygonWithHole == "POLYGON((0.0 0.0,10.0 0.0,10.0 10.0,0.0 10.0,0.0 0.0),(1.0 1.0,1.0 2.0,2.0 2.0,2.0 1.0,1.0 1.0))")
     }
@@ -330,17 +391,41 @@ struct WKTTests {
 
     private let multiPolygonData = "MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ((-1 -1,-1 -2,-2 -2,-2 -1,-1 -1)))"
 
-    // Validates decoding a WKT MultiPolygon.
+    /// Validates decoding a WKT MultiPolygon.
     @Test
-    func multiPolygonDecoding() async throws {
-        let multiPolygon = try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
-        #expect(multiPolygon.polygons.count == 2)
+    func multiPolygonDecoding() throws {
+        let multiPolygon = try #require(try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as? MultiPolygon)
+        #expect(multiPolygon.coordinates == [
+            [
+                [
+                    Coordinate3D(latitude: 0.0, longitude: 0.0),
+                    Coordinate3D(latitude: 0.0, longitude: 4.0),
+                    Coordinate3D(latitude: 4.0, longitude: 4.0),
+                    Coordinate3D(latitude: 4.0, longitude: 0.0),
+                    Coordinate3D(latitude: 0.0, longitude: 0.0),
+                ],
+                [
+                    Coordinate3D(latitude: 1.0, longitude: 1.0),
+                    Coordinate3D(latitude: 1.0, longitude: 2.0),
+                    Coordinate3D(latitude: 2.0, longitude: 2.0),
+                    Coordinate3D(latitude: 2.0, longitude: 1.0),
+                    Coordinate3D(latitude: 1.0, longitude: 1.0),
+                ],
+            ],
+            [[
+                Coordinate3D(latitude: -1.0, longitude: -1.0),
+                Coordinate3D(latitude: -2.0, longitude: -1.0),
+                Coordinate3D(latitude: -2.0, longitude: -2.0),
+                Coordinate3D(latitude: -1.0, longitude: -2.0),
+                Coordinate3D(latitude: -1.0, longitude: -1.0),
+            ]],
+        ])
     }
 
-    // Validates encoding a MultiPolygon to WKT.
+    /// Validates encoding a MultiPolygon to WKT.
     @Test
-    func multiPolygonEncoding() async throws {
-        let multiPolygon = try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as! MultiPolygon
+    func multiPolygonEncoding() throws {
+        let multiPolygon = try #require(try WKTCoder.decode(wkt: multiPolygonData, sourceProjection: .epsg4326) as? MultiPolygon)
         let encodedMultiPolygon = WKTCoder.encode(geometry: multiPolygon, targetProjection: nil)
         #expect(encodedMultiPolygon == "MULTIPOLYGON(((0.0 0.0,4.0 0.0,4.0 4.0,0.0 4.0,0.0 0.0),(1.0 1.0,2.0 1.0,2.0 2.0,1.0 2.0,1.0 1.0)),((-1.0 -1.0,-1.0 -2.0,-2.0 -2.0,-2.0 -1.0,-1.0 -1.0)))")
     }
@@ -349,19 +434,19 @@ struct WKTTests {
 
     private let geometryCollectionData = "GEOMETRYCOLLECTION(POINT(2 0),POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))"
 
-    // Validates decoding a WKT GeometryCollection.
+    /// Validates decoding a WKT GeometryCollection.
     @Test
-    func geometryCollectionDecoding() async throws {
-        let geometryCollection = try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
+    func geometryCollectionDecoding() throws {
+        let geometryCollection = try #require(try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as? GeometryCollection)
         #expect(geometryCollection.geometries.count == 2)
         #expect(geometryCollection.geometries[0].type == .point)
         #expect(geometryCollection.geometries[1].type == .polygon)
     }
 
-    // Validates encoding a GeometryCollection to WKT.
+    /// Validates encoding a GeometryCollection to WKT.
     @Test
-    func geometryCollectionEncoding() async throws {
-        let geometryCollection = try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as! GeometryCollection
+    func geometryCollectionEncoding() throws {
+        let geometryCollection = try #require(try WKTCoder.decode(wkt: geometryCollectionData, sourceProjection: .epsg4326) as? GeometryCollection)
         let encodedGeometryCollection = WKTCoder.encode(geometry: geometryCollection, targetProjection: nil)
         #expect(encodedGeometryCollection == "GEOMETRYCOLLECTION(POINT(2.0 0.0),POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)))")
     }
@@ -373,56 +458,65 @@ struct WKTTests {
     private let triangleMData = "TRIANGLE M ((0 0 2, 0 1 2, 1 1 2, 0 0 2))"
     private let triangleZMData = "TRIANGLE ZM ((0 0 0 2, 0 1 0 2, 1 1 0 2, 0 0 0 2))"
 
-    // Validates decoding WKT Triangle types (XY, XYZ, XYM, XYZM) as Polygon.
+    /// Validates decoding WKT Triangle types (XY, XYZ, XYM, XYZM) as Polygon.
     @Test
-    func triangleDecoding() async throws {
-        let triangle = try WKTCoder.decode(wkt: triangleData, sourceProjection: .epsg4326) as! Polygon
-        #expect(triangle.rings.count == 1)
-        #expect(triangle.outerRing!.coordinates.count == 4)
+    func triangleDecoding() throws {
+        let expected = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
 
-        let triangleZ = try WKTCoder.decode(wkt: triangleZData, sourceProjection: .epsg4326) as! Polygon
-        #expect(triangleZ.rings.count == 1)
-        #expect(triangleZ.outerRing!.coordinates.count == 4)
+        let triangle = try #require(try WKTCoder.decode(wkt: triangleData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(triangle.coordinates == [expected])
 
-        let triangleM = try WKTCoder.decode(wkt: triangleMData, sourceProjection: .epsg4326) as! Polygon
-        #expect(triangleM.rings.count == 1)
-        #expect(triangleM.outerRing!.coordinates.count == 4)
+        let triangleZ = try #require(try WKTCoder.decode(wkt: triangleZData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(triangleZ.coordinates == [expected.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, altitude: 0.0)
+        }])
 
-        let triangleZM = try WKTCoder.decode(wkt: triangleZMData, sourceProjection: .epsg4326) as! Polygon
-        #expect(triangleZM.rings.count == 1)
-        #expect(triangleZM.outerRing!.coordinates.count == 4)
+        let triangleM = try #require(try WKTCoder.decode(wkt: triangleMData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(triangleM.coordinates == [expected.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, m: 2.0)
+        }])
+
+        let triangleZM = try #require(try WKTCoder.decode(wkt: triangleZMData, sourceProjection: .epsg4326) as? Polygon)
+        #expect(triangleZM.coordinates == [expected.map {
+            Coordinate3D(latitude: $0.latitude, longitude: $0.longitude, altitude: 0.0, m: 2.0)
+        }])
     }
 
     // MARK: - GeoJsonGeometry convenience
 
-    // Validates parsing a geometry from WKT with a source SRID.
+    /// Validates parsing a geometry from WKT with a source SRID.
     @Test
-    func geoJsonGeometryParseSourceSrid() async throws {
+    func geoJsonGeometryParseSourceSrid() {
         let geometry = GeometryCollection.parse(wkt: pointData, sourceSrid: 4326)
         #expect(geometry is Point)
-        #expect((geometry as! Point).coordinate.longitude == 1)
+        #expect((geometry as? Point)?.coordinate.longitude == 1)
     }
 
-    // Validates parsing a geometry from WKT with a source projection.
+    /// Validates parsing a geometry from WKT with a source projection.
     @Test
-    func geoJsonGeometryParseSourceProjection() async throws {
+    func geoJsonGeometryParseSourceProjection() {
         let geometry = GeometryCollection.parse(wkt: pointData, sourceProjection: .epsg4326)
         #expect(geometry is Point)
-        #expect((geometry as! Point).coordinate.longitude == 1)
+        #expect((geometry as? Point)?.coordinate.longitude == 1)
     }
 
-    // Validates encoding a geometry to WKT string.
+    /// Validates encoding a geometry to WKT string.
     @Test
-    func geoJsonGeometryAsWKT() async throws {
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+    func geoJsonGeometryAsWKT() throws {
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as? Point)
         #expect(point.asWKT?.uppercased().contains("POINT") == true)
     }
 
     // MARK: - Feature convenience
 
-    // Validates creating a Feature from WKT with a source SRID.
+    /// Validates creating a Feature from WKT with a source SRID.
     @Test
-    func featureInitSourceSrid() async throws {
+    func featureInitSourceSrid() {
         let feature = Feature(
             wkt: pointZData,
             sourceSrid: 4326,
@@ -433,9 +527,9 @@ struct WKTTests {
         #expect(feature?.properties["key"] as? String == "value")
     }
 
-    // Validates creating a Feature from WKT with a source projection.
+    /// Validates creating a Feature from WKT with a source projection.
     @Test
-    func featureInitSourceProjection() async throws {
+    func featureInitSourceProjection() {
         let feature = Feature(
             wkt: pointZData,
             sourceProjection: .epsg4326,
@@ -444,27 +538,27 @@ struct WKTTests {
         #expect(feature?.geometry is Point)
     }
 
-    // Validates encoding a Feature to WKT string.
+    /// Validates encoding a Feature to WKT string.
     @Test
-    func featureAsWKT() async throws {
-        let point = try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as! Point
+    func featureAsWKT() throws {
+        let point = try #require(try WKTCoder.decode(wkt: pointData, sourceProjection: .epsg4326) as? Point)
         let feature = Feature(point)
         #expect(feature.asWKT?.uppercased().contains("POINT") == true)
     }
 
     // MARK: - FeatureCollection convenience
 
-    // Validates creating a FeatureCollection from WKT with a source SRID.
+    /// Validates creating a FeatureCollection from WKT with a source SRID.
     @Test
-    func featureCollectionInitSourceSrid() async throws {
+    func featureCollectionInitSourceSrid() {
         let fc = FeatureCollection(wkt: pointData, sourceSrid: 4326)
         #expect(fc?.features.isNotEmpty == true)
         #expect(fc?.features.first?.geometry is Point)
     }
 
-    // Validates creating a FeatureCollection from WKT with a source projection.
+    /// Validates creating a FeatureCollection from WKT with a source projection.
     @Test
-    func featureCollectionInitSourceProjection() async throws {
+    func featureCollectionInitSourceProjection() {
         let fc = FeatureCollection(wkt: pointData, sourceProjection: .epsg4326)
         #expect(fc?.features.isNotEmpty == true)
         #expect(fc?.features.first?.geometry is Point)
@@ -472,51 +566,119 @@ struct WKTTests {
 
     // MARK: - String convenience
 
-    // Validates decoding a WKT string to a geometry using a source SRID.
+    /// Validates decoding a WKT string to a geometry using a source SRID.
     @Test
-    func stringAsGeoJsonGeometrySourceSrid() async throws {
+    func stringAsGeoJsonGeometrySourceSrid() {
         let geometry = pointZData.asGeoJsonGeometry(sourceSrid: 4326)
         #expect(geometry is Point)
-        #expect((geometry as! Point).coordinate.altitude == 3)
+        #expect((geometry as? Point)?.coordinate.altitude == 3)
     }
 
-    // Validates decoding a WKT string to a geometry using a source projection.
+    /// Validates decoding a WKT string to a geometry using a source projection.
     @Test
-    func stringAsGeoJsonGeometrySourceProjection() async throws {
+    func stringAsGeoJsonGeometrySourceProjection() {
         let geometry = pointZData.asGeoJsonGeometry(sourceProjection: .epsg4326)
         #expect(geometry is Point)
-        #expect((geometry as! Point).coordinate.altitude == 3)
+        #expect((geometry as? Point)?.coordinate.altitude == 3)
     }
 
-    // Validates decoding a WKT string to a Feature using a source SRID.
+    /// Validates decoding a WKT string to a Feature using a source SRID.
     @Test
-    func stringAsFeatureSourceSrid() async throws {
+    func stringAsFeatureSourceSrid() {
         let feature = pointZData.asFeature(sourceSrid: 4326, id: .string("s1"))
         #expect(feature?.id == .string("s1"))
         #expect(feature?.geometry is Point)
     }
 
-    // Validates decoding a WKT string to a Feature using a source projection.
+    /// Validates decoding a WKT string to a Feature using a source projection.
     @Test
-    func stringAsFeatureSourceProjection() async throws {
+    func stringAsFeatureSourceProjection() {
         let feature = pointZData.asFeature(sourceProjection: .epsg4326)
         #expect(feature?.geometry is Point)
     }
 
-    // Validates decoding a WKT string to a FeatureCollection using a source SRID.
+    /// Validates decoding a WKT string to a FeatureCollection using a source SRID.
     @Test
-    func stringAsFeatureCollectionSourceSrid() async throws {
+    func stringAsFeatureCollectionSourceSrid() {
         let fc = pointData.asFeatureCollection(sourceSrid: 4326)
         #expect(fc?.features.isNotEmpty == true)
         #expect(fc?.features.first?.geometry is Point)
     }
 
-    // Validates decoding a WKT string to a FeatureCollection using a source projection.
+    /// Validates decoding a WKT string to a FeatureCollection using a source projection.
     @Test
-    func stringAsFeatureCollectionSourceProjection() async throws {
+    func stringAsFeatureCollectionSourceProjection() {
         let fc = pointData.asFeatureCollection(sourceProjection: .epsg4326)
         #expect(fc?.features.isNotEmpty == true)
         #expect(fc?.features.first?.geometry is Point)
+    }
+
+}
+
+// MARK: - GeoJSON audit regressions
+
+extension WKTTests {
+
+    @Test(arguments: [
+        "POINT (1 2",
+        "POINT (1 2) trailing",
+        "POINT (1 2, 3 4)",
+        "LINESTRING ()",
+        "MULTILINESTRING ()",
+        "MULTIPOLYGON ()",
+    ])
+    func malformedWKTIsRejected(wkt: String) {
+        #expect(throws: WKTCoder.WKTCoderError.self) {
+            try WKTCoder.decode(wkt: wkt, sourceProjection: .epsg4326)
+        }
+    }
+
+    /// Nested WKT components must be encoded in the requested projection.
+    @Test
+    func wktNestedGeometryUsesTargetProjection() throws {
+        let point = Point(Coordinate3D(
+            x: 1_000_000.0,
+            y: 2_000_000.0,
+            projection: .epsg3857))
+        let collection = GeometryCollection([point])
+        let wkt = try #require(WKTCoder.encode(
+            geometry: collection,
+            targetProjection: .epsg3857))
+        let decoded = try #require(try WKTCoder.decode(
+            wkt: wkt,
+            sourceSrid: nil,
+            targetProjection: .epsg3857) as? GeometryCollection)
+        let decodedPoint = try #require(decoded.geometries.first as? Point)
+
+        #expect(decodedPoint.coordinate.longitude == 1_000_000.0)
+        #expect(decodedPoint.coordinate.latitude == 2_000_000.0)
+    }
+
+    /// MultiPoint accepts whitespace between the outer and inner parentheses.
+    @Test
+    func wktMultiPointWithWhitespace() throws {
+        let multiPoint = try #require(try WKTCoder.decode(
+            wkt: "MULTIPOINT ( (1 2), (3 4) )",
+            sourceProjection: .epsg4326) as? MultiPoint)
+
+        #expect(multiPoint.coordinates == [
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 4.0, longitude: 3.0),
+        ])
+    }
+
+    /// A nil WKT target projection uses the geometry's native projection.
+    @Test
+    func wktNilTargetProjectionUsesNativeProjection() throws {
+        let point = Point(Coordinate3D(
+            x: 1_000_000.0,
+            y: 2_000_000.0,
+            projection: .epsg3857))
+        let wkt = try #require(WKTCoder.encode(
+            geometry: point,
+            targetProjection: nil))
+
+        #expect(wkt == "POINT(1000000.0 2000000.0)")
     }
 
 }

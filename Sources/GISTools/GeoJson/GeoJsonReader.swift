@@ -23,6 +23,7 @@ public enum GeoJsonReader {
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(contentsOf url: URL) -> GeoJson? {
         guard let data = try? Data(contentsOf: url) else { return nil }
+
         return geoJsonFrom(jsonData: data)
     }
 
@@ -39,6 +40,7 @@ public enum GeoJsonReader {
         }
 
         guard let value = JSONValue(jsonData: jsonData) else { return nil }
+
         return geoJsonFrom(json: value.asSendable)
     }
 
@@ -50,7 +52,8 @@ public enum GeoJsonReader {
     /// - important: The source is expected to be in EPSG:4326.
     public static func geoJsonFrom(jsonString: String) -> GeoJson? {
         guard let data = jsonString.data(using: .utf8) else { return nil }
-        return GeoJsonDecoder.decode(jsonData: data)
+
+        return geoJsonFrom(jsonData: data)
     }
 
     // MARK: - Geometry auto-detection
@@ -149,10 +152,21 @@ public enum GeoJsonReader {
     private static func isWKT(_ string: String) -> Bool {
         let upper = string.uppercased()
         let keywords = [
-            "POINT", "LINESTRING", "POLYGON", "MULTIPOINT",
-            "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION",
-            "TRIANGLE", "CIRCULARSTRING", "COMPOUNDCURVE", "CURVEPOLYGON",
-            "MULTICURVE", "MULTISURFACE", "POLYHEDRALSURFACE", "TIN",
+            "POINT",
+            "LINESTRING",
+            "POLYGON",
+            "MULTIPOINT",
+            "MULTILINESTRING",
+            "MULTIPOLYGON",
+            "GEOMETRYCOLLECTION",
+            "TRIANGLE",
+            "CIRCULARSTRING",
+            "COMPOUNDCURVE",
+            "CURVEPOLYGON",
+            "MULTICURVE",
+            "MULTISURFACE",
+            "POLYHEDRALSURFACE",
+            "TIN",
         ]
         return upper.hasPrefix("SRID=") || keywords.contains(where: { upper.hasPrefix($0) })
     }

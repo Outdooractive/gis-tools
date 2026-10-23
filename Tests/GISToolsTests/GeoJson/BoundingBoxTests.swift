@@ -654,14 +654,13 @@ struct BoundingBoxTests {
         // Note: Expanded horizontally and vertically
         let bbox3_3857 = try #require(BoundingBox(coordinates: [.zero.projected(to: .epsg3857)], padding: 1000.0))
         let bbox3_4326 = try #require(BoundingBox(coordinates: [.zero], padding: 1000.0))
-
-        #expect(abs(bbox3_3857.southWest.x - -1000.0) < 0.00001)
-        #expect(abs(bbox3_3857.southWest.y - -1000.0) < 0.00001)
-        #expect(abs(bbox3_3857.northEast.x - 1000.0) < 0.00001)
-        #expect(abs(bbox3_3857.northEast.x - 1000.0) < 0.00001)
-        #expect(abs(bbox3_4326.projected(to: .epsg3857).southWest.x - bbox3_3857.southWest.x) < 0.00001)
+        #expect(abs(bbox3_3857.southWest.x - -1000.0) < 0.000001)
+        #expect(abs(bbox3_3857.southWest.y - -1000.0) < 0.000001)
+        #expect(abs(bbox3_3857.northEast.x - 1000.0) < 0.000001)
+        #expect(abs(bbox3_3857.northEast.y - 1000.0) < 0.000001)
+        #expect(abs(bbox3_4326.projected(to: .epsg3857).southWest.x - bbox3_3857.southWest.x) < 0.000001)
         #expect(abs(bbox3_4326.projected(to: .epsg3857).southWest.y - bbox3_3857.southWest.y) < 0.00001)
-        #expect(abs(bbox3_4326.projected(to: .epsg3857).northEast.x - bbox3_3857.northEast.x) < 0.00001)
+        #expect(abs(bbox3_4326.projected(to: .epsg3857).northEast.x - bbox3_3857.northEast.x) < 0.000001)
         #expect(abs(bbox3_4326.projected(to: .epsg3857).northEast.y - bbox3_3857.northEast.y) < 0.00001)
     }
 
@@ -812,7 +811,7 @@ struct BoundingBoxTests {
         let geometry = bbox.boundingBoxGeometry
         #expect(geometry is Polygon)
 
-        let polygon = geometry as! Polygon
+        let polygon = try #require(geometry as? Polygon)
         #expect(polygon.coordinates.count == 1)
     }
 
@@ -828,7 +827,7 @@ struct BoundingBoxTests {
         let geometry = bbox.boundingBoxGeometry
         #expect(geometry is MultiPolygon)
 
-        let multiPolygon = geometry as! MultiPolygon
+        let multiPolygon = try #require(geometry as? MultiPolygon)
         #expect(multiPolygon.polygons.count == 2)
 
         // Right polygon: from 170° to 180°
@@ -860,7 +859,7 @@ struct BoundingBoxTests {
         let geometry = bbox.boundingBoxGeometry
         #expect(geometry is MultiPolygon)
 
-        let multiPolygon = geometry as! MultiPolygon
+        let multiPolygon = try #require(geometry as? MultiPolygon)
         #expect(multiPolygon.polygons.count == 2)
     }
 

@@ -222,3 +222,149 @@ struct GeoJsonParserTests {
     }
 
 }
+
+// MARK: - GeoJSON audit regressions
+
+extension GeoJsonParserTests {
+
+    /// The object-based typed parser and collection convenience initializers agree.
+    @Test
+    func parserObjectAndCollectionOverloads() throws {
+        let json: [String: Sendable] = [
+            "type": "Point",
+            "coordinates": [1, 2],
+        ]
+        let (point, issues) = try GeoJsonParser.parse(
+            json: json,
+            as: Point.self)
+        #expect(point?.coordinate == Coordinate3D(latitude: 2.0, longitude: 1.0))
+        #expect(issues.isEmpty)
+
+        var dataIssues: [GeoJsonParseIssue] = []
+        let fromData = try #require(FeatureCollection(
+            jsonData: Data(#"{"type":"Point","coordinates":[1,2]}"#.utf8),
+            issues: &dataIssues))
+        #expect(fromData.features.count == 1)
+        #expect(dataIssues.isEmpty)
+
+        var objectIssues: [GeoJsonParseIssue] = []
+        let fromObject = try #require(FeatureCollection(
+            json: json,
+            issues: &objectIssues))
+        #expect(fromObject.features.count == 1)
+        #expect(objectIssues.isEmpty)
+    }
+
+    /// The required properties member is reported when absent.
+    @Test
+    func missingPropertiesIsReported() throws {
+        let json = #"{"type":"Feature","geometry":null}"#
+        let result = try GeoJsonParser.parse(jsonString: json)
+
+        #expect(result.issues.contains { $0.path == "/properties" })
+    }
+
+    /// A missing geometry is reported, but validation continues with the other members.
+    @Test
+    func missingGeometryDoesNotStopValidation() throws {
+        let json = #"""
+        {"type":"Feature","properties":[],"bbox":[0,0,1]}
+        """#
+        let result = try GeoJsonParser.parse(jsonString: json)
+
+        #expect(result.issues.contains { $0.path == "/geometry" })
+        #expect(result.issues.contains { $0.path == "/properties" })
+        #expect(result.issues.contains { $0.path == "/bbox" })
+    }
+
+    /// GeoJSON linear rings must be explicitly closed.
+    @Test
+    func unclosedRingIsReported() throws {
+        let json = #"""
+        {"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,1]]]}
+        """#
+        let result = try GeoJsonParser.parse(jsonString: json)
+        let issue = try #require(result.issues.first {
+            $0.path == "/coordinates/0"
+        })
+
+        #expect(issue.message.contains("closed"))
+    }
+
+    /// Empty multi-geometry coordinate arrays are reported as malformed.
+    @Test
+    func emptyMultiGeometriesAreReported() throws {
+        let lineString = try GeoJsonParser.parse(
+            jsonString: #"{"type":"MultiLineString","coordinates":[]}"#)
+        let polygon = try GeoJsonParser.parse(
+            jsonString: #"{"type":"MultiPolygon","coordinates":[]}"#)
+
+        #expect(lineString.issues.contains { $0.path == "/coordinates" })
+        #expect(polygon.issues.contains { $0.path == "/coordinates" })
+    }
+
+    /// Foreign-member values on collections must be JSON-compatible.
+    @Test
+    func collectionForeignMemberMustBeJSONCompatible() throws {
+        let json: [String: Sendable] = [
+            "type": "FeatureCollection",
+            "features": [Sendable](),
+            "bad": Data([0x01]),
+        ]
+        let result = try GeoJsonParser.parse(json: json)
+
+        #expect(result.issues.contains { $0.path == "/bad" })
+    }
+
+    /// Foreign-member values on geometries must be JSON-compatible.
+    @Test
+    func geometryForeignMemberMustBeJSONCompatible() throws {
+        let json: [String: Sendable] = [
+            "type": "Point",
+            "coordinates": [1, 2],
+            "bad": Data([0x01]),
+        ]
+        let result = try GeoJsonParser.parse(json: json)
+
+        #expect(result.issues.contains { $0.path == "/bad" })
+    }
+
+    @Test
+    func parserOverloadsAgree() throws {
+        let data = try #require(#"{"type":"Point","coordinates":[1,2]}"#.data(using: .utf8))
+
+        let fromData = try GeoJsonParser.parse(jsonData: data)
+        let fromString = try GeoJsonParser.parse(
+            jsonString: #"{"type":"Point","coordinates":[1,2]}"#)
+        let fromObject = try GeoJsonParser.parse(json: ["type": "Point", "coordinates": [1, 2]] as [String: Sendable])
+
+        #expect(fromData.object?.type == .point)
+        #expect(fromString.object?.type == .point)
+        #expect(fromObject.object?.type == .point)
+
+        let typedData = try GeoJsonParser.parse(jsonData: data, as: Point.self)
+        let typedString = try GeoJsonParser.parse(
+            jsonString: #"{"type":"Point","coordinates":[1,2]}"#,
+            as: Point.self)
+        #expect(typedData.object != nil)
+        #expect(typedString.object != nil)
+    }
+
+    @Test
+    func parserIssueDescriptionEscapesJSONPointer() throws {
+        let json: [String: Sendable] = [
+            "type": "Feature",
+            "geometry": ["type": "Point", "coordinates": [1, 2]] as [String: Sendable],
+            "properties": [String: Sendable](),
+            "a/b~c": Data([0x01]),
+        ]
+        let result = try GeoJsonParser.parse(json: json)
+        let issue = try #require(result.issues.first {
+            $0.path == "/a~1b~0c"
+        })
+
+        #expect(issue.description.contains("/a~1b~0c"))
+        #expect(GeoJsonParsingError(issue: issue).errorDescription == issue.description)
+    }
+
+}

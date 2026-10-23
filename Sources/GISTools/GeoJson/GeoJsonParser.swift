@@ -92,6 +92,7 @@ public enum GeoJsonParser {
                 path: "",
                 message: "Invalid JSON data"))
         }
+
         return try parse(json: json, mode: mode)
     }
 
@@ -112,6 +113,7 @@ public enum GeoJsonParser {
                 path: "",
                 message: "String is not valid UTF-8"))
         }
+
         return try parse(jsonData: data, mode: mode)
     }
 
@@ -233,19 +235,33 @@ public enum GeoJsonParser {
 extension GeoJsonParser {
 
     private static let featureMembers: Set<String> = [
-        "type", "geometry", "properties", "id", "bbox",
+        "type",
+        "geometry",
+        "properties",
+        "id",
+        "bbox",
+    ]
+
+    private static let featureCollectionMembers: Set<String> = [
+        "type",
+        "features",
+        "bbox",
     ]
 
     private static let geometryTypes: Set<GeoJsonType> = [
-        .point, .multiPoint, .lineString, .multiLineString,
-        .polygon, .multiPolygon, .geometryCollection,
+        .point,
+        .multiPoint,
+        .lineString,
+        .multiLineString,
+        .polygon,
+        .multiPolygon,
+        .geometryCollection,
     ]
 
     private static func validate(json: Any?, path: String) -> [GeoJsonParseIssue] {
         guard let dictionary = JsonCoercion.rawDictionary(json) else {
             return [issue(path, "expected a JSON object")]
         }
-
         guard let typeString = dictionary["type"] as? String,
               let type = GeoJsonType(rawValue: typeString),
               type != .invalid
@@ -260,8 +276,8 @@ extension GeoJsonParser {
         case .featureCollection:
             return validateFeatureCollection(dictionary, path: path)
 
-        case .point, .multiPoint, .lineString, .multiLineString,
-             .polygon, .multiPolygon, .geometryCollection:
+        case .geometryCollection, .lineString, .multiLineString, .multiPoint,
+             .multiPolygon, .point, .polygon:
             return validateGeometry(dictionary, type: type, path: path)
 
         case .invalid:
@@ -280,33 +296,36 @@ extension GeoJsonParser {
             return issues
         }
 
-        guard let geometry = dictionary["geometry"] else {
+        if let geometry = dictionary["geometry"] {
+            if !(geometry is NSNull) {
+                if let geometryDictionary = JsonCoercion.dictionary(geometry),
+                   let typeString = geometryDictionary["type"] as? String,
+                   let type = GeoJsonType(rawValue: typeString),
+                   geometryTypes.contains(type)
+                {
+                    issues.append(contentsOf: validateGeometry(
+                        geometryDictionary,
+                        type: type,
+                        path: path + "/geometry"))
+                }
+                else {
+                    issues.append(issue(
+                        path + "/geometry",
+                        "expected a GeoJSON geometry or null"))
+                }
+            }
+        }
+        else {
             issues.append(issue(path + "/geometry", "missing geometry member"))
-            return issues
         }
 
-        if !(geometry is NSNull) {
-            if let geometryDictionary = JsonCoercion.dictionary(geometry),
-               let typeString = geometryDictionary["type"] as? String,
-               let type = GeoJsonType(rawValue: typeString),
-               geometryTypes.contains(type)
-            {
-                issues.append(contentsOf: validateGeometry(
-                    geometryDictionary,
-                    type: type,
-                    path: path + "/geometry"))
-            }
-            else {
-                issues.append(issue(
-                    path + "/geometry",
-                    "expected a GeoJSON geometry or null"))
-            }
-        }
-
-        if let properties = dictionary["properties"], !(properties is NSNull) {
-            if JsonCoercion.dictionary(properties) == nil {
+        if let properties = dictionary["properties"] {
+            if !(properties is NSNull), JsonCoercion.dictionary(properties) == nil {
                 issues.append(issue(path + "/properties", "properties must be an object or null"))
             }
+        }
+        else {
+            issues.append(issue(path + "/properties", "missing properties member"))
         }
 
         if let id = dictionary["id"], !(id is NSNull) {
@@ -338,7 +357,6 @@ extension GeoJsonParser {
             issues.append(issue(path + "/type", "expected \"FeatureCollection\""))
             return issues
         }
-
         guard let featuresJSON = dictionary["features"],
               let features = JsonCoercion.array(featuresJSON)
         else {
@@ -365,10 +383,43 @@ extension GeoJsonParser {
             issues.append(contentsOf: validateBoundingBox(bbox, path: path + "/bbox"))
         }
 
+        for key in dictionary.keys where !featureCollectionMembers.contains(key) {
+            if JSONValue(value: dictionary[key]) == nil {
+                issues.append(issue("\(path)/\(escape(key))", "value is not JSON-compatible"))
+            }
+        }
+
         return issues
     }
 
     private static func validateGeometry(
+        _ dictionary: [String: Sendable],
+        type: GeoJsonType,
+        path: String
+    ) -> [GeoJsonParseIssue] {
+        validateGeometryMembers(dictionary, type: type, path: path)
+            + validateGeometryContent(dictionary, type: type, path: path)
+    }
+
+    private static func validateGeometryMembers(
+        _ dictionary: [String: Sendable],
+        type: GeoJsonType,
+        path: String
+    ) -> [GeoJsonParseIssue] {
+        let allowedMembers: Set<String> = type == .geometryCollection
+            ? ["type", "geometries", "bbox"]
+            : ["type", "coordinates", "bbox"]
+
+        var issues: [GeoJsonParseIssue] = []
+        for key in dictionary.keys where !allowedMembers.contains(key) {
+            if JSONValue(value: dictionary[key]) == nil {
+                issues.append(issue("\(path)/\(escape(key))", "value is not JSON-compatible"))
+            }
+        }
+        return issues
+    }
+
+    private static func validateGeometryContent(
         _ dictionary: [String: Sendable],
         type: GeoJsonType,
         path: String
@@ -378,6 +429,7 @@ extension GeoJsonParser {
             guard let coordinates = dictionary["coordinates"] else {
                 return [issue(path + "/coordinates", "missing coordinates")]
             }
+
             return validatePosition(coordinates, path: path + "/coordinates")
 
         case .multiPoint:
@@ -401,18 +453,27 @@ extension GeoJsonParser {
                 return [issue(path + "/coordinates", "missing or invalid coordinates")]
             }
 
-            return lines.enumerated().flatMap { index, line in
+            var issues: [GeoJsonParseIssue] = []
+            if lines.isEmpty {
+                issues.append(issue(
+                    path + "/coordinates",
+                    "MultiLineString requires at least one LineString"))
+            }
+
+            issues.append(contentsOf: lines.enumerated().flatMap { index, line in
                 validatePositionArray(
                     line,
                     path: "\(path)/coordinates/\(index)",
                     minimumCount: 2,
                     description: "LineString")
-            }
+            })
+            return issues
 
         case .polygon:
             guard let coordinates = dictionary["coordinates"] else {
                 return [issue(path + "/coordinates", "missing coordinates")]
             }
+
             return validatePolygonCoordinates(coordinates, path: path + "/coordinates")
 
         case .multiPolygon:
@@ -422,11 +483,19 @@ extension GeoJsonParser {
                 return [issue(path + "/coordinates", "missing or invalid coordinates")]
             }
 
-            return polygons.enumerated().flatMap { index, polygon in
+            var issues: [GeoJsonParseIssue] = []
+            if polygons.isEmpty {
+                issues.append(issue(
+                    path + "/coordinates",
+                    "MultiPolygon requires at least one Polygon"))
+            }
+
+            issues.append(contentsOf: polygons.enumerated().flatMap { index, polygon in
                 validatePolygonCoordinates(
                     polygon,
                     path: "\(path)/coordinates/\(index)")
-            }
+            })
+            return issues
 
         case .geometryCollection:
             guard let geometriesJSON = dictionary["geometries"],
@@ -511,6 +580,14 @@ extension GeoJsonParser {
                 "polygon ring requires at least four positions"))
         }
 
+        if positions.count >= 4,
+           let first = JsonCoercion.coordinateArray(positions.first),
+           let last = JsonCoercion.coordinateArray(positions.last),
+           first != last
+        {
+            issues.append(issue(path, "polygon ring must be closed"))
+        }
+
         for (index, position) in positions.enumerated() {
             issues.append(contentsOf: validatePosition(
                 position,
@@ -527,7 +604,6 @@ extension GeoJsonParser {
         guard let values = JsonCoercion.array(json) else {
             return [issue(path, "expected a position array")]
         }
-
         guard values.count >= 2 else {
             return [issue(path, "position requires at least two numbers")]
         }
@@ -606,6 +682,7 @@ extension FeatureCollection {
             guard let collection = FeatureCollection(result.object) else {
                 return nil
             }
+
             self = collection
         }
         catch let error as GeoJsonParsingError {
@@ -664,6 +741,7 @@ extension FeatureCollection {
             guard let collection = FeatureCollection(result.object) else {
                 return nil
             }
+
             self = collection
         }
         catch let error as GeoJsonParsingError {

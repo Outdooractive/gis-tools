@@ -13,13 +13,13 @@ public struct Feature:
     /// (or `UInt64` on 32-bit platforms).
     public enum Identifier: Equatable, Hashable, CustomStringConvertible, Sendable {
 
-#if _pointerBitWidth(_32)
+        #if _pointerBitWidth(_32)
         public typealias IntId = Int64
         public typealias UIntId = UInt64
-#else
+        #else
         public typealias IntId = Int
         public typealias UIntId = UInt
-#endif
+        #endif
 
         /// A string identifier.
         case string(String)
@@ -66,22 +66,23 @@ public struct Feature:
         /// The identifier as a JSON value.
         public var asJson: Sendable {
             switch self {
-            case .double(let double): double
-            case .int(let int): int
-            case .uint(let uint): uint
-            case .string(let string): string
+            case let .double(double): double
+            case let .int(int): int
+            case let .uint(uint): uint
+            case let .string(string): string
             }
         }
 
         /// A textual representation of the identifier.
         public var description: String {
             switch self {
-            case .double(let double): String(double)
-            case .int(let int): String(int)
-            case .uint(let uint): String(uint)
-            case .string(let string): string
+            case let .double(double): String(double)
+            case let .int(int): String(int)
+            case let .uint(uint): String(uint)
+            case let .string(string): string
             }
         }
+
     }
 
     /// The GeoJSON object type.
@@ -134,7 +135,7 @@ public struct Feature:
         self.properties = properties
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
     }
 
@@ -186,6 +187,7 @@ public struct Feature:
             guard let parsed: GeoJsonGeometry = Feature.tryCreateGeometry(json: geoJson["geometry"]) else {
                 return nil
             }
+
             geometry = parsed
         }
 
@@ -196,6 +198,7 @@ public struct Feature:
             guard let properties = JsonCoercion.dictionary(rawProperties) else {
                 return nil
             }
+
             self.properties = properties
         }
         else {
@@ -205,7 +208,7 @@ public struct Feature:
         self.boundingBox = Feature.tryCreate(json: geoJson["bbox"])
 
         if calculateBoundingBox {
-            self.updateBoundingBox()
+            updateBoundingBox()
         }
 
         if geoJson.count > 3 {
@@ -213,6 +216,7 @@ public struct Feature:
             foreignMembers.removeValue(forKey: "type")
             foreignMembers.removeValue(forKey: "geometry")
             foreignMembers.removeValue(forKey: "properties")
+            foreignMembers.removeValue(forKey: "id")
             foreignMembers.removeValue(forKey: "bbox")
             self.foreignMembers = foreignMembers
         }
@@ -225,7 +229,7 @@ public struct Feature:
         var result: [String: Sendable] = [
             "type": GeoJsonType.feature.rawValue,
             "properties": properties,
-            "geometry": geometry?.asJson ?? (NSNull() as Sendable)
+            "geometry": geometry?.asJson ?? (NSNull() as Sendable),
         ]
         if let id {
             result["id"] = id.asJson
@@ -233,8 +237,8 @@ public struct Feature:
         if let boundingBox = boundingBox {
             result["bbox"] = boundingBox.asJson
         }
-        result.merge(foreignMembers) { (current, new) in
-            return current
+        result.merge(foreignMembers) { current, new in
+            current
         }
         return result
     }
@@ -253,7 +257,9 @@ extension Feature {
     ) -> BoundingBox? {
         geometry?.updateBoundingBox(onlyIfNecessary: ifNecessary)
 
-        if boundingBox != nil && ifNecessary { return boundingBox }
+        if boundingBox != nil, ifNecessary {
+            return boundingBox
+        }
 
         boundingBox = calculateBoundingBox()
         return boundingBox
@@ -272,7 +278,7 @@ extension Feature {
     /// - Returns: `true` if the bounding boxes intersect
     public func intersects(_ otherBoundingBox: BoundingBox) -> Bool {
         if let boundingBox = boundingBox ?? calculateBoundingBox(),
-            !boundingBox.intersects(otherBoundingBox)
+           !boundingBox.intersects(otherBoundingBox)
         {
             return false
         }
@@ -291,7 +297,7 @@ extension Feature: Equatable {
     /// property stored as `3.0` equals one stored as `3`. Values that are not
     /// JSON-compatible (e.g. `Data`) cannot be compared generically and are
     /// regarded as equal when they are present on both sides.
-    public static func ==(
+    public static func == (
         lhs: Feature,
         rhs: Feature
     ) -> Bool {
@@ -326,12 +332,14 @@ extension Feature: Equatable {
             guard let rhsValue = rhs[key] else { return false }
 
             switch (JSONValue(value: lhsValue), JSONValue(value: rhsValue)) {
-            case (.some(let lhsJson), .some(let rhsJson)):
+            case let (.some(lhsJson), .some(rhsJson)):
                 if lhsJson != rhsJson {
                     return false
                 }
+
             case (.none, .none):
                 continue
+
             default:
                 return false
             }
@@ -375,7 +383,6 @@ extension Feature {
     /// - Returns: A new feature in the requested projection
     public func projected(to newProjection: Projection) -> Feature {
         guard newProjection != projection else { return self }
-
         guard let geometry else {
             // An unlocated feature has no CRS to reproject.
             return self
@@ -385,7 +392,7 @@ extension Feature {
             geometry.projected(to: newProjection),
             id: id,
             properties: properties,
-            calculateBoundingBox: (boundingBox != nil))
+            calculateBoundingBox: boundingBox != nil)
         feature.foreignMembers = foreignMembers
         return feature
     }

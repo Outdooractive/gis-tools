@@ -22,8 +22,8 @@ extension GeoJsonGeometry {
         guard let geometry = try? WKBCoder.decode(
             wkb: wkb,
             sourceSrid: sourceSrid,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -45,8 +45,8 @@ extension GeoJsonGeometry {
         guard let geometry = try? WKBCoder.decode(
             wkb: wkb,
             sourceProjection: sourceProjection,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -123,8 +123,8 @@ extension Feature {
         guard let geometry = try? WKBCoder.decode(
             wkb: wkb,
             sourceSrid: sourceSrid,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -148,6 +148,7 @@ extension Feature {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -157,6 +158,7 @@ extension Feature {
     ///   the feature has no geometry.
     public var asWKB: Data? {
         guard let geometry else { return nil }
+
         return WKBCoder.encode(geometry: geometry)
     }
 
@@ -182,6 +184,7 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceSrid: sourceSrid, targetProjection: targetProjection) else { return nil }
+
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -201,6 +204,7 @@ extension FeatureCollection {
         calculateBoundingBox: Bool = false
     ) {
         guard let geometry = try? WKBCoder.decode(wkb: wkb, sourceProjection: sourceProjection, targetProjection: targetProjection) else { return nil }
+
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -210,6 +214,7 @@ extension FeatureCollection {
     ///   any feature has no geometry.
     public var asWKB: Data? {
         guard features.allSatisfy({ $0.geometry != nil }) else { return nil }
+
         return WKBCoder.encode(geometry: GeometryCollection(features.compactMap(\.geometry)))
     }
 
@@ -345,6 +350,7 @@ extension Data {
 public enum WKBCoder {
 
     enum WKBTypeCode: Int {
+
         case point = 1
         case lineString = 2
         case polygon = 3
@@ -353,18 +359,22 @@ public enum WKBCoder {
         case multiPolygon = 6
         case geometryCollection = 7
         case triangle = 17
+
     }
 
     /// The WKB byte order (little or big endian).
     public enum ByteOrder: UInt8 {
+
         /// Big endian byte order.
         case bigEndian = 0
         /// Little endian byte order.
         case littleEndian = 1
+
     }
 
     /// WKB errors.
     public enum WKBCoderError: Error {
+
         /// The WKB data is corrupted.
         case dataCorrupted
         /// The geometry is empty.
@@ -377,6 +387,7 @@ public enum WKBCoder {
         case unknownSRID
         /// The geometry type is unexpected.
         case unexpectedType
+
     }
 
 }
@@ -409,7 +420,17 @@ extension WKBCoder {
         let bytes = [UInt8](wkb)
         var offset = 0
 
-        return try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection)
+        let geometry = try decodeGeometry(
+            bytes: bytes,
+            offset: &offset,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+
+        guard offset == bytes.count else {
+            throw WKBCoderError.dataCorrupted
+        }
+
+        return geometry
     }
 
     /// Decode a GeoJSON object from WKB using a specified source projection.
@@ -429,11 +450,17 @@ extension WKBCoder {
         let bytes = [UInt8](wkb)
         var offset = 0
 
-        return try decodeGeometry(
+        let geometry = try decodeGeometry(
             bytes: bytes,
             offset: &offset,
             sourceProjection: sourceProjection,
             targetProjection: targetProjection)
+
+        guard offset == bytes.count else {
+            throw WKBCoderError.dataCorrupted
+        }
+
+        return geometry
     }
 
     // MARK: -
@@ -465,12 +492,20 @@ extension WKBCoder {
             throw WKBCoderError.unexpectedType
         }
 
+        let embeddedSRID: Int?
+        if hasSRID {
+            embeddedSRID = try Int(decodeUInt32(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: byteOrder))
+        }
+        else {
+            embeddedSRID = nil
+        }
+
         var sourceProjection = sourceProjection
-        if sourceProjection == nil,
-           hasSRID
-        {
-            let srid = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
-            sourceProjection = Projection(srid: Int(srid))
+        if sourceProjection == nil, let embeddedSRID {
+            sourceProjection = Projection(srid: embeddedSRID)
         }
         guard let sourceProjection else { throw WKBCoderError.unknownSRID }
 
@@ -545,11 +580,15 @@ extension WKBCoder {
         var m: Double?
         if decodeZ {
             z = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
-            if z?.isFinite == false { z = nil }
+            if z?.isFinite == false {
+                z = nil
+            }
         }
         if decodeM {
             m = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
-            if m?.isFinite == false { m = nil }
+            if m?.isFinite == false {
+                m = nil
+            }
         }
 
         // WKB always stores x (longitude/easting) first, then y
@@ -579,9 +618,7 @@ extension WKBCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> MultiPoint {
-        guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiPoint()
-        }
+        let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
         var points: [Point] = []
 
@@ -589,6 +626,7 @@ extension WKBCoder {
             guard let point = try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection) as? Point else {
                 throw WKBCoderError.invalidGeometry
             }
+
             points.append(point)
         }
 
@@ -604,9 +642,7 @@ extension WKBCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> LineString {
-        guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return LineString()
-        }
+        let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
         var coordinates: [Coordinate3D] = []
 
@@ -627,9 +663,7 @@ extension WKBCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> MultiLineString {
-        guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiLineString()
-        }
+        let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
         var lineStrings: [LineString] = []
 
@@ -637,6 +671,7 @@ extension WKBCoder {
             guard let lineString = try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection) as? LineString else {
                 throw WKBCoderError.invalidGeometry
             }
+
             lineStrings.append(lineString)
         }
 
@@ -659,9 +694,19 @@ extension WKBCoder {
 
         var rings: [Ring] = []
         try count.times {
-            if let ring = try Ring(decodeLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM).coordinates) {
-                rings.append(ring)
+            let coordinates = try decodeLineString(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: byteOrder,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: decodeZ,
+                decodeM: decodeM).coordinates
+            guard let ring = Ring(coordinates) else {
+                throw WKBCoderError.invalidGeometry
             }
+
+            rings.append(ring)
         }
 
         return Polygon(rings) ?? Polygon()
@@ -676,9 +721,7 @@ extension WKBCoder {
         decodeZ: Bool,
         decodeM: Bool
     ) throws -> MultiPolygon {
-        guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return MultiPolygon()
-        }
+        let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
         var polygons: [Polygon] = []
 
@@ -686,6 +729,7 @@ extension WKBCoder {
             guard let polygon = try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection) as? Polygon else {
                 throw WKBCoderError.invalidGeometry
             }
+
             polygons.append(polygon)
         }
 
@@ -701,9 +745,7 @@ extension WKBCoder {
     ) throws -> GeometryCollection {
         var geometries: [GeoJsonGeometry] = []
 
-        guard let count = try? decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder) else {
-            return GeometryCollection(geometries)
-        }
+        let count = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
 
         try count.times {
             try geometries.append(decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection))
@@ -796,7 +838,12 @@ extension WKBCoder {
     ) -> Data? {
         var data = Data()
 
-        encode(geometry: geometry, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+        encode(
+            geometry: geometry,
+            byteOrder: byteOrder,
+            targetProjection: targetProjection,
+            includeSRID: true,
+            to: &data)
 
         return data.nilIfEmpty
     }
@@ -807,23 +854,24 @@ extension WKBCoder {
         geometry: GeoJsonGeometry,
         byteOrder: ByteOrder = .littleEndian,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         switch geometry.type {
         case .point:
-            encode(geometry as! Point, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! Point, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiPoint:
-            encode(geometry as! MultiPoint, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! MultiPoint, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .lineString:
-            encode(geometry as! LineString, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! LineString, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiLineString:
-            encode(geometry as! MultiLineString, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! MultiLineString, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .polygon:
-            encode(geometry as! Polygon, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! Polygon, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiPolygon:
-            encode(geometry as! MultiPolygon, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! MultiPolygon, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .geometryCollection:
-            encode(geometry as! GeometryCollection, byteOrder: byteOrder, targetProjection: targetProjection, to: &data)
+            encode(geometry as! GeometryCollection, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .feature, .featureCollection, .invalid:
             break
         }
@@ -833,10 +881,11 @@ extension WKBCoder {
         _ value: Point,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.point.rawValue, for: value.coordinate, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.point.rawValue, for: value.coordinate, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendCoordinate(value.coordinate, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
     }
 
@@ -844,22 +893,31 @@ extension WKBCoder {
         _ value: MultiPoint,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.multiPoint.rawValue, for: value.points.first?.coordinate, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.multiPoint.rawValue, for: value.points.first?.coordinate, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.points.count), byteOrder: byteOrder, to: &data)
-        value.points.forEach({ encode(geometry: $0, targetProjection: nil, to: &data) })
+        for point in value.points {
+            encode(
+                geometry: point,
+                byteOrder: byteOrder,
+                targetProjection: targetProjection,
+                includeSRID: false,
+                to: &data)
+        }
     }
 
     private static func encode(
         _ value: LineString,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.lineString.rawValue, for: value.coordinates.first, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.lineString.rawValue, for: value.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendLineString(value, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
     }
 
@@ -867,48 +925,79 @@ extension WKBCoder {
         _ value: MultiLineString,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.multiLineString.rawValue, for: value.lineStrings.first?.coordinates.first, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.multiLineString.rawValue, for: value.lineStrings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.lineStrings.count), byteOrder: byteOrder, to: &data)
-        value.lineStrings.forEach({ encode(geometry: $0, targetProjection: nil, to: &data) })
+        for lineString in value.lineStrings {
+            encode(
+                geometry: lineString,
+                byteOrder: byteOrder,
+                targetProjection: targetProjection,
+                includeSRID: false,
+                to: &data)
+        }
     }
 
     private static func encode(
         _ value: Polygon,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.polygon.rawValue, for: value.rings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.rings.count), byteOrder: byteOrder, to: &data)
-        value.rings.forEach({ appendLineString(LineString($0.coordinates) ?? LineString(), targetProjection: targetProjection, byteOrder: byteOrder, to: &data) })
+        for ring in value.rings {
+            appendLineString(
+                LineString(ring.coordinates) ?? LineString(),
+                targetProjection: targetProjection,
+                byteOrder: byteOrder,
+                to: &data)
+        }
     }
 
     private static func encode(
         _ value: MultiPolygon,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.multiPolygon.rawValue, for: value.polygons.first?.rings.first?.coordinates.first, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.multiPolygon.rawValue, for: value.polygons.first?.rings.first?.coordinates.first, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.polygons.count), byteOrder: byteOrder, to: &data)
-        value.polygons.forEach({ encode(geometry: $0, targetProjection: nil, to: &data) })
+        for polygon in value.polygons {
+            encode(
+                geometry: polygon,
+                byteOrder: byteOrder,
+                targetProjection: targetProjection,
+                includeSRID: false,
+                to: &data)
+        }
     }
 
     private static func encode(
         _ value: GeometryCollection,
         byteOrder: ByteOrder,
         targetProjection: Projection?,
+        includeSRID: Bool,
         to data: inout Data
     ) {
         appendByteOrder(byteOrder: byteOrder, to: &data)
-        appendTypeCode(WKBTypeCode.geometryCollection.rawValue, for: nil, targetProjection: targetProjection, byteOrder: byteOrder, to: &data)
+        appendTypeCode(WKBTypeCode.geometryCollection.rawValue, for: nil, targetProjection: targetProjection, includeSRID: includeSRID, byteOrder: byteOrder, to: &data)
         appendUInt32(UInt32(value.geometries.count), byteOrder: byteOrder, to: &data)
-        value.geometries.forEach({ encode(geometry: $0, targetProjection: nil, to: &data) })
+        for item in value.geometries {
+            encode(
+                geometry: item,
+                byteOrder: byteOrder,
+                targetProjection: targetProjection,
+                includeSRID: false,
+                to: &data)
+        }
     }
 
     // MARK: -
@@ -951,6 +1040,7 @@ extension WKBCoder {
         _ typeCode: Int,
         for coordinate: Coordinate3D? = nil,
         targetProjection: Projection?,
+        includeSRID: Bool,
         byteOrder: ByteOrder,
         to data: inout Data
     ) {
@@ -964,13 +1054,13 @@ extension WKBCoder {
             typeCode |= 0x4000_0000
         }
 
-        if targetProjection?.srid != nil {
+        if includeSRID, targetProjection?.srid != nil {
             typeCode |= 0x2000_0000
         }
 
         appendUInt32(typeCode, byteOrder: byteOrder, to: &data)
 
-        if let srid = targetProjection?.srid {
+        if includeSRID, let srid = targetProjection?.srid {
             appendUInt32(UInt32(srid), byteOrder: byteOrder, to: &data)
         }
     }

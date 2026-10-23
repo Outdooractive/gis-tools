@@ -25,8 +25,8 @@ extension GeoJsonGeometry {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceSrid: sourceSrid,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -48,8 +48,8 @@ extension GeoJsonGeometry {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceProjection: sourceProjection,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(json: geometry.asJson, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -119,8 +119,8 @@ extension Feature {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceSrid: sourceSrid,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -146,8 +146,8 @@ extension Feature {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceProjection: sourceProjection,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init(geometry, id: id, properties: properties, calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -175,8 +175,8 @@ extension FeatureCollection {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceSrid: sourceSrid,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -198,8 +198,8 @@ extension FeatureCollection {
         guard let geometry = try? TWKBCoder.decode(
             twkb: twkb,
             sourceProjection: sourceProjection,
-            targetProjection: targetProjection
-        ) else { return nil }
+            targetProjection: targetProjection) else { return nil }
+
         self.init([geometry], calculateBoundingBox: calculateBoundingBox)
     }
 
@@ -332,6 +332,7 @@ public enum TWKBCoder {
 
     /// TWKB decoding errors.
     public enum TWKBError: Error {
+
         /// The TWKB data is corrupted.
         case dataCorrupted
         /// The geometry is empty.
@@ -342,6 +343,7 @@ public enum TWKBCoder {
         case unknownSRID
         /// The geometry type is unexpected.
         case unexpectedType
+
     }
 
     // MARK: - Public decode entry points
@@ -390,84 +392,191 @@ public enum TWKBCoder {
         let bytes = [UInt8](twkb)
         var offset = 0
 
-        return try decodeGeometry(
+        let geometry = try decodeGeometry(
             bytes: bytes,
             offset: &offset,
             sourceProjection: sourceProjection,
-            targetProjection: targetProjection,
-            parentPrecision: nil)
+            targetProjection: targetProjection)
+
+        guard offset == bytes.count else {
+            throw TWKBError.dataCorrupted
+        }
+
+        return geometry
     }
 
     // MARK: - Internal decode helpers
 
-    /// Reads the header byte: lower 4 bits = geometry type, upper 4 bits = precision exponent.
+    private struct Metadata {
+
+        let hasZ: Bool
+        let hasM: Bool
+        let hasIDList: Bool
+        let isEmpty: Bool
+        let zScale: Double
+        let mScale: Double
+
+    }
+
+    /// Reads the header byte: lower 4 bits = geometry type, upper 4 bits = signed precision.
     private static func decodeHeader(
         bytes: [UInt8],
-        offset: inout Int,
-        parentPrecision: Int?
-    ) throws -> (type: Int, precision: Int) {
+        offset: inout Int
+    ) throws -> (type: Int, scale: Double) {
         guard offset < bytes.count else { throw TWKBError.dataCorrupted }
 
         let byte = bytes[offset]
         offset += 1
         let geomType = Int(byte & 0x0F)
-        let prec = Int((byte & 0xF0) >> 4)
-        // A precision byte of 0 means "use parent/global precision"
-        let precision = prec == 0 ? (parentPrecision ?? 0) : prec
-        return (geomType, precision)
+        let rawPrecision = Int((byte & 0xF0) >> 4)
+        let precision = rawPrecision >= 8 ? rawPrecision - 16 : rawPrecision
+        return (geomType, pow(10.0, Double(precision)))
     }
 
-    /// Reads the metadata header varint: flags for Z, M, SRID.
+    /// Reads the metadata header and all optional attributes that precede the geometry data.
     private static func decodeMetadata(
         bytes: [UInt8],
         offset: inout Int
-    ) throws -> (hasZ: Bool, hasM: Bool, hasSRID: Bool, srid: Int?) {
+    ) throws -> Metadata {
         guard offset < bytes.count else { throw TWKBError.dataCorrupted }
 
-        let meta = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-        _ = (meta & 0x01) != 0  // hasBBox
-        _ = (meta & 0x02) != 0  // hasSize
-        let hasSRID = (meta & 0x04) != 0
-        // TWKB uses bits for bbox, size, srid - not Z/M in metadata
-        // Z/M are determined by the coordinate dimensionality in varint
-        var srid: Int?
-        if hasSRID {
-            srid = Int(try decodeVarInt(bytes: bytes, offset: &offset))
+        let meta = Int(bytes[offset])
+        offset += 1
+
+        let hasBoundingBox = (meta & 0x01) != 0
+        let hasSize = (meta & 0x02) != 0
+        let hasIDList = (meta & 0x04) != 0
+        let hasExtendedDimensions = (meta & 0x08) != 0
+        let isEmpty = (meta & 0x10) != 0
+
+        var hasZ = false
+        var hasM = false
+        var zScale = 1.0
+        var mScale = 1.0
+
+        if hasExtendedDimensions {
+            guard offset < bytes.count else { throw TWKBError.dataCorrupted }
+
+            let extended = Int(bytes[offset])
+            offset += 1
+
+            hasZ = (extended & 0x01) != 0
+            hasM = (extended & 0x02) != 0
+            let zPrecision = Int((extended & 0x1C) >> 2)
+            let mPrecision = Int((extended & 0xE0) >> 5)
+            zScale = pow(10.0, Double(zPrecision))
+            mScale = pow(10.0, Double(mPrecision))
         }
-        return (false, false, hasSRID, srid)
+
+        if hasSize {
+            _ = try decodeVarInt(bytes: bytes, offset: &offset)
+        }
+
+        if hasBoundingBox {
+            let dimensions = 2 + (hasZ ? 1 : 0) + (hasM ? 1 : 0)
+            for _ in 0 ..< (2 * dimensions) {
+                _ = try decodeVarInt(bytes: bytes, offset: &offset)
+            }
+        }
+
+        return Metadata(
+            hasZ: hasZ,
+            hasM: hasM,
+            hasIDList: hasIDList,
+            isEmpty: isEmpty,
+            zScale: zScale,
+            mScale: mScale)
+    }
+
+    private static func skipIDList(
+        bytes: [UInt8],
+        offset: inout Int,
+        count: Int
+    ) throws {
+        for _ in 0 ..< count {
+            _ = try decodeVarInt(bytes: bytes, offset: &offset)
+        }
     }
 
     // MARK: - Geometry dispatch
 
     private static func decodeGeometry(
-        bytes: [UInt8], offset: inout Int,
+        bytes: [UInt8],
+        offset: inout Int,
         sourceProjection: Projection?,
-        targetProjection: Projection,
-        parentPrecision: Int?
+        targetProjection: Projection
     ) throws -> GeoJsonGeometry {
         guard offset < bytes.count else { throw TWKBError.emptyGeometry }
 
-        let (geomType, precision) = try decodeHeader(bytes: bytes, offset: &offset, parentPrecision: parentPrecision)
-        let (hasZ, hasM, _, srid) = try decodeMetadata(bytes: bytes, offset: &offset)
+        let (geomType, scale) = try decodeHeader(bytes: bytes, offset: &offset)
+        let metadata = try decodeMetadata(bytes: bytes, offset: &offset)
+        guard !metadata.isEmpty else { throw TWKBError.emptyGeometry }
 
-        let srcProj = sourceProjection ?? srid.flatMap { Projection(srid: $0) } ?? .epsg4326
-        let scale = pow(10.0, Double(precision))
+        let sourceProjection = sourceProjection ?? .epsg4326
 
         switch geomType {
         case 1:
-            return try decodePoint(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodePoint(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 2:
-            return try decodeLineString(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodeLineString(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 3:
-            return try decodePolygon(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodePolygon(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 4:
-            return try decodeMultiPoint(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodeMultiPoint(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 5:
-            return try decodeMultiLineString(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodeMultiLineString(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 6:
-            return try decodeMultiPolygon(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodeMultiPolygon(
+                bytes: bytes,
+                offset: &offset,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         case 7:
-            return try decodeGeometryCollection(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, precision: precision, sourceProjection: srcProj, targetProjection: targetProjection)
+            return try decodeGeometryCollection(
+                bytes: bytes,
+                offset: &offset,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+
         default:
             throw TWKBError.unexpectedType
         }
@@ -478,14 +587,19 @@ public enum TWKBCoder {
     private static func decodePoint(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> Point {
-        let coord = try decodeCoordinate(bytes: bytes, offset: &offset, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-        return Point(coord)
+        let coordinate = try decodeCoordinate(
+            bytes: bytes,
+            offset: &offset,
+            scale: scale,
+            metadata: metadata,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+        return Point(coordinate)
     }
 
     // MARK: - LineString
@@ -493,16 +607,21 @@ public enum TWKBCoder {
     private static func decodeLineString(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> LineString {
-        let count = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-        let coords = try decodeCoordinateSequence(bytes: bytes, offset: &offset, count: count, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-        return LineString(unchecked: coords)
+        let count = try decodeCount(bytes: bytes, offset: &offset)
+        let coordinates = try decodeCoordinateSequence(
+            bytes: bytes,
+            offset: &offset,
+            count: count,
+            scale: scale,
+            metadata: metadata,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+        return LineString(unchecked: coordinates)
     }
 
     // MARK: - Polygon
@@ -510,24 +629,39 @@ public enum TWKBCoder {
     private static func decodePolygon(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> Polygon {
-        let ringCount = Int(try decodeVarInt(bytes: bytes, offset: &offset))
+        let ringCount = try decodeCount(bytes: bytes, offset: &offset)
         var rings: [[Coordinate3D]] = []
-        for _ in 0..<ringCount {
-            let pointCount = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-            let coords = try decodeCoordinateSequence(bytes: bytes, offset: &offset, count: pointCount, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-            // Close the ring
-            var ring = coords
-            ring.append(ring[0])
+
+        for _ in 0 ..< ringCount {
+            let pointCount = try decodeCount(bytes: bytes, offset: &offset)
+            let coordinates = try decodeCoordinateSequence(
+                bytes: bytes,
+                offset: &offset,
+                count: pointCount,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+            guard coordinates.isNotEmpty else {
+                throw TWKBError.invalidGeometry
+            }
+
+            var ring = coordinates
+            if ring.first != ring.last {
+                ring.append(ring[0])
+            }
             rings.append(ring)
         }
-        guard let polygon = Polygon(rings) else { throw TWKBError.invalidGeometry }
+
+        guard let polygon = Polygon(rings) else {
+            throw TWKBError.invalidGeometry
+        }
+
         return polygon
     }
 
@@ -536,38 +670,56 @@ public enum TWKBCoder {
     private static func decodeMultiPoint(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> MultiPoint {
-        let count = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-        var points: [Point] = []
-        // MultiPoint stores all coordinates as a single sequence deltas
-        let coords = try decodeCoordinateSequence(bytes: bytes, offset: &offset, count: count, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-        points = coords.map { Point($0) }
-        guard let mp = MultiPoint(points.map(\.coordinate)) else { throw TWKBError.invalidGeometry }
-        return mp
+        let count = try decodeCount(bytes: bytes, offset: &offset)
+        if metadata.hasIDList {
+            try skipIDList(bytes: bytes, offset: &offset, count: count)
+        }
+
+        let coordinates = try decodeCoordinateSequence(
+            bytes: bytes,
+            offset: &offset,
+            count: count,
+            scale: scale,
+            metadata: metadata,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+        guard let multiPoint = MultiPoint(coordinates) else {
+            throw TWKBError.invalidGeometry
+        }
+
+        return multiPoint
     }
 
     private static func decodeMultiLineString(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> MultiLineString {
-        let count = Int(try decodeVarInt(bytes: bytes, offset: &offset))
+        let count = try decodeCount(bytes: bytes, offset: &offset)
+        if metadata.hasIDList {
+            try skipIDList(bytes: bytes, offset: &offset, count: count)
+        }
+
         var lineStrings: [[Coordinate3D]] = []
-        for _ in 0..<count {
-            let pointCount = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-            let coords = try decodeCoordinateSequence(bytes: bytes, offset: &offset, count: pointCount, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-            lineStrings.append(coords)
+        for _ in 0 ..< count {
+            let pointCount = try decodeCount(bytes: bytes, offset: &offset)
+            let coordinates = try decodeCoordinateSequence(
+                bytes: bytes,
+                offset: &offset,
+                count: pointCount,
+                scale: scale,
+                metadata: metadata,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+            lineStrings.append(coordinates)
         }
         return MultiLineString(unchecked: lineStrings)
     }
@@ -575,28 +727,46 @@ public enum TWKBCoder {
     private static func decodeMultiPolygon(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> MultiPolygon {
-        let count = Int(try decodeVarInt(bytes: bytes, offset: &offset))
+        let count = try decodeCount(bytes: bytes, offset: &offset)
+        if metadata.hasIDList {
+            try skipIDList(bytes: bytes, offset: &offset, count: count)
+        }
+
         var polygons: [Polygon] = []
-        for _ in 0..<count {
-            let ringCount = Int(try decodeVarInt(bytes: bytes, offset: &offset))
+        for _ in 0 ..< count {
+            let ringCount = try decodeCount(bytes: bytes, offset: &offset)
             var rings: [[Coordinate3D]] = []
-            for _ in 0..<ringCount {
-                let pointCount = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-                let coords = try decodeCoordinateSequence(bytes: bytes, offset: &offset, count: pointCount, hasZ: hasZ, hasM: hasM, scale: scale, sourceProjection: sourceProjection, targetProjection: targetProjection)
-                var ring = coords
+
+            for _ in 0 ..< ringCount {
+                let pointCount = try decodeCount(bytes: bytes, offset: &offset)
+                let coordinates = try decodeCoordinateSequence(
+                    bytes: bytes,
+                    offset: &offset,
+                    count: pointCount,
+                    scale: scale,
+                    metadata: metadata,
+                    sourceProjection: sourceProjection,
+                    targetProjection: targetProjection)
+                guard coordinates.isNotEmpty else {
+                    throw TWKBError.invalidGeometry
+                }
+
+                var ring = coordinates
                 if ring.first != ring.last {
                     ring.append(ring[0])
                 }
                 rings.append(ring)
             }
-            guard let polygon = Polygon(rings) else { throw TWKBError.invalidGeometry }
+
+            guard let polygon = Polygon(rings) else {
+                throw TWKBError.invalidGeometry
+            }
+
             polygons.append(polygon)
         }
         return MultiPolygon(unchecked: polygons)
@@ -605,44 +775,57 @@ public enum TWKBCoder {
     private static func decodeGeometryCollection(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
-        scale: Double,
-        precision: Int,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> GeometryCollection {
-        let count = Int(try decodeVarInt(bytes: bytes, offset: &offset))
-        var geoms: [any GeoJsonGeometry] = []
-        for _ in 0..<count {
-            let geom = try decodeGeometry(bytes: bytes, offset: &offset, sourceProjection: sourceProjection, targetProjection: targetProjection, parentPrecision: precision)
-            geoms.append(geom)
+        let count = try decodeCount(bytes: bytes, offset: &offset)
+        if metadata.hasIDList {
+            try skipIDList(bytes: bytes, offset: &offset, count: count)
         }
-        return GeometryCollection(geoms)
+
+        var geometries: [any GeoJsonGeometry] = []
+        for _ in 0 ..< count {
+            let geometry = try decodeGeometry(
+                bytes: bytes,
+                offset: &offset,
+                sourceProjection: sourceProjection,
+                targetProjection: targetProjection)
+            geometries.append(geometry)
+        }
+        return GeometryCollection(geometries)
     }
 
     // MARK: - Coordinate decoding
 
-    /// Decodes a single coordinate from zigzag-encoded int64 values scaled by `scale`.
+    /// Decodes a single coordinate from zigzag-encoded integer values scaled by `scale`.
     private static func decodeCoordinate(
         bytes: [UInt8],
         offset: inout Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> Coordinate3D {
-        let x = Double(decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))) / scale
-        let y = Double(decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))) / scale
-        let z: Double? = hasZ ? Double(decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))) / scale : nil
-        let m: Double? = hasM ? Double(decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))) / scale : nil
+        let x = try Double(decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))) / scale
+        let y = try Double(decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))) / scale
+        let z: Double? = try metadata.hasZ
+            ? Double(decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))) / metadata.zScale
+            : nil
+        let m: Double? = try metadata.hasM
+            ? Double(decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))) / metadata.mScale
+            : nil
 
-        let coord = makeCoordinate(x: x, y: y, z: z, m: m, sourceProjection: sourceProjection)
+        let coordinate = makeCoordinate(
+            x: x,
+            y: y,
+            z: z,
+            m: m,
+            sourceProjection: sourceProjection)
         if sourceProjection != targetProjection {
-            return coord.projected(to: targetProjection)
+            return coordinate.projected(to: targetProjection)
         }
-        return coord
+        return coordinate
     }
 
     /// Decodes a sequence of `count` coordinates as deltas from a running base.
@@ -650,36 +833,44 @@ public enum TWKBCoder {
         bytes: [UInt8],
         offset: inout Int,
         count: Int,
-        hasZ: Bool,
-        hasM: Bool,
         scale: Double,
+        metadata: Metadata,
         sourceProjection: Projection,
         targetProjection: Projection
     ) throws -> [Coordinate3D] {
         guard count > 0 else { return [] }
 
-        var coords: [Coordinate3D] = []
+        var coordinates: [Coordinate3D] = []
         var baseX: Int64 = 0
         var baseY: Int64 = 0
         var baseZ: Int64 = 0
         var baseM: Int64 = 0
 
-        for _ in 0..<count {
-            baseX += decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))
-            baseY += decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset))
-            if hasZ { baseZ += decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset)) }
-            if hasM { baseM += decodeZigZag(try decodeVarInt(bytes: bytes, offset: &offset)) }
+        for _ in 0 ..< count {
+            try baseX += decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))
+            try baseY += decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))
+            if metadata.hasZ {
+                try baseZ += decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))
+            }
+            if metadata.hasM {
+                try baseM += decodeZigZag(decodeVarInt(bytes: bytes, offset: &offset))
+            }
 
             let x = Double(baseX) / scale
             let y = Double(baseY) / scale
-            let z: Double? = hasZ ? Double(baseZ) / scale : nil
-            let m: Double? = hasM ? Double(baseM) / scale : nil
+            let z: Double? = metadata.hasZ ? Double(baseZ) / metadata.zScale : nil
+            let m: Double? = metadata.hasM ? Double(baseM) / metadata.mScale : nil
 
-            coords.append(makeCoordinate(x: x, y: y, z: z, m: m, sourceProjection: sourceProjection))
+            coordinates.append(makeCoordinate(
+                x: x,
+                y: y,
+                z: z,
+                m: m,
+                sourceProjection: sourceProjection))
         }
 
         // Batch conversion: one conversion setup for the whole sequence.
-        return coords.projected(to: targetProjection)
+        return coordinates.projected(to: targetProjection)
     }
 
     // MARK: - Coordinate construction
@@ -697,6 +888,19 @@ public enum TWKBCoder {
 
     // MARK: - VarInt
 
+    /// Decodes an unsigned count and rejects values that cannot index the payload.
+    private static func decodeCount(
+        bytes: [UInt8],
+        offset: inout Int
+    ) throws -> Int {
+        let value = try decodeVarInt(bytes: bytes, offset: &offset)
+        guard let count = Int(exactly: value), count <= bytes.count else {
+            throw TWKBError.dataCorrupted
+        }
+
+        return count
+    }
+
     /// Decodes an unsigned variable-length integer (MSB continuation bit).
     private static func decodeVarInt(
         bytes: [UInt8],
@@ -705,10 +909,14 @@ public enum TWKBCoder {
         var value: UInt64 = 0
         var shift = 0
         while offset < bytes.count {
+            guard shift < 64 else { throw TWKBError.dataCorrupted }
+
             let byte = bytes[offset]
             offset += 1
             value |= UInt64(byte & 0x7F) << shift
-            if (byte & 0x80) == 0 { return value }
+            if (byte & 0x80) == 0 {
+                return value
+            }
             shift += 7
         }
         throw TWKBError.dataCorrupted
