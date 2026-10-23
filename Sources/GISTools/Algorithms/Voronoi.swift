@@ -6,23 +6,32 @@ extension FeatureCollection {
 
     /// Computes a Voronoi diagram from the receiver's points within a bounding box.
     ///
-    /// Each input ``Point`` feature produces one ``Polygon`` cell representing the
-    /// region closer to that point than to any other input point. The cells are
-    /// clipped to the given bounding box.
+    /// Each distinct input ``Point`` site produces one ``Polygon`` cell
+    /// representing the region closer to that site than to any other input
+    /// site. The cells are clipped to the given bounding box.
+    ///
+    /// Duplicate sites (coordinates equal within ``GISTool/equalityDelta``)
+    /// are collapsed to their first occurrence. The returned cell keeps that
+    /// first feature's `id`, `properties` and foreign members; later duplicate
+    /// features do not produce additional cells.
+    ///
+    /// Fewer than three distinct sites are supported by direct half-plane
+    /// clipping, and collinear sites produce parallel strip cells. An empty
+    /// collection (or a collection without point features) produces an empty
+    /// result.
     ///
     /// All projections are supported. The algorithm uses Cartesian math on
     /// native XY values.
     ///
     /// - Parameter boundingBox: The bounding box to which all cells are clipped.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
-    /// - Returns: A ``FeatureCollection`` of ``Polygon`` features, one per input
-    ///   point. At least three point features are required; fewer produce an
-    ///   empty collection.
+    /// - Returns: A ``FeatureCollection`` of ``Polygon`` features, one per
+    ///   distinct input point site.
     public func voronoiDiagram(
         boundingBox: BoundingBox,
         gridSize: Double? = nil
     ) -> FeatureCollection {
-        guard features.count >= 3 else { return FeatureCollection() }
+        guard features.isNotEmpty else { return FeatureCollection() }
 
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
 
@@ -53,17 +62,15 @@ extension FeatureCollection {
             })
         }
 
-        let points: [Coordinate3D] = snapped.features.compactMap { f in
-            (f.geometry as? Point)?.coordinate
-        }
-        guard points.count >= 3 else { return FeatureCollection() }
+        let (siteFeatures, points) = Voronoi.uniqueSites(in: snapped.features)
+        guard points.isNotEmpty else { return FeatureCollection() }
 
         let (unwrappedPoints, unwrappedBox) = Voronoi.unwrapped(
             points: points,
             boundingBox: boundingBox)
 
         return Voronoi.diagram(
-            features: snapped.features,
+            features: siteFeatures,
             points: unwrappedPoints,
             boundingBox: unwrappedBox)
     }
@@ -74,6 +81,11 @@ extension FeatureCollection {
 
 private enum Voronoi {
 
+    fileprivate struct SiteKey: Hashable {
+        let x: Int64
+        let y: Int64
+    }
+
     static func diagram(
         features inputFeatures: [Feature],
         points: [Coordinate3D],
@@ -82,7 +94,6 @@ private enum Voronoi {
         let projection = points.first?.projection ?? boundingBox.projection
         let pts = points.map { Pt(x: $0.longitude, y: $0.latitude) }
         let triangles = Triangulator.triangulate(pts)
-        guard triangles.isNotEmpty else { return FeatureCollection() }
 
         // Build edge counts to identify adjacency and boundary edges
         var edgeCount: [String: Int] = [:]
@@ -112,35 +123,109 @@ private enum Voronoi {
         // Build bounding box polygon (CCW)
         let bboxPolygon = Voronoi.bboxPolygon(boundingBox)
 
-        // Compute Voronoi cell for each point
+        // Compute Voronoi cell for each point. Delaunay neighbours are a
+        // sufficient clipping set for a non-degenerate triangulation; when the
+        // triangulation is empty (fewer than three sites, duplicate-free
+        // collinear sites or a degenerate triangulation) clip against every
+        // other site instead.
         var features: [Feature] = []
         for (i, point) in points.enumerated() {
-            guard let neighborIndices = neighbors[i],
-                  neighborIndices.count >= 2
-            else { continue }
+            let allOtherIndices = points.indices.filter { $0 != i }
+            let neighborIndices = (neighbors[i]?.count ?? 0) >= 2
+                ? Array(neighbors[i] ?? [])
+                : allOtherIndices
 
-            let cell = Voronoi.computeCell(
+            var cell = Voronoi.computeCell(
                 point: point,
-                neighborIndices: Array(neighborIndices),
+                neighborIndices: neighborIndices,
                 allPoints: points,
                 bboxPolygon: bboxPolygon,
                 projection: projection)
 
-            if let cell {
-                let source = inputFeatures[i]
-                let normalizedCell = Polygon(unchecked: cell.coordinates.map { ring in
-                    ring.map { $0.normalized() }
-                })
-                var feature = Feature(
-                    normalizedCell,
-                    id: source.id,
-                    properties: source.properties)
-                feature.foreignMembers = source.foreignMembers
-                features.append(feature)
+            // A numerically fragile Delaunay adjacency can leave a site
+            // without a cell. Retry against every site before giving up.
+            if cell == nil, neighborIndices.count != allOtherIndices.count {
+                cell = Voronoi.computeCell(
+                    point: point,
+                    neighborIndices: allOtherIndices,
+                    allPoints: points,
+                    bboxPolygon: bboxPolygon,
+                    projection: projection)
             }
+
+            guard let cell else { continue }
+
+            let source = inputFeatures[i]
+            let normalizedCell = Polygon(unchecked: cell.coordinates.map { ring in
+                ring.map { $0.normalized() }
+            })
+            var feature = Feature(
+                normalizedCell,
+                id: source.id,
+                properties: source.properties)
+            feature.foreignMembers = source.foreignMembers
+            features.append(feature)
         }
 
         return FeatureCollection(features)
+    }
+
+    /// Collapses duplicate sites while preserving the first feature's metadata.
+    fileprivate static func uniqueSites(
+        in features: [Feature]
+    ) -> (features: [Feature], points: [Coordinate3D]) {
+        var uniqueFeatures: [Feature] = []
+        var uniquePoints: [Coordinate3D] = []
+        var buckets: [SiteKey: [Int]] = [:]
+
+        for feature in features {
+            guard let point = feature.geometry as? Point else { continue }
+            let coordinate = point.coordinate
+            let key = Voronoi.siteKey(for: coordinate)
+
+            // A coordinate can fall into an adjacent quantized bucket while
+            // still being within `equalityDelta` of an existing site, so
+            // inspect the 3x3 neighbourhood before adding it.
+            var isDuplicate = false
+            search: for dx in -1 ... 1 {
+                for dy in -1 ... 1 {
+                    let neighborKey = SiteKey(x: key.x + Int64(dx), y: key.y + Int64(dy))
+                    for index in buckets[neighborKey] ?? [] {
+                        if uniquePoints[index].equals(
+                            other: coordinate,
+                            includingAltitude: false
+                        ) {
+                            isDuplicate = true
+                            break search
+                        }
+                    }
+                }
+            }
+            guard !isDuplicate else { continue }
+
+            buckets[key, default: []].append(uniquePoints.count)
+            uniqueFeatures.append(feature)
+            uniquePoints.append(coordinate)
+        }
+
+        return (uniqueFeatures, uniquePoints)
+    }
+
+    /// Horizontal site identity, canonicalized across the wraparound axis.
+    fileprivate static func siteKey(for point: Coordinate3D) -> SiteKey {
+        var x = point.longitude
+
+        if let extent = point.projection.wraparoundExtent, extent > 0.0 {
+            let period = 2.0 * extent
+            x = x.truncatingRemainder(dividingBy: period)
+            if x <= -extent { x += period }
+            if x > extent { x -= period }
+            if x == extent { x = -extent }
+        }
+
+        return SiteKey(
+            x: Int64((x / GISTool.equalityDelta).rounded()),
+            y: Int64((point.latitude / GISTool.equalityDelta).rounded()))
     }
 
     /// Unwraps the points and bounding box around the projection's wraparound

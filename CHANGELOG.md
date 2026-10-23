@@ -304,6 +304,14 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Voronoi duplicate and collinear sites (#369): duplicate coordinates are
+  collapsed to the first feature (including its `id`, properties and foreign
+  members) before triangulation, and neighbours are resolved from the
+  deduplicated sites instead of `firstIndex` lookups. One and two distinct
+  sites, and any number of collinear sites, now use direct half-plane clipping
+  rather than returning an empty diagram. The documented contract changed from
+  "at least three input points" to "one cell per distinct point site".
+
 - Mask result is cut at the antimeridian (#368): when the mask itself crosses
   the seam, the assembled `MultiPolygon` is cut at ±180° (holes and islands
   preserved) so the result never reports `crossesAntimeridian == true`.

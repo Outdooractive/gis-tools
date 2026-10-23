@@ -87,20 +87,35 @@ struct VoronoiTests {
         #expect(result.features.count == 3)
     }
 
-    // Validates that fewer than 3 points returns an empty FeatureCollection.
+    // Validates that one and two distinct sites are handled directly instead
+    // of producing an empty collection.
     @Test
-    func testTooFewPoints() {
-        let points = [
-            Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0))),
-            Feature(Point(Coordinate3D(latitude: 10.0, longitude: 10.0))),
-        ]
-        let fc = FeatureCollection(points)
+    func testOneOrTwoPoints() throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
             northEast: Coordinate3D(latitude: 20.0, longitude: 20.0))
 
-        let result = fc.voronoiDiagram(boundingBox: bbox)
-        #expect(result.features.isEmpty)
+        let oneSite = Coordinate3D(latitude: 5.0, longitude: 5.0)
+        let one = FeatureCollection([Feature(Point(oneSite))])
+            .voronoiDiagram(boundingBox: bbox)
+        #expect(one.features.count == 1)
+        let oneCell = try #require(one.features.first?.geometry as? Polygon)
+        #expect(oneCell.covers(oneSite))
+        #expect(abs(oneCell.area - geometryArea(bbox.boundingBoxGeometry)) < 0.001)
+
+        let firstSite = Coordinate3D(latitude: 5.0, longitude: 5.0)
+        let secondSite = Coordinate3D(latitude: 10.0, longitude: 10.0)
+        let two = FeatureCollection([
+            Feature(Point(firstSite)),
+            Feature(Point(secondSite)),
+        ]).voronoiDiagram(boundingBox: bbox)
+        #expect(two.features.count == 2)
+        let firstCell = try #require(two.features[0].geometry as? Polygon)
+        let secondCell = try #require(two.features[1].geometry as? Polygon)
+        #expect(firstCell.covers(firstSite))
+        #expect(secondCell.covers(secondSite))
+        let boxArea = geometryArea(bbox.boundingBoxGeometry)
+        #expect(abs(firstCell.area + secondCell.area - boxArea) < max(0.001, boxArea * 0.000001))
     }
 
     // Validates that an empty FeatureCollection returns an empty result.
@@ -423,23 +438,164 @@ extension VoronoiTests {
         }
     }
 
-    /// The documented contract: fewer than three points (including one)
-    /// produce an empty collection.
+    /// The documented contract: one and two distinct sites produce one cell
+    /// per site, and an empty collection produces no cells.
     @Test
-    func fewerThanThreePointsProduceNoCells() {
+    func fewerThanThreeDistinctSitesProduceCells() throws {
         let bbox = BoundingBox(
             southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
             northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
 
         let one = FeatureCollection([Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0)))])
-        #expect(one.voronoiDiagram(boundingBox: bbox).features.isEmpty)
+        let oneResult = one.voronoiDiagram(boundingBox: bbox)
+        #expect(oneResult.features.count == 1)
 
         let two = FeatureCollection([
             Feature(Point(Coordinate3D(latitude: 5.0, longitude: 5.0))),
             Feature(Point(Coordinate3D(latitude: 5.0, longitude: 8.0))),
         ])
-        #expect(two.voronoiDiagram(boundingBox: bbox).features.isEmpty)
+        let twoResult = two.voronoiDiagram(boundingBox: bbox)
+        #expect(twoResult.features.count == 2)
+
+        #expect(FeatureCollection().voronoiDiagram(boundingBox: bbox).features.isEmpty)
     }
 
+    /// Duplicate sites collapse to the first feature, including its metadata,
+    /// and the remaining distinct sites still produce cells.
+    @Test
+    func duplicateSitesProduceUniqueCells() throws {
+        let first = Feature(
+            Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+            id: .string("first"),
+            properties: ["name": "first"])
+        let duplicate = Feature(
+            Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+            id: .string("duplicate"),
+            properties: ["name": "duplicate"])
+        let other = Feature(
+            Point(Coordinate3D(latitude: 0.0, longitude: 10.0)),
+            id: .string("other"))
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: -10.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 20.0))
+
+        let result = FeatureCollection([first, duplicate, other])
+            .voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == 2)
+        #expect(result.features[0].id == .string("first"))
+        #expect(result.features[0].property(for: "name") as String? == "first")
+        #expect(result.features[1].id == .string("other"))
+
+        let firstCell = try #require(result.features[0].geometry as? Polygon)
+        let otherCell = try #require(result.features[1].geometry as? Polygon)
+        let firstPoint = try #require(first.geometry as? Point)
+        let otherPoint = try #require(other.geometry as? Point)
+        #expect(firstCell.covers(firstPoint))
+        #expect(otherCell.covers(otherPoint))
+        let boxArea = geometryArea(bbox.boundingBoxGeometry)
+        #expect(abs(firstCell.area + otherCell.area - boxArea) < max(0.001, boxArea * 0.000001))
+
+        let allDuplicate = FeatureCollection([
+            first,
+            duplicate,
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 0.0)), id: .string("third")),
+        ]).voronoiDiagram(boundingBox: bbox)
+        #expect(allDuplicate.features.count == 1)
+        #expect(allDuplicate.features[0].id == .string("first"))
+        let duplicateCell = try #require(allDuplicate.features[0].geometry as? Polygon)
+        #expect(abs(duplicateCell.area - boxArea) < max(0.001, boxArea * 0.000001))
+    }
+
+    /// Collinear sites produce parallel strip cells instead of an empty
+    /// result from a triangulation with no area.
+    @Test
+    func collinearSitesProduceStripCells() throws {
+        let sites = [
+            Coordinate3D(latitude: 5.0, longitude: 2.0),
+            Coordinate3D(latitude: 5.0, longitude: 6.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 5.0, longitude: 14.0),
+            Coordinate3D(latitude: 5.0, longitude: 18.0),
+        ]
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 20.0))
+
+        let result = FeatureCollection(sites.map { Feature(Point($0)) })
+            .voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == sites.count)
+
+        var areaSum = 0.0
+        for (index, feature) in result.features.enumerated() {
+            let cell = try #require(feature.geometry as? Polygon)
+            #expect(cell.covers(sites[index]))
+            #expect(cell.area > 0.0)
+            areaSum += cell.area
+        }
+        let boxArea = geometryArea(bbox.boundingBoxGeometry)
+        #expect(abs(areaSum - boxArea) < max(0.001, boxArea * 0.000001))
+    }
+
+    /// Duplicate and collinear handling stays correct in every projection.
+    @Test
+    func degenerateSitesAcrossProjections() throws {
+        for projection in [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID] {
+            let sites = [
+                coordinate(latitude: 0.0, longitude: 0.0, projection: projection),
+                coordinate(latitude: 0.0, longitude: 10.0, projection: projection),
+            ]
+            let bbox = BoundingBox(
+                southWest: coordinate(latitude: -10.0, longitude: -10.0, projection: projection),
+                northEast: coordinate(latitude: 10.0, longitude: 20.0, projection: projection))
+
+            let duplicates = FeatureCollection([
+                Feature(Point(sites[0])),
+                Feature(Point(sites[0])),
+                Feature(Point(sites[1])),
+            ]).voronoiDiagram(boundingBox: bbox)
+            #expect(duplicates.features.count == 2, "\(projection)")
+
+            let collinear = FeatureCollection([
+                Feature(Point(sites[0])),
+                Feature(Point(sites[1])),
+                Feature(Point(coordinate(latitude: 0.0, longitude: 5.0, projection: projection))),
+            ]).voronoiDiagram(boundingBox: bbox)
+            #expect(collinear.features.count == 3, "\(projection)")
+        }
+    }
+
+    /// Sites at +180° and −180° are the same site and duplicate coordinates
+    /// must not suppress the diagram.
+    @Test
+    func duplicateSitesAcrossAntimeridian() throws {
+        let seam = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 180.0)))
+        let duplicate = Feature(Point(Coordinate3D(latitude: 0.0, longitude: -180.0)))
+        let other = Feature(Point(Coordinate3D(latitude: 0.0, longitude: 175.0)))
+        let bbox = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: -170.0))
+
+        let result = FeatureCollection([seam, duplicate, other])
+            .voronoiDiagram(boundingBox: bbox)
+        #expect(result.features.count == 2)
+        let seamCell = try #require(result.features[0].geometry as? Polygon)
+        let otherCell = try #require(result.features[1].geometry as? Polygon)
+        let seamPoint = try #require(seam.geometry as? Point)
+        let otherPoint = try #require(other.geometry as? Point)
+        #expect(seamCell.covers(seamPoint))
+        #expect(otherCell.covers(otherPoint))
+    }
+
+    private func coordinate(
+        latitude: Double,
+        longitude: Double,
+        projection: Projection
+    ) -> Coordinate3D {
+        if projection == .noSRID {
+            return Coordinate3D(x: longitude, y: latitude, projection: .noSRID)
+        }
+        return Coordinate3D(latitude: latitude, longitude: longitude)
+            .projected(to: projection)
+    }
 
 }
