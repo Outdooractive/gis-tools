@@ -8,6 +8,13 @@ import Foundation
 /// MapKit, Google Maps, and OpenStreetMap.
 public struct MapTile: CustomStringConvertible, Sendable {
 
+    /// The largest zoom level a tile can represent.
+    ///
+    /// This matches the maximum of ``MapTile/init(boundingBox:maxZoom:)`` and
+    /// keeps every coordinate conversion (`1 << z`) safely inside `Int` on
+    /// 32-bit and 64-bit platforms.
+    private static let maximumZoom = 32
+
     /// The x-coordinate of the tile.
     public let x: Int
     /// The y-coordinate of the tile.
@@ -94,7 +101,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     public init(x: Int, y: Int, z: Int) {
         self.x = x
         self.y = y
-        self.z = z
+        self.z = min(max(z, 0), Self.maximumZoom)
     }
 
     /// Creates a map tile from a geographic coordinate at the given zoom level.
@@ -107,6 +114,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     ///    - coordinate: The geographic coordinate
     ///    - zoom: The zoom level
     public init(coordinate: Coordinate3D, atZoom zoom: Int) {
+        let zoom = min(max(zoom, 0), Self.maximumZoom)
         let scale = Double(1 << zoom)
         let normalizedCoordinate = MapTile.normalizeCoordinate(coordinate.projected(to: .epsg4326))
 
@@ -170,7 +178,9 @@ public struct MapTile: CustomStringConvertible, Sendable {
               components.count == 3,
               let z = components[0].toInt,
               let x = components[1].toInt,
-              let y = components[2].toInt
+              let y = components[2].toInt,
+              z >= 0,
+              z <= Self.maximumZoom
         else { return nil }
 
         self.init(x: x, y: y, z: z)
@@ -334,6 +344,8 @@ public struct MapTile: CustomStringConvertible, Sendable {
     ///    - quadkey: A quadkey string
     /// - Returns: A `MapTile`, or `nil` if the quadkey is invalid
     public init?(quadkey: String) {
+        guard quadkey.count <= Self.maximumZoom else { return nil }
+
         guard !quadkey.isEmpty else {
             self.x = 0
             self.y = 0
@@ -458,7 +470,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
     /// - Parameter zoom: The target zoom level.
     /// - Returns: An array of descendant tiles at the given zoom level.
     public func descendants(atZoom zoom: Int) -> [MapTile] {
-        guard zoom >= z else { return [] }
+        guard zoom >= z, zoom <= Self.maximumZoom else { return [] }
 
         if zoom == z {
             return [self]
@@ -569,7 +581,7 @@ extension MapTile {
     ) {
         self.x = column
         self.y = matrixHeight - 1 - tmsRow
-        self.z = zoom
+        self.z = min(max(zoom, 0), Self.maximumZoom)
     }
 
 }

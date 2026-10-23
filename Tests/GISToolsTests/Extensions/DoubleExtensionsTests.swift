@@ -137,4 +137,18 @@ struct DoubleExtensionsTests {
         #expect(abs(GISTool.convertToMeters(-1.0, .nauticalMiles) - -GISTool.convert(length: 1.0, from: .nauticalMiles, to: .meters)!) < 0.001)
     }
 
+
+    // MARK: - Audit regressions
+
+    /// Precision values beyond the floating-point exponent range must not
+    /// turn a finite number into NaN.
+    @Test
+    func roundingExtremePrecision() {
+        let number = 123.456
+        #expect(number.rounded(precision: 300) == number)
+        #expect(number.rounded(precision: 400) == number)
+        #expect(number.rounded(precision: Int.max) == number)
+    }
+
+
 }

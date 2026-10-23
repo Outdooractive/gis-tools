@@ -260,30 +260,80 @@ extension FeatureCollection {
 
         let center = point.coordinate
 
-        let delta: Double
+        var boxes: [BoundingBox] = []
         switch center.projection.kind {
         case .geographic:
-            delta = maxDistance / 111_000.0
+            // A degree of longitude shrinks with cos(latitude); using the
+            // equatorial metres-per-degree for both axes under-covers the
+            // search box at high latitudes and makes DBSCAN miss neighbours.
+            let latitudeDelta = maxDistance / 111_000.0
+            let cosine = max(cos(center.latitude * .pi / 180.0), 0.000001)
+            let longitudeDelta = min(
+                maxDistance / (111_000.0 * cosine),
+                180.0)
+            let minLatitude = max(-90.0, center.latitude - latitudeDelta)
+            let maxLatitude = min(90.0, center.latitude + latitudeDelta)
+            let minLongitude = center.longitude - longitudeDelta
+            let maxLongitude = center.longitude + longitudeDelta
+
+            boxes.append(BoundingBox(
+                southWest: Coordinate3D(
+                    x: minLongitude,
+                    y: minLatitude,
+                    projection: center.projection),
+                northEast: Coordinate3D(
+                    x: maxLongitude,
+                    y: maxLatitude,
+                    projection: center.projection)))
+
+            // A search box that crosses the antimeridian must also query the
+            // equivalent window on the other side of the seam, because the
+            // R-tree stores longitudes in [-180, 180].
+            if maxLongitude > 180.0 {
+                boxes.append(BoundingBox(
+                    southWest: Coordinate3D(
+                        x: minLongitude - 360.0,
+                        y: minLatitude,
+                        projection: center.projection),
+                    northEast: Coordinate3D(
+                        x: maxLongitude - 360.0,
+                        y: maxLatitude,
+                        projection: center.projection)))
+            }
+            if minLongitude < -180.0 {
+                boxes.append(BoundingBox(
+                    southWest: Coordinate3D(
+                        x: minLongitude + 360.0,
+                        y: minLatitude,
+                        projection: center.projection),
+                    northEast: Coordinate3D(
+                        x: maxLongitude + 360.0,
+                        y: maxLatitude,
+                        projection: center.projection)))
+            }
+
         case .planar, .geocentric, .undefined:
-            delta = maxDistance
+            boxes.append(BoundingBox(
+                southWest: Coordinate3D(
+                    x: center.longitude - maxDistance,
+                    y: center.latitude - maxDistance,
+                    projection: center.projection),
+                northEast: Coordinate3D(
+                    x: center.longitude + maxDistance,
+                    y: center.latitude + maxDistance,
+                    projection: center.projection)))
         }
-        let bbox = BoundingBox(
-            southWest: Coordinate3D(
-                x: center.longitude - delta,
-                y: center.latitude - delta,
-                projection: center.projection),
-            northEast: Coordinate3D(
-                x: center.longitude + delta,
-                y: center.latitude + delta,
-                projection: center.projection))
 
         var result: [Int] = []
-        for candidate in tree.search(inBoundingBox: bbox) {
-            let i = candidate.index
-            guard i != index else { continue }
-            let d = center.distance(from: candidate.point.coordinate)
-            if d <= maxDistance {
-                result.append(i)
+        var seen: Set<Int> = []
+        for box in boxes {
+            for candidate in tree.search(inBoundingBox: box) {
+                let i = candidate.index
+                guard i != index, seen.insert(i).inserted else { continue }
+                let d = center.distance(from: candidate.point.coordinate)
+                if d <= maxDistance {
+                    result.append(i)
+                }
             }
         }
         return result

@@ -226,9 +226,15 @@ extension Double {
 
     /// Rounds a number to a precision
     func rounded(precision: Int) -> Double {
-        guard precision >= 0 else { return self }
+        // Double carries ~15-16 significant decimal digits; larger
+        // precisions cannot be represented and make the multiply/divide
+        // round trip lose the value entirely.
+        guard precision >= 0, precision <= 15 else { return self }
 
         let multiplier: Double = pow(Double(10), Double(precision))
+        // `pow` overflows to infinity above ~308 decimal places; multiplying
+        // by it and dividing back yields NaN instead of the original value.
+        guard multiplier.isFinite else { return self }
         return (self * multiplier).rounded() / multiplier
     }
 

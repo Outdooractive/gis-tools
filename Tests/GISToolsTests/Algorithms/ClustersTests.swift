@@ -573,4 +573,50 @@ struct ClustersTests {
         #endif
     }
 
+
+    // MARK: - Audit regressions
+
+    /// At high latitudes a degree of longitude is much shorter than at the
+    /// equator. The DBSCAN neighbourhood query must use a cos(latitude)
+    /// longitude window, otherwise points 1° apart at 60°N are missed with a
+    /// 60 km search radius.
+    @Test
+    func dbscanHighLatitudeUsesLongitudeAwareWindow() throws {
+        let features = [
+            Feature(Point(Coordinate3D(latitude: 60.0, longitude: 0.0))),
+            Feature(Point(Coordinate3D(latitude: 60.0, longitude: 0.5))),
+            Feature(Point(Coordinate3D(latitude: 60.0, longitude: 1.0))),
+        ]
+        let result = FeatureCollection(features).dbscanClusters(
+            maxDistance: 60_000.0,
+            minPoints: 2)
+
+        let clusters: [Int?] = result.features.map { $0.property(for: "cluster") }
+        let labels: [String?] = result.features.map { $0.property(for: "dbscan") }
+        #expect(clusters[0] != nil)
+        #expect(clusters[0] == clusters[1])
+        #expect(clusters[1] == clusters[2])
+        #expect(!labels.contains("noise"))
+    }
+
+    /// A neighbourhood window that crosses the antimeridian must also search
+    /// the equivalent window on the other side of the seam.
+    @Test
+    func dbscanCrossesAntimeridian() throws {
+        let features = [
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 179.5))),
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: -179.5))),
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: -179.0))),
+        ]
+        let result = FeatureCollection(features).dbscanClusters(
+            maxDistance: 120_000.0,
+            minPoints: 2)
+
+        let clusters: [Int?] = result.features.map { $0.property(for: "cluster") }
+        #expect(clusters[0] != nil)
+        #expect(clusters[0] == clusters[1])
+        #expect(clusters[1] == clusters[2])
+    }
+
+
 }
