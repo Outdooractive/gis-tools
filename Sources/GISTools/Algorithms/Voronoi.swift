@@ -108,12 +108,18 @@ private enum Voronoi {
             }
         }
 
-        // Build neighbor list for each point
+        // Build neighbor list for each point. Sites are already deduplicated,
+        // so a point-keyed lookup is unambiguous.
+        var pointIndices: [Pt: Int] = [:]
+        for (index, point) in pts.enumerated() {
+            pointIndices[point] = index
+        }
+
         var neighbors: [Int: Set<Int>] = [:]
         for (key, _) in edgeCount {
             guard let edge = edgeEndpoints[key],
-                  let ia = pts.firstIndex(where: { $0.x == edge.a.x && $0.y == edge.a.y }),
-                  let ib = pts.firstIndex(where: { $0.x == edge.b.x && $0.y == edge.b.y })
+                  let ia = pointIndices[edge.a],
+                  let ib = pointIndices[edge.b]
             else { continue }
 
             neighbors[ia, default: []].insert(ib)
