@@ -387,7 +387,7 @@ struct BooleanCrossesTests {
     @Test
     func crossesMultiPointLineStringEPSG3857() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
             Coordinate3D(x: 2_000.0, y: 2_000.0, projection: .epsg3857)]))
         let line = try #require(LineString([
             Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
@@ -399,7 +399,7 @@ struct BooleanCrossesTests {
     @Test
     func crossesMultiPointLineStringEPSG4978() throws {
         let mp = try #require(MultiPoint([
-            Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 2_000.0, y: 2_000.0, z: 0.0, projection: .epsg4978)]))
         let line = try #require(LineString([
             Coordinate3D(x: 500.0, y: 500.0, z: 0.0, projection: .epsg4978),
@@ -507,6 +507,66 @@ struct BooleanCrossesTests {
         ]))
         #expect(degenerateLine.crosses(crossingLine) == false)
         #expect(crossingLine.crosses(degenerateLine) == false)
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension BooleanCrossesTests {
+
+    @Test
+    func endpointOnlyMultiPointDoesNotCrossLine() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+        ]))
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+        ]))
+
+        #expect(!multiPoint.crosses(line))
+        #expect(!line.crosses(multiPoint))
+    }
+
+    @Test
+    func boundaryOnlyMultiPointDoesNotCrossPolygon() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+        ]))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        #expect(!multiPoint.crosses(polygon))
+    }
+
+    @Test
+    func tangentAndBoundaryLinesDoNotCrossPolygon() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let tangent = try #require(LineString([
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let alongBoundary = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+
+        #expect(!tangent.crosses(polygon))
+        #expect(!alongBoundary.crosses(polygon))
     }
 
 }

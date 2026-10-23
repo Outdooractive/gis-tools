@@ -200,3 +200,45 @@ struct BooleanCoversTests {
     }
 
 }
+
+// MARK: - Projection regressions
+
+extension BooleanCoversTests {
+
+    @Test
+    func coversLineIn3857() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+        ]]))
+        let line = try #require(LineString([
+            Coordinate3D(x: 100.0, y: 100.0, projection: .epsg3857),
+            Coordinate3D(x: 900.0, y: 900.0, projection: .epsg3857),
+        ]))
+
+        #expect(polygon.covers(line))
+        #expect(polygon.contains(line))
+    }
+
+    @Test
+    func coversLineIn4978() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.1),
+            Coordinate3D(latitude: 0.1, longitude: 0.1),
+            Coordinate3D(latitude: 0.1, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])).projected(to: .epsg4978)
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.02, longitude: 0.02).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.08, longitude: 0.08).projected(to: .epsg4978),
+        ]))
+
+        #expect(polygon.covers(line))
+        #expect(polygon.contains(line))
+    }
+
+}

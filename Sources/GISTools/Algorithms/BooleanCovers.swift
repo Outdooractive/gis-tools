@@ -18,6 +18,9 @@ extension GeoJson {
     /// - Parameter other: The other geometry
     /// - Returns: `true` if the receiver covers the other geometry
     ///
+    /// - Note: A `FeatureCollection` is evaluated member-wise: the receiver must
+    ///   contain/cover every feature on the other side. A FeatureCollection
+    ///   receiver uses one of its features for the whole other geometry.
     /// - Note: A `GeometryCollection` covers `other` when each part of
     ///   `other` is covered by one of its members (member-wise, not union-wise).
     public func covers(_ other: GeoJson) -> Bool {
@@ -25,7 +28,7 @@ extension GeoJson {
             return fc1.features.contains { $0.covers(other) }
         }
         if let fc2 = other as? FeatureCollection {
-            return fc2.features.contains { self.covers($0) }
+            return fc2.features.allSatisfy { self.covers($0) }
         }
 
         let geom1: GeoJson = (self as? Feature)?.geometry ?? self
@@ -463,11 +466,26 @@ extension BooleanCovers {
     }
 
     static func point(on segment: LineSegment, at parameter: Double) -> Coordinate3D {
-        Coordinate3D(
-            latitude: segment.first.latitude
-                + ((segment.second.latitude - segment.first.latitude) * parameter),
-            longitude: segment.first.longitude
-                + ((segment.second.longitude - segment.first.longitude) * parameter))
+        let latitude = segment.first.latitude
+            + ((segment.second.latitude - segment.first.latitude) * parameter)
+        let longitude = segment.first.longitude
+            + ((segment.second.longitude - segment.first.longitude) * parameter)
+
+        let altitude: Double?
+        if let first = segment.first.altitude,
+           let second = segment.second.altitude
+        {
+            altitude = first + ((second - first) * parameter)
+        }
+        else {
+            altitude = nil
+        }
+
+        return Coordinate3D(
+            x: longitude,
+            y: latitude,
+            z: altitude,
+            projection: segment.projection)
     }
 
     private static func parameter(

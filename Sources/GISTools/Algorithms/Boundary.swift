@@ -57,12 +57,13 @@ extension MultiLineString {
 
 extension Polygon {
 
-    /// The topological boundary of a Polygon is its outer ring.
-    /// For a polygon with holes only the exterior ring is returned,
-    /// matching the OGC Simple Features definition.
-    public var boundary: LineString? {
-        guard let ring = outerRing else { return nil }
-        return ring.lineString
+    /// The topological boundary of a Polygon is the union of its outer and
+    /// inner rings, returned as a ``MultiLineString``.
+    public var boundary: MultiLineString? {
+        let lines = rings.map(\.lineString)
+        guard lines.isNotEmpty else { return nil }
+
+        return MultiLineString(lines)
     }
 
 }
@@ -72,8 +73,9 @@ extension MultiPolygon {
     /// The topological boundary of a MultiPolygon is the union of the
     /// boundaries of all constituent polygons, returned as a ``MultiLineString``.
     public var boundary: MultiLineString? {
-        let lines: [LineString] = polygons.compactMap { $0.boundary }
+        let lines = polygons.flatMap { $0.boundary?.lineStrings ?? [] }
         guard lines.isNotEmpty else { return nil }
+
         return MultiLineString(lines)
     }
 
@@ -85,17 +87,37 @@ extension GeometryCollection {
     /// boundaries of all its contained geometries.
     public var boundary: GeometryCollection? {
         let boundaries: [GeoJsonGeometry] = geometries.compactMap { geo in
-            if let p = geo as? Point { return p.boundary }
-            if let mp = geo as? MultiPoint { return mp.boundary }
-            if let ls = geo as? LineString { return ls.boundary }
-            if let mls = geo as? MultiLineString { return mls.boundary }
-            if let pg = geo as? Polygon { return pg.boundary }
-            if let mpg = geo as? MultiPolygon { return mpg.boundary }
-            if let gc = geo as? GeometryCollection { return gc.boundary }
+            if let p = geo as? Point {
+                return p.boundary
+            }
+            if let mp = geo as? MultiPoint {
+                return mp.boundary
+            }
+            if let ls = geo as? LineString {
+                return ls.boundary
+            }
+            if let mls = geo as? MultiLineString {
+                return mls.boundary
+            }
+            if let pg = geo as? Polygon {
+                return pg.boundary
+            }
+            if let mpg = geo as? MultiPolygon {
+                return mpg.boundary
+            }
+            if let gc = geo as? GeometryCollection {
+                return gc.boundary
+            }
             return nil
         }
-        guard boundaries.isNotEmpty else { return nil }
-        return GeometryCollection(boundaries)
+        let nonEmpty = boundaries.filter { boundary in
+            guard let collection = boundary as? GeometryCollection else { return true }
+
+            return collection.geometries.isNotEmpty
+        }
+        guard nonEmpty.isNotEmpty else { return nil }
+
+        return GeometryCollection(nonEmpty)
     }
 
 }
@@ -104,13 +126,27 @@ extension Feature {
 
     /// The topological boundary of a Feature is the boundary of its geometry.
     public var boundary: GeoJsonGeometry? {
-        if let p = geometry as? Point { return p.boundary }
-        if let mp = geometry as? MultiPoint { return mp.boundary }
-        if let ls = geometry as? LineString { return ls.boundary }
-        if let mls = geometry as? MultiLineString { return mls.boundary }
-        if let pg = geometry as? Polygon { return pg.boundary }
-        if let mpg = geometry as? MultiPolygon { return mpg.boundary }
-        if let gc = geometry as? GeometryCollection { return gc.boundary }
+        if let p = geometry as? Point {
+            return p.boundary
+        }
+        if let mp = geometry as? MultiPoint {
+            return mp.boundary
+        }
+        if let ls = geometry as? LineString {
+            return ls.boundary
+        }
+        if let mls = geometry as? MultiLineString {
+            return mls.boundary
+        }
+        if let pg = geometry as? Polygon {
+            return pg.boundary
+        }
+        if let mpg = geometry as? MultiPolygon {
+            return mpg.boundary
+        }
+        if let gc = geometry as? GeometryCollection {
+            return gc.boundary
+        }
         return nil
     }
 
@@ -122,8 +158,14 @@ extension FeatureCollection {
     /// boundaries of all its features' geometries.
     public var boundary: GeometryCollection? {
         let boundaries: [GeoJsonGeometry] = features.compactMap { $0.boundary }
-        guard boundaries.isNotEmpty else { return nil }
-        return GeometryCollection(boundaries)
+        let nonEmpty = boundaries.filter { boundary in
+            guard let collection = boundary as? GeometryCollection else { return true }
+
+            return collection.geometries.isNotEmpty
+        }
+        guard nonEmpty.isNotEmpty else { return nil }
+
+        return GeometryCollection(nonEmpty)
     }
 
 }

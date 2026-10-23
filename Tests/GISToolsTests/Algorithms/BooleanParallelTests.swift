@@ -284,3 +284,28 @@ struct BooleanParallelTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanParallelTests {
+
+    @Test
+    func mismatchedSegmentCountsAreNotParallel() throws {
+        let short = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let long = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 15.0),
+            Coordinate3D(latitude: 0.0, longitude: 20.0),
+            Coordinate3D(latitude: 0.0, longitude: 25.0),
+        ]))
+
+        #expect(!short.isParallel(to: long))
+        #expect(!long.isParallel(to: short))
+    }
+
+}

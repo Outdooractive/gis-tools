@@ -38,6 +38,7 @@ extension GeoJson {
         if let fc2 = snappedOther as? FeatureCollection {
             return fc2.features.contains { feature in
                 guard let geometry = feature.geometry else { return false }
+
                 return snappedSelf.crosses(geometry, gridSize: nil)
             }
         }
@@ -110,7 +111,10 @@ extension GeoJson {
         for point in multiPoint.points {
             var isInterior = false
             for segment in segments {
-                if segment.checkIsOnSegment(point.coordinate) {
+                if segment.checkIsOnSegment(point.coordinate),
+                   !point.coordinate.isCoincident(to: lineString.firstCoordinate),
+                   !point.coordinate.isCoincident(to: lineString.lastCoordinate)
+                {
                     isInterior = true
                     break
                 }
@@ -138,7 +142,7 @@ extension GeoJson {
         var foundExtPoint = false
 
         for point in multiPoint.points {
-            if polygonGeometry.covers(point.coordinate, gridSize: nil) {
+            if polygonGeometry.locate(point.coordinate, gridSize: nil) == .interior {
                 foundIntPoint = true
             }
             else {
@@ -181,17 +185,45 @@ extension GeoJson {
         _ lineString: LineString,
         _ polygonGeometry: PolygonGeometry
     ) -> Bool {
-        for polygon in polygonGeometry.polygons {
-            for ring in polygon.rings {
-                let ls = ring.lineString
-                if lineString.intersections(with: ls).isNotEmpty {
-                    return true
-                }
+        let sourceLine = lineString.projection == polygonGeometry.projection
+            ? lineString
+            : lineString.projected(to: polygonGeometry.projection)
+        let isGeocentric = polygonGeometry.projection.isGeocentric
+        let targetPolygon = isGeocentric
+            ? polygonGeometry.projected(to: .epsg4326)
+            : polygonGeometry
+        let targetLine = isGeocentric
+            ? sourceLine.projected(to: .epsg4326)
+            : sourceLine
+
+        var hasInterior = false
+        var hasExterior = false
+
+        func classify(_ coordinate: Coordinate3D) {
+            switch targetPolygon.locate(coordinate, gridSize: nil) {
+            case .interior:
+                hasInterior = true
+            case .exterior:
+                hasExterior = true
+            case .boundary:
+                break
             }
         }
-        return false
+
+        for coordinate in targetLine.coordinates {
+            classify(coordinate)
+        }
+        for segment in targetLine.lineSegments {
+            classify(segment.first)
+            classify(segment.second)
+            classify(Coordinate3D(
+                x: (segment.first.x + segment.second.x) / 2.0,
+                y: (segment.first.y + segment.second.y) / 2.0,
+                z: segment.first.z,
+                projection: segment.projection))
+        }
+
+        return hasInterior && hasExterior
     }
 
 }
-
-

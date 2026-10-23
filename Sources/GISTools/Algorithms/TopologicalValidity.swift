@@ -15,7 +15,16 @@ private enum TopologicalValidity {
         }
 
         for coordinate in lineString.coordinates {
-            if let reason = coordinateReason(coordinate) { return reason }
+            if let reason = coordinateReason(coordinate) {
+                return reason
+            }
+        }
+
+        for index in 1 ..< lineString.coordinates.count
+            where lineString.coordinates[index].isCoincident(
+                to: lineString.coordinates[index - 1])
+        {
+            return "LineString contains a zero-length segment"
         }
 
         return nil
@@ -28,24 +37,23 @@ private enum TopologicalValidity {
         guard coordinates.count >= 4 else {
             return "\(label) must contain at least four positions"
         }
-
         guard coordinates.first == coordinates.last else {
             return "\(label) is not closed"
         }
-
         guard Set(coordinates).count >= 3 else {
             return "\(label) has fewer than three distinct positions"
         }
 
         for coordinate in coordinates {
-            if let reason = coordinateReason(coordinate) { return reason }
+            if let reason = coordinateReason(coordinate) {
+                return reason
+            }
         }
 
         let ring = Ring(unchecked: coordinates)
         guard abs(ring.area) > GISTool.equalityDelta else {
             return "\(label) has zero area"
         }
-
         guard ring.lineString.kinks().points.isEmpty else {
             return "\(label) self-intersects"
         }
@@ -122,9 +130,16 @@ private enum TopologicalValidity {
             for j in multiPolygon.polygons.indices where j > i {
                 if let intersection = Intersection.intersectPolygons(
                     multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons),
-                   hasAreaOrLength(intersection)
+                    hasAreaOrLength(intersection)
                 {
                     return "MultiPolygon components overlap or share an edge"
+                }
+
+                if polygonsShareEdge(
+                    multiPolygon.polygons[i],
+                    multiPolygon.polygons[j])
+                {
+                    return "MultiPolygon components share an edge"
                 }
             }
         }
@@ -163,7 +178,9 @@ private enum TopologicalValidity {
                         {
                             let allowed = isEndpoint(intersection, of: first)
                                 && isEndpoint(intersection, of: second)
-                            if !allowed { return false }
+                            if !allowed {
+                                return false
+                            }
                         }
                         else if segmentA.compare(segmentB, tolerance: GISTool.equalityDelta) != .notEqual {
                             return false
@@ -182,6 +199,7 @@ private enum TopologicalValidity {
             : polygon
 
         guard let rawOuter = polygon.coordinates.first else { return false }
+
         let outerRing = Ring(unchecked: rawOuter)
         guard rawOuter.first == rawOuter.last,
               outerRing.lineString.kinks().points.isEmpty
@@ -189,9 +207,14 @@ private enum TopologicalValidity {
 
         for rawHole in polygon.coordinates.dropFirst() {
             guard rawHole.first == rawHole.last else { return false }
+
             let hole = Ring(unchecked: rawHole)
-            if !hole.lineString.kinks().points.isEmpty { return false }
-            if hasCrossing(outerRing.coordinates, hole.coordinates) { return false }
+            if !hole.lineString.kinks().points.isEmpty {
+                return false
+            }
+            if hasCrossing(outerRing.coordinates, hole.coordinates) {
+                return false
+            }
         }
 
         return true
@@ -208,7 +231,14 @@ private enum TopologicalValidity {
             for j in multiPolygon.polygons.indices where j > i {
                 if let intersection = Intersection.intersectPolygons(
                     multiPolygon.polygons[i].polygons + multiPolygon.polygons[j].polygons),
-                   hasAreaOrLength(intersection)
+                    hasAreaOrLength(intersection)
+                {
+                    return false
+                }
+
+                if polygonsShareEdge(
+                    multiPolygon.polygons[i],
+                    multiPolygon.polygons[j])
                 {
                     return false
                 }
@@ -238,12 +268,32 @@ private enum TopologicalValidity {
                 let endpointB = intersection.isCoincident(to: segmentB.first)
                     || intersection.isCoincident(to: segmentB.second)
 
-                if !endpointA || !endpointB {
+                if !endpointA, !endpointB {
                     return true
                 }
             }
         }
 
+        return false
+    }
+
+    private static func polygonsShareEdge(
+        _ first: Polygon,
+        _ second: Polygon
+    ) -> Bool {
+        for segmentA in first.lineSegments {
+            for segmentB in second.lineSegments {
+                let comparison = segmentA.compare(
+                    segmentB,
+                    tolerance: GISTool.equalityDelta)
+                if comparison == .equal
+                    || comparison == .thisOnOther
+                    || comparison == .otherOnThis
+                {
+                    return true
+                }
+            }
+        }
         return false
     }
 
@@ -297,6 +347,7 @@ extension MultiPoint {
 
     public var isSimple: Bool {
         guard isValid else { return false }
+
         return Set(coordinates).count == coordinates.count
     }
 

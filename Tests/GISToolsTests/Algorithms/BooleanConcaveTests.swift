@@ -286,3 +286,23 @@ struct BooleanConcaveTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanConcaveTests {
+
+    @Test
+    func collinearVertexDoesNotMakePolygonConcave() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        #expect(!polygon.isConcave())
+    }
+
+}

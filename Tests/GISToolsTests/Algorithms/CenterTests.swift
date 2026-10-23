@@ -300,8 +300,9 @@ struct CenterTests {
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let com = try #require(mp.centerOfMass)
-        // Convex hull is a rectangle spanning lat 0-30, lon 0-10, center of mass ≈ (15, 5)
-        #expect(abs(com.coordinate.latitude - 15.0) < 0.001)
+        // Area-weighted center of the two equal planar squares. Spherical areas
+        // make the southern square slightly heavier, so the latitude is < 15.
+        #expect(abs(com.coordinate.latitude - 14.527533279153484) < 0.000001)
         #expect(abs(com.coordinate.longitude - 5.0) < 0.001)
     }
 
@@ -614,6 +615,36 @@ struct CenterTests {
         let median = try #require(fc.centerMedian())
         #expect(median.coordinate.altitude != nil)
         #expect(abs(median.coordinate.altitude! - 150.0) < 5.0)
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension CenterTests {
+
+    @Test
+    func centerMeanHandlesAntimeridian() throws {
+        let collection = FeatureCollection([
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: 170.0))),
+            Feature(Point(Coordinate3D(latitude: 0.0, longitude: -170.0))),
+        ])
+        let center = try #require(collection.centerMean())
+
+        #expect(abs(abs(center.coordinate.longitude) - 180.0) < 0.000000001)
+        #expect(abs(center.coordinate.latitude) < 0.000000001)
+    }
+
+    @Test
+    func centerMedianDoesNotShiftPlanarCoordinates() throws {
+        let collection = FeatureCollection([
+            Feature(Point(Coordinate3D(x: -1_000.0, y: 0.0, projection: .epsg3857))),
+            Feature(Point(Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857))),
+        ])
+        let center = try #require(collection.centerMedian())
+
+        #expect(abs(center.coordinate.x) < 0.000001)
+        #expect(abs(center.coordinate.y) < 0.000001)
     }
 
 }

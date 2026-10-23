@@ -108,8 +108,7 @@ struct AreaTests {
             Coordinate3D(x: $0.longitude, y: $0.latitude, projection: .noSRID)
         }]))
         let area = polygonNoSRID.area
-        #expect(area > 1.0e12)
-        #expect(area < 1.5e12)
+        #expect(abs(area - 100.0) < GISTool.equalityDelta)
     }
 
     // Verifies area with holes in EPSG:3857.
@@ -297,6 +296,12 @@ struct AreaTests {
         ]
         let polygon = try #require(Polygon([coordinates]))
 
-        #expect(abs(try #require(polygon.area(in: .meters)) - polygon.area) < 0.000001)
-        #expect(abs(try #require(polygon.area(in: .kilometers)) - (polygon.area / 1_000_000.0)) < 0.000001)
+        if projection == .noSRID {
+            #expect(polygon.area(in: .meters) == nil)
+            #expect(polygon.area(in: .kilometers) == nil)
+        }
+        else {
+            #expect(abs(try #require(polygon.area(in: .meters)) - polygon.area) < 0.000001)
+            #expect(abs(try #require(polygon.area(in: .kilometers)) - (polygon.area / 1_000_000.0)) < 0.000001)
+        }
     }

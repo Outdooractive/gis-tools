@@ -37,9 +37,8 @@ struct GeoJsonParserTests {
         let result = try GeoJsonParser.parse(jsonString: malformedJson)
         let collection = try #require(result.object as? FeatureCollection)
 
-        // The two-point ring is accepted by the lenient parser, while the
-        // non-numeric point coordinate is dropped.
-        #expect(collection.features.count == 2)
+        // Both the short ring and the non-numeric point coordinate are dropped.
+        #expect(collection.features.count == 1)
         #expect(result.issues.count == 2)
 
         let ringIssue = try #require(result.issues.first {

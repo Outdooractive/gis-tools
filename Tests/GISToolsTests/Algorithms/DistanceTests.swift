@@ -34,8 +34,7 @@ struct DistanceTests {
         let origin = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let point = Coordinate3D(latitude: 0.0, longitude: 0.09).projected(to: .epsg4978)
         let dist = origin.distance(from: point)
-        #expect(dist > 5_000.0)
-        #expect(dist < 15_000.0)
+        #expect(abs(dist - 10_018.753141382776) < 0.1)
     }
 
     // Validates Euclidean distance in noSRID.
@@ -67,7 +66,7 @@ struct DistanceTests {
         let coordinate1 = Coordinate3D(latitude: 0.0, longitude: 170.0)
         let coordinate2 = Coordinate3D(latitude: 0.0, longitude: -170.0)
         let distance = coordinate1.distance(from: coordinate2)
-        #expect(abs(distance - 2_226_000.0) < 10_000.0)
+        #expect(abs(distance - 2_223_901.604670658) < 1.0)
     }
 
     // MARK: - Edge cases
@@ -77,6 +76,29 @@ struct DistanceTests {
     func distanceIdenticalPoints() async throws {
         let point = Coordinate3D(latitude: 45.0, longitude: -75.0)
         #expect(point.distance(from: point) == 0.0)
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension DistanceTests {
+
+    @Test
+    func mixedProjectionDistanceUsesReceiverProjection() {
+        let origin = Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
+        let other = Coordinate3D(latitude: 1.0, longitude: 1.0)
+
+        #expect(abs(origin.distance(to: other) - 157_433.53030626837) < 0.000001)
+        #expect(abs(other.distance(to: origin) - 157_411.0) < 200.0)
+    }
+
+    @Test
+    func planarDistanceAcrossAntimeridianIsShort() {
+        let first = Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857)
+        let second = Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857)
+
+        #expect(abs(first.distance(to: second) - 2_226_389.8158654715) < 0.001)
     }
 
 }

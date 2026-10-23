@@ -63,8 +63,7 @@ struct LengthTests {
             Coordinate3D(latitude: 0.0, longitude: 10.0).projected(to: .epsg3857),
         ]))
         let length = line.length
-        #expect(length > 1_000_000.0)
-        #expect(length < 1_200_000.0)
+        #expect(abs(length - 1_113_194.9079327357) < 0.001)
     }
 
     // MARK: - Antimeridian
@@ -76,7 +75,7 @@ struct LengthTests {
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
         ]))
-        #expect(lineString.length > 2_000_000.0 && lineString.length < 2_500_000.0)
+        #expect(abs(lineString.length - 2_223_901.604670658) < 0.001)
     }
 
 }
@@ -119,6 +118,40 @@ struct LengthTests {
             Coordinate3D(x: 10.0, y: 0.0, projection: projection),
         ]))
 
-        #expect(abs(try #require(lineString.length(in: .meters)) - lineString.length) < 0.000001)
-        #expect(abs(try #require(lineString.length(in: .kilometers)) - (lineString.length / 1_000.0)) < 0.000001)
+        if projection == .noSRID {
+            #expect(lineString.length(in: .meters) == nil)
+            #expect(lineString.length(in: .kilometers) == nil)
+        }
+        else {
+            #expect(abs(try #require(lineString.length(in: .meters)) - lineString.length) < 0.000001)
+            #expect(abs(try #require(lineString.length(in: .kilometers)) - (lineString.length / 1_000.0)) < 0.000001)
+        }
     }
+
+// MARK: - Audit regressions
+
+extension LengthTests {
+
+    @Test
+    func planarAntimeridianLengthIsShort() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 170.0).projected(to: .epsg3857),
+            Coordinate3D(latitude: 0.0, longitude: -170.0).projected(to: .epsg3857),
+        ]))
+
+        #expect(abs(line.length - 2_226_389.8158654715) < 0.001)
+    }
+
+    @Test
+    func noSRIDLengthUnitsAreUndefined() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+
+        #expect(line.length == 10.0)
+        #expect(line.length(in: .meters) == nil)
+        #expect(line.length(in: .kilometers) == nil)
+    }
+
+}

@@ -17,7 +17,10 @@ extension LineSegment {
     /// - Parameter unit: The target length unit
     /// - Returns: The converted length, or `nil` if `unit` is not a length unit
     public func length(in unit: GISTool.Unit) -> Double? {
-        GISTool.convert(length: length, from: .meters, to: unit)
+        DistanceUnitConverter.fromMeters(
+            length,
+            projection: first.projection,
+            unit: unit)
     }
 
 }
@@ -42,7 +45,10 @@ extension GeoJson {
     /// - Parameter unit: The target length unit
     /// - Returns: The converted length, or `nil` if `unit` is not a length unit
     public func length(in unit: GISTool.Unit) -> Double? {
-        GISTool.convert(length: length, from: .meters, to: unit)
+        DistanceUnitConverter.fromMeters(
+            length,
+            projection: projection,
+            unit: unit)
     }
 
 }

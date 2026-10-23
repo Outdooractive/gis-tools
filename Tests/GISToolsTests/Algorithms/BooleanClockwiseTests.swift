@@ -89,3 +89,36 @@ struct BooleanClockwiseTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanClockwiseTests {
+
+    @Test
+    func primeMeridianRingIsNotClockwise() throws {
+        let ring = try #require(Ring([
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+        ]))
+
+        #expect(!ring.isClockwise)
+        #expect(ring.isCounterClockwise)
+    }
+
+    @Test
+    func primeMeridianReversedRingIsClockwise() throws {
+        let ring = try #require(Ring([
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: -1.0, longitude: 1.0),
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+        ]))
+
+        #expect(ring.isClockwise)
+    }
+
+}

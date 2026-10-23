@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file.
 
 ### Breaking changes
 
+#### Boundary and noSRID units
+
+`Polygon.boundary` and `MultiPolygon.boundary` now return `MultiLineString?`
+and include hole rings. `length(in:)` and `area(in:)` return `nil` for
+`noSRID`, matching the existing distance-unit APIs.
+
 #### Graph API is opt-in
 
 The graph construction, routing and network-analysis API is now gated behind
@@ -297,6 +303,21 @@ left unchanged; that case is ambiguous per RFC 7946.
   benchmark noise; its win is lower per-query scratch memory.
 
 ### Fixed
+
+- Predicate, validity, distance and measurement audit (#320): coverage and
+  containment now preserve the segment's CRS, mixed-projection distances
+  project into the receiver's CRS, planar distances and lengths unwrap the
+  antimeridian, polygon boundaries include holes, touching/crossing/overlap
+  handle holes, T-junctions and boundary-only contact, FeatureCollection
+  containment requires every feature, ring winding handles the prime meridian,
+  collinear vertices no longer make polygons concave, and parallel checks
+  require matching segment counts. Center mean/median now handle the
+  antimeridian and non-geographic projections correctly.
+- `length(in:)` and `area(in:)` now return `nil` for `noSRID` instead of
+  treating raw units as metres; `Polygon.area` for `noSRID` is a planar
+  shoelace area.
+- `Polygon.boundary` and `MultiPolygon.boundary` now include hole rings and
+  return `MultiLineString?`.
 
 - GeoJSON model and reader audit (#319): feature `id` is no longer exposed as a
   foreign member, string and `Data` readers use the same fallback path, parser

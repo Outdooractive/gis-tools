@@ -87,3 +87,20 @@ struct BearingTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BearingTests {
+
+    @Test
+    func pointBearingAndAngleBetween() {
+        let origin = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        let east = Point(Coordinate3D(latitude: 0.0, longitude: 1.0))
+        let north = Point(Coordinate3D(latitude: 1.0, longitude: 0.0))
+
+        #expect(abs(origin.bearing(to: east) - 90.0) < 0.000001)
+        #expect(abs(origin.bearing(to: north) - 0.0) < 0.000001)
+        #expect(abs(abs(Point.angleBetween(first: north, middle: origin, last: east)) - 90.0) < 0.000001)
+    }
+
+}

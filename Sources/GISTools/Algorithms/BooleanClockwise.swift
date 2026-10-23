@@ -14,7 +14,7 @@ extension Ring {
         guard coordinates.isNotEmpty else { return false }
 
         if !projection.hasSRID {
-            var sum: Double = 0.0
+            var sum = 0.0
             for i in 1 ..< coordinates.count {
                 sum += (coordinates[i].longitude - coordinates[i - 1].longitude)
                     * (coordinates[i].latitude + coordinates[i - 1].latitude)
@@ -22,22 +22,32 @@ extension Ring {
             return sum > 0
         }
 
-        let coords = if projection.isGeographic {
-            coordinates
-        }
-        else {
-            coordinates.map { $0.projected(to: .epsg4326) }
+        let coords =
+            if projection.isGeographic {
+                coordinates
+            }
+            else {
+                coordinates.map { $0.projected(to: .epsg4326) }
+            }
+
+        // Unwrap only actual seam crossings. Shifting every negative
+        // longitude breaks small rings around the prime meridian.
+        var unwrappedLongitudes = coords.map(\.longitude)
+        for index in 1 ..< unwrappedLongitudes.count {
+            var longitude = coords[index].longitude
+            while longitude - unwrappedLongitudes[index - 1] > 180.0 {
+                longitude -= 360.0
+            }
+            while unwrappedLongitudes[index - 1] - longitude > 180.0 {
+                longitude += 360.0
+            }
+            unwrappedLongitudes[index] = longitude
         }
 
-        var sum: Double = 0.0
+        var sum = 0.0
         for i in 1 ..< coords.count {
-            let lon1 = coords[i - 1].longitude < 0
-                ? coords[i - 1].longitude + 360.0
-                : coords[i - 1].longitude
-            let lon2 = coords[i].longitude < 0
-                ? coords[i].longitude + 360.0
-                : coords[i].longitude
-            sum += ((lon2 - lon1) * (coords[i].latitude + coords[i - 1].latitude))
+            sum += ((unwrappedLongitudes[i] - unwrappedLongitudes[i - 1])
+                * (coords[i].latitude + coords[i - 1].latitude))
         }
 
         return sum > 0

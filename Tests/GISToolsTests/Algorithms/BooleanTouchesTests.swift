@@ -644,3 +644,92 @@ struct BooleanTouchesTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension BooleanTouchesTests {
+
+    private func polygonWithHole() -> Polygon {
+        Polygon(unchecked: [
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+            ],
+        ])
+    }
+
+    @Test
+    func lineTouchingHoleBoundaryTouches() throws {
+        let polygon = polygonWithHole()
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 4.0, longitude: 4.0),
+            Coordinate3D(latitude: 4.0, longitude: 6.0),
+        ]))
+
+        #expect(line.touches(polygon))
+        #expect(polygon.touches(line))
+    }
+
+    @Test
+    func tJunctionLineTouches() throws {
+        let horizontal = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let vertical = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]))
+
+        #expect(horizontal.touches(vertical))
+        #expect(vertical.touches(horizontal))
+    }
+
+    @Test
+    func polygonVertexOnEdgeTouchesSymmetrically() throws {
+        let square = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let triangle = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: -1.0, longitude: 5.0),
+            Coordinate3D(latitude: -1.0, longitude: 6.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]]))
+
+        #expect(square.touches(triangle))
+        #expect(triangle.touches(square))
+    }
+
+    @Test
+    func sharedMultiLineEndpointIsNotBoundary() throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+        ]))
+        let multi = try #require(MultiLineString([line1, line2]))
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 1.0))
+
+        #expect(!point.touches(multi))
+        #expect(!multi.touches(point))
+    }
+
+}

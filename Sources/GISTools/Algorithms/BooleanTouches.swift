@@ -47,9 +47,7 @@ extension GeoJson {
 
 // MARK: - BooleanTouches namespace
 
-private enum BooleanTouches {
-
-}
+private enum BooleanTouches {}
 
 // MARK: - Geometry dispatch
 
@@ -108,7 +106,9 @@ extension BooleanTouches {
             return isOnLineEnd(point.coordinate, ls)
 
         case let mls as MultiLineString:
-            return mls.lineStrings.contains { isOnLineEnd(point.coordinate, $0) }
+            return mls.boundary.coordinates.contains {
+                $0.isCoincident(to: point.coordinate)
+            }
 
         case let p as Polygon:
             return p.rings.contains { $0.lineString.checkIsOnLine(point.coordinate) }
@@ -178,13 +178,17 @@ extension BooleanTouches {
         var foundTouchingPoint = false
 
         for point in multiPoint.points {
-            for lineString in multiLineString.lineStrings {
-                if !foundTouchingPoint, isOnLineEnd(point.coordinate, lineString) {
-                    foundTouchingPoint = true
-                }
-                if isOnLineInterior(point.coordinate, lineString) {
-                    return false
-                }
+            if !foundTouchingPoint,
+               multiLineString.boundary.coordinates.contains(where: {
+                   $0.isCoincident(to: point.coordinate)
+               })
+            {
+                foundTouchingPoint = true
+            }
+            if multiLineString.lineStrings.contains(where: {
+                isOnLineInterior(point.coordinate, $0)
+            }) {
+                return false
             }
         }
 
@@ -195,15 +199,11 @@ extension BooleanTouches {
         _ multiPoint: MultiPoint,
         _ polygon: Polygon
     ) -> Bool {
-        let rings = polygon.rings
-        let outerRing = rings.first?.lineString
         var foundTouchingPoint = false
 
         for point in multiPoint.points {
-            if !foundTouchingPoint, let outerRing {
-                if outerRing.checkIsOnLine(point.coordinate) {
-                    foundTouchingPoint = true
-                }
+            if !foundTouchingPoint, isOnPolygonBoundary(point.coordinate, polygon) {
+                foundTouchingPoint = true
             }
             if polygon.contains(point.coordinate) {
                 return false
@@ -220,15 +220,11 @@ extension BooleanTouches {
         var foundTouchingPoint = false
 
         for point in multiPoint.points {
-            for polygon in multiPolygon.polygons {
-                if let outerRing = polygon.rings.first?.lineString {
-                    if !foundTouchingPoint, outerRing.checkIsOnLine(point.coordinate) {
-                        foundTouchingPoint = true
-                    }
-                }
-                if polygon.contains(point.coordinate) {
-                    return false
-                }
+            if !foundTouchingPoint, isOnMultiPolygonBoundary(point.coordinate, multiPolygon) {
+                foundTouchingPoint = true
+            }
+            for polygon in multiPolygon.polygons where polygon.contains(point.coordinate) {
+                return false
             }
         }
 
@@ -273,11 +269,38 @@ extension BooleanTouches {
         _ lineString1: LineString,
         _ lineString2: LineString
     ) -> Bool {
-        let startMatch = isOnLineEnd(lineString1.firstCoordinate, lineString2)
-            || isOnLineEnd(lineString1.lastCoordinate, lineString2)
-        guard startMatch else { return false }
+        if lineString1.isOverlapping(with: lineString2) {
+            return false
+        }
 
-        for coordinate in lineString1.allCoordinates {
+        let startMatch = lineString1.firstCoordinate.map {
+            lineString2.checkIsOnLine($0)
+        } ?? false
+        let endMatch = lineString1.lastCoordinate.map {
+            lineString2.checkIsOnLine($0)
+        } ?? false
+        let otherStartMatch = lineString2.firstCoordinate.map {
+            lineString1.checkIsOnLine($0)
+        } ?? false
+        let otherEndMatch = lineString2.lastCoordinate.map {
+            lineString1.checkIsOnLine($0)
+        } ?? false
+        guard startMatch || endMatch || otherStartMatch || otherEndMatch else {
+            return false
+        }
+
+        // Only interior/interior intersections are crossings. An endpoint of
+        // one line landing in the interior of the other is a valid touch.
+        for intersection in lineString1.intersections(with: lineString2) {
+            let point = intersection.coordinate
+            if isOnLineInterior(point, lineString1), isOnLineInterior(point, lineString2) {
+                return false
+            }
+        }
+
+        for (index, coordinate) in lineString1.coordinates.enumerated() {
+            guard index > 0, index < lineString1.coordinates.count - 1 else { continue }
+
             if isOnLineInterior(coordinate, lineString2) {
                 return false
             }
@@ -291,16 +314,25 @@ extension BooleanTouches {
         _ multiLineString: MultiLineString
     ) -> Bool {
         let startMatch = multiLineString.lineStrings.contains { ls in
-            isOnLineEnd(lineString.firstCoordinate, ls)
-                || isOnLineEnd(lineString.lastCoordinate, ls)
+            lineString.firstCoordinate.map { ls.checkIsOnLine($0) } ?? false
+                || lineString.lastCoordinate.map { ls.checkIsOnLine($0) } ?? false
         }
         guard startMatch else { return false }
 
-        for coordinate in lineString.allCoordinates {
-            for ls in multiLineString.lineStrings {
-                if isOnLineInterior(coordinate, ls) {
+        for ls in multiLineString.lineStrings {
+            for intersection in lineString.intersections(with: ls) {
+                let point = intersection.coordinate
+                if isOnLineInterior(point, lineString), isOnLineInterior(point, ls) {
                     return false
                 }
+            }
+        }
+
+        for (index, coordinate) in lineString.coordinates.enumerated() {
+            guard index > 0, index < lineString.coordinates.count - 1 else { continue }
+
+            for ls in multiLineString.lineStrings where isOnLineInterior(coordinate, ls) {
+                return false
             }
         }
 
@@ -311,15 +343,11 @@ extension BooleanTouches {
         _ lineString: LineString,
         _ polygon: Polygon
     ) -> Bool {
-        let rings = polygon.rings
-        let outerRing = rings.first?.lineString
         var foundTouchingPoint = false
 
         for coordinate in lineString.allCoordinates {
-            if !foundTouchingPoint, let outerRing {
-                if outerRing.checkIsOnLine(coordinate) {
-                    foundTouchingPoint = true
-                }
+            if !foundTouchingPoint, isOnPolygonBoundary(coordinate, polygon) {
+                foundTouchingPoint = true
             }
             if polygon.contains(coordinate) {
                 return false
@@ -336,15 +364,11 @@ extension BooleanTouches {
         var foundTouchingPoint = false
 
         for coordinate in lineString.allCoordinates {
-            for polygon in multiPolygon.polygons {
-                if let outerRing = polygon.rings.first?.lineString {
-                    if !foundTouchingPoint, outerRing.checkIsOnLine(coordinate) {
-                        foundTouchingPoint = true
-                    }
-                }
-                if polygon.contains(coordinate) {
-                    return false
-                }
+            if !foundTouchingPoint, isOnMultiPolygonBoundary(coordinate, multiPolygon) {
+                foundTouchingPoint = true
+            }
+            for polygon in multiPolygon.polygons where polygon.contains(coordinate) {
+                return false
             }
         }
 
@@ -363,7 +387,9 @@ extension BooleanTouches {
     ) -> Bool {
         switch geom {
         case let p as Point:
-            return multiLineString.lineStrings.contains { isOnLineEnd(p.coordinate, $0) }
+            return multiLineString.boundary.coordinates.contains {
+                $0.isCoincident(to: p.coordinate)
+            }
 
         case let mp as MultiPoint:
             return multiPointTouchesMultiLineString(mp, multiLineString)
@@ -413,14 +439,11 @@ extension BooleanTouches {
         _ multiLineString: MultiLineString,
         _ polygon: Polygon
     ) -> Bool {
-        let outerRing = polygon.rings.first?.lineString
         var foundTouchingPoint = false
 
         for coordinate in multiLineString.allCoordinates {
-            if !foundTouchingPoint, let outerRing {
-                if outerRing.checkIsOnLine(coordinate) {
-                    foundTouchingPoint = true
-                }
+            if !foundTouchingPoint, isOnPolygonBoundary(coordinate, polygon) {
+                foundTouchingPoint = true
             }
             if polygon.contains(coordinate) {
                 return false
@@ -437,15 +460,11 @@ extension BooleanTouches {
         var foundTouchingPoint = false
 
         for coordinate in multiLineString.allCoordinates {
-            for polygon in multiPolygon.polygons {
-                if let outerRing = polygon.rings.first?.lineString {
-                    if !foundTouchingPoint, outerRing.checkIsOnLine(coordinate) {
-                        foundTouchingPoint = true
-                    }
-                }
-                if polygon.contains(coordinate) {
-                    return false
-                }
+            if !foundTouchingPoint, isOnMultiPolygonBoundary(coordinate, multiPolygon) {
+                foundTouchingPoint = true
+            }
+            for polygon in multiPolygon.polygons where polygon.contains(coordinate) {
+                return false
             }
         }
 
@@ -490,52 +509,50 @@ extension BooleanTouches {
         _ polygon1: Polygon,
         _ polygon2: Polygon
     ) -> Bool {
-        let outerRing1 = polygon1.rings.first?.lineString
-        let outerRing2 = polygon2.rings.first?.lineString
-        guard let ring1 = outerRing1, let ring2 = outerRing2 else { return false }
+        if polygon1.isOverlapping(with: polygon2) {
+            return false
+        }
+        if polygon1.covers(polygon2) || polygon2.covers(polygon1) {
+            return false
+        }
 
-        var foundTouchingPoint = false
-
-        for coordinate in ring1.allCoordinates {
-            if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
-                foundTouchingPoint = true
+        for ring in polygon1.rings {
+            for coordinate in ring.coordinates
+                where isOnPolygonBoundary(coordinate, polygon2)
+            {
+                return true
             }
-            if polygon2.contains(coordinate) {
-                return false
+        }
+        for ring in polygon2.rings {
+            for coordinate in ring.coordinates
+                where isOnPolygonBoundary(coordinate, polygon1)
+            {
+                return true
             }
         }
 
-        return foundTouchingPoint
+        return false
     }
 
     private static func polygonTouchesMultiPolygon(
         _ polygon: Polygon,
         _ multiPolygon: MultiPolygon
     ) -> Bool {
-        let outerRing1 = polygon.rings.first?.lineString
-        guard let ring1 = outerRing1 else { return false }
+        var touched = false
 
-        for p2 in multiPolygon.polygons {
-            let outerRing2 = p2.rings.first?.lineString
-            guard let ring2 = outerRing2 else { continue }
-
-            var foundTouchingPoint = false
-
-            for coordinate in ring1.allCoordinates {
-                if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
-                    foundTouchingPoint = true
-                }
-                if p2.contains(coordinate) {
-                    return false
-                }
+        for other in multiPolygon.polygons {
+            if polygon.isOverlapping(with: other)
+                || polygon.covers(other)
+                || other.covers(polygon)
+            {
+                return false
             }
-
-            if foundTouchingPoint {
-                return true
+            if polygonsTouch(polygon, other) {
+                touched = true
             }
         }
 
-        return false
+        return touched
     }
 
 }
@@ -576,32 +593,23 @@ extension BooleanTouches {
         _ mp1: MultiPolygon,
         _ mp2: MultiPolygon
     ) -> Bool {
+        var touched = false
+
         for p1 in mp1.polygons {
-            let outerRing1 = p1.rings.first?.lineString
-            guard let ring1 = outerRing1 else { continue }
-
             for p2 in mp2.polygons {
-                let outerRing2 = p2.rings.first?.lineString
-                guard let ring2 = outerRing2 else { continue }
-
-                var foundTouchingPoint = false
-
-                for coordinate in ring1.allCoordinates {
-                    if !foundTouchingPoint, ring2.checkIsOnLine(coordinate) {
-                        foundTouchingPoint = true
-                    }
-                    if p2.contains(coordinate) {
-                        return false
-                    }
+                if p1.isOverlapping(with: p2)
+                    || p1.covers(p2)
+                    || p2.covers(p1)
+                {
+                    return false
                 }
-
-                if foundTouchingPoint {
-                    return true
+                if polygonsTouch(p1, p2) {
+                    touched = true
                 }
             }
         }
 
-        return false
+        return touched
     }
 
 }
@@ -615,7 +623,22 @@ extension BooleanTouches {
         _ lineString: LineString
     ) -> Bool {
         guard let coordinate else { return false }
+
         return lineString.boundary.coordinates.contains { $0.isCoincident(to: coordinate) }
+    }
+
+    fileprivate static func isOnPolygonBoundary(
+        _ coordinate: Coordinate3D,
+        _ polygon: Polygon
+    ) -> Bool {
+        polygon.rings.contains { $0.lineString.checkIsOnLine(coordinate) }
+    }
+
+    fileprivate static func isOnMultiPolygonBoundary(
+        _ coordinate: Coordinate3D,
+        _ multiPolygon: MultiPolygon
+    ) -> Bool {
+        multiPolygon.polygons.contains { isOnPolygonBoundary(coordinate, $0) }
     }
 
     fileprivate static func isOnLineInterior(
@@ -623,10 +646,9 @@ extension BooleanTouches {
         _ lineString: LineString
     ) -> Bool {
         guard let coordinate else { return false }
+
         return !isOnLineEnd(coordinate, lineString)
             && lineString.checkIsOnLine(coordinate)
     }
 
 }
-
-
