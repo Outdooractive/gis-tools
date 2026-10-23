@@ -6,6 +6,11 @@ import Foundation
 import Testing
 
 // Algorithm smoke tests in EPSG:32662 (WGS 84 / Plate Carree).
+//
+// EPSG:32662 is equirectangular in metres (`x = a·λ`, `y = a·φ`), not
+// degrees. The fixtures below use its real coordinate range: the horizontal
+// wraparound axis is at ±`GISTool.originShift` (20,037,508.34 m) and the
+// vertical extent is ±`GISTool.originShift / 2` (10,018,754.17 m).
 struct Epsg32662AlgorithmTests {
 
     // Validates that EPSG:32662 is treated as planar (Euclidean) by
@@ -42,12 +47,13 @@ struct Epsg32662AlgorithmTests {
     }
 
     // Validates antimeridian detection and cutting in EPSG:32662, where the
-    // wraparound axis is at ±180 degrees.
+    // wraparound axis is at ±`GISTool.originShift` metres.
     @Test
     func antimeridian() async throws {
+        let extent = GISTool.originShift
         let lineCoordinates: [Coordinate3D] = [
-            Coordinate3D(x: 170.0, y: 45.0, projection: .epsg32662),
-            Coordinate3D(x: -170.0, y: 45.0, projection: .epsg32662),
+            Coordinate3D(x: extent - 1_000_000.0, y: 5_009_377.085697311, projection: .epsg32662),
+            Coordinate3D(x: -extent + 1_000_000.0, y: 5_009_377.085697311, projection: .epsg32662),
         ]
         let line = LineString(unchecked: lineCoordinates)
 
@@ -56,11 +62,11 @@ struct Epsg32662AlgorithmTests {
         let cut = line.cutAtAntimeridian()
         #expect(cut.features.count == 2)
 
-        // Per RFC 7946 §3.1.9, the cut points are at ±180.
+        // Cut points are at ±extent.
         let first = try #require((cut.features[0].geometry as? LineString)?.coordinates.last)
         let second = try #require((cut.features[1].geometry as? LineString)?.coordinates.first)
-        #expect(abs(first.longitude) == 180.0)
-        #expect(abs(second.longitude) == 180.0)
+        #expect(abs(first.longitude) == extent)
+        #expect(abs(second.longitude) == extent)
 
         // A line not crossing the axis stays untouched.
         let plainLineCoordinates: [Coordinate3D] = [
@@ -75,12 +81,13 @@ struct Epsg32662AlgorithmTests {
     // Validates normalize/clamp behavior in EPSG:32662.
     @Test
     func normalizeAndClamp() async throws {
-        let normalized = Coordinate3D(x: 190.0, y: 0.0, projection: .epsg32662).normalized()
-        #expect(normalized.longitude == -170.0)
+        let extent = GISTool.originShift
+        let normalized = Coordinate3D(x: extent + 1_000_000.0, y: 0.0, projection: .epsg32662).normalized()
+        #expect(abs(normalized.longitude - (-extent + 1_000_000.0)) < 0.000001)
 
-        let clamped = Coordinate3D(x: 190.0, y: 95.0, projection: .epsg32662).clamped()
-        #expect(clamped.longitude == 180.0)
-        #expect(clamped.latitude == 90.0)
+        let clamped = Coordinate3D(x: extent + 1_000_000.0, y: extent, projection: .epsg32662).clamped()
+        #expect(clamped.longitude == extent)
+        #expect(clamped.latitude == extent / 2.0)
     }
 
     // Validates WKB round trips in the new projections (the SRID is embedded

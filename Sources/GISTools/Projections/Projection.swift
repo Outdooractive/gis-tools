@@ -69,6 +69,12 @@ public struct Projection:
     /// EPSG:28992 - Amersfoort / RD New, the official Dutch grid
     /// (https://epsg.io/28992).
     public static let epsg28992 = Projection.builtin(srid: 28992)
+    /// EPSG:25828 - ETRS89 / UTM zone 28N (https://epsg.io/25828).
+    public static let epsg25828 = Projection.builtin(srid: 25828)
+    /// EPSG:25829 - ETRS89 / UTM zone 29N (https://epsg.io/25829).
+    public static let epsg25829 = Projection.builtin(srid: 25829)
+    /// EPSG:25830 - ETRS89 / UTM zone 30N (https://epsg.io/25830).
+    public static let epsg25830 = Projection.builtin(srid: 25830)
     /// EPSG:25831 - ETRS89 / UTM zone 31N (https://epsg.io/25831).
     public static let epsg25831 = Projection.builtin(srid: 25831)
     /// EPSG:25832 - ETRS89 / UTM zone 32N (https://epsg.io/25832).
@@ -83,6 +89,8 @@ public struct Projection:
     public static let epsg25836 = Projection.builtin(srid: 25836)
     /// EPSG:25837 - ETRS89 / UTM zone 37N (https://epsg.io/25837).
     public static let epsg25837 = Projection.builtin(srid: 25837)
+    /// EPSG:25838 - ETRS89 / UTM zone 38N (https://epsg.io/25838).
+    public static let epsg25838 = Projection.builtin(srid: 25838)
     /// North American NAD83 CRSs.
     /// EPSG:4269 - NAD83 geodetic degrees (https://epsg.io/4269).
     /// Effectively coincides with WGS84 at meter accuracy.
@@ -95,15 +103,13 @@ public struct Projection:
     public static let epsg3347 = Projection.builtin(srid: 3347)
     /// EPSG:3978 - NAD83 / Canada Atlas Lambert (https://epsg.io/3978).
     public static let epsg3978 = Projection.builtin(srid: 3978)
-    /// NAD83 UTM zones (northern EPSG:26901-26960).
+    /// NAD83 UTM zones (northern EPSG:26901-26923).
     /// EPSG:26901 - NAD83 / UTM zone 1N (https://epsg.io/26901).
     public static let epsg26901 = Projection.builtin(srid: 26901)
     /// EPSG:26910 - NAD83 / UTM zone 10N (https://epsg.io/26910).
     public static let epsg26910 = Projection.builtin(srid: 26910)
     /// EPSG:26918 - NAD83 / UTM zone 18N (https://epsg.io/26918).
     public static let epsg26918 = Projection.builtin(srid: 26918)
-    /// EPSG:26960 - NAD83 / UTM zone 60N (https://epsg.io/26960).
-    public static let epsg26960 = Projection.builtin(srid: 26960)
     /// German DHDN Gauss-Krueger zones (EPSG:31466-31469).
     /// EPSG:31466 - DHDN / Gauss-Krueger zone 2 (https://epsg.io/31466).
     public static let epsg31466 = Projection.builtin(srid: 31466)
@@ -615,7 +621,7 @@ private enum UtmWktIdentification {
     ///
     /// Strings that name the ETRS89 datum next to the zone token
     /// (e.g. `PROJCS["ETRS89 / UTM zone 32N"...]`) resolve into the
-    /// EPSG:25831–25837 belt instead of the WGS84 zones wherever the EPSG
+    /// EPSG:25828–25838 belt instead of the WGS84 zones wherever the EPSG
     /// defines the datum-zoned pairing.
     static func projection(in wkt: String) -> Projection? {
         // A UTM zone token, e.g. `UTM Zone 19N` or `UTM_Zone_5s`.
@@ -631,14 +637,24 @@ private enum UtmWktIdentification {
         guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
 
         let isSouthern = zoneMatch.2.uppercased() == "S"
+        let isEtrs89 = wkt.firstMatch(of: etrsRegex) != nil
+        let isNad83 = wkt.firstMatch(of: nad83Regex) != nil
 
-        // The ETRS89 belt: EPSG:25831–25837 (Northern only).
-        if wkt.firstMatch(of: etrsRegex) != nil, !isSouthern, (31 ... 37).contains(zone) {
+        // A datum-specific belt has a fixed zone range; an out-of-range or
+        // wrong-hemisphere zone must not fall through to the WGS84 belt.
+        if isEtrs89, isNad83 {
+            return nil
+        }
+
+        // The ETRS89 belt: EPSG:25828–25838 (Northern only).
+        if isEtrs89 {
+            guard !isSouthern, (28 ... 38).contains(zone) else { return nil }
             return Projection(srid: 25800 + zone)
         }
 
-        // The NAD83 belt: EPSG:26901–26960 (Northern only).
-        if wkt.firstMatch(of: nad83Regex) != nil, !isSouthern {
+        // The NAD83 belt: EPSG:26901–26923 (Northern only).
+        if isNad83 {
+            guard !isSouthern, (1 ... 23).contains(zone) else { return nil }
             return Projection(srid: 26900 + zone)
         }
 

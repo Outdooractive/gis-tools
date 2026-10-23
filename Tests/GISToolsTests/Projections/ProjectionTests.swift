@@ -252,7 +252,7 @@ struct ProjectionTests {
         #expect(Projection(wkt: #"PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg3857)
         #expect(Projection(wkt: #"GEOCCS["WGS 84 (geocentric)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["metre",1]]"#) == .epsg4978)
         #expect(Projection(wkt: #"PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg3395)
-        #expect(Projection(wkt: #"PROJCS["WGS 84 / Plate Carree",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["degree",0.0174532925199433]]"#) == .epsg32662)
+        #expect(Projection(wkt: #"PROJCS["WGS 84 / Plate Carree",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg32662)
         #expect(Projection(wkt: "unknown") == nil)
         #expect(Projection(wkt: "") == nil)
     }
@@ -308,7 +308,7 @@ struct ProjectionTests {
         #expect(Projection.epsg4978.wraparoundExtent == nil)
         #expect(Projection.noSRID.wraparoundExtent == nil)
         #expect(Projection.epsg3395.wraparoundExtent == GISTool.originShift)
-        #expect(Projection.epsg32662.wraparoundExtent == 180.0)
+        #expect(Projection.epsg32662.wraparoundExtent == GISTool.originShift)
     }
 
     /// Validates meter-to-CRS-unit conversion.
@@ -383,26 +383,28 @@ struct ProjectionTests {
     }
 
     /// Tests coordinate projection from EPSG:4326 to EPSG:32662 (Plate Carree)
-    /// and back. Plate Carree uses longitude/latitude directly as x/y.
+    /// and back. EPSG:32662 is an equirectangular projection in meters:
+    /// `x = a·λ`, `y = a·φ` with `a` the WGS84 semi-major axis.
     @Test
     func convertTo32662() async throws {
         let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 100.0, m: 3.0)
         let result = coordinate.projected(to: .epsg32662)
-        #expect(result.longitude == -71.0)
-        #expect(result.latitude == 41.0)
+        // Reference values: PROJ `+proj=eqc +lat_ts=0 +datum=WGS84 +units=m`.
+        #expect(abs(result.longitude - -7_903_683.846322424) < 0.000001)
+        #expect(abs(result.latitude - 4_540_573.291229727) < 0.000001)
         #expect(result.altitude == 100.0)
         #expect(result.m == 3.0)
 
         let back = result.projected(to: .epsg4326)
-        #expect(back.longitude == -71.0)
-        #expect(back.latitude == 41.0)
+        #expect(abs(back.longitude + 71.0) < 0.0000000001)
+        #expect(abs(back.latitude - 41.0) < 0.0000000001)
         #expect(back.altitude == 100.0)
         #expect(back.m == 3.0)
 
-        // Values outside the degree range are copied as-is (no wrap/clamp on
+        // Values outside the valid extent are copied as-is (no wrap/clamp on
         // plain conversion).
         let outOfRange = Coordinate3D(latitude: 41.0, longitude: 200.0).projected(to: .epsg32662)
-        #expect(outOfRange.longitude == 200.0)
+        #expect(abs(outOfRange.longitude - 22_263_898.158654716) < 0.000001)
     }
 
     /// EPSG:3857 → EPSG:4978 (and back) is routed through the EPSG:4326 pivot

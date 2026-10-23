@@ -97,10 +97,15 @@ def world_mercator():
 
 
 def plate_carree():
-    # Not part of the matrix: the library's EPSG:32662 intentionally uses
-    # degrees as x/y (see Epsg32662Definition), diverging from PROJ's
-    # meter-valued +proj=eqc. Its behavior is pinned by Epsg32662Tests.
-    return None
+    # EPSG:32662 is metre-valued equirectangular (`x = a·λ`, `y = a·φ`),
+    # the same formula as PROJ's +proj=eqc +lat_ts=0.
+    return Crs(
+        32662, "EPSG:32662",
+        "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 "
+        "+datum=WGS84 +units=m +no_defs",
+        (-90.0, -180.0, 90.0, 180.0),
+        0.001,
+        is_global=True)
 
 
 def etrs89():
@@ -274,7 +279,7 @@ def canada_lambert(srid):
 
 
 def nad83_utm_zone(zone):
-    """The NAD83 UTM zone belt (EPSG:26901-26960)."""
+    """The NAD83 UTM zone belt (EPSG:26901-26923, zones 1N-23N)."""
     lon0 = (zone - 1) * 6 - 180 + 3
     return Crs(
         26900 + zone,
@@ -370,7 +375,7 @@ def all_crs():
             rd_new(),
         ] if crs is not None
     ]
-    for zone in range(1, 61):
+    for zone in range(1, 24):
         crs_list.append(nad83_utm_zone(zone))
     for zone in range(2, 6):
         crs_list.append(dhdn_gk(zone))
@@ -379,7 +384,7 @@ def all_crs():
     for zone in range(1, 61):
         crs_list.append(utm_zone(zone, south=False))
         crs_list.append(utm_zone(zone, south=True))
-    for zone in range(31, 38):
+    for zone in range(28, 39):
         crs_list.append(etrs89_utm_zone(zone))
     return crs_list
 

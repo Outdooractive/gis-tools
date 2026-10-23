@@ -144,21 +144,74 @@ struct TransverseMercatorMath: Sendable {
 
     // MARK: - Meridian arc
 
-    /// Snyder meridian arc length (equation 3-21) from the equator to
-    /// `phi` (radians), in meters.
+    /// Meridian arc length from the equator to `phi` (radians), in meters.
+    ///
+    /// Uses the third-flattening series (`n = f / (2 - f)`) through `n⁶`,
+    /// which matches the exact elliptic integral to a few nanometres over
+    /// the whole ellipsoid. The older Snyder `e²` expansion truncated at
+    /// `e⁶` is accurate only to about a millimetre near the poles, which is
+    /// visible when EPSG:32662's meridian-arc axis is converted to another
+    /// projection.
     static func meridianArc(
         _ phi: Double,
         ellipsoid: Ellipsoid
     ) -> Double {
         let a = ellipsoid.semiMajorAxis
-        let e2 = ellipsoid.eccentricitySquared
+        let f = 1.0 / ellipsoid.inverseFlattening
+        let n = f / (2.0 - f)
+        let n2 = n * n
+        let n3 = n2 * n
+        let n4 = n2 * n2
+        let n5 = n4 * n
+        let n6 = n3 * n3
 
-        return a * (
-            (1.0 - e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * pow(e2, 3) / 256.0) * phi
-                - (3.0 * e2 / 8.0 + 3.0 * e2 * e2 / 32.0 + 45.0 * pow(e2, 3) / 1024.0) * sin(2.0 * phi)
-                + (15.0 * e2 * e2 / 256.0 + 45.0 * pow(e2, 3) / 1024.0) * sin(4.0 * phi)
-                - (35.0 * pow(e2, 3) / 3072.0) * sin(6.0 * phi)
+        return a / (1.0 + n) * (
+            (1.0 + n2 / 4.0 + n4 / 64.0 + n6 / 256.0) * phi
+                - (3.0 / 2.0) * (n - n3 / 8.0 + n5 / 64.0) * sin(2.0 * phi)
+                + (15.0 / 16.0) * (n2 - n4 / 4.0 + 3.0 * n6 / 64.0) * sin(4.0 * phi)
+                - (35.0 / 48.0) * (n3 - 5.0 * n5 / 16.0) * sin(6.0 * phi)
+                + (315.0 / 512.0) * (n4 - 7.0 * n6 / 16.0) * sin(8.0 * phi)
+                - (693.0 / 1280.0) * n5 * sin(10.0 * phi)
+                + (1001.0 / 2048.0) * n6 * sin(12.0 * phi)
         )
+    }
+
+    /// The geodetic latitude (radians) whose meridian arc length from the
+    /// equator equals `meridianArc`, inverting ``meridianArc(_:ellipsoid:)``
+    /// with a footpoint series and two Newton refinements.
+    ///
+    /// The refinement keeps the inversion accurate to well below a
+    /// nanometre, so projections such as EPSG:32662 that use the meridian
+    /// arc for one axis round-trip without losing precision.
+    static func latitude(
+        forMeridianArc meridianArc: Double,
+        ellipsoid: Ellipsoid
+    ) -> Double {
+        let a = ellipsoid.semiMajorAxis
+        let e2 = ellipsoid.eccentricitySquared
+        let f = 1.0 / ellipsoid.inverseFlattening
+        let n = f / (2.0 - f)
+        let n2 = n * n
+        let n3 = n2 * n
+        let n4 = n2 * n2
+
+        let mu = meridianArc
+            / (a / (1.0 + n) * (1.0 + n2 / 4.0 + n4 / 64.0 + pow(n, 6) / 256.0))
+
+        var phi = mu
+            + (3.0 * n / 2.0 - 27.0 * n3 / 32.0) * sin(2.0 * mu)
+            + (21.0 * n2 / 16.0 - 55.0 * n4 / 32.0) * sin(4.0 * mu)
+            + (151.0 * n3 / 96.0 - 417.0 * pow(n, 5) / 128.0) * sin(6.0 * mu)
+            + (1097.0 * n4 / 512.0) * sin(8.0 * mu)
+
+        for _ in 0 ..< 2 {
+            let sinPhi = sin(phi)
+            let radiusSquared = 1.0 - e2 * sinPhi * sinPhi
+            let meridionalRadius = a * (1.0 - e2) / pow(radiusSquared, 1.5)
+            phi -= (Self.meridianArc(phi, ellipsoid: ellipsoid) - meridianArc) / meridionalRadius
+        }
+
+        return phi
     }
 
 }

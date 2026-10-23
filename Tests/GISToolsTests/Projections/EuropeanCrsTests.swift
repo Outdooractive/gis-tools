@@ -5,7 +5,7 @@ import Testing
 /// Tests for the pan-European and national CRS additions:
 /// EPSG:3035 (LAEA Europe), EPSG:3034 (LCC Europe), EPSG:2154
 /// (Lambert-93), EPSG:28992 (RD New) and the ETRS89/UTM zone belt
-/// EPSG:25831–25837. All reference values are pyproj/PROJ ground-truth
+/// EPSG:25828–25838. All reference values are pyproj/PROJ ground-truth
 /// fixtures computed from the EPSG parameterization.
 struct EuropeanCrsTests {
 
@@ -197,7 +197,7 @@ struct EuropeanCrsTests {
         }
     }
 
-    // MARK: - EPSG:25831–25837 (ETRS89/UTM belt)
+    // MARK: - EPSG:25828–25838 (ETRS89/UTM belt)
 
     @Test
     func etrs89UtmBelt() throws {
@@ -264,15 +264,17 @@ struct EuropeanCrsTests {
             wkt: "PROJCS[\"ETRS_1989_UTM_Zone_33N\",PROJECTION[\"Transverse_Mercator\"],..."))
         #expect(esriVariant.srid == 25_833)
 
-        // Outside the defined belt: falls back to the WGS84 zones.
+        // The full EPSG belt is 28N–38N, including zone 38N.
         let outside = try #require(Projection(
             wkt: "PROJCS[\"ETRS89 / UTM zone 38N\",GEOGCS[\"ETRS89\",...]]"))
-        #expect(outside.srid == 32_638)
+        #expect(outside.srid == 25_838)
 
-        // Southern hemisphere: no ETRS belt defined.
-        let southern = try #require(Projection(
-            wkt: "PROJCS[\"ETRS89 / UTM zone 32S\",GEOGCS[\"ETRS89\",...]]"))
-        #expect(southern.srid == 32_732)
+        // ETRS89 has no southern zones; a datum-specific zone token must
+        // not silently fall through to the WGS84 belt.
+        #expect(Projection(
+            wkt: "PROJCS[\"ETRS89 / UTM zone 32S\",GEOGCS[\"ETRS89\",...]]") == nil)
+        #expect(Projection(
+            wkt: "PROJCS[\"ETRS89 / UTM zone 39N\",GEOGCS[\"ETRS89\",...]]") == nil)
 
         // Without an ETRS token: standard WGS84 zone.
         let wgs = try #require(Projection(

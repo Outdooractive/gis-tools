@@ -3,14 +3,21 @@ import CoreLocation
 #endif
 import Foundation
 
-/// NAD83 UTM math: the EPSG:26901–26960 zone belt (the NAD83-flavoured
-/// equivalent of EPSG:326xx), used across the United States and Canada.
+/// NAD83 UTM math: the EPSG:26901–26923 zone belt (the NAD83-flavoured
+/// equivalent of EPSG:32601–32623), used across the United States and
+/// Canada.
 ///
 /// Same transverse Mercator geometry as the WGS84 UTM zones on the GRS80
 /// ellipsoid, with the NAD83 datum (effectively coincident with WGS84 at
-/// meter accuracy; see ``Nad83Definition``). The northern belt covers
-/// zones 1–60; NAD83 has no southern zone block (its area of use is North
+/// meter accuracy; see ``Nad83Definition``). The belt covers zones 1–23
+/// only; NAD83 has no southern zone block (its area of use is North
 /// America).
+///
+/// - Important: EPSG SRIDs 26924–26960 are **not** NAD83/UTM zones. After
+///   the 1N–23N block, EPSG assigns 26929–26960 to NAD83 State Plane
+///   zones (Alabama through Florida North), and 26924–26928 are unused.
+///   Those CRSs are not implemented; `Projection(srid:)` returns `nil`
+///   for them rather than silently treating them as UTM zones.
 struct Nad83UtmDefinition: ProjectionDefinition {
 
     var projection: Projection {
@@ -20,7 +27,7 @@ struct Nad83UtmDefinition: ProjectionDefinition {
     let zone: Int
 
     init(zone: Int) {
-        precondition(zone >= 1 && zone <= 60, "NAD83/UTM zones are 1 to 60")
+        precondition(zone >= 1 && zone <= 23, "NAD83/UTM zones are 1 to 23")
         self.zone = zone
     }
 
@@ -123,9 +130,9 @@ struct Nad83UtmDefinition: ProjectionDefinition {
     }
 
     /// Returns the NAD83/UTM definition for a canonical SRID
-    /// (EPSG:26901–26960).
+    /// (EPSG:26901–26923).
     static func definition(forSrid srid: Int) -> Nad83UtmDefinition? {
-        guard srid >= 26901, srid <= 26960 else { return nil }
+        guard srid >= 26901, srid <= 26923 else { return nil }
 
         return Nad83UtmDefinition(zone: srid - 26900)
     }

@@ -3,8 +3,8 @@ import CoreLocation
 #endif
 import Foundation
 
-/// ETRS89/UTM math: the EPSG:25831–25837 zone belt (the ETRS89-flavoured
-/// equivalent of EPSG:32631–32637), used across continental Europe.
+/// ETRS89/UTM math: the EPSG:25828–25838 zone belt (the ETRS89-flavoured
+/// equivalent of EPSG:32628–32638), used across continental Europe.
 ///
 /// Same transverse Mercator geometry as the WGS84 UTM zones on the GRS80
 /// ellipsoid (identical semi-major axis, flattening differing in the 8th
@@ -22,7 +22,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
     let zone: Int
 
     init(zone: Int) {
-        precondition(zone >= 31 && zone <= 37, "ETRS89/UTM zones are 31 to 37")
+        precondition(zone >= 28 && zone <= 38, "ETRS89/UTM zones are 28 to 38")
         self.zone = zone
     }
 
@@ -126,7 +126,7 @@ struct Etrs89UtmDefinition: ProjectionDefinition {
 
     /// Returns the ETRS89/UTM definition for a canonical SRID.
     static func definition(forSrid srid: Int) -> Etrs89UtmDefinition? {
-        guard srid >= 25_831, srid <= 25_837 else { return nil }
+        guard srid >= 25_828, srid <= 25_838 else { return nil }
 
         return Etrs89UtmDefinition(zone: srid - 25_800)
     }

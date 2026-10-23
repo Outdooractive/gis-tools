@@ -304,6 +304,21 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Projection and coordinate-transformation audit (#323): EPSG:32662 (WGS 84 /
+  Plate Carree) now uses its real metre-valued equirectangular definition
+  (`x = a·λ`, `y` = WGS84 meridian arc) instead of copying degrees, so its
+  wraparound extent is ±`originShift` and conversions agree with PROJ.
+  EPSG:26901–26923 are the only NAD83/UTM zones; SRIDs 26924–26960 are
+  unassigned or NAD83 State Plane zones and no longer resolve as UTM
+  (previously they produced silently wrong coordinates). The ETRS89/UTM
+  belt now covers the full EPSG range EPSG:25828–25838 instead of only
+  25831–25837. NAD83 UTM now
+  reports `utmZone`/`utmHemisphere`, `Projection.epsg4269` labels forward
+  results with the NAD83 SRID, the meridian-arc series matches the exact
+  elliptic integral to nanometres, WKT zone matching rejects datum/hemisphere
+  inconsistencies instead of falling through to WGS84, and the projection
+  matrix fixture is regenerated from PROJ.
+
 - Line and polygon algorithm audit (#322): rewinding now applies the requested
   winding order to closed LineStrings; `lineArc` uses the requested number of
   steps; negative distances in `coordinateAlong`/`sliceAlong` are clamped and
