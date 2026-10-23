@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Overlay and spatial regression coverage (#343): tightened overlay fixture
+  area tolerances from 20–40% to 1% (intersection, symmetric difference, mask)
+  and buffer fixture tolerances to 2%; added analytic noSRID tests for
+  intersection (50), union (150) and symmetric difference (100) of overlapping
+  squares; added exact tile-cover tile sets for a single interior tile and a
+  two-tile rectangle; and added a seeded deterministic R-tree search
+  cross-check against brute-force filtering. The coverage work from #337,
+  #338, #340 and #341 already covers the remaining listed APIs (LineOverlap,
+  LineChunk, Truncate, SnapToGrid, LineSegments, MakeValid, negative/zero
+  buffer, mask holes/partials, crossing clips, PreparedPolygon union and
+  crossing bbox).
+
 - GeoJSON decoder validation agreement (#342): the typed `GeoJsonDecoder` now
   validates through `GeoJsonParser` instead of constructing geometries with
   `unchecked` initializers, so the `json`, `jsonData`, `jsonString`,

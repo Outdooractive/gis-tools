@@ -38,8 +38,8 @@ struct MaskTests {
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
         if expectedArea > 0 {
             let ratio = resultArea / expectedArea
-            #expect(ratio > 0.9 && ratio < 1.1,
-                    "\(name): area ratio \(ratio) outside [0.9, 1.1]")
+            #expect(ratio > 0.99 && ratio < 1.01,
+                    "\(name): area ratio \(ratio) outside [0.99, 1.01]")
         }
     }
 
