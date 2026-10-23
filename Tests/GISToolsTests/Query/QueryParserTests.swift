@@ -1035,4 +1035,38 @@ struct QueryParserTests {
         #expect(try #require(QueryParser(string: "((.a == 1 AND .b == 2) OR (.a == 999 AND .b == 999)) AND (.a == 1)")).evaluate(on: feature))
     }
 
+
+    // MARK: - Collection entry points
+
+    /// The public `FeatureCollection.query(term:)` and `[Feature].query(term:)`
+    /// wrappers must apply the same parser/evaluator as direct use, preserve
+    /// order, and return `nil` for invalid queries.
+    @Test
+    func collectionQueryEntryPoints() throws {
+        let features = [
+            Feature(
+                Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+                properties: ["highway": "primary", "lanes": 2]),
+            Feature(
+                Point(Coordinate3D(latitude: 1.0, longitude: 1.0)),
+                properties: ["highway": "primary", "lanes": 1]),
+            Feature(
+                Point(Coordinate3D(latitude: 2.0, longitude: 2.0)),
+                properties: ["highway": "service", "lanes": 4]),
+        ]
+
+        let collection = FeatureCollection(features)
+        let result = try #require(collection.query(term: ".highway == primary and .lanes > 1"))
+        #expect(result.features.count == 1)
+        #expect(result.features[0] == features[0])
+
+        let arrayResult = try #require(features.query(term: ".highway == primary"))
+        #expect(arrayResult.count == 2)
+        #expect(arrayResult == [features[0], features[1]])
+
+        #expect(collection.query(term: ".highway in [") == nil)
+        #expect(features.query(term: ".highway in [") == nil)
+    }
+
+
 }

@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Test quality and coverage audit (#326): generated `Tests/TEST_COVERAGE.md`
+  with per-source-file line coverage, direct/indirect test mapping and status,
+  an explicit keep decision and rationale for every fixture, a weak-assertion
+  inventory, regression links for the audit series, and the remaining gaps.
+  Added coverage for the previously untested `FeatureCollection.query` /
+  `[Feature].query` entry points, `Projectable.project(to:)`, and the batch
+  (`prepared`) transform path for every built-in projection. The audit found
+  two larger pre-existing gaps, filed as #346 (Eulerian parallel edges) and
+  #349 (QueryParser nested groups / prefix `NOT`).
+
 - Core utilities, query, tiles and clustering audit (#325): DBSCAN's
   neighbourhood query now widens its longitude window by `cos(latitude)` and
   searches the seam-adjacent window when the radius crosses ±180°, so points
