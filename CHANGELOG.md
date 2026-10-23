@@ -304,6 +304,11 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- MapTile children at maximum zoom (#370): `child` returns the receiver
+  unchanged and `children` returns an empty array when `z == 32`, instead of
+  shifting x/y and emitting invalid same-zoom tiles. Zoom 31 still produces
+  four valid zoom-32 children.
+
 - Voronoi duplicate and collinear sites (#369): duplicate coordinates are
   collapsed to the first feature (including its `id`, properties and foreign
   members) before triangulation, and neighbours are resolved from the
