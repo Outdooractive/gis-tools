@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Mask and BoundingBoxClip correctness (#341): `PolygonGeometry.mask` now
+  returns a `MultiPolygon`, so masks with holes become unmasked islands,
+  partial masks are clipped to the outer boundary, and multi-part/seam
+  results are representable; fully contained masks are constructed directly
+  (holes + islands) and only partial overlaps use overlay difference.
+  `Polygon.clipped(to:)` now returns a `MultiPolygon` and clips through real
+  polygon intersection: crossing clip boxes are handled as their non-crossing
+  parts, holes reaching the clip edge become notches, U-shaped polygons can
+  split into disconnected parts, and cross-projection clipping uses the
+  projected box geometry instead of corner-only reprojection. Tests assert
+  exact areas, part counts, validity and 4978 cross-projection.
+
 - Negative buffer holes and degenerate buffer behavior (#340): insets now
   reject any result that is not topologically valid, so a large concave inset
   returns `nil` instead of a self-intersecting/inverted polygon; the hole

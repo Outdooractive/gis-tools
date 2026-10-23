@@ -92,43 +92,41 @@ extension MultiLineString {
 
 extension Polygon {
 
-    /// Clips the *Polygon* to the bounding box. May result in degenerate edges.
+    /// Clips the *Polygon* to the bounding box.
     ///
-    /// All projections are supported — the 2‑D Sutherland–Hodgeman clipping
-    /// operates on ``Coordinate3D/x`` and ``Coordinate3D/y`` directly.
+    /// The result is a ``MultiPolygon`` because a clipped polygon can split
+    /// into multiple disconnected components, and an antimeridian-crossing
+    /// clip box produces two parts. Holes that reach the clip edge become
+    /// notches instead of invalid touching holes.
     ///
-    /// - Note: A polygon clipped into multiple disconnected components, or a
-    ///   polygon clipped by an antimeridian-crossing bounding box, cannot be
-    ///   represented by the single `Polygon` returned here. Use overlay with a
-    ///   box polygon for those cases.
+    /// All projections are supported. The clip box is built as a polygon
+    /// geometry and projected into the receiver's CRS, so cross-projection
+    /// clipping (e.g. a 4326 box against EPSG:4978 geometry) is not limited to
+    /// corner projection.
     ///
     /// - Parameter boundingBox: The bounding box
-    ///
-    /// - Returns: The polygon clipped to the bounding box, or *nil* if the polygon would be empty.
-    public func clipped(to boundingBox: BoundingBox) -> Polygon? {
-        let boundingBox = boundingBox.projected(to: projection)
+    /// - Returns: The clipped parts, or `nil` if nothing remains.
+    public func clipped(to boundingBox: BoundingBox) -> MultiPolygon? {
+        let clipGeometry = boundingBox.boundingBoxGeometry.projected(to: projection)
 
-        var result: [Ring] = []
-
-        for ring in rings {
-            var clipped = boundingBox.clipPolygon(coordinates: ring.coordinates)
-            guard !clipped.isEmpty else { continue }
-
-            if clipped.first != clipped.last {
-                clipped.append(clipped[0])
-            }
-            if let ring = Ring(clipped) {
-                result.append(ring)
-            }
+        // A crossing clip box is already split into non-crossing parts; clip
+        // against each part independently so the overlay never merges them
+        // into a seam-spanning result.
+        var parts: [Polygon] = []
+        for clipPolygon in clipGeometry.polygons {
+            guard let result = MultiPolygon(unchecked: [clipPolygon])
+                .intersection(with: self)
+            else { continue }
+            parts.append(contentsOf: result.polygons)
         }
 
-        guard result.isNotEmpty else { return nil }
+        guard parts.isNotEmpty else { return nil }
 
-        var polygon = Polygon(
-            result,
+        var output = MultiPolygon(
+            parts,
             calculateBoundingBox: self.boundingBox != nil)
-        polygon?.foreignMembers = foreignMembers
-        return polygon
+        output?.foreignMembers = foreignMembers
+        return output
     }
 
 }
@@ -146,7 +144,9 @@ extension MultiPolygon {
     public func clipped(to boundingBox: BoundingBox) -> MultiPolygon? {
         let boundingBox = boundingBox.projected(to: projection)
 
-        let clipped = polygons.compactMap({ $0.clipped(to: boundingBox) })
+        let clipped = polygons.flatMap { polygon in
+            polygon.clipped(to: boundingBox)?.polygons ?? []
+        }
         guard clipped.isNotEmpty else { return nil }
 
         var polygon = MultiPolygon(

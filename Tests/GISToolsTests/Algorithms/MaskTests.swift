@@ -57,7 +57,8 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
         if let result {
-            #expect(result.rings.count == 2)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
         }
     }
 
@@ -69,7 +70,7 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == world.projection)
         if let result {
-            #expect(result.rings.count == 1)
+            #expect(result.polygons.count == 1)
         }
     }
 
@@ -95,7 +96,8 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == multiPolygon.projection)
         if let result {
-            #expect(result.rings.count == 3) // outer + 2 holes
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
         }
     }
 
@@ -120,8 +122,9 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection) // masks projection is the input's
         if let result {
-            #expect(result.rings.count == 2)
-            #expect(result.outerRing?.coordinates.count == 5)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
+            #expect(result.polygons.first?.outerRing?.coordinates.count == 5)
         }
     }
 
@@ -132,7 +135,7 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == .epsg4326)
         if let result {
-            #expect(result.rings.count == 1)
+            #expect(result.polygons.count == 1)
         }
     }
 
@@ -151,8 +154,9 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
-        #expect(result?.outerRing?.coordinates.count == 5)
-        #expect(result?.rings.count == 2)
+        #expect(result?.polygons.first?.outerRing?.coordinates.count == 5)
+        #expect(result?.polygons.count == 1)
+            #expect(result?.polygons.first?.rings.count == 2)
     }
 
     // Tests masking in noSRID projection.
@@ -168,7 +172,8 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
-        #expect(result?.rings.count == 2)
+        #expect(result?.polygons.count == 1)
+            #expect(result?.polygons.first?.rings.count == 2)
     }
 
     // Tests masking in EPSG:4978 projection.
@@ -203,7 +208,8 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == .epsg4326)
         if let result {
-            #expect(result.rings.count == 2)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
         }
     }
 
@@ -228,7 +234,8 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
         if let result {
-            #expect(result.rings.count == 2)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
         }
     }
 
@@ -254,8 +261,64 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == multiPolygon.projection)
         if let result {
-            #expect(result.rings.count == 3) // outer + 2 holes
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
         }
     }
+
+
+    // MARK: - Audit regressions
+
+    @Test
+    func maskWithHoleProducesUnmaskedIsland() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let outer = try #require(Polygon([[
+            coordinate(0.0, 0.0), coordinate(20.0, 0.0),
+            coordinate(20.0, 20.0), coordinate(0.0, 20.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let mask = try #require(Polygon([
+            [
+                coordinate(5.0, 5.0), coordinate(15.0, 5.0),
+                coordinate(15.0, 15.0), coordinate(5.0, 15.0),
+                coordinate(5.0, 5.0),
+            ],
+            [
+                coordinate(8.0, 8.0), coordinate(12.0, 8.0),
+                coordinate(12.0, 12.0), coordinate(8.0, 12.0),
+                coordinate(8.0, 8.0),
+            ],
+        ]))
+
+        let result = try #require(mask.mask(outerPolygon: outer))
+        #expect(result.polygons.count == 2)
+        // Base mask hole 10x10, plus the unmasked 4x4 island.
+        #expect(abs(result.area - (400.0 - 100.0 + 16.0)) < 0.000001)
+        #expect(result.polygons.allSatisfy { $0.isValid })
+    }
+
+    @Test
+    func maskPartiallyCrossingOuterIsClipped() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let outer = try #require(Polygon([[
+            coordinate(0.0, 0.0), coordinate(10.0, 0.0),
+            coordinate(10.0, 10.0), coordinate(0.0, 10.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let mask = try #require(Polygon([[
+            coordinate(8.0, 0.0), coordinate(15.0, 0.0),
+            coordinate(15.0, 10.0), coordinate(8.0, 10.0),
+            coordinate(8.0, 0.0),
+        ]]))
+
+        let result = try #require(mask.mask(outerPolygon: outer))
+        #expect(abs(result.area - 80.0) < 0.000001)
+        #expect(result.polygons.allSatisfy { $0.isValid })
+    }
+
 
 }

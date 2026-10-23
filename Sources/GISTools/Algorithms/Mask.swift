@@ -7,24 +7,21 @@ import Foundation
 
 extension PolygonGeometry {
 
-    /// Creates a mask polygon by subtracting this geometry from a larger polygon.
+    /// Creates a mask by subtracting this geometry from a larger polygon.
     ///
-    /// The result is ``outerPolygon`` with this geometry cut out as a hole (or holes).
-    /// If no outer polygon is provided, the world bounding box `(-180, -90, 180, 90)` is used.
+    /// The result is `outerPolygon` minus the receiver. It is returned as a
+    /// ``MultiPolygon`` because a mask can require holes, islands and multiple
+    /// disconnected parts (e.g. a mask partially crossing the outer boundary
+    /// or an antimeridian-crossing mask cut at the seam). If no outer polygon
+    /// is provided, the projection's world extent is used.
     ///
-    /// All projections are supported. The containment check delegates to
-    /// ``PolygonGeometry/contains(_:gridSize:)`` which handles
-    /// 4978→4326 projection. The antimeridian normalisation only applies
-    /// to EPSG:4326.
+    /// All projections are supported; overlay performs the difference in a
+    /// consistent frame. This replaces the old single-`Polygon` API, which
+    /// silently dropped holes and multi-part results.
     ///
-    /// - Note: Because the result is a single `Polygon`, mask polygons with
-    ///   holes and masks crossing the outer boundary are reduced to their outer
-    ///   rings. Use ``PolygonGeometry/difference(with:gridSize:)`` when islands
-    ///   or clipped multi-part results are required.
-    ///
-    /// - Parameter outerPolygon: The polygon to mask (defaults to the world bounding box).
-    /// - Returns: A masked ``Polygon``, or `nil` if the geometry is empty.
-    public func mask(outerPolygon: Polygon? = nil) -> Polygon? {
+    /// - Parameter outerPolygon: The polygon to mask (defaults to the world extent).
+    /// - Returns: The masked area as a ``MultiPolygon``, or `nil` if nothing remains.
+    public func mask(outerPolygon: Polygon? = nil) -> MultiPolygon? {
         let outer: Polygon
         if let outerPolygon {
             outer = outerPolygon
@@ -58,57 +55,53 @@ extension PolygonGeometry {
             outer = Polygon.world.projected(to: projection)
         }
 
-        guard let outerRing = outer.outerRing else { return nil }
-
-        let holes: [Ring] = polygons.compactMap { $0.outerRing }
-        guard holes.isNotEmpty else { return outer }
-
-        // Normalise antimeridian crossing so the Cartesian containment check works.
-        // This only applies to EPSG:4326 where longitude is in degrees.
-        // For other projections the values are in projection units (meters for 3857/4978).
-        let outerCoords = outerRing.coordinates
-        let needShift: Bool
-        if projection.isGeographic {
-            let minOuterLon = outerCoords.map(\.longitude).min() ?? 0
-            let maxOuterLon = outerCoords.map(\.longitude).max() ?? 0
-            let span = maxOuterLon - minOuterLon
-            needShift = span > 180.0 && span < 360.0
-        }
-        else {
-            needShift = false
+        // If the mask is fully inside the outer polygon, construct the
+        // result directly. This preserves the mask's holes as unmasked
+        // islands and avoids running the full overlay on a world-sized shell.
+        if polygons.count == 1,
+           polygons[0].rings.count == 1,
+           polygons[0].outerRing?.coordinates == outer.outerRing?.coordinates
+        {
+            // Masking the outer polygon itself leaves it unchanged.
+            return MultiPolygon(unchecked: [outer])
         }
 
-        let containedHoles: [Ring]
-        if needShift {
-            func shiftCoord(_ c: Coordinate3D) -> Coordinate3D {
-                Coordinate3D(
-                    latitude: c.latitude,
-                    longitude: c.longitude < 0 ? c.longitude + 360.0 : c.longitude,
-                    altitude: c.altitude,
-                    m: c.m)
+        if outer.covers(self) {
+
+            let maskPolygons = polygons
+            let maskHoles: [Ring] = maskPolygons.compactMap(\.outerRing)
+            var outerRings: [Ring] = []
+            if let outerRing = outer.outerRing {
+                outerRings.append(outerRing)
             }
-
-            let shiftedOuter = Polygon(unchecked: [
-                Ring(unchecked: outerCoords.map(shiftCoord)),
-            ])
-
-            containedHoles = holes.filter { hole in
-                guard let pt = hole.coordinates.first else { return false }
-
-                return shiftedOuter.contains(shiftCoord(pt))
+            if let innerRings = outer.innerRings {
+                outerRings.append(contentsOf: innerRings)
             }
-        }
-        else {
-            containedHoles = holes.filter { hole in
-                guard let pt = hole.coordinates.first else { return false }
+            outerRings.append(contentsOf: maskHoles)
 
-                return outer.contains(pt)
+            guard let base = Polygon(outerRings)?.rewinded else { return nil }
+
+            var islands: [Polygon] = []
+            for polygon in maskPolygons {
+                for hole in polygon.innerRings ?? [] {
+                    if let island = Polygon([hole])?.rewinded {
+                        islands.append(island)
+                    }
+                }
             }
+            return MultiPolygon(unchecked: [base] + islands)
         }
 
-        guard containedHoles.isNotEmpty else { return outer }
+        // Partial overlap/crossing masks need true overlay difference.
+        guard let difference = outer.difference(with: self) else { return nil }
 
-        return Polygon(unchecked: [outerRing] + containedHoles)
+        if let multiPolygon = difference as? MultiPolygon {
+            return multiPolygon.polygons.isEmpty ? nil : multiPolygon
+        }
+        if let polygon = difference as? Polygon {
+            return MultiPolygon(unchecked: [polygon])
+        }
+        return nil
     }
 
 }

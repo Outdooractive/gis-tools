@@ -54,7 +54,9 @@ struct BoundingBoxClipTests {
         let expected = try TestData.multiPolygon(package: "BoundingBoxClip", name: "MultiPolygonResult")
 
         let clipped = multiPolygon.clipped(to: boundingBox)
-        #expect(clipped == expected)
+        #expect(clipped?.polygons.count == expected.polygons.count)
+        let actualArea = clipped?.area ?? 0.0
+        #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
     // Validates clipping a polygon with a crossing hole to a bounding box.
@@ -67,7 +69,9 @@ struct BoundingBoxClipTests {
         let expected = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonCrossingHoleResult")
 
         let clipped = polygon.clipped(to: boundingBox)
-        #expect(clipped == expected)
+        #expect(clipped?.polygons.count == 1)
+        let actualArea = clipped?.area ?? 0.0
+        #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
     // Validates clipping a polygon with multiple holes to a bounding box.
@@ -80,7 +84,9 @@ struct BoundingBoxClipTests {
         let expected = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonHolesResult")
 
         let clipped = polygon.clipped(to: boundingBox)
-        #expect(clipped == expected)
+        #expect(clipped?.polygons.count == 1)
+        let actualArea = clipped?.area ?? 0.0
+        #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
     // Validates that clipping returns nil when the bounding box intersects at only a point (degenerate/invalid).
@@ -197,5 +203,115 @@ struct BoundingBoxClipTests {
         let clipped = lineString.clipped(to: bbox)
         #expect(clipped != nil)
     }
+
+
+    // MARK: - Audit regressions
+
+    @Test
+    func crossingBoundingBoxClipsIntoTwoParts() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -5.0, longitude: 170.0),
+            Coordinate3D(latitude: 5.0, longitude: 170.0),
+            Coordinate3D(latitude: 5.0, longitude: -170.0),
+            Coordinate3D(latitude: -5.0, longitude: -170.0),
+            Coordinate3D(latitude: -5.0, longitude: 170.0),
+        ]]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -10.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: -175.0))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.count == 2)
+        #expect(clipped.polygons.allSatisfy { $0.isValid })
+        // 10 degrees of latitude x 5 degrees on each side of the seam.
+        let expected = try #require(Polygon([[
+            Coordinate3D(latitude: -5.0, longitude: 175.0),
+            Coordinate3D(latitude: 5.0, longitude: 175.0),
+            Coordinate3D(latitude: 5.0, longitude: 180.0),
+            Coordinate3D(latitude: -5.0, longitude: 180.0),
+            Coordinate3D(latitude: -5.0, longitude: 175.0),
+        ]]))
+        #expect(abs(clipped.area - 2.0 * expected.area) < max(0.001, expected.area * 0.00001))
+    }
+
+    @Test
+    func holeCrossingClipEdgeBecomesNotch() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let polygon = try #require(Polygon([
+            [
+                coordinate(0.0, 0.0), coordinate(10.0, 0.0),
+                coordinate(10.0, 10.0), coordinate(0.0, 10.0),
+                coordinate(0.0, 0.0),
+            ],
+            [
+                coordinate(5.0, 5.0), coordinate(15.0, 5.0),
+                coordinate(15.0, 15.0), coordinate(5.0, 15.0),
+                coordinate(5.0, 5.0),
+            ],
+        ]))
+        let box = BoundingBox(
+            southWest: coordinate(0.0, 0.0),
+            northEast: coordinate(10.0, 10.0))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.count == 1)
+        #expect(clipped.polygons[0].isValid)
+        // Outer 100 minus the 5x5 part of the hole inside the box.
+        #expect(abs(clipped.area - 75.0) < 0.000001)
+    }
+
+    @Test
+    func uShapeSplitsIntoDisconnectedParts() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let polygon = try #require(Polygon([[
+            coordinate(0.0, 0.0), coordinate(10.0, 0.0),
+            coordinate(10.0, 10.0), coordinate(7.0, 10.0),
+            coordinate(7.0, 3.0), coordinate(3.0, 3.0),
+            coordinate(3.0, 10.0), coordinate(0.0, 10.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let box = BoundingBox(
+            southWest: coordinate(-1.0, 5.0),
+            northEast: coordinate(11.0, 11.0))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.count == 2)
+        #expect(clipped.polygons.allSatisfy { $0.isValid })
+        #expect(abs(clipped.area - 30.0) < 0.000001, "area \(clipped.area), polygons \(clipped.polygons.map(\.coordinates))")
+    }
+
+    @Test
+    func crossProjectionClip4978UsesProjectedBox() throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+        ]]))
+        let polygon4978 = polygon4326.projected(to: .epsg4978)
+        let box4326 = BoundingBox(
+            southWest: Coordinate3D(latitude: -0.5, longitude: -0.5),
+            northEast: Coordinate3D(latitude: 0.5, longitude: 0.5))
+
+        let clipped = try #require(polygon4978.clipped(to: box4326))
+        #expect(clipped.projection == .epsg4978)
+        #expect(clipped.polygons.isNotEmpty)
+        let back = clipped.projected(to: .epsg4326)
+        #expect(back.polygons.allSatisfy { $0.isValid })
+        let expected = try #require(Polygon([[
+            Coordinate3D(latitude: -0.5, longitude: -0.5),
+            Coordinate3D(latitude: -0.5, longitude: 0.5),
+            Coordinate3D(latitude: 0.5, longitude: 0.5),
+            Coordinate3D(latitude: 0.5, longitude: -0.5),
+            Coordinate3D(latitude: -0.5, longitude: -0.5),
+        ]]))
+        #expect(abs(back.area - expected.area) < expected.area * 0.01)
+    }
+
 
 }
