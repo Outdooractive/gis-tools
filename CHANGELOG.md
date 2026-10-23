@@ -304,6 +304,11 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip split-box cleanup (#376): removed the stale
+  `TODO: This is ugly Swift code` and factored the two crossing-box windows
+  through a local constructor, avoiding duplicated coordinate boilerplate. No
+  clipping behavior changed.
+
 - Open-ended and reversed `LineString.slice` (#375): `nil` start/end now
   have exact regression coverage for the documented first/last defaults, all
   projections, antimeridian crossing, altitude interpolation and the
