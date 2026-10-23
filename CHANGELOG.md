@@ -304,6 +304,15 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Negative buffer holes and degenerate buffer behavior (#340): insets now
+  reject any result that is not topologically valid, so a large concave inset
+  returns `nil` instead of a self-intersecting/inverted polygon; the hole
+  expansion direction is covered by an exact hole-area test for both hole
+  windings. Zero-distance buffering has a documented contract: polygonal
+  inputs return a cleaned identity `MultiPolygon`, non-areal inputs return an
+  empty `MultiPolygon` (still the same return type). Tests assert hole growth,
+  ring winding, valid concave output (or nil) and the zero-distance contract.
+
 - Remaining boolean, collection and prepared-geometry semantics (#339):
   a `FeatureCollection` receiver and a multi-part `MultiPolygon` receiver are
   now treated as the union of their parts for `contains`/`covers`, so a
