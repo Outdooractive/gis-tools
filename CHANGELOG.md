@@ -304,6 +304,16 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Eulerian and Chinese Postman parallel edges (#346): parity and traversal
+  now use **edge multiplicity** over the undirected underlying graph instead
+  of distinct neighbours. Hierholzer and the Chinese Postman augmentation are
+  built from every underlying edge instance (parallel edges each get their own
+  edge ID; two-way edges contribute one underlying edge and one-way edges
+  contribute to both endpoint degrees). Two parallel edges, a triangle with a
+  duplicated edge, a bridge with parallel edges and opposite one-way edges now
+  classify and traverse correctly; postman tour lengths assert the required
+  repetitions.
+
 - Overlay and spatial regression coverage (#343): tightened overlay fixture
   area tolerances from 20–40% to 1% (intersection, symmetric difference, mask)
   and buffer fixture tolerances to 2%; added analytic noSRID tests for
