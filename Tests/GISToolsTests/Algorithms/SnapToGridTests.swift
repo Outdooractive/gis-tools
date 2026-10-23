@@ -400,3 +400,17 @@ struct SnapToGridTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension SnapToGridTests {
+
+    @Test
+    func directCoordinateSnapRejectsNonPositiveTolerance() {
+        let coordinate = Coordinate3D(latitude: 1.23, longitude: 4.56)
+
+        #expect(coordinate.snappedToGrid(tolerance: 0.0) == coordinate)
+        #expect(coordinate.snappedToGrid(tolerance: -1.0) == coordinate)
+    }
+
+}

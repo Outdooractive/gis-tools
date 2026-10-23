@@ -5,10 +5,12 @@ import Foundation
 
 /// The winding order for polygons.
 public enum PolygonWindingOrder: Sendable {
+
     /// Vertices are ordered in a clockwise direction.
     case clockwise
     /// Vertices are ordered in a counter-clockwise direction.
     case counterClockwise
+
 }
 
 extension GeoJson {
@@ -23,8 +25,8 @@ extension GeoJson {
         case let lineString as LineString:
             guard let ring = Ring(lineString.coordinates) else { return self }
 
-            if (order == .counterClockwise && ring.isClockwise)
-                || (order == .clockwise && ring.isCounterClockwise)
+            if (order == .counterClockwise && ring.isCounterClockwise)
+                || (order == .clockwise && ring.isClockwise)
             {
                 return self
             }
@@ -34,7 +36,7 @@ extension GeoJson {
         case let multiLineString as MultiLineString:
             var newMultiLineString = MultiLineString(
                 unchecked: multiLineString.lineStrings.map({ $0.withWindingOrder(order) }),
-                calculateBoundingBox: (multiLineString.boundingBox != nil))
+                calculateBoundingBox: multiLineString.boundingBox != nil)
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self
 
@@ -42,20 +44,24 @@ extension GeoJson {
             guard var outer = polygon.outerRing else { return self }
 
             if order == .counterClockwise {
-                if outer.isClockwise { outer.reverse() }
+                if outer.isClockwise {
+                    outer.reverse()
+                }
                 let inner: [Ring] = polygon.innerRings?.map({ $0.isClockwise ? $0 : $0.reversed }) ?? []
                 var newPolygon = Polygon(
                     unchecked: [outer] + inner,
-                    calculateBoundingBox: (polygon.boundingBox != nil))
+                    calculateBoundingBox: polygon.boundingBox != nil)
                 newPolygon.foreignMembers = polygon.foreignMembers
                 return newPolygon as! Self
             }
             else {
-                if outer.isCounterClockwise { outer.reverse() }
+                if outer.isCounterClockwise {
+                    outer.reverse()
+                }
                 let inner: [Ring] = polygon.innerRings?.map({ $0.isCounterClockwise ? $0 : $0.reversed }) ?? []
                 var newPolygon = Polygon(
                     unchecked: [outer] + inner,
-                    calculateBoundingBox: (polygon.boundingBox != nil))
+                    calculateBoundingBox: polygon.boundingBox != nil)
                 newPolygon.foreignMembers = polygon.foreignMembers
                 return newPolygon as! Self
             }
@@ -63,14 +69,14 @@ extension GeoJson {
         case let multiPolygon as MultiPolygon:
             var newMultiPolygon = MultiPolygon(
                 unchecked: multiPolygon.polygons.map({ $0.withWindingOrder(order) }),
-                calculateBoundingBox: (multiPolygon.boundingBox != nil))
+                calculateBoundingBox: multiPolygon.boundingBox != nil)
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
             return newMultiPolygon as! Self
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(
                 geometryCollection.geometries.map({ $0.withWindingOrder(order) }),
-                calculateBoundingBox: (geometryCollection.boundingBox != nil))
+                calculateBoundingBox: geometryCollection.boundingBox != nil)
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
             return newGeometryCollection as! Self
 
@@ -88,14 +94,14 @@ extension GeoJson {
                 geometry.withWindingOrder(order),
                 id: feature.id,
                 properties: feature.properties,
-                calculateBoundingBox: (feature.boundingBox != nil))
+                calculateBoundingBox: feature.boundingBox != nil)
             newFeature.foreignMembers = feature.foreignMembers
             return newFeature as! Self
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(
                 featureCollection.features.map({ $0.withWindingOrder(order) }),
-                calculateBoundingBox: (featureCollection.boundingBox != nil))
+                calculateBoundingBox: featureCollection.boundingBox != nil)
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
             return newFeatureCollection as! Self
 

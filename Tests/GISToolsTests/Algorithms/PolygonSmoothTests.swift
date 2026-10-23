@@ -205,3 +205,23 @@ struct PolygonSmoothTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension PolygonSmoothTests {
+
+    @Test
+    func nonPositiveIterationsReturnInput() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+
+        #expect(polygon.smooth(iterations: 0) == polygon)
+        #expect(polygon.smooth(iterations: -1) == polygon)
+    }
+
+}

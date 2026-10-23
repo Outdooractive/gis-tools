@@ -9,6 +9,7 @@ extension LineSegment {
 
     /// Indicates how one segment compares to another segment.
     public enum LineSegmentComparisonResult: Sendable {
+
         /// The two segments are equal.
         case equal
         /// The two segments are not equal.
@@ -17,6 +18,7 @@ extension LineSegment {
         case thisOnOther
         /// The other segment lies on the receiver's segment.
         case otherOnThis
+
     }
 
     /// Checks how the receiver and the other *LineSegment* lie in relation to each other.
@@ -99,7 +101,11 @@ extension GeoJson {
         for segment in other.lineSegments {
             guard let boundingBox = segment.boundingBox ?? segment.calculateBoundingBox() else { continue }
 
-            for match in tree.search(inBoundingBox: boundingBox) {
+            let searchBox = tolerance > 0.0
+                ? boundingBox.padded(tolerance)
+                : boundingBox
+
+            for match in tree.search(inBoundingBox: searchBox) {
                 let comparison = segment.compare(match, tolerance: tolerance, gridSize: nil)
 
                 if comparison == .equal {
@@ -143,147 +149,156 @@ extension GeoJson {
         let tolerance = abs(tolerance)
         let distanceFunction = FrechetDistanceFunction.haversine
 
-        guard let line = if let segmentLength, segmentLength > 0.0 {
-            LineString(snappedSelf.lineSegments)?.evenlyDivided(segmentLength: segmentLength)
-        }
-        else {
-            LineString(snappedSelf.lineSegments)
-        }
-        else {
-            return nil
-        }
-
-        let p = line.allCoordinates
-        var ca: [OrderedIndexPair: Double] = [:]
-
-        func index(_ pI: Int, _ qI: Int) -> OrderedIndexPair {
-            .init(pI, qI)
-        }
-
-        // Distances between each coordinate pair
-        for i in 0 ..< p.count {
-            for j in i + 1 ..< p.count {
-                let distance = distanceFunction.distance(between: p[i], and: p[j])
-                if distance > tolerance { continue }
-                ca[index(i, j)] = distance
+        guard let line =
+            if let segmentLength, segmentLength > 0.0 {
+                LineString(snappedSelf.lineSegments)?.evenlyDivided(segmentLength: segmentLength)
             }
-        }
-
-        // Find coordinate pairs within the tolerance
-        var pairs: Set<OrderedIndexPair> = []
-
-        var i = 0
-        outer: while i < p.count - 1 {
-            defer { i += 1 }
-
-            var j = i + 2
-            while ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
-                j += 1
-                if j == p.count { break outer }
+            else {
+                LineString(snappedSelf.lineSegments)
+            }
+        else {
+                return nil
             }
 
-            while j < p.count {
-                defer { j += 1 }
+            let p = line.allCoordinates
+            var ca: [OrderedIndexPair: Double] = [:]
 
-                if ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
-                    pairs.insert(index(i, j))
+            func index(_ pI: Int, _ qI: Int) -> OrderedIndexPair {
+                .init(pI, qI)
+            }
+
+            // Distances between each coordinate pair
+            for i in 0 ..< p.count {
+                for j in i + 1 ..< p.count {
+                    let distance = distanceFunction.distance(between: p[i], and: p[j])
+                    if distance > tolerance {
+                        continue
+                    }
+                    ca[index(i, j)] = distance
                 }
             }
-        }
 
-        // Find overlapping segments
-        var scratchList = pairs.sorted()
-        var result: Set<OrderedIndexPair> = []
-        while scratchList.isNotEmpty {
-            let candidate = scratchList.removeFirst()
+            // Find coordinate pairs within the tolerance
+            var pairs: Set<OrderedIndexPair> = []
 
-            if candidate.first > 0,
-               candidate.second > 0,
-               pairs.contains(index(candidate.first - 1, candidate.second - 1))
-            {
-                result.insert(index(candidate.first, candidate.first - 1))
-                result.insert(index(candidate.second, candidate.second - 1))
-                continue
+            var i = 0
+            outer: while i < p.count - 1 {
+                defer { i += 1 }
+
+                var j = i + 2
+                while ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                    j += 1
+                    if j == p.count {
+                        break outer
+                    }
+                }
+
+                while j < p.count {
+                    defer { j += 1 }
+
+                    if ca[index(i, j), default: Double.greatestFiniteMagnitude] <= tolerance {
+                        pairs.insert(index(i, j))
+                    }
+                }
             }
 
-            if candidate.first > 0,
-               candidate.second < p.count - 1,
-               pairs.contains(index(candidate.first - 1, candidate.second + 1))
-            {
-                result.insert(index(candidate.first, candidate.first - 1))
-                result.insert(index(candidate.second, candidate.second + 1))
-                continue
+            // Find overlapping segments
+            var scratchList = pairs.sorted()
+            var result: Set<OrderedIndexPair> = []
+            while scratchList.isNotEmpty {
+                let candidate = scratchList.removeFirst()
+
+                if candidate.first > 0,
+                   candidate.second > 0,
+                   pairs.contains(index(candidate.first - 1, candidate.second - 1))
+                {
+                    result.insert(index(candidate.first, candidate.first - 1))
+                    result.insert(index(candidate.second, candidate.second - 1))
+                    continue
+                }
+
+                if candidate.first > 0,
+                   candidate.second < p.count - 1,
+                   pairs.contains(index(candidate.first - 1, candidate.second + 1))
+                {
+                    result.insert(index(candidate.first, candidate.first - 1))
+                    result.insert(index(candidate.second, candidate.second + 1))
+                    continue
+                }
+
+                if candidate.first < p.count - 1,
+                   candidate.second > 0,
+                   pairs.contains(index(candidate.first + 1, candidate.second - 1))
+                {
+                    result.insert(index(candidate.first, candidate.first + 1))
+                    result.insert(index(candidate.second, candidate.second - 1))
+                    continue
+                }
+
+                if candidate.first < p.count - 1,
+                   candidate.second < p.count - 1,
+                   pairs.contains(index(candidate.first + 1, candidate.second + 1))
+                {
+                    result.insert(index(candidate.first, candidate.first + 1))
+                    result.insert(index(candidate.second, candidate.second + 1))
+                    continue
+                }
             }
 
-            if candidate.first < p.count - 1,
-               candidate.second > 0,
-               pairs.contains(index(candidate.first + 1, candidate.second - 1))
-            {
-                result.insert(index(candidate.first, candidate.first + 1))
-                result.insert(index(candidate.second, candidate.second - 1))
-                continue
-            }
-
-            if candidate.first < p.count - 1,
-               candidate.second < p.count - 1,
-               pairs.contains(index(candidate.first + 1, candidate.second + 1))
-            {
-                result.insert(index(candidate.first, candidate.first + 1))
-                result.insert(index(candidate.second, candidate.second + 1))
-                continue
-            }
-        }
-
-        return MultiLineString(result.map({ LineString(unchecked: [p[$0.first], p[$0.second]]) }))
+            return MultiLineString(result.map({ LineString(unchecked: [p[$0.first], p[$0.second]]) }))
     }
 
-    /// An estimate of how much the receiver overlaps with itself.
-    ///
-    /// All projections are supported — delegates to ``overlappingSegments(tolerance:segmentLength:gridSize:)``.
-    ///
-    /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
-    /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
-    /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
-    ///
-    /// - Returns: The length of all segments that overlap within `tolerance`.
-    public func estimatedOverlap(
-        tolerance: CLLocationDistance,
-        segmentLength: CLLocationDistance? = nil,
-        gridSize: Double? = nil
-    ) -> Double {
-        guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength, gridSize: gridSize) else { return 0.0 }
+            /// An estimate of how much the receiver overlaps with itself.
+            ///
+            /// All projections are supported — delegates to ``overlappingSegments(tolerance:segmentLength:gridSize:)``.
+            ///
+            /// - Parameter tolerance: The tolerance, in meters. Using `0.0` will only count segments that *exactly* overlap.
+            /// - Parameter segmentLength: This value adds intermediate points to the geometry for improved matching, in meters. Choosing this too small might lead to memory explosion.
+            /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
+            ///
+            /// - Returns: The length of all segments that overlap within `tolerance`.
+            public func estimatedOverlap(
+                tolerance: CLLocationDistance,
+                segmentLength: CLLocationDistance? = nil,
+                gridSize: Double? = nil
+            ) -> Double {
+                guard let result = overlappingSegments(tolerance: tolerance, segmentLength: segmentLength, gridSize: gridSize) else { return 0.0 }
 
-        return result.length
-    }
+                return result.length
+            }
 
 }
 
-// MARK: - Private
+            // MARK: - Private
 
-/// A pair of indices used to track overlapping coordinate pairs.
-private struct OrderedIndexPair: Hashable, Comparable, CustomStringConvertible {
+            /// A pair of indices used to track overlapping coordinate pairs.
+            private struct OrderedIndexPair: Hashable, Comparable, CustomStringConvertible {
 
-    /// The first index of the pair.
-    let first: Int
-    /// The second index of the pair.
-    let second: Int
+                /// The first index of the pair.
+                let first: Int
+                /// The second index of the pair.
+                let second: Int
 
-    /// Creates an ordered index pair where the smaller value is stored as `first`.
-    init(_ first: Int, _ second: Int) {
-        self.first = min(first, second)
-        self.second = max(first, second)
-    }
+                /// Creates an ordered index pair where the smaller value is stored as `first`.
+                init(_ first: Int, _ second: Int) {
+                    self.first = min(first, second)
+                    self.second = max(first, second)
+                }
 
-    /// A textual representation of the pair.
-    var description: String {
-        "(\(first)-\(second))"
-    }
+                /// A textual representation of the pair.
+                var description: String {
+                    "(\(first)-\(second))"
+                }
 
-    /// Returns true if the first pair precedes the second pair in lexicographic order.
-    static func < (lhs: OrderedIndexPair, rhs: OrderedIndexPair) -> Bool {
-        if lhs.first < rhs.first { return true }
-        if lhs.first > rhs.first { return false }
-        return lhs.second < rhs.second
-    }
+                /// Returns true if the first pair precedes the second pair in lexicographic order.
+                static func < (lhs: OrderedIndexPair, rhs: OrderedIndexPair) -> Bool {
+                    if lhs.first < rhs.first {
+                        return true
+                    }
+                    if lhs.first > rhs.first {
+                        return false
+                    }
+                    return lhs.second < rhs.second
+                }
 
-}
+            }

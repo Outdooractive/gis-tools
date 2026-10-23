@@ -57,18 +57,18 @@ struct RewindTests {
 
     // MARK: -
 
-    // Tests that a clockwise LineString remains unchanged after rewinding.
-    @Test
-    func lineStringClockwise() async throws {
-        let lineStringRewinded = RewindTests.lineStringClockwise.rewinded
-        #expect(lineStringRewinded == RewindTests.lineStringClockwise)
-    }
-
-    // Tests that a counter-clockwise LineString is rewound to clockwise order.
+    // Tests that a counter-clockwise LineString remains unchanged after rewinding.
     @Test
     func lineStringCounterClockwise() async throws {
         let lineStringRewinded = RewindTests.lineStringCounterClockwise.rewinded
-        #expect(lineStringRewinded.allCoordinates == RewindTests.lineStringClockwise.allCoordinates)
+        #expect(lineStringRewinded == RewindTests.lineStringCounterClockwise)
+    }
+
+    // Tests that a clockwise closed LineString is rewound to counter-clockwise order.
+    @Test
+    func lineStringClockwise() async throws {
+        let lineStringRewinded = RewindTests.lineStringClockwise.rewinded
+        #expect(lineStringRewinded.allCoordinates == RewindTests.lineStringCounterClockwise.allCoordinates)
     }
 
     // Tests that a clockwise Polygon is rewound to counter-clockwise order.
@@ -89,7 +89,7 @@ struct RewindTests {
     @Test
     func feature() async throws {
         let featureRewinded = Feature(RewindTests.lineStringCounterClockwise).rewinded
-        let result = Feature(RewindTests.lineStringClockwise)
+        let result = Feature(RewindTests.lineStringCounterClockwise)
         #expect(featureRewinded == result)
     }
 
@@ -103,8 +103,8 @@ struct RewindTests {
             RewindTests.polygonCounterClockwise,
         ]).rewinded
         let result = FeatureCollection([
-            RewindTests.lineStringClockwise,
-            RewindTests.lineStringClockwise,
+            RewindTests.lineStringCounterClockwise,
+            RewindTests.lineStringCounterClockwise,
             RewindTests.polygonCounterClockwise,
             RewindTests.polygonCounterClockwise,
         ])
@@ -121,8 +121,8 @@ struct RewindTests {
             RewindTests.polygonCounterClockwise,
         ]).rewinded
         let result = GeometryCollection([
-            RewindTests.lineStringClockwise,
-            RewindTests.lineStringClockwise,
+            RewindTests.lineStringCounterClockwise,
+            RewindTests.lineStringCounterClockwise,
             RewindTests.polygonCounterClockwise,
             RewindTests.polygonCounterClockwise,
         ])

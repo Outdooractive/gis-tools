@@ -156,17 +156,17 @@ struct PolygonTangentsTests {
     // Verifies tangent points for a polygon in EPSG:4978.
     @Test
     func polygonTangents4978() async throws {
-        let polygon = try #require(Polygon([
-            [
-                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-                Coordinate3D(x: 50_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
-                Coordinate3D(x: 50_000.0, y: 50_000.0, z: 0.0, projection: .epsg4978),
-                Coordinate3D(x: 0.0, y: 50_000.0, z: 0.0, projection: .epsg4978),
-                Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
-            ],
-        ]))
-        let point = Coordinate3D(x: 100_000.0, y: 25_000.0, z: 0.0, projection: .epsg4978)
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.01),
+            Coordinate3D(latitude: 0.01, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])).projected(to: .epsg4978)
+        let point = Coordinate3D(latitude: 0.02, longitude: 0.005)
+            .projected(to: .epsg4978)
         let tangentPoints = try #require(polygon.tangentPoints(to: point))
+
         #expect(tangentPoints.coordinates.count == 2)
         #expect(tangentPoints.coordinates.allSatisfy({ $0.projection == .epsg4978 }))
     }
@@ -215,6 +215,28 @@ struct PolygonTangentsTests {
         for coord in tangentPoints.coordinates {
             #expect(abs(coord.longitude - 145.0) < 1.0)
         }
+    }
+
+}
+
+// MARK: - Audit regressions
+
+extension PolygonTangentsTests {
+
+    @Test
+    func concaveInteriorPointReturnsNil() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 2.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 1.0),
+            Coordinate3D(latitude: 2.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let point = Coordinate3D(latitude: 0.5, longitude: 1.5)
+
+        #expect(polygon.tangentPoints(to: point) == nil)
     }
 
 }

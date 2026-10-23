@@ -9,7 +9,7 @@ struct SectorTests {
         let center = Coordinate3D(latitude: 0.0, longitude: 0.0)
         let sector = try #require(center.sector(radius: 100_000.0, bearing1: 0.0, bearing2: 90.0))
         #expect(sector.isStructurallyValid)
-        #expect(sector.outerRing?.coordinates.count == 18) // center + 16 arc steps + center
+        #expect(sector.outerRing?.coordinates.count == 67) // center + 65 arc points + center
         #expect(sector.projection == .epsg4326)
     }
 

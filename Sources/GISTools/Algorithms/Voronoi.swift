@@ -15,7 +15,9 @@ extension FeatureCollection {
     ///
     /// - Parameter boundingBox: The bounding box to which all cells are clipped.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
-    /// - Returns: A ``FeatureCollection`` of ``Polygon`` features, one per input point.
+    /// - Returns: A ``FeatureCollection`` of ``Polygon`` features, one per input
+    ///   point. At least three point features are required; fewer produce an
+    ///   empty collection.
     public func voronoiDiagram(
         boundingBox: BoundingBox,
         gridSize: Double? = nil
@@ -29,7 +31,10 @@ extension FeatureCollection {
         }
         guard points.count >= 3 else { return FeatureCollection() }
 
-        return Voronoi.diagram(points: points, boundingBox: boundingBox)
+        return Voronoi.diagram(
+            features: snapped.features,
+            points: points,
+            boundingBox: boundingBox)
     }
 
 }
@@ -39,6 +44,7 @@ extension FeatureCollection {
 private enum Voronoi {
 
     static func diagram(
+        features inputFeatures: [Feature],
         points: [Coordinate3D],
         boundingBox: BoundingBox
     ) -> FeatureCollection {
@@ -67,6 +73,7 @@ private enum Voronoi {
                   let ia = pts.firstIndex(where: { $0.x == edge.a.x && $0.y == edge.a.y }),
                   let ib = pts.firstIndex(where: { $0.x == edge.b.x && $0.y == edge.b.y })
             else { continue }
+
             neighbors[ia, default: []].insert(ib)
             neighbors[ib, default: []].insert(ia)
         }
@@ -89,7 +96,12 @@ private enum Voronoi {
                 projection: projection)
 
             if let cell {
-                let feature = Feature(cell)
+                let source = inputFeatures[i]
+                var feature = Feature(
+                    cell,
+                    id: source.id,
+                    properties: source.properties)
+                feature.foreignMembers = source.foreignMembers
                 features.append(feature)
             }
         }
@@ -133,6 +145,7 @@ private enum Voronoi {
         }
 
         guard cell.count >= 3 else { return nil }
+
         // Close the polygon
         var coords = cell
         coords.append(cell[0])
@@ -169,7 +182,13 @@ private enum Voronoi {
                 if !previousInside {
                     // Entering: add intersection
                     if let intersection = Voronoi.lineIntersection(
-                        p1: previous, p2: current, a: a, b: b, c: c, projection: projection) {
+                        p1: previous,
+                        p2: current,
+                        a: a,
+                        b: b,
+                        c: c,
+                        projection: projection)
+                    {
                         result.append(intersection)
                     }
                 }
@@ -178,7 +197,13 @@ private enum Voronoi {
             else if previousInside {
                 // Exiting: add intersection
                 if let intersection = Voronoi.lineIntersection(
-                    p1: previous, p2: current, a: a, b: b, c: c, projection: projection) {
+                    p1: previous,
+                    p2: current,
+                    a: a,
+                    b: b,
+                    c: c,
+                    projection: projection)
+                {
                     result.append(intersection)
                 }
             }
@@ -196,8 +221,10 @@ private enum Voronoi {
         c: Double,
         projection: Projection
     ) -> Coordinate3D? {
-        let x1 = p1.longitude, y1 = p1.latitude
-        let x2 = p2.longitude, y2 = p2.latitude
+        let x1 = p1.longitude
+        let y1 = p1.latitude
+        let x2 = p2.longitude
+        let y2 = p2.latitude
 
         let denom = a * (x2 - x1) + b * (y2 - y1)
         guard abs(denom) > GISTool.determinantEpsilon else { return nil }

@@ -29,9 +29,10 @@ extension Coordinate3D {
         let angle2 = normalizeAngle(bearing2)
 
         if angle1 == angle2 {
-            guard let polygon = self.circle(radius: radius, steps: steps),
+            guard let polygon = circle(radius: radius, steps: steps),
                   let coordinates = polygon.coordinates.first
             else { return nil }
+
             return LineString(coordinates)
         }
 
@@ -40,16 +41,15 @@ extension Coordinate3D {
             ? angle2
             : angle2 + 360.0)
 
-        let delta = 360.0 / Double(steps)
+        let delta = (arcEndDegree - arcStartDegree) / Double(steps)
         var coordinates: [Coordinate3D] = []
+        coordinates.reserveCapacity(steps + 1)
 
-        var bearing = arcStartDegree
-        while bearing < arcEndDegree {
-            coordinates.append(self.destination(distance: radius, bearing: bearing))
-            bearing += delta
-        }
-        if bearing > arcEndDegree {
-            coordinates.append(self.destination(distance: radius, bearing: arcEndDegree))
+        for index in 0 ... steps {
+            let bearing = index == steps
+                ? arcEndDegree
+                : arcStartDegree + (delta * Double(index))
+            coordinates.append(destination(distance: radius, bearing: bearing))
         }
 
         return LineString(coordinates)

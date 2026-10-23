@@ -18,7 +18,7 @@ extension LineString {
     public func offset(
         by distance: CLLocationDistance
     ) -> LineString? {
-        let coordinatesAreInMeters = projection.isPlanar
+        let coordinatesAreInMeters = projection.isPlanar || projection == .noSRID
 
         let offsetInCRS: Double
         if coordinatesAreInMeters {
@@ -31,9 +31,31 @@ extension LineString {
             return self
         }
 
-        let workingCoords: [Coordinate3D] = coordinatesAreInMeters || projection.isGeographic
-            ? self.coordinates
-            : self.coordinates.map { $0.projected(to: .epsg4326) }
+        let workingProjection = coordinatesAreInMeters || projection.isGeographic
+            ? projection
+            : Projection.epsg4326
+
+        var workingCoords: [Coordinate3D] = coordinatesAreInMeters || projection.isGeographic
+            ? coordinates
+            : coordinates.map { $0.projected(to: .epsg4326) }
+
+        if projection.isGeographic, let first = workingCoords.first {
+            workingCoords = workingCoords.map { coordinate in
+                var longitude = coordinate.longitude
+                while longitude - first.longitude > 180.0 {
+                    longitude -= 360.0
+                }
+                while first.longitude - longitude > 180.0 {
+                    longitude += 360.0
+                }
+                return Coordinate3D(
+                    x: longitude,
+                    y: coordinate.latitude,
+                    z: coordinate.altitude,
+                    m: coordinate.m,
+                    projection: coordinate.projection)
+            }
+        }
 
         guard workingCoords.count >= 2 else { return nil }
 
@@ -45,14 +67,16 @@ extension LineString {
                 workingCoords[i],
                 workingCoords[i + 1],
                 offsetInCRS,
-                coordinatesAreInMeters: coordinatesAreInMeters)
+                coordinatesAreInMeters: coordinatesAreInMeters,
+                outputProjection: workingProjection)
             segments.append(segment)
 
             if i > 0 {
                 if let intersection = LineOffsetHelper.intersectSegments(
                     segments[i - 1],
                     segment,
-                    coordinatesAreInMeters: coordinatesAreInMeters)
+                    coordinatesAreInMeters: coordinatesAreInMeters,
+                    outputProjection: workingProjection)
                 {
                     segments[i - 1].end = intersection
                     segments[i].start = intersection
@@ -70,10 +94,9 @@ extension LineString {
         }
 
         guard finalCoords.count >= 2 else { return nil }
-
         guard let result = LineString(finalCoords) else { return nil }
 
-        if coordinatesAreInMeters || projection.isGeographic {
+        if workingProjection == projection {
             return result
         }
         return result.projected(to: projection)
@@ -92,6 +115,7 @@ extension MultiLineString {
     ) -> MultiLineString? {
         let lineStrings = self.lineStrings.compactMap { $0.offset(by: distance) }
         guard lineStrings.isNotEmpty else { return nil }
+
         return MultiLineString(lineStrings)
     }
 
@@ -104,13 +128,14 @@ private enum LineOffsetHelper {
         _ p1: Coordinate3D,
         _ p2: Coordinate3D,
         _ offset: Double,
-        coordinatesAreInMeters: Bool
+        coordinatesAreInMeters: Bool,
+        outputProjection: Projection
     ) -> (start: Coordinate3D, end: Coordinate3D) {
         let dx = p2.x - p1.x
         let dy = p2.y - p1.y
         let len = sqrt(dx * dx + dy * dy)
 
-        let outputProj: Projection = coordinatesAreInMeters ? .epsg3857 : .epsg4326
+        let outputProj = outputProjection
 
         guard len > .ulpOfOne else {
             return (
@@ -133,7 +158,8 @@ private enum LineOffsetHelper {
     static func intersectSegments(
         _ a: (start: Coordinate3D, end: Coordinate3D),
         _ b: (start: Coordinate3D, end: Coordinate3D),
-        coordinatesAreInMeters: Bool
+        coordinatesAreInMeters: Bool,
+        outputProjection: Projection
     ) -> Coordinate3D? {
         let ax = a.end.x - a.start.x
         let ay = a.end.y - a.start.y
@@ -154,7 +180,7 @@ private enum LineOffsetHelper {
         return Coordinate3D(
             x: a.start.x + t * ax,
             y: a.start.y + t * ay,
-            projection: coordinatesAreInMeters ? .epsg3857 : .epsg4326)
+            projection: outputProjection)
     }
 
 }

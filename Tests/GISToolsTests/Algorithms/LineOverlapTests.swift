@@ -211,3 +211,24 @@ struct LineOverlapTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension LineOverlapTests {
+
+    @Test
+    func toleranceExpandsSearchBoundingBox() throws {
+        let first = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+        ]))
+        let second = try #require(LineString([
+            Coordinate3D(x: 2_000.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 3_000.0, y: 500.0, projection: .epsg3857),
+        ]))
+        let result = first.overlappingSegments(with: second, tolerance: 5_000.0)
+
+        #expect(result.isNotEmpty)
+    }
+
+}

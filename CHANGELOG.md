@@ -304,6 +304,20 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Line and polygon algorithm audit (#322): rewinding now applies the requested
+  winding order to closed LineStrings; `lineArc` uses the requested number of
+  steps; negative distances in `coordinateAlong`/`sliceAlong` are clamped and
+  no longer trap; `lineSplit` returns the original short line when there are no
+  intersections; `lineSlice` no longer duplicates interior vertices; `Clean`
+  uses perpendicular distance for collinearity and honors polygon `gridSize`;
+  direct `Coordinate3D.snappedToGrid` rejects non-positive tolerances;
+  `bezierSpline` and `polygonSmooth` guard non-positive numeric parameters;
+  `LineOffset` preserves the source projection and unwraps the antimeridian;
+  `LineOverlap` expands searches by the requested tolerance; `Polygonize`
+  rewinds shells counter-clockwise; `Polygon.tangentPoints` rejects points in
+  concave interiors; `coverageSimplified` simplifies a single polygon; and
+  Voronoi cells preserve feature ids, properties and foreign members.
+
 - Overlay, buffer, clipping and indexing audit (#321): overlay operations now
   treat each `MultiPolygon` as a union of parts, reproject mixed-projection
   operands independently, keep vertex-touching components separate, rewind

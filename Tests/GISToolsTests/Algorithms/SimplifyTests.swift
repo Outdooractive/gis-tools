@@ -386,3 +386,27 @@ struct SimplifyTests {
     }
 
 }
+
+// MARK: - Audit regressions
+
+extension SimplifyTests {
+
+    @Test
+    func coverageSimplifiedSimplifiesSinglePolygon() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 0.00001, longitude: 2.0),
+            Coordinate3D(latitude: 0.0, longitude: 3.0),
+            Coordinate3D(latitude: 1.0, longitude: 3.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([polygon]))
+        let result = try #require(multiPolygon.coverageSimplified(tolerance: 100.0))
+        let simplified = try #require(result.polygons.first)
+
+        #expect(simplified.outerRing!.coordinates.count < polygon.outerRing!.coordinates.count)
+    }
+
+}
