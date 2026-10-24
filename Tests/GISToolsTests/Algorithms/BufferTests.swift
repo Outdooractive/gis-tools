@@ -136,7 +136,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.15)
+        checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.02)
     }
 
     // Validates flat-end buffer around a long line matches the expected area.
@@ -150,7 +150,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
-        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
+        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.02)
     }
 
     // Validates round-end buffer around multiple lines matches the expected area.
@@ -168,7 +168,7 @@ struct BufferTests {
             ],
         ]))
         let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.25)
+        checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.02)
     }
 
     // Validates flat-end buffer around multiple lines matches the expected area.
@@ -1329,5 +1329,73 @@ extension BufferTests {
 
         #expect(polygon.buffered(by: -10_000.0) == nil)
     }
+
+
+    // MARK: - Audit regressions
+
+    @Test
+    func negativeBufferExpandsHole() throws {
+        let outer = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let hole = try #require(Ring([
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+            Coordinate3D(latitude: 7.0, longitude: 3.0),
+            Coordinate3D(latitude: 7.0, longitude: 7.0),
+            Coordinate3D(latitude: 3.0, longitude: 7.0),
+            Coordinate3D(latitude: 3.0, longitude: 3.0),
+        ]))
+        let polygon = try #require(Polygon([outer, hole]))
+        let originalHoleArea = abs(hole.area)
+
+        let result = try #require(polygon.buffered(by: -10_000.0))
+        let inset = try #require(result.polygons.first)
+        let insetHole = try #require(inset.innerRings?.first)
+
+        #expect(abs(insetHole.area) > originalHoleArea)
+        #expect(inset.isValid)
+        #expect(insetHole.area.sign == hole.area.sign)
+    }
+
+    @Test
+    func zeroDistanceBufferContract() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let zeroPolygon = try #require(polygon.buffered(by: 0.0))
+        #expect(zeroPolygon.polygons.count == 1)
+        #expect(abs(zeroPolygon.polygons[0].area - polygon.area) < 0.000001)
+
+        let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
+        #expect(point.buffered(by: 0.0)?.polygons.isEmpty == true)
+    }
+
+    @Test
+    func largeConcaveInsetIsValidOrNil() throws {
+        let uShape = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 7.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 7.0, y: 3.0, projection: .noSRID),
+            Coordinate3D(x: 3.0, y: 3.0, projection: .noSRID),
+            Coordinate3D(x: 3.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        if let result = uShape.buffered(by: -4.0) {
+            #expect(result.polygons.allSatisfy { $0.isValid })
+            #expect(result.polygons.allSatisfy { $0.area > 0.0 })
+        }
+    }
+
 
 }

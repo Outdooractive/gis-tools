@@ -354,4 +354,35 @@ extension PreparedPolygonTests {
         #expect(prepared.locate(Coordinate3D(latitude: 0.0, longitude: 5.0)) == .exterior)
     }
 
+
+    @Test
+    func seamCrossingPolygonLocatedFromBothSides() throws {
+        let polygon = Polygon(unchecked: [[
+            Coordinate3D(latitude: -10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+            Coordinate3D(latitude: 10.0, longitude: -179.0),
+            Coordinate3D(latitude: -10.0, longitude: -179.0),
+            Coordinate3D(latitude: -10.0, longitude: 179.0),
+        ]], calculateBoundingBox: true)
+        let prepared = PreparedPolygon(polygon)
+
+        #expect(prepared.locate(Coordinate3D(latitude: 0.0, longitude: 179.5)) == .interior)
+        #expect(prepared.locate(Coordinate3D(latitude: 0.0, longitude: -179.5)) == .interior)
+        #expect(prepared.locate(Coordinate3D(latitude: 0.0, longitude: 0.0)) == .exterior)
+        #expect(prepared.boundingBox != nil)
+    }
+
+
+    @Test
+    func preparedUnionCoversSpanningRectangle() throws {
+        let left = square(minX: 0.0, maxX: 5.0, projection: .noSRID)
+        let right = square(minX: 5.0, maxX: 10.0, projection: .noSRID)
+        let prepared = PreparedPolygon(MultiPolygon(unchecked: [left, right]))
+        let spanning = square(minX: 2.0, minY: 1.0, maxX: 8.0, maxY: 4.0, projection: .noSRID)
+
+        #expect(prepared.covers(spanning))
+        #expect(prepared.contains(spanning))
+    }
+
+
 }

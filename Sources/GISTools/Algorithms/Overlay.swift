@@ -440,7 +440,23 @@ extension Overlay {
     }
 
     fileprivate static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
-        let rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        var rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        guard let outer = rings.first, outer.isNotEmpty, rings.count > 1 else {
+            return Polygon(unchecked: rings, calculateBoundingBox: false)
+        }
+
+        let reference = outer.reduce(0.0) { $0 + $1.x } / Double(outer.count)
+        for index in 1 ..< rings.count {
+            let ring = rings[index]
+            guard ring.isNotEmpty else { continue }
+            let center = ring.reduce(0.0) { $0 + $1.x } / Double(ring.count)
+            let shift = ((reference - center) / width).rounded() * width
+            guard shift != 0.0 else { continue }
+            rings[index] = ring.map {
+                Coordinate3D(x: $0.x + shift, y: $0.y, z: $0.altitude, m: $0.m, projection: $0.projection)
+            }
+        }
+
         return Polygon(unchecked: rings, calculateBoundingBox: false)
     }
 

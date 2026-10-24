@@ -32,7 +32,12 @@ extension LineString {
         }
         guard pts.count >= 2 else { return nil }
 
-        return BezierSpline.compute(points: pts, steps: steps)
+        let unwrapped = pts.first.map { point -> [Coordinate3D] in
+            guard let extent = point.projection.wraparoundExtent else { return pts }
+            return AntimeridianCutting.unwrapCoordinates(pts, extent: extent)
+        } ?? pts
+
+        return BezierSpline.compute(points: unwrapped, steps: steps)
     }
 
 }
@@ -175,6 +180,11 @@ private enum BezierSpline {
             splineCoords = splineCoords.map {
                 Coordinate3D(x: $0.longitude, y: $0.latitude, projection: $0.projection)
             }
+        }
+
+        // Normalize seam-crossing intermediates back into the source range.
+        if projection.wraparoundExtent != nil {
+            splineCoords = splineCoords.map { $0.normalized() }
         }
 
         return LineString(unchecked: splineCoords)
