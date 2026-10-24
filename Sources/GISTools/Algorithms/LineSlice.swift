@@ -77,6 +77,16 @@ extension LineString {
         if startVertex.index > endVertex.index {
             swap(&startVertex, &endVertex)
         }
+        else if startVertex.index == endVertex.index {
+            // Both points fall on the same segment. Vertex index alone cannot
+            // order them, so compare their position along that segment.
+            let segment = snappedSelf.lineSegments[startVertex.index]
+            let startDistance = segment.first.distance(from: startVertex.coordinate)
+            let endDistance = segment.first.distance(from: endVertex.coordinate)
+            if startDistance > endDistance {
+                swap(&startVertex, &endVertex)
+            }
+        }
 
         var clipCoordinates: [Coordinate3D] = [startVertex.coordinate]
 

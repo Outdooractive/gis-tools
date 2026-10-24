@@ -29,6 +29,9 @@ extension GeoJson {
     ///   least one pair intersect (member-wise, not union-wise).
     public func contains(_ other: GeoJson) -> Bool {
         if let fc1 = self as? FeatureCollection {
+            if let union = BooleanCovers.polygonUnion(of: fc1) {
+                return union.contains(other)
+            }
             return fc1.features.contains { $0.contains(other) }
         }
         if let fc2 = other as? FeatureCollection {
@@ -45,7 +48,12 @@ extension GeoJson {
               let geometry2 = normalised2 as? GeoJsonGeometry
         else { return false }
 
-        let containerParts = BooleanCovers.parts(of: geometry1)
+        // A polygonal receiver is one union, not a set of independent
+        // containers: a geometry may span two adjacent polygons.
+        let containerParts: [GeoJsonGeometry] =
+            geometry1 is PolygonGeometry
+            ? [geometry1]
+            : BooleanCovers.parts(of: geometry1)
         let otherParts = BooleanCovers.parts(of: geometry2)
 
         return BooleanContains.contains(containerParts, otherParts)

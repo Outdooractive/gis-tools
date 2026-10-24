@@ -304,6 +304,193 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip split-box cleanup (#376): removed the stale
+  `TODO: This is ugly Swift code` and factored the two crossing-box windows
+  through a local constructor, avoiding duplicated coordinate boilerplate. No
+  clipping behavior changed.
+
+- Open-ended and reversed `LineString.slice` (#375): `nil` start/end now
+  have exact regression coverage for the documented first/last defaults, all
+  projections, antimeridian crossing, altitude interpolation and the
+  `Feature.slice` wrapper. Start/end points on the same segment are now
+  ordered along that segment, so reversed same-segment slices no longer emit
+  coordinates in reverse line order. Removed the stale open-ended-slice TODO.
+
+- MapTile children at maximum zoom (#370): `child` returns the receiver
+  unchanged and `children` returns an empty array when `z == 32`, instead of
+  shifting x/y and emitting invalid same-zoom tiles. Zoom 31 still produces
+  four valid zoom-32 children.
+
+- Voronoi duplicate and collinear sites (#369): duplicate coordinates are
+  collapsed to the first feature (including its `id`, properties and foreign
+  members) before triangulation, and neighbours are resolved from the
+  deduplicated sites instead of `firstIndex` lookups. One and two distinct
+  sites, and any number of collinear sites, now use direct half-plane clipping
+  rather than returning an empty diagram. The documented contract changed from
+  "at least three input points" to "one cell per distinct point site".
+
+- Mask result is cut at the antimeridian (#368): when the mask itself crosses
+  the seam, the assembled `MultiPolygon` is cut at ±180° (holes and islands
+  preserved) so the result never reports `crossesAntimeridian == true`.
+  Non-crossing masks keep the direct hole/island construction. Tests assert
+  the default world mask is non-crossing and a crossing mask with a custom
+  outer preserves the exact world-minus-mask area.
+
+- BoundingBoxClip line handling across the antimeridian (#367): line clipping
+  now splits a crossing clip box into its projection-aware non-crossing
+  windows, unwraps and shifts the line into each window's world copy, clips
+  each part and normalizes the result back. Lines and multi-lines inside a
+  `175 → −175` box (or the EPSG:3857 `originShift` equivalent) are no longer
+  dropped. Polygon clipping also uses projection-aware split boxes, so a
+  crossing 3857 box and cross-projection 4978 clipping stay correct.
+
+- QueryParser nested grouping and prefix NOT (#349): nested parentheses no
+  longer reset the caller's pipeline, so `.a == 1 and (.b == 2 or .c == 3)`
+  preserves both operands and the connector; a pending boolean connector is
+  emitted after the completed group. Prefix `NOT` now negates the following
+  operand/group (including after `and`/`or`), while postfix `not` keeps
+  negating the accumulated expression. Incomplete pipelines (`.highway ==`,
+  `.foo and`, unclosed groups) are rejected by an RPN arity check, and exact
+  pipeline/evaluation tests cover nested groups, prefix/postfix negation and
+  mixed forms.
+
+- Eulerian and Chinese Postman parallel edges (#346): parity and traversal
+  now use **edge multiplicity** over the undirected underlying graph instead
+  of distinct neighbours. Hierholzer and the Chinese Postman augmentation are
+  built from every underlying edge instance (parallel edges each get their own
+  edge ID; two-way edges contribute one underlying edge and one-way edges
+  contribute to both endpoint degrees). Two parallel edges, a triangle with a
+  duplicated edge, a bridge with parallel edges and opposite one-way edges now
+  classify and traverse correctly; postman tour lengths assert the required
+  repetitions.
+
+- Overlay and spatial regression coverage (#343): tightened overlay fixture
+  area tolerances from 20–40% to 1% (intersection, symmetric difference, mask)
+  and buffer fixture tolerances to 2%; added analytic noSRID tests for
+  intersection (50), union (150) and symmetric difference (100) of overlapping
+  squares; added exact tile-cover tile sets for a single interior tile and a
+  two-tile rectangle; and added a seeded deterministic R-tree search
+  cross-check against brute-force filtering. The coverage work from #337,
+  #338, #340 and #341 already covers the remaining listed APIs (LineOverlap,
+  LineChunk, Truncate, SnapToGrid, LineSegments, MakeValid, negative/zero
+  buffer, mask holes/partials, crossing clips, PreparedPolygon union and
+  crossing bbox).
+
+- GeoJSON decoder validation agreement (#342): the typed `GeoJsonDecoder` now
+  validates through `GeoJsonParser` instead of constructing geometries with
+  `unchecked` initializers, so the `json`, `jsonData`, `jsonString`,
+  `GeoJsonReader` and `JSONDecoder` paths agree on malformed documents.
+  Feature/geometry collection decoding is lenient like the parser (malformed
+  members are dropped rather than throwing the whole document), the
+  `Decodable` path round-trips through the parser, and a concrete-type
+  mismatch falls back to the documented JSONValue coercion instead of failing
+  outright. Tests compare all entry points on short rings, non-numeric
+  coordinates, missing members, empty multi-geometries and valid documents;
+  the empty intersection fixture is now constructed directly because an empty
+  `MultiPolygon` is deliberately rejected as structurally invalid.
+
+- Mask and BoundingBoxClip correctness (#341): `PolygonGeometry.mask` now
+  returns a `MultiPolygon`, so masks with holes become unmasked islands,
+  partial masks are clipped to the outer boundary, and multi-part/seam
+  results are representable; fully contained masks are constructed directly
+  (holes + islands) and only partial overlaps use overlay difference.
+  `Polygon.clipped(to:)` now returns a `MultiPolygon` and clips through real
+  polygon intersection: crossing clip boxes are handled as their non-crossing
+  parts, holes reaching the clip edge become notches, U-shaped polygons can
+  split into disconnected parts, and cross-projection clipping uses the
+  projected box geometry instead of corner-only reprojection. Tests assert
+  exact areas, part counts, validity and 4978 cross-projection.
+
+- Negative buffer holes and degenerate buffer behavior (#340): insets now
+  reject any result that is not topologically valid, so a large concave inset
+  returns `nil` instead of a self-intersecting/inverted polygon; the hole
+  expansion direction is covered by an exact hole-area test for both hole
+  windings. Zero-distance buffering has a documented contract: polygonal
+  inputs return a cleaned identity `MultiPolygon`, non-areal inputs return an
+  empty `MultiPolygon` (still the same return type). Tests assert hole growth,
+  ring winding, valid concave output (or nil) and the zero-distance contract.
+
+- Remaining boolean, collection and prepared-geometry semantics (#339):
+  a `FeatureCollection` receiver and a multi-part `MultiPolygon` receiver are
+  now treated as the union of their parts for `contains`/`covers`, so a
+  geometry spanning adjacent features or prepared components is covered;
+  `PreparedPolygon` with multiple parts delegates to the union. `BooleanDisjoint`
+  is covered for lines through holes, lines crossing the shell and
+  boundary-touching lines. `Coordinate3D` equality and hashing were made
+  mutually consistent for the wraparound axis (shared with #338). Spherical
+  area now uses the same documented `GISTool.earthRadius` model as distance
+  and length; the 3857 small-square area expectations were updated accordingly
+  and an area-versus-distance consistency test was added.
+
+- Remaining antimeridian correctness in operations and indexes (#338):
+  `perpendicularFoot`/`nearestCoordinateOnLine`, `LineSegment.checkIsOnSegment`
+  and `LineSegment.intersection` now unwrap seam-crossing segments into a
+  continuous frame (intersections stay in the caller's working frame),
+  `Kinks` unwraps and aligns rings before detection/un-kinking and keys
+  vertices by a wrapped coordinate relation, overlay aligns holes into the
+  outer ring's world copy, and crossing geometries get a conservative
+  world-width bounding box so R-tree searches on either side of the seam find
+  them. `Coordinate3D` equality and hashing now treat `+extent` and `−extent`
+  as the same location consistently. Tests cover nearest-point, point-on-line,
+  line intersection, RTree/PreparedPolygon search, kinks/un-kink and union
+  with real `179 → −179` crossings.
+
+- Line and polygon construction regression coverage (#337): added independent
+  expected-value tests for `LineChunk` collection/feature entry points,
+  `Truncate` polygon/multi-polygon/collection/`removeM` paths, `SnapToGrid`
+  MultiPoint/MultiLineString/GeometryCollection dispatch, `LineSegments`
+  BoundingBox/Ring/Polygon/MultiPolygon/collection dispatch, `LineOverlap`
+  self-overlap/segmentLength/grid/MultiLineString/FeatureCollection inputs,
+  one-sided `LineSlice`/`LineSliceAlong` and Feature variants, `MakeValid`
+  `gridSize`, `MultiPolygon.kinks`/mutating `unkink`, exact noSRID/4978
+  `LineOffset` behaviour, and `PolygonToLine` coordinates/closure/order.
+  The audit found and fixed two bugs: `Truncate` copied stale bounding boxes
+  instead of recalculating them, and `unkinked` polygons could be returned with
+  open rings.
+
+- Line and polygon constructor antimeridian handling (#336): added a shared
+  `AntimeridianCutting.unwrapCoordinates` helper that keeps a sequence
+  continuous across the wraparound axis. `BezierSpline` now interpolates in
+  the unwrapped frame and normalizes its output, so `179 → −179` control
+  points stay near the seam instead of sweeping through 0°; `ConcaveHull`
+  unwraps all input points before triangulation and normalizes the resulting
+  hull, so crossing hulls use the 20° short span and the correct area, and
+  ECEF hulls are computed in geographic space. Tests assert intermediate
+  seam spans, exact crossing-hull area and 4978 round trips.
+
+- Voronoi antimeridian and degenerate handling (#335): points and the clip
+  bounding box are unwrapped around the projection's wraparound axis (a
+  `170 ... -170` box becomes `170 ... 190`), the diagram is computed in the
+  short span, and cells are normalized back, so seam-separated sites get
+  adjacent small cells instead of world-spanning ones. ECEF inputs are
+  computed in geographic space and projected back. One/two points consistently
+  return an empty collection (the documented minimum is three), `gridSize`
+  matches manual snapping, and tests assert site containment, bounding-box area
+  partition, short-side spans and metadata preservation.
+
+- Simplify topology and tolerance handling (#334): `polygonHullSimplified`
+  now keeps inner rings (with winding) and the silently ignored `highQuality`
+  parameter was removed from that API; `coverageSimplified` decomposes each
+  ring into shared and nonshared runs, simplifies every shared chain exactly
+  once and reuses it for both incident polygons (including multi-vertex shared
+  edges), so no T-junctions are introduced; and the Visvalingam-Whyatt
+  threshold is now a perpendicular-distance threshold
+  (`0.5 · chordLength · tolerance`) instead of a unit-mixing constant, so
+  short and long segments behave consistently. Tests assert hole retention,
+  shared-coordinate equality, and equal spike removal on 50 m and 1000 m bases.
+
+- Polygonize topology, dangles and collinear edges (#333): degree-1 dangles
+  and bridges (cut edges) are pruned recursively before ring finding;
+  collinear overlapping segments are noded at their endpoints and duplicate
+  noded edges are removed; bounded face rings are distinguished from the
+  unbounded face and classified by containment depth, so a separate inner ring
+  becomes a hole (with outer CCW / hole CW winding) instead of a second shell,
+  while nested islands stay separate polygons. Coordinates crossing the
+  projection wraparound axis are normalized generically (4326 antimeridian and
+  3857 `originShift`), and ECEF is polygonized in geographic space and
+  projected back. Tests assert coordinates, winding, hole counts, exact area,
+  input-order independence and all projections.
+
 - LineMerge junction, metadata and seam endpoints (#332): junction
   continuations are now paired by angle (straightest through-pair) instead of
   input order, so reordering features produces the same geometry and a branch

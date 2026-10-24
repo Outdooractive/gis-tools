@@ -330,4 +330,77 @@ extension KinksTests {
         #expect(multi.kinks().coordinates.isEmpty)
     }
 
+
+    // MARK: - Audit coverage
+
+    @Test
+    func multiPolygonKinksAndMutatingUnkink() throws {
+        let bowtie = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let valid = try #require(Polygon([[
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 30.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 30.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let multi = try #require(MultiPolygon([bowtie, valid]))
+
+        let kinks = multi.kinks()
+        #expect(kinks.coordinates.count == 1)
+        #expect(abs(kinks.coordinates[0].x - 5.0) < 0.000001)
+        #expect(abs(kinks.coordinates[0].y - 5.0) < 0.000001)
+
+        var mutating = multi
+        mutating.unkink()
+        #expect(mutating.isValid)
+        #expect(mutating.polygons.count >= 2)
+    }
+
+    @Test
+    func mutatingPolygonUnkinkReplacesWithFirstSimplePolygon() throws {
+        let bowtie = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        var polygon = bowtie
+        polygon.unkink()
+        #expect(polygon.isValid)
+        #expect(polygon.outerRing?.isCounterClockwise == true)
+    }
+
+
+    @Test
+    func kinksAndUnkinkAcrossAntimeridian() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+            Coordinate3D(latitude: -1.0, longitude: -179.0),
+        ]))
+        let kinks = line.kinks()
+        #expect(kinks.coordinates.count == 1)
+        #expect(abs(abs(kinks.coordinates[0].longitude) - 180.0) < 0.5)
+
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+            Coordinate3D(latitude: -1.0, longitude: -179.0),
+            Coordinate3D(latitude: -1.0, longitude: 179.0),
+        ]]))
+        let unkinked = polygon.unkinked()
+        #expect(unkinked.count >= 2)
+        #expect(unkinked.allSatisfy { $0.isValid })
+    }
+
+
 }

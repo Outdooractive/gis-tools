@@ -293,4 +293,21 @@ extension NearestCoordinateOnLineTests {
         #expect(nearest.coordinate == Coordinate3D(latitude: 0.0, longitude: 2.0))
     }
 
+
+    @Test
+    func seamCrossingSegmentUsesShortPath() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+        ]))
+        let query = Coordinate3D(latitude: 0.2, longitude: 180.0)
+        let result = try #require(line.nearestCoordinateOnLine(from: query))
+
+        #expect(abs(abs(result.coordinate.longitude) - 180.0) < 0.5)
+        #expect(abs(result.coordinate.latitude) < 0.000001)
+        #expect(result.distance < 30_000.0)
+        #expect(result.index == 0)
+    }
+
+
 }
