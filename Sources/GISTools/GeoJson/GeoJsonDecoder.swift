@@ -11,16 +11,34 @@ import Foundation
 enum GeoJsonDecoder {
 
     static func decode(jsonData: Data) -> GeoJson? {
+        // Validate through the same parser used by every other loading path,
+        // so the typed decoder cannot accept structurally invalid GeoJSON
+        // (wrong coordinate counts, unclosed rings, invalid ids, ...).
         guard let jsonData = Gzip.decompressIfNeeded(jsonData),
-              let decoded = try? JSONDecoder().decode(DecodedGeoJson.self, from: jsonData)
-        else {
-            return nil
-        }
-        return decoded.asGeoJson
+              let result = try? GeoJsonParser.parse(jsonData: jsonData)
+        else { return nil }
+
+        // Match the parser's lenient contract: malformed members are reported
+        // as issues and dropped, but the remaining valid object is returned.
+        // Structural validation has already run in the parser.
+        return result.object
     }
 
     static func decode(from decoder: Decoder) throws -> GeoJson {
-        try DecodedGeoJson(from: decoder).asGeoJson
+        let object = try DecodedGeoJson(from: decoder).asGeoJson
+
+        // The `Decodable` entry point has no raw document to parse; round-trip
+        // the typed result through the parser so both paths agree.
+        guard let data = object.asJsonData(prettyPrinted: false),
+              let result = try? GeoJsonParser.parse(jsonData: data),
+              let validated = result.object
+        else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(
+                codingPath: decoder.codingPath,
+                debugDescription: "Structurally invalid GeoJSON"))
+        }
+
+        return validated
     }
 
     static func decode<T: GeoJson>(jsonData: Data, as type: T.Type) -> T? {
@@ -65,6 +83,18 @@ private struct DynamicCodingKey: CodingKey {
 
     init?(intValue: Int) {
         nil
+    }
+
+}
+
+/// Decodes an element but converts a failure into `nil`, matching the
+/// parser's lenient treatment of malformed members.
+private struct FailableDecodable<Value: Decodable>: Decodable {
+
+    let value: Value?
+
+    init(from decoder: Decoder) {
+        value = try? Value(from: decoder)
     }
 
 }
@@ -221,8 +251,10 @@ private struct DecodedGeometry: Decodable {
             knownKeys = ["type", "coordinates", "bbox"]
 
         case GeoJsonType.geometryCollection.rawValue:
-            let geometries = try keys.decode([DecodedGeometry].self, forKey: .geometries)
-            geometry = GeometryCollection(geometries.map(\.geometry))
+            let geometries = try keys.decode(
+                [FailableDecodable<DecodedGeometry>].self,
+                forKey: .geometries)
+            geometry = GeometryCollection(geometries.compactMap(\.value).map(\.geometry))
             knownKeys = ["type", "geometries", "bbox"]
 
         default:
@@ -305,14 +337,16 @@ private struct DecodedFeatureCollection: Decodable {
 
     init(from decoder: Decoder) throws {
         let keys = try decoder.container(keyedBy: GeoJsonKey.self)
-        let features = try keys.decode([DecodedFeature].self, forKey: .features)
+        let features = try keys.decode(
+            [FailableDecodable<DecodedFeature>].self,
+            forKey: .features)
         let boundingBox = try keys.decodeIfPresent(DecodedBoundingBox.self, forKey: .bbox)
             .flatMap { BoundingBox(json: $0.values) }
         let foreignMembers = try GeoJsonForeignMembers.decode(
             from: decoder,
             excluding: ["type", "features", "bbox"])
 
-        var collection = FeatureCollection(features.map(\.feature))
+        var collection = FeatureCollection(features.compactMap(\.value).map(\.feature))
         collection.boundingBox = boundingBox
         collection.foreignMembers = foreignMembers
         self.collection = collection

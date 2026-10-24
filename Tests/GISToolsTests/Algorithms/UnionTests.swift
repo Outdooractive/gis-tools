@@ -478,4 +478,21 @@ extension UnionTests {
         #expect(result.polygons.count == 2)
     }
 
+
+    @Test
+    func analyticSquareUnion() throws {
+        func square(_ minX: Double, _ maxX: Double) throws -> Polygon {
+            try #require(Polygon([[
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+            ]]))
+        }
+        let result = try #require((try square(0.0, 10.0)).union(with: try square(5.0, 15.0)))
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - 150.0) < 0.000001)
+    }
+
+
 }

@@ -314,4 +314,56 @@ struct BoundingBoxClipTests {
     }
 
 
+    @Test
+    func lineInsideCrossingBoxIsKept() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+        // Each side contributes one degree at the equator.
+        #expect(abs(clipped.length - 2.0 * 111_195.0) < 2_000.0)
+    }
+
+    @Test
+    func lineInsideCrossingBox3857IsKept() throws {
+        let shift = GISTool.originShift
+        let line = try #require(LineString([
+            Coordinate3D(x: shift - 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: -shift + 1_000.0, y: 0.0, projection: .epsg3857),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(x: shift - 5_000.0, y: -10_000.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: -shift + 5_000.0, y: 10_000.0, projection: .epsg3857))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+        #expect(abs(clipped.length - 2_000.0) < 0.001)
+    }
+
+    @Test
+    func multiLineStringInsideCrossingBoxIsKept() throws {
+        let line1 = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+        ]))
+        let line2 = try #require(LineString([
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: 179.0),
+        ]))
+        let multi = try #require(MultiLineString([line1, line2]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(multi.clipped(to: box))
+        #expect(clipped.lineStrings.count == 4)
+    }
+
+
 }

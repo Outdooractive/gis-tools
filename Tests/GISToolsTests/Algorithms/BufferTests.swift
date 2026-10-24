@@ -136,7 +136,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.15)
+        checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.02)
     }
 
     // Validates flat-end buffer around a long line matches the expected area.
@@ -150,7 +150,7 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
-        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.25)
+        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.02)
     }
 
     // Validates round-end buffer around multiple lines matches the expected area.
@@ -168,7 +168,7 @@ struct BufferTests {
             ],
         ]))
         let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.25)
+        checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.02)
     }
 
     // Validates flat-end buffer around multiple lines matches the expected area.
