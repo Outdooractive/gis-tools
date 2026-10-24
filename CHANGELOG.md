@@ -311,6 +311,13 @@ left unchanged; that case is ambiguous per RFC 7946.
   projection math document their local tolerances and units. Numeric values
   are unchanged.
 
+- Generic geometry dispatch safety (#386): replaced all forced `as!` casts in
+  the GeoJSON transform, rewind, snap, simplify, truncate, reverse, densify,
+  scale, WKB and WKT dispatch paths with a single checked-cast helper that
+  reports the expected and actual type. Removed or guarded the force unwraps
+  in the same dispatch and geometry paths, including the cited `outerRing!`
+  and `sorted.last!` cases. Added regression tests for every concrete GeoJSON
+  type and both coder type switches. No public behavior changed.
 - Geographic and unit-conversion constants (#388): added canonical
   `GISTool.oneDegreeLatitudeDistance`, `metersPerDegreeLongitude(atLatitude:)`,
   `conservativeMetersPerDegree` and documented length/area conversion

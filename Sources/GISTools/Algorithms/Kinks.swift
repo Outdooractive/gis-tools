@@ -235,7 +235,7 @@ extension Polygon {
         for entry in allRings {
             var coords = entry.coords
             if coords.first != coords.last {
-                coords.append(coords.first!)
+                coords.append(coords[0])
             }
             // Snap to grid if requested
             if let gridSize {
@@ -424,7 +424,7 @@ extension Polygon {
                 let currentSeg = segments[currentSegIndex]
                 let endCoord = currentForward ? currentSeg.end : currentSeg.start
                 let endKey = vertexKey(endCoord)
-                let startKey = vertexKey(ring.first!)
+                let startKey = vertexKey(ring[0])
 
                 if endKey == startKey, ring.count >= 3 {
                     break
@@ -477,7 +477,7 @@ extension Polygon {
                 currentForward = nextForward
             }
 
-            if ring.count >= 3, vertexKey(ring.first!) == vertexKey(ring.last!) {
+            if ring.count >= 3, vertexKey(ring[0]) == vertexKey(ring[ring.count - 1]) {
                 outputRings.append(ring)
             }
             else if ring.count >= 3 {
@@ -500,7 +500,7 @@ extension Polygon {
         counted.sort { $0.area > $1.area }
 
         for i in 1 ..< counted.count {
-            let testCoord = counted[i].coords.first!
+            let testCoord = counted[i].coords[0]
             for j in (0 ..< i).reversed() {
                 if Self.pointInRing(testCoord, ring: counted[j].coords) {
                     counted[i].parentIndex = j

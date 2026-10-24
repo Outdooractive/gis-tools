@@ -182,7 +182,7 @@ enum AntimeridianCutting {
         guard coords.count >= 4 else { return result }
 
         var currentPart: [Coordinate3D] = []
-        var currentSide: Side!
+        var currentSide: Side?
 
         for i in 1..<coords.count {
             let prev = coords[i - 1]
@@ -194,9 +194,10 @@ enum AntimeridianCutting {
             }
 
             if let intersection = AntimeridianCutting.intersection(prev, curr, extent: extent) {
+                guard let side = currentSide else { continue }
                 currentPart.append(intersection.first)
-                appendPart(&result, currentPart, side: currentSide)
-                currentSide = (currentSide == .right) ? .left : .right
+                appendPart(&result, currentPart, side: side)
+                currentSide = (side == .right) ? .left : .right
                 currentPart = [intersection.second, curr]
             }
             else {
@@ -262,8 +263,8 @@ enum AntimeridianCutting {
         var result: [Coordinate3D] = []
         for part in parts {
             if result.isNotEmpty {
-                let prevEnd = result.last!
-                let thisStart = part.first!
+                let prevEnd = result[result.count - 1]
+                let thisStart = part[0]
                 if prevEnd.x != thisStart.x
                     || prevEnd.y != thisStart.y
                 {
@@ -275,8 +276,8 @@ enum AntimeridianCutting {
         }
 
         if result.first != result.last {
-            let first = result.first!
-            let last = result.last!
+            let first = result[0]
+            let last = result[result.count - 1]
             if last.x != first.x
                 || last.y != first.y
             {
@@ -284,7 +285,7 @@ enum AntimeridianCutting {
                 result.append(Coordinate3D(x: x, y: first.y, projection: projection))
             }
         }
-        result.append(result.first!)
+        result.append(result[0])
 
         return result
     }
@@ -353,7 +354,7 @@ extension LineString {
         var currentPart: [Coordinate3D] = [coordinates[0]]
 
         for i in 1..<coordinates.count {
-            let prev = currentPart.last!
+            let prev = currentPart[currentPart.count - 1]
             let curr = coordinates[i]
 
             if let intersection = AntimeridianCutting.intersection(prev, curr, extent: extent) {
@@ -415,9 +416,9 @@ extension Polygon {
 
     /// Internal: returns each cut part as a separate `Polygon`.
     fileprivate func _cutParts(extent: Double) -> [Polygon] {
-        guard crossesAntimeridian else { return [self] }
+        guard crossesAntimeridian, let outerRing else { return [self] }
 
-        let outerResult = AntimeridianCutting.cutRing(outerRing!, extent: extent)
+        let outerResult = AntimeridianCutting.cutRing(outerRing, extent: extent)
 
         var rightInnerRings: [[Coordinate3D]] = []
         var leftInnerRings: [[Coordinate3D]] = []

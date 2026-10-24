@@ -872,12 +872,13 @@ extension Overlay {
             let ring = Ring(unchecked: coords)
             let candidate = Polygon(unchecked: [ring])
             let testPoint = candidate.poleOfInaccessibility()?.coordinate
-                ?? ring.coordinates.first!
+                ?? ring.coordinates[0]
 
             var assigned = false
             for (i, _) in result.enumerated() {
                 if result[i].locate(testPoint, gridSize: nil) == .interior {
-                    let poly = Polygon(unchecked: [result[i].outerRing!] + (result[i].innerRings ?? []) + [ring])
+                    let outerRing = result[i].outerRing ?? ring
+                    let poly = Polygon(unchecked: [outerRing] + (result[i].innerRings ?? []) + [ring])
                     result[i] = poly
                     assigned = true
                     break

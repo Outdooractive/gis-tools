@@ -143,9 +143,11 @@ enum Triangulator {
 
         let sorted = vertices.sorted { $0.x > $1.x }
 
-        let xmin = sorted.last!.x
-        let xmax = sorted.first!.x
-        var ymin = sorted.last!.y
+        let last = sorted[sorted.count - 1]
+        let first = sorted[0]
+        let xmin = last.x
+        let xmax = first.x
+        var ymin = last.y
         var ymax = ymin
 
         for v in sorted {

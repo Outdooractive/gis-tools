@@ -22,7 +22,7 @@ extension GeoJson {
         guard let geoJson = Densify.densify(geoJson: self, maxSegmentLength: maxSegmentLength) else {
             return self
         }
-        return geoJson as! Self
+        return GeometryDispatch.checkedCast(geoJson, to: Self.self)
     }
 
 }
@@ -136,7 +136,7 @@ private enum Densify {
                 }
             }
         }
-        result.append(coords.last!)
+        result.append(coords[coords.count - 1])
         return result
     }
 

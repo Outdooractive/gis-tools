@@ -65,7 +65,7 @@ extension GeoJson {
             sumX += x
             sumY += coordinate.latitude
             if hasAltitude {
-                sumZ += coordinate.altitude!
+                sumZ += coordinate.altitude ?? 0.0
             }
         }
 

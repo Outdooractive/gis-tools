@@ -92,7 +92,7 @@ private enum Minkowski {
               sourcePolygons.isNotEmpty
         else { return nil }
 
-        let projection = sourcePolygons.first!.projection
+        let projection = sourcePolygons[0].projection
 
         // ECEF x/y/z are not a map plane, so run the Minkowski geometry in
         // geographic coordinates and project the result back. All other
