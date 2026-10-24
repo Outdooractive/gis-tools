@@ -325,6 +325,12 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Cross-projection line clipping (#399): `LineString` and `MultiLineString`
+  clipping now projects the line into the bounding box's CRS before clipping,
+  then projects the result back to the source CRS. This makes EPSG:4978 lines
+  clip correctly against EPSG:4326 boxes instead of being dropped by an
+  axis-aligned ECEF approximation. Foreign members are preserved.
+
 - Symmetric difference correctness (#394): `symmetricDifference` is now the
   union of the two independently computed one-sided differences (`A \ B` and
   `B \ A`) instead of a single multi-component XOR boundary pass. This fixes
