@@ -60,7 +60,7 @@ extension GeoJson {
         switch self {
         case let point as Point:
             var newPoint = Point(point.coordinate.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM))
-            newPoint.boundingBox = point.boundingBox
+            if point.boundingBox != nil { newPoint.updateBoundingBox(onlyIfNecessary: false) }
             newPoint.foreignMembers = point.foreignMembers
             return newPoint as! Self
 
@@ -68,7 +68,7 @@ extension GeoJson {
             guard var newMultiPoint = MultiPoint(multiPoint.coordinates.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             })) else { return self }
-            newMultiPoint.boundingBox = multiPoint.boundingBox
+            if multiPoint.boundingBox != nil { newMultiPoint.updateBoundingBox(onlyIfNecessary: false) }
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
             return newMultiPoint as! Self
 
@@ -76,7 +76,7 @@ extension GeoJson {
             guard var newLineString = LineString(lineString.coordinates.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))  else { return self }
-            newLineString.boundingBox = lineString.boundingBox
+            if lineString.boundingBox != nil { newLineString.updateBoundingBox(onlyIfNecessary: false) }
             newLineString.foreignMembers = lineString.foreignMembers
             return newLineString as! Self
 
@@ -86,7 +86,7 @@ extension GeoJson {
                     $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
                 })
             }))  else { return self }
-            newMultiLineString.boundingBox = multiLineString.boundingBox
+            if multiLineString.boundingBox != nil { newMultiLineString.updateBoundingBox(onlyIfNecessary: false) }
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
             return newMultiLineString as! Self
 
@@ -96,7 +96,7 @@ extension GeoJson {
                     $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
                 })
             })) else { return self }
-            newPolygon.boundingBox = polygon.boundingBox
+            if polygon.boundingBox != nil { newPolygon.updateBoundingBox(onlyIfNecessary: false) }
             newPolygon.foreignMembers = polygon.foreignMembers
             return newPolygon as! Self
 
@@ -108,7 +108,7 @@ extension GeoJson {
                     })
                 })
             })) else { return self }
-            newMultiPolygon.boundingBox = multiPolygon.boundingBox
+            if multiPolygon.boundingBox != nil { newMultiPolygon.updateBoundingBox(onlyIfNecessary: false) }
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
             return newMultiPolygon as! Self
 
@@ -116,7 +116,7 @@ extension GeoJson {
             var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))
-            newGeometryCollection.boundingBox = geometryCollection.boundingBox
+            if geometryCollection.boundingBox != nil { newGeometryCollection.updateBoundingBox(onlyIfNecessary: false) }
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
             return newGeometryCollection as! Self
 
@@ -126,7 +126,7 @@ extension GeoJson {
                     id: feature.id,
                     properties: feature.properties,
                     foreignMembers: feature.foreignMembers)
-                newFeature.boundingBox = feature.boundingBox
+                if feature.boundingBox != nil { newFeature.updateBoundingBox(onlyIfNecessary: false) }
                 return newFeature as! Self
             }
 
@@ -134,7 +134,7 @@ extension GeoJson {
                 geometry.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM),
                 id: feature.id,
                 properties: feature.properties)
-            newFeature.boundingBox = feature.boundingBox
+            if feature.boundingBox != nil { newFeature.updateBoundingBox(onlyIfNecessary: false) }
             newFeature.foreignMembers = feature.foreignMembers
             return newFeature as! Self
 
@@ -142,7 +142,7 @@ extension GeoJson {
             var newFeatureCollection = FeatureCollection(featureCollection.features.map({
                 $0.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM)
             }))
-            newFeatureCollection.boundingBox = featureCollection.boundingBox
+            if featureCollection.boundingBox != nil { newFeatureCollection.updateBoundingBox(onlyIfNecessary: false) }
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
             return newFeatureCollection as! Self
 

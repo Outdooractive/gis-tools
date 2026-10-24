@@ -153,7 +153,7 @@ extension Ring {
                 area += dLon * sinLat
             }
 
-            area *= GISTool.equatorialRadius * GISTool.equatorialRadius / 2.0
+            area *= GISTool.earthRadius * GISTool.earthRadius / 2.0
         }
 
         return area

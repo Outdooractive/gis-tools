@@ -241,4 +241,37 @@ extension BooleanCoversTests {
         #expect(polygon.contains(line))
     }
 
+
+    // MARK: - Audit regressions
+
+    @Test
+    func featureCollectionReceiverActsAsUnion() throws {
+        let left = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let right = try #require(Polygon([[
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let spanning = try #require(Polygon([[
+            Coordinate3D(x: 2.0, y: 1.0, projection: .noSRID),
+            Coordinate3D(x: 8.0, y: 1.0, projection: .noSRID),
+            Coordinate3D(x: 8.0, y: 4.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 4.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 1.0, projection: .noSRID),
+        ]]))
+
+        let collection = FeatureCollection([Feature(left), Feature(right)])
+        #expect(collection.covers(spanning))
+        #expect(collection.contains(spanning))
+    }
+
+
 }
