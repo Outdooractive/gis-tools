@@ -4,7 +4,14 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   macos:
@@ -19,7 +26,7 @@ jobs:
         run: swift package clean
       - name: Build without Graph trait
         run: swift build
-      - name: Build Test with Graph trait
+      - name: Test with Graph trait
         run: swift test --traits EnableGraphAPI
 
   linux:
@@ -32,5 +39,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build without Graph trait
         run: swift build
-      - name: Build Test with Graph trait
+      - name: Test with Graph trait
         run: swift test --traits EnableGraphAPI
+
+  linux-traits:
+    name: build (linux traits)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: swift:6.1
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test meter conversion trait
+        run: swift test --traits EnableMeterConversionExtensions
+      - name: Test measurement conversion trait
+        run: swift test --traits EnableMeasurementConversionExtensions
