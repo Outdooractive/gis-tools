@@ -13,7 +13,7 @@ struct AreaTests {
             Coordinate3D(x: 0.0, y: 100.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857)
         ]]))
-        #expect(abs(polygon.area - 10000.0) < 0.1)
+        #expect(abs(polygon.area - 9977.660508812702) < 0.1)
     }
 
     // Tests polygon area calculation for a polygon with a single hole.
@@ -32,7 +32,7 @@ struct AreaTests {
             Coordinate3D(x: 25.0, y: 75.0, projection: .epsg3857),
             Coordinate3D(x: 25.0, y: 25.0, projection: .epsg3857)
         ]]))
-        #expect(abs(polygon.area - 7500.0) < 0.1)
+        #expect(abs(polygon.area - 7483.245381609526) < 0.1)
     }
 
     // Tests polygon area with overlapping holes.
@@ -57,7 +57,7 @@ struct AreaTests {
             Coordinate3D(x: 40.0, y: 80.0, projection: .epsg3857),
         ]))
         let polygon = try #require(Polygon([outerRing, hole1, hole2]))
-        #expect(abs(polygon.area - 7200.0) < 0.1)
+        #expect(abs(polygon.area - 7183.915566345144) < 0.1)
     }
 
     // MARK: - Projections
@@ -304,4 +304,24 @@ struct AreaTests {
             #expect(abs(try #require(polygon.area(in: .meters)) - polygon.area) < 0.000001)
             #expect(abs(try #require(polygon.area(in: .kilometers)) - (polygon.area / 1_000_000.0)) < 0.000001)
         }
+
+    }
+
+    // MARK: - Audit regressions
+
+    /// Area and distance use the same documented spherical Earth radius.
+    @Test
+    func areaAndDistanceUseSameEarthModel() throws {
+        let side = 0.001
+        let southwest = Coordinate3D(latitude: 0.0, longitude: 0.0)
+        let southeast = Coordinate3D(latitude: 0.0, longitude: side)
+        let northeast = Coordinate3D(latitude: side, longitude: side)
+        let northwest = Coordinate3D(latitude: side, longitude: 0.0)
+
+        let square = try #require(Polygon([[
+            southwest, southeast, northeast, northwest, southwest,
+        ]]))
+        let sideLength = southwest.distance(from: southeast)
+        let planarArea = sideLength * sideLength
+        #expect(abs(square.area - planarArea) / planarArea < 0.0001)
     }

@@ -542,4 +542,35 @@ extension TileCoverTests {
         }
     }
 
+
+    @Test
+    func exactSingleTilePolygonCover() throws {
+        // A rectangle strictly inside the x=0, y=1 tile at zoom 2.
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: -91.0),
+            Coordinate3D(latitude: 60.0, longitude: -91.0),
+            Coordinate3D(latitude: 60.0, longitude: -179.0),
+            Coordinate3D(latitude: 1.0, longitude: -179.0),
+        ]]))
+        #expect(Set(polygon.tileCover(atZoom: 2)) == [MapTile(x: 0, y: 1, z: 2)])
+    }
+
+    @Test
+    func exactRectangleTileCover() throws {
+        // Exactly the left half of the world at zoom 1, rows 0...1.
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -1.0),
+            Coordinate3D(latitude: 60.0, longitude: -1.0),
+            Coordinate3D(latitude: 60.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+        ]]))
+        #expect(Set(polygon.tileCover(atZoom: 1)) == [
+            MapTile(x: 0, y: 0, z: 1),
+            MapTile(x: 0, y: 1, z: 1),
+        ])
+    }
+
+
 }

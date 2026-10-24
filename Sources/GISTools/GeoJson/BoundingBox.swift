@@ -144,6 +144,18 @@ public struct BoundingBox:
             }
         }
 
+        // A geometry that crosses the wraparound axis has a raw x range
+        // wider than one world. Use the full world extent on that axis so an
+        // R-tree lookup on either side of the seam still finds it; the
+        // geometry's own intersects check then rejects false positives.
+        if let extent = projection.wraparoundExtent,
+           extent > 0.0,
+           maxX - minX > extent
+        {
+            minX = -extent
+            maxX = extent
+        }
+
         let altitude = (allHaveAltitude ? minAltitude : nil, allHaveAltitude ? maxAltitude : nil)
         self.init(
             projection: projection,

@@ -33,8 +33,8 @@ struct SymmetricDifferenceTests {
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
         if expectedArea > 0 {
             let ratio = resultArea / expectedArea
-            #expect(ratio > 0.60 && ratio < 1.40,
-                    "\(name): area ratio \(ratio) outside [0.60, 1.40]")
+            #expect(ratio > 0.99 && ratio < 1.01,
+                    "\(name): area ratio \(ratio) outside [0.99, 1.01]")
         }
         else {
             #expect(resultArea == 0, "\(name): expected empty but got area \(resultArea)")
@@ -360,5 +360,22 @@ extension SymmetricDifferenceTests {
         #expect(abs(result.polygons.reduce(0) { $0 + $1.area }
             - (first.area + second.area + remote.area)) < 1.0)
     }
+
+
+    @Test
+    func analyticSquareSymmetricDifference() throws {
+        func square(_ minX: Double, _ maxX: Double) throws -> Polygon {
+            try #require(Polygon([[
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+            ]]))
+        }
+        let result = try #require((try square(0.0, 10.0)).symmetricDifference(with: try square(5.0, 15.0)))
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - 100.0) < 0.000001)
+    }
+
 
 }
