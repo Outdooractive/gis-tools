@@ -1,6 +1,7 @@
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
+import Foundation
 
 // MARK: - Projection
 
@@ -395,6 +396,7 @@ public struct Projection:
         guard let definition = ProjectionRegistry.definition(forSrid: srid) else {
             preconditionFailure("Projection \(srid) has no registered definition")
         }
+
         return definition
     }
 
@@ -606,6 +608,34 @@ extension Projection {
 
 // MARK: - UTM WKT
 
+/// Small `NSRegularExpression` wrapper for WKT matching.
+///
+/// Keeps the library deployable on iOS 15/tvOS 15/watchOS 7, where the Swift
+/// `Regex` type and regex literals are unavailable.
+private enum WKTRegex {
+
+    /// Returns the full match and capture groups, or `nil`.
+    static func firstMatch(_ pattern: String, in string: String) -> [String?]? {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return nil
+        }
+
+        let range = NSRange(string.startIndex ..< string.endIndex, in: string)
+        guard let match = regex.firstMatch(in: string, range: range) else {
+            return nil
+        }
+
+        return (0 ..< match.numberOfRanges).map { index in
+            guard let range = Range(match.range(at: index), in: string) else {
+                return nil
+            }
+
+            return String(string[range])
+        }
+    }
+
+}
+
 /// Namespace for identifying UTM zones in WKT projection strings.
 ///
 /// Both patterns allow spaces or underscores as word separators (the common
@@ -625,20 +655,23 @@ private enum UtmWktIdentification {
     /// defines the datum-zoned pairing.
     static func projection(in wkt: String) -> Projection? {
         // A UTM zone token, e.g. `UTM Zone 19N` or `UTM_Zone_5s`.
-        let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*(\d{1,2})[\s_]*([NS])/
-        // A central meridian parameter, e.g. `"Central_Meridian",-69`.
-        let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
-        // An ETRS89 datum token, e.g. `ETRS89` or the ESRI `ETRS_1989`.
-        let etrsRegex = /(?i)ETRS[\s_]*(?:89|1989)/
-        // An NAD83 datum token, e.g. `NAD83` or the ESRI `NAD_1983`.
-        let nad83Regex = /(?i)NAD[\s_]*(?:83|1983)/
+        let zoneMatch = WKTRegex.firstMatch(
+            #"(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*(\d{1,2})[\s_]*([NS])"#,
+            in: wkt)
+        guard let zoneMatch,
+              let zoneText = zoneMatch[1],
+              let zone = Int(zoneText),
+              zone >= 1,
+              zone <= 60
+        else { return nil }
 
-        guard let zoneMatch = wkt.firstMatch(of: zoneRegex) else { return nil }
-        guard let zone = Int(String(zoneMatch.1)), zone >= 1, zone <= 60 else { return nil }
-
-        let isSouthern = zoneMatch.2.uppercased() == "S"
-        let isEtrs89 = wkt.firstMatch(of: etrsRegex) != nil
-        let isNad83 = wkt.firstMatch(of: nad83Regex) != nil
+        let isSouthern = zoneMatch[2]?.uppercased() == "S"
+        let isEtrs89 = WKTRegex.firstMatch(
+            #"(?i)ETRS[\s_]*(?:89|1989)"#,
+            in: wkt) != nil
+        let isNad83 = WKTRegex.firstMatch(
+            #"(?i)NAD[\s_]*(?:83|1983)"#,
+            in: wkt) != nil
 
         // A datum-specific belt has a fixed zone range; an out-of-range or
         // wrong-hemisphere zone must not fall through to the WGS84 belt.
@@ -649,22 +682,25 @@ private enum UtmWktIdentification {
         // The ETRS89 belt: EPSG:25828–25838 (Northern only).
         if isEtrs89 {
             guard !isSouthern, (28 ... 38).contains(zone) else { return nil }
+
             return Projection(srid: 25800 + zone)
         }
 
         // The NAD83 belt: EPSG:26901–26923 (Northern only).
         if isNad83 {
             guard !isSouthern, (1 ... 23).contains(zone) else { return nil }
+
             return Projection(srid: 26900 + zone)
         }
 
         let srid = isSouthern ? 32700 + zone : 32600 + zone
 
-        if let meridianMatch = wkt.firstMatch(of: centralMeridianRegex) {
+        if let meridianMatch = WKTRegex.firstMatch(
+            #"(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)"#,
+            in: wkt), let meridianText = meridianMatch[1], let centralMeridian = Double(meridianText)
+        {
             let expected = Double((zone - 1) * 6 - 180 + 3)
-            guard let centralMeridian = Double(String(meridianMatch.1)),
-                  abs(centralMeridian - expected) < 0.001
-            else { return nil }
+            guard abs(centralMeridian - expected) < 0.001 else { return nil }
         }
 
         return Projection(srid: srid)
@@ -673,8 +709,9 @@ private enum UtmWktIdentification {
     /// `true` when the string carries a UTM zone token (regardless of
     /// whether the zone identification succeeds).
     static func hasUtmZoneToken(in wkt: String) -> Bool {
-        let zoneRegex = /(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*\d/
-        return wkt.firstMatch(of: zoneRegex) != nil
+        WKTRegex.firstMatch(
+            #"(?i)(?:UTM|Universal[\s_]+Transverse[\s_]+Mercator)[\s_]*Zone[\s_]*\d"#,
+            in: wkt) != nil
     }
 
 }
@@ -697,22 +734,36 @@ private enum GaussKruegerWktIdentification {
         // A Gauss-Krüger token: the projection name (also abbreviated
         // "GK" in EPSG-style names) or the ESRI `PROJECTION["Gauss_Kruger"]`
         // parameter.
-        let gkRegex = /(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]/
-        guard wkt.firstMatch(of: gkRegex) != nil else { return nil }
+        guard WKTRegex.firstMatch(
+            #"(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]"#,
+            in: wkt) != nil
+        else { return nil }
 
-        let centralMeridianRegex = /(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)/
-        let falseEastingRegex = /(?i)False[\s_]*Easting["]?\s*,\s*(-?\d+(?:\.\d+)?)/
-        let centralMeridian = wkt.firstMatch(of: centralMeridianRegex).flatMap { Double(String($0.1)) }
-        let falseEasting = wkt.firstMatch(of: falseEastingRegex).flatMap { Double(String($0.1)) }
+        let centralMeridian = WKTRegex.firstMatch(
+            #"(?i)Central[\s_]*Meridian["]?\s*,\s*(-?\d+(?:\.\d+)?)"#,
+            in: wkt)
+            .flatMap { match in
+                match[1].flatMap(Double.init)
+            }
+        let falseEasting = WKTRegex.firstMatch(
+            #"(?i)False[\s_]*Easting["]?\s*,\s*(-?\d+(?:\.\d+)?)"#,
+            in: wkt)
+            .flatMap { match in
+                match[1].flatMap(Double.init)
+            }
 
         // The datum token selects the belt.
-        let dhdnRegex = /(?i)DHDN|Deutsches[\s_]*Hauptdreiecksnetz/
-        if wkt.firstMatch(of: dhdnRegex) != nil {
+        if WKTRegex.firstMatch(
+            #"(?i)DHDN|Deutsches[\s_]*Hauptdreiecksnetz"#,
+            in: wkt) != nil
+        {
             return dhdnZone(wkt: wkt, centralMeridian: centralMeridian, falseEasting: falseEasting)
         }
 
-        let mgiRegex = /(?i)MGI|Militar[\s_-]*Geographische[\s_-]*Institut/
-        if wkt.firstMatch(of: mgiRegex) != nil {
+        if WKTRegex.firstMatch(
+            #"(?i)MGI|Militar[\s_-]*Geographische[\s_-]*Institut"#,
+            in: wkt) != nil
+        {
             return mgiZone(wkt: wkt, centralMeridian: centralMeridian, falseEasting: falseEasting)
         }
 
@@ -721,8 +772,9 @@ private enum GaussKruegerWktIdentification {
 
     /// `true` when the string carries a Gauss-Krüger token.
     static func hasGaussKruegerToken(in wkt: String) -> Bool {
-        let gkRegex = /(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]/
-        return wkt.firstMatch(of: gkRegex) != nil
+        WKTRegex.firstMatch(
+            #"(?i)Gauss[\s_-]*Kr[üu](?:e)?ger|[\s_\/]GK[\s_]"#,
+            in: wkt) != nil
     }
 
     /// The DHDN zone: from the zone token (`zone N`, `_DHDN_N`), the
@@ -731,10 +783,14 @@ private enum GaussKruegerWktIdentification {
     private static func dhdnZone(
         wkt: String,
         centralMeridian: Double?,
-        falseEasting: Double?
+        falseEasting: Double?,
     ) -> Projection? {
-        let zoneRegex = /(?i)(?:zone|DHDN)[\s_-]*(\d{1,2})/
-        let zoneFromToken = wkt.firstMatch(of: zoneRegex).flatMap { Int(String($0.1)) }
+        let zoneFromToken = WKTRegex.firstMatch(
+            #"(?i)(?:zone|DHDN)[\s_-]*(\d{1,2})"#,
+            in: wkt)
+            .flatMap { match in
+                match[1].flatMap(Int.init)
+            }
 
         var candidates: [(Int, Double, Double)] = []
         for zone in 2 ... 5 {
@@ -770,7 +826,7 @@ private enum GaussKruegerWktIdentification {
     private static func mgiZone(
         wkt: String,
         centralMeridian: Double?,
-        falseEasting: Double?
+        falseEasting: Double?,
     ) -> Projection? {
         // (srid, central meridian degrees, false easting).
         let zones: [(Int, Double, Double)] = [
@@ -783,9 +839,9 @@ private enum GaussKruegerWktIdentification {
 
         // The zone token: `M28`/`M31`/`M34` in the name (the Ferro-based
         // historic numbering: 28°/31°/34° minus the Ferro offset 17°40').
-        let zoneTokenRegex = /(?i)M(28|31|34)/
-        if let zoneMatch = wkt.firstMatch(of: zoneTokenRegex),
-           let token = Int(String(zoneMatch.1))
+        if let zoneMatch = WKTRegex.firstMatch(#"(?i)M(28|31|34)"#, in: wkt),
+           let tokenText = zoneMatch[1],
+           let token = Int(tokenText)
         {
             let srid = 31257 + (token - 28) / 3
             return Projection(srid: srid)

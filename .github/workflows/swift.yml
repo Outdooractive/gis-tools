@@ -29,6 +29,49 @@ jobs:
       - name: Test with Graph trait
         run: swift test --traits EnableGraphAPI
 
+  macos-min:
+    name: build (macos, Swift 6.1)
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: "6.1"
+      - name: Swift version
+        run: swift --version
+      - name: Build without Graph trait
+        run: swift build
+      - name: Test with Graph trait
+        run: swift test --traits EnableGraphAPI
+
+  apple-platforms:
+    name: build (iOS/tvOS/watchOS simulators)
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-iOS" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Build for tvOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=tvOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-tvOS" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Build for watchOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=watchOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-watchOS" \
+            CODE_SIGNING_ALLOWED=NO build
+
   linux:
     name: build (linux)
     runs-on: ubuntu-latest

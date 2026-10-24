@@ -335,6 +335,11 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Apple deployment-target compatibility: replaced Swift regex literals in
+  projection WKT identification with `NSRegularExpression` and the
+  synchronization `Mutex` in the projection registry with an `NSLock` wrapper.
+  This makes the declared iOS 15/tvOS 15/watchOS 7 deployment targets build.
+
 - Polar Lambert azimuthal equal-area forward projection scaling: the polar
   branches now apply the ellipsoid semi-major axis, matching the equatorial
   and oblique formulas and the inverse path. Discovered by the new LAEA mode
