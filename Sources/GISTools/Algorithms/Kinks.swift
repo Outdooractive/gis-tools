@@ -27,7 +27,7 @@ extension GeoJson {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let geometry = (snappedSelf as? Feature)?.geometry ?? (snappedSelf as? GeoJsonGeometry)
 
-        let coordSets: [[Coordinate3D]]
+        var coordSets: [[Coordinate3D]]
 
         switch geometry {
         case let ls as LineString:
@@ -40,6 +40,10 @@ extension GeoJson {
             coordSets = mp.coordinates.flatMap { $0 }
         default:
             return MultiPoint()
+        }
+
+        if let extent = geometry?.projection.wraparoundExtent, extent > 0.0 {
+            coordSets = Polygon.alignedUnwrappedSets(coordSets, extent: extent)
         }
 
         var intersectionPoints: Set<Coordinate3D> = []
@@ -109,7 +113,11 @@ extension Polygon {
         epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) -> [Polygon] {
-        Self.unkinkPolygons(from: [self], epsilon: epsilon, gridSize: gridSize)
+        let extent = projection.wraparoundExtent
+        let working = extent.map { [Polygon.unwrappedForKinks(self, extent: $0)] } ?? [self]
+        let result = Self.unkinkPolygons(from: working, epsilon: epsilon, gridSize: gridSize)
+        guard let extent else { return result }
+        return result.map { Polygon.normalizedKinkResult($0, extent: extent) }
     }
 
     /// Splits a self-intersecting polygon in place.
@@ -143,7 +151,13 @@ extension MultiPolygon {
         epsilon: Double = GISTool.equalityDelta,
         gridSize: Double? = nil
     ) -> [Polygon] {
-        Polygon.unkinkPolygons(from: polygons, epsilon: epsilon, gridSize: gridSize)
+        let extent = projection.wraparoundExtent
+        let working = extent.map { extent in
+            polygons.map { Polygon.unwrappedForKinks($0, extent: extent) }
+        } ?? polygons
+        let result = Polygon.unkinkPolygons(from: working, epsilon: epsilon, gridSize: gridSize)
+        guard let extent else { return result }
+        return result.map { Polygon.normalizedKinkResult($0, extent: extent) }
     }
 
     /// Splits all self-intersecting polygons in place.
@@ -317,7 +331,7 @@ extension Polygon {
 
         // 5. Build segments and adjacency
         var segments: [UnkinkSegment] = []
-        var adj: [String: [Int]] = [:]
+        var adj: [KinkVertexKey: [Int]] = [:]
 
         for ringIndex in 0 ..< numRings {
             let edgeSplits = ringEdgeSplits[ringIndex]
@@ -352,7 +366,7 @@ extension Polygon {
         // Build lookup: for each intersection coordinate, which segments from
         // each ring meet at that point
         typealias SegAtNode = (segIndex: Int, forward: Bool)
-        var nodeSegs: [String: [SegAtNode]] = [:]
+        var nodeSegs: [KinkVertexKey: [SegAtNode]] = [:]
         for (segIndex, seg) in segments.enumerated() {
             let sk = vertexKey(seg.start)
             let ek = vertexKey(seg.end)
@@ -361,14 +375,14 @@ extension Polygon {
         }
 
         // For each intersection coordinate, find the two original edges that intersect
-        var isectEdgePairs: [String: (ring0: Int, edge0: Int, ring1: Int, edge1: Int)] = [:]
+        var isectEdgePairs: [KinkVertexKey: (ring0: Int, edge0: Int, ring1: Int, edge1: Int)] = [:]
         for isect in intersections {
             let key = vertexKey(isect.coordinate)
             isectEdgePairs[key] = (isect.ring0, isect.edge0, isect.ring1, isect.edge1)
         }
 
         func getOtherRingSegments(
-            at nodeKey: String,
+            at nodeKey: KinkVertexKey,
             fromRing: Int,
             fromEdge: Int,
             arrivingForward: Bool
@@ -499,17 +513,10 @@ extension Polygon {
         var usedAsChild: Set<Int> = []
 
         for i in 0 ..< counted.count where counted[i].parentIndex == -1 {
-            var outerCoords = counted[i].coords
-            if outerCoords.count > 2, outerCoords.first! == outerCoords.last! {
-                outerCoords.removeLast()
-            }
+            let outerCoords = counted[i].coords
             var holes: [[Coordinate3D]] = []
             for h in 0 ..< counted.count where counted[h].parentIndex == i {
-                var hc = counted[h].coords
-                if hc.count > 2, hc.first! == hc.last! {
-                    hc.removeLast()
-                }
-                holes.append(hc)
+                holes.append(counted[h].coords)
                 usedAsChild.insert(h)
             }
             if let polygon = Polygon([outerCoords] + holes) {
@@ -518,11 +525,7 @@ extension Polygon {
         }
 
         for i in 0 ..< counted.count where counted[i].parentIndex != -1 && !usedAsChild.contains(i) {
-            var coords = counted[i].coords
-            if coords.count > 2, coords.first! == coords.last! {
-                coords.removeLast()
-            }
-            if let polygon = Polygon([coords]) {
+            if let polygon = Polygon([counted[i].coords]) {
                 result.append(polygon)
             }
         }
@@ -576,8 +579,66 @@ extension Polygon {
         return ((point.longitude - start.longitude) * dx + (point.latitude - start.latitude) * dy) / lenSq
     }
 
-    private static func vertexKey(_ c: Coordinate3D) -> String {
-        "\(c.longitude),\(c.latitude)"
+    fileprivate static func unwrappedForKinks(_ polygon: Polygon, extent: Double) -> Polygon {
+        let period = 2.0 * extent
+        var rings = polygon.coordinates.map { AntimeridianCutting.unwrapCoordinates($0, extent: extent) }
+        guard let outer = rings.first, outer.isNotEmpty, rings.count > 1 else {
+            return Polygon(unchecked: rings)
+        }
+        let reference = outer.reduce(0.0) { $0 + $1.x } / Double(outer.count)
+        for index in 1 ..< rings.count {
+            let ring = rings[index]
+            guard ring.isNotEmpty else { continue }
+            let center = ring.reduce(0.0) { $0 + $1.x } / Double(ring.count)
+            let shift = ((reference - center) / period).rounded() * period
+            guard shift != 0.0 else { continue }
+            rings[index] = ring.map {
+                Coordinate3D(x: $0.x + shift, y: $0.y, z: $0.altitude, m: $0.m, projection: $0.projection)
+            }
+        }
+        return Polygon(unchecked: rings)
+    }
+
+    fileprivate static func normalizedKinkResult(_ polygon: Polygon, extent: Double) -> Polygon {
+        Polygon(unchecked: polygon.coordinates.map { ring in ring.map { $0.normalized() } })
+    }
+
+    fileprivate static func alignedUnwrappedSets(_ sets: [[Coordinate3D]], extent: Double) -> [[Coordinate3D]] {
+        guard sets.isNotEmpty else { return sets }
+        let period = 2.0 * extent
+        let unwrapped = sets.map { AntimeridianCutting.unwrapCoordinates($0, extent: extent) }
+        guard let first = unwrapped.first, first.isNotEmpty else { return unwrapped }
+        let reference = first.reduce(0.0) { $0 + $1.x } / Double(first.count)
+        return unwrapped.enumerated().map { index, set in
+            guard index > 0, set.isNotEmpty else { return set }
+            let center = set.reduce(0.0) { $0 + $1.x } / Double(set.count)
+            let shift = ((reference - center) / period).rounded() * period
+            guard shift != 0.0 else { return set }
+            return set.map {
+                Coordinate3D(x: $0.x + shift, y: $0.y, z: $0.altitude, m: $0.m, projection: $0.projection)
+            }
+        }
+    }
+
+    private struct KinkVertexKey: Hashable {
+        let x: Int64
+        let y: Int64
+
+        init(_ coordinate: Coordinate3D) {
+            var x = coordinate.x
+            if let extent = coordinate.projection.wraparoundExtent, extent > 0.0 {
+                let period = 2.0 * extent
+                x = x.truncatingRemainder(dividingBy: period)
+                if x <= -extent { x += period }
+                if x > extent { x -= period }
+            }
+            self.x = Int64((x / GISTool.equalityDelta).rounded())
+            self.y = Int64((coordinate.y / GISTool.equalityDelta).rounded())
+        }
+    }
+
+    private static func vertexKey(_ c: Coordinate3D) -> KinkVertexKey {
+        KinkVertexKey(c)
     }
 
 }

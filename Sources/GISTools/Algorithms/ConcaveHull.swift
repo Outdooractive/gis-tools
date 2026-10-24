@@ -24,8 +24,24 @@ extension GeoJson {
         gridSize: Double? = nil
     ) -> MultiPolygon? {
         let snappedSelf = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
-        let coords = snappedSelf.allCoordinates
-        let unique = Set(coords)
+
+        // ECEF x/y/z are not a map plane: compute in geographic space and
+        // project the hull back into the source CRS.
+        if snappedSelf.projection.isGeocentric {
+            let geographic = snappedSelf.projected(to: .epsg4326)
+            guard let hull = geographic.concaveHull(
+                maxEdgeLength: maxEdgeLength)
+            else { return nil }
+            return hull.projected(to: snappedSelf.projection)
+        }
+
+        let rawCoordinates = snappedSelf.allCoordinates
+        let extent = snappedSelf.projection.wraparoundExtent
+        let coordinates = extent.map {
+            AntimeridianCutting.unwrapCoordinates(rawCoordinates, extent: $0)
+        } ?? rawCoordinates
+
+        let unique = Set(coordinates)
         guard unique.count >= 3 else { return nil }
 
         let points = unique.map { Pt(x: $0.longitude, y: $0.latitude) }
@@ -41,17 +57,11 @@ extension GeoJson {
         guard filteredTriangles.isNotEmpty else { return nil }
 
         if filteredTriangles.count == 1 {
-            return MultiPolygon(unchecked: [
-                Self.polygon(for: filteredTriangles[0], projection: projection)
-            ])
-        }
-
-        // Geocentric and antimeridian-crossing inputs keep the previous
-        // overlay-based merge path, which handles their coordinate frames.
-        if projection.isGeocentric || ConcaveHullBuilder.crossesAntimeridian(snappedSelf) {
-            return Union.unionPolygons(filteredTriangles.map {
-                Self.polygon(for: $0, projection: projection)
-            })
+            return ConcaveHullNormalizer.normalized(
+                MultiPolygon(unchecked: [
+                    Self.polygon(for: filteredTriangles[0], projection: projection)
+                ]),
+                extent: extent)
         }
 
         // The surviving triangles form a planar mesh. Its boundary is the set
@@ -64,12 +74,13 @@ extension GeoJson {
         let assembled = Overlay.polygons(fromBoundaryEdges: boundary)
 
         guard assembled.isNotEmpty else {
-            return Union.unionPolygons(filteredTriangles.map {
+            guard let union = Union.unionPolygons(filteredTriangles.map {
                 Self.polygon(for: $0, projection: projection)
-            })
+            }) else { return nil }
+            return ConcaveHullNormalizer.normalized(union, extent: extent)
         }
 
-        return MultiPolygon(unchecked: assembled)
+        return ConcaveHullNormalizer.normalized(MultiPolygon(unchecked: assembled), extent: extent)
     }
 
     private static func polygon(
@@ -80,6 +91,24 @@ extension GeoJson {
         let p2 = Coordinate3D(x: triangle.b.x, y: triangle.b.y, projection: projection)
         let p3 = Coordinate3D(x: triangle.c.x, y: triangle.c.y, projection: projection)
         return Polygon(unchecked: [[p1, p2, p3, p1]])
+    }
+
+}
+
+private enum ConcaveHullNormalizer {
+
+    static func normalized(
+        _ multiPolygon: MultiPolygon,
+        extent: Double?
+    ) -> MultiPolygon {
+        guard extent != nil else { return multiPolygon }
+
+        let polygons = multiPolygon.polygons.map { polygon in
+            Polygon(unchecked: polygon.coordinates.map { ring in
+                ring.map { $0.normalized() }
+            })
+        }
+        return MultiPolygon(unchecked: polygons)
     }
 
 }

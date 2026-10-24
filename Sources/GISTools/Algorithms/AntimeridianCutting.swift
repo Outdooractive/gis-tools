@@ -52,6 +52,51 @@ enum AntimeridianCutting {
         return false
     }
 
+    // MARK: - Construction helpers
+
+    /// Unwraps a coordinate sequence into a continuous frame around its first
+    /// coordinate, shifting each subsequent x by whole world periods so the
+    /// step stays within ±`extent`.
+    ///
+    /// This is the shared construction helper used by Bézier splines, concave
+    /// hulls and other algorithms that must not interpolate across the long
+    /// way around the world. The output is in the same projection; call
+    /// ``Coordinate3D/normalized()`` when emitting the final geometry.
+    static func unwrapCoordinates(
+        _ coordinates: [Coordinate3D],
+        extent: Double
+    ) -> [Coordinate3D] {
+        guard coordinates.isNotEmpty, extent > 0.0 else { return coordinates }
+
+        let period = 2.0 * extent
+        var result: [Coordinate3D] = []
+        result.reserveCapacity(coordinates.count)
+
+        var previous = coordinates[0]
+        result.append(previous)
+
+        for coordinate in coordinates.dropFirst() {
+            var x = coordinate.x
+            while x - previous.x > extent {
+                x -= period
+            }
+            while previous.x - x > extent {
+                x += period
+            }
+
+            let unwrapped = Coordinate3D(
+                x: x,
+                y: coordinate.y,
+                z: coordinate.altitude,
+                m: coordinate.m,
+                projection: coordinate.projection)
+            result.append(unwrapped)
+            previous = unwrapped
+        }
+
+        return result
+    }
+
     // MARK: - Detection (EPSG:4326)
 
     /// Returns `true` when the shortest path between `p1` and `p2`

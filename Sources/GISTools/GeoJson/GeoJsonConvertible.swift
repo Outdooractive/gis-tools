@@ -49,7 +49,9 @@ extension GeoJsonReadable {
                 return
             }
 
-            return nil
+            // Fall through to the lenient JSONValue path for a different
+            // concrete type (e.g. `MultiPolygon(jsonString:)` given a lone
+            // Polygon).
         }
 
         // Fall back to the lenient JSONValue path for input the typed decoder

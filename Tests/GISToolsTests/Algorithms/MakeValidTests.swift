@@ -523,4 +523,18 @@ extension MakeValidTests {
         #expect(multi.madeValid() == nil)
     }
 
+
+    @Test
+    func gridSizeRepairsNearDuplicateCoordinates() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0000001, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let repaired = try #require(line.madeValid(gridSize: 0.001))
+        #expect(repaired.coordinates.map(\.x) == [0.0, 10.0])
+        #expect(repaired.isValid)
+    }
+
+
 }

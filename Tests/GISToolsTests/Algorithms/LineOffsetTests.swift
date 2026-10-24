@@ -219,4 +219,32 @@ extension LineOffsetTests {
         #expect(result.coordinates.allSatisfy { $0.latitude < 0.0 })
     }
 
+
+    @Test
+    func noSRIDAnd4978OffsetsHaveExactCoordinates() throws {
+        let noSRID = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let offsetNoSRID = try #require(noSRID.offset(by: 2.0))
+        #expect(offsetNoSRID.coordinates.map(\.x) == [0.0, 10.0])
+        #expect(offsetNoSRID.coordinates.map(\.y) == [-2.0, -2.0])
+
+        let ecef = try #require(LineString([
+            Coordinate3D(x: 6_378_000.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 6_378_100.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let offsetECEF = try #require(ecef.offset(by: 10.0))
+        #expect(offsetECEF.projection == .epsg4978)
+        let offsetGeographic = offsetECEF.projected(to: .epsg4326)
+        let sourceGeographic = ecef.projected(to: .epsg4326)
+        for (offsetCoordinate, sourceCoordinate) in zip(
+            offsetGeographic.coordinates,
+            sourceGeographic.coordinates)
+        {
+            #expect(abs(offsetCoordinate.distance(from: sourceCoordinate) - 10.0) < 0.01)
+        }
+    }
+
+
 }
