@@ -161,6 +161,11 @@ The deprecated aliases from 2.x have been removed. Use the current names:
   are covered by a new differential test suite; the generator script is
   development-only and the package keeps no third-party runtime dependency.
 
+- API compatibility CI (#380): pull requests now run
+  `swift package diagnose-api-breaking-changes` against their base branch.
+  Accidental public API removals or signature changes fail CI; intentional
+  changes are acknowledged with the `api-breaking` label. See
+  [API_BREAKAGE.md](API_BREAKAGE.md).
 - Transparent gzip support for GeoJSON data and file loading. The `contentsOf:`
   and `jsonData:` entry points detect the gzip magic bytes and decompress with
   the system zlib library; `GeoJsonReader`, `GeoJsonParser`, `JSONValue` and all
