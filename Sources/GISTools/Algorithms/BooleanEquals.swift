@@ -87,9 +87,13 @@ extension GeoJson {
 
 enum AreaComparison {
 
+    /// Relative tolerance for comparing polygon areas. The scale factor keeps
+    /// the comparison meaningful for both tiny and huge areas.
+    private static let relativeTolerance = 0.000000001
+
     static func areEqual(_ first: Double, _ second: Double) -> Bool {
         let scale = max(abs(first), abs(second), 1.0)
-        return abs(first - second) <= scale * 0.000000001
+        return abs(first - second) <= scale * Self.relativeTolerance
     }
 
 }

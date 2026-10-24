@@ -21,6 +21,13 @@ import Foundation
 /// projection origin.
 struct LambertAzimuthalEqualAreaMath: Sendable {
 
+    /// Angular tolerance for the polar/equatorial mode selection and domain
+    /// guards (PROJ EPS10).
+    private static let angularTolerance = 0.0000000001
+
+    /// Threshold for a vanishing polar q value.
+    private static let qPrimeTolerance = 0.000000000000001
+
     /// The mapping modes of PROJ's laea implementation, keyed by which of
     /// the four domains the projection origin falls into.
     private enum Mode {
@@ -83,10 +90,10 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         self.falseNorthing = falseNorthing
 
         // PROJ's mode selection guard (EPS10: ±90° origins are polar).
-        if abs(abs(phi0) - Double.pi / 2.0) < 0.0000000001 {
+        if abs(abs(phi0) - Double.pi / 2.0) < Self.angularTolerance {
             self.mode = phi0 < 0.0 ? .southPole : .northPole
         }
-        else if abs(phi0) < 0.0000000001 {
+        else if abs(phi0) < Self.angularTolerance {
             self.mode = .equatorial
         }
         else {
@@ -155,11 +162,11 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         switch mode {
         case .oblique:
             let b = 1.0 + sinB1 * sinB + cosB1 * cosB * cosLambda
-            scalingOpt = abs(b) < 0.0000000001 ? nil : b
+            scalingOpt = abs(b) < Self.angularTolerance ? nil : b
 
         case .equatorial:
             let b = 1.0 + cosB * cosLambda
-            scalingOpt = abs(b) < 0.0000000001 ? nil : 1.0 + cosB * cosLambda
+            scalingOpt = abs(b) < Self.angularTolerance ? nil : 1.0 + cosB * cosLambda
 
         case .northPole:
             // PROJ rewrites q and only guards |b| for a real zero (which
@@ -192,7 +199,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         case .northPole, .southPole:
             let qPrime = mode == .northPole ? qPole - q : qPole + q
             // PROJ falls back to the projection center for a vanishing q.
-            if qPrime < 1e-15 {
+            if qPrime < Self.qPrimeTolerance {
                 return (falseEasting, falseNorthing)
             }
             let radius = scaleFactor * sqrt(qPrime)
@@ -215,7 +222,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             var dx = (x - falseEasting) / (ellipsoid.semiMajorAxis * dD)
             let dy = (y - falseNorthing) * dD / ellipsoid.semiMajorAxis
             let rho = hypot(dx, dy)
-            if rho < 0.0000000001 {
+            if rho < Self.angularTolerance {
                 return (latitudeOfOrigin, longitudeOfOrigin)
             }
             guard 0.5 * rho / radiusQ <= 1.0 else {

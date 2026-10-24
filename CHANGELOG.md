@@ -304,6 +304,13 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Hardcoded epsilon audit (#387): replaced unexplained tolerance literals
+  with named constants or existing `GISTool` tolerances. `BooleanPointInPolygon`
+  now uses `GISTool.determinantEpsilon`; `BooleanEquals`, `LineMerge`,
+  `Clusters`, `Overlay`, `Polygonize` and the LCC/Albers/LAEA/Swiss
+  projection math document their local tolerances and units. Numeric values
+  are unchanged.
+
 - Generic geometry dispatch safety (#386): replaced all forced `as!` casts in
   the GeoJSON transform, rewind, snap, simplify, truncate, reverse, densify,
   scale, WKB and WKT dispatch paths with a single checked-cast helper that
@@ -311,7 +318,6 @@ left unchanged; that case is ambiguous per RFC 7946.
   in the same dispatch and geometry paths, including the cited `outerRing!`
   and `sorted.last!` cases. Added regression tests for every concrete GeoJSON
   type and both coder type switches. No public behavior changed.
-
 - Geographic and unit-conversion constants (#388): added canonical
   `GISTool.oneDegreeLatitudeDistance`, `metersPerDegreeLongitude(atLatitude:)`,
   `conservativeMetersPerDegree` and documented length/area conversion

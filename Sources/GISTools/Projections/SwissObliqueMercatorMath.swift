@@ -16,6 +16,9 @@ import Foundation
 /// LV95, 600_000/200_000 for LV03).
 struct SwissObliqueMercatorMath: Sendable {
 
+    /// Newton-iteration convergence tolerance for the inverse projection.
+    private static let convergenceTolerance = 0.0000000001
+
     /// The Bessel 1841 ellipsoid the projection is computed on.
     let ellipsoid: Ellipsoid
 
@@ -140,7 +143,6 @@ struct SwissObliqueMercatorMath: Sendable {
         let e = sqrt(ellipsoid.eccentricitySquared)
 
         var currentPhi = phiP
-        let epsilon = 0.0000000001
         for _ in 0 ..< 6 {
             let esp = e * sin(currentPhi)
             let deltaP = (con + log(tan(.pi / 4.0 + 0.5 * currentPhi))
@@ -148,7 +150,7 @@ struct SwissObliqueMercatorMath: Sendable {
                 * (1.0 - esp * esp) * cos(currentPhi)
                 / (1.0 - ellipsoid.eccentricitySquared)
             currentPhi -= deltaP
-            if abs(deltaP) < epsilon {
+            if abs(deltaP) < Self.convergenceTolerance {
                 break
             }
         }

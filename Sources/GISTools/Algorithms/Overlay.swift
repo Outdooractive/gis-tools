@@ -10,6 +10,10 @@ import Foundation
 /// This limits the usable latitude range to approximately ±85°.
 enum Overlay {
 
+    /// Micron-scale tolerance for near-collinear overlap detection in the
+    /// metre-based overlay working frame.
+    private static let topologyTolerance = 0.000001
+
     // MARK: - Types
 
     struct Edge {
@@ -569,7 +573,7 @@ extension Overlay {
                 // for near-collinearity: tight enough not to disturb dense
                 // buffer geometry, loose enough to absorb projection rounding
                 // differences between platforms.
-                let tolerance = 0.000001
+                let tolerance = Overlay.topologyTolerance
 
                 // Split each edge at the other edge's endpoints. This covers
                 // collinear overlaps (where there is no single intersection

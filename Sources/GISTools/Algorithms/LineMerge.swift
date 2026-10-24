@@ -40,6 +40,10 @@ extension FeatureCollection {
 
 private enum LineMerge {
 
+    /// Tolerance for treating two direction dot products as equal when
+    /// selecting the straightest continuation at a junction.
+    private static let parallelDotTolerance = 0.0000000001
+
     // MARK: - Model
 
     private enum End: Hashable {
@@ -122,11 +126,11 @@ private enum LineMerge {
                             remaining[i],
                             remaining[j],
                             records: records)
-                        if dot < bestDot - 0.0000000001 {
+                        if dot < bestDot - LineMerge.parallelDotTolerance {
                             bestDot = dot
                             bestPair = (remaining[i], remaining[j])
                         }
-                        else if abs(dot - bestDot) <= 0.0000000001,
+                        else if abs(dot - bestDot) <= LineMerge.parallelDotTolerance,
                                 let current = bestPair,
                                 occurrenceOrderKey(remaining[i], records: records)
                                     < occurrenceOrderKey(current.first, records: records)

@@ -15,6 +15,9 @@ import Foundation
 /// ``CustomProjection/lambertConformalConic(datum:helmert:)``.
 struct LambertConformalConicMath: Sendable {
 
+    /// PROJ's EPS10 tolerance for degenerate standard-parallel choices.
+    private static let parallelTolerance = 0.0000000001
+
     /// The ellipsoid the projection is computed on.
     let ellipsoid: Ellipsoid
 
@@ -58,10 +61,10 @@ struct LambertConformalConicMath: Sendable {
         falseNorthing: Double = 0.0
     ) {
         // PROJ's EPS10 domain guards: the mirror symmetry across the
-        // equator degenerates for |lat1 + lat2| < 1e-10, and the msfn / t
-        // series diverge at the poles.
+        // equator degenerates for |lat1 + lat2| < parallelTolerance, and the
+        // msfn / t series diverge at the poles.
         precondition(
-            abs(latitudeOfFirstParallel + latitudeOfSecondParallel) >= 0.0000000001,
+            abs(latitudeOfFirstParallel + latitudeOfSecondParallel) >= Self.parallelTolerance,
             "Invalid choice of standard parallels: the sum should be larger than epsilon")
         precondition(
             abs(latitudeOfFirstParallel) < 90.0 && abs(latitudeOfSecondParallel) < 90.0,
@@ -82,7 +85,7 @@ struct LambertConformalConicMath: Sendable {
         let es = ellipsoid.eccentricitySquared
         let e = sqrt(es)
 
-        let secant = abs(phi1 - phi2) >= 0.0000000001
+        let secant = abs(phi1 - phi2) >= Self.parallelTolerance
 
         let m1 = Self.msfn(sin(phi1), cos(phi1), es)
         let t1 = Self.tsfn(phi1, sin(phi1), e)
