@@ -794,19 +794,19 @@ extension WKTCoder {
     ) {
         switch geometry.type {
         case .point:
-            encode(geometry as! Point, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: Point.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiPoint:
-            encode(geometry as! MultiPoint, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiPoint.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .lineString:
-            encode(geometry as! LineString, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: LineString.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiLineString:
-            encode(geometry as! MultiLineString, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiLineString.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .polygon:
-            encode(geometry as! Polygon, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: Polygon.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .multiPolygon:
-            encode(geometry as! MultiPolygon, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiPolygon.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .geometryCollection:
-            encode(geometry as! GeometryCollection, targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
+            encode(GeometryDispatch.checkedCast(geometry, to: GeometryCollection.self), targetProjection: targetProjection, includeSRID: includeSRID, to: &result)
         case .feature, .featureCollection, .invalid:
             // Feature and FeatureCollection can't happen
             break

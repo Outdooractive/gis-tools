@@ -266,10 +266,12 @@ extension FeatureCollection {
             // A degree of longitude shrinks with cos(latitude); using the
             // equatorial metres-per-degree for both axes under-covers the
             // search box at high latitudes and makes DBSCAN miss neighbours.
-            let latitudeDelta = maxDistance / 111_000.0
-            let cosine = max(cos(center.latitude * .pi / 180.0), 0.000001)
+            let latitudeDelta = maxDistance / GISTool.conservativeMetersPerDegree
+            // Clamp the cosine so a pole-adjacent search window stays finite.
+            let minimumCosine = 0.000001
+            let cosine = max(cos(center.latitude * .pi / 180.0), minimumCosine)
             let longitudeDelta = min(
-                maxDistance / (111_000.0 * cosine),
+                maxDistance / (GISTool.conservativeMetersPerDegree * cosine),
                 180.0)
             let minLatitude = max(-90.0, center.latitude - latitudeDelta)
             let maxLatitude = min(90.0, center.latitude + latitudeDelta)

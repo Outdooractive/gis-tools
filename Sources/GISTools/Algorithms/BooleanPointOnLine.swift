@@ -16,14 +16,23 @@ extension LineSegment {
     ) -> Bool {
         let coordinate = coordinate.projected(to: projection)
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
-        let snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+        var snappedCoordinate = gridSize.map { coordinate.snappedToGrid(tolerance: $0) } ?? coordinate
+        var snappedSegment = snapped
 
-        let ab = sqrt((snapped.second.longitude - snapped.first.longitude) * (snapped.second.longitude - snapped.first.longitude)
-            + (snapped.second.latitude - snapped.first.latitude) * (snapped.second.latitude - snapped.first.latitude))
-        let ap = sqrt((snappedCoordinate.longitude - snapped.first.longitude) * (snappedCoordinate.longitude - snapped.first.longitude)
-            + (snappedCoordinate.latitude - snapped.first.latitude) * (snappedCoordinate.latitude - snapped.first.latitude))
-        let pb = sqrt((snapped.second.longitude - snappedCoordinate.longitude) * (snapped.second.longitude - snappedCoordinate.longitude)
-            + (snapped.second.latitude - snappedCoordinate.latitude) * (snapped.second.latitude - snappedCoordinate.latitude))
+        if let extent = projection.wraparoundExtent {
+            let unwrapped = AntimeridianCutting.unwrapCoordinates(
+                [snapped.first, snapped.second, snappedCoordinate],
+                extent: extent)
+            snappedSegment = LineSegment(first: unwrapped[0], second: unwrapped[1], index: snapped.index)
+            snappedCoordinate = unwrapped[2]
+        }
+
+        let ab = sqrt((snappedSegment.second.longitude - snappedSegment.first.longitude) * (snappedSegment.second.longitude - snappedSegment.first.longitude)
+            + (snappedSegment.second.latitude - snappedSegment.first.latitude) * (snappedSegment.second.latitude - snappedSegment.first.latitude))
+        let ap = sqrt((snappedCoordinate.longitude - snappedSegment.first.longitude) * (snappedCoordinate.longitude - snappedSegment.first.longitude)
+            + (snappedCoordinate.latitude - snappedSegment.first.latitude) * (snappedCoordinate.latitude - snappedSegment.first.latitude))
+        let pb = sqrt((snappedSegment.second.longitude - snappedCoordinate.longitude) * (snappedSegment.second.longitude - snappedCoordinate.longitude)
+            + (snappedSegment.second.latitude - snappedCoordinate.latitude) * (snappedSegment.second.latitude - snappedCoordinate.latitude))
 
         return abs(ab - (ap + pb)) < GISTool.equalityDelta
     }

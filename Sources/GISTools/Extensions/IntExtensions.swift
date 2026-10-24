@@ -110,27 +110,27 @@ extension Int {
 
     /// Convert inches to meters.
     public var inches: Double {
-        Double(self) / 39.370
+        Double(self) / GISTool.inchesPerMeter
     }
 
     /// Convert feet to meters.
     public var feet: Double {
-        Double(self) / 3.28084
+        Double(self) / GISTool.feetPerMeter
     }
 
     /// Convert yards to meters.
     public var yards: Double {
-        Double(self) / 1.0936
+        Double(self) / GISTool.yardsPerMeter
     }
 
     /// Convert miles to meters.
     public var miles: Double {
-        Double(self) * 1609.344
+        Double(self) * GISTool.metersPerMile
     }
 
     /// Convert nautical miles to meters.
     public var nauticalMiles: Double {
-        Double(self) * 1852.0
+        Double(self) * GISTool.metersPerNauticalMile
     }
 
     /// Convert megameters to meters.

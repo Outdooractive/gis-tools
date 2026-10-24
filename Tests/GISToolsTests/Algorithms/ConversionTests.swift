@@ -39,6 +39,38 @@ struct ConversionTests {
         #expect(abs(degreesLatitude1 - degreesLatitude2) < 0.00000001)
     }
 
+    // MARK: - canonical geographic constants
+
+    @Test
+    func oneDegreeLatitudeDistanceIsCanonical() {
+        let expected = GISTool.earthCircumference / 360.0
+        #expect(abs(GISTool.oneDegreeLatitudeDistance - expected) < 0.000000001)
+        #expect(abs(GISTool.oneDegreeLatitudeDistance - 111_319.49079327358) < 0.000000001)
+    }
+
+    @Test
+    func metersPerDegreeLongitudeAtLatitude() {
+        let equator = GISTool.metersPerDegreeLongitude(atLatitude: 0.0)
+        #expect(abs(equator - GISTool.oneDegreeLatitudeDistance) < 0.000000001)
+
+        let midLatitude = GISTool.metersPerDegreeLongitude(atLatitude: 60.0)
+        #expect(abs(midLatitude - GISTool.oneDegreeLatitudeDistance / 2.0) < 0.000000001)
+
+        let highLatitude = GISTool.metersPerDegreeLongitude(atLatitude: 85.0)
+        #expect(highLatitude > 0.0)
+        #expect(highLatitude < GISTool.oneDegreeLatitudeDistance / 10.0)
+    }
+
+    @Test
+    func unitConversionConstantsAreUsed() {
+        #expect(GISTool.convertToMeters(1.0, .miles) == GISTool.metersPerMile)
+        #expect(GISTool.convertToMeters(1.0, .nauticalMiles) == GISTool.metersPerNauticalMile)
+        #expect(GISTool.convertToMeters(1.0, .feet) == 1.0 / GISTool.feetPerMeter)
+        #expect(GISTool.convertToMeters(1.0, .inches) == 1.0 / GISTool.inchesPerMeter)
+        #expect(GISTool.convertToMeters(1.0, .yards) == 1.0 / GISTool.yardsPerMeter)
+        #expect(GISTool.convertToMeters(1.0, .degrees) == GISTool.oneDegreeLatitudeDistance)
+    }
+
     // MARK: - unit factors
 
     // Validates the factor returned for each supported unit type.

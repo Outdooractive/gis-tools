@@ -29,7 +29,7 @@ extension GeoJson {
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
-            return newLineString as! Self
+            return GeometryDispatch.checkedCast(newLineString, to: Self.self)
 
         case let multiLineString as MultiLineString:
             var newMultiLineString = MultiLineString(multiLineString.lineStrings.map({
@@ -37,7 +37,7 @@ extension GeoJson {
             })) ?? multiLineString
             newMultiLineString.boundingBox = multiLineString.boundingBox
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
-            return newMultiLineString as! Self
+            return GeometryDispatch.checkedCast(newMultiLineString, to: Self.self)
 
         case let polygon as Polygon:
             var newPolygon = Polygon(polygon.rings.map({
@@ -45,7 +45,7 @@ extension GeoJson {
             })) ?? polygon
             newPolygon.boundingBox = polygon.boundingBox
             newPolygon.foreignMembers = polygon.foreignMembers
-            return newPolygon as! Self
+            return GeometryDispatch.checkedCast(newPolygon, to: Self.self)
 
         case let multiPolygon as MultiPolygon:
             var newMultiPolygon = MultiPolygon(multiPolygon.polygons.map({
@@ -53,7 +53,7 @@ extension GeoJson {
             })) ?? multiPolygon
             newMultiPolygon.boundingBox = multiPolygon.boundingBox
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
-            return newMultiPolygon as! Self
+            return GeometryDispatch.checkedCast(newMultiPolygon, to: Self.self)
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({
@@ -61,7 +61,7 @@ extension GeoJson {
             }))
             newGeometryCollection.boundingBox = geometryCollection.boundingBox
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
-            return newGeometryCollection as! Self
+            return GeometryDispatch.checkedCast(newGeometryCollection, to: Self.self)
 
         case let feature as Feature:
             guard let geometry = feature.geometry else {
@@ -70,7 +70,7 @@ extension GeoJson {
                     properties: feature.properties,
                     foreignMembers: feature.foreignMembers)
                 newFeature.boundingBox = feature.boundingBox
-                return newFeature as! Self
+                return GeometryDispatch.checkedCast(newFeature, to: Self.self)
             }
 
             var newFeature = Feature(
@@ -79,7 +79,7 @@ extension GeoJson {
                 properties: feature.properties)
             newFeature.boundingBox = feature.boundingBox
             newFeature.foreignMembers = feature.foreignMembers
-            return newFeature as! Self
+            return GeometryDispatch.checkedCast(newFeature, to: Self.self)
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(featureCollection.features.map({
@@ -87,7 +87,7 @@ extension GeoJson {
             }))
             newFeatureCollection.boundingBox = featureCollection.boundingBox
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
-            return newFeatureCollection as! Self
+            return GeometryDispatch.checkedCast(newFeatureCollection, to: Self.self)
 
         default:
             return snappedSelf
@@ -151,31 +151,47 @@ extension Polygon {
     /// (area-based) simplification. The result stays within a given distance
     /// of the original boundary and preserves topological validity.
     ///
+    /// Outer and inner rings are simplified independently and the holes are
+    /// retained (with their winding) in the result.
+    ///
     /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
-    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
     /// - Returns: A simplified topologically valid polygon, or `nil` if the polygon cannot be simplified.
     public func polygonHullSimplified(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false,
         gridSize: Double? = nil
     ) -> Polygon? {
         let snapped = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
-        guard let ring = snapped.outerRing else { return nil }
+        guard let outerRing = snapped.outerRing else { return nil }
 
-        let simplified = Simplify.simplifyVisvalingamWhyatt(
-            coordinates: ring.coordinates,
-            toleranceInMeters: tolerance)
-        guard simplified.count >= 3 else { return nil }
+        var rings: [Ring] = []
 
-        var closed = simplified
-        if closed.first != closed.last {
-            closed.append(closed[0])
+        if let simplifiedOuter = Simplify.simplifiedRing(
+            outerRing,
+            toleranceInMeters: tolerance
+        ) {
+            rings.append(simplifiedOuter)
+        }
+        else {
+            rings.append(outerRing)
         }
 
-        guard let result = Polygon([closed]) else { return nil }
-        guard let valid = result.madeValid() else { return nil }
+        if let innerRings = snapped.innerRings {
+            for hole in innerRings {
+                if let simplifiedHole = Simplify.simplifiedRing(
+                    hole,
+                    toleranceInMeters: tolerance
+                ) {
+                    rings.append(simplifiedHole)
+                }
+                else {
+                    rings.append(hole)
+                }
+            }
+        }
 
+        guard let result = Polygon(rings) else { return nil }
+        guard let valid = result.madeValid() else { return nil }
         return valid
     }
 
@@ -187,16 +203,14 @@ extension MultiPolygon {
     /// Visvalingam-Whyatt (area-based) simplification.
     ///
     /// - Parameter tolerance: Simplification tolerance in meters (default `1.0`).
-    /// - Parameter highQuality: Excludes distance-based preprocessing (slower but higher quality).
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before simplifying.
     /// - Returns: A simplified topologically valid multi-polygon, or `nil` if empty.
     public func polygonHullSimplified(
         tolerance: CLLocationDistance = 1.0,
-        highQuality: Bool = false,
         gridSize: Double? = nil
     ) -> MultiPolygon? {
         let valid = polygons.compactMap {
-            $0.polygonHullSimplified(tolerance: tolerance, highQuality: highQuality, gridSize: gridSize)
+            $0.polygonHullSimplified(tolerance: tolerance, gridSize: gridSize)
         }
         guard valid.isNotEmpty else { return nil }
 
@@ -242,41 +256,32 @@ extension MultiPolygon {
             }
         }
 
-        var sharedEdges: [EdgeKey: [Coordinate3D]] = [:]
-        var edgeCount: [EdgeKey: Int] = [:]
-
+        // Count every undirected original segment. Segments with a count
+        // greater than one are shared with another polygon.
+        var edgeCounts: [Simplify.CoverageSegmentKey: Int] = [:]
         for polygon in polys {
             for ring in polygon.rings {
-                let coords = ring.coordinates
-                for i in 0 ..< coords.count - 1 {
-                    let key = EdgeKey(coords[i], coords[i + 1])
-                    edgeCount[key, default: 0] += 1
-                    if sharedEdges[key] == nil {
-                        sharedEdges[key] = [coords[i], coords[i + 1]]
-                    }
+                let coordinates = ring.coordinates
+                for index in 0 ..< (coordinates.count - 1) {
+                    let key = Simplify.CoverageSegmentKey(
+                        first: coordinates[index],
+                        second: coordinates[index + 1])
+                    edgeCounts[key, default: 0] += 1
                 }
             }
         }
 
-        let sharedKeys = Set(edgeCount.filter { $0.value > 1 }.keys)
-        let simplified = polys.map { $0.simplified(tolerance: tolerance, highQuality: highQuality) }
-
-        let result = simplified.map { poly -> Polygon in
-            var newRings: [[Coordinate3D]] = []
-            for ring in poly.rings {
-                var coords = ring.coordinates
-                guard coords.count >= 2 else { continue }
-
-                for i in 0 ..< coords.count - 1 {
-                    let key = EdgeKey(coords[i], coords[i + 1])
-                    if sharedKeys.contains(key), let original = sharedEdges[key] {
-                        coords[i] = original[0]
-                        coords[i + 1] = original[1]
-                    }
-                }
-                newRings.append(coords)
+        var sharedChains: [Simplify.CoverageChainKey: Simplify.CoverageChainValue] = [:]
+        let result = polys.map { polygon -> Polygon in
+            let rings = polygon.rings.map { ring -> [Coordinate3D] in
+                Simplify.simplifyCoverageRing(
+                    ring,
+                    edgeCounts: edgeCounts,
+                    toleranceInMeters: tolerance,
+                    highQuality: highQuality,
+                    sharedChains: &sharedChains)
             }
-            return Polygon(unchecked: newRings)
+            return Polygon(unchecked: rings)
         }
 
         return MultiPolygon(unchecked: result)
@@ -547,6 +552,7 @@ public enum Simplify {
         var prev = Array(repeating: 0, count: n)
         var next = Array(repeating: 0, count: n)
         var area = Array(repeating: 0.0, count: n)
+        var threshold = Array(repeating: 0.0, count: n)
         var removed = Array(repeating: false, count: n)
 
         for i in 0 ..< n {
@@ -554,8 +560,17 @@ public enum Simplify {
             next[i] = (i + 1) % n
         }
 
+        // Area = 0.5 * base * height. A vertex is removed when its
+        // perpendicular distance (height) to the neighbour chord is below the
+        // tolerance, so the area threshold depends on the chord length.
+        func update(_ index: Int) {
+            let base = distance(coords[prev[index]], coords[next[index]])
+            threshold[index] = 0.5 * base * abs(crsTolerance)
+            area[index] = triangleArea(coords[prev[index]], coords[index], coords[next[index]])
+        }
+
         for i in 0 ..< n {
-            area[i] = triangleArea(coords[prev[i]], coords[i], coords[next[i]])
+            update(i)
         }
 
         var remaining = n
@@ -572,8 +587,7 @@ public enum Simplify {
                 break
             }
 
-            let areaThreshold = abs(crsTolerance) * 2.0
-            if minArea > areaThreshold {
+            if minArea > threshold[minIdx] {
                 break
             }
 
@@ -583,13 +597,11 @@ public enum Simplify {
             next[p] = nxt
             prev[nxt] = p
 
-            let pp = prev[p]
-            if !removed[pp] {
-                area[p] = triangleArea(coords[pp], coords[p], coords[nxt])
+            if !removed[prev[p]] {
+                update(p)
             }
-            let nn = next[nxt]
-            if !removed[nn] {
-                area[nxt] = triangleArea(coords[p], coords[nxt], coords[nn])
+            if !removed[next[nxt]] {
+                update(nxt)
             }
             area[minIdx] = -1.0
 
@@ -601,6 +613,214 @@ public enum Simplify {
             result.append(coords[i])
         }
         return result
+    }
+
+    // MARK: - Coverage simplification
+
+    struct CoverageCoordinateKey: Hashable {
+        let x: Int64
+        let y: Int64
+
+        init(_ coordinate: Coordinate3D) {
+            x = Int64((coordinate.x / GISTool.equalityDelta).rounded())
+            y = Int64((coordinate.y / GISTool.equalityDelta).rounded())
+        }
+    }
+
+    struct CoverageSegmentKey: Hashable {
+        let first: CoverageCoordinateKey
+        let second: CoverageCoordinateKey
+
+        init(first: Coordinate3D, second: Coordinate3D) {
+            let a = CoverageCoordinateKey(first)
+            let b = CoverageCoordinateKey(second)
+            if (a.x, a.y) <= (b.x, b.y) {
+                self.first = a
+                self.second = b
+            }
+            else {
+                self.first = b
+                self.second = a
+            }
+        }
+    }
+
+    struct CoverageChainKey: Hashable {
+        let coordinates: [CoverageCoordinateKey]
+
+        init(_ coordinates: [Coordinate3D]) {
+            let forward = coordinates.map(CoverageCoordinateKey.init)
+            let reversed = Array(forward.reversed())
+            self.coordinates = forward.lexicographicallyPrecedes(reversed) {
+                ($0.x, $0.y) < ($1.x, $1.y)
+            }
+                ? forward
+                : reversed
+        }
+    }
+
+    struct CoverageChainValue {
+        let first: CoverageCoordinateKey
+        let simplified: [Coordinate3D]
+    }
+
+    /// Simplifies one coverage ring while replacing every maximal shared
+    /// chain with a chain simplified exactly once. Nonshared runs between
+    /// shared chains are simplified independently, so adjacent polygons keep
+    /// identical shared vertices (no T-junctions) even when the shared edge
+    /// has intermediate original vertices.
+    static func simplifyCoverageRing(
+        _ ring: Ring,
+        edgeCounts: [CoverageSegmentKey: Int],
+        toleranceInMeters: CLLocationDistance,
+        highQuality: Bool,
+        sharedChains: inout [CoverageChainKey: CoverageChainValue]
+    ) -> [Coordinate3D] {
+        let coordinates = ring.coordinates
+        guard coordinates.count >= 4 else { return coordinates }
+
+        let segmentCount = coordinates.count - 1
+        let shared = (0 ..< segmentCount).map { index in
+            (edgeCounts[CoverageSegmentKey(
+                first: coordinates[index],
+                second: coordinates[index + 1])] ?? 0) > 1
+        }
+
+        if !shared.contains(true) {
+            return close(
+                simplify(
+                    coordinates: coordinates,
+                    toleranceInMeters: toleranceInMeters,
+                    highQuality: highQuality))
+        }
+
+        if shared.allSatisfy({ $0 }) {
+            let chain = Array(coordinates.dropLast())
+            let simplified = simplifiedSharedChain(
+                chain,
+                toleranceInMeters: toleranceInMeters,
+                highQuality: highQuality,
+                sharedChains: &sharedChains)
+            return close(Array(simplified))
+        }
+
+        // Rotate so the ring starts on a nonshared segment; every run then
+        // lies between two shared/nonshared boundaries with no wrap-around.
+        var start = 0
+        while shared[start] {
+            start += 1
+        }
+
+        var runs: [(shared: Bool, coordinates: [Coordinate3D])] = []
+        var offset = 0
+        while offset < segmentCount {
+            let isShared = shared[(start + offset) % segmentCount]
+            var end = offset
+            while end + 1 < segmentCount,
+                  shared[(start + end + 1) % segmentCount] == isShared
+            {
+                end += 1
+            }
+
+            var runCoordinates: [Coordinate3D] = []
+            for index in offset ... end {
+                runCoordinates.append(coordinates[(start + index) % segmentCount])
+            }
+            runCoordinates.append(coordinates[(start + end + 1) % segmentCount])
+            runs.append((isShared, runCoordinates))
+            offset = end + 1
+        }
+
+        var result: [Coordinate3D] = []
+        for run in runs {
+            let simplified: [Coordinate3D]
+            if run.shared {
+                simplified = simplifiedSharedChain(
+                    run.coordinates,
+                    toleranceInMeters: toleranceInMeters,
+                    highQuality: highQuality,
+                    sharedChains: &sharedChains)
+            }
+            else {
+                simplified = simplify(
+                    coordinates: run.coordinates,
+                    toleranceInMeters: toleranceInMeters,
+                    highQuality: highQuality)
+            }
+
+            if result.isEmpty {
+                result = simplified
+            }
+            else {
+                result.append(contentsOf: simplified.dropFirst())
+            }
+        }
+
+        return close(result)
+    }
+
+    private static func simplifiedSharedChain(
+        _ coordinates: [Coordinate3D],
+        toleranceInMeters: CLLocationDistance,
+        highQuality: Bool,
+        sharedChains: inout [CoverageChainKey: CoverageChainValue]
+    ) -> [Coordinate3D] {
+        guard coordinates.count >= 2 else { return coordinates }
+
+        let key = CoverageChainKey(coordinates)
+        let value: CoverageChainValue
+
+        if let cached = sharedChains[key] {
+            value = cached
+        }
+        else {
+            let simplified = simplify(
+                coordinates: coordinates,
+                toleranceInMeters: toleranceInMeters,
+                highQuality: highQuality)
+            value = CoverageChainValue(
+                first: CoverageCoordinateKey(coordinates[0]),
+                simplified: simplified)
+            sharedChains[key] = value
+        }
+
+        if CoverageCoordinateKey(coordinates[0]) == value.first {
+            return value.simplified
+        }
+        return value.simplified.reversed()
+    }
+
+    private static func close(_ coordinates: [Coordinate3D]) -> [Coordinate3D] {
+        guard let first = coordinates.first else { return coordinates }
+        var result = coordinates
+        if result.last != first {
+            result.append(first)
+        }
+        return result
+    }
+
+    /// Planar distance between two coordinates in the CRS's native units.
+    private static func distance(_ a: Coordinate3D, _ b: Coordinate3D) -> Double {
+        let dx = a.x - b.x
+        let dy = a.y - b.y
+        return sqrt(dx * dx + dy * dy)
+    }
+
+    /// Simplifies a ring with Visvalingam-Whyatt and returns a closed ring.
+    static func simplifiedRing(
+        _ ring: Ring,
+        toleranceInMeters: CLLocationDistance
+    ) -> Ring? {
+        let simplified = simplifyVisvalingamWhyatt(
+            coordinates: ring.coordinates,
+            toleranceInMeters: toleranceInMeters)
+        guard simplified.count >= 3 else { return nil }
+
+        var closed = simplified
+        if closed.first != closed.last {
+            closed.append(closed[0])
+        }
+        return Ring(closed)
     }
 
     /// Triangle area (2D cross product magnitude).

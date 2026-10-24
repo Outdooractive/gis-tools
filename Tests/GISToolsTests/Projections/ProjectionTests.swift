@@ -314,8 +314,8 @@ struct ProjectionTests {
     /// Validates meter-to-CRS-unit conversion.
     @Test
     func crsLengthFromMeters() async throws {
-        #expect(Projection.epsg4326.crsLength(fromMeters: 111_325.0) == 1.0)
-        #expect(abs(Projection.epsg4326.crsLength(fromMeters: 55_662.5) - 0.5) < 0.0000000001)
+        #expect(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance) == 1.0)
+        #expect(abs(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance / 2.0) - 0.5) < 0.0000000001)
         #expect(Projection.epsg3857.crsLength(fromMeters: 1000.0) == 1000.0)
         #expect(Projection.epsg4978.crsLength(fromMeters: 1000.0) == 1000.0)
         #expect(Projection.noSRID.crsLength(fromMeters: 1000.0) == 1000.0)
@@ -773,5 +773,51 @@ struct ProjectionTests {
             return (45.0, 10.0)
         }
     }
+
+
+    // MARK: - Batch audit
+
+    /// The batch transform path (hoisted `prepared` closures) must agree with
+    /// the single-coordinate path for every built-in projection, in both
+    /// directions. This covers the datum, conic and equal-area `prepared`
+    /// overrides that the single-point matrix does not execute.
+    @Test
+    func batchTransformsMatchSinglePathForEveryBuiltin() throws {
+        for srid in Self.builtinSrids {
+            let projection = try #require(Projection(srid: srid))
+            let point = Self.representativePoint(for: projection)
+            let original = Coordinate3D(
+                latitude: point.latitude,
+                longitude: point.longitude,
+                altitude: 12.0)
+
+            let single = original.projected(to: projection)
+            let batch = [original, original].projected(to: projection)
+            #expect(batch.count == 2)
+            #expect(abs(batch[0].x - single.x) < 0.000000001, "SRID \(srid) forward x")
+            #expect(abs(batch[0].y - single.y) < 0.000000001, "SRID \(srid) forward y")
+
+            let singleBack = single.projected(to: .epsg4326)
+            let batchBack = batch.projected(to: .epsg4326)
+            #expect(abs(batchBack[0].latitude - singleBack.latitude) < 0.000000001, "SRID \(srid) inverse latitude")
+            #expect(abs(batchBack[0].longitude - singleBack.longitude) < 0.000000001, "SRID \(srid) inverse longitude")
+        }
+    }
+
+    /// `Projectable.project(to:)` is the in-place variant and must behave
+    /// exactly like assigning `projected(to:)`.
+    @Test
+    func projectInPlace() {
+        var coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 50.0)
+        let expected = coordinate.projected(to: .epsg3857)
+        coordinate.project(to: .epsg3857)
+        #expect(coordinate == expected)
+
+        // Projecting to the same projection is a no-op.
+        let unchanged = coordinate
+        coordinate.project(to: .epsg3857)
+        #expect(coordinate == unchanged)
+    }
+
 
 }

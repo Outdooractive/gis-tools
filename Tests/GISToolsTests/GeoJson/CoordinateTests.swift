@@ -668,4 +668,17 @@ extension CoordinateTests {
         #expect(abs(multiPoint.coordinates[1].y - expectedY) < 0.00000001)
     }
 
+
+    @Test
+    func antimeridianPlusMinus180AreEqualAndHashEqually() {
+        let east = Coordinate3D(latitude: 0.0, longitude: 180.0)
+        let west = Coordinate3D(latitude: 0.0, longitude: -180.0)
+
+        #expect(east == west)
+        #expect(east.isCoincident(to: west))
+        #expect(east.hashValue == west.hashValue)
+        #expect(Set([east, west]).count == 1)
+    }
+
+
 }

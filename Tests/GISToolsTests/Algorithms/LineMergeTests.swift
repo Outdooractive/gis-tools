@@ -306,4 +306,135 @@ struct LineMergeTests {
         }
     }
 
+
+    // MARK: - Audit regressions
+
+    private func junctionFeatures(
+        order: [Int],
+        metadata: Bool = false
+    ) throws -> FeatureCollection {
+        let a = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+        ]))
+        let b = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ]))
+        let c = try #require(LineString([
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]))
+        let features = [
+            Feature(a, id: .string("a"), properties: ["name": "A"]),
+            Feature(b, id: .string("b"), properties: ["name": "B"]),
+            Feature(c, id: .string("c"), properties: ["name": "C"]),
+        ]
+        return FeatureCollection(order.map { features[$0] })
+    }
+
+    /// At a Y-junction the straight-through pair (a+b) must merge and the
+    /// branch stays separate, in the exact coordinates, for every input order.
+    @Test
+    func junctionChoosesStraightThroughIndependentOfOrder() throws {
+        let orders = [[0, 1, 2], [2, 1, 0], [1, 0, 2], [2, 0, 1], [1, 2, 0], [0, 2, 1]]
+        var expected: [[Coordinate3D]]?
+
+        for order in orders {
+            let result = try junctionFeatures(order: order).lineMerged()
+            #expect(result.features.count == 2)
+
+            let lines = result.features.compactMap { $0.geometry as? LineString }
+            #expect(lines.count == 2)
+
+            let coordinates = lines.map(\.coordinates).sorted { lhs, rhs in
+                (lhs.first?.longitude ?? 0.0) < (rhs.first?.longitude ?? 0.0)
+            }
+
+            if let expected {
+                #expect(coordinates == expected, "order \(order) differs")
+            }
+            else {
+                expected = coordinates
+            }
+
+            let through = try #require(lines.first(where: { $0.coordinates.count == 3 }))
+            #expect(through.coordinates.map(\.longitude) == [0.0, 0.0, 0.0])
+            #expect(through.coordinates.map(\.latitude) == [0.0, 5.0, 10.0])
+
+            let branch = try #require(lines.first(where: { $0.coordinates.count == 2 }))
+            #expect(branch.coordinates.map(\.longitude) == [0.0, 5.0])
+            #expect(branch.coordinates.map(\.latitude) == [5.0, 5.0])
+        }
+    }
+
+    /// A merged line takes the metadata of the earliest contributing input
+    /// feature; a branch keeps its own metadata.
+    @Test
+    func metadataFollowsEarliestContributor() throws {
+        let result = try junctionFeatures(order: [1, 0, 2], metadata: true).lineMerged()
+        let through = try #require(result.features.first { ($0.geometry as? LineString)?.coordinates.count == 3 })
+        #expect(through.id == .string("b"))
+        let name: String? = through.property(for: "name")
+        #expect(name == "B")
+
+        let branch = try #require(result.features.first { ($0.geometry as? LineString)?.coordinates.count == 2 })
+        #expect(branch.id == .string("c"))
+    }
+
+    /// A MultiLineString that produces several merged lines copies its
+    /// metadata (id, properties and foreign members) to every result.
+    @Test
+    func multiLineStringMetadataCopiedToEveryLine() throws {
+        let multiLineString = try #require(MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 5.0),
+            ],
+            [
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 15.0),
+            ],
+        ]))
+        var feature = Feature(
+            multiLineString,
+            id: .string("multi"),
+            properties: ["kind": "route"])
+        feature.foreignMembers = ["source": "audit"]
+
+        let result = FeatureCollection([feature]).lineMerged()
+        #expect(result.features.count == 2)
+        for output in result.features {
+            #expect(output.id == .string("multi"))
+            let kind: String? = output.property(for: "kind")
+            #expect(kind == "route")
+            let source: String? = output.foreignMember(for: "source")
+            #expect(source == "audit")
+        }
+    }
+
+    /// `+180` and `−180` are the same endpoint. The merged line keeps one
+    /// shared coordinate and does not duplicate the seam point.
+    @Test
+    func antimeridianPlusMinus180AreCoincident() throws {
+        let a = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 175.0),
+            Coordinate3D(latitude: 0.0, longitude: 180.0),
+        ]))
+        let b = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: -180.0),
+            Coordinate3D(latitude: 0.0, longitude: -175.0),
+        ]))
+
+        let result = FeatureCollection([Feature(a), Feature(b)]).lineMerged()
+        #expect(result.features.count == 1)
+        let line = try #require(result.features.first?.geometry as? LineString)
+        #expect(line.coordinates.count == 3)
+        // Orientation is normalized lexicographically, so the seam point may
+        // be represented as +180 or −180; either is the same location.
+        #expect(abs(line.coordinates[1].longitude) == 180.0)
+        #expect(Set([line.coordinates[0].longitude, line.coordinates[2].longitude]) == [175.0, -175.0])
+    }
+
+
 }

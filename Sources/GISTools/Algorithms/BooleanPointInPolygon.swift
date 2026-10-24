@@ -665,7 +665,7 @@ enum PointInRing {
             return sign(of: det)
         }
 
-        let errorBound = 0.000000000000001 * detSum
+        let errorBound = GISTool.determinantEpsilon * detSum
         if det >= errorBound || -det >= errorBound {
             return sign(of: det)
         }

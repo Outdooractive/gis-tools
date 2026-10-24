@@ -217,4 +217,162 @@ extension PolygonizeTests {
         #expect(polygon.outerRing?.isCounterClockwise == true)
     }
 
+
+    private func squareLine(
+        _ minX: Double, _ minY: Double,
+        _ maxX: Double, _ maxY: Double,
+        projection: Projection,
+        clockwise: Bool = false
+    ) throws -> LineString {
+        var coordinates = [
+            Coordinate3D(latitude: minY, longitude: minX),
+            Coordinate3D(latitude: minY, longitude: maxX),
+            Coordinate3D(latitude: maxY, longitude: maxX),
+            Coordinate3D(latitude: maxY, longitude: minX),
+        ]
+        if projection != .epsg4326 {
+            coordinates = coordinates.map { $0.projected(to: projection) }
+        }
+        if clockwise {
+            coordinates.reverse()
+        }
+        coordinates.append(coordinates[0])
+        return try #require(LineString(coordinates))
+    }
+
+    /// A dangling spur is recursively pruned and does not become part of the
+    /// polygon or create an extra feature.
+    @Test
+    func danglingSpurIsPruned() throws {
+        let square = try squareLine(0.0, 0.0, 5.0, 5.0, projection: .epsg4326)
+        let spur = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: -2.0, longitude: -2.0),
+        ]))
+
+        let multiLine = try #require(MultiLineString([square, spur]))
+        let result = multiLine.polygonized()
+        #expect(result.features.count == 1)
+        guard let polygon = result.features.first?.geometry as? Polygon else {
+            Issue.record("Expected a polygon")
+            return
+        }
+        #expect(polygon.outerRing?.coordinates.count == 5)
+    }
+
+    /// A cut edge/bridge between two squares is removed; both faces remain.
+    @Test
+    func cutEdgeIsPruned() throws {
+        let left = try squareLine(0.0, 0.0, 5.0, 5.0, projection: .epsg4326)
+        let right = try squareLine(5.0, 0.0, 10.0, 5.0, projection: .epsg4326)
+        // The shared side already exists; add a bridge from an interior corner
+        // of each square to force cut-edge pruning.
+        let bridge = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+
+        let multiLine = try #require(MultiLineString([left, right, bridge]))
+        let result = multiLine.polygonized()
+        #expect(result.features.count == 2)
+    }
+
+    /// Duplicate and collinear overlapping edges are noded and deduplicated;
+    /// the square must be emitted exactly once.
+    @Test
+    func collinearDuplicateEdgesProduceOneFace() throws {
+        let square = try squareLine(0.0, 0.0, 5.0, 5.0, projection: .epsg4326)
+        let duplicateSide = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]))
+        let reversedSide = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+
+        let multiLine = try #require(MultiLineString([square, duplicateSide, reversedSide]))
+        let result = multiLine.polygonized()
+        #expect(result.features.count == 1)
+        guard let polygon = result.features.first?.geometry as? Polygon else {
+            Issue.record("Expected a polygon")
+            return
+        }
+        #expect(polygon.outerRing?.coordinates.count == 5)
+    }
+
+    /// A separate inner ring becomes a hole, not a second shell.
+    @Test
+    func innerRingBecomesHole() throws {
+        let outer = try squareLine(0.0, 0.0, 10.0, 10.0, projection: .noSRID)
+        let inner = try squareLine(3.0, 3.0, 7.0, 7.0, projection: .noSRID)
+
+        let multiLine = try #require(MultiLineString([outer, inner]))
+        let result = multiLine.polygonized()
+        #expect(result.features.count == 1)
+        guard let polygon = result.features.first?.geometry as? Polygon else {
+            Issue.record("Expected a polygon")
+            return
+        }
+        #expect(polygon.outerRing?.isCounterClockwise == true)
+        #expect(polygon.innerRings?.count == 1)
+        #expect(polygon.innerRings?.first?.isClockwise == true)
+        #expect(abs(polygon.area - 84.0) < 0.000001, "Area \(polygon.area) != 84")
+    }
+
+    /// Polygonize must be independent of line input order.
+    @Test
+    func inputOrderDoesNotChangeFaces() throws {
+        let sides = [
+            try #require(LineString([
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 5.0),
+            ])),
+            try #require(LineString([
+                Coordinate3D(latitude: 0.0, longitude: 5.0),
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+            ])),
+            try #require(LineString([
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+                Coordinate3D(latitude: 5.0, longitude: 0.0),
+            ])),
+            try #require(LineString([
+                Coordinate3D(latitude: 5.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ])),
+        ]
+
+        for order in [sides, sides.reversed(), [sides[2], sides[0], sides[3], sides[1]]] {
+            let multiLine = try #require(MultiLineString(order))
+            let result = multiLine.polygonized()
+            #expect(result.features.count == 1)
+            guard let polygon = result.features.first?.geometry as? Polygon else {
+                Issue.record("Expected a polygon")
+                continue
+            }
+            #expect(polygon.outerRing?.coordinates.count == 5)
+            let expectedArea = 25.0 * 111_000.0 * 111_000.0
+            let actualArea = abs(polygon.area)
+            #expect(abs(actualArea - expectedArea) < expectedArea * 0.01)
+        }
+    }
+
+    /// Outer + hole in every supported projection.
+    @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
+    func holeAcrossProjections(projection: Projection) throws {
+        let outer = try squareLine(0.0, 0.0, 10.0, 10.0, projection: projection)
+        let inner = try squareLine(3.0, 3.0, 7.0, 7.0, projection: projection)
+
+        let multiLine = try #require(MultiLineString([outer, inner]))
+        let result = multiLine.polygonized()
+        #expect(result.features.count == 1)
+        guard let polygon = result.features.first?.geometry as? Polygon else {
+            Issue.record("Expected a polygon")
+            return
+        }
+        #expect(polygon.projection == projection)
+        #expect(polygon.innerRings?.count == 1)
+    }
+
+
 }

@@ -32,7 +32,12 @@ extension LineString {
         }
         guard pts.count >= 2 else { return nil }
 
-        return BezierSpline.compute(points: pts, steps: steps)
+        let unwrapped = pts.first.map { point -> [Coordinate3D] in
+            guard let extent = point.projection.wraparoundExtent else { return pts }
+            return AntimeridianCutting.unwrapCoordinates(pts, extent: extent)
+        } ?? pts
+
+        return BezierSpline.compute(points: unwrapped, steps: steps)
     }
 
 }
@@ -106,7 +111,7 @@ private enum BezierSpline {
                 // Forward difference
                 let dx = points[1].longitude - points[0].longitude
                 let dy = points[1].latitude - points[0].latitude
-                let dz = hasAltitude ? (points[1].altitude! - points[0].altitude!) : 0.0
+                let dz = hasAltitude ? ((points[1].altitude ?? 0.0) - (points[0].altitude ?? 0.0)) : 0.0
                 let len = sqrt(dx * dx + dy * dy + dz * dz)
                 tangent = len > 0 ? (dx / len, dy / len, dz / len) : (1.0, 0.0, 0.0)
             }
@@ -114,7 +119,7 @@ private enum BezierSpline {
                 // Backward difference
                 let dx = points[i].longitude - points[i - 1].longitude
                 let dy = points[i].latitude - points[i - 1].latitude
-                let dz = hasAltitude ? (points[i].altitude! - points[i - 1].altitude!) : 0.0
+                let dz = hasAltitude ? ((points[i].altitude ?? 0.0) - (points[i - 1].altitude ?? 0.0)) : 0.0
                 let len = sqrt(dx * dx + dy * dy + dz * dz)
                 tangent = len > 0 ? (dx / len, dy / len, dz / len) : (1.0, 0.0, 0.0)
             }
@@ -122,7 +127,7 @@ private enum BezierSpline {
                 // Centered difference
                 let dx = points[i + 1].longitude - points[i - 1].longitude
                 let dy = points[i + 1].latitude - points[i - 1].latitude
-                let dz = hasAltitude ? (points[i + 1].altitude! - points[i - 1].altitude!) : 0.0
+                let dz = hasAltitude ? ((points[i + 1].altitude ?? 0.0) - (points[i - 1].altitude ?? 0.0)) : 0.0
                 let len = sqrt(dx * dx + dy * dy + dz * dz)
                 tangent = len > 0 ? (dx / len, dy / len, dz / len) : (1.0, 0.0, 0.0)
             }
@@ -142,12 +147,12 @@ private enum BezierSpline {
             let p1 = Coordinate3D(
                 x: p0.longitude + tangents[i].dx * tension,
                 y: p0.latitude + tangents[i].dy * tension,
-                z: hasAltitude ? p0.altitude! + tangents[i].dz * tension : nil,
+                z: hasAltitude ? (p0.altitude ?? 0.0) + tangents[i].dz * tension : nil,
                 projection: projection)
             let p2 = Coordinate3D(
                 x: p3.longitude - tangents[i + 1].dx * tension,
                 y: p3.latitude - tangents[i + 1].dy * tension,
-                z: hasAltitude ? p3.altitude! - tangents[i + 1].dz * tension : nil,
+                z: hasAltitude ? (p3.altitude ?? 0.0) - tangents[i + 1].dz * tension : nil,
                 projection: projection)
 
             for s in 1 ..< steps {
@@ -162,7 +167,7 @@ private enum BezierSpline {
                 let x = b0 * p0.longitude + b1 * p1.longitude + b2 * p2.longitude + b3 * p3.longitude
                 let y = b0 * p0.latitude + b1 * p1.latitude + b2 * p2.latitude + b3 * p3.latitude
                 let z = hasAltitude
-                    ? b0 * p0.altitude! + b1 * p1.altitude! + b2 * p2.altitude! + b3 * p3.altitude!
+                    ? b0 * (p0.altitude ?? 0.0) + b1 * (p1.altitude ?? 0.0) + b2 * (p2.altitude ?? 0.0) + b3 * (p3.altitude ?? 0.0)
                     : nil
                 splineCoords.append(Coordinate3D(x: x, y: y, z: z, projection: projection))
             }
@@ -175,6 +180,11 @@ private enum BezierSpline {
             splineCoords = splineCoords.map {
                 Coordinate3D(x: $0.longitude, y: $0.latitude, projection: $0.projection)
             }
+        }
+
+        // Normalize seam-crossing intermediates back into the source range.
+        if projection.wraparoundExtent != nil {
+            splineCoords = splineCoords.map { $0.normalized() }
         }
 
         return LineString(unchecked: splineCoords)
@@ -195,7 +205,7 @@ private enum BezierSpline {
     ) -> Double {
         let dx = a.longitude - b.longitude
         let dy = a.latitude - b.latitude
-        let dz = a.altitude! - b.altitude!
+        let dz = (a.altitude ?? 0.0) - (b.altitude ?? 0.0)
         return sqrt(dx * dx + dy * dy + dz * dz)
     }
 

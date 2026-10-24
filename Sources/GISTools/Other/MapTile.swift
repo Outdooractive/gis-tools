@@ -38,16 +38,26 @@ public struct MapTile: CustomStringConvertible, Sendable {
     }
 
     /// One of the four child tiles at the next zoom level (north-west quadrant).
+    ///
+    /// At the maximum zoom level there is no deeper level; the receiver is
+    /// returned unchanged.
     public var child: MapTile {
-        MapTile(
+        guard z < Self.maximumZoom else { return self }
+
+        return MapTile(
             x: x << 1,
             y: y << 1,
             z: z + 1)
     }
 
     /// All four child tiles at the next zoom level.
+    ///
+    /// At the maximum zoom level there is no deeper level, so this returns an
+    /// empty array.
     public var children: [MapTile] {
-        [
+        guard z < Self.maximumZoom else { return [] }
+
+        return [
             MapTile(x: x << 1, y: y << 1, z: z + 1),
             MapTile(x: (x << 1) + 1, y: y << 1, z: z + 1),
             MapTile(x: x << 1, y: (y << 1) + 1, z: z + 1),
@@ -308,9 +318,20 @@ public struct MapTile: CustomStringConvertible, Sendable {
             evaluateRange(latMin: latMin, latMax: latMax, lonMin: -180.0, lonMax: lonMax)
         }
 
+        // `evaluateRange` always adds at least four samples.
+        guard let minX = xValues.min(),
+              let minY = yValues.min(),
+              let minZ = zValues.min(),
+              let maxX = xValues.max(),
+              let maxY = yValues.max(),
+              let maxZ = zValues.max()
+        else {
+            preconditionFailure("MapTile ECEF bounding box has no samples")
+        }
+
         return BoundingBox(
-            southWest: Coordinate3D(x: xValues.min()!, y: yValues.min()!, z: zValues.min()!, projection: .epsg4978),
-            northEast: Coordinate3D(x: xValues.max()!, y: yValues.max()!, z: zValues.max()!, projection: .epsg4978))
+            southWest: Coordinate3D(x: minX, y: minY, z: minZ, projection: .epsg4978),
+            northEast: Coordinate3D(x: maxX, y: maxY, z: maxZ, projection: .epsg4978))
     }
 
     // MARK: - Quadkey

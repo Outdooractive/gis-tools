@@ -10,6 +10,10 @@ import Foundation
 /// This limits the usable latitude range to approximately ±85°.
 enum Overlay {
 
+    /// Micron-scale tolerance for near-collinear overlap detection in the
+    /// metre-based overlay working frame.
+    private static let topologyTolerance = 0.000001
+
     // MARK: - Types
 
     struct Edge {
@@ -440,7 +444,23 @@ extension Overlay {
     }
 
     fileprivate static func unwrap(_ polygon: Polygon, width: Double, extent: Double) -> Polygon {
-        let rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        var rings = polygon.coordinates.map { unwrapRing($0, width: width, extent: extent) }
+        guard let outer = rings.first, outer.isNotEmpty, rings.count > 1 else {
+            return Polygon(unchecked: rings, calculateBoundingBox: false)
+        }
+
+        let reference = outer.reduce(0.0) { $0 + $1.x } / Double(outer.count)
+        for index in 1 ..< rings.count {
+            let ring = rings[index]
+            guard ring.isNotEmpty else { continue }
+            let center = ring.reduce(0.0) { $0 + $1.x } / Double(ring.count)
+            let shift = ((reference - center) / width).rounded() * width
+            guard shift != 0.0 else { continue }
+            rings[index] = ring.map {
+                Coordinate3D(x: $0.x + shift, y: $0.y, z: $0.altitude, m: $0.m, projection: $0.projection)
+            }
+        }
+
         return Polygon(unchecked: rings, calculateBoundingBox: false)
     }
 
@@ -553,7 +573,7 @@ extension Overlay {
                 // for near-collinearity: tight enough not to disturb dense
                 // buffer geometry, loose enough to absorb projection rounding
                 // differences between platforms.
-                let tolerance = 0.000001
+                let tolerance = Overlay.topologyTolerance
 
                 // Split each edge at the other edge's endpoints. This covers
                 // collinear overlaps (where there is no single intersection
@@ -852,12 +872,13 @@ extension Overlay {
             let ring = Ring(unchecked: coords)
             let candidate = Polygon(unchecked: [ring])
             let testPoint = candidate.poleOfInaccessibility()?.coordinate
-                ?? ring.coordinates.first!
+                ?? ring.coordinates[0]
 
             var assigned = false
             for (i, _) in result.enumerated() {
                 if result[i].locate(testPoint, gridSize: nil) == .interior {
-                    let poly = Polygon(unchecked: [result[i].outerRing!] + (result[i].innerRings ?? []) + [ring])
+                    let outerRing = result[i].outerRing ?? ring
+                    let poly = Polygon(unchecked: [outerRing] + (result[i].innerRings ?? []) + [ring])
                     result[i] = poly
                     assigned = true
                     break

@@ -1035,4 +1035,108 @@ struct QueryParserTests {
         #expect(try #require(QueryParser(string: "((.a == 1 AND .b == 2) OR (.a == 999 AND .b == 999)) AND (.a == 1)")).evaluate(on: feature))
     }
 
+
+    // MARK: - Collection entry points
+
+    /// The public `FeatureCollection.query(term:)` and `[Feature].query(term:)`
+    /// wrappers must apply the same parser/evaluator as direct use, preserve
+    /// order, and return `nil` for invalid queries.
+    @Test
+    func collectionQueryEntryPoints() throws {
+        let features = [
+            Feature(
+                Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+                properties: ["highway": "primary", "lanes": 2]),
+            Feature(
+                Point(Coordinate3D(latitude: 1.0, longitude: 1.0)),
+                properties: ["highway": "primary", "lanes": 1]),
+            Feature(
+                Point(Coordinate3D(latitude: 2.0, longitude: 2.0)),
+                properties: ["highway": "service", "lanes": 4]),
+        ]
+
+        let collection = FeatureCollection(features)
+        let result = try #require(collection.query(term: ".highway == primary and .lanes > 1"))
+        #expect(result.features.count == 1)
+        #expect(result.features[0] == features[0])
+
+        let arrayResult = try #require(features.query(term: ".highway == primary"))
+        #expect(arrayResult.count == 2)
+        #expect(arrayResult == [features[0], features[1]])
+
+        #expect(collection.query(term: ".highway in [") == nil)
+        #expect(features.query(term: ".highway in [") == nil)
+    }
+
+
+    // MARK: - Nested grouping and prefix NOT audit
+
+    private var groupingFeature: Feature {
+        Feature(
+            Point(Coordinate3D(latitude: 0.0, longitude: 0.0)),
+            properties: ["a": 1, "b": 2, "c": 3])
+    }
+
+    @Test
+    func nestedGroupsPreserveBothOperands() throws {
+        #expect(pipeline(for: ".a == 1 and (.b == 2 or .c == 3)") == [
+            .value([.key("a")]), .literal(1), .comparison(.equals),
+            .value([.key("b")]), .literal(2), .comparison(.equals),
+            .value([.key("c")]), .literal(3), .comparison(.equals),
+            .condition(.or), .condition(.and),
+        ])
+        #expect(pipeline(for: "(.a == 1 or .b == 2) and .c == 3") == [
+            .value([.key("a")]), .literal(1), .comparison(.equals),
+            .value([.key("b")]), .literal(2), .comparison(.equals),
+            .condition(.or),
+            .value([.key("c")]), .literal(3), .comparison(.equals),
+            .condition(.and),
+        ])
+        #expect(pipeline(for: ".a == 1 and (.b == 2 and (.c == 3 or .a == 4))") == [
+            .value([.key("a")]), .literal(1), .comparison(.equals),
+            .value([.key("b")]), .literal(2), .comparison(.equals),
+            .value([.key("c")]), .literal(3), .comparison(.equals),
+            .value([.key("a")]), .literal(4), .comparison(.equals),
+            .condition(.or), .condition(.and), .condition(.and),
+        ])
+    }
+
+    @Test
+    func nestedGroupsEvaluateCorrectly() throws {
+        #expect(try #require(QueryParser(string: ".a == 1 and (.b == 2 or .c == 3)"))
+            .evaluate(on: groupingFeature))
+        #expect(try #require(QueryParser(string: "(.a == 1 or .b == 9) and .c == 3"))
+            .evaluate(on: groupingFeature))
+        #expect(try #require(QueryParser(string: ".a == 9 and (.b == 2 or .c == 3)"))
+            .evaluate(on: groupingFeature) == false)
+    }
+
+    @Test
+    func prefixNotEvaluatesAndComposes() throws {
+        #expect(try #require(QueryParser(string: "NOT .a == 1"))
+            .evaluate(on: groupingFeature) == false)
+        #expect(try #require(QueryParser(string: "NOT .a == 9"))
+            .evaluate(on: groupingFeature))
+        #expect(try #require(QueryParser(string: "NOT (.a == 1 and .b == 2)"))
+            .evaluate(on: groupingFeature) == false)
+        #expect(try #require(QueryParser(string: "NOT (.a == 9 and .b == 2)"))
+            .evaluate(on: groupingFeature))
+        #expect(try #require(QueryParser(string: ".a == 1 and NOT .b == 9"))
+            .evaluate(on: groupingFeature))
+        #expect(try #require(QueryParser(string: ".a == 1 and NOT .b == 2"))
+            .evaluate(on: groupingFeature) == false)
+        // Postfix `not` still negates the accumulated expression.
+        #expect(try #require(QueryParser(string: ".a == 1 and .b == 2 not"))
+            .evaluate(on: groupingFeature) == false)
+    }
+
+    @Test
+    func incompleteQueriesReturnNil() {
+        #expect(QueryParser(string: ".highway ==") == nil)
+        #expect(QueryParser(string: ".foo and") == nil)
+        #expect(QueryParser(string: "(.foo == 1") == nil)
+        #expect(QueryParser(string: "and .foo") == nil)
+    }
+
+
 }

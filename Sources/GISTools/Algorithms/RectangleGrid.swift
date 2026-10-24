@@ -40,8 +40,12 @@ private enum RectangleGrid {
     ) -> FeatureCollection {
         let projection = bbox.projection
         let coordinatesAreInMeters = !projection.isGeographic
-        let cellStepX: Double = coordinatesAreInMeters ? cellWidth : cellWidth / 111_325.0
-        let cellStepY: Double = coordinatesAreInMeters ? cellHeight : cellHeight / 111_325.0
+        let cellStepX: Double = coordinatesAreInMeters
+            ? cellWidth
+            : cellWidth / GISTool.oneDegreeLatitudeDistance
+        let cellStepY: Double = coordinatesAreInMeters
+            ? cellHeight
+            : cellHeight / GISTool.oneDegreeLatitudeDistance
 
         let west = bbox.southWest.longitude
         let south = bbox.southWest.latitude

@@ -25,7 +25,17 @@ extension LineSegment {
         from coordinate: Coordinate3D,
         clampToEnds: Bool = false
     ) -> Coordinate3D? {
-        let coordinate = coordinate.projected(to: projection)
+        var coordinate = coordinate.projected(to: projection)
+        var first = first
+        var second = second
+        let extent = projection.wraparoundExtent
+
+        if let extent {
+            let unwrapped = AntimeridianCutting.unwrapCoordinates([first, second, coordinate], extent: extent)
+            first = unwrapped[0]
+            second = unwrapped[1]
+            coordinate = unwrapped[2]
+        }
 
         let squareLineDistance: Double = pow(first.latitude - second.latitude, 2) + pow(first.longitude - second.longitude, 2)
 
@@ -56,11 +66,13 @@ extension LineSegment {
             altitude = firstAltitude + weight * (secondAltitude - firstAltitude)
         }
 
-        return Coordinate3D(
+        let result = Coordinate3D(
             x: longitude,
             y: latitude,
             z: altitude,
             projection: projection)
+
+        return extent == nil ? result : result.normalized()
     }
 
 }

@@ -93,8 +93,9 @@ private enum TopologicalValidity {
 
         for i in holes.indices {
             for j in holes.indices where j > i {
-                let first = holes[i].coordinates.first!
-                let second = holes[j].coordinates.first!
+                guard let first = holes[i].coordinates.first,
+                      let second = holes[j].coordinates.first
+                else { continue }
 
                 if holes[i].locate(second) == .interior
                     || holes[j].locate(first) == .interior

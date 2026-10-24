@@ -76,12 +76,38 @@ extension GeoJson {
         gridSize: Double? = nil
     ) -> MultiPolygon? {
         let geometry = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
-        guard distance != 0.0 else { return nil }
+        if distance == 0.0 {
+            return Self.zeroBuffer(geometry)
+        }
 
         if distance < 0.0 {
             return Self.inset(geometry, by: -distance, endType: endType, unionType: unionType, steps: steps)
         }
         return Self.buffer(geometry, by: distance, endType: endType, joinType: joinType, unionType: unionType, steps: steps)
+    }
+
+    /// Zero-distance contract: polygonal inputs are returned as a cleaned
+    /// identity, non-areal inputs have a zero-area result (an empty
+    /// MultiPolygon). This keeps the `MultiPolygon` return type consistent.
+    private static func zeroBuffer(_ geometry: GeoJson) -> MultiPolygon {
+        switch geometry {
+        case let polygon as Polygon:
+            return MultiPolygon(unchecked: [polygon])
+        case let multiPolygon as MultiPolygon:
+            return multiPolygon
+        case let feature as Feature:
+            return feature.geometry.map { zeroBuffer($0) } ?? MultiPolygon()
+        case let collection as FeatureCollection:
+            return MultiPolygon(unchecked: collection.features.flatMap {
+                $0.geometry.map { zeroBuffer($0).polygons } ?? []
+            })
+        case let collection as GeometryCollection:
+            return MultiPolygon(unchecked: collection.geometries.flatMap {
+                zeroBuffer($0).polygons
+            })
+        default:
+            return MultiPolygon()
+        }
     }
 
     private static func buffer(
@@ -136,7 +162,7 @@ extension GeoJson {
                 // Bridge the gap between end and start to form a closed ring.
                 // Circles at all coordinates (like .round) plus the bridge.
                 let coords = lineString.coordinates
-                let bridge = LineSegment(first: coords.last!, second: coords[0], index: 0)
+                let bridge = LineSegment(first: coords[coords.count - 1], second: coords[0], index: 0)
                 if let bp = bridge.buffered(by: distance, endType: .butt, unionType: .none) {
                     polygons.append(contentsOf: bp.polygons)
                 }
@@ -470,6 +496,7 @@ extension GeoJson {
         var insetRings = [insetRing]
         insetRings.append(contentsOf: insetHoles)
         let insetPolygon = Polygon(unchecked: insetRings)
+        guard insetPolygon.isValid else { return nil }
         return insetPolygon.projected(to: polygon.projection)
     }
 

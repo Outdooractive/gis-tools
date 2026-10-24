@@ -377,9 +377,7 @@ extension Coordinate3D {
     ///              See also ``init(_:)`` and ``asJson``.
     /// - Returns: A `CLLocation` representing this coordinate
     public var location: CLLocation {
-        let timestamp = (m != nil
-            ? Date(timeIntervalSinceReferenceDate: m!)
-            : Date())
+        let timestamp = m.map(Date.init(timeIntervalSinceReferenceDate:)) ?? Date()
 
         return CLLocation(
             coordinate: coordinate2D,
@@ -732,10 +730,19 @@ extension Coordinate3D: Equatable {
         lhs: Coordinate3D,
         rhs: Coordinate3D
     ) -> Bool {
-        lhs.projection == rhs.projection
-            && abs(lhs.latitude - rhs.latitude) <= GISTool.equalityDelta
-            && abs(lhs.longitude - rhs.longitude) <= GISTool.equalityDelta
-            && lhs.altitude == rhs.altitude
+        guard lhs.projection == rhs.projection,
+              abs(lhs.latitude - rhs.latitude) <= GISTool.equalityDelta,
+              lhs.altitude == rhs.altitude
+        else { return false }
+
+        var longitudeDelta = lhs.longitude - rhs.longitude
+        if let extent = lhs.projection.wraparoundExtent, extent > 0.0 {
+            let period = 2.0 * extent
+            longitudeDelta = longitudeDelta.truncatingRemainder(dividingBy: period)
+            if longitudeDelta > extent { longitudeDelta -= period }
+            else if longitudeDelta < -extent { longitudeDelta += period }
+        }
+        return abs(longitudeDelta) <= GISTool.equalityDelta
     }
 
     /// Compares two coordinates with the given deltas.
@@ -757,9 +764,22 @@ extension Coordinate3D: Equatable {
         // same CRS.
         let other = other.projection == projection ? other : other.projected(to: projection)
 
-        if abs(latitude - other.latitude) > equalityDelta
-            || abs(longitude - other.longitude) > equalityDelta
-        {
+        if abs(latitude - other.latitude) > equalityDelta {
+            return false
+        }
+
+        var longitudeDelta = longitude - other.longitude
+        if let extent = projection.wraparoundExtent, extent > 0.0 {
+            let period = 2.0 * extent
+            longitudeDelta = longitudeDelta.truncatingRemainder(dividingBy: period)
+            if longitudeDelta > extent {
+                longitudeDelta -= period
+            }
+            else if longitudeDelta < -extent {
+                longitudeDelta += period
+            }
+        }
+        if abs(longitudeDelta) > equalityDelta {
             return false
         }
 
@@ -783,7 +803,16 @@ extension Coordinate3D: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(projection)
         let lat = (latitude / GISTool.equalityDelta).rounded()
-        let lon = (longitude / GISTool.equalityDelta).rounded()
+
+        var canonicalLongitude = longitude
+        if let extent = projection.wraparoundExtent, extent > 0.0 {
+            let period = 2.0 * extent
+            canonicalLongitude = canonicalLongitude.truncatingRemainder(dividingBy: period)
+            if canonicalLongitude <= -extent { canonicalLongitude += period }
+            if canonicalLongitude > extent { canonicalLongitude -= period }
+            if canonicalLongitude == extent { canonicalLongitude = -extent }
+        }
+        let lon = (canonicalLongitude / GISTool.equalityDelta).rounded()
         hasher.combine(lat)
         hasher.combine(lon)
         hasher.combine(altitude)

@@ -21,8 +21,7 @@ extension Polygon {
     ) -> PolygonGeometry? {
         let a = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let b = gridSize.map { pattern.snappedToGrid(tolerance: $0) } ?? pattern
-        let bPolygons = b.polygons
-        return Minkowski.computeSum(a, bPolygons)
+        return Minkowski.computeSum(a, b.polygons)
     }
 
     /// Returns the Minkowski difference of the receiver and a pattern polygon.
@@ -39,9 +38,7 @@ extension Polygon {
     ) -> PolygonGeometry? {
         let a = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let b = gridSize.map { pattern.snappedToGrid(tolerance: $0) } ?? pattern
-        let reflected = b.projected(to: b.projection)  // keep projection
-        let reflectedPolygons = reflected.polygons.map { $0.reflectedThroughOrigin() }
-        return Minkowski.computeSum(a, reflectedPolygons)
+        return Minkowski.computeSum(a, b.polygons, reflectPatterns: true)
     }
 
 }
@@ -61,8 +58,7 @@ extension MultiPolygon {
     ) -> PolygonGeometry? {
         let a = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let b = gridSize.map { pattern.snappedToGrid(tolerance: $0) } ?? pattern
-        let bPolygons = b.polygons
-        return Minkowski.computeSum(a, bPolygons)
+        return Minkowski.computeSum(a, b.polygons)
     }
 
     /// Returns the Minkowski difference of the receiver and a pattern polygon.
@@ -76,8 +72,7 @@ extension MultiPolygon {
     ) -> PolygonGeometry? {
         let a = gridSize.map { self.snappedToGrid(tolerance: $0) } ?? self
         let b = gridSize.map { pattern.snappedToGrid(tolerance: $0) } ?? pattern
-        let reflectedPolygons = b.polygons.map { $0.reflectedThroughOrigin() }
-        return Minkowski.computeSum(a, reflectedPolygons)
+        return Minkowski.computeSum(a, b.polygons, reflectPatterns: true)
     }
 
 }
@@ -89,18 +84,36 @@ private enum Minkowski {
     /// Compute the Minkowski sum of a polygon/polygon-coverage and a pattern.
     static func computeSum(
         _ geoJson: GeoJson,
-        _ patterns: [Polygon]
+        _ patterns: [Polygon],
+        reflectPatterns: Bool = false
     ) -> PolygonGeometry? {
         guard patterns.isNotEmpty else { return nil }
         guard let sourcePolygons = (geoJson as? PolygonGeometry)?.polygons,
               sourcePolygons.isNotEmpty
         else { return nil }
 
-        let projection = sourcePolygons.first!.projection
+        let projection = sourcePolygons[0].projection
+
+        // ECEF x/y/z are not a map plane, so run the Minkowski geometry in
+        // geographic coordinates and project the result back. All other
+        // projections share a plane and are used directly.
+        let workingProjection: Projection = projection.isGeocentric
+            ? .epsg4326
+            : projection
+
+        let workingSource = sourcePolygons.map {
+            $0.projected(to: workingProjection)
+        }
+        var workingPatterns = patterns.map {
+            $0.projected(to: workingProjection)
+        }
+        if reflectPatterns {
+            workingPatterns = workingPatterns.map { $0.reflectedThroughOrigin() }
+        }
 
         // Tessellate source and pattern into convex triangles
-        let sourceParts = tessellateConvex(sourcePolygons, projection: projection)
-        let patternParts = tessellateConvex(patterns, projection: projection)
+        let sourceParts = tessellateConvex(workingSource)
+        let patternParts = tessellateConvex(workingPatterns)
 
         guard sourceParts.isNotEmpty,
               patternParts.isNotEmpty
@@ -130,15 +143,18 @@ private enum Minkowski {
 
     /// Decompose polygons into convex triangles.
     private static func tessellateConvex(
-        _ polygons: [Polygon],
-        projection: Projection
+        _ polygons: [Polygon]
     ) -> [Polygon] {
         var parts: [Polygon] = []
         for poly in polygons {
-            if !poly.isConcave() {
+            let hasHoles = poly.innerRings?.isNotEmpty ?? false
+            if !poly.isConcave(), !hasHoles {
                 parts.append(poly)
             }
             else {
+                // Holes must be removed before the vertex-sum: a convex outer
+                // ring with holes is not a convex set, and including the hole
+                // vertices in the sum would fill the hole.
                 let triangles = poly.tesselated()
                 for f in triangles.features {
                     if let t = f.geometry as? Polygon {

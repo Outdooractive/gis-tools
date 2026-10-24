@@ -113,4 +113,33 @@ struct PolygonToLineTests {
         #expect(result.count == 1)
     }
 
+
+    // MARK: - Audit coverage
+
+    @Test
+    func exactCoordinatesClosureAndRingOrder() throws {
+        let outer: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]
+        let hole: [Coordinate3D] = [
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]
+        let polygon = try #require(Polygon([outer, hole]))
+        let result = try #require(polygon.lineStrings.first)
+
+        #expect(result.lineStrings.count == 2)
+        #expect(result.lineStrings[0].coordinates == outer)
+        #expect(result.lineStrings[1].coordinates == hole)
+        #expect(result.lineStrings.allSatisfy { $0.coordinates.first == $0.coordinates.last })
+    }
+
+
 }
