@@ -154,12 +154,18 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Deterministic property-based and differential tests (#381): seeded
+  generators now exercise GeoJSON, WKB, WKT and TWKB round-trips, overlay
+  partition invariants (projected and antimeridian-crossing), simplify and
+  buffer invariants. Shapely-generated overlay, buffer and polygonize fixtures
+  are covered by a new differential test suite; the generator script is
+  development-only and the package keeps no third-party runtime dependency.
+
 - API compatibility CI (#380): pull requests now run
   `swift package diagnose-api-breaking-changes` against their base branch.
   Accidental public API removals or signature changes fail CI; intentional
   changes are acknowledged with the `api-breaking` label. See
   [API_BREAKAGE.md](API_BREAKAGE.md).
-
 - Transparent gzip support for GeoJSON data and file loading. The `contentsOf:`
   and `jsonData:` entry points detect the gzip magic bytes and decompress with
   the system zlib library; `GeoJsonReader`, `GeoJsonParser`, `JSONValue` and all
@@ -309,6 +315,12 @@ left unchanged; that case is ambiguous per RFC 7946.
   benchmark noise; its win is lower per-query scratch memory.
 
 ### Fixed
+
+- Symmetric difference correctness (#394): `symmetricDifference` is now the
+  union of the two independently computed one-sided differences (`A \ B` and
+  `B \ A`) instead of a single multi-component XOR boundary pass. This fixes
+  invalid output and a wrong area for overlapping rectangles. The property
+  and Shapely differential tests now assert symmetric difference again.
 
 - Hardcoded epsilon audit (#387): replaced unexplained tolerance literals
   with named constants or existing `GISTool` tolerances. `BooleanPointInPolygon`
