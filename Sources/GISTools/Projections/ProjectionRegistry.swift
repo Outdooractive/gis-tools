@@ -77,10 +77,10 @@ enum ProjectionRegistry {
         for srid in 32_701 ... 32_760 {
             map[srid] = UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 25_831 ... 25_837 {
+        for srid in 25_828 ... 25_838 {
             map[srid] = Etrs89UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 26_901 ... 26_960 {
+        for srid in 26_901 ... 26_923 {
             map[srid] = Nad83UtmDefinition.definition(forSrid: srid)
         }
         for srid in 31_466 ... 31_469 {

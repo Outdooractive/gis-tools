@@ -211,16 +211,18 @@ extension Projection {
 
     /// The UTM zone number (1–60) of the receiver, or `nil` for
     /// non-UTM projections. Both the WGS84 belts (EPSG:326xx/327xx) and
-    /// the ETRS89 belt (EPSG:25831–25837) resolve here.
+    /// the ETRS89 belt (EPSG:25828–25838) resolve here.
     public var utmZone: Int? {
         UtmDefinition.definition(for: self)?.zone
             ?? Etrs89UtmDefinition.definition(forSrid: srid)?.zone
+            ?? Nad83UtmDefinition.definition(forSrid: srid)?.zone
     }
 
     /// The UTM hemisphere of the receiver, or `nil` for non-UTM projections.
     public var utmHemisphere: UtmHemisphere? {
         UtmDefinition.definition(for: self)?.hemisphere
             ?? Etrs89UtmDefinition.definition(forSrid: srid).map { _ in .north }
+            ?? Nad83UtmDefinition.definition(forSrid: srid).map { _ in .north }
     }
 
 }

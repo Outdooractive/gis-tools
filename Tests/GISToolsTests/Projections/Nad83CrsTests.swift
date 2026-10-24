@@ -3,7 +3,7 @@ import Foundation
 import Testing
 
 /// Tests for the North American NAD83 CRSs: the geographic EPSG:4269, the
-/// UTM belt EPSG:26901–26960, the CONUS/BC Albers (EPSG:5070/3005) and the
+/// UTM belt EPSG:26901–26923, the CONUS/BC Albers (EPSG:5070/3005) and the
 /// Canadian Lambert conic grids (EPSG:3347/3978).
 ///
 /// All reference values are pyproj/PROJ 9.8.1 ground-truth fixtures computed
@@ -16,17 +16,26 @@ struct Nad83CrsTests {
     // MARK: - SRID mapping
 
     /// Validates the NAD83/UTM belt SRID mapping.
+    ///
+    /// EPSG only defines NAD83/UTM zones 1N–23N in the 269xx block. SRIDs
+    /// 26924–26960 are not UTM zones: 26924–26928 are unassigned and
+    /// 26929–26960 are NAD83 State Plane zones.
     @Test
     func utmSridMapping() throws {
-        for zone in 1 ... 60 {
+        for zone in 1 ... 23 {
             let projection = try #require(Projection(srid: 26900 + zone))
             #expect(projection.srid == 26900 + zone)
             #expect(projection.datum == .nad83)
             #expect(projection.definition.projection == projection)
+            #expect(projection.utmZone == zone)
+            #expect(projection.utmHemisphere == .north)
         }
 
         // Out-of-belt SRIDs.
         #expect(Projection(srid: 26900) == nil)
+        #expect(Projection(srid: 26924) == nil)
+        #expect(Projection(srid: 26929) == nil)
+        #expect(Projection(srid: 26960) == nil)
         #expect(Projection(srid: 26961) == nil)
     }
 

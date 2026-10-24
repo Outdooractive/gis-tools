@@ -49,14 +49,19 @@ struct Nad83Definition: ProjectionDefinition {
 
     func forward(_ coordinate: Coordinate3D) -> Coordinate3D {
         Coordinate3D(
+            x: coordinate.longitude,
+            y: coordinate.latitude,
+            z: coordinate.altitude,
+            m: coordinate.m,
+            projection: projection)
+    }
+
+    func inverse(_ coordinate: Coordinate3D) -> Coordinate3D {
+        Coordinate3D(
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
             altitude: coordinate.altitude,
             m: coordinate.m)
-    }
-
-    func inverse(_ coordinate: Coordinate3D) -> Coordinate3D {
-        forward(coordinate)
     }
 
 }

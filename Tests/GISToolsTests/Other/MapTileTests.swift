@@ -575,20 +575,26 @@ struct MapTileTests {
     }
 
     // Verifies tile bounding boxes in EPSG:32662 (Plate Carree). At zoom 4
-    // tiles span 22.5 degrees of longitude: tile x=8 starts at longitude
-    // -180 + 8 * 22.5 = 0.0. Latitudes follow the Web Mercator row layout
-    // and must match the manually reprojected EPSG:4326 bounds exactly.
+    // tiles span 22.5 degrees of longitude, i.e. 2,504,688.54 metres in the
+    // projection's metre units: tile x=8 starts at longitude
+    // -180 + 8 * 22.5 = 0.0 and therefore at x = 0. Latitudes follow the
+    // Web Mercator row layout and must match the reprojected EPSG:4326
+    // bounds exactly.
     @Test
     func boundingBox32662() async throws {
         let tile = MapTile(x: 8, y: 5, z: 4)
         let box = tile.boundingBox(projection: .epsg32662)
 
         let box4326 = tile.boundingBox(projection: .epsg4326)
+        let expectedSouthWest = box4326.southWest.projected(to: .epsg32662)
+        let expectedNorthEast = box4326.northEast.projected(to: .epsg32662)
 
         #expect(abs(box.southWest.longitude - 0.0) < 0.000001)
-        #expect(abs(box.northEast.longitude - 22.5) < 0.000001)
-        #expect(abs(box.southWest.latitude - box4326.southWest.latitude) < 0.000001)
-        #expect(abs(box.northEast.latitude - box4326.northEast.latitude) < 0.000001)
+        #expect(abs(box.northEast.longitude - 2_504_688.5428486555) < 0.000001)
+        #expect(abs(box.southWest.latitude - expectedSouthWest.latitude) < 0.000001)
+        #expect(abs(box.northEast.latitude - expectedNorthEast.latitude) < 0.000001)
+        #expect(abs(box.southWest.longitude - expectedSouthWest.longitude) < 0.000001)
+        #expect(abs(box.northEast.longitude - expectedNorthEast.longitude) < 0.000001)
 
         #expect(box.contains(Coordinate3D(latitude: 45.0, longitude: 10.0).projected(to: .epsg32662)))
     }
