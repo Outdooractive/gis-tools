@@ -54,6 +54,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
   - [Graph algorithms](#graph-algorithms)
 - [Benchmarks](#benchmarks)
 - [Related packages](#related-packages)
+- [Development checks](#development-checks)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
@@ -1218,6 +1219,40 @@ The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip),
 The Allgäu, Munich and Paris graph test fixtures are derived from
 OpenStreetMap data © OpenStreetMap contributors, available under the
 [Open Database License (ODbL)](https://www.openstreetmap.org/copyright).
+
+# Development checks
+
+Coverage and formatting are gated in CI.
+
+Refresh the per-file coverage report after running the test suite with coverage:
+
+```bash
+swift test --traits EnableGraphAPI --enable-code-coverage
+python3 scripts/refresh_coverage_report.py
+```
+
+The CI coverage floor is **87.5%** weighted line coverage. To run the same gate locally:
+
+```bash
+python3 scripts/refresh_coverage_report.py --minimum 87.5 --check
+```
+
+Formatting uses the repository's `.swiftformat` configuration. CI compares
+the Swift files changed by a pull request against the base branch and fails
+when the PR **adds** formatting violations. Existing legacy debt is tolerated
+until those files are cleaned up.
+
+Check changed files locally:
+
+```bash
+swiftformat --lint --config .swiftformat <changed Swift files>
+```
+
+To fix them:
+
+```bash
+swiftformat --config .swiftformat <changed Swift files>
+```
 
 # Contributing
 Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.
