@@ -508,6 +508,7 @@ struct BoundingBoxClipTests {
             lineString.coordinates.allSatisfy {
                 $0.longitude >= 175.0 || $0.longitude <= -175.0
             }
-        })    }
+        })
+    }
 
 }
