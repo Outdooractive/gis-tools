@@ -1237,10 +1237,10 @@ The CI coverage floor is **87.5%** weighted line coverage. To run the same gate 
 python3 scripts/refresh_coverage_report.py --minimum 87.5 --check
 ```
 
-Formatting uses the repository's `.swiftformat` configuration. CI compares
-the Swift files changed by a pull request against the base branch and fails
-when the PR **adds** formatting violations. Existing legacy debt is tolerated
-until those files are cleaned up.
+Formatting uses the repository's `.swiftformat` configuration and the pinned
+Swift version in `.swift-version`. CI compares the Swift files changed by a
+pull request against the base branch and fails when the PR **adds** formatting
+violations. Existing legacy debt is tolerated until those files are cleaned up.
 
 Check changed files locally:
 
