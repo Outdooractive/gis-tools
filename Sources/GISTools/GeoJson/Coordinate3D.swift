@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: -
 
-/// A three dimensional coordinate (``latitude``/``y``, ``longitude``/``x``, ``altitude``/``z``)
+/// A three dimensional coordinate (``Coordinate3D/latitude``/``y``, ``Coordinate3D/longitude``/``x``, ``Coordinate3D/altitude``/``z``)
 /// plus a generic value ``m``.
 public struct Coordinate3D:
     CustomStringConvertible,
@@ -36,7 +36,7 @@ public struct Coordinate3D:
     /// The GeoJSON specification doesn't specifiy the meaning of this value,
     /// and it doesn't guarantee that parsers won't ignore or discard it. See
     /// [chapter 3.1.1 in the spec](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1).
-    /// - Important: ``asJson`` will output a `null` altitude value if ``altitude`` is `nil` so that
+    /// - Important: ``asJson`` will output a `null` altitude value if ``Coordinate3D/altitude`` is `nil` so that
     ///              `m` won't get lost. This might lead to compatibilty issues with other GeoJSON readers.
     public var m: Double?
 
@@ -52,7 +52,7 @@ public struct Coordinate3D:
     @inlinable
     public var z: Double? { altitude }
 
-    /// Create a coordinate with ``latitude``, ``longitude``, ``altitude`` and ``m``.
+    /// Create a coordinate with ``Coordinate3D/latitude``, ``Coordinate3D/longitude``, ``Coordinate3D/altitude`` and ``m``.
     /// Projection will be *EPSG:4326*.
     ///
     /// - Parameters:
@@ -568,8 +568,8 @@ extension Coordinate3D: GeoJsonReadable {
     ///
     /// - Note: The [GeoJSON spec](https://datatracker.ietf.org/doc/html/rfc7946)
     ///         uses CRS:84 that specifies coordinates in longitude/latitude order.
-    /// - Important: The third value in GeoJSON coordinates will always be ``altitude``, the fourth value
-    ///              will be ``m`` if it exists. ``altitude`` can be a JSON `null` value.
+    /// - Important: The third value in GeoJSON coordinates will always be ``Coordinate3D/altitude``, the fourth value
+    ///              will be ``m`` if it exists. ``Coordinate3D/altitude`` can be a JSON `null` value.
     /// - important: The source is expected to be in EPSG:4326.
     /// - Parameters:
     ///    - json: A GeoJSON position array or a dictionary with `x`, `y`, `z` keys
@@ -606,7 +606,7 @@ extension Coordinate3D: GeoJsonReadable {
     /// Dump the coordinate as a GeoJSON coordinate.
     ///
     /// - Important: The result JSON object will have a `null` value for the altitude
-    ///              if the ``altitude`` is `nil` and ``m`` exists.
+    ///              if the ``Coordinate3D/altitude`` is `nil` and ``m`` exists.
     /// - important: Always projected to EPSG:4326, unless the coordinate has no SRID.
     /// - Returns: An array of doubles (and `nil` placeholders) in GeoJSON order
     public var asJson: [Double?] {
@@ -630,8 +630,8 @@ extension Coordinate3D: GeoJsonReadable {
 
     /// Dump the coordinate as a JSON object, as defined in the specification.
     ///
-    /// - important: The returned array will always contain ``latitude`` and ``longitude``,
-    ///              and ``altitude`` only if it exists.
+    /// - important: The returned array will always contain ``Coordinate3D/latitude`` and ``Coordinate3D/longitude``,
+    ///              and ``Coordinate3D/altitude`` only if it exists.
     /// - Returns: An array of doubles in GeoJSON order (no `nil` placeholders)
     public var asMinimalJson: [Double] {
         var result: [Double] = (projection == .epsg4326 || projection == .noSRID
@@ -829,7 +829,7 @@ extension Coordinate3D {
     /// For projections without a defined extent (geocentric projections or
     /// coordinates without an SRID) this is always `true`.
     ///
-    /// - SeeAlso: ``Projection/validExtent``
+    /// - SeeAlso: `validExtent`
     public var isValid: Bool {
         guard let extent = projection.definition.validExtent
         else { return true }

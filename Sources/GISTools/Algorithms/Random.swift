@@ -29,7 +29,7 @@ extension BoundingBox {
 
     /// Generates random polygons within this bounding box.
     ///
-    /// The coordinate values (bbox extents, ``maxRadialLength``) are in degrees
+    /// The coordinate values (bbox extents, `maxRadialLength`) are in degrees
     /// for EPSG:4326 and in projection units (meters for 3857/4978) for others.
     ///
     /// - Parameter count: Number of polygons to generate (default `1`).
@@ -77,7 +77,7 @@ extension BoundingBox {
 
     /// Generates random line strings within this bounding box.
     ///
-    /// The coordinate values (bbox extents, ``maxLength``) are in degrees
+    /// The coordinate values (bbox extents, `maxLength`) are in degrees
     /// for EPSG:4326 and in projection units (meters for 3857/4978) for others.
     ///
     /// - Parameter count: Number of line strings to generate (default `1`).
@@ -147,7 +147,7 @@ extension BoundingBox {
 
     /// Generates random polygons within the world bounding box.
     ///
-    /// The coordinate values (``maxRadialLength``) are in degrees for EPSG:4326
+    /// The coordinate values (`maxRadialLength`) are in degrees for EPSG:4326
     /// and in projection units (meters for 3857/4978) for others.
     ///
     /// - Parameter count: Number of polygons to generate (default `1`).
@@ -169,7 +169,7 @@ extension BoundingBox {
 
     /// Generates random line strings within the world bounding box.
     ///
-    /// The coordinate values (``maxLength``) are in degrees for EPSG:4326
+    /// The coordinate values (`maxLength`) are in degrees for EPSG:4326
     /// and in projection units (meters for 3857/4978) for others.
     ///
     /// - Parameter count: Number of line strings to generate (default `1`).

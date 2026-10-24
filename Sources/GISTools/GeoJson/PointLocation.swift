@@ -3,7 +3,7 @@ import Foundation
 /// The location of a coordinate relative to a geometry.
 ///
 /// This mirrors the OGC Simple Features / JTS `Location` model and is the
-/// primitive behind ``Ring/contains(_:gridSize:)``, ``Ring/covers(_:gridSize:)``
+/// primitive behind `contains(_:gridSize:)`, `covers(_:gridSize:)`
 /// and their equivalents on the other geometry types:
 ///
 /// - `contains` is `true` only for ``interior`` (OGC/PostGIS `ST_Contains`

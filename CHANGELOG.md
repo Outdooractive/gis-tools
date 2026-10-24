@@ -154,6 +154,22 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- DocC catalog and 3.0 migration guide (#383): added a `GISTools.docc` landing
+  page with focused articles for getting started, projections and antimeridian
+  handling, GeoJSON and WKB/WKT/TWKB (including a SwiftData transformer
+  example), the query DSL, the graph API, performance and memory, and
+  dedicated pages for the CSV, FIT, GeoPackage, GPX and Shapefile companion
+  packages. The dedicated migration guide covers every 3.0 breaking change,
+  including containment, validity, `mask`/`clip` return types, projected
+  coordinates, unlocated features, bounding-box storage, the graph trait and
+  removed 2.x aliases. The README now links to the catalog and published API
+  reference. `scripts/check_documentation.py` builds the catalog in CI
+  and rejects documentation warnings or broken links; the existing 355 DocC
+  diagnostics in source comments were cleaned up as part of this change.
+  Benchmark, development and API compatibility notes moved from the README
+  and `API_BREAKAGE.md` to `DEVELOPMENT.md`, with the README linking to the
+  guide.
+
 - Benchmark baselines and regression comparison (#385): representative
   loading, projection, overlay, R-tree, buffer, simplify, graph and memory
   suites now have platform/architecture-specific baselines under
@@ -192,7 +208,7 @@ The deprecated aliases from 2.x have been removed. Use the current names:
   `swift package diagnose-api-breaking-changes` against their base branch.
   Accidental public API removals or signature changes fail CI; intentional
   changes are acknowledged with the `api-breaking` label. See
-  [API_BREAKAGE.md](API_BREAKAGE.md).
+  [DEVELOPMENT.md](DEVELOPMENT.md#api-compatibility).
 - Transparent gzip support for GeoJSON data and file loading. The `contentsOf:`
   and `jsonData:` entry points detect the gzip magic bytes and decompress with
   the system zlib library; `GeoJsonReader`, `GeoJsonParser`, `JSONValue` and all

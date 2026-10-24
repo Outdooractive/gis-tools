@@ -12,7 +12,7 @@ extension GeoJson {
     ///
     /// "A contains B" means that no points of B lie in the exterior of A, and
     /// at least one point of B lies in the interior of A. This matches OGC
-    /// `ST_Contains`; use ``covers(_:)`` to include boundary points.
+    /// `ST_Contains`; use `covers(_:)` to include boundary points.
     ///
     /// The other geometry is projected to the receiver's projection. Antimeridian-
     /// crossing geometries are cut at ±180° before the check. Altitude
@@ -64,7 +64,7 @@ extension GeoJson {
     ///
     /// "A is within B" means that no points of A lie in the exterior of B, and
     /// at least one point of A lies in the interior of B. This is the converse
-    /// of ``contains(_:)`` (OGC `ST_Within`).
+    /// of `contains(_:)` (OGC `ST_Within`).
     ///
     /// - Parameter other: The other geometry
     /// - Returns: `true` if the receiver is within the other geometry

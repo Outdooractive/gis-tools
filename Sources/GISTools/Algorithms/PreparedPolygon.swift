@@ -4,9 +4,9 @@ import Foundation
 ///
 /// Preparing a polygon builds a latitude-bucket index for each ring and an
 /// R-tree over its boundary segments. The index is immutable and can be reused
-/// for repeated ``locate(_:)``, ``contains(_:)`` and ``covers(_:)`` calls.
+/// for repeated `locate(_:)`, `contains(_:)` and `covers(_:)` calls.
 ///
-/// One-shot predicates such as ``Polygon/locate(_:gridSize:)`` keep their
+/// One-shot predicates such as `locate(_:gridSize:)` keep their
 /// existing implementation. Use ``Polygon/prepared(gridSize:)`` when the same
 /// geometry is queried repeatedly.
 public struct PreparedPolygon: Sendable {
@@ -92,7 +92,7 @@ public struct PreparedPolygon: Sendable {
     /// Determines if a coordinate lies in the interior of the prepared geometry.
     ///
     /// This uses the same OGC/PostGIS `ST_Contains` point semantics as
-    /// ``Polygon/contains(_:gridSize:)``.
+    /// `contains(_:gridSize:)`.
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Returns: `true` if the coordinate is in the interior
@@ -103,7 +103,7 @@ public struct PreparedPolygon: Sendable {
     /// Determines if a coordinate is covered by the prepared geometry.
     ///
     /// This uses the same OGC/PostGIS `ST_Covers` point semantics as
-    /// ``Polygon/covers(_:gridSize:)``.
+    /// `covers(_:gridSize:)`.
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Returns: `true` if the coordinate is in the interior or on the boundary

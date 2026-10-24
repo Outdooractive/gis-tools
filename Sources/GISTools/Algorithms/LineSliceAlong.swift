@@ -10,7 +10,7 @@ extension LineString {
     /// Takes a specified distance along the line to a start point, and a specified distance along
     /// the line to a stop point and returns a subsection of the line in-between those points.
     ///
-    /// When both endpoints of a cut segment have an ``altitude`` value, the
+    /// When both endpoints of a cut segment have an ``Coordinate3D/altitude`` value, the
     /// interpolated start/stop points carry a linearly interpolated altitude.
     ///
     /// This can be useful for extracting only the part of a route between two distances.
@@ -136,7 +136,7 @@ extension Feature {
     /// Takes a specified distance along the line to a start point, and a specified distance along
     /// the line to a stop point and returns a subsection of the line in-between those points.
     ///
-    /// When both endpoints of a cut segment have an ``altitude`` value, the
+    /// When both endpoints of a cut segment have an ``Coordinate3D/altitude`` value, the
     /// interpolated start/stop points carry a linearly interpolated altitude.
     ///
     /// This can be useful for extracting only the part of a route between two distances.

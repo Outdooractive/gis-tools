@@ -59,7 +59,7 @@ extension LineSegment {
     /// Checks if two line segments intersect.
     ///
     /// All projections are supported — the 2‑D orientation-based check
-    /// operates on raw ``longitude``/``latitude`` values.
+    /// operates on raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values.
     /// For ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
     /// altitude/Z is ignored.
     ///
@@ -120,7 +120,7 @@ extension LineSegment {
     /// Returns `nil` when the segments are parallel or collinear (overlapping
     /// collinear segments produce a line segment, not a single point).
     ///
-    /// When both endpoints of the receiver's segment have an ``altitude`` value,
+    /// When both endpoints of the receiver's segment have an ``Coordinate3D/altitude`` value,
     /// the result's altitude is linearly interpolated at the intersection point.
     ///
     /// - Parameters:
@@ -197,13 +197,13 @@ extension GeoJson {
     /// - note: Takes all polygon rings into account, not just the outer ring.
     ///
     /// All projections are supported — the 2‑D segment‑intersection check
-    /// operates on raw ``longitude``/``latitude`` values.
+    /// operates on raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values.
     /// For ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
     /// altitude/Z is ignored.
     ///
     /// - Parameters:
     /// - Parameter other: The other geometry
-    /// - Parameter epsilon: Tolerance passed through to ``LineSegment/intersection(_:epsilon:)``
+    /// - Parameter epsilon: Tolerance passed through to `intersection(_:epsilon:gridSize:)`
     ///     (in the coordinate system's native units, e.g. degrees for EPSG:4326)
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     ///

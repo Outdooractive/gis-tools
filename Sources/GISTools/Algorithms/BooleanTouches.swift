@@ -14,7 +14,7 @@ extension GeoJson {
     /// but their interiors are disjoint.
     ///
     /// All projections are supported. The 2‑D checks operate on raw
-    /// ``longitude``/``latitude`` values regardless of CRS.
+    /// ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values regardless of CRS.
     /// For ``Projection/epsg4978`` (ECEF) the XY plane is used; altitude/Z
     /// is ignored.
     ///

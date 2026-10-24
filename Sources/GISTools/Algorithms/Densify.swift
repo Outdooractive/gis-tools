@@ -10,7 +10,7 @@ extension GeoJson {
     /// Returns a copy of the receiver with additional interpolated vertices
     /// added along line segments longer than the given interval.
     ///
-    /// When both endpoints of a segment have an ``altitude`` value, the
+    /// When both endpoints of a segment have an ``Coordinate3D/altitude`` value, the
     /// interpolated vertices carry a linearly interpolated altitude.
     /// Otherwise the new vertices have no altitude.
     ///

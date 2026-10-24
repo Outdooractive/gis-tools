@@ -10,7 +10,7 @@ extension Polygon {
 
     /// Smooths the polygon using Chaikin's algorithm.
     ///
-    /// When all coordinates have an ``altitude`` value, the Z component is
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the Z component is
     /// smoothed using the same Chaikin weights (0.75 / 0.25) as the X and Y
     /// components. Otherwise the result has no altitude.
     ///
@@ -109,7 +109,7 @@ extension MultiPolygon {
 
     /// Smooths all polygons in the MultiPolygon using Chaikin's algorithm.
     ///
-    /// When all coordinates have an ``altitude`` value, the Z component is
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the Z component is
     /// smoothed using the same Chaikin weights as X and Y.
     /// Otherwise the result has no altitude.
     ///

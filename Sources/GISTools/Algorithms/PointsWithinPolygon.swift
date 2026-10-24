@@ -20,6 +20,7 @@ extension PolygonGeometry {
     }
 
     /// Finds *Point*s that fall within the receiver.
+    /// - Parameter points: The points to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     /// - Returns: The points inside the polygon.
     public func pointsWithin(_ points: [Point], gridSize: Double? = nil) -> [Point] {

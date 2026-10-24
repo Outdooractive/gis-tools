@@ -10,7 +10,7 @@ extension LineString {
     /// Returns a coordinate at a specified distance along the line.
     ///
     /// When both endpoints of the segment containing the target distance have
-    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// an ``Coordinate3D/altitude`` value, the result carries a linearly interpolated
     /// altitude. Otherwise the result has no altitude.
     ///
     /// - Parameter distance: The distance along the line, in meters.
@@ -50,7 +50,7 @@ extension LineString {
     /// Returns a `Point` at a specified distance along the line.
     ///
     /// When both endpoints of the segment containing the target distance have
-    /// an ``altitude`` value, the result carries a linearly interpolated
+    /// an ``Coordinate3D/altitude`` value, the result carries a linearly interpolated
     /// altitude. Otherwise the result has no altitude.
     ///
     /// - Parameter distance: The distance along the line, in meters

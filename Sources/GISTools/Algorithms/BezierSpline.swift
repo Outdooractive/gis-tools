@@ -7,7 +7,7 @@ extension LineString {
     /// Creates a smoothed cubic Bezier spline through the control points
     /// of the receiver.
     ///
-    /// When all coordinates have an ``altitude`` value, the spline is computed
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the spline is computed
     /// as a 3-D curve interpolating longitude, latitude and altitude. Otherwise
     /// the spline is 2-D (longitude, latitude).
     ///
@@ -49,7 +49,7 @@ extension MultiLineString {
     /// Creates a smoothed cubic Bezier spline through all control points
     /// of all constituent line strings, concatenated.
     ///
-    /// When all coordinates have an ``altitude`` value, the spline is computed
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the spline is computed
     /// as a 3-D curve interpolating longitude, latitude and altitude. Otherwise
     /// the spline is 2-D (longitude, latitude).
     ///

@@ -15,6 +15,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 ## Table of Contents
 
 - [GISTools](#gistools)
+  - [Documentation](#documentation)
   - [Features](#features)
   - [Notes](#notes)
   - [Requirements](#requirements)
@@ -52,12 +53,34 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
   - [Merge](#merge)
   - [Export](#export)
   - [Graph algorithms](#graph-algorithms)
-- [Benchmarks](#benchmarks)
 - [Related packages](#related-packages)
-- [Development checks](#development-checks)
+- [Development](DEVELOPMENT.md)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
+
+## Documentation
+
+The [DocC catalog](Sources/GISTools/GISTools.docc/GISTools.md) contains focused
+guides for the main workflows:
+
+- [Getting started](Sources/GISTools/GISTools.docc/GettingStarted.md)
+- [Projections and antimeridian handling](Sources/GISTools/GISTools.docc/ProjectionsAndAntimeridian.md)
+- [GeoJSON and WKB/WKT/TWKB](Sources/GISTools/GISTools.docc/GeoJSONAndCoders.md)
+- [Query DSL](Sources/GISTools/GISTools.docc/QueryDSL.md)
+- [Graph API](Sources/GISTools/GISTools.docc/GraphAPI.md)
+- [Performance and memory notes](Sources/GISTools/GISTools.docc/PerformanceAndMemory.md)
+- [CSV](Sources/GISTools/GISTools.docc/CSV.md)
+- [FIT](Sources/GISTools/GISTools.docc/FIT.md)
+- [GeoPackage](Sources/GISTools/GISTools.docc/GeoPackage.md)
+- [GPX](Sources/GISTools/GISTools.docc/GPX.md)
+- [Shapefile](Sources/GISTools/GISTools.docc/Shapefile.md)
+- [Migrating to GISTools 3.0](Sources/GISTools/GISTools.docc/MigrationGuide.md)
+
+The generated API reference is available on
+[Swift Package Index](https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools).
+The sections below remain a detailed reference for individual types and
+algorithms.
 
 ## Features
 
@@ -67,6 +90,7 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 - Supports `Codable` and `SwiftData` (see below)
 - Supports a wide range of projections (see [Projections](#projections)): EPSG:4326 (geodetic), 3857 (web mercator), 4978 (ECEF geocentric), 3395 (World Mercator), 32662 (Plate Carree), 4258 (ETRS89), 4267 (NAD27), 4269 (NAD83), 4277/27700 (OSGB 1936 / British National Grid), 2056/21781 (Swiss CH1903+/LV95 and CH1903/LV03), 29902/29903/2157 (Irish Grid and Irish Transverse Mercator), 25828–25838 (ETRS89/UTM), 26901–26923 (NAD83/UTM), 3035/3034 (EU-wide LAEA and LCC), 5070 (US Conus Albers), 3005 (BC Albers), 3347/3978 (Canadian Lambert), 2154 (French Lambert-93), 28992 (Dutch RD New), 31466–31469 (German DHDN/Gauss-Krüger), 31255–31259 (Austrian MGI/Gauss-Krüger) and all 120 WGS84 UTM zones, plus user-definable custom projections
 - Supports WKT/WKB/TWKB, also with different projections
+- [**gis-tools-csv**](https://github.com/Outdooractive/gis-tools-csv) — reads and writes CSV and PostGIS CSV exports
 - [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — reads and writes ESRI Shapefiles (.shp/.dbf/.shx/.prj)
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
 - [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — reads and writes GPX 1.1 files (.gpx)
@@ -91,9 +115,10 @@ with one `Feature` per cut geometry part. This makes iterating the results unifo
 Works natively for EPSG:4326 and EPSG:3857 (splits at ±180° and ±originShift respectively).
 For EPSG:4978 and noSRID, returns the original geometry unchanged (the antimeridian concept does not apply).
 
-> **Upgrading to 3.0?** The containment API and several Codable/parsing
-> behaviours changed. See [CHANGELOG.md](CHANGELOG.md) for the breaking changes
-> and migration mapping.
+> **Upgrading to 3.0?** The containment API, validity semantics, projected
+> coordinates, unlocated features, bounding boxes and graph trait changed. See
+> the [3.0 migration guide](Sources/GISTools/GISTools.docc/MigrationGuide.md)
+> and [CHANGELOG.md](CHANGELOG.md) for the complete list.
 
 ## Requirements
 
@@ -662,7 +687,9 @@ Then create your models like this:
 ...
 ```
 
-This is necessary because SwiftData doesn't work well with the default Codable implementation, so you need to do the serialization for yourself...
+This is necessary because SwiftData doesn't work well with the default Codable implementation, so you need to do the serialization for yourself.
+
+A complete model, container and fetch example is in the [GeoJSON and WKB/WKT/TWKB guide](Sources/GISTools/GISTools.docc/GeoJSONAndCoders.md).
 
 # WKB/WKT/TWKB
 The following geometry types are supported: `point`, `linestring`, `linearring`, `polygon`, `multipoint`, `multilinestring`, `multipolygon`, `geometrycollection` and `triangle`. Please open an issue if you need more.
@@ -1192,110 +1219,26 @@ let fc = graph.toFeatureCollection()
 | TSP approximation | `graph.travelingSalespersonTour(nodes: [...])` | [Source][276] / [Tests][277] |
 
 # Related packages
-Currently only two:
+
+Companion packages built on GISTools:
+
+- [**gis-tools-csv**](https://github.com/Outdooractive/gis-tools-csv) — CSV and PostGIS CSV exports ([guide](Sources/GISTools/GISTools.docc/CSV.md))
+- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — Garmin FIT activities ([guide](Sources/GISTools/GISTools.docc/FIT.md))
+- [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — OGC GeoPackage files ([guide](Sources/GISTools/GISTools.docc/GeoPackage.md))
+- [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — GPX 1.1 routes and tracks ([guide](Sources/GISTools/GISTools.docc/GPX.md))
+- [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — ESRI Shapefiles ([guide](Sources/GISTools/GISTools.docc/Shapefile.md))
+
+Each guide covers installation, formats, supported APIs and limitations.
+
+Additional vector-tile tools:
+
 - [mvt-tools][125]: Vector tiles reader/writer for Swift
 - [mvt-postgis][130]: Creates vector tiles from Postgis databases
 
-# Benchmarks
+# Development
 
-A separate release-mode executable covers loading, projection, spatial predicates, overlay, the R-tree, coders, buffer, simplify, hulls, line operations, tile cover, clipping, graph routing, the query DSL, clustering, memory layout and a small cross-module inlining suite.
-
-```bash
-# Run every suite and print a Markdown table
-scripts/benchmarks.sh
-
-# Run selected suites
-swift run -c release --traits EnableGraphAPI Benchmarks predicates overlay graph
-
-# Run the real-world graph benchmarks
-swift run -c release --traits EnableGraphAPI Benchmarks realworld
-
-# List available suites
-swift run -c release Benchmarks
-```
-
-Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
-
-The `graph` and `realworld` suites require the `EnableGraphAPI` trait. The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
-
-The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries, ALT landmark queries and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
-
-The Allgäu, Munich and Paris graph test fixtures are derived from
-OpenStreetMap data © OpenStreetMap contributors, available under the
-[Open Database License (ODbL)](https://www.openstreetmap.org/copyright).
-
-## Benchmark baselines
-
-Tracked baselines live in `Benchmarks/Baselines/` and are keyed by operating
-system and CPU architecture, for example `linux-aarch64.json` or
-`darwin-arm64.json`. Run the representative loading, projection, overlay,
-R-tree, buffer, simplify, graph and memory suites and compare them with the
-matching baseline:
-
-```bash
-python3 scripts/benchmark_compare.py
-```
-
-The command builds `Benchmarks` in release mode, prints current-versus-baseline
-deltas for every suite, and exits non-zero when a benchmark time or peak RSS
-regresses by more than the default 20%, or a finer-grained memory metric by more
-than 50%. Use `--threshold 0.30` to change the time/RSS threshold,
-`--metric-threshold 0.60` to change the memory metric threshold,
-`--report-only` to keep the exit status successful, or pass suite names to
-compare a subset. Benchmarks below 0.5 ms are reported without a regression
-decision because the measurement noise is too large; suites without a matching
-baseline are reported as such.
-
-Refresh a baseline only after reviewing the performance change:
-
-```bash
-python3 scripts/benchmark_compare.py --update
-git diff Benchmarks/Baselines/
-```
-
-Passing suite names with `--update` refreshes only those suites and preserves
-the other entries. Commit the refreshed baseline with the change that
-justifies it. Baselines are machine-specific; generate one on each
-platform/architecture you intend to track. The manually triggered
-**Benchmarks** workflow can run the comparison on a Linux ARM64 runner and on
-macOS, but is not part of pull-request CI. The committed Linux baseline targets
-the ARM64 runner used by that workflow. To create a baseline for another
-platform, run the workflow with `update_baseline` enabled, download the uploaded
-artifact, and commit it.
-
-# Development checks
-
-Coverage and formatting are gated in CI.
-
-Refresh the per-file coverage report after running the test suite with coverage:
-
-```bash
-swift test --traits EnableGraphAPI --enable-code-coverage
-python3 scripts/refresh_coverage_report.py
-```
-
-The CI coverage floor is **87.5%** weighted line coverage. To run the same gate locally:
-
-```bash
-python3 scripts/refresh_coverage_report.py --minimum 87.5 --check
-```
-
-Formatting uses the repository's `.swiftformat` configuration and the pinned
-Swift version in `.swift-version`. CI compares the Swift files changed by a
-pull request against the base branch and fails when the PR **adds** formatting
-violations. Existing legacy debt is tolerated until those files are cleaned up.
-
-Check changed files locally:
-
-```bash
-swiftformat --lint --config .swiftformat <changed Swift files>
-```
-
-To fix them:
-
-```bash
-swiftformat --config .swiftformat <changed Swift files>
-```
+Benchmark suites, baseline refreshes, coverage, formatting, documentation and
+API compatibility checks are documented in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 # Contributing
 Please [create an issue](https://github.com/Outdooractive/gis-tools/issues) or [open a pull request](https://github.com/Outdooractive/gis-tools/pulls) with a fix or enhancement.

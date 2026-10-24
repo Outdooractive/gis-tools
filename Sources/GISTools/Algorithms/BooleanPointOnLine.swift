@@ -9,6 +9,7 @@ import Foundation
 extension LineSegment {
 
     /// Tests if *Coordinate3D* is on the segment.
+    /// - Parameter coordinate: The coordinate to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     public func checkIsOnSegment(
         _ coordinate: Coordinate3D,
@@ -38,6 +39,7 @@ extension LineSegment {
     }
 
     /// Tests if *Point* is on the segment.
+    /// - Parameter point: The point to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     public func checkIsOnSegment(_ point: Point, gridSize: Double? = nil) -> Bool {
         checkIsOnSegment(point.coordinate, gridSize: gridSize)
@@ -48,6 +50,7 @@ extension LineSegment {
 extension LineStringGeometry {
 
     /// Tests if *Coordinate3D* is on the line.
+    /// - Parameter coordinate: The coordinate to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     public func checkIsOnLine(
         _ coordinate: Coordinate3D,
@@ -60,6 +63,7 @@ extension LineStringGeometry {
     }
 
     /// Tests if *Point* is on the line.
+    /// - Parameter point: The point to test.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
     public func checkIsOnLine(
         _ point: Point,

@@ -14,3 +14,6 @@ xcuserdata
 # Python tooling
 __pycache__/
 *.pyc
+
+# DocC preview build
+.docc-build/

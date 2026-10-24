@@ -112,7 +112,7 @@ extension GeometryCollection {
 
     /// Update the receiver's bounding box.
     ///
-    /// - Parameter onlyIfNecessary: Only update if the receiver doesn't already have one
+    /// - Parameter ifNecessary: Only update if the receiver doesn't already have one
     /// - Returns: The updated bounding box
     @discardableResult
     public mutating func updateBoundingBox(

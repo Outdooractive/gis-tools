@@ -56,6 +56,7 @@ extension MultiPolygon {
     }
 
     /// Forms the union of the receiver with another polygon geometry in place.
+    /// - Parameter other: The other polygon geometry.
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public mutating func formUnion(
         with other: PolygonGeometry,

@@ -6,7 +6,7 @@ import Foundation
 extension BoundingBox {
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the bounding box.
-    /// - Parameter from: The reference coordinate
+    /// - Parameter other: The reference coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestCoordinateOnFeature(
         from other: Coordinate3D,
@@ -21,7 +21,7 @@ extension BoundingBox {
     }
 
     /// Returns a *Point* guaranteed to be on the surface of the bounding box.
-    /// - Parameter from: The reference point
+    /// - Parameter other: The reference point
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     public func nearestPointOnFeature(
         from other: Point,
@@ -37,7 +37,7 @@ extension BoundingBox {
 extension GeoJson {
 
     /// Returns a *Point* guaranteed to be on the surface of the feature.
-    /// - Parameter from: The reference point
+    /// - Parameter other: The reference point
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: The nearest point and distance, or `nil`.
     public func nearestPointOnFeature(
@@ -51,7 +51,7 @@ extension GeoJson {
     }
 
     /// Returns a *Coordinate* guaranteed to be on the surface of the feature.
-    /// - Parameter from: The reference coordinate
+    /// - Parameter other: The reference coordinate
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before computing (default `nil`).
     /// - Returns: The nearest coordinate and distance, or `nil`.
     public func nearestCoordinateOnFeature(

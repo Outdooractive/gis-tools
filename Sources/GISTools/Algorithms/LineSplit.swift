@@ -14,7 +14,7 @@ extension LineString {
     /// If there are no intersections, the result contains the original line.
     ///
     /// All projections are supported — the intersection and point-on-line
-    /// checks operate on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// checks operate on raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values (ECEF X/Y
     /// for EPSG:4978).
     ///
     /// - Parameter splitter: A ``Point``, ``MultiPoint``, ``LineString``, or ``MultiLineString``

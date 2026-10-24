@@ -68,6 +68,8 @@ jobs:
         run: swift build
       - name: Ensure Python
         run: command -v python3 >/dev/null || (apt-get update && apt-get install -y python3)
+      - name: Build documentation
+        run: python3 scripts/check_documentation.py
       - name: Test with Graph trait and coverage
         run: swift test --traits EnableGraphAPI --enable-code-coverage
       - name: Coverage gate

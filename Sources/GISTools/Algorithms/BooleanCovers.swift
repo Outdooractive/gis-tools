@@ -8,7 +8,7 @@ extension GeoJson {
     /// other geometry.
     ///
     /// "A covers B" means that no point of B lies in the exterior of A. Unlike
-    /// ``contains(_:)``, points on the boundary of A are covered. This matches
+    /// `contains(_:)`, points on the boundary of A are covered. This matches
     /// OGC `ST_Covers`.
     ///
     /// The other geometry is projected to the receiver's projection. Antimeridian-

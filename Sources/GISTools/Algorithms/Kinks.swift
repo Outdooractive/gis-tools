@@ -16,7 +16,7 @@ extension GeoJson {
     /// and ``MultiPolygon``.
     ///
     /// All projections are supported — the 2‑D segment‑intersection check
-    /// operates on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// operates on raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values (ECEF X/Y
     /// for EPSG:4978). Antimeridian-crossing inputs should be cut or unwrapped
     /// first; this method does not normalise the seam.
     ///

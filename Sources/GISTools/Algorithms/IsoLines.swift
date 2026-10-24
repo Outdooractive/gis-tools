@@ -11,7 +11,7 @@ extension FeatureCollection {
     /// is a ``FeatureCollection`` of ``MultiLineString`` features, one per break value.
     ///
     /// All projections are supported — the marching‑squares algorithm operates on
-    /// raw ``longitude``/``latitude`` values (ECEF X/Y for EPSG:4978). The result
+    /// raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values (ECEF X/Y for EPSG:4978). The result
     /// uses the same projection as the input.
     ///
     /// - Parameter breaks: The contour values to generate (e.g. `[0, 100, 200]`).

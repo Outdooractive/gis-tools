@@ -7,7 +7,7 @@ import Foundation
 /// projection origin (Snyder formulas, *Map Projections - A Working
 /// Manual*, USGS PP 1395).
 ///
-/// Used by ``UtmDefinition`` (EPSG:32xxx, origin at the equator) and by the
+/// Used by `UtmDefinition` (EPSG:32xxx, origin at the equator) and by the
 /// datument-capable built-in projected CRSs (EPSG:27700 etc.), and exposed
 /// publicly through ``CustomProjection/transverseMercator(datum:helmert:)``.
 struct TransverseMercatorMath: Sendable {
