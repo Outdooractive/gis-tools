@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Core utilities, query, tiles and clustering audit (#325): DBSCAN's
+  neighbourhood query now widens its longitude window by `cos(latitude)` and
+  searches the seam-adjacent window when the radius crosses ±180°, so points
+  at high latitudes and across the antimeridian are no longer missed. `MapTile`
+  clamps zoom levels to the supported `0...32` range (negative or oversized
+  zooms previously trapped in `1 << zoom`), and string/quadkey/descendant
+  entry points reject or bound unsupported zooms. `Double.rounded(precision:)`
+  returns the value unchanged for precisions beyond the representable
+  ~15 digits instead of producing a rounded-but-wrong (or NaN) result.
+  Existing query-DSL, tile-cover and benchmark coverage was audited; the
+  remaining tile-cover exactness gaps stay in #343.
+
 - Graph and routing audit (#324): chain contraction no longer drops a one-way
   edge when its target looks like a two-way degree-2 pass-through; when a
   direct edge and a longer chain connect the same contracted pair, the

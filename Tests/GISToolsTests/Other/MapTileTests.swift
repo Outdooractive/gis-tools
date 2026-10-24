@@ -648,4 +648,28 @@ extension MapTileTests {
             longitude: box.southEast.longitude)))
     }
 
+
+    // MARK: - Audit regressions
+
+    /// Negative and oversized zoom levels must not trap in the coordinate
+    /// conversion (`1 << zoom`): they are clamped to the supported range.
+    @Test
+    func invalidZoomLevelsAreClamped() async throws {
+        let coordinate = Coordinate3D(latitude: 47.56, longitude: 10.22)
+        #expect(MapTile(coordinate: coordinate, atZoom: -1) == MapTile(x: 0, y: 0, z: 0))
+        #expect(MapTile(coordinate: coordinate, atZoom: 100).z == 32)
+        #expect(MapTile(x: 1, y: 2, z: -5).z == 0)
+        #expect(MapTile(x: 1, y: 2, z: 100).z == 32)
+
+        // String and quadkey inputs reject unsupported zooms instead of
+        // creating tiles whose later conversions would trap.
+        #expect(MapTile(string: "-1/0/0") == nil)
+        #expect(MapTile(string: "33/0/0") == nil)
+        #expect(MapTile(quadkey: String(repeating: "0", count: 33)) == nil)
+
+        // Descendant expansion is bounded by the same maximum.
+        #expect(MapTile(x: 0, y: 0, z: 32).descendants(atZoom: 33).isEmpty)
+    }
+
+
 }
