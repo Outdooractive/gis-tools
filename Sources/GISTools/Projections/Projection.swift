@@ -599,7 +599,7 @@ extension Projection {
     /// - Parameter meters: The length in meters
     /// - Returns: The length in the receiver's coordinate units
     public func crsLength(fromMeters meters: CLLocationDistance) -> Double {
-        isGeographic ? meters / 111_325.0 : meters
+        isGeographic ? meters / GISTool.oneDegreeLatitudeDistance : meters
     }
 
 }

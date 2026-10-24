@@ -1,6 +1,7 @@
 #if canImport(CoreLocation)
 import CoreLocation
 #endif
+import Foundation
 
 /// Some constants used in this library.
 public enum GISTool {
@@ -16,8 +17,51 @@ public enum GISTool {
     /// The radius of the earth, in meters.
     public static let earthRadius: CLLocationDistance = 6_371_008.8
 
+    /// Length of one degree of latitude in meters, using the same spherical
+    /// circumference model as ``earthCircumference``.
+    ///
+    /// This is the canonical value for the meter/degree conversion helpers:
+    /// `earthCircumference / 360 ≈ 111_319.49 m`.
+    public static let oneDegreeLatitudeDistance: CLLocationDistance = earthCircumference / 360.0
+
+    /// A deliberately conservative metres-per-degree bound for spatial search
+    /// windows.
+    ///
+    /// This is smaller than ``oneDegreeLatitudeDistance`` so latitude search
+    /// boxes cannot under-cover at high latitudes. Do not replace it with the
+    /// equatorial constant.
+    public static let conservativeMetersPerDegree: CLLocationDistance = 111_000.0
+
+    /// Length of one degree of longitude at `latitude`, in meters.
+    ///
+    /// Uses the spherical ``oneDegreeLatitudeDistance`` model; longitude
+    /// distance shrinks by `cos(latitude)` toward the poles.
+    ///
+    /// - Parameter latitude: The latitude in degrees.
+    /// - Returns: The length of one degree of longitude at that latitude.
+    public static func metersPerDegreeLongitude(
+        atLatitude latitude: CLLocationDegrees
+    ) -> CLLocationDistance {
+        cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
+    }
+
     /// WGS84 equatorial radius as specified by the International Union of Geodesy and Geophysics.
     public static let equatorialRadius: CLLocationDistance = 6_378_137
+
+    /// Meters in one statute mile.
+    public static let metersPerMile: CLLocationDistance = 1_609.344
+
+    /// Meters in one international nautical mile.
+    public static let metersPerNauticalMile: CLLocationDistance = 1_852.0
+
+    /// Feet in one meter, using the legacy `3.28084` conversion factor.
+    public static let feetPerMeter: Double = 3.28084
+
+    /// Inches in one meter, using the legacy `39.370` conversion factor.
+    public static let inchesPerMeter: Double = 39.370
+
+    /// Yards in one meter, using the legacy `1.0936` conversion factor.
+    public static let yardsPerMeter: Double = 1.0936
 
     /// The accuracy for testing what is equal (~0.011mm at the equator for EPSG:4326,
     /// 0.1nm for EPSG:3857, mainly to counter small rounding errors).
@@ -43,5 +87,31 @@ public enum GISTool {
 
     /// WGS84 semi-minor axis in meters.
     public static let wgs84SemiMinorAxis: CLLocationDistance = equatorialRadius * (1.0 - wgs84Flattening)
+
+    // MARK: - Area conversion factors
+
+    /// Acres in one square meter.
+    static let acresPerSquareMeter: Double = 0.000247105
+
+    /// Square feet in one square meter.
+    static let squareFeetPerSquareMeter: Double = 10.763910417
+
+    /// Square inches in one square meter.
+    static let squareInchesPerSquareMeter: Double = 1_550.003100006
+
+    /// Square kilometers in one square meter.
+    static let squareKilometersPerSquareMeter: Double = 0.000001
+
+    /// Square miles in one square meter.
+    static let squareMilesPerSquareMeter: Double = 0.000000386
+
+    /// Square yards in one square meter.
+    static let squareYardsPerSquareMeter: Double = 1.195990046
+
+    /// Square centimeters in one square meter.
+    static let squareCentimetersPerSquareMeter: Double = 10_000.0
+
+    /// Square millimeters in one square meter.
+    static let squareMillimetersPerSquareMeter: Double = 1_000_000.0
 
 }
