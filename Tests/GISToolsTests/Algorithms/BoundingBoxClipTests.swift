@@ -3,24 +3,24 @@ import Testing
 
 struct BoundingBoxClipTests {
 
-    // Validates clipping a single line segment to a bounding box.
+    /// Validates clipping a single line segment to a bounding box.
     @Test
-    func lineStringSingleLine() async throws {
+    func lineStringSingleLine() throws {
         let lineString = try TestData.lineString(package: "BoundingBoxClip", name: "SingleLine")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 39.095962936305476, longitude: -77.72552490234374),
             northEast: Coordinate3D(latitude: 39.59722324495565, longitude: -77.0361328125))
-        let expected = MultiLineString([
-            try TestData.lineString(package: "BoundingBoxClip", name: "SingleLineResult")
+        let expected = try MultiLineString([
+            TestData.lineString(package: "BoundingBoxClip", name: "SingleLineResult"),
         ])
 
         let clipped = lineString.clipped(to: boundingBox)
         #expect(clipped == expected)
     }
 
-    // Validates clipping a multi-segment line string to a bounding box.
+    /// Validates clipping a multi-segment line string to a bounding box.
     @Test
-    func lineString() async throws {
+    func lineString() throws {
         let lineString = try TestData.lineString(package: "BoundingBoxClip", name: "LineString")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 36.29741818650811, longitude: -81.551513671875),
@@ -31,9 +31,9 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
-    // Validates clipping a `MultiLineString` to a bounding box.
+    /// Validates clipping a `MultiLineString` to a bounding box.
     @Test
-    func multiLineString() async throws {
+    func multiLineString() throws {
         let lineString = try TestData.multiLineString(package: "BoundingBoxClip", name: "MultiLineString")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 38.49229419236133, longitude: -78.3929443359375),
@@ -44,9 +44,9 @@ struct BoundingBoxClipTests {
         #expect(clipped == expected)
     }
 
-    // Validates clipping a `MultiPolygon` to a bounding box.
+    /// Validates clipping a `MultiPolygon` to a bounding box.
     @Test
-    func multiPolygon() async throws {
+    func multiPolygon() throws {
         let multiPolygon = try TestData.multiPolygon(package: "BoundingBoxClip", name: "MultiPolygon")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 36.2354121683998, longitude: -80.1123046875),
@@ -59,9 +59,9 @@ struct BoundingBoxClipTests {
         #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
-    // Validates clipping a polygon with a crossing hole to a bounding box.
+    /// Validates clipping a polygon with a crossing hole to a bounding box.
     @Test
-    func polygonCrossingHole() async throws {
+    func polygonCrossingHole() throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonCrossingHole")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 36.34167804918315, longitude: -79.12353515625),
@@ -74,9 +74,9 @@ struct BoundingBoxClipTests {
         #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
-    // Validates clipping a polygon with multiple holes to a bounding box.
+    /// Validates clipping a polygon with multiple holes to a bounding box.
     @Test
-    func polygonHoles() async throws {
+    func polygonHoles() throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonHoles")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: 36.38591277287651, longitude: -79.60693359375),
@@ -89,9 +89,9 @@ struct BoundingBoxClipTests {
         #expect(abs(actualArea - expected.area) < max(0.001, expected.area * 0.000001))
     }
 
-    // Validates that clipping returns nil when the bounding box intersects at only a point (degenerate/invalid).
+    /// Validates that clipping returns nil when the bounding box intersects at only a point (degenerate/invalid).
     @Test
-    func polygonPointIntersection() async throws {
+    func polygonPointIntersection() throws {
         let polygon = try TestData.polygon(package: "BoundingBoxClip", name: "PolygonPointIntersection")
         let boundingBox = BoundingBox(
             southWest: Coordinate3D(latitude: -31.98, longitude: 115.875),
@@ -103,9 +103,9 @@ struct BoundingBoxClipTests {
 
     // MARK: - Projections
 
-    // Validates clipping in EPSG:3857 projection.
+    /// Validates clipping in EPSG:3857 projection.
     @Test
-    func boundingBoxClip3857() async throws {
+    func boundingBoxClip3857() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .epsg3857),
@@ -117,9 +117,9 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
-    // Validates clipping in noSRID projection.
+    /// Validates clipping in noSRID projection.
     @Test
-    func boundingBoxClipNoSRID() async throws {
+    func boundingBoxClipNoSRID() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, projection: .noSRID),
@@ -131,9 +131,9 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
-    // Validates clipping in EPSG:4978 projection.
+    /// Validates clipping in EPSG:4978 projection.
     @Test
-    func boundingBoxClip4978() async throws {
+    func boundingBoxClip4978() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 1_000_000.0, y: 1_000_000.0, z: 0.0, projection: .epsg4978),
@@ -145,11 +145,11 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil)
     }
 
-    // Clipping a point at the Earth's center (0,0,0) in EPSG:4978 to the
-    // world tile bounding box should return the point unchanged, since the
-    // ECEF AABB of the full Mercator viewable globe contains the origin.
+    /// Clipping a point at the Earth's center (0,0,0) in EPSG:4978 to the
+    /// world tile bounding box should return the point unchanged, since the
+    /// ECEF AABB of the full Mercator viewable globe contains the origin.
     @Test
-    func worldBoundingBoxClip4978() async throws {
+    func worldBoundingBoxClip4978() throws {
         let world = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4978)
         let point = Feature(Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857).projected(to: .epsg4978)))
         let result = try #require(point.clipped(to: world))
@@ -159,16 +159,16 @@ struct BoundingBoxClipTests {
 
     // MARK: - Antimeridian
 
-    // All geometries with coordinates well inside the world-spanning bounding box
-    // at z=0 in EPSG:4326 must survive clipping without being dropped.
-    // The bbox below is exactly what MapTile(x:0, y:0, z:0).boundingBox(.epsg4326) produces.
+    /// All geometries with coordinates well inside the world-spanning bounding box
+    /// at z=0 in EPSG:4326 must survive clipping without being dropped.
+    /// The bbox below is exactly what MapTile(x:0, y:0, z:0).boundingBox(.epsg4326) produces.
     @Test(arguments: [
         "Point",
         "MultiPoint",
         "LineString",
         "Polygon",
     ] as [String])
-    func insideWorldBox(_ label: String) async throws {
+    func insideWorldBox(_ label: String) throws {
         let bbox = MapTile(x: 0, y: 0, z: 0).boundingBox(projection: .epsg4326)
         let coords = [
             Coordinate3D(latitude: 48.8566, longitude: 2.3522),
@@ -180,9 +180,9 @@ struct BoundingBoxClipTests {
         case "Point":
             geom = Feature(Point(coords[0]))
         case "MultiPoint":
-            geom = Feature(MultiPoint(coords)!)
+            geom = try Feature(#require(MultiPoint(coords)))
         case "LineString":
-            geom = Feature(LineString(coords)!)
+            geom = try Feature(#require(LineString(coords)))
         case "Polygon":
             geom = Feature(Polygon([coords + [coords[0]]])!)
         default:
@@ -192,9 +192,9 @@ struct BoundingBoxClipTests {
         #expect(clipped != nil, "\(label) was dropped")
     }
 
-    // Validates clipping near the antimeridian.
+    /// Validates clipping near the antimeridian.
     @Test
-    func antimeridian() async throws {
+    func antimeridian() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 175.0),
             Coordinate3D(latitude: 10.0, longitude: 179.0),
@@ -203,7 +203,6 @@ struct BoundingBoxClipTests {
         let clipped = lineString.clipped(to: bbox)
         #expect(clipped != nil)
     }
-
 
     // MARK: - Audit regressions
 
@@ -222,7 +221,8 @@ struct BoundingBoxClipTests {
 
         let clipped = try #require(polygon.clipped(to: box))
         #expect(clipped.polygons.count == 2)
-        #expect(clipped.polygons.allSatisfy { $0.isValid })
+        // swiftformat:disable:next preferKeyPath
+        #expect(clipped.polygons.allSatisfy({ $0.isValid }))
         // 10 degrees of latitude x 5 degrees on each side of the seam.
         let expected = try #require(Polygon([[
             Coordinate3D(latitude: -5.0, longitude: 175.0),
@@ -241,13 +241,17 @@ struct BoundingBoxClipTests {
         }
         let polygon = try #require(Polygon([
             [
-                coordinate(0.0, 0.0), coordinate(10.0, 0.0),
-                coordinate(10.0, 10.0), coordinate(0.0, 10.0),
+                coordinate(0.0, 0.0),
+                coordinate(10.0, 0.0),
+                coordinate(10.0, 10.0),
+                coordinate(0.0, 10.0),
                 coordinate(0.0, 0.0),
             ],
             [
-                coordinate(5.0, 5.0), coordinate(15.0, 5.0),
-                coordinate(15.0, 15.0), coordinate(5.0, 15.0),
+                coordinate(5.0, 5.0),
+                coordinate(15.0, 5.0),
+                coordinate(15.0, 15.0),
+                coordinate(5.0, 15.0),
                 coordinate(5.0, 5.0),
             ],
         ]))
@@ -268,10 +272,14 @@ struct BoundingBoxClipTests {
             Coordinate3D(x: x, y: y, projection: .noSRID)
         }
         let polygon = try #require(Polygon([[
-            coordinate(0.0, 0.0), coordinate(10.0, 0.0),
-            coordinate(10.0, 10.0), coordinate(7.0, 10.0),
-            coordinate(7.0, 3.0), coordinate(3.0, 3.0),
-            coordinate(3.0, 10.0), coordinate(0.0, 10.0),
+            coordinate(0.0, 0.0),
+            coordinate(10.0, 0.0),
+            coordinate(10.0, 10.0),
+            coordinate(7.0, 10.0),
+            coordinate(7.0, 3.0),
+            coordinate(3.0, 3.0),
+            coordinate(3.0, 10.0),
+            coordinate(0.0, 10.0),
             coordinate(0.0, 0.0),
         ]]))
         let box = BoundingBox(
@@ -280,7 +288,8 @@ struct BoundingBoxClipTests {
 
         let clipped = try #require(polygon.clipped(to: box))
         #expect(clipped.polygons.count == 2)
-        #expect(clipped.polygons.allSatisfy { $0.isValid })
+        // swiftformat:disable:next preferKeyPath
+        #expect(clipped.polygons.allSatisfy({ $0.isValid }))
         #expect(abs(clipped.area - 30.0) < 0.000001, "area \(clipped.area), polygons \(clipped.polygons.map(\.coordinates))")
     }
 
@@ -302,7 +311,8 @@ struct BoundingBoxClipTests {
         #expect(clipped.projection == .epsg4978)
         #expect(clipped.polygons.isNotEmpty)
         let back = clipped.projected(to: .epsg4326)
-        #expect(back.polygons.allSatisfy { $0.isValid })
+        // swiftformat:disable:next preferKeyPath
+        #expect(back.polygons.allSatisfy({ $0.isValid }))
         let expected = try #require(Polygon([[
             Coordinate3D(latitude: -0.5, longitude: -0.5),
             Coordinate3D(latitude: -0.5, longitude: 0.5),
@@ -312,7 +322,6 @@ struct BoundingBoxClipTests {
         ]]))
         #expect(abs(back.area - expected.area) < expected.area * 0.01)
     }
-
 
     @Test
     func lineInsideCrossingBoxIsKept() throws {
@@ -327,23 +336,23 @@ struct BoundingBoxClipTests {
         let clipped = try #require(line.clipped(to: box))
         #expect(clipped.lineStrings.count == 2)
         // Each side contributes one degree at the equator.
-        #expect(abs(clipped.length - 2.0 * 111_195.0) < 2_000.0)
+        #expect(abs(clipped.length - 2.0 * 111_195.0) < 2000.0)
     }
 
     @Test
     func lineInsideCrossingBox3857IsKept() throws {
         let shift = GISTool.originShift
         let line = try #require(LineString([
-            Coordinate3D(x: shift - 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: -shift + 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: shift - 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: -shift + 1000.0, y: 0.0, projection: .epsg3857),
         ]))
         let box = BoundingBox(
-            southWest: Coordinate3D(x: shift - 5_000.0, y: -10_000.0, projection: .epsg3857),
-            northEast: Coordinate3D(x: -shift + 5_000.0, y: 10_000.0, projection: .epsg3857))
+            southWest: Coordinate3D(x: shift - 5000.0, y: -10000.0, projection: .epsg3857),
+            northEast: Coordinate3D(x: -shift + 5000.0, y: 10000.0, projection: .epsg3857))
 
         let clipped = try #require(line.clipped(to: box))
         #expect(clipped.lineStrings.count == 2)
-        #expect(abs(clipped.length - 2_000.0) < 0.001)
+        #expect(abs(clipped.length - 2000.0) < 0.001)
     }
 
     @Test
@@ -365,5 +374,93 @@ struct BoundingBoxClipTests {
         #expect(clipped.lineStrings.count == 4)
     }
 
+    @Test
+    func lineOnBoundingBoxBoundaryIsKept() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 1)
+        #expect(abs(clipped.length - line.length) < 0.001)
+    }
+
+    @Test
+    func lineFullyOutsideBoxReturnsNil() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 30.0, longitude: 30.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        #expect(line.clipped(to: box) == nil)
+    }
+
+    @Test
+    func multipointCrossingBoxKeepsOnlySeamPoints() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(multiPoint.clipped(to: box))
+        #expect(clipped.coordinates.count == 2)
+        #expect(clipped.coordinates.contains { abs($0.longitude - 179.0) < 0.000001 })
+        #expect(clipped.coordinates.contains { abs($0.longitude + 179.0) < 0.000001 })
+    }
+
+    @Test
+    func featureCollectionClipPreservesMetadata() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "Route"],
+            calculateBoundingBox: true)
+        let collection = FeatureCollection([feature])
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: 2.0),
+            northEast: Coordinate3D(latitude: 1.0, longitude: 8.0))
+
+        let clipped = try #require(collection.clipped(to: box))
+        let clippedFeature = try #require(clipped.features.first)
+        #expect(clippedFeature.id == .string("route"))
+        #expect(clippedFeature.property(for: "name") as String? == "Route")
+        #expect(clippedFeature.boundingBox != nil)
+    }
+
+    @Test
+    func linePartiallyOutsideCrossingBoxIsTrimmed() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 160.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -160.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+        #expect(clipped.lineStrings.allSatisfy { lineString in
+            lineString.coordinates.allSatisfy {
+                $0.longitude >= 175.0 || $0.longitude <= -175.0
+            }
+        })
+    }
 
 }

@@ -4,17 +4,17 @@ import Testing
 
 struct PointOnFeatureTests {
 
-    // Verifies that a point feature returns its own coordinate as the point on feature.
+    /// Verifies that a point feature returns its own coordinate as the point on feature.
     @Test
-    func pointOnPoint() async throws {
+    func pointOnPoint() throws {
         let p = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let result = try #require(p.coordinateOnFeature)
         #expect(result == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
-    // Verifies that a line string returns its centroid as the point on feature.
+    /// Verifies that a line string returns its centroid as the point on feature.
     @Test
-    func pointOnLineString() async throws {
+    func pointOnLineString() throws {
         let ls = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 10.0),
@@ -24,9 +24,9 @@ struct PointOnFeatureTests {
         #expect(result == Coordinate3D(latitude: 5.0, longitude: 5.0))
     }
 
-    // Verifies that a polygon returns a point on its surface as the point on feature.
+    /// Verifies that a polygon returns a point on its surface as the point on feature.
     @Test
-    func pointOnPolygon() async throws {
+    func pointOnPolygon() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -40,9 +40,9 @@ struct PointOnFeatureTests {
         #expect(result.coordinate.latitude <= 10.0)
     }
 
-    // Verifies that a multi-polygon returns a point inside one of its constituent polygons.
+    /// Verifies that a multi-polygon returns a point inside one of its constituent polygons.
     @Test
-    func pointOnMultiPolygon() async throws {
+    func pointOnMultiPolygon() throws {
         let poly1 = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 5.0, longitude: 0.0),
@@ -64,9 +64,9 @@ struct PointOnFeatureTests {
         #expect(result.coordinate.latitude <= 15.0)
     }
 
-    // Verifies that a generic feature wrapping a point returns the point's coordinate as the point on feature.
+    /// Verifies that a generic feature wrapping a point returns the point's coordinate as the point on feature.
     @Test
-    func pointOnFeature() async throws {
+    func pointOnFeature() throws {
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let feature = Feature(point)
         let result = try #require(feature.pointOnFeature)
@@ -75,9 +75,9 @@ struct PointOnFeatureTests {
 
     // MARK: - Grid size
 
-    // Validates that `coordinateOnFeature(gridSize:)` matches manual pre-snapping.
+    /// Validates that `coordinateOnFeature(gridSize:)` matches manual pre-snapping.
     @Test
-    func pointOnFeatureWithGridSize() async throws {
+    func pointOnFeatureWithGridSize() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0001, longitude: 0.0001),
             Coordinate3D(latitude: 10.0001, longitude: 0.0001),
@@ -95,9 +95,9 @@ struct PointOnFeatureTests {
 
     // MARK: - Projections
 
-    // Verifies point on feature for a polygon in EPSG:3857.
+    /// Verifies point on feature for a polygon in EPSG:3857.
     @Test
-    func pointOnFeature3857() async throws {
+    func pointOnFeature3857() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             Coordinate3D(x: 100_000.0, y: 0.0, projection: .epsg3857),
@@ -109,23 +109,27 @@ struct PointOnFeatureTests {
         #expect(point.coordinate.projection == .epsg3857)
     }
 
-    // Verifies point on feature in EPSG:4978.
+    /// Verifies point on feature in EPSG:4978.
     @Test
-    func pointOnFeature4978() async throws {
+    func pointOnFeature4978() throws {
         let c00 = Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978)
         let c10 = Coordinate3D(latitude: 0.0, longitude: 0.00009).projected(to: .epsg4978)
         let c11 = Coordinate3D(latitude: 0.00009, longitude: 0.00009).projected(to: .epsg4978)
         let c01 = Coordinate3D(latitude: 0.00009, longitude: 0.0).projected(to: .epsg4978)
         let polygon = try #require(Polygon([[
-            c00, c10, c11, c01, c00,
+            c00,
+            c10,
+            c11,
+            c01,
+            c00,
         ]]))
         let point = try #require(polygon.pointOnFeature)
         #expect(point.coordinate.projection == .epsg4978)
     }
 
-    // Verifies point on feature in noSRID.
+    /// Verifies point on feature in noSRID.
     @Test
-    func pointOnFeatureNoSRID() async throws {
+    func pointOnFeatureNoSRID() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 100.0, y: 0.0, projection: .noSRID),
@@ -139,9 +143,9 @@ struct PointOnFeatureTests {
 
     // MARK: - Antimeridian
 
-    // Verifies point on feature for a polygon near the antimeridian.
+    /// Verifies point on feature for a polygon near the antimeridian.
     @Test
-    func nearAntimeridian() async throws {
+    func nearAntimeridian() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 10.0, longitude: 170.0),
@@ -153,9 +157,9 @@ struct PointOnFeatureTests {
         #expect(polygon.contains(result))
     }
 
-    // Tests point on feature for a polygon crossing the antimeridian.
+    /// Tests point on feature for a polygon crossing the antimeridian.
     @Test
-    func crossingAntimeridian() async throws {
+    func crossingAntimeridian() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 10.0, longitude: 170.0),
@@ -173,9 +177,84 @@ struct PointOnFeatureTests {
         let parts = polygon.cutAtAntimeridian()
         let isInsidePart = parts.features.contains { feature in
             guard let partPolygon = feature.geometry as? Polygon else { return false }
+
             return partPolygon.contains(result)
         }
         #expect(isInsidePart)
+    }
+
+    @Test
+    func concavePolygonWithCentroidOutsideReturnsSurfacePoint() throws {
+        let concave = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 2.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 2.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let point = try #require(concave.pointOnFeature())
+        #expect(concave.covers(point))
+    }
+
+    @Test
+    func featureWithoutGeometryHasNoPointOnFeature() {
+        let feature = Feature(id: .string("empty"))
+        #expect(feature.pointOnFeature() == nil)
+        #expect(feature.coordinateOnFeature == nil)
+    }
+
+    @Test
+    func emptyCollectionsHaveNoPointOnFeature() {
+        #expect(FeatureCollection().pointOnFeature() == nil)
+        #expect(GeometryCollection([]).pointOnFeature() == nil)
+        #expect(MultiPoint().pointOnFeature() == nil)
+    }
+
+    @Test
+    func multiPointAndMultiLineStringFallbacks() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: -1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let point = try #require(multiPoint.pointOnFeature())
+        #expect(multiPoint.covers(point))
+
+        let multiLine = try #require(MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: -1.0),
+                Coordinate3D(latitude: 0.0, longitude: 1.0),
+            ],
+            [
+                Coordinate3D(latitude: 1.0, longitude: 0.0),
+                Coordinate3D(latitude: -1.0, longitude: 0.0),
+            ],
+        ]))
+        let linePoint = try #require(multiLine.pointOnFeature())
+        #expect(multiLine.covers(linePoint))
+    }
+
+    @Test
+    func geometryAndFeatureCollectionFallbacks() throws {
+        let point = Point(Coordinate3D(latitude: 2.0, longitude: 3.0))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+        ]]))
+        let geometryCollection = GeometryCollection([point, polygon])
+        #expect(geometryCollection.coordinateOnFeature == point.coordinate)
+
+        let featureCollection = FeatureCollection([
+            Feature(polygon),
+            Feature(point),
+        ])
+        let result = try #require(featureCollection.coordinateOnFeature)
+        #expect(polygon.covers(Point(result)))
     }
 
 }

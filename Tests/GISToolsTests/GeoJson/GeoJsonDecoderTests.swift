@@ -4,9 +4,9 @@ import Testing
 
 struct GeoJsonDecoderTests {
 
-    // Validates the typed decoder builds every geometry type.
+    /// Validates the typed decoder builds every geometry type.
     @Test
-    func decodesAllGeometryTypes() async throws {
+    func decodesAllGeometryTypes() throws {
         let json = #"""
         {"type":"FeatureCollection","features":[
           {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{}},
@@ -30,10 +30,10 @@ struct GeoJsonDecoderTests {
         #expect(collection.features[6].geometry is GeometryCollection)
     }
 
-    // Validates bounding boxes and foreign members on features, geometries and
-    // collections are preserved.
+    /// Validates bounding boxes and foreign members on features, geometries and
+    /// collections are preserved.
     @Test
-    func preservesBoundingBoxesAndForeignMembers() async throws {
+    func preservesBoundingBoxesAndForeignMembers() throws {
         let json = #"""
         {"type":"FeatureCollection","bbox":[-10,-10,10,10],"source":"test","features":[
           {"type":"Feature","id":"a","geometry":{"type":"Point","coordinates":[1,2],"custom":1},"properties":{"p":1},"bbox":[0,0,1,2],"f":2}
@@ -52,9 +52,9 @@ struct GeoJsonDecoderTests {
         #expect(JSONValue(value: feature.properties["p"]) == .int(1))
     }
 
-    // Validates an unlocated feature decodes through the typed path.
+    /// Validates an unlocated feature decodes through the typed path.
     @Test
-    func decodesUnlocatedFeature() async throws {
+    func decodesUnlocatedFeature() throws {
         let json = #"""
         {"type":"Feature","geometry":null,"properties":{"a":1}}
         """#
@@ -64,16 +64,15 @@ struct GeoJsonDecoderTests {
         #expect(JSONValue(value: feature.properties["a"]) == .int(1))
     }
 
-    // A bare geometry decodes through the typed path.
+    /// A bare geometry decodes through the typed path.
     @Test
-    func decodesBareGeometry() async throws {
+    func decodesBareGeometry() throws {
         let json = #"{"type":"LineString","coordinates":[[1,2],[3,4]]}"#
         let line = try #require(LineString(jsonData: Data(json.utf8)))
 
         #expect(line.coordinates.count == 2)
         #expect(line.coordinates[0] == Coordinate3D(latitude: 2.0, longitude: 1.0))
     }
-
 
     // MARK: - Audit regressions
 
@@ -90,13 +89,13 @@ struct GeoJsonDecoderTests {
             let data = Data(jsonString.utf8)
             let json = try? JSONSerialization.jsonObject(with: data)
             let parsed = try GeoJsonParser.parse(jsonString: jsonString)
-            let expectedCount: Int?
-            if let collection = parsed.object as? FeatureCollection {
-                expectedCount = collection.features.count
-            }
-            else {
-                expectedCount = parsed.object == nil ? nil : 1
-            }
+            let expectedCount: Int? =
+                if let collection = parsed.object as? FeatureCollection {
+                    collection.features.count
+                }
+                else {
+                    parsed.object == nil ? nil : 1
+                }
 
             let fromData = FeatureCollection(jsonData: data)
             let fromString = FeatureCollection(jsonString: jsonString)
@@ -135,5 +134,22 @@ struct GeoJsonDecoderTests {
         #expect((try? JSONDecoder().decode(FeatureCollection.self, from: data))?.features.count == 1)
     }
 
+    @Test
+    func decoderRejectsInvalidBoundingBoxAndUnsupportedTypes() {
+        let invalidBox = Data(#"{"type":"Point","coordinates":[1,2],"bbox":[0,0,1]}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(Point.self, from: invalidBox)
+        }
+
+        let unsupported = Data(#"{"type":"Circle","coordinates":[1,2]}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(Point.self, from: unsupported)
+        }
+
+        let missingFeatureGeometry = Data(#"{"type":"Feature","properties":{}}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(Feature.self, from: missingFeatureGeometry)
+        }
+    }
 
 }

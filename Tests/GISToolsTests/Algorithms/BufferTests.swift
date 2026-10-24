@@ -29,7 +29,7 @@ struct BufferTests {
     private func checkArea(
         _ result: MultiPolygon,
         _ expected: MultiPolygon,
-        tolerance: Double = 0.05
+        tolerance: Double = 0.05,
     ) {
         let resultArea = result.polygons.reduce(0) { $0 + $1.area }
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
@@ -38,20 +38,23 @@ struct BufferTests {
             return
         }
         let ratio = resultArea / expectedArea
-        #expect(ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
-                "Area ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)]")
+        #expect(
+            ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
+            "Area ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)]",
+        )
     }
 
     // MARK: - Turf helper methods
 
     private static func expectedArea(
         _ name: String,
-        tolerance: Double = 0.10
+        tolerance: Double = 0.10,
     ) throws -> (area: Double, tolerance: Double) {
         let fc = try TestData.featureCollection(package: "Buffer", name: name + "Result")
         var total: Double = 0
         for feature in fc.features {
             guard feature.properties["stroke"] as? String == "#F00" else { continue }
+
             if let polygon = feature.geometry as? Polygon {
                 total += polygon.area
             }
@@ -73,61 +76,61 @@ struct BufferTests {
         let units = props["units"] as? String ?? "miles"
         let steps = props["steps"] as? Int ?? 64
 
-        let unit: GISTool.Unit
-        switch units {
-        case "meters", "metres": unit = .meters
-        case "miles": unit = .miles
-        default: unit = .miles
-        }
+        let unit: GISTool.Unit =
+            switch units {
+            case "meters", "metres": .meters
+            case "miles": .miles
+            default: .miles
+            }
         return (GISTool.convertToMeters(abs(radius), unit), steps)
     }
 
     // MARK: - Reference tests
 
-    // Validates buffer around a single point matches the expected area.
+    /// Validates buffer around a single point matches the expected area.
     @Test
-    func bufferedPoint() async throws {
+    func bufferedPoint() throws {
         let point = Point(Coordinate3D(latitude: 47.56, longitude: 10.22))
         let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("RefPointResult"))
+        try checkArea(result, loadExpected("RefPointResult"))
     }
 
-    // Validates buffer around multiple points matches the expected area.
+    /// Validates buffer around multiple points matches the expected area.
     @Test
-    func bufferedPoints() async throws {
+    func bufferedPoints() throws {
         let multiPoint = try #require(MultiPoint([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
         let result = try #require(multiPoint.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("RefMultiPointResult"))
+        try checkArea(result, loadExpected("RefMultiPointResult"))
     }
 
-    // Validates round-end buffer around a short line matches the expected area.
+    /// Validates round-end buffer around a short line matches the expected area.
     @Test
-    func bufferedLineShort() async throws {
+    func bufferedLineShort() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("LineRoundResult"))
+        try checkArea(result, loadExpected("LineRoundResult"))
     }
 
-    // Validates flat-end buffer around a short line matches the expected area.
+    /// Validates flat-end buffer around a short line matches the expected area.
     @Test
-    func bufferedLineShortFlatEnds() async throws {
+    func bufferedLineShortFlatEnds() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
-        checkArea(result, try loadExpected("LineFlatResult"))
+        try checkArea(result, loadExpected("LineFlatResult"))
     }
 
-    // Validates round-end buffer around a long line matches the expected area.
+    /// Validates round-end buffer around a long line matches the expected area.
     @Test
-    func bufferedLineLong() async throws {
+    func bufferedLineLong() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -136,12 +139,12 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("LongLineRoundResult"), tolerance: 0.02)
+        try checkArea(result, loadExpected("LongLineRoundResult"), tolerance: 0.02)
     }
 
-    // Validates flat-end buffer around a long line matches the expected area.
+    /// Validates flat-end buffer around a long line matches the expected area.
     @Test
-    func bufferedLineLongFlatEnds() async throws {
+    func bufferedLineLongFlatEnds() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 47.56, longitude: 10.2),
             Coordinate3D(latitude: 47.56, longitude: 10.25),
@@ -150,12 +153,12 @@ struct BufferTests {
             Coordinate3D(latitude: 47.70, longitude: 10.2),
         ]))
         let result = try #require(lineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
-        checkArea(result, try loadExpected("LongLineFlatResult"), tolerance: 0.02)
+        try checkArea(result, loadExpected("LongLineFlatResult"), tolerance: 0.02)
     }
 
-    // Validates round-end buffer around multiple lines matches the expected area.
+    /// Validates round-end buffer around multiple lines matches the expected area.
     @Test
-    func bufferedLines() async throws {
+    func bufferedLines() throws {
         let multiLineString = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -168,12 +171,12 @@ struct BufferTests {
             ],
         ]))
         let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .round))
-        checkArea(result, try loadExpected("MultiLineRoundResult"), tolerance: 0.02)
+        try checkArea(result, loadExpected("MultiLineRoundResult"), tolerance: 0.02)
     }
 
-    // Validates flat-end buffer around multiple lines matches the expected area.
+    /// Validates flat-end buffer around multiple lines matches the expected area.
     @Test
-    func bufferedLinesFlatEnds() async throws {
+    func bufferedLinesFlatEnds() throws {
         let multiLineString = try #require(MultiLineString([
             [
                 Coordinate3D(latitude: 47.56, longitude: 10.2),
@@ -186,12 +189,12 @@ struct BufferTests {
             ],
         ]))
         let result = try #require(multiLineString.buffered(by: GISTool.convertToMeters(1000, .meters), endType: .butt))
-        checkArea(result, try loadExpected("MultiLineFlatResult"))
+        try checkArea(result, loadExpected("MultiLineFlatResult"))
     }
 
-    // Validates buffer around a polygon with a hole matches the expected area.
+    /// Validates buffer around a polygon with a hole matches the expected area.
     @Test
-    func bufferedPolygon() async throws {
+    func bufferedPolygon() throws {
         let polygon = try #require(Polygon([
             [
                 Coordinate3D(latitude: 47.5, longitude: 10.2),
@@ -210,12 +213,12 @@ struct BufferTests {
             ],
         ]))
         let result = try #require(polygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("PolygonWithHoleResult"))
+        try checkArea(result, loadExpected("PolygonWithHoleResult"))
     }
 
-    // Validates buffer around a multi-polygon matches the expected area.
+    /// Validates buffer around a multi-polygon matches the expected area.
     @Test
-    func bufferedMultiPolygon() async throws {
+    func bufferedMultiPolygon() throws {
         let p1 = try #require(Polygon([
             [
                 Coordinate3D(latitude: 47.5, longitude: 10.2),
@@ -243,7 +246,7 @@ struct BufferTests {
         ]]))
         let multiPolygon = try #require(MultiPolygon([p1, p2]))
         let result = try #require(multiPolygon.buffered(by: GISTool.convertToMeters(1000, .meters)))
-        checkArea(result, try loadExpected("RefMultiPolygonResult"))
+        try checkArea(result, loadExpected("RefMultiPolygonResult"))
     }
 
     // MARK: - Ported Turf.js buffer tests
@@ -252,83 +255,41 @@ struct BufferTests {
         let (expected, tolerance) = try Self.expectedArea(name)
         let actual = result.polygons.reduce(0) { $0 + $1.area }
         let ratio = expected > 0 ? actual / expected : (actual == 0 ? 1 : 0)
-        #expect(ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
-                "\(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)], actual=\(actual), expected=\(expected)")
+        #expect(
+            ratio > 1.0 - tolerance && ratio < 1.0 + tolerance,
+            "\(name): ratio \(ratio) outside [\(1 - tolerance), \(1 + tolerance)], actual=\(actual), expected=\(expected)",
+        )
     }
 
     private struct TurfFixture: Sendable {
+
         let name: String
         let loadFeatureCollection: Bool
         let loadGeometryCollection: Bool
         let unionType: BufferUnionType
 
-        init(name: String,
-             loadFeatureCollection: Bool = false,
-             loadGeometryCollection: Bool = false,
-             unionType: BufferUnionType = .individual
+        init(
+            name: String,
+            loadFeatureCollection: Bool = false,
+            loadGeometryCollection: Bool = false,
+            unionType: BufferUnionType = .individual,
         ) {
             self.name = name
             self.loadFeatureCollection = loadFeatureCollection
             self.loadGeometryCollection = loadGeometryCollection
             self.unionType = unionType
         }
+
     }
 
-    private static let turfFixtures: [TurfFixture] = [
-        .init(name: "FeatureCollectionPoints", loadFeatureCollection: true),
-        .init(name: "GeometryCollectionPoints", loadGeometryCollection: true),
-        .init(name: "LineString"),
-        .init(name: "MultiLineString"),
-        .init(name: "MultiPoint"),
-        .init(name: "MultiPolygon"),
-        .init(name: "Point"),
-        .init(name: "PolygonWithHoles"),
-        .init(name: "NorthernPolygon"),
-        .init(name: "NorthLatitudePoints", unionType: .overlapping),
-
-        // Buffered circles at polygon extreme points fall outside.
-        .init(name: "PolygonExtremePoints", loadFeatureCollection: true),
-        // Polygon buffer radius too small vs point (equator variant).
-        .init(name: "PolygonCentroidEquator", loadFeatureCollection: true),
-        // Polygon buffer radius too small vs point.
-        .init(name: "PolygonCentroidRadius", loadFeatureCollection: true),
-        // Non-uniform stroke-width along a buffered line.
-        .init(name: "LineStringStripWidth"),
-        // Buffer touches itself, merges instead of creating a hole.
-        .init(name: "TouchingBufferPolygon", loadFeatureCollection: true),
-    ]
-
-    // Validates buffer against ported Turf.js fixture test cases.
-    @Test(arguments: turfFixtures)
-    private func turfFixture(_ fixture: TurfFixture) async throws {
-        let params = try Self.bufferParams(fixture.name)
-        let geoJson: GeoJson
-        if fixture.loadGeometryCollection {
-            geoJson = try TestData.geometryCollection(package: "Buffer", name: fixture.name)
-        }
-        else if fixture.loadFeatureCollection {
-            geoJson = try TestData.featureCollection(package: "Buffer", name: fixture.name)
-        }
-        else {
-            geoJson = try TestData.feature(package: "Buffer", name: fixture.name)
-        }
-        try runTurfTest(
-            name: fixture.name,
-            result: try #require(geoJson.buffered(
-                by: params.distance,
-                endType: .round,
-                unionType: fixture.unionType,
-                steps: params.steps)))
-    }
-
-    // Buffering a long LineString creates kinks / self-intersection artifacts.
-    // Validates buffer on a long line that produces kinks and self-intersection artifacts.
+    /// Buffering a long LineString creates kinks / self-intersection artifacts.
+    /// Validates buffer on a long line that produces kinks and self-intersection artifacts.
     @Test
-    func issue900() async throws {
+    func issue900() throws {
         let params = try Self.bufferParams("LongLineStringKinks")
         try runTurfTest(
             name: "LongLineStringKinks",
-            result: try #require(TestData.feature(
+            result: #require(TestData.feature(
                 package: "Buffer",
                 name: "LongLineStringKinks")
                 .buffered(
@@ -339,9 +300,9 @@ struct BufferTests {
 
     // MARK: - Grid size
 
-    // Validates that `buffered(gridSize:)` matches manual pre-snapping.
+    /// Validates that `buffered(gridSize:)` matches manual pre-snapping.
     @Test
-    func bufferWithGridSize() async throws {
+    func bufferWithGridSize() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0001, longitude: 0.0001),
             Coordinate3D(latitude: 10.0001, longitude: 0.0001),
@@ -359,11 +320,12 @@ struct BufferTests {
 
     // MARK: - Antimeridian tests
 
-    // Validates buffer around a point near the antimeridian stays within valid coordinate bounds.
+    /// Validates buffer around a point near the antimeridian stays within valid coordinate bounds.
     @Test
-    func bufferedPointAntimeridian() async throws {
+    func bufferedPointAntimeridian() throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 179.0))
         let result = try #require(point.buffered(by: 200_000.0))
+        // swiftformat:disable:next preferKeyPath
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
         for poly in result.polygons {
             for coord in poly.allCoordinates {
@@ -380,63 +342,69 @@ struct BufferTests {
         #expect(area > expected * 0.1 && area < expected * 10.0)
     }
 
-    // Validates buffer around a line crossing the antimeridian produces multiple non-crossing polygons.
+    /// Validates buffer around a line crossing the antimeridian produces multiple non-crossing polygons.
     @Test
-    func bufferedLineAntimeridian() async throws {
+    func bufferedLineAntimeridian() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 0.0, longitude: -170.0),
         ]))
         let result = try #require(lineString.buffered(by: 100_000.0, endType: .round))
+        // swiftformat:disable:next preferKeyPath
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
         #expect(result.polygons.count >= 2)
     }
 
-    // Validates buffer near the antimeridian does not cross it.
+    /// Validates buffer near the antimeridian does not cross it.
     @Test
-    func bufferedLineNearAntimeridianNoCross() async throws {
+    func bufferedLineNearAntimeridianNoCross() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 178.0),
             Coordinate3D(latitude: 1.0, longitude: 179.0),
         ]))
-        let result = try #require(lineString.buffered(by: 50_000.0, endType: .round))
+        let result = try #require(lineString.buffered(by: 50000.0, endType: .round))
+        // swiftformat:disable:next preferKeyPath
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
     }
 
-    // Validates buffer away from the antimeridian does not cross it and produces a single polygon.
+    /// Validates buffer away from the antimeridian does not cross it and produces a single polygon.
     @Test
-    func bufferedPointNoAntimeridian() async throws {
+    func bufferedPointNoAntimeridian() throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 10.0))
         let result = try #require(point.buffered(by: 200_000.0))
+        // swiftformat:disable:next preferKeyPath
         #expect(!result.polygons.contains(where: { $0.crossesAntimeridian }))
         #expect(result.polygons.count == 1)
     }
 
     // MARK: - Negative buffer
 
-    // Validates negative (inset) buffer reduces the area of a polygon.
+    /// Validates negative (inset) buffer reduces the area of a polygon.
     @Test
-    func negativeBuffer() async throws {
+    func negativeBuffer() throws {
         let name = "NegativeBuffer"
         let json = try TestData.stringFromFile(package: "Buffer", name: name)
         guard let data = json.data(using: .utf8),
               let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return }
+
         let props = dict["properties"] as? [String: Any] ?? [:]
         let radius = props["radius"] as? Double ?? -200.0
 
         #expect(radius < 0)
         let feature = try TestData.feature(package: "Buffer", name: name)
         guard let geometry = feature.geometry as? Polygon else { return }
+
         let result = geometry.buffered(by: GISTool.convertToMeters(radius, .miles))
         guard let resultPolygon = result?.polygons.first else { return }
+
         #expect(resultPolygon.area < geometry.area)
         #expect(resultPolygon.isStructurallyValid)
     }
 
-    // Validates insetting a simple convex polygon reduces area and remains valid.
+    /// Validates insetting a simple convex polygon reduces area and remains valid.
     @Test
-    func insetSimpleConvex() async throws {
+    func insetSimpleConvex() {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -446,8 +414,10 @@ struct BufferTests {
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
         ]) else { return }
-        let result = polygon.buffered(by: -50_000.0)
+
+        let result = polygon.buffered(by: -50000.0)
         guard let inset = result?.polygons.first else { return }
+
         #expect(inset.area < polygon.area)
         #expect(inset.isStructurallyValid)
         #expect(!inset.crossesAntimeridian)
@@ -457,9 +427,9 @@ struct BufferTests {
         }
     }
 
-    // Validates that an inset larger than the polygon returns nil.
+    /// Validates that an inset larger than the polygon returns nil.
     @Test
-    func insetTooLargeReturnsNil() async throws {
+    func insetTooLargeReturnsNil() {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -469,32 +439,34 @@ struct BufferTests {
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
         ]) else { return }
+
         let result = polygon.buffered(by: -500_000.0)
         #expect(result == nil)
     }
 
-    // Validates that a negative buffer on a point returns nil.
+    /// Validates that a negative buffer on a point returns nil.
     @Test
-    func insetPointReturnsNil() async throws {
+    func insetPointReturnsNil() {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0))
         let result = point.buffered(by: -1000.0)
         #expect(result == nil)
     }
 
-    // Validates that a negative buffer on a line string returns nil.
+    /// Validates that a negative buffer on a line string returns nil.
     @Test
-    func insetLineStringReturnsNil() async throws {
+    func insetLineStringReturnsNil() {
         guard let line = LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 1.0),
         ]) else { return }
+
         let result = line.buffered(by: -1000.0)
         #expect(result == nil)
     }
 
-    // Validates insetting a polygon with holes reduces area and remains valid.
+    /// Validates insetting a polygon with holes reduces area and remains valid.
     @Test
-    func insetPolygonWithHoles() async throws {
+    func insetPolygonWithHoles() {
         guard let outerRing = Ring([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 10.0, longitude: 0.0),
@@ -510,15 +482,17 @@ struct BufferTests {
             Coordinate3D(latitude: 2.0, longitude: 2.0),
         ]) else { return }
         guard let polygon = Polygon([outerRing, hole]) else { return }
-        let result = polygon.buffered(by: -50_000.0)
+
+        let result = polygon.buffered(by: -50000.0)
         guard let inset = result?.polygons.first else { return }
+
         #expect(inset.area < polygon.area)
         #expect(inset.isStructurallyValid)
     }
 
-    // Validates insetting each polygon in a multi-polygon independently reduces area.
+    /// Validates insetting each polygon in a multi-polygon independently reduces area.
     @Test
-    func insetMultiPolygon() async throws {
+    func insetMultiPolygon() {
         guard let poly1 = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -528,6 +502,7 @@ struct BufferTests {
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
         ]) else { return }
+
         let area1 = poly1.area
         guard let poly2 = Polygon([
             [
@@ -538,10 +513,13 @@ struct BufferTests {
                 Coordinate3D(latitude: 10.0, longitude: 10.0),
             ],
         ]) else { return }
+
         let area2 = poly2.area
         guard let multiPolygon = MultiPolygon([poly1, poly2]) else { return }
-        let result = multiPolygon.buffered(by: -50_000.0)
+
+        let result = multiPolygon.buffered(by: -50000.0)
         guard let resultPolygons = result?.polygons else { return }
+
         #expect(resultPolygons.count == 2)
         #expect(resultPolygons[0].area < area1)
         #expect(resultPolygons[1].area < area2)
@@ -549,9 +527,9 @@ struct BufferTests {
         #expect(resultPolygons[1].isStructurallyValid)
     }
 
-    // Validates insetting a polygon crossing the antimeridian produces a valid non-crossing result.
+    /// Validates insetting a polygon crossing the antimeridian produces a valid non-crossing result.
     @Test
-    func insetAcrossAntimeridian() async throws {
+    func insetAcrossAntimeridian() {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 175.0),
@@ -561,9 +539,11 @@ struct BufferTests {
                 Coordinate3D(latitude: 0.0, longitude: 175.0),
             ],
         ]) else { return }
+
         #expect(polygon.crossesAntimeridian)
-        let result = polygon.buffered(by: -50_000.0)
+        let result = polygon.buffered(by: -50000.0)
         guard let inset = result?.polygons.first else { return }
+
         #expect(inset.area < polygon.area)
         #expect(inset.isStructurallyValid)
         #expect(!inset.crossesAntimeridian)
@@ -572,9 +552,9 @@ struct BufferTests {
         }
     }
 
-    // Validates insetting a polygon wrapped in a Feature reduces area.
+    /// Validates insetting a polygon wrapped in a Feature reduces area.
     @Test
-    func insetFeatureWrappingPolygon() async throws {
+    func insetFeatureWrappingPolygon() throws {
         guard let polygon = Polygon([
             [
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
@@ -584,15 +564,16 @@ struct BufferTests {
                 Coordinate3D(latitude: 0.0, longitude: 0.0),
             ],
         ]) else { return }
+
         let feature = Feature(polygon)
-        let result = feature.buffered(by: -30_000.0)
+        let result = feature.buffered(by: -30000.0)
         let inset = try #require(result?.polygons.first)
         #expect(inset.area < polygon.area)
     }
 
     // MARK: - Projections
 
-    // Verifies buffer around a polygon in EPSG:3857 produces a valid result.
+    /// Verifies buffer around a polygon in EPSG:3857 produces a valid result.
     @Test
     func bufferedPolygon3857() throws {
         let polygon = try #require(Polygon([[
@@ -611,7 +592,7 @@ struct BufferTests {
         }
     }
 
-    // Verifies buffer around a point in EPSG:3857 produces a valid polygon.
+    /// Verifies buffer around a point in EPSG:3857 produces a valid polygon.
     @Test
     func bufferedPoint3857() throws {
         let point = Point(Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857))
@@ -621,7 +602,7 @@ struct BufferTests {
         #expect(result.polygons[0].isStructurallyValid)
     }
 
-    // Verifies buffer around a polygon in noSRID produces a valid result.
+    /// Verifies buffer around a polygon in noSRID produces a valid result.
     @Test
     func bufferedNoSRID() throws {
         let polygon = try #require(Polygon([[
@@ -638,18 +619,18 @@ struct BufferTests {
         }
     }
 
-    // Validates buffer around a point in EPSG:4978 (ECEF).
+    /// Validates buffer around a point in EPSG:4978 (ECEF).
     @Test
-    func bufferedPoint4978() async throws {
+    func bufferedPoint4978() throws {
         let point = Point(Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978))
         let result = try #require(point.buffered(by: GISTool.convertToMeters(1000, .meters)))
         #expect(result.polygons.count >= 1)
         #expect(result.polygons[0].isStructurallyValid)
     }
 
-    // Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
+    /// Validates insetting a donut polygon crossing the antimeridian remains valid and reduces area.
     @Test
-    func insetDonutAcrossAntimeridian() async throws {
+    func insetDonutAcrossAntimeridian() {
         guard let outerRing = Ring([
             Coordinate3D(latitude: 0.0, longitude: -175.0),
             Coordinate3D(latitude: 10.0, longitude: -175.0),
@@ -663,9 +644,11 @@ struct BufferTests {
             Coordinate3D(latitude: 2.0, longitude: -177.0),
         ]) else { return }
         guard let polygon = Polygon([outerRing, innerRing]) else { return }
+
         #expect(polygon.crossesAntimeridian)
-        let result = polygon.buffered(by: -50_000.0)
+        let result = polygon.buffered(by: -50000.0)
         guard let insetPolygons = result?.polygons, insetPolygons.isNotEmpty else { return }
+
         let totalArea = insetPolygons.reduce(0.0) { $0 + $1.area }
         #expect(totalArea < polygon.area * 3.0)
         for poly in insetPolygons {
@@ -680,22 +663,22 @@ struct BufferTests {
 
     // MARK: - Square end type
 
-    // Validates that square end buffer produces a larger area than flat end.
+    /// Validates that square end buffer produces a larger area than flat end.
     @Test
     func squareEndLargerThanButt() throws {
         let line = try #require(LineString([
             Coordinate3D(latitude: 48.0, longitude: 2.0),
             Coordinate3D(latitude: 48.0, longitude: 2.1),
         ]))
-        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
-        let square = try #require(line.buffered(by: 5_000.0, endType: .square))
+        let butt = try #require(line.buffered(by: 5000.0, endType: .butt))
+        let square = try #require(line.buffered(by: 5000.0, endType: .square))
         let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
         let squareArea = square.polygons.reduce(0) { $0 + $1.area }
         #expect(squareArea > buttArea)
         #expect(square.isStructurallyValid)
     }
 
-    // Validates that square end buffer on a polygon falls back to polygon behavior.
+    /// Validates that square end buffer on a polygon falls back to polygon behavior.
     @Test
     func squareEndPolygon() throws {
         let poly = try #require(Polygon([[
@@ -705,12 +688,12 @@ struct BufferTests {
             Coordinate3D(latitude: 48.1, longitude: 2.0),
             Coordinate3D(latitude: 48.0, longitude: 2.0),
         ]]))
-        let result = try #require(poly.buffered(by: 1_000.0, endType: .square))
+        let result = try #require(poly.buffered(by: 1000.0, endType: .square))
         #expect(result.polygons.isNotEmpty)
         #expect(result.polygons[0].isStructurallyValid)
     }
 
-    // Validates square end on a multi-line string.
+    /// Validates square end on a multi-line string.
     @Test
     func squareEndMultiLine() throws {
         let mls = try #require(MultiLineString([
@@ -723,21 +706,21 @@ struct BufferTests {
                 Coordinate3D(latitude: 48.1, longitude: 2.1),
             ],
         ]))
-        let result = try #require(mls.buffered(by: 2_000.0, endType: .square))
+        let result = try #require(mls.buffered(by: 2000.0, endType: .square))
         #expect(result.polygons.isNotEmpty)
     }
 
     // MARK: - Polygon end type
 
-    // Validates polygon end buffer produces larger area than butt end.
+    /// Validates polygon end buffer produces larger area than butt end.
     @Test
     func polygonEndBasic() throws {
         let line = try #require(LineString([
             Coordinate3D(latitude: 48.0, longitude: 2.0),
             Coordinate3D(latitude: 48.0, longitude: 2.1),
         ]))
-        let polygon = try #require(line.buffered(by: 5_000.0, endType: .polygon))
-        let butt = try #require(line.buffered(by: 5_000.0, endType: .butt))
+        let polygon = try #require(line.buffered(by: 5000.0, endType: .polygon))
+        let butt = try #require(line.buffered(by: 5000.0, endType: .butt))
         let polyArea = polygon.polygons.reduce(0) { $0 + $1.area }
         let buttArea = butt.polygons.reduce(0) { $0 + $1.area }
         // Polygon end should bridge the gap, making area visibly larger
@@ -747,7 +730,7 @@ struct BufferTests {
 
     // MARK: - Bevel join tests
 
-    // Validates bevel join on a line produces less area than round.
+    /// Validates bevel join on a line produces less area than round.
     @Test
     func bevelJoinBasic() throws {
         let line = try #require(LineString([
@@ -756,9 +739,13 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 1.0),
         ]))
         let bevel = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .bevel))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .bevel))
         let round = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .round))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .round))
 
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
@@ -766,11 +753,13 @@ struct BufferTests {
         #expect(bevel.isStructurallyValid)
         #expect(round.isStructurallyValid)
         // Bevel should have less area than round (no arc filling the corner)
-        #expect(bevelArea < roundArea,
-                "bevel=\(bevelArea), round=\(roundArea)")
+        #expect(
+            bevelArea < roundArea,
+            "bevel=\(bevelArea), round=\(roundArea)",
+        )
     }
 
-    // Validates bevel join on a line in EPSG:3857 produces less area than round.
+    /// Validates bevel join on a line in EPSG:3857 produces less area than round.
     @Test
     func bevelJoin3857() throws {
         let line = try #require(LineString([
@@ -779,20 +768,26 @@ struct BufferTests {
             Coordinate3D(x: 0.0, y: 10.0, projection: .epsg3857),
         ]))
         let bevel = try #require(line.buffered(
-            by: 1.0, endType: .butt, joinType: .bevel))
+            by: 1.0,
+            endType: .butt,
+            joinType: .bevel))
         let round = try #require(line.buffered(
-            by: 1.0, endType: .butt, joinType: .round))
+            by: 1.0,
+            endType: .butt,
+            joinType: .round))
 
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
         #expect(bevel.isStructurallyValid)
         #expect(round.isStructurallyValid)
-        #expect(bevelArea < roundArea,
-                "bevel=\(bevelArea), round=\(roundArea)")
+        #expect(
+            bevelArea < roundArea,
+            "bevel=\(bevelArea), round=\(roundArea)",
+        )
     }
 
-    // Validates bevel join on a polygon produces less area than round.
+    /// Validates bevel join on a polygon produces less area than round.
     @Test
     func bevelJoinOnPolygon() throws {
         let poly = try #require(Polygon([[
@@ -803,20 +798,24 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let bevel = try #require(poly.buffered(
-            by: 10_000.0, joinType: .bevel))
+            by: 10000.0,
+            joinType: .bevel))
         let round = try #require(poly.buffered(
-            by: 10_000.0, joinType: .round))
+            by: 10000.0,
+            joinType: .round))
 
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
         #expect(bevel.isStructurallyValid)
         #expect(round.isStructurallyValid)
-        #expect(bevelArea < roundArea,
-                "bevel=\(bevelArea), round=\(roundArea)")
+        #expect(
+            bevelArea < roundArea,
+            "bevel=\(bevelArea), round=\(roundArea)",
+        )
     }
 
-    // Validates bevel join on a polygon in EPSG:3857 produces less area than round.
+    /// Validates bevel join on a polygon in EPSG:3857 produces less area than round.
     @Test
     func bevelJoinOnPolygon3857() throws {
         let poly = try #require(Polygon([[
@@ -827,20 +826,24 @@ struct BufferTests {
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let bevel = try #require(poly.buffered(
-            by: 1.0, joinType: .bevel))
+            by: 1.0,
+            joinType: .bevel))
         let round = try #require(poly.buffered(
-            by: 1.0, joinType: .round))
+            by: 1.0,
+            joinType: .round))
 
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
         #expect(bevel.isStructurallyValid)
         #expect(round.isStructurallyValid)
-        #expect(bevelArea < roundArea,
-                "bevel=\(bevelArea), round=\(roundArea)")
+        #expect(
+            bevelArea < roundArea,
+            "bevel=\(bevelArea), round=\(roundArea)",
+        )
     }
 
-    // Validates bevel join on a multi-line string produces less area than round.
+    /// Validates bevel join on a multi-line string produces less area than round.
     @Test
     func bevelJoinMultiLine() throws {
         let mls = try #require(MultiLineString([
@@ -851,22 +854,28 @@ struct BufferTests {
             ],
         ]))
         let bevel = try #require(mls.buffered(
-            by: 10_000.0, endType: .butt, joinType: .bevel))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .bevel))
         let round = try #require(mls.buffered(
-            by: 10_000.0, endType: .butt, joinType: .round))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .round))
 
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
         let roundArea = round.polygons.reduce(0) { $0 + $1.area }
 
         #expect(bevel.isStructurallyValid)
         #expect(round.isStructurallyValid)
-        #expect(bevelArea < roundArea,
-                "bevel=\(bevelArea), round=\(roundArea)")
+        #expect(
+            bevelArea < roundArea,
+            "bevel=\(bevelArea), round=\(roundArea)",
+        )
     }
 
     // MARK: - Miter join tests
 
-    // Validates miter join on a line produces more area than bevel.
+    /// Validates miter join on a line produces more area than bevel.
     @Test
     func miterJoinBasic() throws {
         let line = try #require(LineString([
@@ -875,19 +884,25 @@ struct BufferTests {
             Coordinate3D(latitude: 1.0, longitude: 1.0),
         ]))
         let miter = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .miter()))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .miter()))
         let bevel = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .bevel))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .bevel))
 
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
         #expect(miter.isStructurallyValid)
-        #expect(miterArea > bevelArea,
-                "miter=\(miterArea), bevel=\(bevelArea)")
+        #expect(
+            miterArea > bevelArea,
+            "miter=\(miterArea), bevel=\(bevelArea)",
+        )
     }
 
-    // Validates miter join falls back to bevel when the limit is exceeded.
+    /// Validates miter join falls back to bevel when the limit is exceeded.
     @Test
     func miterJoinLimitClamp() throws {
         // Sharp turn forces miter to exceed the limit; should fall back to bevel
@@ -897,9 +912,13 @@ struct BufferTests {
             Coordinate3D(latitude: 0.1, longitude: 0.05),
         ]))
         let miter = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .miter(limit: 1.5)))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .miter(limit: 1.5)))
         let bevel = try #require(line.buffered(
-            by: 10_000.0, endType: .butt, joinType: .bevel))
+            by: 10000.0,
+            endType: .butt,
+            joinType: .bevel))
 
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
@@ -907,11 +926,13 @@ struct BufferTests {
         #expect(miter.isStructurallyValid)
         // With a tight limit the miter falls back to bevel — areas should match
         let ratio = miterArea / bevelArea
-        #expect(ratio > 0.95 && ratio < 1.05,
-                "miter=\(miterArea), bevel=\(bevelArea), ratio=\(ratio)")
+        #expect(
+            ratio > 0.95 && ratio < 1.05,
+            "miter=\(miterArea), bevel=\(bevelArea), ratio=\(ratio)",
+        )
     }
 
-    // Validates miter join on a line in EPSG:3857 produces more area than bevel.
+    /// Validates miter join on a line in EPSG:3857 produces more area than bevel.
     @Test
     func miterJoin3857() throws {
         let line = try #require(LineString([
@@ -920,19 +941,25 @@ struct BufferTests {
             Coordinate3D(x: 10.0, y: 10.0, projection: .epsg3857),
         ]))
         let miter = try #require(line.buffered(
-            by: 1.0, endType: .butt, joinType: .miter()))
+            by: 1.0,
+            endType: .butt,
+            joinType: .miter()))
         let bevel = try #require(line.buffered(
-            by: 1.0, endType: .butt, joinType: .bevel))
+            by: 1.0,
+            endType: .butt,
+            joinType: .bevel))
 
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
         #expect(miter.isStructurallyValid)
-        #expect(miterArea > bevelArea,
-                "miter=\(miterArea), bevel=\(bevelArea)")
+        #expect(
+            miterArea > bevelArea,
+            "miter=\(miterArea), bevel=\(bevelArea)",
+        )
     }
 
-    // Validates miter join on a polygon produces more area than bevel.
+    /// Validates miter join on a polygon produces more area than bevel.
     @Test
     func miterJoinOnPolygon() throws {
         let poly = try #require(Polygon([[
@@ -943,31 +970,37 @@ struct BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
         let miter = try #require(poly.buffered(
-            by: 10_000.0, joinType: .miter()))
+            by: 10000.0,
+            joinType: .miter()))
         let bevel = try #require(poly.buffered(
-            by: 10_000.0, joinType: .bevel))
+            by: 10000.0,
+            joinType: .bevel))
 
         let miterArea = miter.polygons.reduce(0) { $0 + $1.area }
         let bevelArea = bevel.polygons.reduce(0) { $0 + $1.area }
 
         #expect(miter.isStructurallyValid)
-        #expect(miterArea > bevelArea,
-                "miter=\(miterArea), bevel=\(bevelArea)")
+        #expect(
+            miterArea > bevelArea,
+            "miter=\(miterArea), bevel=\(bevelArea)",
+        )
     }
 
     // MARK: - Showcase (disabled)
 
-    // Dumps a GeoJSON FeatureCollection to the console showing all buffer
-    // join and end type combinations. Run locally to visually inspect the
-    // results at https://geojson.io.
+    /// Dumps a GeoJSON FeatureCollection to the console showing all buffer
+    /// join and end type combinations. Run locally to visually inspect the
+    /// results at https://geojson.io.
     @Test(.disabled("Enable locally to dump GeoJSON to console"))
-    func bufferShowcase() async throws {
-        let distance: CLLocationDistance = 5_000.0
+    func bufferShowcase() throws {
+        let distance: CLLocationDistance = 5000.0
         var allFeatures: [Feature] = []
 
-        func addFeature<T: GeoJsonGeometry>(_ geometry: T, _ props: [String: String]) {
+        func addFeature(_ geometry: some GeoJsonGeometry, _ props: [String: String]) {
             var f = Feature(geometry)
-            for (k, v) in props { f.setProperty(v, for: k) }
+            for (k, v) in props {
+                f.setProperty(v, for: k)
+            }
             allFeatures.append(f)
         }
 
@@ -989,7 +1022,9 @@ struct BufferTests {
                 distance: lonOffset * 111_325.0 * cos(49.0 * .pi / 180.0),
                 direction: 90.0)
             let mp = try #require(line.buffered(
-                by: distance, endType: .butt, joinType: joinType))
+                by: distance,
+                endType: .butt,
+                joinType: joinType))
             for poly in mp.polygons {
                 addFeature(poly, [
                     "joinType": joinLabel,
@@ -1022,7 +1057,9 @@ struct BufferTests {
                 distance: lonOffset * 111_325.0 * cos(48.5 * .pi / 180.0),
                 direction: 90.0)
             let mp = try #require(line2.buffered(
-                by: distance, endType: endType, joinType: .miter()))
+                by: distance,
+                endType: endType,
+                joinType: .miter()))
             for poly in mp.polygons {
                 addFeature(poly, [
                     "joinType": "miter",
@@ -1049,14 +1086,16 @@ struct BufferTests {
         func addBevelLine(
             _ coords: [Coordinate3D],
             offset: Double,
-            label: String
+            label: String,
         ) throws {
             let line = try #require(LineString(coords))
             let shifted = line.translated(
                 distance: offset * 111_325.0 * cos(bevelLat * .pi / 180.0),
                 direction: 90.0)
             let mp = try #require(shifted.buffered(
-                by: distance, endType: .butt, joinType: .bevel))
+                by: distance,
+                endType: .butt,
+                joinType: .bevel))
             for poly in mp.polygons {
                 addFeature(poly, [
                     "bevelTest": label,
@@ -1157,13 +1196,15 @@ struct BufferTests {
         func addBevelPolygon(
             _ ring: [Coordinate3D],
             offset: Double,
-            label: String
+            label: String,
         ) {
             guard let poly = Polygon([ring]) else { return }
+
             let shifted = poly.translated(
                 distance: offset * 111_325.0 * cos(polyLat * .pi / 180.0),
                 direction: 90.0)
             guard let mp = shifted.buffered(by: distance, joinType: .bevel) else { return }
+
             for p in mp.polygons {
                 addFeature(p, [
                     "bevelTest": label,
@@ -1205,14 +1246,16 @@ struct BufferTests {
             _ coords: [Coordinate3D],
             offset: Double,
             limit: Double = 2.0,
-            label: String
+            label: String,
         ) throws {
             let line = try #require(LineString(coords))
             let shifted = line.translated(
                 distance: offset * 111_325.0 * cos(miterLat * .pi / 180.0),
                 direction: 90.0)
             let mp = try #require(shifted.buffered(
-                by: distance, endType: .butt, joinType: .miter(limit: limit)))
+                by: distance,
+                endType: .butt,
+                joinType: .miter(limit: limit)))
             for poly in mp.polygons {
                 addFeature(poly, [
                     "miterTest": label,
@@ -1327,9 +1370,8 @@ extension BufferTests {
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
 
-        #expect(polygon.buffered(by: -10_000.0) == nil)
+        #expect(polygon.buffered(by: -10000.0) == nil)
     }
-
 
     // MARK: - Audit regressions
 
@@ -1352,7 +1394,7 @@ extension BufferTests {
         let polygon = try #require(Polygon([outer, hole]))
         let originalHoleArea = abs(hole.area)
 
-        let result = try #require(polygon.buffered(by: -10_000.0))
+        let result = try #require(polygon.buffered(by: -10000.0))
         let inset = try #require(result.polygons.first)
         let insetHole = try #require(inset.innerRings?.first)
 
@@ -1392,10 +1434,77 @@ extension BufferTests {
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
         ]]))
         if let result = uShape.buffered(by: -4.0) {
-            #expect(result.polygons.allSatisfy { $0.isValid })
+            // swiftformat:disable:next preferKeyPath
+            #expect(result.polygons.allSatisfy({ $0.isValid }))
             #expect(result.polygons.allSatisfy { $0.area > 0.0 })
         }
     }
 
+    @Test
+    func zeroDistanceCollectionsKeepPolygonalParts() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let point = Point(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))
+        let feature = Feature(polygon)
+        let collection = FeatureCollection([
+            Feature(polygon),
+            Feature(point),
+        ])
+        let geometryCollection = GeometryCollection([polygon, point])
+
+        #expect(feature.buffered(by: 0.0)?.polygons.count == 1)
+        #expect(collection.buffered(by: 0.0)?.polygons.count == 1)
+        #expect(geometryCollection.buffered(by: 0.0)?.polygons.count == 1)
+    }
+
+    @Test
+    func negativeBufferCollectionsDelegate() throws {
+        let square = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 20.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 20.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let collection = FeatureCollection([Feature(square)])
+        let geometryCollection = GeometryCollection([square])
+
+        let fromCollection = try #require(collection.buffered(by: -2.0))
+        let fromGeometryCollection = try #require(geometryCollection.buffered(by: -2.0))
+        #expect(fromCollection.polygons.count == 1)
+        #expect(fromGeometryCollection.polygons.count == 1)
+        #expect(fromCollection.polygons[0].area < square.area)
+        #expect(fromGeometryCollection.polygons[0].area < square.area)
+    }
+
+    @Test
+    func miterJoinOnPolygonWithHoleStaysValid() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 30.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 30.0, y: 30.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 30.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ],
+            [
+                Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 20.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 20.0, y: 20.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 20.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            ],
+        ]))
+        let buffered = try #require(polygon.buffered(
+            by: 2.0,
+            joinType: .miter(limit: 4.0)))
+        #expect(buffered.isStructurallyValid)
+        #expect(buffered.polygons.allSatisfy { $0.area > 0.0 })
+    }
 
 }

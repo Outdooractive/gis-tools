@@ -71,4 +71,73 @@ struct HelmertTransformationTests {
         }
     }
 
+    /// Zero parameters must be an exact identity in both directions.
+    @Test
+    func zeroParameterTransformationIsIdentity() {
+        let identity = HelmertTransformation(datum: .wgs84, dx: 0.0, dy: 0.0, dz: 0.0)
+        let coordinate = Coordinate3D(latitude: 12.34, longitude: 56.78, altitude: 123.0, m: 7.0)
+
+        let toDatum = identity.transform(wgs84ToDatum: coordinate)
+        let toWgs84 = identity.transform(datumToWgs84: coordinate)
+
+        #expect(abs(toDatum.latitude - coordinate.latitude) < 0.000000001)
+        #expect(abs(toDatum.longitude - coordinate.longitude) < 0.000000001)
+        #expect(abs(toWgs84.latitude - coordinate.latitude) < 0.000000001)
+        #expect(abs(toWgs84.longitude - coordinate.longitude) < 0.000000001)
+        #expect(toDatum.altitude == coordinate.altitude)
+        #expect(toDatum.m == coordinate.m)
+    }
+
+    /// The hoisted batch path must match the single-coordinate path exactly.
+    @Test
+    func preparedBatchMatchesSinglePath() {
+        let coordinate = Coordinate3D(latitude: 47.5, longitude: 11.0, altitude: 600.0, m: 4.0)
+        for helmert in [HelmertTransformation.nad27, .osgb1936] {
+            let steps = helmert.prepared()
+            let singleToWgs84 = helmert.transform(datumToWgs84: coordinate)
+            let batchToWgs84 = helmert.transform(
+                datumToWgs84: coordinate,
+                step: steps.datumToWgs84)
+            #expect(abs(singleToWgs84.latitude - batchToWgs84.latitude) < 0.0000000001)
+            #expect(abs(singleToWgs84.longitude - batchToWgs84.longitude) < 0.0000000001)
+
+            let singleToDatum = helmert.transform(wgs84ToDatum: coordinate)
+            let batchToDatum = helmert.transform(
+                wgs84ToDatum: coordinate,
+                step: steps.wgs84ToDatum)
+            #expect(abs(singleToDatum.latitude - batchToDatum.latitude) < 0.0000000001)
+            #expect(abs(singleToDatum.longitude - batchToDatum.longitude) < 0.0000000001)
+        }
+    }
+
+    /// The description exposes the datum and every Helmert parameter.
+    @Test
+    func descriptionIncludesParameters() {
+        let description = HelmertTransformation.osgb1936.description
+        #expect(description.contains("OSGB"))
+        #expect(description.contains("446.448"))
+        #expect(description.contains("-125.157"))
+        #expect(description.contains("542.06"))
+        #expect(description.contains("-20.489"))
+    }
+
+    /// The transformation remains finite at the equator and near the poles,
+    /// and preserves the nominal height/metadata.
+    @Test
+    func poleAndEquatorCoordinatesStayFinite() {
+        let helmert = HelmertTransformation.osgb1936
+        let coordinates = [
+            Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 10.0, m: 1.0),
+            Coordinate3D(latitude: 89.999, longitude: 45.0, altitude: 20.0, m: 2.0),
+            Coordinate3D(latitude: -89.999, longitude: -120.0, altitude: 30.0, m: 3.0),
+        ]
+        for coordinate in coordinates {
+            let transformed = helmert.transform(datumToWgs84: coordinate)
+            #expect(transformed.latitude.isFinite)
+            #expect(transformed.longitude.isFinite)
+            #expect(transformed.altitude == coordinate.altitude)
+            #expect(transformed.m == coordinate.m)
+        }
+    }
+
 }

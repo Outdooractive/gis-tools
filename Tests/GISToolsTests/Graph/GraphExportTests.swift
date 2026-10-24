@@ -20,27 +20,27 @@ struct GraphExportTests {
     }
 
     @Test
-    func exportPreservesEdgeCount() {
+    func exportPreservesEdgeCount() throws {
         let coords = [
             Coordinate3D(latitude: 10.0, longitude: 20.0),
             Coordinate3D(latitude: 10.1, longitude: 20.1),
             Coordinate3D(latitude: 10.2, longitude: 20.2),
         ]
-        let graph = Graph(
-            featureCollection: FeatureCollection([Feature(LineString(coords)!)]))
+        let graph = try Graph(
+            featureCollection: FeatureCollection([Feature(#require(LineString(coords)))]))
         let fc = graph.toFeatureCollection()
         // 3 nodes → 2 edges
         #expect(fc.features.count == 2)
     }
 
     @Test
-    func exportPreservesGeometries() {
+    func exportPreservesGeometries() throws {
         let coords = [
             Coordinate3D(latitude: 10.0, longitude: 20.0),
             Coordinate3D(latitude: 10.1, longitude: 20.1),
         ]
-        let graph = Graph(
-            featureCollection: FeatureCollection([Feature(LineString(coords)!)]))
+        let graph = try Graph(
+            featureCollection: FeatureCollection([Feature(#require(LineString(coords)))]))
         let fc = graph.toFeatureCollection()
         #expect(fc.features.count == 1)
 
@@ -49,6 +49,7 @@ struct GraphExportTests {
             Issue.record("Expected LineString geometry")
             return
         }
+
         #expect(ls.coordinates.count == 2)
         #expect(ls.coordinates[0].latitude == 10.0)
         #expect(ls.coordinates[0].longitude == 20.0)
@@ -57,12 +58,12 @@ struct GraphExportTests {
     }
 
     @Test
-    func exportPreservesFeatureProperties() {
-        let feature = Feature(
-            LineString([
+    func exportPreservesFeatureProperties() throws {
+        let feature = try Feature(
+            #require(LineString([
                 Coordinate3D(latitude: 10.0, longitude: 20.0),
                 Coordinate3D(latitude: 10.1, longitude: 20.1),
-            ])!,
+            ])),
             properties: ["highway": "residential", "maxspeed": 50])
         let graph = Graph(
             featureCollection: FeatureCollection([feature]))
@@ -77,12 +78,12 @@ struct GraphExportTests {
     }
 
     @Test
-    func exportMarksDirectedEdges() {
-        let feature = Feature(
-            LineString([
+    func exportMarksDirectedEdges() throws {
+        let feature = try Feature(
+            #require(LineString([
                 Coordinate3D(latitude: 10.0, longitude: 20.0),
                 Coordinate3D(latitude: 10.1, longitude: 20.1),
-            ])!,
+            ])),
             properties: ["oneway": "yes"])
         let graph = Graph(
             featureCollection: FeatureCollection([feature]),
@@ -96,28 +97,28 @@ struct GraphExportTests {
     }
 
     @Test
-    func exportIncludesWeight() {
+    func exportIncludesWeight() throws {
         let coords = [
             Coordinate3D(latitude: 10.0, longitude: 20.0),
             Coordinate3D(latitude: 10.1, longitude: 20.1),
         ]
-        let graph = Graph(
-            featureCollection: FeatureCollection([Feature(LineString(coords)!)]))
+        let graph = try Graph(
+            featureCollection: FeatureCollection([Feature(#require(LineString(coords)))]))
         let fc = graph.toFeatureCollection()
         #expect(fc.features.count == 1)
 
         let weight: Double? = fc.features[0].property(for: "weight")
         #expect(weight != nil)
-        #expect(weight! > 0.0)
+        #expect(try #require(weight) > 0.0)
     }
 
     @Test
-    func exportPreservesFeatureId() {
-        let feature = Feature(
-            LineString([
+    func exportPreservesFeatureId() throws {
+        let feature = try Feature(
+            #require(LineString([
                 Coordinate3D(latitude: 10.0, longitude: 20.0),
                 Coordinate3D(latitude: 10.1, longitude: 20.1),
-            ])!,
+            ])),
             id: .string("road-42"))
         let graph = Graph(
             featureCollection: FeatureCollection([feature]))
@@ -129,13 +130,13 @@ struct GraphExportTests {
     }
 
     @Test
-    func exportUndirectedEdgeHasNoOnewayProperty() {
+    func exportUndirectedEdgeHasNoOnewayProperty() throws {
         let coords = [
             Coordinate3D(latitude: 10.0, longitude: 20.0),
             Coordinate3D(latitude: 10.1, longitude: 20.1),
         ]
-        let graph = Graph(
-            featureCollection: FeatureCollection([Feature(LineString(coords)!)]))
+        let graph = try Graph(
+            featureCollection: FeatureCollection([Feature(#require(LineString(coords)))]))
         let fc = graph.toFeatureCollection()
         #expect(fc.features.count == 1)
 
@@ -164,8 +165,10 @@ struct GraphExportTests {
         let graph = try GraphTestHelper.immenstadtGraph()
         let fc = graph.toFeatureCollection()
         let rebuilt = Graph(featureCollection: fc)
-        #expect(rebuilt.edges.count == graph.edges.count,
-                "Edge count should match: \(rebuilt.edges.count) vs \(graph.edges.count)")
+        #expect(
+            rebuilt.edges.count == graph.edges.count,
+            "Edge count should match: \(rebuilt.edges.count) vs \(graph.edges.count)",
+        )
     }
 
     @Test
@@ -176,8 +179,8 @@ struct GraphExportTests {
             Coordinate3D(latitude: 10.05, longitude: 20.05),
             Coordinate3D(latitude: 10.1, longitude: 20.1),
         ]
-        let original = Graph(
-            featureCollection: FeatureCollection([Feature(LineString(coords)!)]))
+        let original = try Graph(
+            featureCollection: FeatureCollection([Feature(#require(LineString(coords)))]))
         let fc = original.toFeatureCollection()
         let rebuilt = Graph(featureCollection: fc)
 
@@ -188,8 +191,29 @@ struct GraphExportTests {
         for (orig, reb) in zip(origWeights, rebWeights) {
             #expect(
                 abs(orig - reb) < 1.0,
-                "Weight mismatch: \(orig) vs \(reb)")
+                "Weight mismatch: \(orig) vs \(reb)",
+            )
         }
+    }
+
+    @Test
+    func debugDescriptionForEmptyGraph() {
+        #expect(Graph().debugDescription.isEmpty)
+    }
+
+    @Test
+    func debugDescriptionListsNodesAndEdges() throws {
+        let graph = try Graph(featureCollection: FeatureCollection([Feature(#require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+        ])))]))
+
+        let description = graph.debugDescription
+        #expect(!description.isEmpty)
+        #expect(description.contains("->"))
+        #expect(description.components(separatedBy: "\n").count >= 2)
+        #expect(description.contains("0.0,0.0") || description.contains("0,0"))
     }
 
 }

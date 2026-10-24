@@ -19,9 +19,9 @@ struct GeoJsonParserTests {
     ]}
     """#
 
-    // A clean document has no issues and preserves unlocated features.
+    /// A clean document has no issues and preserves unlocated features.
     @Test
-    func validDocumentHasNoIssues() async throws {
+    func validDocumentHasNoIssues() throws {
         let result = try GeoJsonParser.parse(jsonString: validJson)
         let collection = try #require(result.object as? FeatureCollection)
 
@@ -31,9 +31,9 @@ struct GeoJsonParserTests {
         #expect(collection.features[1].geometry != nil)
     }
 
-    // Lenient parsing returns the object and reports every malformed element.
+    /// Lenient parsing returns the object and reports every malformed element.
     @Test
-    func malformedFeaturesReportIssues() async throws {
+    func malformedFeaturesReportIssues() throws {
         let result = try GeoJsonParser.parse(jsonString: malformedJson)
         let collection = try #require(result.object as? FeatureCollection)
 
@@ -52,9 +52,9 @@ struct GeoJsonParserTests {
         #expect(coordinateIssue.message.contains("number"))
     }
 
-    // Strict mode throws the first issue with its JSON Pointer path.
+    /// Strict mode throws the first issue with its JSON Pointer path.
     @Test
-    func strictModeThrowsFirstIssue() async throws {
+    func strictModeThrowsFirstIssue() throws {
         do {
             _ = try GeoJsonParser.parse(jsonString: malformedJson, mode: .strict)
             Issue.record("Expected GeoJsonParsingError")
@@ -64,9 +64,9 @@ struct GeoJsonParserTests {
         }
     }
 
-    // A missing geometry member is reported; an explicit null is not.
+    /// A missing geometry member is reported; an explicit null is not.
     @Test
-    func missingGeometryReportsIssue() async throws {
+    func missingGeometryReportsIssue() throws {
         let json = #"""
         {"type":"FeatureCollection","features":[
           {"type":"Feature","properties":{"a":1}}
@@ -78,9 +78,9 @@ struct GeoJsonParserTests {
         #expect(result.issues[0].path == "/features/0/geometry")
     }
 
-    // Invalid nested positions report the exact path.
+    /// Invalid nested positions report the exact path.
     @Test
-    func nestedInvalidPositionReportsPath() async throws {
+    func nestedInvalidPositionReportsPath() throws {
         let json = #"""
         {"type":"LineString","coordinates":[[0,0],[1,"x"]]}
         """#
@@ -90,9 +90,9 @@ struct GeoJsonParserTests {
         #expect(result.issues[0].path == "/coordinates/1/1")
     }
 
-    // Invalid bounding boxes are reported without failing the whole parse.
+    /// Invalid bounding boxes are reported without failing the whole parse.
     @Test
-    func invalidBoundingBoxReportsIssue() async throws {
+    func invalidBoundingBoxReportsIssue() throws {
         let json = #"""
         {"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{},"bbox":[0,0,1]}
         """#
@@ -103,9 +103,9 @@ struct GeoJsonParserTests {
         #expect(result.object != nil)
     }
 
-    // The data and string overloads agree.
+    /// The data and string overloads agree.
     @Test
-    func dataOverload() async throws {
+    func dataOverload() throws {
         let data = try #require(validJson.data(using: .utf8))
         let result = try GeoJsonParser.parse(jsonData: data)
 
@@ -113,9 +113,9 @@ struct GeoJsonParserTests {
         #expect(result.object is FeatureCollection)
     }
 
-    // A FeatureCollection only accepts Features, not bare geometries.
+    /// A FeatureCollection only accepts Features, not bare geometries.
     @Test
-    func featureCollectionRejectsGeometryElement() async throws {
+    func featureCollectionRejectsGeometryElement() throws {
         let json = #"""
         {"type":"FeatureCollection","features":[{"type":"Point","coordinates":[1,2]}]}
         """#
@@ -126,9 +126,9 @@ struct GeoJsonParserTests {
         #expect(result.issues[0].message.contains("Feature"))
     }
 
-    // A GeometryCollection only accepts geometries, not Features.
+    /// A GeometryCollection only accepts geometries, not Features.
     @Test
-    func geometryCollectionRejectsFeatureElement() async throws {
+    func geometryCollectionRejectsFeatureElement() throws {
         let json = #"""
         {"type":"GeometryCollection","geometries":[{"type":"Feature","geometry":null,"properties":{}}]}
         """#
@@ -141,9 +141,9 @@ struct GeoJsonParserTests {
 
     // MARK: - Typed parsing
 
-    // Typed parsing returns the requested concrete type.
+    /// Typed parsing returns the requested concrete type.
     @Test
-    func typedParseReturnsConcreteType() async throws {
+    func typedParseReturnsConcreteType() throws {
         let (collection, issues) = try GeoJsonParser.parse(
             jsonString: validJson,
             as: FeatureCollection.self)
@@ -153,9 +153,9 @@ struct GeoJsonParserTests {
         #expect(typed.features.count == 2)
     }
 
-    // A type mismatch is reported and returns nil instead of the object.
+    /// A type mismatch is reported and returns nil instead of the object.
     @Test
-    func typedParseTypeMismatch() async throws {
+    func typedParseTypeMismatch() throws {
         let pointJson = #"{"type":"Point","coordinates":[1,2]}"#
         let (collection, issues) = try GeoJsonParser.parse(
             jsonString: pointJson,
@@ -166,9 +166,9 @@ struct GeoJsonParserTests {
         #expect(issues[0].message.contains("FeatureCollection"))
     }
 
-    // Strict typed parsing throws on a type mismatch.
+    /// Strict typed parsing throws on a type mismatch.
     @Test
-    func typedParseStrictTypeMismatchThrows() async throws {
+    func typedParseStrictTypeMismatchThrows() throws {
         let pointJson = #"{"type":"Point","coordinates":[1,2]}"#
 
         #expect(throws: GeoJsonParsingError.self) {
@@ -179,9 +179,9 @@ struct GeoJsonParserTests {
         }
     }
 
-    // The FeatureCollection convenience normalizes any GeoJSON object.
+    /// The FeatureCollection convenience normalizes any GeoJSON object.
     @Test
-    func featureCollectionConvenienceNormalizes() async throws {
+    func featureCollectionConvenienceNormalizes() throws {
         let pointJson = #"{"type":"Point","coordinates":[1,2]}"#
         var issues: [GeoJsonParseIssue] = []
         let collection = try #require(FeatureCollection(
@@ -193,9 +193,9 @@ struct GeoJsonParserTests {
         #expect(collection.features[0].geometry is Point)
     }
 
-    // The FeatureCollection convenience reports malformed elements.
+    /// The FeatureCollection convenience reports malformed elements.
     @Test
-    func featureCollectionConvenienceReportsIssues() async throws {
+    func featureCollectionConvenienceReportsIssues() {
         var issues: [GeoJsonParseIssue] = []
         _ = FeatureCollection(jsonString: malformedJson, issues: &issues)
 
@@ -203,17 +203,17 @@ struct GeoJsonParserTests {
         #expect(issues[0].path == "/features/0/geometry/coordinates/0")
     }
 
-    // Unreadable JSON throws in both modes.
+    /// Unreadable JSON throws in both modes.
     @Test
-    func invalidJsonThrows() async throws {
+    func invalidJsonThrows() throws {
         #expect(throws: GeoJsonParsingError.self) {
             try GeoJsonParser.parse(jsonData: Data([0x00, 0x01]))
         }
     }
 
-    // Strict mode accepts a clean document.
+    /// Strict mode accepts a clean document.
     @Test
-    func strictModeAcceptsValidDocument() async throws {
+    func strictModeAcceptsValidDocument() throws {
         let result = try GeoJsonParser.parse(jsonString: validJson, mode: .strict)
 
         #expect(result.issues.isEmpty)
@@ -364,6 +364,42 @@ extension GeoJsonParserTests {
 
         #expect(issue.description.contains("/a~1b~0c"))
         #expect(GeoJsonParsingError(issue: issue).errorDescription == issue.description)
+    }
+
+    @Test
+    func nonObjectJSONAndMissingCoordinateContainers() throws {
+        let nonObject = try GeoJsonParser.parse(json: 42)
+        #expect(nonObject.object == nil)
+        #expect(nonObject.issues.first?.message == "expected a JSON object")
+        #expect(throws: GeoJsonParsingError.self) {
+            try GeoJsonParser.parse(json: 42, mode: .strict)
+        }
+
+        let malformed: [(json: String, path: String)] = [
+            (#"{"type":"MultiLineString"}"#, "/coordinates"),
+            (#"{"type":"Polygon"}"#, "/coordinates"),
+            (#"{"type":"MultiPolygon"}"#, "/coordinates"),
+            (#"{"type":"GeometryCollection"}"#, "/geometries"),
+        ]
+        for item in malformed {
+            let result = try GeoJsonParser.parse(jsonString: item.json)
+            #expect(result.object == nil)
+            #expect(result.issues.contains { $0.path == item.path }, "\(item.json)")
+        }
+    }
+
+    @Test
+    func invalidBoundingBoxAndFeatureCollectionIssues() throws {
+        let invalidBox = #"{"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{},"bbox":[0,0,1]}"#
+        let result = try GeoJsonParser.parse(jsonString: invalidBox)
+        #expect(result.issues.contains { $0.path == "/bbox" && $0.message.contains("four or six") })
+
+        var issues: [GeoJsonParseIssue] = []
+        let collection = FeatureCollection(
+            jsonString: #"{"type":"Point","coordinates":[1,2]}"#,
+            issues: &issues)
+        #expect(collection?.features.count == 1)
+        #expect(issues.isEmpty)
     }
 
 }
