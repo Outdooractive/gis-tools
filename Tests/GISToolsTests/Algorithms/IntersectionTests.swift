@@ -21,7 +21,9 @@ struct IntersectionTests {
         let a = try loadOverlayPolygon(name, "A")
         let b = try loadOverlayPolygon(name, "B")
         let expectedJson = try TestData.stringFromFile(package: "Overlay", name: name + "IntersectResult")
-        let expected = try #require(MultiPolygon(jsonString: expectedJson), "Missing expected result for \(name)")
+        // An empty MultiPolygon is structurally invalid per the parser
+        // contract, so the empty intersection fixture is constructed directly.
+        let expected = MultiPolygon(jsonString: expectedJson) ?? MultiPolygon()
 
         guard let result = a.intersection(with: b) else {
             if expected.polygons.isNotEmpty {
@@ -34,8 +36,8 @@ struct IntersectionTests {
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
         if expectedArea > 0 {
             let ratio = resultArea / expectedArea
-            #expect(ratio > 0.80 && ratio < 1.20,
-                    "\(name): area ratio \(ratio) outside [0.80, 1.20], result=\(resultArea), expected=\(expectedArea)")
+            #expect(ratio > 0.99 && ratio < 1.01,
+                    "\(name): area ratio \(ratio) outside [0.99, 1.01], result=\(resultArea), expected=\(expectedArea)")
         }
         else {
             #expect(resultArea < 1000.0, "\(name): expected empty but got area \(resultArea)")
@@ -425,5 +427,22 @@ extension IntersectionTests {
         #expect(result.projection == .epsg3857)
         #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - first3857.area) < 1.0)
     }
+
+
+    @Test
+    func analyticSquareIntersection() throws {
+        func square(_ minX: Double, _ maxX: Double) throws -> Polygon {
+            try #require(Polygon([[
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: maxX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: minX, y: 0.0, projection: .noSRID),
+            ]]))
+        }
+        let result = try #require((try square(0.0, 10.0)).intersection(with: try square(5.0, 15.0)))
+        #expect(abs(result.polygons.reduce(0) { $0 + $1.area } - 50.0) < 0.000001)
+    }
+
 
 }

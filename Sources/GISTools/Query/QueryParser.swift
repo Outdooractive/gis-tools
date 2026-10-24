@@ -136,8 +136,42 @@ public struct QueryParser {
         self.reader = Reader(characters: Array(string.utf8))
 
         guard var reader = self.reader,
-              parseQuery(reader: &reader)
+              parseQuery(reader: &reader),
+              let pipeline,
+              Self.isWellFormed(pipeline)
         else { return nil }
+    }
+
+    /// Validates that the RPN pipeline reduces to exactly one value: every
+    /// binary operator sees two operands and every unary operator one.
+    private static func isWellFormed(_ pipeline: [Expression]) -> Bool {
+        var depth = 0
+
+        for expression in pipeline {
+            switch expression {
+            case .comparison,
+                 .condition(.and),
+                 .condition(.or):
+                guard depth >= 2 else { return false }
+                depth -= 1
+
+            case .condition(.not),
+                 .condition(.exists):
+                guard depth >= 1 else { return false }
+
+            case .literal,
+                 .literalSet,
+                 .near,
+                 .searchValues,
+                 .value,
+                 .within,
+                 .intersects,
+                 .condition:
+                depth += 1
+            }
+        }
+
+        return depth == 1
     }
 
     /// Creates a parser with a pre-built expression pipeline, skipping
@@ -480,18 +514,43 @@ public struct QueryParser {
         var terms: [Expression] = []
         var comparison: Expression?
         var condition: Expression?
+        var pendingNegations = 0
         var isBeginningOfTerm = true
 
+        func appendTerms() {
+            pipeline?.append(contentsOf: terms)
+            if let comparison {
+                pipeline?.append(comparison)
+            }
+            terms = []
+            comparison = nil
+        }
+
+        func appendPendingNegations() {
+            guard pendingNegations > 0 else { return }
+            pipeline?.append(contentsOf: Array(
+                repeating: Expression.condition(.not),
+                count: pendingNegations))
+            pendingNegations = 0
+        }
+
+        /// Flushes a completed operand. `includeCondition` appends the
+        /// pending boolean connector after it (used when the operand is the
+        /// left side of a new connector or the whole expression).
+        func finishOperand(includeCondition: Bool) {
+            appendTerms()
+            appendPendingNegations()
+            if includeCondition, let pending = condition {
+                pipeline?.append(pending)
+                condition = nil
+            }
+        }
+
         outer: while let char = reader.peek() {
-            // Check for terminator (e.g., ')') when in a sub-expression
             if let terminator, char == terminator {
                 break
             }
 
-            // Check for:
-            // - and, or, not, exists
-            // - ==, !=, >, >=, <, <=, =~, =*, =^, =$
-            // - in
             if isBeginningOfTerm {
                 let hasAnd = reader.peekWord("and")
                 let hasOr = reader.peekWord("or")
@@ -502,52 +561,46 @@ public struct QueryParser {
                 let hasWithin = reader.peekString("within(", caseInsensitive: true)
                 let hasIntersects = reader.peekString("intersects(", caseInsensitive: true)
 
-                if hasAnd || hasOr || hasNot || hasExists {
-                    pipeline?.append(contentsOf: terms)
-                    if let comparison {
-                        pipeline?.append(comparison)
-                    }
-                    if let condition {
-                        pipeline?.append(condition)
-                    }
-                    terms = []
-                    comparison = nil
-                    condition = nil
+                if hasAnd || hasOr {
+                    finishOperand(includeCondition: true)
                     isBeginningOfTerm = false
 
-                    if hasAnd {
-                        condition = .condition(.and)
-                        reader.moveIndex(by: 3)
-                    }
-                    else if hasOr {
-                        condition = .condition(.or)
-                        reader.moveIndex(by: 2)
-                    }
-                    else if hasNot {
-                        pipeline?.append(.condition(.not))
-                        reader.moveIndex(by: 3)
-                    }
-                    else if hasExists {
-                        pipeline?.append(.condition(.exists))
-                        reader.moveIndex(by: 6)
-                    }
+                    condition = hasAnd ? .condition(.and) : .condition(.or)
+                    reader.moveIndex(by: hasAnd ? 3 : 2)
+                    continue
+                }
 
+                if hasNot {
+                    // Prefix `NOT` before an operand (start of query, after
+                    // and/or, or at the start of a group) becomes a pending
+                    // negation applied to that operand. Postfix `not` applies
+                    // to the expression completed so far.
+                    let isPrefix = terms.isEmpty
+                        && comparison == nil
+                        && (condition != nil || (pipeline?.isEmpty ?? true))
+
+                    reader.moveIndex(by: 3)
+                    if isPrefix {
+                        pendingNegations += 1
+                    }
+                    else {
+                        finishOperand(includeCondition: true)
+                        pipeline?.append(.condition(.not))
+                    }
+                    isBeginningOfTerm = true
+                    continue
+                }
+
+                if hasExists {
+                    finishOperand(includeCondition: true)
+                    pipeline?.append(.condition(.exists))
+                    reader.moveIndex(by: 6)
+                    isBeginningOfTerm = false
                     continue
                 }
 
                 if hasIn {
-                    pipeline?.append(contentsOf: terms)
-                    if let comparison {
-                        pipeline?.append(comparison)
-                    }
-                    if let condition {
-                        pipeline?.append(condition)
-                    }
-                    terms = []
-                    comparison = nil
-                    condition = nil
-                    isBeginningOfTerm = false
-
+                    finishOperand(includeCondition: true)
                     reader.moveIndex(by: 2)
 
                     reader.skipWhitespace()
@@ -555,44 +608,38 @@ public struct QueryParser {
                     reader.moveIndex(by: 1)
 
                     guard let setValues = reader.readLiteralSet() else { return false }
-
                     terms.append(.literalSet(setValues))
                     comparison = .comparison(.in)
+                    isBeginningOfTerm = false
                     continue
                 }
 
                 if hasNear {
                     guard let term = reader.readNear() else { return false }
-
-                    isBeginningOfTerm = false
                     terms.append(term)
-
+                    isBeginningOfTerm = false
                     continue
                 }
 
                 if hasWithin {
                     guard let term = reader.readWithin() else { return false }
-
-                    isBeginningOfTerm = false
                     terms.append(term)
-
+                    isBeginningOfTerm = false
                     continue
                 }
 
                 if hasIntersects {
                     guard let term = reader.readIntersects() else { return false }
-
-                    isBeginningOfTerm = false
                     terms.append(term)
-
+                    isBeginningOfTerm = false
                     continue
                 }
 
                 if terms.count == 1,
                    let term = reader.readComparisonExpression()
                 {
-                    isBeginningOfTerm = false
                     comparison = term
+                    isBeginningOfTerm = false
                     continue
                 }
             }
@@ -601,46 +648,43 @@ public struct QueryParser {
             case UInt8(ascii: " "), UInt8(ascii: "\t"), UInt8(ascii: "\n"), UInt8(ascii: "\r"):
                 reader.skipWhitespace()
                 isBeginningOfTerm = true
-                continue
 
             case UInt8(ascii: "("):
-                pipeline?.append(contentsOf: terms)
-                if let comparison { pipeline?.append(comparison) }
-                if let condition { pipeline?.append(condition) }
-                terms = []
-                comparison = nil
-                condition = nil
-                isBeginningOfTerm = false
+                appendTerms()
 
+                let saved = pipeline ?? []
+                pipeline = []
                 reader.moveIndex(by: 1)
 
-                guard parseQuery(reader: &reader, until: UInt8(ascii: ")")) else { return false }
-
+                guard parseQuery(reader: &reader, until: UInt8(ascii: ")")) else {
+                    return false
+                }
+                let inner = pipeline ?? []
                 reader.skipWhitespace()
                 guard reader.peek() == UInt8(ascii: ")") else { return false }
                 reader.moveIndex(by: 1)
 
+                pipeline = saved + inner
+                appendPendingNegations()
+                if let pending = condition {
+                    pipeline?.append(pending)
+                    condition = nil
+                }
                 isBeginningOfTerm = true
 
             case UInt8(ascii: "."):
                 guard let term = reader.readValueExpression() else { return false }
-                isBeginningOfTerm = false
                 terms.append(term)
+                isBeginningOfTerm = false
 
             default:
                 guard let term = reader.readLiteralExpression() else { return false }
-                isBeginningOfTerm = false
                 terms.append(term)
+                isBeginningOfTerm = false
             }
         }
 
-        pipeline?.append(contentsOf: terms)
-        if let comparison {
-            pipeline?.append(comparison)
-        }
-        if let condition {
-            pipeline?.append(condition)
-        }
+        finishOperand(includeCondition: true)
 
         // Only apply the global-search fallback at the top level (no terminator)
         guard terminator == nil else { return true }

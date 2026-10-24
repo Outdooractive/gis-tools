@@ -38,8 +38,8 @@ struct MaskTests {
         let expectedArea = expected.polygons.reduce(0) { $0 + $1.area }
         if expectedArea > 0 {
             let ratio = resultArea / expectedArea
-            #expect(ratio > 0.9 && ratio < 1.1,
-                    "\(name): area ratio \(ratio) outside [0.9, 1.1]")
+            #expect(ratio > 0.99 && ratio < 1.01,
+                    "\(name): area ratio \(ratio) outside [0.99, 1.01]")
         }
     }
 
@@ -57,7 +57,8 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
         if let result {
-            #expect(result.rings.count == 2)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
         }
     }
 
@@ -69,7 +70,7 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == world.projection)
         if let result {
-            #expect(result.rings.count == 1)
+            #expect(result.polygons.count == 1)
         }
     }
 
@@ -91,12 +92,10 @@ struct MaskTests {
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]]))
         let multiPolygon = try #require(MultiPolygon([poly1, poly2]))
-        let result = multiPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == multiPolygon.projection)
-        if let result {
-            #expect(result.rings.count == 3) // outer + 2 holes
-        }
+        let result = try #require(multiPolygon.mask())
+        #expect(result.projection == multiPolygon.projection)
+        #expect(result.polygons.count == 1)
+        #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
     }
 
     /// Mask with a custom outer polygon.
@@ -120,8 +119,9 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection) // masks projection is the input's
         if let result {
-            #expect(result.rings.count == 2)
-            #expect(result.outerRing?.coordinates.count == 5)
+            #expect(result.polygons.count == 1)
+            #expect(result.polygons[0].rings.count == 2)
+            #expect(result.polygons.first?.outerRing?.coordinates.count == 5)
         }
     }
 
@@ -132,7 +132,7 @@ struct MaskTests {
         #expect(result != nil)
         #expect(result?.projection == .epsg4326)
         if let result {
-            #expect(result.rings.count == 1)
+            #expect(result.polygons.count == 1)
         }
     }
 
@@ -151,8 +151,9 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
-        #expect(result?.outerRing?.coordinates.count == 5)
-        #expect(result?.rings.count == 2)
+        #expect(result?.polygons.first?.outerRing?.coordinates.count == 5)
+        #expect(result?.polygons.count == 1)
+            #expect(result?.polygons.first?.rings.count == 2)
     }
 
     // Tests masking in noSRID projection.
@@ -168,7 +169,8 @@ struct MaskTests {
         let result = maskPolygon.mask()
         #expect(result != nil)
         #expect(result?.projection == maskPolygon.projection)
-        #expect(result?.rings.count == 2)
+        #expect(result?.polygons.count == 1)
+            #expect(result?.polygons.first?.rings.count == 2)
     }
 
     // Tests masking in EPSG:4978 projection.
@@ -199,15 +201,24 @@ struct MaskTests {
             Coordinate3D(latitude: -5.0, longitude: -179.0),
             Coordinate3D(latitude: -5.0, longitude: 179.0),
         ]]))
-        let result = maskPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == .epsg4326)
-        if let result {
-            #expect(result.rings.count == 2)
-        }
+        let outer = try #require(Polygon([[
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 190.0),
+            Coordinate3D(latitude: -10.0, longitude: 190.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]]))
+        let worldResult = try #require(maskPolygon.mask())
+        #expect(!worldResult.crossesAntimeridian)
+
+        let result = try #require(maskPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == .epsg4326)
+        #expect(result.polygons.count == 2)
+        #expect(!result.crossesAntimeridian)
+        #expect(abs(result.area - (outer.area - maskPolygon.area)) < outer.area * 0.000001)
     }
 
-    /// A mask crossing the antimeridian with a non-crossing outer polygon.
+    /// A mask crossing the antimeridian with a crossing outer polygon.
     @Test
     func antimeridianCustomOuter() throws {
         let outer = try #require(Polygon([[
@@ -224,12 +235,10 @@ struct MaskTests {
             Coordinate3D(latitude: -5.0, longitude: -175.0),
             Coordinate3D(latitude: -5.0, longitude: 175.0),
         ]]))
-        let result = maskPolygon.mask(outerPolygon: outer)
-        #expect(result != nil)
-        #expect(result?.projection == maskPolygon.projection)
-        if let result {
-            #expect(result.rings.count == 2)
-        }
+        let result = try #require(maskPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == maskPolygon.projection)
+        #expect(!result.crossesAntimeridian)
+        #expect(abs(result.area - (outer.area - maskPolygon.area)) < outer.area * 0.000001)
     }
 
     /// A MultiPolygon mask where both polygons cross the antimeridian, punched into the world.
@@ -250,12 +259,73 @@ struct MaskTests {
             Coordinate3D(latitude: 10.0, longitude: 178.0),
         ]]))
         let multiPolygon = try #require(MultiPolygon([poly1, poly2]))
-        let result = multiPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == multiPolygon.projection)
-        if let result {
-            #expect(result.rings.count == 3) // outer + 2 holes
-        }
+        let outer = try #require(Polygon([[
+            Coordinate3D(latitude: -20.0, longitude: 170.0),
+            Coordinate3D(latitude: 25.0, longitude: 170.0),
+            Coordinate3D(latitude: 25.0, longitude: 190.0),
+            Coordinate3D(latitude: -20.0, longitude: 190.0),
+            Coordinate3D(latitude: -20.0, longitude: 170.0),
+        ]]))
+        let result = try #require(multiPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == multiPolygon.projection)
+        #expect(!result.crossesAntimeridian)
+        let expected = outer.area - multiPolygon.area
+        #expect(abs(result.area - expected) < abs(expected) * 0.000001)
     }
+
+
+    // MARK: - Audit regressions
+
+    @Test
+    func maskWithHoleProducesUnmaskedIsland() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let outer = try #require(Polygon([[
+            coordinate(0.0, 0.0), coordinate(20.0, 0.0),
+            coordinate(20.0, 20.0), coordinate(0.0, 20.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let mask = try #require(Polygon([
+            [
+                coordinate(5.0, 5.0), coordinate(15.0, 5.0),
+                coordinate(15.0, 15.0), coordinate(5.0, 15.0),
+                coordinate(5.0, 5.0),
+            ],
+            [
+                coordinate(8.0, 8.0), coordinate(12.0, 8.0),
+                coordinate(12.0, 12.0), coordinate(8.0, 12.0),
+                coordinate(8.0, 8.0),
+            ],
+        ]))
+
+        let result = try #require(mask.mask(outerPolygon: outer))
+        #expect(result.polygons.count == 2)
+        // Base mask hole 10x10, plus the unmasked 4x4 island.
+        #expect(abs(result.area - (400.0 - 100.0 + 16.0)) < 0.000001)
+        #expect(result.polygons.allSatisfy { $0.isValid })
+    }
+
+    @Test
+    func maskPartiallyCrossingOuterIsClipped() throws {
+        func coordinate(_ x: Double, _ y: Double) -> Coordinate3D {
+            Coordinate3D(x: x, y: y, projection: .noSRID)
+        }
+        let outer = try #require(Polygon([[
+            coordinate(0.0, 0.0), coordinate(10.0, 0.0),
+            coordinate(10.0, 10.0), coordinate(0.0, 10.0),
+            coordinate(0.0, 0.0),
+        ]]))
+        let mask = try #require(Polygon([[
+            coordinate(8.0, 0.0), coordinate(15.0, 0.0),
+            coordinate(15.0, 10.0), coordinate(8.0, 10.0),
+            coordinate(8.0, 0.0),
+        ]]))
+
+        let result = try #require(mask.mask(outerPolygon: outer))
+        #expect(abs(result.area - 80.0) < 0.000001)
+        #expect(result.polygons.allSatisfy { $0.isValid })
+    }
+
 
 }

@@ -854,4 +854,42 @@ extension RTreeTests {
     }
 
 
+    @Test
+    func seededRandomSearchMatchesBruteForce() {
+        struct LCG {
+            var state: UInt64
+            mutating func next() -> Double {
+                state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                return Double(state >> 11) / Double(1 << 53)
+            }
+            mutating func double(in range: ClosedRange<Double>) -> Double {
+                range.lowerBound + next() * (range.upperBound - range.lowerBound)
+            }
+        }
+
+        var random = LCG(state: 42)
+        for _ in 0 ..< 30 {
+            let points = (0 ..< 200).map { _ in
+                Point(Coordinate3D(
+                    latitude: random.double(in: -10.0 ... 10.0),
+                    longitude: random.double(in: -10.0 ... 10.0)))
+            }
+            let tree = RTree(points, nodeSize: 8)
+            let minX = random.double(in: -10.0 ... 0.0)
+            let maxX = random.double(in: 0.0 ... 10.0)
+            let minY = random.double(in: -10.0 ... 0.0)
+            let maxY = random.double(in: 0.0 ... 10.0)
+            let box = BoundingBox(
+                southWest: Coordinate3D(x: minX, y: minY, projection: .epsg4326),
+                northEast: Coordinate3D(x: maxX, y: maxY, projection: .epsg4326))
+
+            let expected = points.filter {
+                $0.coordinate.longitude >= minX && $0.coordinate.longitude <= maxX
+                    && $0.coordinate.latitude >= minY && $0.coordinate.latitude <= maxY
+            }.count
+            #expect(tree.search(inBoundingBox: box).count == expected)
+        }
+    }
+
+
 }
