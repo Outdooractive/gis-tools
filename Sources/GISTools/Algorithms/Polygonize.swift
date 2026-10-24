@@ -274,7 +274,9 @@ private enum Polygonize {
 
         func contains(_ point: Coordinate3D, start: Coordinate3D, dx: Double, dy: Double) -> Bool {
             let t = parameter(of: point, from: start, dx: dx, dy: dy)
-            return t >= -0.000000001 && t <= 1.000000001
+            // Endpoint tolerance in the normalized line parameter domain.
+            let parametricTolerance = 0.000000001
+            return t >= -parametricTolerance && t <= 1.0 + parametricTolerance
         }
 
         var points: [Coordinate3D] = []

@@ -17,6 +17,9 @@ import Foundation
 /// ``CustomProjection/albersEqualArea(datum:helmert:)``.
 struct AlbersEqualAreaMath: Sendable {
 
+    /// Snyder 14-3 tolerance for deciding between secant and tangent cones.
+    private static let parallelTolerance = 0.0000000001
+
     /// The ellipsoid the projection is computed on.
     let ellipsoid: Ellipsoid
 
@@ -83,7 +86,7 @@ struct AlbersEqualAreaMath: Sendable {
         let q2 = Self.q(phi2, eccentricity: eccentricity)
 
         // Snyder 14-3 (secant cone) / 14-4a (single parallel): n = sin(φ₁).
-        if abs(phi1 - phi2) > 0.0000000001 {
+        if abs(phi1 - phi2) > Self.parallelTolerance {
             self.n = (m1 * m1 - m2 * m2) / (q2 - q1)
         }
         else {

@@ -304,6 +304,13 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Hardcoded epsilon audit (#387): replaced unexplained tolerance literals
+  with named constants or existing `GISTool` tolerances. `BooleanPointInPolygon`
+  now uses `GISTool.determinantEpsilon`; `BooleanEquals`, `LineMerge`,
+  `Clusters`, `Overlay`, `Polygonize` and the LCC/Albers/LAEA/Swiss
+  projection math document their local tolerances and units. Numeric values
+  are unchanged.
+
 - BoundingBoxClip split-box cleanup (#376): removed the stale
   `TODO: This is ugly Swift code` and factored the two crossing-box windows
   through a local constructor, avoiding duplicated coordinate boilerplate. No
