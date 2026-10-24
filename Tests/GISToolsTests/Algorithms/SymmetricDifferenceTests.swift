@@ -378,4 +378,45 @@ extension SymmetricDifferenceTests {
     }
 
 
+
+    /// Regression for #394: overlapping rectangles used to return an invalid
+    /// XOR result with a wrong area.
+    @Test
+    func overlappingRectanglesRegression394() throws {
+        func area(of geometry: (any PolygonGeometry)?) -> Double {
+            guard let geometry else { return 0.0 }
+            if let polygon = geometry as? Polygon {
+                return polygon.area
+            }
+            if let multiPolygon = geometry as? MultiPolygon {
+                return multiPolygon.area
+            }
+            return 0.0
+        }
+
+        let a = Polygon(unchecked: [[
+            Coordinate3D(x: 2832.807876, y: 3728.908786, projection: .epsg3857),
+            Coordinate3D(x: 4292.211731, y: 3728.908786, projection: .epsg3857),
+            Coordinate3D(x: 4292.211731, y: 4451.011690, projection: .epsg3857),
+            Coordinate3D(x: 2832.807876, y: 4451.011690, projection: .epsg3857),
+            Coordinate3D(x: 2832.807876, y: 3728.908786, projection: .epsg3857),
+        ]])
+        let b = Polygon(unchecked: [[
+            Coordinate3D(x: 2221.323504, y: 3814.471959, projection: .epsg3857),
+            Coordinate3D(x: 3549.611666, y: 3814.471959, projection: .epsg3857),
+            Coordinate3D(x: 3549.611666, y: 4646.766011, projection: .epsg3857),
+            Coordinate3D(x: 2221.323504, y: 4646.766011, projection: .epsg3857),
+            Coordinate3D(x: 2221.323504, y: 3814.471959, projection: .epsg3857),
+        ]])
+
+        let intersectionArea = area(of: a.intersection(with: b))
+        let expectedArea = a.area + b.area - 2.0 * intersectionArea
+        let result = try #require(a.symmetricDifference(with: b))
+
+        #expect(result.isValid)
+        #expect(
+            abs(result.polygons.reduce(0.0) { $0 + $1.area } - expectedArea)
+                <= max(1.0, expectedArea * 0.002))
+    }
+
 }

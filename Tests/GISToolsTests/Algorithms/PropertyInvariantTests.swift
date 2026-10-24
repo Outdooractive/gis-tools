@@ -86,7 +86,6 @@ struct PropertyInvariantTests {
         }
     }
 
-    // Symmetric difference is intentionally absent until #394 is fixed.
     @Test
     func overlayInvariantsInProjectedSpace() throws {
         for seed in 0 ..< 30 {
@@ -97,10 +96,12 @@ struct PropertyInvariantTests {
             let intersection = a.intersection(with: b)
             let difference = a.difference(with: b)
             let union = a.union(with: b)
+            let symmetricDifference = a.symmetricDifference(with: b)
 
             let intersectionArea = PropertyGenerators.area(of: intersection)
             let differenceArea = PropertyGenerators.area(of: difference)
             let unionArea = PropertyGenerators.area(of: union)
+            let symmetricDifferenceArea = PropertyGenerators.area(of: symmetricDifference)
             let aArea = a.area
             let bArea = b.area
             let tolerance = max(1.0, aArea * 0.002)
@@ -111,9 +112,13 @@ struct PropertyInvariantTests {
             #expect(
                 abs(unionArea - (aArea + bArea - intersectionArea)) <= tolerance,
                 "seed \(seed): union != A + B - intersection")
+            #expect(
+                abs(symmetricDifferenceArea - (aArea + bArea - 2.0 * intersectionArea)) <= tolerance,
+                "seed \(seed): symmetric difference invariant")
             #expect(intersection?.isValid != false, "seed \(seed): invalid intersection")
             #expect(difference?.isValid != false, "seed \(seed): invalid difference")
             #expect(union?.isValid != false, "seed \(seed): invalid union")
+            #expect(symmetricDifference?.isValid != false, "seed \(seed): invalid symmetric difference")
         }
     }
 
@@ -127,10 +132,12 @@ struct PropertyInvariantTests {
             let intersection = a.intersection(with: b)
             let difference = a.difference(with: b)
             let union = a.union(with: b)
+            let symmetricDifference = a.symmetricDifference(with: b)
 
             let intersectionArea = PropertyGenerators.area(of: intersection)
             let differenceArea = PropertyGenerators.area(of: difference)
             let unionArea = PropertyGenerators.area(of: union)
+            let symmetricDifferenceArea = PropertyGenerators.area(of: symmetricDifference)
             let aArea = a.area
             let bArea = b.area
             let tolerance = max(1.0, aArea * 0.005)
