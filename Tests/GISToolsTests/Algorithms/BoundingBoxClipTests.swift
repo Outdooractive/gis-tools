@@ -375,6 +375,54 @@ struct BoundingBoxClipTests {
     }
 
     @Test
+    func lineClippingIn4978UsesProjectedBox() throws {
+        var line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 10.0).projected(to: .epsg4978),
+        ]))
+        line.foreignMembers = ["source": "test"]
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: -1.0),
+            northEast: Coordinate3D(latitude: 1.0, longitude: 11.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.projection == .epsg4978)
+        #expect(clipped.foreignMembers["source"] as? String == "test")
+
+        let back = clipped.projected(to: .epsg4326)
+        #expect(back.lineStrings.isNotEmpty)
+        for coordinate in back.allCoordinates {
+            #expect(coordinate.latitude >= -1.000001)
+            #expect(coordinate.latitude <= 1.000001)
+            #expect(coordinate.longitude >= -1.000001)
+            #expect(coordinate.longitude <= 11.000001)
+        }
+    }
+
+    @Test
+    func multiLineStringClippingIn4978DropsOutsideParts() throws {
+        let inside = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 0.0, longitude: 10.0).projected(to: .epsg4978),
+        ]))
+        let outside = try #require(LineString([
+            Coordinate3D(latitude: 20.0, longitude: 20.0).projected(to: .epsg4978),
+            Coordinate3D(latitude: 30.0, longitude: 30.0).projected(to: .epsg4978),
+        ]))
+        let multi = try #require(MultiLineString([inside, outside]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: -1.0),
+            northEast: Coordinate3D(latitude: 1.0, longitude: 11.0))
+
+        let clipped = try #require(multi.clipped(to: box))
+        #expect(clipped.projection == .epsg4978)
+        #expect(clipped.lineStrings.count == 1)
+
+        let back = clipped.projected(to: .epsg4326)
+        #expect(back.allCoordinates.count == 2)
+    }
+
+    @Test
     func lineOnBoundingBoxBoundaryIsKept() throws {
         let line = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
