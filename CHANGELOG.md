@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip split-box cleanup (#376): removed the stale
+  `TODO: This is ugly Swift code` and factored the two crossing-box windows
+  through a local constructor, avoiding duplicated coordinate boilerplate. No
+  clipping behavior changed.
+
+- Open-ended and reversed `LineString.slice` (#375): `nil` start/end now
+  have exact regression coverage for the documented first/last defaults, all
+  projections, antimeridian crossing, altitude interpolation and the
+  `Feature.slice` wrapper. Start/end points on the same segment are now
+  ordered along that segment, so reversed same-segment slices no longer emit
+  coordinates in reverse line order. Removed the stale open-ended-slice TODO.
+
 - MapTile children at maximum zoom (#370): `child` returns the receiver
   unchanged and `children` returns an empty array when `z == 32`, instead of
   shifting x/y and emitting invalid same-zoom tiles. Zoom 31 still produces
