@@ -304,6 +304,19 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Graph and routing audit (#324): chain contraction no longer drops a one-way
+  edge when its target looks like a two-way degree-2 pass-through; when a
+  direct edge and a longer chain connect the same contracted pair, the
+  cheapest edge is kept instead of the first one discovered; and path
+  expansion now selects the edge actually used by the route (respecting
+  one-way vs two-way edges and reversing intermediate order on reverse
+  traversals). All routing entry points (Dijkstra, A*, bidirectional, the
+  contraction wrappers, the reusable routing index and ALT) are now
+  cross-checked against Floyd–Warshall on seeded random directed and
+  undirected graphs, and MST minimality is checked against the cycle property.
+  Parallel-edge Eulerian/Chinese Postman behaviour is still incorrect and is
+  tracked in #346.
+
 - Projection and coordinate-transformation audit (#323): EPSG:32662 (WGS 84 /
   Plate Carree) now uses its real metre-valued equirectangular definition
   (`x = a·λ`, `y` = WGS84 meridian arc) instead of copying degrees, so its
