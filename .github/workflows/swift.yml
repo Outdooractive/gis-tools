@@ -54,3 +54,40 @@ jobs:
         run: swift test --traits EnableMeterConversionExtensions
       - name: Test measurement conversion trait
         run: swift test --traits EnableMeasurementConversionExtensions
+
+  api-compatibility:
+    name: API compatibility
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container: swift:6.1
+    env:
+      BASE_REF: ${{ github.base_ref }}
+      API_BREAKING_ACK: ${{ contains(github.event.pull_request.labels.*.name, 'api-breaking') }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch base branch
+        run: git fetch origin "${BASE_REF}"
+      - name: Check public API against base branch
+        shell: bash
+        run: |
+          set +e
+          swift package diagnose-api-breaking-changes "origin/${BASE_REF}" \
+            --products GISTools 2>&1 | tee api-breakage.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          if [ "$API_BREAKING_ACK" = "true" ]; then
+            echo "::warning::API breaking changes acknowledged by the api-breaking label."
+            exit 0
+          fi
+
+          echo "::error::API breaking changes detected. Add the api-breaking label if intentional."
+          exit "$status"
