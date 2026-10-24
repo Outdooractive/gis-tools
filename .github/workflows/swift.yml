@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   macos:
-    name: build (macos)
+    name: build (macos, latest Swift)
     runs-on: macos-latest
     timeout-minutes: 30
 
@@ -29,11 +29,38 @@ jobs:
       - name: Test with Graph trait
         run: swift test --traits EnableGraphAPI
 
+  apple-platforms:
+    name: build (iOS/tvOS/watchOS simulators)
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-iOS" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Build for tvOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=tvOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-tvOS" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Build for watchOS Simulator
+        run: |
+          xcodebuild -quiet -scheme GISTools \
+            -destination "generic/platform=watchOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-watchOS" \
+            CODE_SIGNING_ALLOWED=NO build
+
   linux:
     name: build (linux)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    container: swift:6.1
+    container: swift:latest
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +77,7 @@ jobs:
     name: build (linux traits)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    container: swift:6.1
+    container: swift:latest
 
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +114,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    container: swift:6.1
+    container: swift:latest
     env:
       BASE_REF: ${{ github.base_ref }}
       API_BREAKING_ACK: ${{ contains(github.event.pull_request.labels.*.name, 'api-breaking') }}

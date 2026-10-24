@@ -97,7 +97,11 @@ For EPSG:4978 and noSRID, returns the original geometry unchanged (the antimerid
 
 ## Requirements
 
-This package requires Swift 6.1 or higher (at least Xcode 15), and compiles on iOS (\>= iOS 15), macOS (\>= macOS 15), tvOS (\>= tvOS 15), watchOS (\>= watchOS 7) as well as Linux, Android and Wasm.
+This package requires Swift 6.1 or higher (at least Xcode 15). CI builds and
+tests Linux and macOS with the latest stable Swift. The iOS, tvOS and watchOS
+simulator builds run on `main` only; deployment targets are declared in
+`Package.swift`. Android and Wasm are not currently part of the continuously
+verified platform matrix.
 
 ## Installation with Swift Package Manager
 

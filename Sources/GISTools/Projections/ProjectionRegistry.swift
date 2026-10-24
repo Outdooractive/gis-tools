@@ -1,5 +1,4 @@
 import Foundation
-import Synchronization
 
 /// Registry providing ``ProjectionDefinition`` implementations for
 /// registered projections.
@@ -50,15 +49,15 @@ enum ProjectionRegistry {
             4326: epsg4326Definition,
             4978: epsg4978Definition,
             3395: epsg3395Definition,
-            32_662: epsg32662Definition,
+            32662: epsg32662Definition,
             4258: etrs89Definition,
             4267: nad27Definition,
             4277: osgb1936Definition,
             27700: osgb1936BngDefinition,
             2056: ch1903PlusLv95Definition,
-            21_781: ch1903Lv03Definition,
-            29_902: irishGridTM65Definition,
-            29_903: irishGridTM75Definition,
+            21781: ch1903Lv03Definition,
+            29902: irishGridTM65Definition,
+            29903: irishGridTM75Definition,
             2157: irishTransverseMercatorDefinition,
             3035: etrs89LaeaDefinition,
             3034: etrs89LccDefinition,
@@ -71,22 +70,22 @@ enum ProjectionRegistry {
             3978: epsg3978Definition,
         ]
 
-        for srid in 32_601 ... 32_660 {
+        for srid in 32601 ... 32660 {
             map[srid] = UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 32_701 ... 32_760 {
+        for srid in 32701 ... 32760 {
             map[srid] = UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 25_828 ... 25_838 {
+        for srid in 25828 ... 25838 {
             map[srid] = Etrs89UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 26_901 ... 26_923 {
+        for srid in 26901 ... 26923 {
             map[srid] = Nad83UtmDefinition.definition(forSrid: srid)
         }
-        for srid in 31_466 ... 31_469 {
+        for srid in 31466 ... 31469 {
             map[srid] = DhdnGkDefinition.definition(forSrid: srid)
         }
-        for srid in 31_255 ... 31_259 {
+        for srid in 31255 ... 31259 {
             map[srid] = MgiGkDefinition.definition(forSrid: srid)
         }
 
@@ -95,6 +94,7 @@ enum ProjectionRegistry {
 
     /// The mutable registry state guarded by the mutex.
     private struct State {
+
         /// Definitions keyed by canonical SRID.
         var definitions: [Int: any ProjectionDefinition]
 
@@ -102,6 +102,7 @@ enum ProjectionRegistry {
         /// (specific patterns before generic ones), custom registrations
         /// last.
         var wktDefinitions: [any ProjectionDefinition]
+
     }
 
     private static let builtinWktDefinitions: [any ProjectionDefinition] = [
@@ -134,7 +135,24 @@ enum ProjectionRegistry {
         definitions: builtinDefinitions,
         wktDefinitions: builtinWktDefinitions)
 
-    private static let stateMutex = Mutex<State>(state)
+    private final class LockedState: @unchecked Sendable {
+
+        private let lock = NSLock()
+        private var state: State
+
+        init(_ state: State) {
+            self.state = state
+        }
+
+        func withLock<T>(_ body: (inout State) throws -> T) rethrows -> T {
+            lock.lock()
+            defer { lock.unlock() }
+            return try body(&state)
+        }
+
+    }
+
+    private static let lockedState = LockedState(state)
 
     // MARK: - Lookup
 
@@ -150,14 +168,14 @@ enum ProjectionRegistry {
             return builtin
         }
 
-        return stateMutex.withLock { snapshot in
+        return lockedState.withLock { snapshot in
             snapshot.definitions[srid]
         }
     }
 
     /// Whether a canonical SRID has a registered definition.
     static func isRegisteredSrid(_ srid: Int) -> Bool {
-        stateMutex.withLock { snapshot in
+        lockedState.withLock { snapshot in
             snapshot.definitions[srid] != nil
         }
     }
@@ -167,7 +185,7 @@ enum ProjectionRegistry {
     /// - Parameter wkt: A WKT projection string
     /// - Returns: The matching definition, or `nil` if the string is not recognised
     static func definition(matchingWkt wkt: String) -> (any ProjectionDefinition)? {
-        stateMutex.withLock { snapshot in
+        lockedState.withLock { snapshot in
             snapshot.wktDefinitions.first { definition in
                 definition.wktMatchers.contains { alternative in
                     alternative.allSatisfy { wkt.contains($0) }
@@ -189,7 +207,7 @@ enum ProjectionRegistry {
     static func register(_ definition: CustomProjection) -> Bool {
         guard definition.srid > 0 else { return false }
 
-        return stateMutex.withLock { state in
+        return lockedState.withLock { state in
             guard state.definitions[definition.srid] == nil else { return false }
 
             let registered = RegisteredCustomDefinition(custom: definition)
