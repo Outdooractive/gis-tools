@@ -304,6 +304,18 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Tesselate hole and antimeridian triangulation (#330): holes are now
+  traversed in the opposite winding direction and bridged to a visible outer
+  vertex with duplicated bridge endpoints, so polygons with one or many holes
+  triangulate to the correct area instead of overlapping or missing
+  ring-minus-hole regions. Rings are unwrapped across the projection's
+  wraparound axis before triangulation and emitted coordinates are normalized
+  back, so antimeridian polygons use the short side. Degenerate/collinear
+  rings stop triangulation instead of emitting overlapping triangles, and
+  ECEF polygons are triangulated in geographic space and projected back.
+  `TesselateTests` now asserts triangle area sums, hole coverage, short-side
+  antimeridian spans and all projections.
+
 - Test quality and coverage audit (#326): generated `Tests/TEST_COVERAGE.md`
   with per-source-file line coverage, direct/indirect test mapping and status,
   an explicit keep decision and rationale for every fixture, a weak-assertion
