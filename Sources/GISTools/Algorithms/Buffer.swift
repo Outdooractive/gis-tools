@@ -162,7 +162,7 @@ extension GeoJson {
                 // Bridge the gap between end and start to form a closed ring.
                 // Circles at all coordinates (like .round) plus the bridge.
                 let coords = lineString.coordinates
-                let bridge = LineSegment(first: coords.last!, second: coords[0], index: 0)
+                let bridge = LineSegment(first: coords[coords.count - 1], second: coords[0], index: 0)
                 if let bp = bridge.buffered(by: distance, endType: .butt, unionType: .none) {
                     polygons.append(contentsOf: bp.polygons)
                 }

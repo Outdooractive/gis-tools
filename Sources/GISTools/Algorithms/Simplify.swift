@@ -29,7 +29,7 @@ extension GeoJson {
             var newLineString = LineString(Simplify.simplify(coordinates: lineString.coordinates, toleranceInMeters: tolerance, highQuality: highQuality)) ?? lineString
             newLineString.boundingBox = lineString.boundingBox
             newLineString.foreignMembers = lineString.foreignMembers
-            return newLineString as! Self
+            return GeometryDispatch.checkedCast(newLineString, to: Self.self)
 
         case let multiLineString as MultiLineString:
             var newMultiLineString = MultiLineString(multiLineString.lineStrings.map({
@@ -37,7 +37,7 @@ extension GeoJson {
             })) ?? multiLineString
             newMultiLineString.boundingBox = multiLineString.boundingBox
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
-            return newMultiLineString as! Self
+            return GeometryDispatch.checkedCast(newMultiLineString, to: Self.self)
 
         case let polygon as Polygon:
             var newPolygon = Polygon(polygon.rings.map({
@@ -45,7 +45,7 @@ extension GeoJson {
             })) ?? polygon
             newPolygon.boundingBox = polygon.boundingBox
             newPolygon.foreignMembers = polygon.foreignMembers
-            return newPolygon as! Self
+            return GeometryDispatch.checkedCast(newPolygon, to: Self.self)
 
         case let multiPolygon as MultiPolygon:
             var newMultiPolygon = MultiPolygon(multiPolygon.polygons.map({
@@ -53,7 +53,7 @@ extension GeoJson {
             })) ?? multiPolygon
             newMultiPolygon.boundingBox = multiPolygon.boundingBox
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
-            return newMultiPolygon as! Self
+            return GeometryDispatch.checkedCast(newMultiPolygon, to: Self.self)
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({
@@ -61,7 +61,7 @@ extension GeoJson {
             }))
             newGeometryCollection.boundingBox = geometryCollection.boundingBox
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
-            return newGeometryCollection as! Self
+            return GeometryDispatch.checkedCast(newGeometryCollection, to: Self.self)
 
         case let feature as Feature:
             guard let geometry = feature.geometry else {
@@ -70,7 +70,7 @@ extension GeoJson {
                     properties: feature.properties,
                     foreignMembers: feature.foreignMembers)
                 newFeature.boundingBox = feature.boundingBox
-                return newFeature as! Self
+                return GeometryDispatch.checkedCast(newFeature, to: Self.self)
             }
 
             var newFeature = Feature(
@@ -79,7 +79,7 @@ extension GeoJson {
                 properties: feature.properties)
             newFeature.boundingBox = feature.boundingBox
             newFeature.foreignMembers = feature.foreignMembers
-            return newFeature as! Self
+            return GeometryDispatch.checkedCast(newFeature, to: Self.self)
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(featureCollection.features.map({
@@ -87,7 +87,7 @@ extension GeoJson {
             }))
             newFeatureCollection.boundingBox = featureCollection.boundingBox
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
-            return newFeatureCollection as! Self
+            return GeometryDispatch.checkedCast(newFeatureCollection, to: Self.self)
 
         default:
             return snappedSelf

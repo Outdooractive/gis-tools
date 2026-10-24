@@ -810,9 +810,9 @@ extension WKBCoder {
             throw WKBCoderError.dataCorrupted
         }
 
-        bytes.withUnsafeBytes {
-            let from = $0.baseAddress! + offset
-            memcpy(into, from, byteCount)
+        bytes.withUnsafeBytes { buffer in
+            guard let baseAddress = buffer.baseAddress else { return }
+            memcpy(into, baseAddress + offset, byteCount)
         }
 
         offset += byteCount
@@ -859,19 +859,19 @@ extension WKBCoder {
     ) {
         switch geometry.type {
         case .point:
-            encode(geometry as! Point, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: Point.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiPoint:
-            encode(geometry as! MultiPoint, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiPoint.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .lineString:
-            encode(geometry as! LineString, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: LineString.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiLineString:
-            encode(geometry as! MultiLineString, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiLineString.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .polygon:
-            encode(geometry as! Polygon, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: Polygon.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .multiPolygon:
-            encode(geometry as! MultiPolygon, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: MultiPolygon.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .geometryCollection:
-            encode(geometry as! GeometryCollection, byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
+            encode(GeometryDispatch.checkedCast(geometry, to: GeometryCollection.self), byteOrder: byteOrder, targetProjection: targetProjection, includeSRID: includeSRID, to: &data)
         case .feature, .featureCollection, .invalid:
             break
         }

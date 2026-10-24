@@ -233,7 +233,9 @@ extension Polygon {
 
     /// Polygon centroid (outer ring area centroid).
     private func centroidCell() -> PQCell {
-        let points = outerRing!.coordinates
+        guard let points = outerRing?.coordinates, points.isNotEmpty else {
+            return PQCell(x: 0.0, y: 0.0, h: 0.0, polygon: self)
+        }
         var area: Double = 0
         var cx: Double = 0
         var cy: Double = 0

@@ -62,7 +62,7 @@ extension GeoJson {
             var newPoint = Point(point.coordinate.truncated(precision: precision, removeAltitude: removeAltitude, removeM: removeM))
             if point.boundingBox != nil { newPoint.updateBoundingBox(onlyIfNecessary: false) }
             newPoint.foreignMembers = point.foreignMembers
-            return newPoint as! Self
+            return GeometryDispatch.checkedCast(newPoint, to: Self.self)
 
         case let multiPoint as MultiPoint:
             guard var newMultiPoint = MultiPoint(multiPoint.coordinates.map({
@@ -70,7 +70,7 @@ extension GeoJson {
             })) else { return self }
             if multiPoint.boundingBox != nil { newMultiPoint.updateBoundingBox(onlyIfNecessary: false) }
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
-            return newMultiPoint as! Self
+            return GeometryDispatch.checkedCast(newMultiPoint, to: Self.self)
 
         case let lineString as LineString:
             guard var newLineString = LineString(lineString.coordinates.map({
@@ -78,7 +78,7 @@ extension GeoJson {
             }))  else { return self }
             if lineString.boundingBox != nil { newLineString.updateBoundingBox(onlyIfNecessary: false) }
             newLineString.foreignMembers = lineString.foreignMembers
-            return newLineString as! Self
+            return GeometryDispatch.checkedCast(newLineString, to: Self.self)
 
         case let multiLineString as MultiLineString:
             guard var newMultiLineString = MultiLineString(multiLineString.coordinates.map({
@@ -88,7 +88,7 @@ extension GeoJson {
             }))  else { return self }
             if multiLineString.boundingBox != nil { newMultiLineString.updateBoundingBox(onlyIfNecessary: false) }
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
-            return newMultiLineString as! Self
+            return GeometryDispatch.checkedCast(newMultiLineString, to: Self.self)
 
         case let polygon as Polygon:
             guard var newPolygon = Polygon(polygon.coordinates.map({
@@ -98,7 +98,7 @@ extension GeoJson {
             })) else { return self }
             if polygon.boundingBox != nil { newPolygon.updateBoundingBox(onlyIfNecessary: false) }
             newPolygon.foreignMembers = polygon.foreignMembers
-            return newPolygon as! Self
+            return GeometryDispatch.checkedCast(newPolygon, to: Self.self)
 
         case let multiPolygon as MultiPolygon:
             guard var newMultiPolygon = MultiPolygon(multiPolygon.coordinates.map({
@@ -110,7 +110,7 @@ extension GeoJson {
             })) else { return self }
             if multiPolygon.boundingBox != nil { newMultiPolygon.updateBoundingBox(onlyIfNecessary: false) }
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
-            return newMultiPolygon as! Self
+            return GeometryDispatch.checkedCast(newMultiPolygon, to: Self.self)
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(geometryCollection.geometries.map({
@@ -118,7 +118,7 @@ extension GeoJson {
             }))
             if geometryCollection.boundingBox != nil { newGeometryCollection.updateBoundingBox(onlyIfNecessary: false) }
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
-            return newGeometryCollection as! Self
+            return GeometryDispatch.checkedCast(newGeometryCollection, to: Self.self)
 
         case let feature as Feature:
             guard let geometry = feature.geometry else {
@@ -127,7 +127,7 @@ extension GeoJson {
                     properties: feature.properties,
                     foreignMembers: feature.foreignMembers)
                 if feature.boundingBox != nil { newFeature.updateBoundingBox(onlyIfNecessary: false) }
-                return newFeature as! Self
+                return GeometryDispatch.checkedCast(newFeature, to: Self.self)
             }
 
             var newFeature = Feature(
@@ -136,7 +136,7 @@ extension GeoJson {
                 properties: feature.properties)
             if feature.boundingBox != nil { newFeature.updateBoundingBox(onlyIfNecessary: false) }
             newFeature.foreignMembers = feature.foreignMembers
-            return newFeature as! Self
+            return GeometryDispatch.checkedCast(newFeature, to: Self.self)
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(featureCollection.features.map({
@@ -144,7 +144,7 @@ extension GeoJson {
             }))
             if featureCollection.boundingBox != nil { newFeatureCollection.updateBoundingBox(onlyIfNecessary: false) }
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
-            return newFeatureCollection as! Self
+            return GeometryDispatch.checkedCast(newFeatureCollection, to: Self.self)
 
         default:
             return self

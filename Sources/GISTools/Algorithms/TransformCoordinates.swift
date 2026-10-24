@@ -19,21 +19,21 @@ extension GeoJson {
                 transform(point.coordinate),
                 calculateBoundingBox: (point.boundingBox != nil))
             newPoint.foreignMembers = point.foreignMembers
-            return newPoint as! Self
+            return GeometryDispatch.checkedCast(newPoint, to: Self.self)
 
         case let multiPoint as MultiPoint:
             var newMultiPoint = MultiPoint(
                 multiPoint.coordinates.map(transform),
                 calculateBoundingBox: (multiPoint.boundingBox != nil)) ?? multiPoint
             newMultiPoint.foreignMembers = multiPoint.foreignMembers
-            return newMultiPoint as! Self
+            return GeometryDispatch.checkedCast(newMultiPoint, to: Self.self)
 
         case let lineString as LineString:
             var newLineString = LineString(
                 lineString.coordinates.map(transform),
                 calculateBoundingBox: (lineString.boundingBox != nil)) ?? lineString
             newLineString.foreignMembers = lineString.foreignMembers
-            return newLineString as! Self
+            return GeometryDispatch.checkedCast(newLineString, to: Self.self)
 
         case let multiLineString as MultiLineString:
             let coordinates = multiLineString.coordinates.map({ (inner) in
@@ -43,7 +43,7 @@ extension GeoJson {
                 coordinates,
                 calculateBoundingBox: (multiLineString.boundingBox != nil)) ?? multiLineString
             newMultiLineString.foreignMembers = multiLineString.foreignMembers
-            return newMultiLineString as! Self
+            return GeometryDispatch.checkedCast(newMultiLineString, to: Self.self)
 
         case let polygon as Polygon:
             let coordinates = polygon.coordinates.map({ (inner) in
@@ -53,7 +53,7 @@ extension GeoJson {
                 coordinates,
                 calculateBoundingBox: (polygon.boundingBox != nil)) ?? polygon
             newPolygon.foreignMembers = polygon.foreignMembers
-            return newPolygon as! Self
+            return GeometryDispatch.checkedCast(newPolygon, to: Self.self)
 
         case let multiPolygon as MultiPolygon:
             let coordinates = multiPolygon.coordinates.map({ (outer) in
@@ -65,14 +65,14 @@ extension GeoJson {
                 coordinates,
                 calculateBoundingBox: (multiPolygon.boundingBox != nil)) ?? multiPolygon
             newMultiPolygon.foreignMembers = multiPolygon.foreignMembers
-            return newMultiPolygon as! Self
+            return GeometryDispatch.checkedCast(newMultiPolygon, to: Self.self)
 
         case let geometryCollection as GeometryCollection:
             var newGeometryCollection = GeometryCollection(
                 geometryCollection.geometries.map({ $0.transformedCoordinates(transform) }),
                 calculateBoundingBox: (geometryCollection.boundingBox != nil))
             newGeometryCollection.foreignMembers = geometryCollection.foreignMembers
-            return newGeometryCollection as! Self
+            return GeometryDispatch.checkedCast(newGeometryCollection, to: Self.self)
 
         case let feature as Feature:
             guard let geometry = feature.geometry else {
@@ -81,7 +81,7 @@ extension GeoJson {
                     properties: feature.properties,
                     foreignMembers: feature.foreignMembers)
                 newFeature.boundingBox = feature.boundingBox
-                return newFeature as! Self
+                return GeometryDispatch.checkedCast(newFeature, to: Self.self)
             }
 
             var newFeature = Feature(
@@ -90,14 +90,14 @@ extension GeoJson {
                 properties: feature.properties,
                 calculateBoundingBox: (feature.boundingBox != nil))
             newFeature.foreignMembers = feature.foreignMembers
-            return newFeature as! Self
+            return GeometryDispatch.checkedCast(newFeature, to: Self.self)
 
         case let featureCollection as FeatureCollection:
             var newFeatureCollection = FeatureCollection(
                 featureCollection.features.map({ $0.transformedCoordinates(transform) }),
                 calculateBoundingBox: (featureCollection.boundingBox != nil))
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
-            return newFeatureCollection as! Self
+            return GeometryDispatch.checkedCast(newFeatureCollection, to: Self.self)
 
         default:
             return self

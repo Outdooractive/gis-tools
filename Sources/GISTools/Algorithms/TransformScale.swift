@@ -58,7 +58,7 @@ extension GeoJson {
                 featureCollection.features.map({ $0.scaled(factor: factor, anchor: anchor) }),
                 calculateBoundingBox: (featureCollection.boundingBox != nil))
             newFeatureCollection.foreignMembers = featureCollection.foreignMembers
-            return newFeatureCollection as! Self
+            return GeometryDispatch.checkedCast(newFeatureCollection, to: Self.self)
         }
 
         return _scaledBy(factor: factor, anchor: anchor)

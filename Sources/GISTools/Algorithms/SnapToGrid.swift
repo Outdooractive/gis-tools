@@ -28,7 +28,9 @@ extension GeoJson {
     /// - Parameter tolerance: Grid spacing in the CRS unit (must be > 0).
     /// - Returns: A new geometry with coordinates snapped to the nearest grid point.
     public func snappedToGrid(tolerance: Double) -> Self {
-        SnapToGrid.snap(self, tolerance: tolerance) as! Self
+        GeometryDispatch.checkedCast(
+            SnapToGrid.snap(self, tolerance: tolerance),
+            to: Self.self)
     }
 
     /// Snaps each coordinate to the nearest grid point, mutating in place.
@@ -258,7 +260,11 @@ extension SnapToGrid {
 
     private static func snap(geometryCollection: GeometryCollection, tolerance: Double) -> GeometryCollection {
         var result = GeometryCollection(
-            geometryCollection.geometries.map({ snap($0, tolerance: tolerance) as! GeoJsonGeometry }),
+            geometryCollection.geometries.map({
+                GeometryDispatch.checkedCast(
+                    snap($0, tolerance: tolerance),
+                    to: GeoJsonGeometry.self)
+            }),
             calculateBoundingBox: geometryCollection.boundingBox != nil)
         result.foreignMembers = geometryCollection.foreignMembers
         return result
@@ -275,7 +281,9 @@ extension SnapToGrid {
         }
 
         var result = Feature(
-            snap(geometry, tolerance: tolerance) as! GeoJsonGeometry,
+            GeometryDispatch.checkedCast(
+                snap(geometry, tolerance: tolerance),
+                to: GeoJsonGeometry.self),
             id: feature.id,
             properties: feature.properties,
             calculateBoundingBox: feature.boundingBox != nil)

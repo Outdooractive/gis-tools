@@ -55,7 +55,7 @@ extension Coordinate3D {
         var current: [Coordinate3D] = [coords[0]]
 
         for i in 1..<coords.count {
-            let prev = current.last!
+            let prev = current[current.count - 1]
             let curr = coords[i]
 
             if let intersection = AntimeridianCutting.intersection(prev, curr) {
