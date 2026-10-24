@@ -242,4 +242,46 @@ extension BooleanDisjointTests {
         #expect(!second.isDisjoint(with: first))
     }
 
+
+    // MARK: - Audit regressions
+
+    @Test
+    func lineThroughHoleAndBoundaryContact() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ],
+            [
+                Coordinate3D(x: 3.0, y: 3.0, projection: .noSRID),
+                Coordinate3D(x: 7.0, y: 3.0, projection: .noSRID),
+                Coordinate3D(x: 7.0, y: 7.0, projection: .noSRID),
+                Coordinate3D(x: 3.0, y: 7.0, projection: .noSRID),
+                Coordinate3D(x: 3.0, y: 3.0, projection: .noSRID),
+            ],
+        ]))
+
+        let insideHole = try #require(LineString([
+            Coordinate3D(x: 4.0, y: 4.0, projection: .noSRID),
+            Coordinate3D(x: 6.0, y: 6.0, projection: .noSRID),
+        ]))
+        #expect(insideHole.isDisjoint(with: polygon))
+
+        let crossingHole = try #require(LineString([
+            Coordinate3D(x: 1.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 9.0, y: 5.0, projection: .noSRID),
+        ]))
+        #expect(!crossingHole.isDisjoint(with: polygon))
+
+        let boundaryTouching = try #require(LineString([
+            Coordinate3D(x: -1.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]))
+        #expect(!boundaryTouching.isDisjoint(with: polygon))
+    }
+
+
 }

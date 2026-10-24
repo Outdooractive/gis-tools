@@ -182,4 +182,16 @@ struct BooleanPointOnLineTests {
         #expect(lineString.checkIsOnLine(Coordinate3D(latitude: 0.0, longitude: 175.0)) == false)
     }
 
+
+    @Test
+    func seamCrossingPointIsOnSegment() throws {
+        let segment = LineSegment(
+            first: Coordinate3D(latitude: 0.0, longitude: 179.0),
+            second: Coordinate3D(latitude: 0.0, longitude: -179.0))
+        #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 0.0, longitude: 180.0)))
+        #expect(segment.checkIsOnSegment(Coordinate3D(latitude: 0.0, longitude: -180.0)))
+        #expect(!segment.checkIsOnSegment(Coordinate3D(latitude: 0.1, longitude: 180.0)))
+    }
+
+
 }

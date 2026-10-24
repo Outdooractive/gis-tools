@@ -25,6 +25,9 @@ extension GeoJson {
     ///   `other` is covered by one of its members (member-wise, not union-wise).
     public func covers(_ other: GeoJson) -> Bool {
         if let fc1 = self as? FeatureCollection {
+            if let union = BooleanCovers.polygonUnion(of: fc1) {
+                return union.covers(other)
+            }
             return fc1.features.contains { $0.covers(other) }
         }
         if let fc2 = other as? FeatureCollection {
@@ -44,7 +47,12 @@ extension GeoJson {
               let geometry2 = normalised2 as? GeoJsonGeometry
         else { return false }
 
-        let containerParts = BooleanCovers.parts(of: geometry1)
+        // A polygonal receiver is one union, not a set of independent
+        // containers: a geometry may span two adjacent polygons.
+        let containerParts: [GeoJsonGeometry] =
+            geometry1 is PolygonGeometry
+            ? [geometry1]
+            : BooleanCovers.parts(of: geometry1)
         let otherParts = BooleanCovers.parts(of: geometry2)
 
         return BooleanCovers.covers(containerParts, otherParts)
@@ -127,6 +135,19 @@ struct CoverageContainer {
 // MARK: - BooleanCovers namespace
 
 enum BooleanCovers {
+
+    /// Union of a collection's polygonal features, used to make a
+    /// FeatureCollection receiver behave as the union of its members rather
+    /// than member-wise.
+    static func polygonUnion(of collection: FeatureCollection) -> MultiPolygon? {
+        var polygons: [Polygon] = []
+        for feature in collection.features {
+            guard let geometry = feature.geometry as? PolygonGeometry else { return nil }
+            polygons.append(contentsOf: geometry.polygons)
+        }
+        guard polygons.isNotEmpty else { return nil }
+        return MultiPolygon(unchecked: polygons)
+    }
 
     /// Returns `true` if every part of `others` is covered by at least one
     /// container part. Antimeridian cutting can produce multiple parts on

@@ -141,4 +141,58 @@ struct LineChunkTests {
         #expect(chunks.isEmpty)
     }
 
+
+    // MARK: - Collection dispatch
+
+    @Test
+    func multiLineStringChunkedAndEvenlyDivided() throws {
+        func line(_ start: Double, _ end: Double) throws -> LineString {
+            try #require(LineString([
+                Coordinate3D(x: start, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: end, y: 0.0, projection: .noSRID),
+            ]))
+        }
+        let multi = try #require(MultiLineString([
+            try line(0.0, 10.0),
+            try line(20.0, 30.0),
+        ]))
+
+        let chunked = multi.chunked(segmentLength: 4.0)
+        #expect(chunked.lineStrings.count == 6)
+        #expect(chunked.lineStrings.first?.coordinates.first?.x == 0.0)
+        #expect(chunked.lineStrings.last?.coordinates.last?.x == 30.0)
+
+        let divided = multi.evenlyDivided(segmentLength: 4.0, dropIntermediateCoordinates: true)
+        #expect(divided.lineStrings.count == 2)
+        #expect(divided.lineStrings[0].coordinates.count == 4)
+        #expect(divided.lineStrings[1].coordinates.count == 4)
+    }
+
+    @Test
+    func featureAndCollectionChunkingPreserveMetadata() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "R1"])
+
+        let chunked = feature.chunked(segmentLength: 4.0, dropIntermediateCoordinates: true)
+        #expect(chunked.features.count == 3)
+        for output in chunked.features {
+            #expect(output.id == .string("route"))
+            let name: String? = output.property(for: "name")
+            #expect(name == "R1")
+            #expect((output.geometry as? LineString)?.coordinates.count == 2)
+        }
+
+        let collection = FeatureCollection([feature, feature]).chunked(
+            segmentLength: 5.0,
+            dropIntermediateCoordinates: true)
+        #expect(collection.features.count == 4)
+    }
+
+
 }
