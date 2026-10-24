@@ -1,0 +1,65 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: "Write a new baseline artifact instead of comparing"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: benchmarks (linux arm64)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    container: swift:latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure Python
+        run: command -v python3 >/dev/null || (apt-get update && apt-get install -y python3)
+      - name: Run benchmark comparison
+        run: |
+          if [ "${{ inputs.update_baseline }}" = "true" ]; then
+            python3 scripts/benchmark_compare.py --update
+          else
+            python3 scripts/benchmark_compare.py
+          fi
+      - name: Upload baseline
+        if: inputs.update_baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline-${{ runner.os }}-${{ runner.arch }}
+          path: Benchmarks/Baselines/*.json
+          if-no-files-found: error
+
+  macos:
+    name: benchmarks (macos)
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v3
+      - name: Run benchmark comparison
+        run: |
+          if [ "${{ inputs.update_baseline }}" = "true" ]; then
+            python3 scripts/benchmark_compare.py --update
+          else
+            python3 scripts/benchmark_compare.py
+          fi
+      - name: Upload baseline
+        if: inputs.update_baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline-${{ runner.os }}-${{ runner.arch }}
+          path: Benchmarks/Baselines/*.json
+          if-no-files-found: error

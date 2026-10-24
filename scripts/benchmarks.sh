@@ -44,7 +44,7 @@ for suite in "${SUITES[@]}"; do
     memory="$(printf '%s\n' "$output" | sed -n 's/^peak_rss_mb=\([^ ]*\).*/\1/p' | tail -1)"
     printf '| `%s` | %s | %s |\n' "$suite" "$seconds" "$memory"
 
-    printf '%s\n' "$output" | grep '^bench='
+    printf '%s\n' "$output" | grep '^bench=' || true
 done
 
 printf '\nFixture: /tmp/gis-tools-benchmark.geojson\n'
