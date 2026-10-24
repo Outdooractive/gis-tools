@@ -57,6 +57,19 @@ extension LineString {
     ///
     /// - Returns: The line clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
+        if boundingBox.projection != projection,
+           boundingBox.projection != .noSRID,
+           projection != .noSRID
+        {
+            guard let clipped = projected(to: boundingBox.projection)
+                .clipped(to: boundingBox)
+            else { return nil }
+
+            var result = clipped.projected(to: projection)
+            result.foreignMembers = foreignMembers
+            return result
+        }
+
         let boundingBox = boundingBox.projected(to: projection)
 
         var lineString = MultiLineString(
@@ -79,6 +92,19 @@ extension MultiLineString {
     ///
     /// - Returns: The lines clipped to the bounding box.
     public func clipped(to boundingBox: BoundingBox) -> MultiLineString? {
+        if boundingBox.projection != projection,
+           boundingBox.projection != .noSRID,
+           projection != .noSRID
+        {
+            guard let clipped = projected(to: boundingBox.projection)
+                .clipped(to: boundingBox)
+            else { return nil }
+
+            var result = clipped.projected(to: projection)
+            result.foreignMembers = foreignMembers
+            return result
+        }
+
         let boundingBox = boundingBox.projected(to: projection)
 
         var lineString = MultiLineString(
@@ -122,6 +148,7 @@ extension Polygon {
             guard let result = MultiPolygon(unchecked: [clipPolygon])
                 .intersection(with: self)
             else { continue }
+
             parts.append(contentsOf: result.polygons)
         }
 
@@ -305,7 +332,7 @@ extension BoundingBox {
     /// the box into its non-crossing parts and clipping against each one.
     fileprivate func clipLineParts(
         coordinates: [Coordinate3D],
-        projection: Projection
+        projection: Projection,
     ) -> [[Coordinate3D]] {
         let boxes = clipBoxes(projection: projection)
         let extent = projection.wraparoundExtent
@@ -340,6 +367,7 @@ extension BoundingBox {
                     ? part
                     : part.map { $0.normalized() }
                 guard seen.insert(normalized).inserted else { continue }
+
                 parts.append(normalized)
             }
         }
@@ -349,7 +377,7 @@ extension BoundingBox {
 
     /// Cohen-Sutherland line clipping algorithm, adapted to efficiently
     /// handle polylines rather than just segments.
-    fileprivate func clipLine(coordinates: [Coordinate3D]) -> [[Coordinate3D]] {
+    private func clipLine(coordinates: [Coordinate3D]) -> [[Coordinate3D]] {
         guard coordinates.count > 1 else { return [] }
 
         var result: [[Coordinate3D]] = []
@@ -457,7 +485,7 @@ extension BoundingBox {
     private func intersect(
         a: Coordinate3D,
         b: Coordinate3D,
-        edge: UInt8
+        edge: UInt8,
     ) -> Coordinate3D? {
         if edge & 8 != 0 { // top
             return Coordinate3D(

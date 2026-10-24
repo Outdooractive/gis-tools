@@ -335,16 +335,20 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Cross-projection line clipping (#399): `LineString` and `MultiLineString`
+  clipping now projects the line into the bounding box's CRS before clipping,
+  then projects the result back to the source CRS. This makes EPSG:4978 lines
+  clip correctly against EPSG:4326 boxes instead of being dropped by an
+  axis-aligned ECEF approximation. Foreign members are preserved.
+
 - Apple deployment-target compatibility: replaced Swift regex literals in
   projection WKT identification with `NSRegularExpression` and the
   synchronization `Mutex` in the projection registry with an `NSLock` wrapper.
   This makes the declared iOS 15/tvOS 15/watchOS 7 deployment targets build.
-
 - Polar Lambert azimuthal equal-area forward projection scaling: the polar
   branches now apply the ellipsoid semi-major axis, matching the equatorial
   and oblique formulas and the inverse path. Discovered by the new LAEA mode
   round-trip tests.
-
 - Symmetric difference correctness (#394): `symmetricDifference` is now the
   union of the two independently computed one-sided differences (`A \ B` and
   `B \ A`) instead of a single multi-component XOR boundary pass. This fixes
