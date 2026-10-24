@@ -231,4 +231,59 @@ extension LineOverlapTests {
         #expect(result.isNotEmpty)
     }
 
+
+    @Test
+    func selfOverlapWithSegmentLengthAndGrid() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]))
+
+        let result = try #require(line.overlappingSegments(
+            tolerance: 0.001,
+            segmentLength: 1.0))
+        #expect(result.lineStrings.isNotEmpty)
+        #expect(result.length > 0.0)
+
+        let estimated = line.estimatedOverlap(tolerance: 0.001, segmentLength: 1.0)
+        #expect(abs(estimated - result.length) < 0.000001)
+
+        let snapped = line.snappedToGrid(tolerance: 0.5)
+        let manual = try #require(snapped.overlappingSegments(
+            tolerance: 0.001,
+            segmentLength: 1.0))
+        let withGrid = try #require(line.overlappingSegments(
+            tolerance: 0.001,
+            segmentLength: 1.0,
+            gridSize: 0.5))
+        #expect(abs(withGrid.length - manual.length) < 0.000001)
+    }
+
+    @Test
+    func multiLineStringAndFeatureCollectionInputs() throws {
+        let a = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+        let b = try #require(LineString([
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+        ]))
+        let multi = try #require(MultiLineString([a, b]))
+        let overlapping = try #require(LineString([
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+
+        #expect(!overlapping.overlappingSegments(with: multi).isEmpty)
+        #expect(!overlapping.overlappingSegments(with: FeatureCollection([Feature(multi)])).isEmpty)
+
+        let feature = Feature(overlapping)
+        #expect(!feature.overlappingSegments(with: multi).isEmpty)
+    }
+
+
 }

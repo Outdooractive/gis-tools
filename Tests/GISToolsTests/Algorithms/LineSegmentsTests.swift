@@ -84,4 +84,48 @@ struct LineSegmentsTests {
         }
     }
 
+
+    // MARK: - Audit dispatch coverage
+
+    @Test
+    func boundingBoxRingPolygonMultiPolygonAndCollectionDispatch() throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+        #expect(box.lineSegments.count == 4)
+        #expect(box.lineSegments.map(\.index) == [0, 1, 2, 3])
+
+        let ring = try #require(Ring([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        #expect(ring.lineSegments.count == 4)
+        #expect(ring.lineSegments.map(\.index) == [0, 1, 2, 3])
+
+        let polygon = try #require(Polygon([ring.coordinates]))
+        #expect(polygon.lineSegments.count == 4)
+
+        let hole = try #require(Ring([
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 8.0),
+            Coordinate3D(latitude: 8.0, longitude: 2.0),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]))
+        let holedPolygon = try #require(Polygon([ring.coordinates, hole.coordinates]))
+        let multiPolygon = try #require(MultiPolygon([holedPolygon]))
+        #expect(multiPolygon.lineSegments.count == 8)
+
+        let collection = GeometryCollection([polygon, Point(Coordinate3D(latitude: 5.0, longitude: 5.0))])
+        #expect(collection.lineSegments.count == 4)
+
+        let feature = Feature(polygon)
+        #expect(feature.lineSegments.count == 4)
+        #expect(FeatureCollection([feature, feature]).lineSegments.count == 8)
+    }
+
+
 }

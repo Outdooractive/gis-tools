@@ -135,4 +135,42 @@ struct TruncateTests {
         #expect(truncated.coordinates[1].y == 400_000.11)
     }
 
+
+    // MARK: - Audit coverage
+
+    @Test
+    func polygonMultiPolygonGeometryCollectionAndRemoveM() throws {
+        let ring: [Coordinate3D] = [
+            Coordinate3D(latitude: 0.1234567, longitude: 0.1234567, altitude: 1.234567, m: 9.87654),
+            Coordinate3D(latitude: 0.1234567, longitude: 1.9876543, altitude: 2.345678, m: 9.87654),
+            Coordinate3D(latitude: 1.9876543, longitude: 1.9876543, altitude: 3.456789, m: 9.87654),
+            Coordinate3D(latitude: 0.1234567, longitude: 0.1234567, altitude: 1.234567, m: 9.87654),
+        ]
+        let polygon = try #require(Polygon([ring], calculateBoundingBox: true))
+        let truncatedPolygon = polygon.truncated(precision: 2, removeM: true)
+        #expect(truncatedPolygon.coordinates[0][0].x == 0.12)
+        #expect(truncatedPolygon.coordinates[0][0].m == nil)
+        #expect(truncatedPolygon.boundingBox?.southWest.x == 0.12)
+        #expect(truncatedPolygon.boundingBox != nil)
+
+        let multiPolygon = try #require(MultiPolygon([polygon]))
+        let truncatedMulti = multiPolygon.truncated(precision: 2, removeM: true)
+        #expect(truncatedMulti.polygons.count == 1)
+        #expect(truncatedMulti.polygons[0].coordinates[0][0].m == nil)
+
+        let collection = GeometryCollection([Point(ring[0]), polygon])
+        let truncatedCollection = collection.truncated(precision: 2, removeM: true)
+        #expect(truncatedCollection.geometries.count == 2)
+
+        let feature = Feature(polygon, id: .string("p"), properties: ["name": "P"], calculateBoundingBox: true)
+        let truncatedFeature = feature.truncated(precision: 2, removeM: true)
+        #expect(truncatedFeature.id == .string("p"))
+        #expect(truncatedFeature.boundingBox != nil)
+
+        let featureCollection = FeatureCollection([feature])
+        let truncatedFC = featureCollection.truncated(precision: 2, removeM: true)
+        #expect(truncatedFC.features.count == 1)
+    }
+
+
 }

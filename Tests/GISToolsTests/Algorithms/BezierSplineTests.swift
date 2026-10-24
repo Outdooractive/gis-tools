@@ -215,4 +215,45 @@ extension BezierSplineTests {
         #expect(result.coordinates == line.coordinates)
     }
 
+
+    /// Intermediates stay in the short seam interval instead of sweeping
+    /// through 0°.
+    @Test
+    func antimeridianStaysOnShortSide() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 5.0, longitude: -179.0),
+            Coordinate3D(latitude: 10.0, longitude: 179.0),
+        ]))
+        let spline = try #require(line.bezierSpline(steps: 20))
+
+        var unwrapped = spline.coordinates.map(\.longitude)
+        for index in 1 ..< unwrapped.count {
+            while unwrapped[index] - unwrapped[index - 1] > 180.0 {
+                unwrapped[index] -= 360.0
+            }
+            while unwrapped[index - 1] - unwrapped[index] > 180.0 {
+                unwrapped[index] += 360.0
+            }
+        }
+
+        #expect((unwrapped.min() ?? 0.0) >= 178.999999)
+        #expect((unwrapped.max() ?? 0.0) <= 181.000001)
+        #expect(spline.coordinates.first?.longitude == 179.0)
+        #expect(spline.coordinates.last?.longitude == 179.0)
+
+        // EPSG:3857 seam is the same construction in metres.
+        let shift = GISTool.originShift
+        let planar = try #require(LineString([
+            Coordinate3D(x: shift - 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: -shift + 1_000.0, y: 5_000.0, projection: .epsg3857),
+            Coordinate3D(x: shift - 1_000.0, y: 10_000.0, projection: .epsg3857),
+        ]))
+        let planarSpline = try #require(planar.bezierSpline(steps: 10))
+        #expect(planarSpline.coordinates.allSatisfy { abs($0.x) <= shift + 0.001 })
+        let seamDistance = planarSpline.coordinates.map { abs($0.x) }
+        #expect(seamDistance.allSatisfy { $0 > 1_000.0 })
+    }
+
+
 }

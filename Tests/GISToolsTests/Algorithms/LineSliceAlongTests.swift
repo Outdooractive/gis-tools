@@ -175,4 +175,33 @@ extension LineSliceAlongTests {
         #expect(line.sliceAlong(startDistance: 10.0, stopDistance: -10.0) == nil)
     }
 
+
+    // MARK: - Audit coverage
+
+    @Test
+    func oneSidedSlicesAndFeatureVariant() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]))
+
+        let head = try #require(line.sliceAlong(startDistance: 2.0))
+        #expect(head.coordinates.map(\.x) == [2.0, 5.0, 10.0])
+
+        let tail = try #require(line.sliceAlong(stopDistance: 7.0))
+        #expect(tail.coordinates.map(\.x) == [0.0, 5.0, 7.0])
+
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "R"],
+            calculateBoundingBox: true)
+        let sliced = try #require(feature.sliceAlong(startDistance: 2.0, stopDistance: 7.0))
+        #expect(sliced.id == .string("route"))
+        #expect(sliced.boundingBox != nil)
+        #expect((sliced.geometry as? LineString)?.coordinates.map(\.x) == [2.0, 5.0, 7.0])
+    }
+
+
 }

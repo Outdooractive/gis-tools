@@ -44,18 +44,11 @@ extension Graph {
     public func eulerianity() -> Eulerianity {
         guard adjacencyList.isNotEmpty else { return .nonEulerian }
 
-        // Compute undirected degree of each node (number of distinct neighbors;
-        // parallel edges count once per distinct neighbor to match the
-        // "distinct connection" parity rule used by Hierholzer).
-        var oddDegreeNodes: [Int] = []
-        for i in 0..<adjacencyList.count {
-            let neighbors = adjacencyList[i].edges.map(\.to.index)
-            let distinctNeighbors = Set(neighbors)
-            // Self-loops contribute 2 to the degree; we don't model them here.
-            if distinctNeighbors.count % 2 != 0 {
-                oddDegreeNodes.append(i)
-            }
-        }
+        // Eulerian parity is based on edge multiplicity over the undirected
+        // underlying graph, not on distinct neighbours: two parallel edges
+        // contribute degree 2 to each endpoint.
+        let degrees = undirectedDegrees()
+        let oddDegreeNodes = degrees.indices.filter { degrees[$0] % 2 != 0 }
 
         // Connectivity: the non-isolated nodes must form a single component.
         if !nonIsolatedNodesAreSingleComponent() {
@@ -87,18 +80,17 @@ extension Graph {
 
         // Choose the start node: an odd-degree endpoint if semi-Eulerian, else
         // any non-isolated node.
+        let degrees = undirectedDegrees()
         var start = -1
-        var oddStarts: [Int] = []
-        for i in 0..<adjacencyList.count {
-            let neighbors = Set(adjacencyList[i].edges.map(\.to.index))
-            if neighbors.count % 2 != 0 {
-                oddStarts.append(i)
+        for index in degrees.indices where degrees[index] > 0 {
+            if start == -1 {
+                start = index
             }
-            if start == -1, neighbors.isNotEmpty {
-                start = i
+            if degrees[index] % 2 != 0 {
+                start = index
+                break
             }
         }
-        if let odd = oddStarts.first { start = odd }
         guard start >= 0 else { return [] }
 
         // Build an adjacency with shared edgeIDs per undirected edge so
@@ -111,13 +103,11 @@ extension Graph {
 
         var adjacency: [[EEdge]] = Array(repeating: [], count: adjacencyList.count)
         var nextEdgeID = 0
-        for edge in edges {
+        for edge in underlyingEdges() {
             let id = nextEdgeID
             nextEdgeID += 1
-            let u = edge.from.index
-            let v = edge.to.index
-            adjacency[u].append(EEdge(neighbor: v, edgeID: id))
-            adjacency[v].append(EEdge(neighbor: u, edgeID: id))
+            adjacency[edge.from].append(EEdge(neighbor: edge.to, edgeID: id))
+            adjacency[edge.to].append(EEdge(neighbor: edge.from, edgeID: id))
         }
 
         // Hierholzer's iterative algorithm.
@@ -172,14 +162,9 @@ extension Graph {
         guard adjacencyList.isNotEmpty else { return [] }
         guard nonIsolatedNodesAreSingleComponent() else { return [] }
 
-        // Collect odd-degree nodes (undirected distinct-neighbor degree).
-        var oddNodes: [Int] = []
-        for i in 0..<adjacencyList.count {
-            let neighbors = Set(adjacencyList[i].edges.map(\.to.index))
-            if neighbors.count % 2 != 0 {
-                oddNodes.append(i)
-            }
-        }
+        // Collect odd-degree nodes by edge multiplicity.
+        let degrees = undirectedDegrees()
+        let oddNodes = degrees.indices.filter { degrees[$0] % 2 != 0 }
 
         // Eulerian already: just return the Eulerian circuit.
         if oddNodes.isEmpty {
@@ -208,15 +193,13 @@ extension Graph {
         var augmented: [[AugmentedEdge]] = Array(repeating: [], count: adjacencyList.count)
         var nextEdgeID = 0
 
-        // Add every original undirected edge once (deduped by `graph.edges`),
-        // with a shared edgeID for both directions.
-        for edge in edges {
+        // Add every underlying edge instance exactly once, with a shared
+        // edgeID for both directions (parallel edges each get their own ID).
+        for edge in underlyingEdges() {
             let id = nextEdgeID
             nextEdgeID += 1
-            let u = edge.from.index
-            let v = edge.to.index
-            augmented[u].append(AugmentedEdge(neighbor: v, edgeID: id))
-            augmented[v].append(AugmentedEdge(neighbor: u, edgeID: id))
+            augmented[edge.from].append(AugmentedEdge(neighbor: edge.to, edgeID: id))
+            augmented[edge.to].append(AugmentedEdge(neighbor: edge.from, edgeID: id))
         }
 
         // Add duplicated edges for matched pairs' shortest paths. The
@@ -270,6 +253,47 @@ extension Graph {
         }
 
         return circuit.reversed().map { adjacencyList[$0].node }
+    }
+
+    // MARK: - Underlying edges
+
+    /// One representative per undirected underlying edge: parallel edges are
+    /// preserved, a two-way edge is included once, and a one-way edge is
+    /// included once (but contributes to both endpoint degrees).
+    private func underlyingEdges() -> [(from: Int, to: Int)] {
+        var result: [(from: Int, to: Int)] = []
+
+        for edgeList in adjacencyList {
+            for edge in edgeList.edges {
+                if edge.isDirected {
+                    result.append((edge.from.index, edge.to.index))
+                }
+                else if edge.from.index <= edge.to.index {
+                    // The reverse mirror has from > to and is skipped.
+                    result.append((edge.from.index, edge.to.index))
+                }
+            }
+        }
+
+        return result
+    }
+
+    /// Degree of every node over the undirected underlying graph, counting
+    /// edge multiplicity (a self-loop contributes 2).
+    private func undirectedDegrees() -> [Int] {
+        var degrees = Array(repeating: 0, count: adjacencyList.count)
+
+        for edge in underlyingEdges() {
+            if edge.from == edge.to {
+                degrees[edge.from] += 2
+            }
+            else {
+                degrees[edge.from] += 1
+                degrees[edge.to] += 1
+            }
+        }
+
+        return degrees
     }
 
     // MARK: - Eulerian support

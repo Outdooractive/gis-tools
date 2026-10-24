@@ -413,4 +413,43 @@ extension SnapToGridTests {
         #expect(coordinate.snappedToGrid(tolerance: -1.0) == coordinate)
     }
 
+
+    // MARK: - Audit dispatch coverage
+
+    @Test
+    func multiPointMultiLineAndGeometryCollectionDispatch() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.04, longitude: 0.04),
+            Coordinate3D(latitude: 1.96, longitude: 1.96),
+        ]))
+        let snapped = multiPoint.snappedToGrid(tolerance: 1.0)
+        #expect(snapped.coordinates[0].latitude == 0.0)
+        #expect(snapped.coordinates[0].longitude == 0.0)
+        #expect(snapped.coordinates[1].latitude == 2.0)
+        #expect(snapped.coordinates[1].longitude == 2.0)
+
+        let multiLine = try #require(MultiLineString([
+            [Coordinate3D(x: 0.04, y: 0.04, projection: .noSRID),
+             Coordinate3D(x: 0.96, y: 0.96, projection: .noSRID)],
+            [Coordinate3D(x: 1.04, y: 1.04, projection: .noSRID),
+             Coordinate3D(x: 1.96, y: 1.96, projection: .noSRID)],
+        ]))
+        let snappedLine = multiLine.snappedToGrid(tolerance: 1.0)
+        #expect(snappedLine.lineStrings[0].coordinates.map(\.x) == [0.0, 1.0])
+        #expect(snappedLine.lineStrings[1].coordinates.map(\.x) == [1.0, 2.0])
+
+        let collection = GeometryCollection([
+            Point(Coordinate3D(x: 0.04, y: 0.04, projection: .noSRID)),
+            LineString(unchecked: [
+                Coordinate3D(x: 0.1, y: 0.1, projection: .noSRID),
+                Coordinate3D(x: 1.9, y: 1.9, projection: .noSRID),
+            ]),
+        ])
+        let snappedCollection = collection.snappedToGrid(tolerance: 1.0)
+        #expect(snappedCollection.geometries.count == 2)
+        #expect((snappedCollection.geometries[0] as? Point)?.coordinate.x == 0.0)
+        #expect((snappedCollection.geometries[1] as? LineString)?.coordinates.map(\.x) == [0.0, 2.0])
+    }
+
+
 }

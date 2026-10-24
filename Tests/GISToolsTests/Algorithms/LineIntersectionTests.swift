@@ -457,4 +457,21 @@ extension LineIntersectionTests {
         #expect(fromPoint.first?.coordinate == fromLine.first?.coordinate)
     }
 
+
+    @Test
+    func seamCrossingSegmentsIntersectAtShortPath() throws {
+        let horizontal = LineSegment(
+            first: Coordinate3D(latitude: 0.0, longitude: 179.0),
+            second: Coordinate3D(latitude: 0.0, longitude: -179.0))
+        let vertical = LineSegment(
+            first: Coordinate3D(latitude: -1.0, longitude: 180.0),
+            second: Coordinate3D(latitude: 1.0, longitude: 180.0))
+
+        let intersection = try #require(horizontal.intersection(vertical))
+        #expect(abs(abs(intersection.longitude) - 180.0) < 0.000001)
+        #expect(abs(intersection.latitude) < 0.000001)
+        #expect(horizontal.intersects(vertical))
+    }
+
+
 }
