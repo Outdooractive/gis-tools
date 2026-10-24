@@ -62,11 +62,15 @@ public struct Graph: Sendable {
         /// search is covered by the 3x3 neighborhood of cells.
         init(tolerance: CLLocationDistance, referenceLatitude: Double) {
             self.referenceLatitude = referenceLatitude.clamped(to: -89.0 ... 89.0)
-            // meters -> degrees. 1 degree latitude ~= 111_320 m.
-            cellLatDegrees = max(tolerance / 111_320.0, 0.0000001)
+            // meters -> degrees using the canonical spherical conversion.
+            cellLatDegrees = max(
+                tolerance / GISTool.oneDegreeLatitudeDistance,
+                0.0000001)
             // longitude degrees shrink with cos(latitude).
             let cosLat = cos(self.referenceLatitude * .pi / 180.0)
-            cellLonDegrees = max(tolerance / (111_320.0 * max(cosLat, 0.0000001)), 0.0000001)
+            cellLonDegrees = max(
+                tolerance / (GISTool.oneDegreeLatitudeDistance * max(cosLat, 0.0000001)),
+                0.0000001)
         }
 
         func key(for coordinate: Coordinate3D) -> Key {

@@ -49,16 +49,16 @@ extension GISTool {
     public static func factor(for unit: Unit) -> Double? {
         switch unit {
         case .centimeters, .centimetres: return earthRadius * 100.0
-        case .degrees: return earthRadius / (GISTool.earthCircumference / 360.0)
-        case .feet: return earthRadius * 3.28084
-        case .inches: return earthRadius * 39.370
+        case .degrees: return earthRadius / GISTool.oneDegreeLatitudeDistance
+        case .feet: return earthRadius * GISTool.feetPerMeter
+        case .inches: return earthRadius * GISTool.inchesPerMeter
         case .kilometers, .kilometres: return earthRadius / 1000.0
         case .meters, .metres: return earthRadius
-        case .miles: return earthRadius / 1609.344
+        case .miles: return earthRadius / GISTool.metersPerMile
         case .millimeters, .millimetres: return earthRadius * 1000.0
-        case .nauticalMiles: return earthRadius / 1852.0
+        case .nauticalMiles: return earthRadius / GISTool.metersPerNauticalMile
         case .radians: return 1.0
-        case .yards: return earthRadius / (1.0 / 1.0936)
+        case .yards: return earthRadius * GISTool.yardsPerMeter
         default: return nil
         }
     }
@@ -67,16 +67,16 @@ extension GISTool {
     public static func unitsFactor(for unit: Unit) -> Double? {
         switch unit {
         case .centimeters, .centimetres: return 100.0
-        case .degrees: return 1.0 / 111_325.0
-        case .feet: return 3.28084
-        case .inches: return 39.370
+        case .degrees: return 1.0 / GISTool.oneDegreeLatitudeDistance
+        case .feet: return GISTool.feetPerMeter
+        case .inches: return GISTool.inchesPerMeter
         case .kilometers, .kilometres: return 1.0 / 1000.0
         case .meters, .metres: return 1.0
-        case .miles: return 1.0 / 1609.344
+        case .miles: return 1.0 / GISTool.metersPerMile
         case .millimeters, .millimetres: return 1000.0
-        case .nauticalMiles: return 1.0 / 1852.0
+        case .nauticalMiles: return 1.0 / GISTool.metersPerNauticalMile
         case .radians: return 1.0 / earthRadius
-        case .yards: return 1.0 / 1.0936
+        case .yards: return GISTool.yardsPerMeter
         default: return nil
         }
     }
@@ -84,15 +84,15 @@ extension GISTool {
     /// Area of measurement factors based on 1 square meter.
     public static func areaFactor(for unit: Unit) -> Double? {
         switch unit {
-        case .acres: return 0.000247105
-        case .centimeters, .centimetres: return 10_000.0
-        case .feet: return 10.763910417
-        case .inches: return 1550.003100006
-        case .kilometers, .kilometres: return 0.000001
+        case .acres: return GISTool.acresPerSquareMeter
+        case .centimeters, .centimetres: return GISTool.squareCentimetersPerSquareMeter
+        case .feet: return GISTool.squareFeetPerSquareMeter
+        case .inches: return GISTool.squareInchesPerSquareMeter
+        case .kilometers, .kilometres: return GISTool.squareKilometersPerSquareMeter
         case .meters, .metres: return 1.0
-        case .miles: return 0.000000386
-        case .millimeters, .millimetres: return 1_000_000.0
-        case .yards: return 1.195990046
+        case .miles: return GISTool.squareMilesPerSquareMeter
+        case .millimeters, .millimetres: return GISTool.squareMillimetersPerSquareMeter
+        case .yards: return GISTool.squareYardsPerSquareMeter
         default: return nil
         }
     }
@@ -148,12 +148,12 @@ extension GISTool {
         case .centimeters, .centimetres: return value / 100.0
         case .meters, .metres: return value
         case .kilometers, .kilometres: return value * 1000.0
-        case .inches: return value / 39.370
-        case .feet: return value / 3.28084
-        case .yards: return value / 1.0936
-        case .miles: return value * 1609.344
-        case .nauticalMiles: return value * 1852.0
-        case .degrees: return value * 111_325.0
+        case .inches: return value / GISTool.inchesPerMeter
+        case .feet: return value / GISTool.feetPerMeter
+        case .yards: return value / GISTool.yardsPerMeter
+        case .miles: return value * GISTool.metersPerMile
+        case .nauticalMiles: return value * GISTool.metersPerNauticalMile
+        case .degrees: return value * GISTool.oneDegreeLatitudeDistance
         default: return value
         }
     }
@@ -211,12 +211,8 @@ extension GISTool {
         fromMeters meters: CLLocationDistance,
         atLatitude latitude: CLLocationDegrees
     ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
-        // Length of one minute at this latitude
-        let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0 // ~111 km
-        let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
-
-        let longitudeDistance: Double = (meters / oneDegreeLongitudeDistance)
-        let latitudeDistance: Double = (meters / oneDegreeLatitudeDistance)
+        let longitudeDistance = meters / GISTool.metersPerDegreeLongitude(atLatitude: latitude)
+        let latitudeDistance = meters / GISTool.oneDegreeLatitudeDistance
 
         return (latitudeDistance, longitudeDistance)
     }
@@ -233,11 +229,8 @@ extension GISTool {
         longitudeDegrees: CLLocationDegrees,
         atLatitude latitude: CLLocationDegrees
     ) -> (latitudeMeters: CLLocationDistance, longitudeMeters: CLLocationDistance) {
-        let oneDegreeLatitudeDistance: CLLocationDistance = GISTool.earthCircumference / 360.0
-        let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
-
-        let latitudeMeters = latitudeDegrees * oneDegreeLatitudeDistance
-        let longitudeMeters = longitudeDegrees * oneDegreeLongitudeDistance
+        let latitudeMeters = latitudeDegrees * GISTool.oneDegreeLatitudeDistance
+        let longitudeMeters = longitudeDegrees * GISTool.metersPerDegreeLongitude(atLatitude: latitude)
 
         return (latitudeMeters, longitudeMeters)
     }
