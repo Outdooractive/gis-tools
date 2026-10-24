@@ -154,6 +154,16 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Edge-case coverage tests (#382): added meaningful regression tests for
+  Helmert datum transforms, topological validity failures, Boolean touch
+  combinations, buffer collections/insets, simplify metadata and shared
+  chains, bounding-box clipping boundaries, point-on-feature fallbacks,
+  BooleanCover union receivers, direct overlay assembly, LAEA projection
+  modes, built-in projection metadata and prepared-path invariants,
+  projection WKT zone rejection, parser/decoder invalid-input branches,
+  concave-hull collection inputs and graph debug descriptions. Coverage
+  increased from **88.27%** to **90.35%** weighted line coverage.
+
 - Coverage and formatting gates (#382): refreshed `Tests/TEST_COVERAGE.md`
   from the current code-coverage JSON (231 files, **88.27%** weighted line
   coverage), added a documented **87.5%** CI coverage floor, a
@@ -331,6 +341,10 @@ left unchanged; that case is ambiguous per RFC 7946.
   clip correctly against EPSG:4326 boxes instead of being dropped by an
   axis-aligned ECEF approximation. Foreign members are preserved.
 
+- Polar Lambert azimuthal equal-area forward projection scaling: the polar
+  branches now apply the ellipsoid semi-major axis, matching the equatorial
+  and oblique formulas and the inverse path. Discovered by the new LAEA mode
+  round-trip tests.
 - Symmetric difference correctness (#394): `symmetricDifference` is now the
   union of the two independently computed one-sided differences (`A \ B` and
   `B \ A`) instead of a single multi-component XOR boundary pass. This fixes

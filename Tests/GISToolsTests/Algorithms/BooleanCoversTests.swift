@@ -4,43 +4,43 @@ import Testing
 
 struct BooleanCoversTests {
 
-    // Validates that a polygon covers a point inside it.
+    /// Validates that a polygon covers a point inside it.
     @Test
-    func polygonCoversInteriorPoint() async throws {
+    func polygonCoversInteriorPoint() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         #expect(polygon.covers(point))
         #expect(polygon.contains(point))
     }
 
-    // Validates that a polygon covers a point on its boundary.
+    /// Validates that a polygon covers a point on its boundary.
     @Test
-    func polygonCoversBoundaryPoint() async throws {
+    func polygonCoversBoundaryPoint() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let pointOnEdge = Point(Coordinate3D(latitude: 0.0, longitude: 5.0))
         #expect(polygon.covers(pointOnEdge))
     }
 
-    // Validates that a polygon does not cover a point outside it.
+    /// Validates that a polygon does not cover a point outside it.
     @Test
-    func polygonDoesNotCoverExteriorPoint() async throws {
+    func polygonDoesNotCoverExteriorPoint() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let point = Point(Coordinate3D(latitude: 15.0, longitude: 15.0))
         #expect(polygon.covers(point) == false)
     }
 
-    // Validates that a polygon covers a line string on its boundary.
+    /// Validates that a polygon covers a line string on its boundary.
     @Test
-    func polygonCoversLineOnBoundary() async throws {
+    func polygonCoversLineOnBoundary() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0)]))
         #expect(polygon.covers(line))
     }
 
-    // A concave polygon does not cover a line whose endpoints are inside but
-    // whose segment leaves the polygon through the notch.
+    /// A concave polygon does not cover a line whose endpoints are inside but
+    /// whose segment leaves the polygon through the notch.
     @Test
-    func polygonDoesNotCoverLineLeavingConcaveShape() async throws {
+    func polygonDoesNotCoverLineLeavingConcaveShape() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.0, longitude: 6.0),
@@ -60,7 +60,7 @@ struct BooleanCoversTests {
         #expect(polygon.covers(line) == false)
     }
 
-    // Antimeridian-crossing container with an antimeridian-crossing hole.
+    /// Antimeridian-crossing container with an antimeridian-crossing hole.
     @Test
     func antimeridianPolygonWithHoleCoverage() throws {
         let container = try #require(Polygon([
@@ -98,42 +98,42 @@ struct BooleanCoversTests {
         #expect(container.covers(aroundHole) == false)
     }
 
-    // Validates that a polygon covers an identical polygon.
+    /// Validates that a polygon covers an identical polygon.
     @Test
-    func polygonCoversIdentical() async throws {
+    func polygonCoversIdentical() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         #expect(polygon.covers(polygon))
     }
 
-    // Validates coveredBy is the inverse of covers.
+    /// Validates coveredBy is the inverse of covers.
     @Test
-    func coveredByInverse() async throws {
+    func coveredByInverse() throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 10.0), Coordinate3D(latitude: 10.0, longitude: 0.0), Coordinate3D(latitude: 0.0, longitude: 0.0)]]))
         let inner = try #require(Polygon([[Coordinate3D(latitude: 2.0, longitude: 2.0), Coordinate3D(latitude: 2.0, longitude: 8.0), Coordinate3D(latitude: 8.0, longitude: 8.0), Coordinate3D(latitude: 8.0, longitude: 2.0), Coordinate3D(latitude: 2.0, longitude: 2.0)]]))
         #expect(outer.covers(inner))
         #expect(inner.coveredBy(outer))
     }
 
-    // Validates point covers identical point.
+    /// Validates point covers identical point.
     @Test
-    func pointCoversPoint() async throws {
+    func pointCoversPoint() {
         let point1 = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let point2 = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         #expect(point1.covers(point2))
         #expect(point2.coveredBy(point1))
     }
 
-    // Validates point does not cover a different point.
+    /// Validates point does not cover a different point.
     @Test
-    func pointDoesNotCoverDifferentPoint() async throws {
+    func pointDoesNotCoverDifferentPoint() {
         let point1 = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         let point2 = Point(Coordinate3D(latitude: 6.0, longitude: 5.0))
         #expect(point1.covers(point2) == false)
     }
 
-    // Validates covers near the antimeridian (east side of the dateline).
+    /// Validates covers near the antimeridian (east side of the dateline).
     @Test
-    func antimeridianNear() async throws {
+    func antimeridianNear() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: 178.0), Coordinate3D(latitude: 10.0, longitude: 178.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: 170.0)]]))
         let pointInside = Point(Coordinate3D(latitude: 5.0, longitude: 175.0))
         let pointOutside = Point(Coordinate3D(latitude: 5.0, longitude: -175.0))
@@ -141,9 +141,9 @@ struct BooleanCoversTests {
         #expect(polygon.covers(pointOutside) == false)
     }
 
-    // Validates that a polygon crossing the antimeridian covers a point on the opposite side.
+    /// Validates that a polygon crossing the antimeridian covers a point on the opposite side.
     @Test
-    func antimeridianCrossingPolygonCoversPoint() async throws {
+    func antimeridianCrossingPolygonCoversPoint() throws {
         let polygon = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: -170.0), Coordinate3D(latitude: 10.0, longitude: -170.0), Coordinate3D(latitude: 10.0, longitude: 170.0), Coordinate3D(latitude: 0.0, longitude: 170.0)]]))
         let pointInside = Point(Coordinate3D(latitude: 5.0, longitude: 175.0))
         let pointOutside = Point(Coordinate3D(latitude: 5.0, longitude: 0.0))
@@ -151,18 +151,18 @@ struct BooleanCoversTests {
         #expect(polygon.covers(pointOutside) == false)
     }
 
-    // Validates coveredBy across the antimeridian.
+    /// Validates coveredBy across the antimeridian.
     @Test
-    func antimeridianCrossingCoveredBy() async throws {
+    func antimeridianCrossingCoveredBy() throws {
         let outer = try #require(Polygon([[Coordinate3D(latitude: -10.0, longitude: 170.0), Coordinate3D(latitude: -10.0, longitude: -170.0), Coordinate3D(latitude: 20.0, longitude: -170.0), Coordinate3D(latitude: 20.0, longitude: 170.0), Coordinate3D(latitude: -10.0, longitude: 170.0)]]))
         let inner = try #require(Polygon([[Coordinate3D(latitude: 0.0, longitude: 175.0), Coordinate3D(latitude: 0.0, longitude: -175.0), Coordinate3D(latitude: 10.0, longitude: -175.0), Coordinate3D(latitude: 10.0, longitude: 175.0), Coordinate3D(latitude: 0.0, longitude: 175.0)]]))
         #expect(outer.covers(inner))
         #expect(inner.coveredBy(outer))
     }
 
-    // Validates line covers a point on the line.
+    /// Validates line covers a point on the line.
     @Test
-    func lineCoversPointOnLine() async throws {
+    func lineCoversPointOnLine() throws {
         let line = try #require(LineString([Coordinate3D(latitude: 0.0, longitude: 0.0), Coordinate3D(latitude: 10.0, longitude: 10.0)]))
         let point = Point(Coordinate3D(latitude: 5.0, longitude: 5.0))
         #expect(line.covers(point))
@@ -170,23 +170,23 @@ struct BooleanCoversTests {
 
     // MARK: - Projections
 
-    // Polygon covers point in EPSG:3857.
+    /// Polygon covers point in EPSG:3857.
     @Test
     func polygonCoversPoint3857() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let point = Point(Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857))
         #expect(polygon.covers(point))
     }
 
-    // Polygon covers point in EPSG:4978.
+    /// Polygon covers point in EPSG:4978.
     @Test
-    func polygonCoversPoint4978() async throws {
+    func polygonCoversPoint4978() throws {
         let polygon4326 = try #require(Polygon([[
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 0.0),
@@ -209,9 +209,9 @@ extension BooleanCoversTests {
     func coversLineIn3857() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let line = try #require(LineString([
@@ -240,7 +240,6 @@ extension BooleanCoversTests {
         #expect(polygon.covers(line))
         #expect(polygon.contains(line))
     }
-
 
     // MARK: - Audit regressions
 
@@ -273,5 +272,60 @@ extension BooleanCoversTests {
         #expect(collection.contains(spanning))
     }
 
+    @Test
+    func multipolygonReceiverActsAsUnion() throws {
+        let left = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let right = try #require(Polygon([[
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID),
+            Coordinate3D(x: 5.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([left, right]))
+        let spanning = try #require(Polygon([[
+            Coordinate3D(x: 2.0, y: 1.0, projection: .noSRID),
+            Coordinate3D(x: 8.0, y: 1.0, projection: .noSRID),
+            Coordinate3D(x: 8.0, y: 4.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 4.0, projection: .noSRID),
+            Coordinate3D(x: 2.0, y: 1.0, projection: .noSRID),
+        ]]))
+
+        #expect(multiPolygon.covers(spanning))
+        #expect(multiPolygon.contains(spanning))
+    }
+
+    @Test
+    func holeBoundaryIsCoveredButNotContained() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+                Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            ],
+            [
+                Coordinate3D(x: 4.0, y: 4.0, projection: .noSRID),
+                Coordinate3D(x: 6.0, y: 4.0, projection: .noSRID),
+                Coordinate3D(x: 6.0, y: 6.0, projection: .noSRID),
+                Coordinate3D(x: 4.0, y: 6.0, projection: .noSRID),
+                Coordinate3D(x: 4.0, y: 4.0, projection: .noSRID),
+            ],
+        ]))
+        let boundaryPoint = Point(Coordinate3D(x: 4.0, y: 5.0, projection: .noSRID))
+        let interiorPoint = Point(Coordinate3D(x: 2.0, y: 2.0, projection: .noSRID))
+
+        #expect(polygon.covers(boundaryPoint))
+        #expect(!polygon.contains(boundaryPoint))
+        #expect(polygon.covers(interiorPoint))
+        #expect(polygon.contains(interiorPoint))
+    }
 
 }

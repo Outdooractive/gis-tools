@@ -11,3 +11,6 @@ xcuserdata
 \#*
 .\#*
 
+# Python tooling
+__pycache__/
+*.pyc

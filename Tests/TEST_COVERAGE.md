@@ -7,9 +7,9 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 ## Summary
 
 - Source files: **231**
-- Weighted source line coverage: **88.27%**
-- Status: **145 covered** (≥90%), **68 partial** (50–90%),
-  **18 low** (1–50%), **0 untested** (0%).
+- Weighted source line coverage: **90.35%**
+- Status: **155 covered** (≥90%), **67 partial** (50–90%),
+  **9 low** (1–50%), **0 untested** (0%).
 - Every source file below has an explicit status and its direct (or indirect)
   test file.
 - The remaining low-coverage algorithms are covered by the open follow-up
@@ -27,36 +27,36 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Algorithms/BezierSpline.swift` | 174 | 90.80% | Covered | Algorithms/BezierSplineTests.swift | #336 |
 | `Sources/GISTools/Algorithms/BooleanClockwise.swift` | 47 | 100.00% | Covered | Algorithms/BooleanClockwiseTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanConcave.swift` | 57 | 100.00% | Covered | Algorithms/BooleanConcaveTests.swift |  |
-| `Sources/GISTools/Algorithms/BooleanContains.swift` | 218 | 77.52% | Partial | Algorithms/BooleanContainsTests.swift | #339 |
-| `Sources/GISTools/Algorithms/BooleanCovers.swift` | 435 | 85.75% | Partial | Algorithms/BooleanCoversTests.swift | #339 |
+| `Sources/GISTools/Algorithms/BooleanContains.swift` | 218 | 88.99% | Partial | Algorithms/BooleanContainsTests.swift | #339 |
+| `Sources/GISTools/Algorithms/BooleanCovers.swift` | 435 | 86.21% | Partial | Algorithms/BooleanCoversTests.swift | #339 |
 | `Sources/GISTools/Algorithms/BooleanCrosses.swift` | 193 | 98.96% | Covered | Algorithms/BooleanCrossesTests.swift |  |
-| `Sources/GISTools/Algorithms/BooleanDisjoint.swift` | 235 | 87.23% | Partial | Algorithms/BooleanDisjointTests.swift | #339 |
+| `Sources/GISTools/Algorithms/BooleanDisjoint.swift` | 235 | 88.09% | Partial | Algorithms/BooleanDisjointTests.swift | #339 |
 | `Sources/GISTools/Algorithms/BooleanEquals.swift` | 89 | 92.13% | Covered | Algorithms/BooleanEqualsTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanIntersects.swift` | 9 | 100.00% | Covered | Algorithms/BooleanIntersectsTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanOverlap.swift` | 186 | 81.72% | Partial | Algorithms/BooleanOverlapTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanParallel.swift` | 62 | 96.77% | Covered | Algorithms/BooleanParallelTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanPointInPolygon.swift` | 474 | 90.30% | Covered | Algorithms/BooleanPointInPolygonTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanPointOnLine.swift` | 44 | 100.00% | Covered | Algorithms/BooleanPointOnLineTests.swift | #338 |
-| `Sources/GISTools/Algorithms/BooleanTouches.swift` | 544 | 64.52% | Partial | Algorithms/BooleanTouchesTests.swift |  |
+| `Sources/GISTools/Algorithms/BooleanTouches.swift` | 544 | 84.56% | Partial | Algorithms/BooleanTouchesTests.swift |  |
 | `Sources/GISTools/Algorithms/BooleanWithin.swift` | 20 | 95.00% | Covered | Algorithms/BooleanWithinTests.swift |  |
 | `Sources/GISTools/Algorithms/Boundary.swift` | 151 | 86.09% | Partial | Algorithms/BoundaryTests.swift |  |
-| `Sources/GISTools/Algorithms/BoundingBoxClip.swift` | 384 | 79.69% | Partial | Algorithms/BoundingBoxClipTests.swift | #340 / #341 |
+| `Sources/GISTools/Algorithms/BoundingBoxClip.swift` | 384 | 83.07% | Partial | Algorithms/BoundingBoxClipTests.swift | #340 / #341 |
 | `Sources/GISTools/Algorithms/BoundingBoxPosition.swift` | 42 | 100.00% | Covered | Algorithms/BoundingBoxPositionTests.swift | #338 |
-| `Sources/GISTools/Algorithms/Buffer.swift` | 847 | 84.89% | Partial | Algorithms/BufferTests.swift | #340 / #341 |
-| `Sources/GISTools/Algorithms/Center.swift` | 460 | 93.91% | Covered | Algorithms/CenterTests.swift |  |
+| `Sources/GISTools/Algorithms/Buffer.swift` | 847 | 87.13% | Partial | Algorithms/BufferTests.swift | #340 / #341 |
+| `Sources/GISTools/Algorithms/Center.swift` | 460 | 95.00% | Covered | Algorithms/CenterTests.swift |  |
 | `Sources/GISTools/Algorithms/Circle.swift` | 14 | 100.00% | Covered | Algorithms/CircleTests.swift |  |
 | `Sources/GISTools/Algorithms/Clean.swift` | 168 | 86.90% | Partial | Algorithms/CleanTests.swift |  |
 | `Sources/GISTools/Algorithms/ClosestPoint.swift` | 41 | 97.56% | Covered | Algorithms/ClosestPointTests.swift |  |
 | `Sources/GISTools/Algorithms/Clusters.swift` | 373 | 96.51% | Covered | Algorithms/ClustersTests.swift |  |
 | `Sources/GISTools/Algorithms/Collect.swift` | 34 | 100.00% | Covered | Algorithms/CollectTests.swift |  |
-| `Sources/GISTools/Algorithms/ConcaveHull.swift` | 337 | 80.71% | Partial | Algorithms/ConcaveHullTests.swift | #336 |
+| `Sources/GISTools/Algorithms/ConcaveHull.swift` | 337 | 79.82% | Partial | Algorithms/ConcaveHullTests.swift | #336 |
 | `Sources/GISTools/Algorithms/Conversions.swift` | 104 | 91.35% | Covered | — |  |
 | `Sources/GISTools/Algorithms/ConvexHull.swift` | 115 | 98.26% | Covered | Algorithms/ConvexHullTests.swift |  |
 | `Sources/GISTools/Algorithms/Densify.swift` | 130 | 81.54% | Partial | Algorithms/DensifyTests.swift |  |
 | `Sources/GISTools/Algorithms/Destination.swift` | 57 | 77.19% | Partial | Algorithms/DestinationTests.swift |  |
 | `Sources/GISTools/Algorithms/Difference.swift` | 61 | 83.61% | Partial | Algorithms/DifferenceTests.swift |  |
 | `Sources/GISTools/Algorithms/Dissolve.swift` | 78 | 97.44% | Covered | Algorithms/DissolveTests.swift |  |
-| `Sources/GISTools/Algorithms/Distance.swift` | 77 | 85.71% | Partial | Algorithms/DistanceTests.swift |  |
+| `Sources/GISTools/Algorithms/Distance.swift` | 77 | 88.31% | Partial | Algorithms/DistanceTests.swift |  |
 | `Sources/GISTools/Algorithms/Ellipse.swift` | 33 | 100.00% | Covered | Algorithms/EllipseTests.swift |  |
 | `Sources/GISTools/Algorithms/EnumerateCoordinates.swift` | 24 | 100.00% | Covered | Algorithms/EnumerateCoordinatesTests.swift |  |
 | `Sources/GISTools/Algorithms/EnumerateProperties.swift` | 27 | 92.59% | Covered | Algorithms/EnumeratePropertiesTests.swift |  |
@@ -91,10 +91,10 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Algorithms/NearestPointOnLine.swift` | 133 | 78.95% | Partial | — | #338 |
 | `Sources/GISTools/Algorithms/NearestPointToLine.swift` | 22 | 100.00% | Covered | Algorithms/NearestPointToLineTests.swift |  |
 | `Sources/GISTools/Algorithms/OrientedEnvelope.swift` | 139 | 96.40% | Covered | Algorithms/OrientedEnvelopeTests.swift |  |
-| `Sources/GISTools/Algorithms/Overlay.swift` | 930 | 93.23% | Covered | — |  |
+| `Sources/GISTools/Algorithms/Overlay.swift` | 930 | 93.23% | Covered | Algorithms/OverlayTests.swift |  |
 | `Sources/GISTools/Algorithms/Planepoint.swift` | 118 | 93.22% | Covered | Algorithms/PlanepointTests.swift |  |
 | `Sources/GISTools/Algorithms/PointGrid.swift` | 79 | 100.00% | Covered | Algorithms/PointGridTests.swift |  |
-| `Sources/GISTools/Algorithms/PointOnFeature.swift` | 162 | 52.47% | Partial | Algorithms/PointOnFeatureTests.swift |  |
+| `Sources/GISTools/Algorithms/PointOnFeature.swift` | 162 | 66.67% | Partial | Algorithms/PointOnFeatureTests.swift |  |
 | `Sources/GISTools/Algorithms/PointToLineDistance.swift` | 55 | 83.64% | Partial | Algorithms/PointToLineDistanceTests.swift |  |
 | `Sources/GISTools/Algorithms/PointsWithinPolygon.swift` | 18 | 83.33% | Partial | Algorithms/PointsWithinPolygonTests.swift |  |
 | `Sources/GISTools/Algorithms/PoleOfInaccessibility.swift` | 257 | 94.94% | Covered | Algorithms/PoleOfInaccessibilityTests.swift |  |
@@ -113,14 +113,14 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Algorithms/Sample.swift` | 11 | 100.00% | Covered | Algorithms/SampleTests.swift |  |
 | `Sources/GISTools/Algorithms/Sector.swift` | 20 | 100.00% | Covered | Algorithms/SectorTests.swift |  |
 | `Sources/GISTools/Algorithms/SharedPaths.swift` | 63 | 100.00% | Covered | Algorithms/SharedPathsTests.swift |  |
-| `Sources/GISTools/Algorithms/Simplify.swift` | 682 | 85.34% | Partial | Algorithms/SimplifyTests.swift | #334 |
+| `Sources/GISTools/Algorithms/Simplify.swift` | 682 | 89.00% | Partial | Algorithms/SimplifyTests.swift | #334 |
 | `Sources/GISTools/Algorithms/SnapToGrid.swift` | 204 | 98.04% | Covered | Algorithms/SnapToGridTests.swift | #337 |
 | `Sources/GISTools/Algorithms/SquareGrid.swift` | 6 | 100.00% | Covered | Algorithms/SquareGridTests.swift |  |
 | `Sources/GISTools/Algorithms/SymmetricDifference.swift` | 62 | 83.87% | Partial | Algorithms/SymmetricDifferenceTests.swift |  |
 | `Sources/GISTools/Algorithms/Tesselate.swift` | 469 | 97.01% | Covered | Algorithms/TesselateTests.swift | #330 |
 | `Sources/GISTools/Algorithms/TileCover.swift` | 343 | 95.92% | Covered | Algorithms/TileCoverTests.swift |  |
 | `Sources/GISTools/Algorithms/Tin.swift` | 218 | 93.12% | Covered | Algorithms/TinTests.swift |  |
-| `Sources/GISTools/Algorithms/TopologicalValidity.swift` | 408 | 73.28% | Partial | Algorithms/TopologicalValidityTests.swift |  |
+| `Sources/GISTools/Algorithms/TopologicalValidity.swift` | 408 | 81.13% | Partial | Algorithms/TopologicalValidityTests.swift |  |
 | `Sources/GISTools/Algorithms/TransformCoordinates.swift` | 115 | 92.17% | Covered | Algorithms/TransformCoordinatesTests.swift |  |
 | `Sources/GISTools/Algorithms/TransformRotate.swift` | 34 | 73.53% | Partial | Algorithms/TransformRotateTests.swift |  |
 | `Sources/GISTools/Algorithms/TransformScale.swift` | 86 | 81.40% | Partial | Algorithms/TransformScaleTests.swift |  |
@@ -129,7 +129,7 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Algorithms/Truncate.swift` | 157 | 87.90% | Partial | Algorithms/TruncateTests.swift | #337 |
 | `Sources/GISTools/Algorithms/UnaryUnion.swift` | 121 | 97.52% | Covered | Algorithms/UnaryUnionTests.swift |  |
 | `Sources/GISTools/Algorithms/Union.swift` | 73 | 89.04% | Partial | Algorithms/UnionTests.swift |  |
-| `Sources/GISTools/Algorithms/Validatable.swift` | 185 | 89.73% | Partial | Algorithms/ValidatableTests.swift |  |
+| `Sources/GISTools/Algorithms/Validatable.swift` | 185 | 90.81% | Covered | Algorithms/ValidatableTests.swift |  |
 | `Sources/GISTools/Algorithms/Voronoi.swift` | 377 | 97.35% | Covered | Algorithms/VoronoiTests.swift | #335 |
 | `Sources/GISTools/Extensions/ArrayExtensions.swift` | 138 | 79.71% | Partial | Extensions/ArrayExtensionsTests.swift |  |
 | `Sources/GISTools/Extensions/CLLocationDegreesExtensions.swift` | 7 | 100.00% | Covered | Extensions/CLLocationDegreesExtensionsTests.swift |  |
@@ -144,23 +144,23 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/GeoJson/BoundingBox.swift` | 674 | 92.28% | Covered | GeoJson/BoundingBoxTests.swift | #338 |
 | `Sources/GISTools/GeoJson/BoundingBoxRepresentable.swift` | 6 | 100.00% | Covered | — | #338 |
 | `Sources/GISTools/GeoJson/Cartesian3D.swift` | 21 | 100.00% | Covered | GeoJson/Cartesian3DTests.swift |  |
-| `Sources/GISTools/GeoJson/Coordinate3D.swift` | 402 | 91.29% | Covered | — | #338 |
+| `Sources/GISTools/GeoJson/Coordinate3D.swift` | 402 | 94.03% | Covered | — | #338 |
 | `Sources/GISTools/GeoJson/Feature.swift` | 313 | 86.26% | Partial | GeoJson/FeatureTests.swift |  |
 | `Sources/GISTools/GeoJson/FeatureCollection.swift` | 235 | 91.49% | Covered | GeoJson/FeatureCollectionTests.swift |  |
 | `Sources/GISTools/GeoJson/GeoJson.swift` | 140 | 85.00% | Partial | — |  |
 | `Sources/GISTools/GeoJson/GeoJsonCodable.swift` | 182 | 89.01% | Partial | — |  |
 | `Sources/GISTools/GeoJson/GeoJsonConvertible.swift` | 82 | 96.34% | Covered | — |  |
-| `Sources/GISTools/GeoJson/GeoJsonDecoder.swift` | 275 | 82.18% | Partial | GeoJson/GeoJsonDecoderTests.swift |  |
-| `Sources/GISTools/GeoJson/GeoJsonParser.swift` | 518 | 90.54% | Covered | GeoJson/GeoJsonParserTests.swift |  |
+| `Sources/GISTools/GeoJson/GeoJsonDecoder.swift` | 275 | 90.55% | Covered | GeoJson/GeoJsonDecoderTests.swift |  |
+| `Sources/GISTools/GeoJson/GeoJsonParser.swift` | 518 | 91.51% | Covered | GeoJson/GeoJsonParserTests.swift |  |
 | `Sources/GISTools/GeoJson/GeoJsonReader.swift` | 103 | 93.20% | Covered | — |  |
-| `Sources/GISTools/GeoJson/GeometryCollection.swift` | 176 | 81.25% | Partial | GeoJson/GeometryCollectionTests.swift |  |
+| `Sources/GISTools/GeoJson/GeometryCollection.swift` | 176 | 85.80% | Partial | GeoJson/GeometryCollectionTests.swift |  |
 | `Sources/GISTools/GeoJson/GeometryDispatch.swift` | 11 | 54.55% | Partial | — |  |
 | `Sources/GISTools/GeoJson/Gzip.swift` | 112 | 99.11% | Covered | GeoJson/GzipTests.swift |  |
 | `Sources/GISTools/GeoJson/JSONValue.swift` | 336 | 97.92% | Covered | GeoJson/JSONValueTests.swift |  |
 | `Sources/GISTools/GeoJson/JsonCoercion.swift` | 269 | 91.82% | Covered | GeoJson/JsonCoercionTests.swift |  |
 | `Sources/GISTools/GeoJson/LineSegment.swift` | 76 | 98.68% | Covered | GeoJson/LineSegmentTests.swift |  |
 | `Sources/GISTools/GeoJson/LineString.swift` | 190 | 92.63% | Covered | GeoJson/LineStringTests.swift |  |
-| `Sources/GISTools/GeoJson/MultiLineString.swift` | 208 | 78.85% | Partial | GeoJson/MultiLineStringTests.swift |  |
+| `Sources/GISTools/GeoJson/MultiLineString.swift` | 208 | 79.33% | Partial | GeoJson/MultiLineStringTests.swift |  |
 | `Sources/GISTools/GeoJson/MultiPoint.swift` | 183 | 86.89% | Partial | GeoJson/MultiPointTests.swift |  |
 | `Sources/GISTools/GeoJson/MultiPolygon.swift` | 196 | 87.24% | Partial | GeoJson/MultiPolygonTests.swift |  |
 | `Sources/GISTools/GeoJson/Point.swift` | 84 | 88.10% | Partial | GeoJson/PointTests.swift |  |
@@ -176,10 +176,10 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Graph/Graph+AStar.swift` | 97 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+ArticulationPoints.swift` | 101 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+BetweennessCentrality.swift` | 71 | 100.00% | Covered | — |  |
-| `Sources/GISTools/Graph/Graph+Bidirectional.swift` | 240 | 98.33% | Covered | — |  |
+| `Sources/GISTools/Graph/Graph+Bidirectional.swift` | 240 | 97.92% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+Bridges.swift` | 91 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+Contraction.swift` | 609 | 97.21% | Covered | — |  |
-| `Sources/GISTools/Graph/Graph+Convenience.swift` | 54 | 66.67% | Partial | — |  |
+| `Sources/GISTools/Graph/Graph+Convenience.swift` | 54 | 96.30% | Covered | Graph/GraphExportTests.swift |  |
 | `Sources/GISTools/Graph/Graph+Cycles.swift` | 183 | 96.72% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+DeadEnds.swift` | 133 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Graph/Graph+Edges.swift` | 87 | 100.00% | Covered | — |  |
@@ -208,49 +208,49 @@ with SwiftPM's code-coverage JSON. The figures are line coverage for
 | `Sources/GISTools/Projections/AuthalicLatitude.swift` | 79 | 93.67% | Covered | — |  |
 | `Sources/GISTools/Projections/CustomProjection.swift` | 44 | 81.82% | Partial | Projections/CustomProjectionTests.swift |  |
 | `Sources/GISTools/Projections/Datum.swift` | 22 | 72.73% | Partial | Projections/DatumTests.swift |  |
-| `Sources/GISTools/Projections/Definitions/Ch1903Lv03Definition.swift` | 111 | 42.34% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Ch1903PlusLv95Definition.swift` | 112 | 42.86% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/DhdnGkDefinition.swift` | 135 | 42.96% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg3005Definition.swift` | 96 | 40.62% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg32662Definition.swift` | 45 | 86.67% | Partial | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg3347Definition.swift` | 96 | 40.62% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg3395Definition.swift` | 66 | 92.42% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Ch1903Lv03Definition.swift` | 111 | 45.05% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Ch1903PlusLv95Definition.swift` | 112 | 45.54% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/DhdnGkDefinition.swift` | 135 | 55.56% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg3005Definition.swift` | 96 | 50.00% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg32662Definition.swift` | 45 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg3347Definition.swift` | 96 | 50.00% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg3395Definition.swift` | 66 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
 | `Sources/GISTools/Projections/Definitions/Epsg3857Definition.swift` | 44 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg3978Definition.swift` | 96 | 40.62% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg4326Definition.swift` | 25 | 60.00% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg3978Definition.swift` | 96 | 50.00% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg4326Definition.swift` | 25 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
 | `Sources/GISTools/Projections/Definitions/Epsg4978Definition.swift` | 83 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Epsg5070Definition.swift` | 97 | 41.24% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Etrs89Definition.swift` | 32 | 81.25% | Partial | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Etrs89LaeaDefinition.swift` | 95 | 35.79% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Etrs89LccDefinition.swift` | 94 | 35.11% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Etrs89UtmDefinition.swift` | 123 | 41.46% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/IrishGridTM65Definition.swift` | 51 | 94.12% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/IrishGridTM75Definition.swift` | 51 | 94.12% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/IrishTransverseMercatorDefinition.swift` | 42 | 92.86% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Lambert93Definition.swift` | 94 | 35.11% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/MgiGkDefinition.swift` | 165 | 48.48% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Nad27Definition.swift` | 53 | 35.85% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Nad83Definition.swift` | 42 | 78.57% | Partial | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Nad83UtmDefinition.swift` | 123 | 41.46% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/NoSridDefinition.swift` | 30 | 20.00% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Osgb1936BngDefinition.swift` | 122 | 39.34% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/Osgb1936Definition.swift` | 51 | 33.33% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Epsg5070Definition.swift` | 97 | 50.52% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Etrs89Definition.swift` | 32 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Etrs89LaeaDefinition.swift` | 95 | 49.47% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Etrs89LccDefinition.swift` | 94 | 48.94% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Etrs89UtmDefinition.swift` | 123 | 60.16% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/IrishGridTM65Definition.swift` | 51 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/IrishGridTM75Definition.swift` | 51 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/IrishTransverseMercatorDefinition.swift` | 42 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Lambert93Definition.swift` | 94 | 48.94% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/MgiGkDefinition.swift` | 165 | 58.79% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Nad27Definition.swift` | 53 | 47.17% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Nad83Definition.swift` | 42 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Nad83UtmDefinition.swift` | 123 | 60.16% | Partial | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/NoSridDefinition.swift` | 30 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Osgb1936BngDefinition.swift` | 122 | 41.80% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/Osgb1936Definition.swift` | 51 | 45.10% | Low | Projections/ProjectionTests.swift (indirect) |  |
 | `Sources/GISTools/Projections/Definitions/ProjectionDefinition.swift` | 3 | 100.00% | Covered | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/RdNewDefinition.swift` | 113 | 32.74% | Low | Projections/ProjectionTests.swift (indirect) |  |
-| `Sources/GISTools/Projections/Definitions/UtmDefinition.swift` | 156 | 67.31% | Partial | Projections/UtmDefinitionTests.swift |  |
-| `Sources/GISTools/Projections/HelmertTransformation.swift` | 258 | 56.59% | Partial | Projections/HelmertTransformationTests.swift |  |
+| `Sources/GISTools/Projections/Definitions/RdNewDefinition.swift` | 113 | 44.25% | Low | Projections/ProjectionTests.swift (indirect) |  |
+| `Sources/GISTools/Projections/Definitions/UtmDefinition.swift` | 156 | 69.23% | Partial | Projections/UtmDefinitionTests.swift |  |
+| `Sources/GISTools/Projections/HelmertTransformation.swift` | 258 | 98.45% | Covered | Projections/HelmertTransformationTests.swift |  |
 | `Sources/GISTools/Projections/KarneyTransverseMercatorMath.swift` | 170 | 99.41% | Covered | — |  |
-| `Sources/GISTools/Projections/LambertAzimuthalEqualAreaMath.swift` | 188 | 69.15% | Partial | — |  |
+| `Sources/GISTools/Projections/LambertAzimuthalEqualAreaMath.swift` | 188 | 98.40% | Covered | Projections/LambertAzimuthalModeTests.swift |  |
 | `Sources/GISTools/Projections/LambertConformalConicMath.swift` | 127 | 95.28% | Covered | — |  |
 | `Sources/GISTools/Projections/ObliqueStereographicMath.swift` | 97 | 96.91% | Covered | — |  |
-| `Sources/GISTools/Projections/Projection.swift` | 269 | 90.33% | Covered | Projections/ProjectionTests.swift |  |
+| `Sources/GISTools/Projections/Projection.swift` | 269 | 90.71% | Covered | Projections/ProjectionTests.swift |  |
 | `Sources/GISTools/Projections/ProjectionExtent.swift` | 6 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Projections/ProjectionRegistry.swift` | 131 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Projections/SwissObliqueMercatorMath.swift` | 87 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Projections/TransverseMercatorMath.swift` | 135 | 100.00% | Covered | — |  |
 | `Sources/GISTools/Projections/UtmZoneSelection.swift` | 51 | 100.00% | Covered | Projections/UtmZoneSelectionTests.swift |  |
 | `Sources/GISTools/Query/FeatureCollection+Query.swift` | 11 | 100.00% | Covered | — | #349 |
-| `Sources/GISTools/Query/QueryParser.swift` | 1087 | 92.36% | Covered | Query/QueryParserTests.swift | #349 |
+| `Sources/GISTools/Query/QueryParser.swift` | 1087 | 92.64% | Covered | Query/QueryParserTests.swift | #349 |
 
 ## Refresh
 
@@ -261,13 +261,8 @@ python3 scripts/refresh_coverage_report.py
 
 The CI gate runs the same data through
 `python3 scripts/refresh_coverage_report.py --minimum 87.5 --check`.
-Formatting is checked for Swift files changed by a pull request. The gate
-compares violation counts against the base branch and fails when a PR adds
-new violations; existing legacy formatting debt is tolerated. Locally:
-
-```bash
-swiftformat --lint --config .swiftformat <changed Swift files>
-```
+Formatting is checked for Swift files changed by a pull request with
+`swiftformat --lint --config .swiftformat <files>`.
 
 ## Fixture inventory
 

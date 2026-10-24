@@ -4,29 +4,29 @@ import Testing
 
 struct SimplifyTests {
 
-    // Validates that invalid polygons are returned unmodified when simplified.
+    /// Validates that invalid polygons are returned unmodified when simplified.
     @Test
-    func invalidPolygons() async throws {
+    func invalidPolygons() {
         let polygon1 = MultiPolygon([[[
             Coordinate3D(latitude: 1.0, longitude: 0.0),
             Coordinate3D(latitude: 2.0, longitude: 0.0),
             Coordinate3D(latitude: 3.0, longitude: 0.0),
             Coordinate3D(latitude: 2.5, longitude: 0.0),
-            Coordinate3D(latitude: 1.0, longitude: 0.0)
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
         ]]])
         let polygon2 = MultiPolygon([[[
             Coordinate3D(latitude: 1.0, longitude: 0.0),
             Coordinate3D(latitude: 1.0, longitude: 0.0),
             Coordinate3D(latitude: 2.0, longitude: 1.0),
-            Coordinate3D(latitude: 1.0, longitude: 0.0)
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
         ]]])
         #expect(polygon1?.simplified() == polygon1)
         #expect(polygon2?.simplified() == polygon2)
     }
 
-    // Validates that simplification with degenerate rings does not enter an endless loop.
+    /// Validates that simplification with degenerate rings does not enter an endless loop.
     @Test
-    func ringValidationBackoff() async throws {
+    func ringValidationBackoff() {
         let polygon = Polygon([[
             Coordinate3D(latitude: 47.602460344511684, longitude: 4.564821280446012),
             Coordinate3D(latitude: 47.639486027997926, longitude: 4.564821280446012),
@@ -42,9 +42,9 @@ struct SimplifyTests {
 
     // MARK: - Grid size
 
-    // Validates that `simplified(tolerance:highQuality:gridSize:)` matches manual pre-snapping.
+    /// Validates that `simplified(tolerance:highQuality:gridSize:)` matches manual pre-snapping.
     @Test
-    func simplifyWithGridSize() async throws {
+    func simplifyWithGridSize() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0001, longitude: 0.0001),
             Coordinate3D(latitude: 5.0001, longitude: 5.0001),
@@ -60,9 +60,9 @@ struct SimplifyTests {
 
     // MARK: - Projections
 
-    // Validates simplification of a multi-segment line string in EPSG:3857.
+    /// Validates simplification of a multi-segment line string in EPSG:3857.
     @Test
-    func simplify3857() async throws {
+    func simplify3857() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
             Coordinate3D(x: 250.0, y: 250.0, projection: .epsg3857),
@@ -76,9 +76,9 @@ struct SimplifyTests {
         #expect(simplified.projection == .epsg3857)
     }
 
-    // Validates simplification of a multi-segment line string in EPSG:4978.
+    /// Validates simplification of a multi-segment line string in EPSG:4978.
     @Test
-    func simplify4978() async throws {
+    func simplify4978() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, z: 0.0, projection: .epsg4978),
             Coordinate3D(x: 250.0, y: 250.0, z: 0.0, projection: .epsg4978),
@@ -92,10 +92,9 @@ struct SimplifyTests {
         #expect(simplified.projection == .epsg4978)
     }
 
-
-    // Validates simplification in noSRID (Euclidean) projection.
+    /// Validates simplification in noSRID (Euclidean) projection.
     @Test
-    func simplifyNoSRID() async throws {
+    func simplifyNoSRID() throws {
         let lineString = try #require(LineString([
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 25.0, y: 25.0, projection: .noSRID),
@@ -111,9 +110,9 @@ struct SimplifyTests {
 
     // MARK: - Antimeridian
 
-    // Tests simplification of a line crossing the antimeridian.
+    /// Tests simplification of a line crossing the antimeridian.
     @Test
-    func antimeridian() async throws {
+    func antimeridian() throws {
         let lineString = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 170.0),
             Coordinate3D(latitude: 5.0, longitude: 174.0),
@@ -131,9 +130,9 @@ struct SimplifyTests {
 
     // MARK: - topologyPreserveSimplify
 
-    // Tests topology-preserving simplify on a simple line.
+    /// Tests topology-preserving simplify on a simple line.
     @Test
-    func topologyPreserveSimpleLine() async throws {
+    func topologyPreserveSimpleLine() throws {
         let ls = try #require(LineString([
             Coordinate3D(latitude: 0.0, longitude: 0.0),
             Coordinate3D(latitude: 0.1, longitude: 0.1),
@@ -141,11 +140,11 @@ struct SimplifyTests {
             Coordinate3D(latitude: 0.3, longitude: 0.1),
             Coordinate3D(latitude: 0.4, longitude: 0.0),
         ]))
-        let result = try #require(ls.topologyPreservedSimplified(tolerance: 50_000.0))
+        let result = try #require(ls.topologyPreservedSimplified(tolerance: 50000.0))
         #expect(result.coordinates.count < ls.coordinates.count)
     }
 
-    // Tests topology-preserving simplify on a self-intersecting polygon.
+    /// Tests topology-preserving simplify on a self-intersecting polygon.
     @Test
     func topologyPreserveSelfIntersectingPolygon() throws {
         let polygon = try #require(Polygon([[
@@ -155,11 +154,11 @@ struct SimplifyTests {
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let result = try #require(polygon.topologyPreservedSimplified(tolerance: 5_000.0))
+        let result = try #require(polygon.topologyPreservedSimplified(tolerance: 5000.0))
         #expect(result.isValid)
     }
 
-    // Tests topology-preserving simplify on a noisy polygon.
+    /// Tests topology-preserving simplify on a noisy polygon.
     @Test
     func topologyPreserveInvalidPolygon() throws {
         let noisy = try #require(LineString([
@@ -177,7 +176,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
-    // Tests topology-preserving simplify in EPSG:3857.
+    /// Tests topology-preserving simplify in EPSG:3857.
     @Test
     func topologyPreserve3857() throws {
         let ls = try #require(LineString([
@@ -194,7 +193,7 @@ struct SimplifyTests {
 
     // MARK: - polygonHullSimplify
 
-    // Tests polygon hull simplification on a simple square.
+    /// Tests polygon hull simplification on a simple square.
     @Test
     func polygonHullSimpleSquare() throws {
         let polygon = try #require(Polygon([[
@@ -208,7 +207,7 @@ struct SimplifyTests {
         #expect(result.isValid)
     }
 
-    // Tests polygon hull simplification on a self-intersecting polygon.
+    /// Tests polygon hull simplification on a self-intersecting polygon.
     @Test
     func polygonHullSelfIntersecting() throws {
         let polygon = try #require(Polygon([[
@@ -218,39 +217,39 @@ struct SimplifyTests {
             Coordinate3D(latitude: 0.0, longitude: 5.0),
             Coordinate3D(latitude: 0.0, longitude: 0.0),
         ]]))
-        let result = try #require(polygon.polygonHullSimplified(tolerance: 5_000.0))
+        let result = try #require(polygon.polygonHullSimplified(tolerance: 5000.0))
         #expect(result.isValid)
     }
 
-    // Tests polygon hull simplification in EPSG:3857.
+    /// Tests polygon hull simplification in EPSG:3857.
     @Test
     func polygonHull3857() throws {
         let polygon = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let result = try #require(polygon.polygonHullSimplified(tolerance: 10.0))
         #expect(result.isValid)
     }
 
-    // Tests polygon hull simplification on a MultiPolygon.
+    /// Tests polygon hull simplification on a MultiPolygon.
     @Test
     func multiPolygonHullSimplified() throws {
         let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
             Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
-            Coordinate3D(x: 500.0, y: 1_500.0, projection: .epsg3857),
-            Coordinate3D(x: 1_500.0, y: 1_500.0, projection: .epsg3857),
-            Coordinate3D(x: 1_500.0, y: 500.0, projection: .epsg3857),
+            Coordinate3D(x: 500.0, y: 1500.0, projection: .epsg3857),
+            Coordinate3D(x: 1500.0, y: 1500.0, projection: .epsg3857),
+            Coordinate3D(x: 1500.0, y: 500.0, projection: .epsg3857),
             Coordinate3D(x: 500.0, y: 500.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
@@ -263,7 +262,7 @@ struct SimplifyTests {
 
     // MARK: - coverageSimplify
 
-    // Tests coverage simplify preserves shared edges between adjacent tiles.
+    /// Tests coverage simplify preserves shared edges between adjacent tiles.
     @Test
     func coverageSimplifyAdjacentTiles() throws {
         let tile1 = MapTile(x: 0, y: 0, z: 1)
@@ -282,36 +281,38 @@ struct SimplifyTests {
         let p1 = try polygon(from: tile1.boundingBox())
         let p2 = try polygon(from: tile2.boundingBox())
         let mp = try #require(MultiPolygon([p1, p2]))
-        let result = try #require(mp.coverageSimplified(tolerance: 10_000.0))
+        let result = try #require(mp.coverageSimplified(tolerance: 10000.0))
         #expect(result.polygons.count == 2)
         // Shared chains may start at a different vertex after simplification;
         // compare the shared boundary coordinates as sets.
-        let rightEdge = Set(result.polygons[0].coordinates[0]
+        let rightEdge = Set(result.polygons[0]
+            .coordinates[0]
             .filter { $0.longitude == 0.0 }
             .map { "\($0.longitude),\($0.latitude)" })
-        let leftEdge = Set(result.polygons[1].coordinates[0]
+        let leftEdge = Set(result.polygons[1]
+            .coordinates[0]
             .filter { $0.longitude == 0.0 }
             .map { "\($0.longitude),\($0.latitude)" })
         #expect(rightEdge == leftEdge)
         #expect(rightEdge.count >= 2)
     }
 
-    // Tests coverage simplify in EPSG:3857.
+    /// Tests coverage simplify in EPSG:3857.
     @Test
     func coverageSimplify3857() throws {
         let p1 = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .epsg3857),
             Coordinate3D(x: 0.0, y: 0.0, projection: .epsg3857),
         ]]))
         let p2 = try #require(Polygon([[
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 2_000.0, y: 0.0, projection: .epsg3857),
-            Coordinate3D(x: 2_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .epsg3857),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2000.0, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: 2000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .epsg3857),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .epsg3857),
         ]]))
         let mp = try #require(MultiPolygon([p1, p2]))
         let result = try #require(mp.coverageSimplified(tolerance: 50.0))
@@ -323,7 +324,7 @@ struct SimplifyTests {
         #expect(endpoints0 == endpoints1)
     }
 
-    // Tests coverage simplify with a single polygon.
+    /// Tests coverage simplify with a single polygon.
     @Test
     func coverageSimplifySinglePolygon() throws {
         let p = try #require(Polygon([[
@@ -340,7 +341,7 @@ struct SimplifyTests {
 
     // MARK: - Antimeridian
 
-    // Tests topology-preserving simplify on a line crossing the antimeridian.
+    /// Tests topology-preserving simplify on a line crossing the antimeridian.
     @Test
     func topologyPreserveAntimeridian() throws {
         let ls = try #require(LineString([
@@ -354,11 +355,11 @@ struct SimplifyTests {
 
     // MARK: - Tolerance conversion
 
-    // Validates that the metre-to-degree tolerance conversion depends on the
-    // latitude, not on the longitude, of the geometry (regression test).
+    /// Validates that the metre-to-degree tolerance conversion depends on the
+    /// latitude, not on the longitude, of the geometry (regression test).
     @Test
     func toleranceConversionIsIndependentOfLongitude() throws {
-        // A zigzag line with 100 points spread over a few kilometres.
+        /// A zigzag line with 100 points spread over a few kilometres.
         func zigzag(longitude: Double) throws -> LineString {
             let coordinates = (0 ..< 100).map { i in
                 Coordinate3D(
@@ -413,9 +414,8 @@ extension SimplifyTests {
         let result = try #require(multiPolygon.coverageSimplified(tolerance: 100.0))
         let simplified = try #require(result.polygons.first)
 
-        #expect(simplified.outerRing!.coordinates.count < polygon.outerRing!.coordinates.count)
+        #expect(try #require(simplified.outerRing?.coordinates.count) < polygon.outerRing!.coordinates.count)
     }
-
 
     /// `polygonHullSimplified` keeps holes (and their winding) instead of
     /// returning only the outer ring.
@@ -423,17 +423,17 @@ extension SimplifyTests {
     func polygonHullKeepsHoles() throws {
         let outer: [Coordinate3D] = [
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
-            Coordinate3D(x: 10_000.0, y: 0.0, projection: .noSRID),
-            Coordinate3D(x: 10_000.0, y: 10_000.0, projection: .noSRID),
-            Coordinate3D(x: 0.0, y: 10_000.0, projection: .noSRID),
+            Coordinate3D(x: 10000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10000.0, y: 10000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
         ]
         let hole: [Coordinate3D] = [
-            Coordinate3D(x: 3_000.0, y: 3_000.0, projection: .noSRID),
-            Coordinate3D(x: 3_000.0, y: 7_000.0, projection: .noSRID),
-            Coordinate3D(x: 7_000.0, y: 7_000.0, projection: .noSRID),
-            Coordinate3D(x: 7_000.0, y: 3_000.0, projection: .noSRID),
-            Coordinate3D(x: 3_000.0, y: 3_000.0, projection: .noSRID),
+            Coordinate3D(x: 3000.0, y: 3000.0, projection: .noSRID),
+            Coordinate3D(x: 3000.0, y: 7000.0, projection: .noSRID),
+            Coordinate3D(x: 7000.0, y: 7000.0, projection: .noSRID),
+            Coordinate3D(x: 7000.0, y: 3000.0, projection: .noSRID),
+            Coordinate3D(x: 3000.0, y: 3000.0, projection: .noSRID),
         ]
         let polygon = try #require(Polygon([outer, hole]))
         let result = try #require(polygon.polygonHullSimplified(tolerance: 100.0))
@@ -454,32 +454,35 @@ extension SimplifyTests {
                 Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
                 Coordinate3D(x: base / 2.0, y: 5.0, projection: .noSRID),
                 Coordinate3D(x: base, y: 0.0, projection: .noSRID),
-                Coordinate3D(x: base, y: 1_000.0, projection: .noSRID),
-                Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+                Coordinate3D(x: base, y: 1000.0, projection: .noSRID),
+                Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
                 Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             ]]))
         }
 
-        for base in [1_000.0, 50.0] {
+        for base in [1000.0, 50.0] {
             let polygon = try spikedRing(base: base)
             let simplified = try #require(
-                polygon.polygonHullSimplified(tolerance: 10.0))
+                polygon.polygonHullSimplified(tolerance: 10.0),
+            )
             #expect(
                 simplified.outerRing?.coordinates.count == 5,
-                "base \(base): spike was not removed")
+                "base \(base): spike was not removed",
+            )
         }
 
         // A 20 m spike exceeds the same tolerance and must survive.
         let tallSpike = try #require(Polygon([[
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
             Coordinate3D(x: 500.0, y: 20.0, projection: .noSRID),
-            Coordinate3D(x: 1_000.0, y: 0.0, projection: .noSRID),
-            Coordinate3D(x: 1_000.0, y: 1_000.0, projection: .noSRID),
-            Coordinate3D(x: 0.0, y: 1_000.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 1000.0, y: 1000.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 1000.0, projection: .noSRID),
             Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
         ]]))
         let simplifiedTall = try #require(
-            tallSpike.polygonHullSimplified(tolerance: 10.0))
+            tallSpike.polygonHullSimplified(tolerance: 10.0),
+        )
         #expect(simplifiedTall.outerRing?.coordinates.count == 6)
     }
 
@@ -492,11 +495,11 @@ extension SimplifyTests {
         }
 
         let shared: [Coordinate3D] = [
-            coordinate(1_000.0, 0.0),
-            coordinate(1_000.0, 250.0),
-            coordinate(1_000.0, 500.0),
-            coordinate(1_000.0, 750.0),
-            coordinate(1_000.0, 1_000.0),
+            coordinate(1000.0, 0.0),
+            coordinate(1000.0, 250.0),
+            coordinate(1000.0, 500.0),
+            coordinate(1000.0, 750.0),
+            coordinate(1000.0, 1000.0),
         ]
 
         let left = try #require(Polygon([[
@@ -506,7 +509,7 @@ extension SimplifyTests {
             shared[2],
             shared[3],
             shared[4],
-            coordinate(0.0, 1_000.0),
+            coordinate(0.0, 1000.0),
             coordinate(0.0, 0.0),
         ]]))
         let right = try #require(Polygon([[
@@ -515,8 +518,8 @@ extension SimplifyTests {
             shared.reversed()[2],
             shared.reversed()[3],
             shared.reversed()[4],
-            coordinate(2_000.0, 0.0),
-            coordinate(2_000.0, 1_000.0),
+            coordinate(2000.0, 0.0),
+            coordinate(2000.0, 1000.0),
             shared.reversed()[0],
         ]]))
 
@@ -524,16 +527,168 @@ extension SimplifyTests {
         let result = try #require(coverage.coverageSimplified(tolerance: 100.0))
         #expect(result.polygons.count == 2)
 
-        let leftShared = result.polygons[0].coordinates[0]
-            .filter { $0.x == 1_000.0 }
+        let leftShared = result.polygons[0]
+            .coordinates[0]
+            .filter { $0.x == 1000.0 }
             .map { "\($0.x),\($0.y)" }
-        let rightShared = result.polygons[1].coordinates[0]
-            .filter { $0.x == 1_000.0 }
+        let rightShared = result.polygons[1]
+            .coordinates[0]
+            .filter { $0.x == 1000.0 }
             .map { "\($0.x),\($0.y)" }
 
         #expect(Set(leftShared) == Set(rightShared))
         #expect(leftShared.count >= 2)
     }
 
+    @Test
+    func highQualitySimplifyPreservesEndpointsAndValidity() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.2, longitude: 0.1),
+            Coordinate3D(latitude: 0.35, longitude: 0.25),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.3, longitude: 1.6),
+            Coordinate3D(latitude: 2.0, longitude: 2.0),
+        ]))
+        let simplified = line.simplified(tolerance: 10000.0, highQuality: true)
+        #expect(simplified.coordinates.count <= line.coordinates.count)
+        #expect(simplified.firstCoordinate == line.firstCoordinate)
+        #expect(simplified.lastCoordinate == line.lastCoordinate)
+        #expect(simplified.isValid)
+    }
+
+    @Test
+    func simplifyPreservesFeatureMetadata() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.5),
+            Coordinate3D(latitude: 0.0, longitude: 1.0),
+        ]))
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "Route"],
+            calculateBoundingBox: true)
+        let collection = FeatureCollection([feature])
+
+        let simplifiedFeature = feature.simplified(tolerance: 10000.0)
+        #expect(simplifiedFeature.id == .string("route"))
+        #expect(simplifiedFeature.property(for: "name") as String? == "Route")
+        #expect(simplifiedFeature.boundingBox != nil)
+
+        let simplifiedCollection = collection.simplified(tolerance: 10000.0)
+        #expect(simplifiedCollection.features.count == 1)
+        #expect(simplifiedCollection.features[0].id == .string("route"))
+        #expect(simplifiedCollection.features[0].property(for: "name") as String? == "Route")
+    }
+
+    @Test
+    func coverageSimplifyPreservesSharedChainForTwoPolygons() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let coverage = try #require(MultiPolygon([first, second]))
+        let simplified = try #require(coverage.coverageSimplified(tolerance: 1.0))
+
+        #expect(simplified.polygons.count == 2)
+        let sharedFirst = simplified.polygons[0]
+            .coordinates
+            .flatMap(\.self)
+            .filter { abs($0.x - 10.0) < 0.000001 }
+        let sharedSecond = simplified.polygons[1]
+            .coordinates
+            .flatMap(\.self)
+            .filter { abs($0.x - 10.0) < 0.000001 }
+        #expect(!sharedFirst.isEmpty)
+        #expect(!sharedSecond.isEmpty)
+        #expect(Set(sharedFirst.map { "\($0.x),\($0.y)" })
+            == Set(sharedSecond.map { "\($0.x),\($0.y)" }))
+    }
+
+    @Test
+    func topologyPreservedSimplifyWithGridAndCollections() throws {
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let feature = Feature(polygon, id: .string("area"), properties: ["kind": "test"])
+        let collection = FeatureCollection([feature])
+
+        if let simplified = collection.topologyPreservedSimplified(
+            tolerance: 10000.0,
+            gridSize: 0.0001)
+        {
+            #expect(simplified.isValid)
+            #expect(simplified.features.first?.id == .string("area"))
+            #expect(simplified.features.first?.property(for: "kind") as String? == "test")
+        }
+    }
+
+    @Test
+    func polygonHullSimplifyWithHoleAndGrid() throws {
+        let polygon = try #require(Polygon([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+            ],
+            [
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 6.0),
+                Coordinate3D(latitude: 6.0, longitude: 4.0),
+                Coordinate3D(latitude: 4.0, longitude: 4.0),
+            ],
+        ]))
+        if let simplified = polygon.polygonHullSimplified(
+            tolerance: 10000.0,
+            gridSize: 0.0001)
+        {
+            #expect(simplified.isValid)
+            #expect((simplified.innerRings ?? []).count == 1)
+        }
+    }
+
+    @Test
+    func coverageSimplifyHighQualityKeepsSharedEdge() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 20.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 10.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+        ]]))
+        let coverage = try #require(MultiPolygon([first, second]))
+        if let simplified = coverage.coverageSimplified(
+            tolerance: 1.0,
+            highQuality: true)
+        {
+            #expect(simplified.polygons.count == 2)
+            #expect(abs(simplified.area - coverage.area) < 0.000001)
+        }
+    }
 
 }

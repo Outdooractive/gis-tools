@@ -6,7 +6,7 @@ struct ProjectionTests {
 
     /// Tests coordinate projection from EPSG:4326 to EPSG:3857, including coordinates crossing the 180th meridian.
     @Test
-    func convertTo3857() async throws {
+    func convertTo3857() {
         let coordinate1 = Coordinate3D(latitude: 41.0, longitude: -71.0)
         let result1 = coordinate1.projected(to: .epsg3857)
         #expect(abs(result1.longitude - -7_903_683.846322424) < 0.000001)
@@ -40,7 +40,7 @@ struct ProjectionTests {
 
     /// Tests coordinate projection from EPSG:3857 to EPSG:4326, including coordinates crossing the 180th meridian.
     @Test
-    func convertTo4326() async throws {
+    func convertTo4326() {
         let coordinate1 = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, projection: .epsg3857)
         let result1 = coordinate1.projected(to: .epsg4326)
         #expect(abs(result1.latitude - 41.0) < 0.000001)
@@ -64,7 +64,7 @@ struct ProjectionTests {
 
     /// Tests coordinate projection from EPSG:4326 to EPSG:4978 (ECEF), including round-trip and cross-projection chaining.
     @Test
-    func convertTo4978() async throws {
+    func convertTo4978() {
         // Null Island → ECEF X = a, Y = 0, Z = 0
         let nullIsland = Coordinate3D(latitude: 0.0, longitude: 0.0, altitude: 0.0)
         let nullEcef = nullIsland.projected(to: .epsg4978)
@@ -78,14 +78,14 @@ struct ProjectionTests {
         let back1 = ecef1.projected(to: .epsg4326)
         #expect(abs(back1.latitude - coord1.latitude) < 0.00000001)
         #expect(abs(back1.longitude - coord1.longitude) < 0.00000001)
-        #expect(abs((back1.altitude ?? 0.0)) < 0.001)
+        #expect(abs(back1.altitude ?? 0.0) < 0.001)
 
         let coord2 = Coordinate3D(latitude: 35.522895, longitude: -97.552175, altitude: 0.0)
         let ecef2 = coord2.projected(to: .epsg4978)
         let back2 = ecef2.projected(to: .epsg4326)
         #expect(abs(back2.latitude - coord2.latitude) < 0.00000001)
         #expect(abs(back2.longitude - coord2.longitude) < 0.00000001)
-        #expect(abs((back2.altitude ?? 0.0)) < 0.001)
+        #expect(abs(back2.altitude ?? 0.0) < 0.001)
 
         // Round-trip with altitude preserved
         let coord3 = Coordinate3D(latitude: -33.86, longitude: 151.21, altitude: 500.0)
@@ -107,7 +107,7 @@ struct ProjectionTests {
 
     /// Tests coordinate projection from EPSG:4978 (ECEF) back to EPSG:4326 and EPSG:3857.
     @Test
-    func convertFrom4978() async throws {
+    func convertFrom4978() {
         // ECEF Null Island (a, 0, 0) → lat=0, lon=0
         let ecefNull = Coordinate3D(x: 6_378_137.0, y: 0.0, z: 0.0, projection: .epsg4978)
         let geoNull = ecefNull.projected(to: .epsg4326)
@@ -137,9 +137,9 @@ struct ProjectionTests {
     func convertFrom4978NearOriginClampsLatitude() {
         let nearOriginPoints: [(x: Double, y: Double, z: Double)] = [
             (0.0, 0.0, 0.0),
-            (1_000.0, 0.0, 0.0),
-            (1_000.0, 1_000.0, 0.0),
-            (0.0, 1_000.0, 0.0),
+            (1000.0, 0.0, 0.0),
+            (1000.0, 1000.0, 0.0),
+            (0.0, 1000.0, 0.0),
             (500.0, 500.0, 0.0),
         ]
         for (x, y, z) in nearOriginPoints {
@@ -151,7 +151,7 @@ struct ProjectionTests {
 
     /// Validates that each projection case reports the correct SRID number.
     @Test
-    func cases() async throws {
+    func cases() {
         #expect(Projection.noSRID.srid == 0)
         #expect(Projection.epsg3857.srid == 3857)
         #expect(Projection.epsg4326.srid == 4326)
@@ -160,7 +160,7 @@ struct ProjectionTests {
 
     /// Validates initialization from supported SRID numbers.
     @Test
-    func initFromSrid() async throws {
+    func initFromSrid() {
         #expect(Projection(srid: 0) == .noSRID)
         #expect(Projection(srid: 4326) == .epsg4326)
         #expect(Projection(srid: 3857) == .epsg3857)
@@ -171,26 +171,26 @@ struct ProjectionTests {
 
     /// Validates initialization from known EPSG:3857 alias SRIDs.
     @Test
-    func initFromSridAliases() async throws {
+    func initFromSridAliases() {
         #expect(Projection(srid: 102_100) == .epsg3857)
         #expect(Projection(srid: 102_113) == .epsg3857)
         #expect(Projection(srid: 900_913) == .epsg3857)
         #expect(Projection(srid: 3587) == .epsg3857)
         #expect(Projection(srid: 3785) == .epsg3857)
-        #expect(Projection(srid: 41_001) == .epsg3857)
-        #expect(Projection(srid: 54_004) == .epsg3857)
+        #expect(Projection(srid: 41001) == .epsg3857)
+        #expect(Projection(srid: 54004) == .epsg3857)
     }
 
     /// Validates that unsupported SRID numbers return `nil`.
     @Test
-    func initFromUnsupportedSrid() async throws {
+    func initFromUnsupportedSrid() {
         #expect(Projection(srid: 1234) == nil)
         #expect(Projection(srid: -1) == nil)
     }
 
     /// Validates the human-readable description of each projection.
     @Test
-    func description() async throws {
+    func description() {
         #expect(Projection.noSRID.description == "No SRID")
         #expect(Projection.epsg3857.description == "EPSG:3857")
         #expect(Projection.epsg4326.description == "EPSG:4326")
@@ -201,7 +201,7 @@ struct ProjectionTests {
 
     /// Validates the `srid` computed property returns the correct integer.
     @Test
-    func sridProperty() async throws {
+    func sridProperty() {
         #expect(Projection.noSRID.srid == 0)
         #expect(Projection.epsg3857.srid == 3857)
         #expect(Projection.epsg4326.srid == 4326)
@@ -212,7 +212,7 @@ struct ProjectionTests {
 
     /// Validates equality and inequality between projections.
     @Test
-    func equatable() async throws {
+    func equatable() {
         #expect(Projection.epsg4326 == .epsg4326)
         #expect(Projection.epsg4326 != .epsg3857)
         #expect(Projection.noSRID != .epsg4326)
@@ -222,7 +222,7 @@ struct ProjectionTests {
 
     /// Validates round-trip JSON encoding and decoding for all projections.
     @Test
-    func codableRoundTrip() async throws {
+    func codableRoundTrip() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -235,18 +235,18 @@ struct ProjectionTests {
 
     /// Validates the raw JSON values for each projection's Codable representation.
     @Test
-    func codableRawValues() async throws {
+    func codableRawValues() throws {
         let encoder = JSONEncoder()
 
-        #expect(String(data: try encoder.encode(Projection.noSRID), encoding: .utf8) == "0")
-        #expect(String(data: try encoder.encode(Projection.epsg3857), encoding: .utf8) == "3857")
-        #expect(String(data: try encoder.encode(Projection.epsg4326), encoding: .utf8) == "4326")
-        #expect(String(data: try encoder.encode(Projection.epsg4978), encoding: .utf8) == "4978")
+        #expect(try String(data: encoder.encode(Projection.noSRID), encoding: .utf8) == "0")
+        #expect(try String(data: encoder.encode(Projection.epsg3857), encoding: .utf8) == "3857")
+        #expect(try String(data: encoder.encode(Projection.epsg4326), encoding: .utf8) == "4326")
+        #expect(try String(data: encoder.encode(Projection.epsg4978), encoding: .utf8) == "4978")
     }
 
     /// Validates ``Projection.init(wkt:)`` with common ``.prj`` strings.
     @Test
-    func initFromWkt() async throws {
+    func initFromWkt() {
         #expect(Projection(wkt: #"GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]"#) == .epsg4326)
         #expect(Projection(wkt: #"GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]"#) == .epsg4326)
         #expect(Projection(wkt: #"PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]"#) == .epsg3857)
@@ -259,7 +259,7 @@ struct ProjectionTests {
 
     /// Validates the semantic category of each projection.
     @Test
-    func kind() async throws {
+    func kind() {
         #expect(Projection.noSRID.kind == .undefined)
         #expect(Projection.epsg3857.kind == .planar)
         #expect(Projection.epsg4326.kind == .geographic)
@@ -270,7 +270,7 @@ struct ProjectionTests {
 
     /// Validates the projection kind flag computed properties.
     @Test
-    func kindFlags() async throws {
+    func kindFlags() {
         #expect(Projection.epsg4326.isGeographic)
         #expect(!Projection.epsg3857.isGeographic)
         #expect(!Projection.epsg4978.isGeographic)
@@ -302,7 +302,7 @@ struct ProjectionTests {
 
     /// Validates the horizontal wraparound extent of each projection.
     @Test
-    func wraparoundExtent() async throws {
+    func wraparoundExtent() {
         #expect(Projection.epsg4326.wraparoundExtent == 180.0)
         #expect(Projection.epsg3857.wraparoundExtent == GISTool.originShift)
         #expect(Projection.epsg4978.wraparoundExtent == nil)
@@ -313,7 +313,7 @@ struct ProjectionTests {
 
     /// Validates meter-to-CRS-unit conversion.
     @Test
-    func crsLengthFromMeters() async throws {
+    func crsLengthFromMeters() {
         #expect(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance) == 1.0)
         #expect(abs(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance / 2.0) - 0.5) < 0.0000000001)
         #expect(Projection.epsg3857.crsLength(fromMeters: 1000.0) == 1000.0)
@@ -324,7 +324,7 @@ struct ProjectionTests {
     /// Round-trips a coordinate through every projection pair; the result must
     /// match the original (within projection precision).
     @Test
-    func roundTrips() async throws {
+    func roundTrips() {
         let base = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 250.0, m: 7.0)
         let projections: [Projection] = [.epsg4326, .epsg3857, .epsg4978, .epsg3395, .epsg32662]
 
@@ -350,7 +350,7 @@ struct ProjectionTests {
     /// Mercator) and back. Reference values computed independently with the
     /// Snyder ellipsoidal Mercator formulas on the WGS84 ellipsoid.
     @Test
-    func convertTo3395() async throws {
+    func convertTo3395() {
         let coordinate1 = Coordinate3D(latitude: 41.0, longitude: -71.0)
         let result1 = coordinate1.projected(to: .epsg3395)
         #expect(abs(result1.longitude - -7_903_683.846322423) < 0.000001)
@@ -386,7 +386,7 @@ struct ProjectionTests {
     /// and back. EPSG:32662 is an equirectangular projection in meters:
     /// `x = a·λ`, `y = a·φ` with `a` the WGS84 semi-major axis.
     @Test
-    func convertTo32662() async throws {
+    func convertTo32662() {
         let coordinate = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 100.0, m: 3.0)
         let result = coordinate.projected(to: .epsg32662)
         // Reference values: PROJ `+proj=eqc +lat_ts=0 +datum=WGS84 +units=m`.
@@ -410,7 +410,7 @@ struct ProjectionTests {
     /// EPSG:3857 → EPSG:4978 (and back) is routed through the EPSG:4326 pivot
     /// and matches the chained manual conversion.
     @Test
-    func pivotRouting3857To4978() async throws {
+    func pivotRouting3857To4978() {
         let mercator = Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 100.0, m: 3.0, projection: .epsg3857)
 
         let ecef = mercator.projected(to: .epsg4978)
@@ -432,7 +432,7 @@ struct ProjectionTests {
     /// - Projecting to `.noSRID` copies values verbatim as well.
     /// - Per-axis helpers treat noSRID values as already being in the target.
     @Test
-    func noSridSemantics() async throws {
+    func noSridSemantics() {
         let coordinate = Coordinate3D(x: -71.0, y: 41.0, z: 50.0, m: 2.0, projection: .noSRID)
 
         // Verbatim copy into every target projection.
@@ -464,7 +464,7 @@ struct ProjectionTests {
     /// Per-axis helpers match the corresponding full projection for all
     /// non-noSRID projections.
     @Test
-    func perAxisHelpersMatchProjection() async throws {
+    func perAxisHelpersMatchProjection() {
         let sources: [Coordinate3D] = [
             Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 10.0),
             Coordinate3D(x: -7_903_683.846322424, y: 5_012_341.663847514, z: 10.0, projection: .epsg3857),
@@ -483,7 +483,7 @@ struct ProjectionTests {
 
     /// Altitude and m values are preserved through projections where defined.
     @Test
-    func altitudeAndMPreserved() async throws {
+    func altitudeAndMPreserved() {
         let withAltitude = Coordinate3D(latitude: 41.0, longitude: -71.0, altitude: 300.0, m: 5.0)
 
         let mercator = withAltitude.projected(to: .epsg3857)
@@ -505,7 +505,7 @@ struct ProjectionTests {
 
     /// Validates `clamped()` against the valid extent of each projection.
     @Test
-    func clamped() async throws {
+    func clamped() {
         // EPSG:4326: ±180 longitude, ±90 latitude.
         let geographic = Coordinate3D(latitude: 95.0, longitude: 200.0).clamped()
         #expect(geographic.latitude == 90.0)
@@ -535,7 +535,6 @@ struct ProjectionTests {
     }
 
     // MARK: - Audit
-
 
     // MARK: - Registry contract
 
@@ -603,7 +602,7 @@ struct ProjectionTests {
     /// PROJ reference (`+proj=eqc +lat_ts=0 +datum=WGS84 +units=m`):
     /// (10°E, 50°N) → (1,113,194.907933, 5,540,847.041684).
     @Test
-    func plateCarreeReferenceValues() throws {
+    func plateCarreeReferenceValues() {
         let projection = Projection.epsg32662
         let projected = Coordinate3D(latitude: 50.0, longitude: 10.0).projected(to: projection)
 
@@ -657,10 +656,12 @@ struct ProjectionTests {
                 : 0.000001
             #expect(
                 abs(back.latitude - point.latitude) < tolerance,
-                "SRID \(srid) latitude \(back.latitude) != \(point.latitude)")
+                "SRID \(srid) latitude \(back.latitude) != \(point.latitude)",
+            )
             #expect(
                 abs(back.longitude - point.longitude) < tolerance,
-                "SRID \(srid) longitude \(back.longitude) != \(point.longitude)")
+                "SRID \(srid) longitude \(back.longitude) != \(point.longitude)",
+            )
             #expect(abs((back.altitude ?? 0.0) - 123.0) < 0.001, "SRID \(srid) altitude")
         }
     }
@@ -725,15 +726,36 @@ struct ProjectionTests {
     /// loops. Keeping the list explicit means a new registry entry must
     /// also be added here, and a removed one shows up as a test failure.
     private static let builtinSrids: [Int] = [
-        0, 3857, 4326, 4978, 3395, 32_662,
-        4258, 4267, 4277, 27700, 2056, 21_781, 29_902, 29_903, 2157,
-        3035, 3034, 2154, 28_992, 4269, 5070, 3005, 3347, 3978,
-    ] + Array(32_601 ... 32_660)
-        + Array(32_701 ... 32_760)
-        + Array(25_828 ... 25_838)
-        + Array(26_901 ... 26_923)
-        + Array(31_466 ... 31_469)
-        + Array(31_255 ... 31_259)
+        0,
+        3857,
+        4326,
+        4978,
+        3395,
+        32662,
+        4258,
+        4267,
+        4277,
+        27700,
+        2056,
+        21781,
+        29902,
+        29903,
+        2157,
+        3035,
+        3034,
+        2154,
+        28992,
+        4269,
+        5070,
+        3005,
+        3347,
+        3978,
+    ] + Array(32601 ... 32660)
+        + Array(32701 ... 32760)
+        + Array(25828 ... 25838)
+        + Array(26901 ... 26923)
+        + Array(31466 ... 31469)
+        + Array(31255 ... 31259)
 
     /// A point comfortably inside each projection's area of use.
     private static func representativePoint(for projection: Projection) -> (latitude: Double, longitude: Double) {
@@ -744,36 +766,47 @@ struct ProjectionTests {
         }
 
         switch projection.srid {
-        case 0, 4326, 3857, 4978, 3395, 32_662, 4258, 4269:
+        case 0, 3395, 3857, 4258, 4269, 4326, 4978, 32662:
             return (45.0, 10.0)
+
         case 4267:
             return (40.0, -100.0)
+
         case 4277, 27700:
             return (52.5, -1.5)
-        case 2056, 21_781:
+
+        case 2056, 21781:
             return (46.95, 7.44)
-        case 29_902, 29_903, 2157:
+
+        case 2157, 29902, 29903:
             return (53.3, -8.0)
-        case 3035, 3034:
+
+        case 3034, 3035:
             return (52.0, 10.0)
+
         case 2154:
             return (48.85, 2.35)
-        case 28_992:
+
+        case 28992:
             return (52.0, 5.0)
+
         case 5070:
             return (40.0, -100.0)
+
         case 3005, 3347, 3978:
             return (50.0, -110.0)
-        case 31_466 ... 31_469:
-            let zone = projection.srid - 31_464
+
+        case 31466 ... 31469:
+            let zone = projection.srid - 31464
             return (50.0, Double(zone * 3))
-        case 31_255 ... 31_259:
+
+        case 31255 ... 31259:
             return (47.5, 13.33)
+
         default:
             return (45.0, 10.0)
         }
     }
-
 
     // MARK: - Batch audit
 
@@ -819,5 +852,97 @@ struct ProjectionTests {
         #expect(coordinate == unchanged)
     }
 
+    /// Every built-in definition must expose metadata consistent with its
+    /// projection and its representative point must lie inside any declared
+    /// valid extent.
+    @Test
+    func definitionMetadataMatchesProjection() throws {
+        for srid in Self.builtinSrids {
+            let projection = try #require(Projection(srid: srid))
+            let definition = projection.definition
+
+            #expect(definition.projection == projection, "SRID \(srid)")
+            #expect(definition.kind == projection.kind, "SRID \(srid)")
+            #expect(definition.datum == projection.datum, "SRID \(srid)")
+            #expect(
+                definition.wktMatchers.allSatisfy { !$0.isEmpty },
+                "SRID \(srid)",
+            )
+
+            if let extent = definition.wraparoundExtent {
+                #expect(extent > 0.0, "SRID \(srid)")
+            }
+
+            if let validExtent = definition.validExtent {
+                let representative = Self.representativePoint(for: projection)
+                let projected = Coordinate3D(
+                    latitude: representative.latitude,
+                    longitude: representative.longitude)
+                    .projected(to: projection)
+                #expect(
+                    projected.x >= validExtent.minX
+                        && projected.x <= validExtent.maxX,
+                    "SRID \(srid) representative x outside extent",
+                )
+                #expect(
+                    projected.y >= validExtent.minY
+                        && projected.y <= validExtent.maxY,
+                    "SRID \(srid) representative y outside extent",
+                )
+            }
+
+            if let worldBoundingBox = definition.worldBoundingBox {
+                #expect(
+                    worldBoundingBox.projection == .epsg4326
+                        || worldBoundingBox.projection == projection,
+                    "SRID \(srid) world box projection",
+                )
+            }
+        }
+    }
+
+    /// The hoisted `prepared` path must agree with the definition's one-shot
+    /// forward/inverse methods for every built-in projection.
+    @Test
+    func definitionPreparedTransformsMatchSinglePath() throws {
+        for srid in Self.builtinSrids {
+            let projection = try #require(Projection(srid: srid))
+            let definition = projection.definition
+            let representative = Self.representativePoint(for: projection)
+            let original = Coordinate3D(
+                latitude: representative.latitude,
+                longitude: representative.longitude,
+                altitude: 12.0,
+                m: 3.0)
+
+            let prepared = definition.prepared
+            let singleForward = definition.forward(original)
+            let batchForward = prepared.forward(original)
+            #expect(
+                abs(singleForward.x - batchForward.x) < 0.000001,
+                "SRID \(srid) prepared forward x",
+            )
+            #expect(
+                abs(singleForward.y - batchForward.y) < 0.000001,
+                "SRID \(srid) prepared forward y",
+            )
+            #expect(batchForward.projection == singleForward.projection, "SRID \(srid)")
+            #expect(batchForward.altitude == singleForward.altitude, "SRID \(srid)")
+            #expect(batchForward.m == singleForward.m, "SRID \(srid)")
+
+            let singleInverse = definition.inverse(singleForward)
+            let batchInverse = prepared.inverse(singleForward)
+            #expect(
+                abs(singleInverse.latitude - batchInverse.latitude) < 0.000001,
+                "SRID \(srid) prepared inverse latitude",
+            )
+            #expect(
+                abs(singleInverse.longitude - batchInverse.longitude) < 0.000001,
+                "SRID \(srid) prepared inverse longitude",
+            )
+            #expect(batchInverse.altitude == singleInverse.altitude, "SRID \(srid)")
+            #expect(batchInverse.m == singleInverse.m, "SRID \(srid)")
+        }
+    }
 
 }

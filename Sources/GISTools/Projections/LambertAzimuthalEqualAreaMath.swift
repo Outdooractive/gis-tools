@@ -75,7 +75,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
         longitudeOfOrigin: Double,
         scaleFactor: Double = 1.0,
         falseEasting: Double = 0.0,
-        falseNorthing: Double = 0.0
+        falseNorthing: Double = 0.0,
     ) {
         let phi0 = latitudeOfOrigin.degreesToRadians
         let es = ellipsoid.eccentricitySquared
@@ -136,7 +136,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
     /// grid coordinates in meters.
     func forward(
         latitude: Double,
-        longitude: Double
+        longitude: Double,
     ) -> (x: Double, y: Double) {
         let e = sqrt(ellipsoid.eccentricitySquared)
         let oneEs = 1.0 - ellipsoid.eccentricitySquared
@@ -202,7 +202,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             if qPrime < Self.qPrimeTolerance {
                 return (falseEasting, falseNorthing)
             }
-            let radius = scaleFactor * sqrt(qPrime)
+            let radius = ellipsoid.semiMajorAxis * scaleFactor * sqrt(qPrime)
             let x = falseEasting + radius * sinLambda
             let y = falseNorthing + radius * (mode == .southPole ? cosLambda : -cosLambda)
             return (x, y)
@@ -215,7 +215,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
     /// degrees.
     func inverse(
         x: Double,
-        y: Double
+        y: Double,
     ) -> (latitude: Double, longitude: Double) {
         switch mode {
         case .equatorial, .oblique:
@@ -247,7 +247,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             let phi = authalicLatitude.geographicLatitude(fromAuthalic: asin(authalic))
             return (
                 phi * 180.0 / .pi,
-                longitudeOfOrigin + lambda * 180.0 / .pi
+                longitudeOfOrigin + lambda * 180.0 / .pi,
             )
 
         case .northPole, .southPole:
@@ -265,7 +265,7 @@ struct LambertAzimuthalEqualAreaMath: Sendable {
             let phi = authalicLatitude.geographicLatitude(fromAuthalic: asin(authalic))
             return (
                 phi * 180.0 / .pi,
-                longitudeOfOrigin + lambda * 180.0 / .pi
+                longitudeOfOrigin + lambda * 180.0 / .pi,
             )
         }
     }

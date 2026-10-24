@@ -422,4 +422,92 @@ struct BoundingBoxClipTests {
         #expect(back.allCoordinates.count == 2)
     }
 
+    @Test
+    func lineOnBoundingBoxBoundaryIsKept() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 1)
+        #expect(abs(clipped.length - line.length) < 0.001)
+    }
+
+    @Test
+    func lineFullyOutsideBoxReturnsNil() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 20.0, longitude: 20.0),
+            Coordinate3D(latitude: 30.0, longitude: 30.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: 0.0, longitude: 0.0),
+            northEast: Coordinate3D(latitude: 10.0, longitude: 10.0))
+
+        #expect(line.clipped(to: box) == nil)
+    }
+
+    @Test
+    func multipointCrossingBoxKeepsOnlySeamPoints() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(multiPoint.clipped(to: box))
+        #expect(clipped.coordinates.count == 2)
+        #expect(clipped.coordinates.contains { abs($0.longitude - 179.0) < 0.000001 })
+        #expect(clipped.coordinates.contains { abs($0.longitude + 179.0) < 0.000001 })
+    }
+
+    @Test
+    func featureCollectionClipPreservesMetadata() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]))
+        let feature = Feature(
+            line,
+            id: .string("route"),
+            properties: ["name": "Route"],
+            calculateBoundingBox: true)
+        let collection = FeatureCollection([feature])
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -1.0, longitude: 2.0),
+            northEast: Coordinate3D(latitude: 1.0, longitude: 8.0))
+
+        let clipped = try #require(collection.clipped(to: box))
+        let clippedFeature = try #require(clipped.features.first)
+        #expect(clippedFeature.id == .string("route"))
+        #expect(clippedFeature.property(for: "name") as String? == "Route")
+        #expect(clippedFeature.boundingBox != nil)
+    }
+
+    @Test
+    func linePartiallyOutsideCrossingBoxIsTrimmed() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 160.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -160.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+        #expect(clipped.lineStrings.allSatisfy { lineString in
+            lineString.coordinates.allSatisfy {
+                $0.longitude >= 175.0 || $0.longitude <= -175.0
+            }
+        })    }
+
 }
