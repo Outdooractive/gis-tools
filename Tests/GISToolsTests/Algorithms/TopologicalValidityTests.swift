@@ -9,7 +9,7 @@ struct TopologicalValidityTests {
         minY: Double = 0.0,
         maxX: Double = 10.0,
         maxY: Double = 10.0,
-        projection: Projection = .epsg4326
+        projection: Projection = .epsg4326,
     ) -> Polygon {
         Polygon(unchecked: [[
             Coordinate3D(x: minX, y: minY, projection: projection),
@@ -46,20 +46,20 @@ struct TopologicalValidityTests {
 
     @Test(arguments: [Projection.epsg4326, .epsg3857, .epsg4978, .noSRID])
     func validPolygonAcrossProjections(projection: Projection) {
-        let polygon: Polygon
-        switch projection {
-        case .epsg4978:
-            polygon = square().projected(to: .epsg4978)
-        case .epsg4326:
-            polygon = square()
-        default:
-            polygon = square(
-                minX: 0.0,
-                minY: 0.0,
-                maxX: 1_000.0,
-                maxY: 1_000.0,
-                projection: projection)
-        }
+        let polygon: Polygon =
+            switch projection {
+            case .epsg4978:
+                square().projected(to: .epsg4978)
+            case .epsg4326:
+                square()
+            default:
+                square(
+                    minX: 0.0,
+                    minY: 0.0,
+                    maxX: 1000.0,
+                    maxY: 1000.0,
+                    projection: projection)
+            }
 
         #expect(polygon.isValid)
         #expect(polygon.isSimple)
@@ -240,6 +240,82 @@ extension TopologicalValidityTests {
 
         #expect(multiPolygon.isStructurallyValid)
         #expect(!multiPolygon.isValid)
+    }
+
+    @Test
+    func explicitRingFailureReasons() {
+        let unclosed = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+        ]])
+        #expect(unclosed.isValidReason?.contains("not closed") == true)
+
+        let twoPoints = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        #expect(twoPoints.isValidReason?.contains("four positions") == true)
+
+        let zeroArea = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]])
+        #expect(zeroArea.isValidReason?.contains("zero area") == true)
+    }
+
+    @Test
+    func holeCrossingShellIsInvalid() {
+        let polygon = Polygon(unchecked: [
+            square().coordinates[0],
+            [
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+                Coordinate3D(latitude: 5.0, longitude: 15.0),
+                Coordinate3D(latitude: 15.0, longitude: 15.0),
+                Coordinate3D(latitude: 15.0, longitude: 5.0),
+                Coordinate3D(latitude: 5.0, longitude: 5.0),
+            ],
+        ])
+        #expect(!polygon.isValid)
+        #expect(polygon.isValidReason?.contains("crosses") == true)
+    }
+
+    @Test
+    func crossingMultiLineStringIsNotSimple() throws {
+        let multiLine = try #require(MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: 0.0),
+                Coordinate3D(latitude: 10.0, longitude: 10.0),
+            ],
+            [
+                Coordinate3D(latitude: 0.0, longitude: 10.0),
+                Coordinate3D(latitude: 10.0, longitude: 0.0),
+            ],
+        ]))
+        #expect(!multiLine.isSimple)
+    }
+
+    @Test
+    func emptyMultiPolygonHasReason() {
+        let multiPolygon = MultiPolygon()
+        #expect(!multiPolygon.isValid)
+        #expect(multiPolygon.isValidReason?.contains("no polygons") == true)
+    }
+
+    @Test
+    func geocentricInvalidPolygonIsRejected() {
+        let bowtie = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]).projected(to: .epsg4978)
+        #expect(!bowtie.isValid)
     }
 
 }
