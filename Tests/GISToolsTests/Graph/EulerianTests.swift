@@ -356,5 +356,90 @@ struct EulerianTests {
         #expect(path.first == path.last)
     }
 
+
+    // MARK: - Parallel-edge regressions
+
+    @Test
+    func parallelEdgesAreEulerianAndTraversed() {
+        var graph = Graph()
+        let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.05, longitude: 20.05))
+        graph.addUndirectedEdge(from: a, to: b)
+        graph.addUndirectedEdge(from: a, to: b)
+
+        #expect(graph.eulerianity() == .eulerian)
+        let path = graph.eulerianPath()
+        #expect(path.count == 3, "Both parallel edges must be traversed: \(path.count)")
+        #expect(path.first == path.last)
+
+        let tour = graph.chinesePostmanTour()
+        #expect(tour.count == 3)
+        #expect(tour.first == tour.last)
+        let weight = graph.weight(from: a, to: b)!
+        #expect(abs(graph.length(ofPath: tour) - 2.0 * weight) < 0.001)
+    }
+
+    @Test
+    func duplicatedTriangleEdgeIsSemiEulerian() {
+        var graph = Graph()
+        let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.1))
+        let c = graph.createNode(at: Coordinate3D(latitude: 10.1, longitude: 20.05))
+        graph.addUndirectedEdge(from: a, to: b)
+        graph.addUndirectedEdge(from: a, to: b) // duplicated edge
+        graph.addUndirectedEdge(from: b, to: c)
+        graph.addUndirectedEdge(from: c, to: a)
+
+        // a=3, b=3, c=2.
+        #expect(graph.eulerianity() == .semiEulerian)
+        let path = graph.eulerianPath()
+        #expect(path.count == 5, "4 underlying edges → 5 path nodes")
+        let endpoints = Set([path.first!.index, path.last!.index])
+        #expect(endpoints == Set([a.index, b.index]))
+
+        let ab = graph.weight(from: a, to: b)!
+        let bc = graph.weight(from: b, to: c)!
+        let ca = graph.weight(from: c, to: a)!
+        let tour = graph.chinesePostmanTour()
+        #expect(abs(graph.length(ofPath: tour) - (2.0 * ab + bc + ca + ab)) < 0.001)
+    }
+
+    @Test
+    func bridgeWithParallelEdgesPostmanRepeatsBridge() {
+        var graph = Graph()
+        let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.1))
+        let c = graph.createNode(at: Coordinate3D(latitude: 10.1, longitude: 20.2))
+        graph.addUndirectedEdge(from: a, to: b)
+        graph.addUndirectedEdge(from: a, to: b)
+        graph.addUndirectedEdge(from: b, to: c)
+
+        // a=2, b=3, c=1 → odd b, c.
+        #expect(graph.eulerianity() == .semiEulerian)
+        #expect(graph.eulerianPath().count == 4)
+
+        let ab = graph.weight(from: a, to: b)!
+        let bc = graph.weight(from: b, to: c)!
+        let tour = graph.chinesePostmanTour()
+        #expect(abs(graph.length(ofPath: tour) - (2.0 * ab + 2.0 * bc)) < 0.001)
+        #expect(tour.first == tour.last)
+    }
+
+    @Test
+    func oppositeOneWayEdgesFormEulerianUnderlyingGraph() throws {
+        var graph = Graph(isDirected: true)
+        let a = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.0))
+        let b = graph.createNode(at: Coordinate3D(latitude: 10.0, longitude: 20.1))
+        graph.addDirectedEdge(from: a, to: b, isDirected: true)
+        graph.addDirectedEdge(from: b, to: a, isDirected: true)
+
+        #expect(graph.eulerianity() == .eulerian)
+        let path = graph.eulerianPath()
+        #expect(path.count == 3)
+        #expect(path.first == path.last)
+    }
+
+
 }
+
 #endif

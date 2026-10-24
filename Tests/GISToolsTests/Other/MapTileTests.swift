@@ -229,6 +229,33 @@ struct MapTileTests {
         ])
     }
 
+    // Verifies that the maximum zoom level has no children instead of
+    // returning same-zoom tiles with shifted x/y indices.
+    @Test
+    func childrenAtMaximumZoom() async throws {
+        let maximum = MapTile(x: 1, y: 1, z: 32)
+        #expect(maximum.child == maximum)
+        #expect(maximum.children.isEmpty)
+
+        let last = MapTile(x: (1 << 32) - 1, y: (1 << 32) - 1, z: 32)
+        #expect(last.child == last)
+        #expect(last.children.isEmpty)
+
+        let parent = MapTile(x: 1, y: 1, z: 31)
+        let child = parent.child
+        #expect(child.z == 32)
+        #expect(child.x == 2)
+        #expect(child.y == 2)
+
+        let children = parent.children
+        #expect(children.count == 4)
+        #expect(children.allSatisfy { $0.z == 32 })
+        #expect(Set(children.map(\.x)) == [2, 3])
+        #expect(Set(children.map(\.y)) == [2, 3])
+        #expect(children.allSatisfy { $0.x >= 0 && $0.x < (1 << 32) })
+        #expect(children.allSatisfy { $0.y >= 0 && $0.y < (1 << 32) })
+    }
+
     // Verifies MapTile bounding boxes in EPSG:3857 projection at various zoom levels.
     @Test
     func epsg3857TileBounds() async throws {
