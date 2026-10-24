@@ -1,0 +1,154 @@
+{
+  "generated_at": "2026-10-24T19:47:41.707220+00:00",
+  "machine": "aarch64",
+  "platform": "linux",
+  "schema": 1,
+  "suites": {
+    "buffer": {
+      "benchmarks": {
+        "buffer/line/10k/steps-8": 3.474381,
+        "buffer/line/1k/steps-32": 0.543443,
+        "buffer/line/1k/steps-8": 0.16154,
+        "buffer/line/steps-32": 0.067052,
+        "buffer/line/steps-8": 0.022725,
+        "buffer/point/steps-32": 4e-06,
+        "buffer/point/steps-8": 3e-06,
+        "buffer/polygon/10k/steps-8": 3.178508,
+        "buffer/polygon/1k/steps-32": 0.464427,
+        "buffer/polygon/1k/steps-8": 0.148557,
+        "buffer/polygon/steps-32": 0.066856,
+        "buffer/polygon/steps-8": 0.021252
+      },
+      "metrics": {},
+      "peak_rss_mb": 273.7,
+      "wall_seconds": 8.511929
+    },
+    "graph": {
+      "benchmarks": {
+        "graph/a-star/100k": 0.011268,
+        "graph/a-star/10k": 0.000667,
+        "graph/a-star/1M": 0.13877,
+        "graph/bfs/100k": 0.010441,
+        "graph/bfs/10k": 0.000371,
+        "graph/bidirectional/100k": 0.010107,
+        "graph/bidirectional/10k": 0.000306,
+        "graph/bidirectional/1M": 0.127224,
+        "graph/construction/100k": 0.129692,
+        "graph/construction/10k": 0.011413,
+        "graph/construction/1M": 1.598243,
+        "graph/contraction-build/100k": 0.140687,
+        "graph/contraction-build/10k": 0.00803,
+        "graph/contraction-build/1M": 2.116775,
+        "graph/contraction-dijkstra/100k": 0.009981,
+        "graph/contraction-dijkstra/10k": 0.000792,
+        "graph/contraction-dijkstra/1M": 0.122149,
+        "graph/cycles/100k": 0.001023,
+        "graph/cycles/10k": 0.001224,
+        "graph/dfs/100k": 0.013608,
+        "graph/dfs/10k": 0.000514,
+        "graph/dijkstra/100k": 0.007433,
+        "graph/dijkstra/10k": 0.000285,
+        "graph/dijkstra/1M": 0.095004,
+        "graph/merge-stitched/100k": 0.534391,
+        "graph/merge-stitched/10k": 0.044477,
+        "graph/merge/100k": 0.087427,
+        "graph/merge/10k": 0.007228
+      },
+      "metrics": {},
+      "peak_rss_mb": 2883.0,
+      "wall_seconds": 9.877783
+    },
+    "loading": {
+      "benchmarks": {
+        "loading/codable": 9.353104,
+        "loading/native": 8.921166
+      },
+      "metrics": {},
+      "peak_rss_mb": 680.4,
+      "wall_seconds": 110.015888
+    },
+    "memory": {
+      "benchmarks": {},
+      "metrics": {
+        "memory/BoundingBox/stride": 64.0,
+        "memory/Coordinate3D/size": 49.0,
+        "memory/Coordinate3D/stride": 56.0,
+        "memory/CoordinateArray/100k": 5600000.0,
+        "memory/Feature/stride": 144.0,
+        "memory/FeatureCollection/stride": 80.0,
+        "memory/LineString/stride": 80.0,
+        "memory/MultiPolygon/stride": 80.0,
+        "memory/Point/stride": 128.0,
+        "memory/Polygon/stride": 80.0,
+        "memory/Projection/size": 8.0,
+        "memory/Projection/stride": 8.0,
+        "memory/point-features/100k/bytes-per-feature": 328.0,
+        "memory/point-features/100k/peak-mb": 31.3,
+        "memory/polygon-features/10k/bytes-per-feature": 564.0,
+        "memory/polygon-features/10k/peak-mb": 5.4
+      },
+      "peak_rss_mb": 54.5,
+      "wall_seconds": 0.015679
+    },
+    "overlay": {
+      "benchmarks": {
+        "overlay/difference": 0.011438,
+        "overlay/difference/10000": 0.162619,
+        "overlay/difference/100000": 2.723383,
+        "overlay/intersection": 0.010068,
+        "overlay/intersection/10000": 0.15021,
+        "overlay/intersection/100000": 2.536945,
+        "overlay/symmetric-difference": 0.019457,
+        "overlay/symmetric-difference/10000": 0.286701,
+        "overlay/symmetric-difference/100000": 4.835582,
+        "overlay/union": 0.010089,
+        "overlay/union/10000": 0.147975,
+        "overlay/union/100000": 2.413888
+      },
+      "metrics": {},
+      "peak_rss_mb": 198.6,
+      "wall_seconds": 14.967664
+    },
+    "projection": {
+      "benchmarks": {
+        "projection/baseline-3857-to-4326": 4.3e-05,
+        "projection/baseline-4326-to-3857": 4.5e-05,
+        "projection/batch-4326-32619-4326": 0.006033,
+        "projection/batch-4326-to-27700": 0.005355,
+        "projection/batch-4326-to-3857": 0.000148,
+        "projection/registry-3857-to-4326": 0.000293,
+        "projection/registry-4326-32619-4326": 0.006292,
+        "projection/registry-4326-4978-4326": 0.0043,
+        "projection/registry-4326-to-3857": 0.000289
+      },
+      "metrics": {},
+      "peak_rss_mb": 22.8,
+      "wall_seconds": 0.142716
+    },
+    "rtree": {
+      "benchmarks": {
+        "rtree/build-by-latitude/100k": 0.030899,
+        "rtree/build-by-longitude/100k": 0.031094,
+        "rtree/build-hilbert/100k": 0.019485,
+        "rtree/build-unsorted/100k": 0.013142,
+        "rtree/search-around/100k": 0.000946,
+        "rtree/search-hilbert/100k": 0.000168,
+        "rtree/search-serial/100k": 0.008024
+      },
+      "metrics": {},
+      "peak_rss_mb": 63.0,
+      "wall_seconds": 0.464524
+    },
+    "simplify": {
+      "benchmarks": {
+        "simplify/line-dp/100k": 0.002482,
+        "simplify/line-vw/100k": 0.001991,
+        "simplify/polygon-dp/100k": 0.002904
+      },
+      "metrics": {},
+      "peak_rss_mb": 47.0,
+      "wall_seconds": 0.040631
+    }
+  },
+  "swift": "Swift version 6.4.1 (swift-6.4.1-RELEASE)"
+}

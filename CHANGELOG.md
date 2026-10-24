@@ -154,6 +154,14 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Benchmark baselines and regression comparison (#385): representative
+  loading, projection, overlay, R-tree, buffer, simplify, graph and memory
+  suites now have platform/architecture-specific baselines under
+  `Benchmarks/Baselines/`. `scripts/benchmark_compare.py` reports current
+  versus baseline wall times and peak RSS, fails on regressions above a
+  configurable threshold, and can refresh a baseline intentionally. A manual
+  Benchmarks workflow can report comparisons or upload a new baseline artifact.
+
 - Edge-case coverage tests (#382): added meaningful regression tests for
   Helmert datum transforms, topological validity failures, Boolean touch
   combinations, buffer collections/insets, simplify metadata and shared

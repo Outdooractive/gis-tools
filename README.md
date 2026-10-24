@@ -1224,6 +1224,45 @@ The Allgäu, Munich and Paris graph test fixtures are derived from
 OpenStreetMap data © OpenStreetMap contributors, available under the
 [Open Database License (ODbL)](https://www.openstreetmap.org/copyright).
 
+## Benchmark baselines
+
+Tracked baselines live in `Benchmarks/Baselines/` and are keyed by operating
+system and CPU architecture, for example `linux-aarch64.json` or
+`darwin-arm64.json`. Run the representative loading, projection, overlay,
+R-tree, buffer, simplify, graph and memory suites and compare them with the
+matching baseline:
+
+```bash
+python3 scripts/benchmark_compare.py
+```
+
+The command builds `Benchmarks` in release mode, prints current-versus-baseline
+deltas for every suite, and exits non-zero when a benchmark time or peak RSS
+regresses by more than the default 20%, or a finer-grained memory metric by more
+than 50%. Use `--threshold 0.30` to change the time/RSS threshold,
+`--metric-threshold 0.60` to change the memory metric threshold,
+`--report-only` to keep the exit status successful, or pass suite names to
+compare a subset. Benchmarks below 0.5 ms are reported without a regression
+decision because the measurement noise is too large; suites without a matching
+baseline are reported as such.
+
+Refresh a baseline only after reviewing the performance change:
+
+```bash
+python3 scripts/benchmark_compare.py --update
+git diff Benchmarks/Baselines/
+```
+
+Passing suite names with `--update` refreshes only those suites and preserves
+the other entries. Commit the refreshed baseline with the change that
+justifies it. Baselines are machine-specific; generate one on each
+platform/architecture you intend to track. The manually triggered
+**Benchmarks** workflow can run the comparison on a Linux ARM64 runner and on
+macOS, but is not part of pull-request CI. The committed Linux baseline targets
+the ARM64 runner used by that workflow. To create a baseline for another
+platform, run the workflow with `update_baseline` enabled, download the uploaded
+artifact, and commit it.
+
 # Development checks
 
 Coverage and formatting are gated in CI.
