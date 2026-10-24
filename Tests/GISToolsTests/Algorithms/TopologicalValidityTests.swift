@@ -318,4 +318,38 @@ extension TopologicalValidityTests {
         #expect(!bowtie.isValid)
     }
 
+    @Test
+    func geometryCollectionReportsInvalidMember() {
+        let valid = square()
+        let invalid = Polygon(unchecked: [[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+        ]])
+        let collection = GeometryCollection([valid, invalid])
+        #expect(!collection.isValid)
+        #expect(collection.isValidReason?.contains("closed") == true)
+    }
+
+    @Test
+    func multiPolygonWithSharedVertexIsValid() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]]))
+        let multiPolygon = try #require(MultiPolygon([first, second]))
+        #expect(multiPolygon.isValid)
+    }
+
 }

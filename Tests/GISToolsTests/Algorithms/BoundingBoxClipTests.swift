@@ -442,4 +442,25 @@ struct BoundingBoxClipTests {
         #expect(clippedFeature.boundingBox != nil)
     }
 
+    @Test
+    func linePartiallyOutsideCrossingBoxIsTrimmed() throws {
+        let line = try #require(LineString([
+            Coordinate3D(latitude: 0.0, longitude: 160.0),
+            Coordinate3D(latitude: 0.0, longitude: 179.0),
+            Coordinate3D(latitude: 0.0, longitude: -179.0),
+            Coordinate3D(latitude: 0.0, longitude: -160.0),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 175.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -175.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+        #expect(clipped.lineStrings.allSatisfy { lineString in
+            lineString.coordinates.allSatisfy {
+                $0.longitude >= 175.0 || $0.longitude <= -175.0
+            }
+        })
+    }
+
 }

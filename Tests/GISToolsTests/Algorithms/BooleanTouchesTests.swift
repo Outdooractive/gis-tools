@@ -782,4 +782,59 @@ extension BooleanTouchesTests {
         #expect(!multiPoint.touches(point))
     }
 
+    @Test
+    func multiPointMultiLineBoundaryAndInterior() throws {
+        let multiLine = try #require(MultiLineString([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 10.0),
+        ]]))
+        let endpointOnly = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let endpointAndInterior = try #require(MultiPoint([
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+        ]))
+
+        #expect(endpointOnly.touches(multiLine))
+        #expect(multiLine.touches(endpointOnly))
+        #expect(!endpointAndInterior.touches(multiLine))
+        #expect(!multiLine.touches(endpointAndInterior))
+    }
+
+    @Test
+    func multiLineStringTouchesMultiPolygonAtBoundary() throws {
+        let multiPolygon = try #require(MultiPolygon([polygonWithHole()]))
+        let multiLine = try #require(MultiLineString([[
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: -5.0, longitude: 5.0),
+        ]]))
+
+        #expect(multiLine.touches(multiPolygon))
+        #expect(multiPolygon.touches(multiLine))
+    }
+
+    @Test
+    func multiPolygonsTouchAtSharedVertex() throws {
+        let first = try #require(Polygon([[
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]]))
+        let second = try #require(Polygon([[
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 10.0),
+            Coordinate3D(latitude: 10.0, longitude: 5.0),
+            Coordinate3D(latitude: 5.0, longitude: 5.0),
+        ]]))
+        let left = try #require(MultiPolygon([first]))
+        let right = try #require(MultiPolygon([second]))
+
+        #expect(left.touches(right))
+        #expect(right.touches(left))
+    }
+
 }

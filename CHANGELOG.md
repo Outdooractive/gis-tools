@@ -159,8 +159,10 @@ The deprecated aliases from 2.x have been removed. Use the current names:
   combinations, buffer collections/insets, simplify metadata and shared
   chains, bounding-box clipping boundaries, point-on-feature fallbacks,
   BooleanCover union receivers, direct overlay assembly, LAEA projection
-  modes, projection WKT zone rejection and graph debug descriptions. Coverage
-  increased from **88.27%** to **89.19%** weighted line coverage.
+  modes, built-in projection metadata and prepared-path invariants,
+  projection WKT zone rejection, parser/decoder invalid-input branches,
+  concave-hull collection inputs and graph debug descriptions. Coverage
+  increased from **88.27%** to **90.35%** weighted line coverage.
 
 - Coverage and formatting gates (#382): refreshed `Tests/TEST_COVERAGE.md`
   from the current code-coverage JSON (231 files, **88.27%** weighted line

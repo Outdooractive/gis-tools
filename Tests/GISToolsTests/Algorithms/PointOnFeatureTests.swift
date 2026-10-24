@@ -212,4 +212,49 @@ struct PointOnFeatureTests {
         #expect(MultiPoint().pointOnFeature() == nil)
     }
 
+    @Test
+    func multiPointAndMultiLineStringFallbacks() throws {
+        let multiPoint = try #require(MultiPoint([
+            Coordinate3D(latitude: -1.0, longitude: 0.0),
+            Coordinate3D(latitude: 1.0, longitude: 0.0),
+            Coordinate3D(latitude: 0.0, longitude: 0.0),
+        ]))
+        let point = try #require(multiPoint.pointOnFeature())
+        #expect(multiPoint.covers(point))
+
+        let multiLine = try #require(MultiLineString([
+            [
+                Coordinate3D(latitude: 0.0, longitude: -1.0),
+                Coordinate3D(latitude: 0.0, longitude: 1.0),
+            ],
+            [
+                Coordinate3D(latitude: 1.0, longitude: 0.0),
+                Coordinate3D(latitude: -1.0, longitude: 0.0),
+            ],
+        ]))
+        let linePoint = try #require(multiLine.pointOnFeature())
+        #expect(multiLine.covers(linePoint))
+    }
+
+    @Test
+    func geometryAndFeatureCollectionFallbacks() throws {
+        let point = Point(Coordinate3D(latitude: 2.0, longitude: 3.0))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: 1.0),
+            Coordinate3D(latitude: 1.0, longitude: -1.0),
+            Coordinate3D(latitude: -1.0, longitude: -1.0),
+        ]]))
+        let geometryCollection = GeometryCollection([point, polygon])
+        #expect(geometryCollection.coordinateOnFeature == point.coordinate)
+
+        let featureCollection = FeatureCollection([
+            Feature(polygon),
+            Feature(point),
+        ])
+        let result = try #require(featureCollection.coordinateOnFeature)
+        #expect(polygon.covers(Point(result)))
+    }
+
 }
