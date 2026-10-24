@@ -39,8 +39,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build without Graph trait
         run: swift build
-      - name: Test with Graph trait
-        run: swift test --traits EnableGraphAPI
+      - name: Ensure Python
+        run: command -v python3 >/dev/null || (apt-get update && apt-get install -y python3)
+      - name: Test with Graph trait and coverage
+        run: swift test --traits EnableGraphAPI --enable-code-coverage
+      - name: Coverage gate
+        run: python3 scripts/refresh_coverage_report.py --minimum 87.5 --check
 
   linux-traits:
     name: build (linux traits)
@@ -54,6 +58,29 @@ jobs:
         run: swift test --traits EnableMeterConversionExtensions
       - name: Test measurement conversion trait
         run: swift test --traits EnableMeasurementConversionExtensions
+
+  format:
+    name: format
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_REF: ${{ github.base_ref }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install SwiftFormat
+        run: |
+          curl -sSL https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux.zip -o /tmp/swiftformat.zip
+          unzip -q /tmp/swiftformat.zip -d /tmp/swiftformat
+          chmod +x /tmp/swiftformat/swiftformat_linux
+          sudo mv /tmp/swiftformat/swiftformat_linux /usr/local/bin/swiftformat
+      - name: Lint changed Swift files
+        run: |
+          git fetch origin "${BASE_REF}"
+          python3 scripts/check_swiftformat_changes.py --base "origin/${BASE_REF}"
 
   api-compatibility:
     name: API compatibility

@@ -154,6 +154,15 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Coverage and formatting gates (#382): refreshed `Tests/TEST_COVERAGE.md`
+  from the current code-coverage JSON (231 files, **88.27%** weighted line
+  coverage), added a documented **87.5%** CI coverage floor, a
+  `scripts/refresh_coverage_report.py` refresh/gate command, and a
+  changed-file SwiftFormat lint job using `.swiftformat` and the pinned
+  `.swift-version`, failing when a PR adds new violations relative to its base
+  branch. Exact local commands are
+  documented in the README and the coverage report.
+
 - Deterministic property-based and differential tests (#381): seeded
   generators now exercise GeoJSON, WKB, WKT and TWKB round-trips, overlay
   partition invariants (projected and antimeridian-crossing), simplify and
