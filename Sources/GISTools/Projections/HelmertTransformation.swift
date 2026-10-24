@@ -9,7 +9,7 @@ import Foundation
 /// parameters follow the **position vector convention** and are listed in
 /// the direction *datum → WGS84* (the direction the EPSG registry uses).
 /// Both directions are supported:
-/// ``transform(datumToWgs84:)`` and ``transform(wgs84ToDatum:)``.
+/// ``transform(datumToWgs84:)`` and `transform(wgs84ToDatum:projection:)`.
 ///
 /// The transformation operates on geocentric (ECEF) coordinates, so the
 /// datum's ``Datum/ellipsoid`` must be correct: the geocentric legs use it.

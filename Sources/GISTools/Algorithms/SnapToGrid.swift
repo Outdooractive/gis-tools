@@ -22,8 +22,8 @@ extension GeoJson {
     /// ```
     ///
     /// - Warning: Snapping can produce invalid geometries — rings with fewer than 3
-    ///   distinct points, self‑intersections, or collapsed features. Use ``GeoJson/isValid``
-    ///   or ``GeoJson/validated`` to check the result before passing it downstream.
+    ///   distinct points, self‑intersections, or collapsed features. Use `isValid`
+    ///   or `validated` to check the result before passing it downstream.
     ///
     /// - Parameter tolerance: Grid spacing in the CRS unit (must be > 0).
     /// - Returns: A new geometry with coordinates snapped to the nearest grid point.

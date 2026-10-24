@@ -665,7 +665,7 @@ extension FeatureCollection {
     /// Parse GeoJSON data as a `FeatureCollection`, reporting issues.
     ///
     /// Any GeoJSON object is normalized into a collection, matching
-    /// ``FeatureCollection/init(_:calculateBoundingBox:)``.
+    /// `init(_:calculateBoundingBox:)`.
     ///
     /// - Parameters:
     ///    - jsonData: The JSON data
@@ -700,7 +700,7 @@ extension FeatureCollection {
     /// Parse a GeoJSON string as a `FeatureCollection`, reporting issues.
     ///
     /// Any GeoJSON object is normalized into a collection, matching
-    /// ``FeatureCollection/init(_:calculateBoundingBox:)``.
+    /// `init(_:calculateBoundingBox:)`.
     ///
     /// - Parameters:
     ///    - jsonString: The JSON string
@@ -724,7 +724,7 @@ extension FeatureCollection {
     /// reporting issues.
     ///
     /// Any GeoJSON object is normalized into a collection, matching
-    /// ``FeatureCollection/init(_:calculateBoundingBox:)``.
+    /// `init(_:calculateBoundingBox:)`.
     ///
     /// - Parameters:
     ///    - json: A GeoJSON-compatible Swift object

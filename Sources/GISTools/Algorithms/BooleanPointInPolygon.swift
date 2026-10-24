@@ -116,7 +116,7 @@ extension Ring {
     /// Determines if *Coordinate3D* resides in the interior of the *Ring*.
     ///
     /// This is the OGC/PostGIS `ST_Contains` semantics for a point: points on the
-    /// ring's boundary are **not** contained. Use ``covers(_:gridSize:)`` to
+    /// ring's boundary are **not** contained. Use `covers(_:gridSize:)` to
     /// include boundary points.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -129,7 +129,7 @@ extension Ring {
     /// Determines if *Coordinate3D* is covered by the *Ring*.
     ///
     /// This is the OGC/PostGIS `ST_Covers` semantics for a point: points on the
-    /// ring's boundary are covered. Use ``contains(_:gridSize:)`` for
+    /// ring's boundary are covered. Use `contains(_:gridSize:)` for
     /// interior-only containment.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -236,7 +236,7 @@ extension Polygon {
     /// Determines if *Coordinate3D* resides in the interior of the *Polygon*.
     ///
     /// This is the OGC/PostGIS `ST_Contains` semantics for a point: points on the
-    /// outer or hole boundary are **not** contained. Use ``covers(_:gridSize:)``
+    /// outer or hole boundary are **not** contained. Use `covers(_:gridSize:)`
     /// to include boundary points.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -249,7 +249,7 @@ extension Polygon {
     /// Determines if *Coordinate3D* is covered by the *Polygon*.
     ///
     /// This is the OGC/PostGIS `ST_Covers` semantics for a point: points on the
-    /// outer or hole boundary are covered. Use ``contains(_:gridSize:)`` for
+    /// outer or hole boundary are covered. Use `contains(_:gridSize:)` for
     /// interior-only containment.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -328,7 +328,7 @@ extension MultiPolygon {
     /// Determines if *Coordinate3D* resides in the interior of the *MultiPolygon*.
     ///
     /// This is the OGC/PostGIS `ST_Contains` semantics for a point: points on any
-    /// polygon boundary are **not** contained. Use ``covers(_:gridSize:)`` to
+    /// polygon boundary are **not** contained. Use `covers(_:gridSize:)` to
     /// include boundary points.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -341,7 +341,7 @@ extension MultiPolygon {
     /// Determines if *Coordinate3D* is covered by the *MultiPolygon*.
     ///
     /// This is the OGC/PostGIS `ST_Covers` semantics for a point: points on any
-    /// polygon boundary are covered. Use ``contains(_:gridSize:)`` for
+    /// polygon boundary are covered. Use `contains(_:gridSize:)` for
     /// interior-only containment.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -386,7 +386,7 @@ extension GeometryCollection {
     ///
     /// Only polygonal members (``PolygonGeometry`` and nested
     /// ``GeometryCollection``s) contribute to the result, matching
-    /// ``contains(_:gridSize:)``. The interior of any member takes precedence
+    /// `contains(_:gridSize:)`. The interior of any member takes precedence
     /// over boundaries of other members.
     ///
     /// - Parameter coordinate: The coordinate to check
@@ -477,7 +477,7 @@ extension Feature {
     /// Determines where *Coordinate3D* lies relative to the *Feature*.
     ///
     /// Only polygonal geometries (``PolygonGeometry`` and ``GeometryCollection``)
-    /// contribute, matching ``contains(_:gridSize:)``.
+    /// contribute, matching `contains(_:gridSize:)`.
     ///
     /// - Parameter coordinate: The coordinate to check
     /// - Parameter gridSize: Snap coordinates to a grid of the given size before checking (default `nil`).
@@ -549,7 +549,7 @@ extension FeatureCollection {
 
     /// Determines where *Coordinate3D* lies relative to the *FeatureCollection*.
     ///
-    /// Each feature contributes through ``Feature/locate(_:gridSize:)``. A
+    /// Each feature contributes through `locate(_:gridSize:)`. A
     /// coordinate interior to any feature is `.interior`; otherwise a boundary
     /// of any feature makes it `.boundary`.
     ///

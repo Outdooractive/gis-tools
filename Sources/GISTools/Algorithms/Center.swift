@@ -9,7 +9,7 @@ extension GeoJson {
 
     /// Returns the absolute center point of the receiver.
     ///
-    /// When all coordinates have an ``altitude`` value, the result carries
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the result carries
     /// the midpoint altitude of the bounding box corners.
     public var center: Point? {
         guard let boundingBox = boundingBox ?? calculateBoundingBox() else { return nil }
@@ -26,7 +26,7 @@ extension GeoJson {
     /// Calculates the centroid using the mean of all vertices. This lessens the effect
     /// of small islands and artifacts when calculating the centroid of a set of polygons.
     ///
-    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the result carries the
     /// arithmetic mean of all altitudes.
     public var centroid: Point? {
         let allCoordinates = centroidCoordinates
@@ -90,7 +90,7 @@ extension FeatureCollection {
 
     /// Returns the mean center of the receiver. Can be weighted.
     ///
-    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the result carries the
     /// weighted mean of all altitudes.
     ///
     /// - Parameter weightAttribute: The property name used to weight the center
@@ -158,7 +158,7 @@ extension FeatureCollection {
     /// Weiszfeld algorithm. The median center is the point that requires the
     /// least total travel distance from all points in the dataset.
     ///
-    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the result carries the
     /// median altitude computed with the same Weiszfeld iteration.
     ///
     /// - Parameters:
@@ -317,7 +317,7 @@ extension GeoJson {
     /// Uses the centroid of polygon formula (signed area method) for polygons,
     /// and falls back to the convex hull's center of mass for other geometries.
     ///
-    /// When all coordinates have an ``altitude`` value, the result carries the
+    /// When all coordinates have an ``Coordinate3D/altitude`` value, the result carries the
     /// signed-area-weighted mean of all altitudes.
     public var centerOfMass: Point? {
         if let feature = self as? Feature {

@@ -5,14 +5,14 @@ import Foundation
 ///
 /// The query string syntax supports:
 /// - Literal values (strings, numbers) for full-text search across all properties
-/// - Property path access via ``.``-separated keys and ``[index]`` subscripts
-/// - Comparisons: ``==``, ``!=``, ``>``, ``>=``, ``<``, ``<=``, ``=~`` (regex),
-///   ``=*`` (contains), ``=^`` (starts with), ``=$`` (ends with)
-/// - Set membership: ``.class in ["primary", "secondary"]``
-/// - Boolean operators: ``and``, ``or``, ``not`` (+ ``exists`` for presence check)
-/// - Spatial filters: ``near(lat,lon,tolerance)``, ``within(minLon,minLat,maxLon,maxLat)``,
-///   ``intersects(minLon,minLat,maxLon,maxLat)``
-/// - Grouping with parentheses: ``(A AND B) OR C``
+/// - Property path access via `.`-separated keys and `[index]` subscripts
+/// - Comparisons: `==`, `!=`, `>`, `>=`, `<`, `<=`, `=~` (regex),
+///   `=*` (contains), `=^` (starts with), `=$` (ends with)
+/// - Set membership: `.class in ["primary", "secondary"]`
+/// - Boolean operators: `and`, `or`, `not` (+ `exists` for presence check)
+/// - Spatial filters: `near(lat,lon,tolerance)`, `within(minLon,minLat,maxLon,maxLat)`,
+///   `intersects(minLon,minLat,maxLon,maxLat)`
+/// - Grouping with parentheses: `(A AND B) OR C`
 ///
 /// Example queries:
 /// ```
@@ -33,37 +33,37 @@ public struct QueryParser {
         /// A comparison operator between two values.
         public enum Comparison: Equatable {
 
-            /// Equal to (``==``).
+            /// Equal to (`==`).
             case equals
 
-            /// Not equal to (``!=``).
+            /// Not equal to (`!=`).
             case notEquals
 
-            /// Greater than (``>``).
+            /// Greater than (`>`).
             case greaterThan
 
-            /// Greater than or equal to (``>=``).
+            /// Greater than or equal to (`>=`).
             case greaterThanOrEqual
 
-            /// Less than (``<``).
+            /// Less than (`<`).
             case lessThan
 
-            /// Less than or equal to (``<=``).
+            /// Less than or equal to (`<=`).
             case lessThanOrEqual
 
-            /// Regular expression match (``=~``).
+            /// Regular expression match (`=~`).
             case regex
 
-            /// String contains (``=*``).
+            /// String contains (`=*`).
             case contains
 
-            /// String starts with (``=^``).
+            /// String starts with (`=^`).
             case startsWith
 
-            /// String ends with (``=$``).
+            /// String ends with (`=$`).
             case endsWith
 
-            /// Value in a set (``in``).
+            /// Value in a set (`in`).
             case `in`
         }
 
@@ -79,7 +79,7 @@ public struct QueryParser {
             /// Logical NOT.
             case not
 
-            /// Truthy-value check. Evaluates ``true`` if the preceding value
+            /// Truthy-value check. Evaluates `true` if the preceding value
             /// is non-nil.
             case exists
         }
@@ -103,25 +103,25 @@ public struct QueryParser {
         /// A literal value token.
         case literal(AnyHashable)
 
-        /// A set of literal values, used with the ``.in`` comparison.
+        /// A set of literal values, used with the `.in` comparison.
         case literalSet([AnyHashable])
 
-        /// A spatial proximity predicate: ``near(latitude, longitude, tolerance)``.
+        /// A spatial proximity predicate: `near(latitude, longitude, tolerance)`.
         case near(Coordinate3D, Double)
 
         /// A full-text search token that matches any property value.
         case searchValues(String)
 
         /// A property value reference, composed of key path segments and/or
-        /// array indices (e.g. ``.properties.name``, ``.tags[0]``).
+        /// array indices (e.g. `.properties.name`, `.tags[0]`).
         case value([KeyOrIndex])
 
-        /// A spatial bounding-box predicate: ``within(minLon, minLat, maxLon, maxLat)``.
-        /// Returns ``true`` if the feature's geometry is fully contained by the box.
+        /// A spatial bounding-box predicate: `within(minLon, minLat, maxLon, maxLat)`.
+        /// Returns `true` if the feature's geometry is fully contained by the box.
         case within(BoundingBox)
 
-        /// A spatial bounding-box intersection predicate: ``intersects(minLon, minLat, maxLon, maxLat)``.
-        /// Returns ``true`` if the feature's geometry intersects the box.
+        /// A spatial bounding-box intersection predicate: `intersects(minLon, minLat, maxLon, maxLat)`.
+        /// Returns `true` if the feature's geometry intersects the box.
         case intersects(BoundingBox)
     }
 
@@ -177,7 +177,7 @@ public struct QueryParser {
     /// Creates a parser with a pre-built expression pipeline, skipping
     /// string parsing.
     ///
-    /// - Parameter pipeline: An ordered array of ``Expression`` tokens in
+    /// - Parameter pipeline: An ordered array of `Expression` tokens in
     ///   Reverse Polish Notation.
     public init(pipeline: [Expression]) {
         self.reader = nil
@@ -406,7 +406,7 @@ public struct QueryParser {
         return result != nil
     }
 
-    /// Recursively converts a ``[String: Sendable]`` dictionary to ``[String: AnyHashable]``,
+    /// Recursively converts a `[String: Sendable]` dictionary to `[String: AnyHashable]`,
     /// handling nested dictionaries and arrays.
     private static func convertToAnyHashable(_ dict: [String: Sendable]) -> [String: AnyHashable] {
         dict.mapValues { value in
@@ -437,7 +437,7 @@ public struct QueryParser {
         }
     }
 
-    /// Converts an ``AnyHashable`` numeric value to ``Double`` for cross-type ordered comparisons.
+    /// Converts an `AnyHashable` numeric value to `Double` for cross-type ordered comparisons.
     /// Handles all standard Swift integer and floating-point types.
     private static func toDouble(_ value: AnyHashable) -> Double? {
         if let v = value as? Double { return v }

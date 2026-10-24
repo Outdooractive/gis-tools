@@ -4,7 +4,7 @@ import CoreLocation
 import Foundation
 
 /// Controls how convex corners are joined during buffering.
-/// The fidelity of rounded joins is controlled by the ``steps`` parameter.
+/// The fidelity of rounded joins is controlled by the `steps` parameter.
 public enum BufferJoinType: Sendable {
 
     /// Cut off mitered corners with a straight line at the buffer distance.
@@ -14,13 +14,13 @@ public enum BufferJoinType: Sendable {
     /// - Parameter limit: Maximum ratio of miter length to buffer distance (default `2.0`).
     case miter(limit: Double = 2.0)
 
-    /// Round corners (fidelity controlled by ``steps``).
+    /// Round corners (fidelity controlled by `steps`).
     case round
 
 }
 
 /// Controls how the ends of open buffer paths are terminated.
-/// Fidelity of round ends is controlled by the ``steps`` parameter.
+/// Fidelity of round ends is controlled by the `steps` parameter.
 public enum BufferEndType: Sendable {
 
     /// Flat end at the last vertex, perpendicular to the line direction.
@@ -29,7 +29,7 @@ public enum BufferEndType: Sendable {
     /// Closed polygon: the path forms a closed ring (no end caps).
     case polygon
 
-    /// Rounded end cap (fidelity controlled by ``steps``).
+    /// Rounded end cap (fidelity controlled by `steps`).
     case round
 
     /// Extended by half the buffer width beyond the last vertex.

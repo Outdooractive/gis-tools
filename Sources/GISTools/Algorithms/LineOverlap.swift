@@ -75,7 +75,7 @@ extension GeoJson {
     /// Returns the overlapping segments between the receiver and the other geometry.
     ///
     /// All projections are supported — the 2‑D segment comparison
-    /// operates on raw ``longitude``/``latitude`` values (ECEF X/Y
+    /// operates on raw ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values (ECEF X/Y
     /// for EPSG:4978).
     ///
     /// - Parameters:

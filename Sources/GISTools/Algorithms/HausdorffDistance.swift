@@ -44,7 +44,7 @@ extension GeoJson {
     /// Computes the Hausdorff distance between two geometries.
     ///
     /// The Hausdorff distance measures how far two subsets of a metric space
-    /// are from each other. Unlike ``frechetDistance(from:distanceFunction:segmentLength:)``,
+    /// are from each other. Unlike `frechetDistance(from:distanceFunction:segmentLength:)`,
     /// Hausdorff only considers the maximum distance from any point in one set
     /// to the nearest point in the other set, without accounting for point ordering.
     ///

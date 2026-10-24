@@ -249,7 +249,7 @@ extension Feature {
 
     /// Update the bounding box, optionally only if it hasn't been calculated yet.
     ///
-    /// - Parameter onlyIfNecessary: Only update if the receiver doesn't already have one
+    /// - Parameter ifNecessary: Only update if the receiver doesn't already have one
     /// - Returns: The updated bounding box
     @discardableResult
     public mutating func updateBoundingBox(

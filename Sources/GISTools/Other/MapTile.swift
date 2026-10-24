@@ -178,7 +178,7 @@ public struct MapTile: CustomStringConvertible, Sendable {
             z: bestZ)
     }
 
-    /// Creates a map tile from a ``String`` in the format `"z/x/y"`.
+    /// Creates a map tile from a `String` in the format `"z/x/y"`.
     ///
     /// - Parameters:
     ///    - string: A tile string in the format `"z/x/y"`

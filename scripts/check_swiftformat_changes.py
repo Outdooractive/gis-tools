@@ -17,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / ".swiftformat"
+SWIFT_VERSION = (ROOT / ".swift-version").read_text().strip()
 
 
 def changed_files(base: str) -> list[Path]:
@@ -30,7 +31,15 @@ def changed_files(base: str) -> list[Path]:
 
 def violation_count(path: Path, swiftformat: str) -> tuple[int, str]:
     result = subprocess.run(
-        [swiftformat, "--lint", "--config", str(CONFIG), str(path)],
+        [
+            swiftformat,
+            "--lint",
+            "--config",
+            str(CONFIG),
+            "--swiftversion",
+            SWIFT_VERSION,
+            str(path),
+        ],
         cwd=ROOT,
         capture_output=True,
         text=True,

@@ -14,7 +14,7 @@ extension Coordinate3D {
     /// For projections other than EPSG:4326 the computation is performed
     /// in EPSG:4326 and the result is projected back.
     ///
-    /// When both coordinates have an ``altitude`` value, the result carries the
+    /// When both coordinates have an ``Coordinate3D/altitude`` value, the result carries the
     /// arithmetic mean of the two altitudes. Otherwise the result has no altitude.
     ///
     /// - Parameter other: The other coordinate
@@ -57,7 +57,7 @@ extension Point {
     /// The midpoint is calculated geodesically, meaning the curvature of the earth
     /// is taken into account.
     ///
-    /// When both points have an ``altitude`` value, the result carries the
+    /// When both points have an ``Coordinate3D/altitude`` value, the result carries the
     /// arithmetic mean of the two altitudes. Otherwise the result has no altitude.
     ///
     /// - Parameter other: The other point

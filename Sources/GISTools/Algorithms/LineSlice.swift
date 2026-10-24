@@ -14,7 +14,7 @@ extension LineString {
     /// check operates on ``Coordinate3D`` values regardless of CRS.
     ///
     /// When the interpolated start/stop points fall on a segment whose
-    /// endpoints both have an ``altitude`` value, the result carries a
+    /// endpoints both have an ``Coordinate3D/altitude`` value, the result carries a
     /// linearly interpolated altitude. Otherwise the new points have
     /// no altitude.
     ///

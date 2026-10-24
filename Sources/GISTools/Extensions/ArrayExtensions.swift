@@ -24,7 +24,7 @@ extension Array where Element == Coordinate3D {
         map({ Point($0) })
     }
 
-    /// Creates a ``MultiPoint`` geometry from the array of ``Coordinate3D`` values, or ``nil`` if the array is empty.
+    /// Creates a ``MultiPoint`` geometry from the array of ``Coordinate3D`` values, or `nil` if the array is empty.
     public var asMultiPoint: MultiPoint? {
         MultiPoint(self)
     }
@@ -34,7 +34,7 @@ extension Array where Element == Coordinate3D {
         MultiPoint(unchecked: self)
     }
 
-    /// Creates a ``LineString`` geometry from the array of ``Coordinate3D`` values, or ``nil`` if the array is not valid.
+    /// Creates a ``LineString`` geometry from the array of ``Coordinate3D`` values, or `nil` if the array is not valid.
     public var asLineString: LineString? {
         LineString(self)
     }
@@ -44,7 +44,7 @@ extension Array where Element == Coordinate3D {
         LineString(unchecked: self)
     }
 
-    /// Creates a ``Polygon`` geometry from the array of ``Coordinate3D`` values treated as a single ring, or ``nil`` if not valid.
+    /// Creates a ``Polygon`` geometry from the array of ``Coordinate3D`` values treated as a single ring, or `nil` if not valid.
     public var asPolygon: Polygon? {
         Polygon([self])
     }
@@ -54,7 +54,7 @@ extension Array where Element == Coordinate3D {
         Polygon(unchecked: [self])
     }
 
-    /// Creates a ``Ring`` from the array of ``Coordinate3D`` values, or ``nil`` if the ring is not valid.
+    /// Creates a ``Ring`` from the array of ``Coordinate3D`` values, or `nil` if the ring is not valid.
     public var asRing: Ring? {
         Ring(self)
     }

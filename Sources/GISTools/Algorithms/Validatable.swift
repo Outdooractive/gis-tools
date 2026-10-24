@@ -11,7 +11,7 @@ public protocol ValidatableGeoJson {
     /// Check if the geometry has enough coordinates to make structural sense.
     ///
     /// This is a structural check only. For OGC/PostGIS topology validity,
-    /// use ``isValid``.
+    /// use `isValid`.
     ///
     /// - Note: RFC 7946 §3.2 allows a Feature with `"geometry": null`. Such an
     ///   unlocated feature is considered structurally valid; its other members
@@ -21,13 +21,13 @@ public protocol ValidatableGeoJson {
     /// Check if the geometry is topologically valid according to OGC rules.
     var isValid: Bool { get }
 
-    /// A human-readable reason why ``isValid`` is `false`, or `nil` when valid.
+    /// A human-readable reason why `isValid` is `false`, or `nil` when valid.
     var isValidReason: String? { get }
 
     /// Whether the geometry is simple (no self-intersections).
     var isSimple: Bool { get }
 
-    /// Returns `self` when ``isValid`` is `true`, otherwise `nil`.
+    /// Returns `self` when `isValid` is `true`, otherwise `nil`.
     var validated: Self? { get }
 
 }

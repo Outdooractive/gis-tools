@@ -18,7 +18,7 @@ extension GeoJson {
     /// MultiPolygon behaves like Polygon in these comparisons.
     ///
     /// All projections are supported — the 2‑D checks operate on raw
-    /// ``longitude``/``latitude`` values regardless of CRS. For
+    /// ``Coordinate3D/longitude``/``Coordinate3D/latitude`` values regardless of CRS. For
     /// ``Projection/epsg4978`` (ECEF) this means the XY plane is used;
     /// altitude/Z is ignored.
     ///

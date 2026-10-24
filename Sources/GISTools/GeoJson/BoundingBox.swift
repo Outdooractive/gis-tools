@@ -986,7 +986,7 @@ extension BoundingBox {
     /// For projections without a defined extent (geocentric projections or
     /// bounding boxes without an SRID) this is always `true`.
     ///
-    /// - SeeAlso: ``Projection/validExtent``
+    /// - SeeAlso: `validExtent`
     public var isValid: Bool {
         southWest.isValid
             && northEast.isValid

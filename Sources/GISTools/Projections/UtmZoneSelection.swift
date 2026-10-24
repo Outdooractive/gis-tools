@@ -101,7 +101,7 @@ extension Projection {
     /// using the EPSG banding including the Norway ("32V") and Svalbard
     /// ("31X/32X/33X/35X/37X") exceptions.
     ///
-    /// See ``UtmDefinition/zone(for:)`` for the full documentation.
+    /// See `UtmDefinition/zone(for:)` for the full documentation.
     ///
     /// - Parameter coordinate: a WGS84 latitude/longitude coordinate
     /// - Returns: The zone's projection, or `nil` for coordinates outside
