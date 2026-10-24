@@ -89,19 +89,37 @@ extension PolygonGeometry {
                     }
                 }
             }
-            return MultiPolygon(unchecked: [base] + islands)
+            return Self.cutAtSeam(MultiPolygon(unchecked: [base] + islands), enabled: self.crossesAntimeridian)
         }
 
         // Partial overlap/crossing masks need true overlay difference.
         guard let difference = outer.difference(with: self) else { return nil }
 
         if let multiPolygon = difference as? MultiPolygon {
-            return multiPolygon.polygons.isEmpty ? nil : multiPolygon
+            return multiPolygon.polygons.isEmpty
+                ? nil
+                : Self.cutAtSeam(multiPolygon, enabled: self.crossesAntimeridian)
         }
         if let polygon = difference as? Polygon {
-            return MultiPolygon(unchecked: [polygon])
+            return Self.cutAtSeam(MultiPolygon(unchecked: [polygon]), enabled: self.crossesAntimeridian)
         }
         return nil
+    }
+
+    /// Cuts a mask result at the wraparound axis so every emitted polygon is
+    /// non-crossing.
+    private static func cutAtSeam(
+        _ multiPolygon: MultiPolygon,
+        enabled: Bool
+    ) -> MultiPolygon {
+        guard enabled, multiPolygon.crossesAntimeridian else { return multiPolygon }
+
+        let parts = multiPolygon.cutAtAntimeridian().features.compactMap {
+            $0.geometry as? Polygon
+        }
+        return parts.isEmpty
+            ? multiPolygon
+            : MultiPolygon(unchecked: parts)
     }
 
 }
