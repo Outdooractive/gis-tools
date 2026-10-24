@@ -154,6 +154,13 @@ The deprecated aliases from 2.x have been removed. Use the current names:
 
 ### Added
 
+- Deterministic property-based and differential tests (#381): seeded
+  generators now exercise GeoJSON, WKB, WKT and TWKB round-trips, overlay
+  partition invariants (projected and antimeridian-crossing), simplify and
+  buffer invariants. Shapely-generated overlay, buffer and polygonize fixtures
+  are covered by a new differential test suite; the generator script is
+  development-only and the package keeps no third-party runtime dependency.
+
 - Transparent gzip support for GeoJSON data and file loading. The `contentsOf:`
   and `jsonData:` entry points detect the gzip magic bytes and decompress with
   the system zlib library; `GeoJsonReader`, `GeoJsonParser`, `JSONValue` and all
