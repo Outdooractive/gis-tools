@@ -92,13 +92,10 @@ struct MaskTests {
             Coordinate3D(latitude: 10.0, longitude: 10.0),
         ]]))
         let multiPolygon = try #require(MultiPolygon([poly1, poly2]))
-        let result = multiPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == multiPolygon.projection)
-        if let result {
-            #expect(result.polygons.count == 1)
-            #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
-        }
+        let result = try #require(multiPolygon.mask())
+        #expect(result.projection == multiPolygon.projection)
+        #expect(result.polygons.count == 1)
+        #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
     }
 
     /// Mask with a custom outer polygon.
@@ -204,16 +201,24 @@ struct MaskTests {
             Coordinate3D(latitude: -5.0, longitude: -179.0),
             Coordinate3D(latitude: -5.0, longitude: 179.0),
         ]]))
-        let result = maskPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == .epsg4326)
-        if let result {
-            #expect(result.polygons.count == 1)
-            #expect(result.polygons[0].rings.count == 2)
-        }
+        let outer = try #require(Polygon([[
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 170.0),
+            Coordinate3D(latitude: 10.0, longitude: 190.0),
+            Coordinate3D(latitude: -10.0, longitude: 190.0),
+            Coordinate3D(latitude: -10.0, longitude: 170.0),
+        ]]))
+        let worldResult = try #require(maskPolygon.mask())
+        #expect(!worldResult.crossesAntimeridian)
+
+        let result = try #require(maskPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == .epsg4326)
+        #expect(result.polygons.count == 2)
+        #expect(!result.crossesAntimeridian)
+        #expect(abs(result.area - (outer.area - maskPolygon.area)) < outer.area * 0.000001)
     }
 
-    /// A mask crossing the antimeridian with a non-crossing outer polygon.
+    /// A mask crossing the antimeridian with a crossing outer polygon.
     @Test
     func antimeridianCustomOuter() throws {
         let outer = try #require(Polygon([[
@@ -230,13 +235,10 @@ struct MaskTests {
             Coordinate3D(latitude: -5.0, longitude: -175.0),
             Coordinate3D(latitude: -5.0, longitude: 175.0),
         ]]))
-        let result = maskPolygon.mask(outerPolygon: outer)
-        #expect(result != nil)
-        #expect(result?.projection == maskPolygon.projection)
-        if let result {
-            #expect(result.polygons.count == 1)
-            #expect(result.polygons[0].rings.count == 2)
-        }
+        let result = try #require(maskPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == maskPolygon.projection)
+        #expect(!result.crossesAntimeridian)
+        #expect(abs(result.area - (outer.area - maskPolygon.area)) < outer.area * 0.000001)
     }
 
     /// A MultiPolygon mask where both polygons cross the antimeridian, punched into the world.
@@ -257,13 +259,18 @@ struct MaskTests {
             Coordinate3D(latitude: 10.0, longitude: 178.0),
         ]]))
         let multiPolygon = try #require(MultiPolygon([poly1, poly2]))
-        let result = multiPolygon.mask()
-        #expect(result != nil)
-        #expect(result?.projection == multiPolygon.projection)
-        if let result {
-            #expect(result.polygons.count == 1)
-            #expect(result.polygons[0].rings.count == 3) // outer + 2 holes
-        }
+        let outer = try #require(Polygon([[
+            Coordinate3D(latitude: -20.0, longitude: 170.0),
+            Coordinate3D(latitude: 25.0, longitude: 170.0),
+            Coordinate3D(latitude: 25.0, longitude: 190.0),
+            Coordinate3D(latitude: -20.0, longitude: 190.0),
+            Coordinate3D(latitude: -20.0, longitude: 170.0),
+        ]]))
+        let result = try #require(multiPolygon.mask(outerPolygon: outer))
+        #expect(result.projection == multiPolygon.projection)
+        #expect(!result.crossesAntimeridian)
+        let expected = outer.area - multiPolygon.area
+        #expect(abs(result.area - expected) < abs(expected) * 0.000001)
     }
 
 

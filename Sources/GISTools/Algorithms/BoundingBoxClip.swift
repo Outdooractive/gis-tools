@@ -277,8 +277,6 @@ extension FeatureCollection {
 
 extension BoundingBox {
 
-    // TODO: This is ugly Swift code
-
     /// Splits a crossing bounding box into its non-crossing world windows.
     /// Uses the projection's wraparound extent (180° for EPSG:4326,
     /// `originShift` for EPSG:3857), unlike `boundingBoxGeometry` which is
@@ -288,25 +286,18 @@ extension BoundingBox {
               southWest.x > northEast.x
         else { return [self] }
 
+        let south = southWest.y
+        let north = northEast.y
+
+        func window(west: Double, east: Double) -> BoundingBox {
+            BoundingBox(
+                southWest: Coordinate3D(x: west, y: south, projection: projection),
+                northEast: Coordinate3D(x: east, y: north, projection: projection))
+        }
+
         return [
-            BoundingBox(
-                southWest: Coordinate3D(
-                    x: southWest.x,
-                    y: southWest.y,
-                    projection: projection),
-                northEast: Coordinate3D(
-                    x: extent,
-                    y: northEast.y,
-                    projection: projection)),
-            BoundingBox(
-                southWest: Coordinate3D(
-                    x: -extent,
-                    y: southWest.y,
-                    projection: projection),
-                northEast: Coordinate3D(
-                    x: northEast.x,
-                    y: northEast.y,
-                    projection: projection)),
+            window(west: southWest.x, east: extent),
+            window(west: -extent, east: northEast.x),
         ]
     }
 

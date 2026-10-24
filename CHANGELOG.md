@@ -304,6 +304,38 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip split-box cleanup (#376): removed the stale
+  `TODO: This is ugly Swift code` and factored the two crossing-box windows
+  through a local constructor, avoiding duplicated coordinate boilerplate. No
+  clipping behavior changed.
+
+- Open-ended and reversed `LineString.slice` (#375): `nil` start/end now
+  have exact regression coverage for the documented first/last defaults, all
+  projections, antimeridian crossing, altitude interpolation and the
+  `Feature.slice` wrapper. Start/end points on the same segment are now
+  ordered along that segment, so reversed same-segment slices no longer emit
+  coordinates in reverse line order. Removed the stale open-ended-slice TODO.
+
+- MapTile children at maximum zoom (#370): `child` returns the receiver
+  unchanged and `children` returns an empty array when `z == 32`, instead of
+  shifting x/y and emitting invalid same-zoom tiles. Zoom 31 still produces
+  four valid zoom-32 children.
+
+- Voronoi duplicate and collinear sites (#369): duplicate coordinates are
+  collapsed to the first feature (including its `id`, properties and foreign
+  members) before triangulation, and neighbours are resolved from the
+  deduplicated sites instead of `firstIndex` lookups. One and two distinct
+  sites, and any number of collinear sites, now use direct half-plane clipping
+  rather than returning an empty diagram. The documented contract changed from
+  "at least three input points" to "one cell per distinct point site".
+
+- Mask result is cut at the antimeridian (#368): when the mask itself crosses
+  the seam, the assembled `MultiPolygon` is cut at ±180° (holes and islands
+  preserved) so the result never reports `crossesAntimeridian == true`.
+  Non-crossing masks keep the direct hole/island construction. Tests assert
+  the default world mask is non-crossing and a crossing mask with a custom
+  outer preserves the exact world-minus-mask area.
+
 - BoundingBoxClip line handling across the antimeridian (#367): line clipping
   now splits a crossing clip box into its projection-aware non-crossing
   windows, unwraps and shifts the line into each window's world copy, clips
