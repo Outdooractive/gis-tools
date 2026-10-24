@@ -70,7 +70,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch base branch
-        run: git fetch origin "${BASE_REF}"
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git fetch origin "${BASE_REF}"
       - name: Check public API against base branch
         shell: bash
         run: |
