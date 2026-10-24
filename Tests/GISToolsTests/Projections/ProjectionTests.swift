@@ -314,8 +314,8 @@ struct ProjectionTests {
     /// Validates meter-to-CRS-unit conversion.
     @Test
     func crsLengthFromMeters() async throws {
-        #expect(Projection.epsg4326.crsLength(fromMeters: 111_325.0) == 1.0)
-        #expect(abs(Projection.epsg4326.crsLength(fromMeters: 55_662.5) - 0.5) < 0.0000000001)
+        #expect(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance) == 1.0)
+        #expect(abs(Projection.epsg4326.crsLength(fromMeters: GISTool.oneDegreeLatitudeDistance / 2.0) - 0.5) < 0.0000000001)
         #expect(Projection.epsg3857.crsLength(fromMeters: 1000.0) == 1000.0)
         #expect(Projection.epsg4978.crsLength(fromMeters: 1000.0) == 1000.0)
         #expect(Projection.noSRID.crsLength(fromMeters: 1000.0) == 1000.0)

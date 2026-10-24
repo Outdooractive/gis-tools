@@ -304,6 +304,15 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Geographic and unit-conversion constants (#388): added canonical
+  `GISTool.oneDegreeLatitudeDistance`, `metersPerDegreeLongitude(atLatitude:)`,
+  `conservativeMetersPerDegree` and documented length/area conversion
+  constants. `Conversions`, `RectangleGrid`, `Graph`, `Clusters`, `Projection`
+  and the trait-gated meter extensions now use them instead of scattered
+  `111_000`/`111_320`/`111_325`, mile/nautical-mile and imperial-unit
+  literals. The deliberately conservative DBSCAN search bound remains
+  separate and documented.
+
 - BoundingBoxClip split-box cleanup (#376): removed the stale
   `TODO: This is ugly Swift code` and factored the two crossing-box windows
   through a local constructor, avoiding duplicated coordinate boilerplate. No
