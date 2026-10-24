@@ -304,6 +304,14 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Generic geometry dispatch safety (#386): replaced all forced `as!` casts in
+  the GeoJSON transform, rewind, snap, simplify, truncate, reverse, densify,
+  scale, WKB and WKT dispatch paths with a single checked-cast helper that
+  reports the expected and actual type. Removed or guarded the force unwraps
+  in the same dispatch and geometry paths, including the cited `outerRing!`
+  and `sorted.last!` cases. Added regression tests for every concrete GeoJSON
+  type and both coder type switches. No public behavior changed.
+
 - BoundingBoxClip split-box cleanup (#376): removed the stale
   `TODO: This is ugly Swift code` and factored the two crossing-box windows
   through a local constructor, avoiding duplicated coordinate boilerplate. No

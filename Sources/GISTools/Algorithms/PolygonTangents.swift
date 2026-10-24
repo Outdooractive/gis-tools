@@ -73,7 +73,11 @@ extension Polygon {
         else if pointOnFarSide {
             // Shift the point so it approaches the polygon across the date line
             shouldUnshift = true
-            let shift = point.longitude < (vertices.map(\.longitude).min()! + vertices.map(\.longitude).max()!) / 2.0 ? 360.0 : -360.0
+            let longitudes = vertices.map(\.longitude)
+            let longitudeMidpoint = (
+                longitudes.reduce(longitudes[0], min) + longitudes.reduce(longitudes[0], max)
+            ) / 2.0
+            let shift = point.longitude < longitudeMidpoint ? 360.0 : -360.0
             shiftedPoint = Coordinate3D(
                 x: point.longitude + shift,
                 y: point.latitude,

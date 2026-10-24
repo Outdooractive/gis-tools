@@ -377,9 +377,7 @@ extension Coordinate3D {
     ///              See also ``init(_:)`` and ``asJson``.
     /// - Returns: A `CLLocation` representing this coordinate
     public var location: CLLocation {
-        let timestamp = (m != nil
-            ? Date(timeIntervalSinceReferenceDate: m!)
-            : Date())
+        let timestamp = m.map(Date.init(timeIntervalSinceReferenceDate:)) ?? Date()
 
         return CLLocation(
             coordinate: coordinate2D,

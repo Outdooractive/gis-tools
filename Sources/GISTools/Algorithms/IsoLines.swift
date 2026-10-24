@@ -272,25 +272,25 @@ private enum IsoLines {
                 connected = false
                 for i in 0..<remaining.count {
                     let seg = remaining[i]
-                    if coords.last!.isCoincident(to: seg.start) {
+                    if coords[coords.count - 1].isCoincident(to: seg.start) {
                         coords.append(seg.end)
                         remaining.remove(at: i)
                         connected = true
                         break
                     }
-                    else if coords.last!.isCoincident(to: seg.end) {
+                    else if coords[coords.count - 1].isCoincident(to: seg.end) {
                         coords.append(seg.start)
                         remaining.remove(at: i)
                         connected = true
                         break
                     }
-                    else if coords.first!.isCoincident(to: seg.start) {
+                    else if coords[0].isCoincident(to: seg.start) {
                         coords.insert(seg.end, at: 0)
                         remaining.remove(at: i)
                         connected = true
                         break
                     }
-                    else if coords.first!.isCoincident(to: seg.end) {
+                    else if coords[0].isCoincident(to: seg.end) {
                         coords.insert(seg.start, at: 0)
                         remaining.remove(at: i)
                         connected = true

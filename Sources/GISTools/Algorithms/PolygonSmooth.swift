@@ -84,8 +84,8 @@ extension Polygon {
                 let qz: Double?
                 let rz: Double?
                 if hasAltitude {
-                    qz = 0.75 * p0.altitude! + 0.25 * p1.altitude!
-                    rz = 0.25 * p0.altitude! + 0.75 * p1.altitude!
+                    qz = 0.75 * (p0.altitude ?? 0.0) + 0.25 * (p1.altitude ?? 0.0)
+                    rz = 0.25 * (p0.altitude ?? 0.0) + 0.75 * (p1.altitude ?? 0.0)
                 }
                 else {
                     qz = nil
