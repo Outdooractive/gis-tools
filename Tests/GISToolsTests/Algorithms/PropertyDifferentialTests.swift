@@ -25,6 +25,10 @@ struct PropertyDifferentialTests {
                 a.union(with: b)?.area ?? 0.0,
                 fixture.unionArea,
                 label: "overlay \(index) union")
+            assertArea(
+                area(of: a.symmetricDifference(with: b)),
+                fixture.symmetricDifferenceArea,
+                label: "overlay \(index) symmetric difference")
         }
     }
 

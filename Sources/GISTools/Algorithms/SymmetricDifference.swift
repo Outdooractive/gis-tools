@@ -75,22 +75,27 @@ enum SymmetricDifference {
         let normalized = polygons.map {
             $0.projection == originalProj ? $0 : $0.projected(to: originalProj)
         }
-        let polygons3857 = normalized.map { $0.projected(to: .epsg3857) }
 
-        let boundaryTest = Overlay.makeBoundaryTest { point, polygons in
-            polygons.contains(point, in: 0 ..< firstCount)
-                != polygons.contains(point, in: firstCount ..< polygons.polygons.count)
-        }
+        let first = Array(normalized.prefix(firstCount))
+        let second = Array(normalized.suffix(from: firstCount))
 
-        guard let result = Overlay.overlayPolygons(polygons3857, boundaryTest: boundaryTest) else {
-            return nil
-        }
+        // XOR is the union of the two one-sided differences. Building it from
+        // the independently tested difference/union operations avoids the
+        // multi-component ring-assembly bug in the previous XOR boundary pass.
+        let firstMinusSecond = Difference.differencePolygons(
+            first + second,
+            firstCount: first.count)
+        let secondMinusFirst = Difference.differencePolygons(
+            second + first,
+            firstCount: second.count)
 
-        let projected = result.projected(to: originalProj)
-        if projected.polygons.count == 1 {
-            return projected.polygons[0]
-        }
-        return projected
+        let parts = [firstMinusSecond, secondMinusFirst]
+            .compactMap { $0?.polygons }
+            .flatMap { $0 }
+
+        guard parts.isNotEmpty else { return nil }
+
+        return Union.unionPolygons(parts)
     }
 
 }

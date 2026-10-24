@@ -316,6 +316,12 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- Symmetric difference correctness (#394): `symmetricDifference` is now the
+  union of the two independently computed one-sided differences (`A \ B` and
+  `B \ A`) instead of a single multi-component XOR boundary pass. This fixes
+  invalid output and a wrong area for overlapping rectangles. The property
+  and Shapely differential tests now assert symmetric difference again.
+
 - Hardcoded epsilon audit (#387): replaced unexplained tolerance literals
   with named constants or existing `GISTool` tolerances. `BooleanPointInPolygon`
   now uses `GISTool.determinantEpsilon`; `BooleanEquals`, `LineMerge`,
