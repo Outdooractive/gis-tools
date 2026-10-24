@@ -74,4 +74,66 @@ struct GeoJsonDecoderTests {
         #expect(line.coordinates[0] == Coordinate3D(latitude: 2.0, longitude: 1.0))
     }
 
+
+    // MARK: - Audit regressions
+
+    @Test
+    func malformedDocumentsAgreeAcrossEveryEntryPoint() throws {
+        let documents = [
+            #"{"type":"LineString","coordinates":[[0,0]]}"#,
+            #"{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[0,0],[1,0]]]},"properties":{}},{"type":"Feature","geometry":{"type":"Point","coordinates":["x",2]},"properties":{}},{"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{}}]}"#,
+            #"{"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]}}"#,
+            #"{"type":"MultiLineString","coordinates":[]}"#,
+        ]
+
+        for jsonString in documents {
+            let data = Data(jsonString.utf8)
+            let json = try? JSONSerialization.jsonObject(with: data)
+            let parsed = try GeoJsonParser.parse(jsonString: jsonString)
+            let expectedCount: Int?
+            if let collection = parsed.object as? FeatureCollection {
+                expectedCount = collection.features.count
+            }
+            else {
+                expectedCount = parsed.object == nil ? nil : 1
+            }
+
+            let fromData = FeatureCollection(jsonData: data)
+            let fromString = FeatureCollection(jsonString: jsonString)
+            let fromJSON = FeatureCollection(json: json)
+            let readerObject = GeoJsonReader.geoJsonFrom(jsonData: data)
+            let fromReader = readerObject as? FeatureCollection
+                ?? readerObject.flatMap { FeatureCollection($0) }
+            let fromDecoder = try? JSONDecoder().decode(FeatureCollection.self, from: data)
+
+            #expect((fromData != nil) == (parsed.object != nil), "\(jsonString)")
+            #expect(fromData?.features.count == expectedCount, "\(jsonString)")
+            #expect(fromString?.features.count == expectedCount, "\(jsonString)")
+            #expect(fromJSON?.features.count == expectedCount, "\(jsonString)")
+            #expect(fromReader?.features.count == expectedCount, "\(jsonString)")
+            #expect(fromDecoder?.features.count == expectedCount, "\(jsonString)")
+
+            // Every surviving geometry must itself be structurally valid.
+            for feature in fromData?.features ?? [] {
+                if let geometry = feature.geometry {
+                    #expect(geometry.isStructurallyValid, "\(jsonString): \(geometry)")
+                }
+            }
+        }
+    }
+
+    @Test
+    func validDocumentIsAcceptedByEveryEntryPoint() throws {
+        let jsonString = #"{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"a":1}}]}"#
+        let data = Data(jsonString.utf8)
+        let json = try #require(try? JSONSerialization.jsonObject(with: data))
+
+        #expect(FeatureCollection(jsonData: data)?.features.count == 1)
+        #expect(FeatureCollection(jsonString: jsonString)?.features.count == 1)
+        #expect(FeatureCollection(json: json)?.features.count == 1)
+        #expect(GeoJsonReader.geoJsonFrom(jsonData: data) != nil)
+        #expect((try? JSONDecoder().decode(FeatureCollection.self, from: data))?.features.count == 1)
+    }
+
+
 }

@@ -373,4 +373,16 @@ extension PreparedPolygonTests {
     }
 
 
+    @Test
+    func preparedUnionCoversSpanningRectangle() throws {
+        let left = square(minX: 0.0, maxX: 5.0, projection: .noSRID)
+        let right = square(minX: 5.0, maxX: 10.0, projection: .noSRID)
+        let prepared = PreparedPolygon(MultiPolygon(unchecked: [left, right]))
+        let spanning = square(minX: 2.0, minY: 1.0, maxX: 8.0, maxY: 4.0, projection: .noSRID)
+
+        #expect(prepared.covers(spanning))
+        #expect(prepared.contains(spanning))
+    }
+
+
 }
