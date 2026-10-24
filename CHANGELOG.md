@@ -304,6 +304,103 @@ left unchanged; that case is ambiguous per RFC 7946.
 
 ### Fixed
 
+- BoundingBoxClip split-box cleanup (#376): removed the stale
+  `TODO: This is ugly Swift code` and factored the two crossing-box windows
+  through a local constructor, avoiding duplicated coordinate boilerplate. No
+  clipping behavior changed.
+
+- Open-ended and reversed `LineString.slice` (#375): `nil` start/end now
+  have exact regression coverage for the documented first/last defaults, all
+  projections, antimeridian crossing, altitude interpolation and the
+  `Feature.slice` wrapper. Start/end points on the same segment are now
+  ordered along that segment, so reversed same-segment slices no longer emit
+  coordinates in reverse line order. Removed the stale open-ended-slice TODO.
+
+- MapTile children at maximum zoom (#370): `child` returns the receiver
+  unchanged and `children` returns an empty array when `z == 32`, instead of
+  shifting x/y and emitting invalid same-zoom tiles. Zoom 31 still produces
+  four valid zoom-32 children.
+
+- Voronoi duplicate and collinear sites (#369): duplicate coordinates are
+  collapsed to the first feature (including its `id`, properties and foreign
+  members) before triangulation, and neighbours are resolved from the
+  deduplicated sites instead of `firstIndex` lookups. One and two distinct
+  sites, and any number of collinear sites, now use direct half-plane clipping
+  rather than returning an empty diagram. The documented contract changed from
+  "at least three input points" to "one cell per distinct point site".
+
+- Mask result is cut at the antimeridian (#368): when the mask itself crosses
+  the seam, the assembled `MultiPolygon` is cut at ±180° (holes and islands
+  preserved) so the result never reports `crossesAntimeridian == true`.
+  Non-crossing masks keep the direct hole/island construction. Tests assert
+  the default world mask is non-crossing and a crossing mask with a custom
+  outer preserves the exact world-minus-mask area.
+
+- BoundingBoxClip line handling across the antimeridian (#367): line clipping
+  now splits a crossing clip box into its projection-aware non-crossing
+  windows, unwraps and shifts the line into each window's world copy, clips
+  each part and normalizes the result back. Lines and multi-lines inside a
+  `175 → −175` box (or the EPSG:3857 `originShift` equivalent) are no longer
+  dropped. Polygon clipping also uses projection-aware split boxes, so a
+  crossing 3857 box and cross-projection 4978 clipping stay correct.
+
+- QueryParser nested grouping and prefix NOT (#349): nested parentheses no
+  longer reset the caller's pipeline, so `.a == 1 and (.b == 2 or .c == 3)`
+  preserves both operands and the connector; a pending boolean connector is
+  emitted after the completed group. Prefix `NOT` now negates the following
+  operand/group (including after `and`/`or`), while postfix `not` keeps
+  negating the accumulated expression. Incomplete pipelines (`.highway ==`,
+  `.foo and`, unclosed groups) are rejected by an RPN arity check, and exact
+  pipeline/evaluation tests cover nested groups, prefix/postfix negation and
+  mixed forms.
+
+- Eulerian and Chinese Postman parallel edges (#346): parity and traversal
+  now use **edge multiplicity** over the undirected underlying graph instead
+  of distinct neighbours. Hierholzer and the Chinese Postman augmentation are
+  built from every underlying edge instance (parallel edges each get their own
+  edge ID; two-way edges contribute one underlying edge and one-way edges
+  contribute to both endpoint degrees). Two parallel edges, a triangle with a
+  duplicated edge, a bridge with parallel edges and opposite one-way edges now
+  classify and traverse correctly; postman tour lengths assert the required
+  repetitions.
+
+- Overlay and spatial regression coverage (#343): tightened overlay fixture
+  area tolerances from 20–40% to 1% (intersection, symmetric difference, mask)
+  and buffer fixture tolerances to 2%; added analytic noSRID tests for
+  intersection (50), union (150) and symmetric difference (100) of overlapping
+  squares; added exact tile-cover tile sets for a single interior tile and a
+  two-tile rectangle; and added a seeded deterministic R-tree search
+  cross-check against brute-force filtering. The coverage work from #337,
+  #338, #340 and #341 already covers the remaining listed APIs (LineOverlap,
+  LineChunk, Truncate, SnapToGrid, LineSegments, MakeValid, negative/zero
+  buffer, mask holes/partials, crossing clips, PreparedPolygon union and
+  crossing bbox).
+
+- GeoJSON decoder validation agreement (#342): the typed `GeoJsonDecoder` now
+  validates through `GeoJsonParser` instead of constructing geometries with
+  `unchecked` initializers, so the `json`, `jsonData`, `jsonString`,
+  `GeoJsonReader` and `JSONDecoder` paths agree on malformed documents.
+  Feature/geometry collection decoding is lenient like the parser (malformed
+  members are dropped rather than throwing the whole document), the
+  `Decodable` path round-trips through the parser, and a concrete-type
+  mismatch falls back to the documented JSONValue coercion instead of failing
+  outright. Tests compare all entry points on short rings, non-numeric
+  coordinates, missing members, empty multi-geometries and valid documents;
+  the empty intersection fixture is now constructed directly because an empty
+  `MultiPolygon` is deliberately rejected as structurally invalid.
+
+- Mask and BoundingBoxClip correctness (#341): `PolygonGeometry.mask` now
+  returns a `MultiPolygon`, so masks with holes become unmasked islands,
+  partial masks are clipped to the outer boundary, and multi-part/seam
+  results are representable; fully contained masks are constructed directly
+  (holes + islands) and only partial overlaps use overlay difference.
+  `Polygon.clipped(to:)` now returns a `MultiPolygon` and clips through real
+  polygon intersection: crossing clip boxes are handled as their non-crossing
+  parts, holes reaching the clip edge become notches, U-shaped polygons can
+  split into disconnected parts, and cross-projection clipping uses the
+  projected box geometry instead of corner-only reprojection. Tests assert
+  exact areas, part counts, validity and 4978 cross-projection.
+
 - Negative buffer holes and degenerate buffer behavior (#340): insets now
   reject any result that is not topologically valid, so a large concave inset
   returns `nil` instead of a self-intersecting/inverted polygon; the hole
