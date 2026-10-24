@@ -316,7 +316,7 @@ left unchanged; that case is ambiguous per RFC 7946.
   cancels superseded runs, and tests the two individual conversion traits in
   a single Linux job. The matrix stays at three jobs; trait combinations are
   intentionally not tested.
->>>>>>> 3080fe3 (Run CI on all PR branches and individual conversion traits (#379))
+
 - Generic geometry dispatch safety (#386): replaced all forced `as!` casts in
   the GeoJSON transform, rewind, snap, simplify, truncate, reverse, densify,
   scale, WKB and WKT dispatch paths with a single checked-cast helper that
