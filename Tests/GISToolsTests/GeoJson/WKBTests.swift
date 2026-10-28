@@ -178,12 +178,17 @@ struct WKBTests {
     /// SELECT ST_ClipByBox2D(ToPoint('POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))'::geometry), ST_MakeEnvelope(0,0,0.2,0.2));
     private let invalidPointData = Data(hex: "0101000000000000000000F87F000000000000F87F")!
 
-    /// Validates that decoding an invalid WKB Point (NaN coordinates) throws an error.
+    /// Validates that a WKB Point with NaN coordinates decodes as an empty
+    /// MultiPoint, matching `POINT EMPTY`.
     @Test
     func invalidPointDecoding() throws {
-        #expect(throws: WKBCoder.WKBCoderError.self) {
-            try WKBCoder.decode(wkb: invalidPointData, sourceProjection: .epsg4326) as? Point
-        }
+        let multiPoint = try #require(
+            try WKBCoder.decode(
+                wkb: invalidPointData,
+                sourceProjection: .epsg4326) as? MultiPoint,
+        )
+
+        #expect(multiPoint.points.isEmpty)
     }
 
     // MARK: - MultiPoint
@@ -732,6 +737,137 @@ extension WKBTests {
             targetProjection: .epsg3857) as? MultiPoint)
 
         #expect(decoded.coordinates == coordinates)
+    }
+
+    // MARK: - Curves and surfaces
+
+    /// PostGIS: ST_AsBinary('CIRCULARSTRING(0 0, 1 1, 2 0)'::geometry)
+    private static let circularStringData = Data(hex: "01080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000")!
+
+    /// PostGIS: ST_AsBinary('COMPOUNDCURVE(CIRCULARSTRING(0 0, 1 1, 2 0), (2 0, 3 1))'::geometry)
+    private static let compoundCurveData = Data(hex: "01090000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000010200000002000000000000000000004000000000000000000000000000000840000000000000F03F")!
+
+    /// PostGIS: ST_AsBinary('CURVEPOLYGON(CIRCULARSTRING(0 0, 1 1, 2 0, 1 -1, 0 0))'::geometry)
+    private static let curvePolygonData = Data(hex: "010A0000000100000001080000000500000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000000000000000F03F000000000000F0BF00000000000000000000000000000000")!
+
+    /// PostGIS: ST_AsBinary('MULTICURVE(CIRCULARSTRING(0 0, 1 1, 2 0), (2 0, 3 1))'::geometry)
+    private static let multiCurveData = Data(hex: "010B0000000200000001080000000300000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000010200000002000000000000000000004000000000000000000000000000000840000000000000F03F")!
+
+    /// PostGIS: ST_AsBinary('MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(0 0, 1 1, 2 0, 1 -1, 0 0)))'::geometry)
+    private static let multiSurfaceData = Data(hex: "010C00000001000000010A0000000100000001080000000500000000000000000000000000000000000000000000000000F03F000000000000F03F00000000000000400000000000000000000000000000F03F000000000000F0BF00000000000000000000000000000000")!
+
+    /// PostGIS: ST_AsBinary('TIN(((0 0, 1 0, 0 1, 0 0)))'::geometry)
+    private static let tinData = Data(hex: "0110000000010000000111000000010000000400000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000")!
+
+    /// PostGIS: ST_AsBinary('POLYHEDRALSURFACE(((0 0, 1 0, 0 1, 0 0)))'::geometry)
+    private static let polyhedralSurfaceData = Data(hex: "010F000000010000000103000000010000000400000000000000000000000000000000000000000000000000F03F00000000000000000000000000000000000000000000F03F00000000000000000000000000000000")!
+
+    /// PostGIS: ST_AsBinary('TIN(((0 0 0, 1 0 0, 0 1 0, 0 0 0)))'::geometry)
+    private static let tinZData = Data(hex: "01F80300000100000001F90300000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000000000000000000000000000000000000000000000000000F03F0000000000000000000000000000000000000000000000000000000000000000")!
+
+    /// PostGIS: ST_AsBinary('POINT EMPTY'::geometry)
+    private static let emptyPointData = Data(hex: "0101000000000000000000F87F000000000000F87F")!
+
+    /// PostGIS: ST_AsBinary('POINT Z (1 2 3)'::geometry), ISO type code 1001.
+    private static let isoPointZData = Data(hex: "01E9030000000000000000F03F00000000000000400000000000000840")!
+
+    /// Validates that a CircularString is linearized into a LineString.
+    @Test
+    func circularStringDecoding() throws {
+        let lineString = try #require(try WKBCoder.decode(wkb: Self.circularStringData, sourceProjection: .epsg4326) as? LineString)
+
+        #expect(lineString.coordinates.count > 3)
+        #expect(abs(lineString.coordinates[0].longitude - 0.0) < 1e-9)
+        #expect(abs(lineString.coordinates[0].latitude - 0.0) < 1e-9)
+        #expect(try abs(#require(lineString.coordinates.last?.longitude) - 2.0) < 1e-9)
+        #expect(try abs(#require(lineString.coordinates.last?.latitude) - 0.0) < 1e-9)
+        #expect(lineString.coordinates.contains { coordinate in
+            abs(coordinate.longitude - 1.0) < 1e-6 && abs(coordinate.latitude - 1.0) < 1e-6
+        })
+    }
+
+    /// Validates that a CompoundCurve is linearized into a LineString.
+    @Test
+    func compoundCurveDecoding() throws {
+        let lineString = try #require(try WKBCoder.decode(wkb: Self.compoundCurveData, sourceProjection: .epsg4326) as? LineString)
+
+        #expect(try abs(#require(lineString.coordinates.first?.longitude) - 0.0) < 1e-9)
+        #expect(try abs(#require(lineString.coordinates.last?.longitude) - 3.0) < 1e-9)
+        #expect(try abs(#require(lineString.coordinates.last?.latitude) - 1.0) < 1e-9)
+        #expect(lineString.coordinates.contains { coordinate in
+            abs(coordinate.longitude - 2.0) < 1e-9 && abs(coordinate.latitude - 0.0) < 1e-9
+        })
+    }
+
+    /// Validates that a CurvePolygon is linearized into a Polygon.
+    @Test
+    func curvePolygonDecoding() throws {
+        let polygon = try #require(try WKBCoder.decode(wkb: Self.curvePolygonData, sourceProjection: .epsg4326) as? Polygon)
+
+        #expect(polygon.coordinates.count == 1)
+        #expect(polygon.coordinates[0].count > 4)
+        #expect(polygon.coordinates[0].first == polygon.coordinates[0].last)
+    }
+
+    /// Validates that a MultiCurve is linearized into a MultiLineString.
+    @Test
+    func multiCurveDecoding() throws {
+        let multiLineString = try #require(try WKBCoder.decode(wkb: Self.multiCurveData, sourceProjection: .epsg4326) as? MultiLineString)
+
+        #expect(multiLineString.coordinates.count == 2)
+        #expect(multiLineString.coordinates[0].count > 3)
+        #expect(try abs(#require(multiLineString.coordinates[1].last?.longitude) - 3.0) < 1e-9)
+    }
+
+    /// Validates that a MultiSurface is linearized into a MultiPolygon.
+    @Test
+    func multiSurfaceDecoding() throws {
+        let multiPolygon = try #require(try WKBCoder.decode(wkb: Self.multiSurfaceData, sourceProjection: .epsg4326) as? MultiPolygon)
+
+        #expect(multiPolygon.polygons.count == 1)
+        #expect(multiPolygon.polygons[0].coordinates[0].count > 4)
+    }
+
+    /// Validates that TIN and PolyhedralSurface decode to a MultiPolygon.
+    @Test
+    func tinAndPolyhedralSurfaceDecoding() throws {
+        let tin = try #require(try WKBCoder.decode(wkb: Self.tinData, sourceProjection: .epsg4326) as? MultiPolygon)
+        #expect(tin.polygons.count == 1)
+        #expect(tin.polygons[0].coordinates[0].count == 4)
+
+        let polyhedralSurface = try #require(try WKBCoder.decode(wkb: Self.polyhedralSurfaceData, sourceProjection: .epsg4326) as? MultiPolygon)
+        #expect(polyhedralSurface.polygons.count == 1)
+        #expect(polyhedralSurface.polygons[0].coordinates[0].count == 4)
+    }
+
+    /// Validates ISO SQL/MM dimension codes as used by PostGIS for TIN.
+    @Test
+    func tinZDecoding() throws {
+        let tin = try #require(try WKBCoder.decode(wkb: Self.tinZData, sourceProjection: .epsg4326) as? MultiPolygon)
+
+        #expect(tin.polygons.count == 1)
+        #expect(tin.polygons[0].coordinates[0][0].altitude == 0)
+        #expect(tin.polygons[0].coordinates[0][1].altitude == 0)
+        #expect(tin.polygons[0].coordinates[0][2].altitude == 0)
+    }
+
+    /// Validates ISO SQL/MM dimension codes for a Point.
+    @Test
+    func isoPointZDecoding() throws {
+        let point = try #require(try WKBCoder.decode(wkb: Self.isoPointZData, sourceProjection: .epsg4326) as? Point)
+
+        #expect(point.coordinate.longitude == 1)
+        #expect(point.coordinate.latitude == 2)
+        #expect(point.coordinate.altitude == 3)
+    }
+
+    /// Validates that POINT EMPTY becomes an empty MultiPoint.
+    @Test
+    func emptyPointDecoding() throws {
+        let multiPoint = try #require(try WKBCoder.decode(wkb: Self.emptyPointData, sourceProjection: .epsg4326) as? MultiPoint)
+
+        #expect(multiPoint.points.isEmpty)
+        #expect(multiPoint.allCoordinates.isEmpty)
     }
 
 }

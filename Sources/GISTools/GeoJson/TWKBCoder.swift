@@ -510,7 +510,25 @@ public enum TWKBCoder {
 
         let (geomType, scale) = try decodeHeader(bytes: bytes, offset: &offset)
         let metadata = try decodeMetadata(bytes: bytes, offset: &offset)
-        guard !metadata.isEmpty else { throw TWKBError.emptyGeometry }
+
+        if metadata.isEmpty {
+            switch geomType {
+            case 1, 4:
+                return MultiPoint()
+            case 2:
+                return LineString()
+            case 3:
+                return Polygon()
+            case 5:
+                return MultiLineString()
+            case 6:
+                return MultiPolygon()
+            case 7:
+                return GeometryCollection([])
+            default:
+                throw TWKBError.unexpectedType
+            }
+        }
 
         let sourceProjection = sourceProjection ?? .epsg4326
 

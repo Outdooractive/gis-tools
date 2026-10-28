@@ -358,6 +358,13 @@ public enum WKBCoder {
         case multiLineString = 5
         case multiPolygon = 6
         case geometryCollection = 7
+        case circularString = 8
+        case compoundCurve = 9
+        case curvePolygon = 10
+        case multiCurve = 11
+        case multiSurface = 12
+        case polyhedralSurface = 15
+        case tin = 16
         case triangle = 17
 
     }
@@ -465,93 +472,211 @@ extension WKBCoder {
 
     // MARK: -
 
+    /// The parsed header of a WKB geometry.
+    private struct WKBHeader {
+
+        let byteOrder: ByteOrder
+        let typeCode: WKBTypeCode
+        let decodeZ: Bool
+        let decodeM: Bool
+        let sourceProjection: Projection
+
+    }
+
     private static func decodeGeometry(
         bytes: [UInt8],
         offset: inout Int,
         sourceProjection: Projection?,
         targetProjection: Projection
     ) throws -> GeoJsonGeometry {
+        let header = try decodeHeader(
+            bytes: bytes,
+            offset: &offset,
+            sourceProjection: sourceProjection,
+            targetProjection: targetProjection)
+
+        switch header.typeCode {
+        case .point:
+            return try decodePoint(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .multiPoint:
+            return try decodeMultiPoint(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .lineString:
+            return try decodeLineString(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .multiLineString:
+            return try decodeMultiLineString(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .polygon, .triangle:
+            return try decodePolygon(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .multiPolygon:
+            return try decodeMultiPolygon(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+
+        case .geometryCollection:
+            return try decodeGeometryCollection(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection)
+
+        case .circularString, .compoundCurve:
+            let coordinates = try decodeCurveCoordinates(
+                bytes: bytes,
+                offset: &offset,
+                header: header,
+                targetProjection: targetProjection)
+            return LineString(coordinates.projected(to: targetProjection)) ?? LineString()
+
+        case .curvePolygon:
+            let rings = try decodeCurvePolygonRings(
+                bytes: bytes,
+                offset: &offset,
+                header: header,
+                targetProjection: targetProjection)
+            return try polygon(from: rings, targetProjection: targetProjection)
+
+        case .multiCurve:
+            return try decodeMultiCurve(
+                bytes: bytes,
+                offset: &offset,
+                header: header,
+                targetProjection: targetProjection)
+
+        case .multiSurface:
+            return try decodeMultiSurface(
+                bytes: bytes,
+                offset: &offset,
+                header: header,
+                targetProjection: targetProjection)
+
+        case .polyhedralSurface, .tin:
+            // Surface patches are encoded as Polygons (PolyhedralSurface) or
+            // Triangles (TIN), which the regular polygon decoder handles.
+            return try decodeMultiPolygon(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection,
+                decodeZ: header.decodeZ,
+                decodeM: header.decodeM)
+        }
+    }
+
+    /// Reads a WKB geometry header.
+    ///
+    /// Supports both EWKB dimension flags (the high bits) and the ISO
+    /// SQL/MM dimension offsets used by PostGIS for `TIN`, `PolyhedralSurface`
+    /// and the curve types (`+1000` for Z, `+2000` for M, `+3000` for ZM).
+    private static func decodeHeader(
+        bytes: [UInt8],
+        offset: inout Int,
+        sourceProjection: Projection?,
+        targetProjection: Projection,
+    ) throws -> WKBHeader {
         guard let byteOrder = try ByteOrder(rawValue: decodeUInt8(bytes: bytes, offset: &offset, byteOrder: .bigEndian)) else {
             throw WKBCoderError.dataCorrupted
         }
 
         var typeCodeValue = try decodeUInt32(bytes: bytes, offset: &offset, byteOrder: byteOrder)
-        var decodeZ = false
-        var decodeM = false
+        var decodeZ = typeCodeValue & 0x8000_0000 != 0
+        var decodeM = typeCodeValue & 0x4000_0000 != 0
         let hasSRID = typeCodeValue & 0x2000_0000 != 0
 
-        if typeCodeValue & 0x8000_0000 != 0 {
-            decodeZ = true
-        }
-        if typeCodeValue & 0x4000_0000 != 0 {
-            decodeM = true
-        }
         typeCodeValue &= 0x0FFF_FFFF
+
+        if typeCodeValue >= 3000 {
+            decodeZ = true
+            decodeM = true
+            typeCodeValue -= 3000
+        }
+        else if typeCodeValue >= 2000 {
+            decodeM = true
+            typeCodeValue -= 2000
+        }
+        else if typeCodeValue >= 1000 {
+            decodeZ = true
+            typeCodeValue -= 1000
+        }
 
         guard let typeCode = WKBTypeCode(rawValue: Int(typeCodeValue)) else {
             throw WKBCoderError.unexpectedType
         }
 
-        let embeddedSRID: Int?
-        if hasSRID {
-            embeddedSRID = try Int(decodeUInt32(
-                bytes: bytes,
-                offset: &offset,
-                byteOrder: byteOrder))
-        }
-        else {
-            embeddedSRID = nil
-        }
+        let embeddedSRID: Int? =
+            if hasSRID {
+                try Int(decodeUInt32(
+                    bytes: bytes,
+                    offset: &offset,
+                    byteOrder: byteOrder))
+            }
+            else {
+                nil
+            }
 
-        var sourceProjection = sourceProjection
-        if sourceProjection == nil, let embeddedSRID {
-            sourceProjection = Projection(srid: embeddedSRID)
+        var resolvedSourceProjection = sourceProjection
+        if resolvedSourceProjection == nil, let embeddedSRID {
+            resolvedSourceProjection = Projection(srid: embeddedSRID)
         }
-        guard let sourceProjection else { throw WKBCoderError.unknownSRID }
+        guard let resolvedSourceProjection else { throw WKBCoderError.unknownSRID }
 
-        if sourceProjection == .noSRID,
+        if resolvedSourceProjection == .noSRID,
            targetProjection != .noSRID
         {
             throw WKBCoderError.targetProjectionMustBeNoSRID
         }
 
-        switch typeCode {
-        case .point:
-            return try decodePoint(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .multiPoint:
-            return try decodeMultiPoint(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .lineString:
-            return try decodeLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .multiLineString:
-            return try decodeMultiLineString(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .polygon, .triangle:
-            return try decodePolygon(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .multiPolygon:
-            return try decodeMultiPolygon(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM)
-        case .geometryCollection:
-            return try decodeGeometryCollection(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection)
-        }
-    }
-
-    private static func decodeCoordinate(
-        bytes: [UInt8],
-        offset: inout Int,
-        byteOrder: ByteOrder,
-        sourceProjection: Projection?,
-        targetProjection: Projection,
-        decodeZ: Bool,
-        decodeM: Bool
-    ) throws -> Coordinate3D {
-        // Single-coordinate path (Point): project directly.
-        try decodeRawCoordinate(
-            bytes: bytes,
-            offset: &offset,
+        return WKBHeader(
             byteOrder: byteOrder,
-            sourceProjection: sourceProjection,
-            targetProjection: targetProjection,
+            typeCode: typeCode,
             decodeZ: decodeZ,
-            decodeM: decodeM)
-            .projected(to: targetProjection)
+            decodeM: decodeM,
+            sourceProjection: resolvedSourceProjection)
     }
 
     /// Decodes a coordinate in the source projection, without projecting it:
@@ -604,9 +729,59 @@ extension WKBCoder {
         sourceProjection: Projection?,
         targetProjection: Projection,
         decodeZ: Bool,
-        decodeM: Bool
-    ) throws -> Point {
-        try Point(decodeCoordinate(bytes: bytes, offset: &offset, byteOrder: byteOrder, sourceProjection: sourceProjection, targetProjection: targetProjection, decodeZ: decodeZ, decodeM: decodeM))
+        decodeM: Bool,
+    ) throws -> GeoJsonGeometry {
+        guard let coordinate = try decodeRawPointCoordinate(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: byteOrder,
+            sourceProjection: sourceProjection,
+            decodeZ: decodeZ,
+            decodeM: decodeM)
+        else {
+            // `POINT EMPTY` is encoded with NaN coordinates. The GeoJSON model
+            // has no empty Point, so use the empty point geometry instead.
+            return MultiPoint()
+        }
+
+        return Point(coordinate.projected(to: targetProjection))
+    }
+
+    /// Reads a Point coordinate, returning `nil` for an empty Point.
+    ///
+    /// All coordinate components are consumed even when the point is empty so
+    /// that the offset stays correct.
+    private static func decodeRawPointCoordinate(
+        bytes: [UInt8],
+        offset: inout Int,
+        byteOrder: ByteOrder,
+        sourceProjection: Projection?,
+        decodeZ: Bool,
+        decodeM: Bool,
+    ) throws -> Coordinate3D? {
+        guard let sourceProjection else { throw WKBCoderError.unknownSRID }
+
+        let x = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+        let y = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+
+        var z: Double?
+        var m: Double?
+        if decodeZ {
+            z = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+            if z?.isFinite == false {
+                z = nil
+            }
+        }
+        if decodeM {
+            m = try decodeDouble(bytes: bytes, offset: &offset, byteOrder: byteOrder)
+            if m?.isFinite == false {
+                m = nil
+            }
+        }
+
+        guard x.isFinite, y.isFinite else { return nil }
+
+        return Coordinate3D(x: x, y: y, z: z, m: m, projection: sourceProjection)
     }
 
     private static func decodeMultiPoint(
@@ -752,6 +927,247 @@ extension WKBCoder {
         }
 
         return GeometryCollection(geometries)
+    }
+
+    // MARK: - Curves and surfaces
+
+    /// Decodes a LineString, CircularString or CompoundCurve into a linear
+    /// coordinate list in the source projection.
+    private static func decodeCurveCoordinates(
+        bytes: [UInt8],
+        offset: inout Int,
+        header: WKBHeader,
+        targetProjection: Projection,
+    ) throws -> [Coordinate3D] {
+        switch header.typeCode {
+        case .lineString:
+            return try decodeRawCoordinateList(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                header: header)
+
+        case .circularString:
+            let coordinates = try decodeRawCoordinateList(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder,
+                header: header)
+            return CurveLinearization.circularString(coordinates)
+
+        case .compoundCurve:
+            let count = try decodeUInt32(
+                bytes: bytes,
+                offset: &offset,
+                byteOrder: header.byteOrder)
+
+            var coordinates: [Coordinate3D] = []
+            try count.times {
+                let partHeader = try decodeHeader(
+                    bytes: bytes,
+                    offset: &offset,
+                    sourceProjection: header.sourceProjection,
+                    targetProjection: targetProjection)
+                let part = try decodeCurveCoordinates(
+                    bytes: bytes,
+                    offset: &offset,
+                    header: partHeader,
+                    targetProjection: targetProjection)
+
+                if coordinates.isEmpty {
+                    coordinates = part
+                }
+                else {
+                    // Consecutive curve segments share their first/last point.
+                    coordinates.append(contentsOf: part.dropFirst())
+                }
+            }
+
+            return coordinates
+
+        default:
+            throw WKBCoderError.invalidGeometry
+        }
+    }
+
+    /// Decodes the rings of a CurvePolygon into linear coordinate lists in the
+    /// source projection.
+    private static func decodeCurvePolygonRings(
+        bytes: [UInt8],
+        offset: inout Int,
+        header: WKBHeader,
+        targetProjection: Projection,
+    ) throws -> [[Coordinate3D]] {
+        let count = try decodeUInt32(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: header.byteOrder)
+
+        var rings: [[Coordinate3D]] = []
+        try count.times {
+            let ringHeader = try decodeHeader(
+                bytes: bytes,
+                offset: &offset,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection)
+            try rings.append(
+                decodeCurveCoordinates(
+                    bytes: bytes,
+                    offset: &offset,
+                    header: ringHeader,
+                    targetProjection: targetProjection))
+        }
+
+        return rings
+    }
+
+    /// Decodes a MultiCurve into a MultiLineString.
+    private static func decodeMultiCurve(
+        bytes: [UInt8],
+        offset: inout Int,
+        header: WKBHeader,
+        targetProjection: Projection,
+    ) throws -> MultiLineString {
+        let count = try decodeUInt32(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: header.byteOrder)
+
+        var lineStrings: [LineString] = []
+        try count.times {
+            let curveHeader = try decodeHeader(
+                bytes: bytes,
+                offset: &offset,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection)
+            let coordinates = try decodeCurveCoordinates(
+                bytes: bytes,
+                offset: &offset,
+                header: curveHeader,
+                targetProjection: targetProjection)
+                .projected(to: targetProjection)
+
+            lineStrings.append(LineString(coordinates) ?? LineString())
+        }
+
+        return MultiLineString(lineStrings) ?? MultiLineString()
+    }
+
+    /// Decodes a MultiSurface into a MultiPolygon.
+    private static func decodeMultiSurface(
+        bytes: [UInt8],
+        offset: inout Int,
+        header: WKBHeader,
+        targetProjection: Projection,
+    ) throws -> MultiPolygon {
+        let count = try decodeUInt32(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: header.byteOrder)
+
+        var polygons: [Polygon] = []
+        try count.times {
+            let surfaceHeader = try decodeHeader(
+                bytes: bytes,
+                offset: &offset,
+                sourceProjection: header.sourceProjection,
+                targetProjection: targetProjection)
+
+            let rings: [[Coordinate3D]]
+            switch surfaceHeader.typeCode {
+            case .polygon:
+                rings = try decodeRawPolygonRings(
+                    bytes: bytes,
+                    offset: &offset,
+                    header: surfaceHeader)
+
+            case .curvePolygon:
+                rings = try decodeCurvePolygonRings(
+                    bytes: bytes,
+                    offset: &offset,
+                    header: surfaceHeader,
+                    targetProjection: targetProjection)
+
+            default:
+                throw WKBCoderError.invalidGeometry
+            }
+
+            try polygons.append(
+                polygon(from: rings, targetProjection: targetProjection))
+        }
+
+        return MultiPolygon(polygons) ?? MultiPolygon()
+    }
+
+    /// Reads a raw coordinate list in the source projection.
+    private static func decodeRawCoordinateList(
+        bytes: [UInt8],
+        offset: inout Int,
+        byteOrder: ByteOrder,
+        header: WKBHeader,
+    ) throws -> [Coordinate3D] {
+        let count = try decodeUInt32(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: byteOrder)
+
+        var coordinates: [Coordinate3D] = []
+        try count.times {
+            try coordinates.append(
+                decodeRawCoordinate(
+                    bytes: bytes,
+                    offset: &offset,
+                    byteOrder: byteOrder,
+                    sourceProjection: header.sourceProjection,
+                    targetProjection: header.sourceProjection,
+                    decodeZ: header.decodeZ,
+                    decodeM: header.decodeM))
+        }
+
+        return coordinates
+    }
+
+    /// Reads the raw rings of a Polygon in the source projection.
+    private static func decodeRawPolygonRings(
+        bytes: [UInt8],
+        offset: inout Int,
+        header: WKBHeader,
+    ) throws -> [[Coordinate3D]] {
+        let count = try decodeUInt32(
+            bytes: bytes,
+            offset: &offset,
+            byteOrder: header.byteOrder)
+
+        var rings: [[Coordinate3D]] = []
+        try count.times {
+            try rings.append(
+                decodeRawCoordinateList(
+                    bytes: bytes,
+                    offset: &offset,
+                    byteOrder: header.byteOrder,
+                    header: header))
+        }
+
+        return rings
+    }
+
+    /// Projects raw rings and builds a Polygon.
+    private static func polygon(
+        from rings: [[Coordinate3D]],
+        targetProjection: Projection,
+    ) throws -> Polygon {
+        guard rings.isNotEmpty else { return Polygon() }
+
+        var result: [Ring] = []
+        for coordinates in rings {
+            guard let ring = Ring(coordinates.projected(to: targetProjection)) else {
+                throw WKBCoderError.invalidGeometry
+            }
+
+            result.append(ring)
+        }
+
+        return Polygon(result) ?? Polygon()
     }
 
     // MARK: -

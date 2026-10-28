@@ -681,4 +681,136 @@ extension WKTTests {
         #expect(wkt == "POINT(1000000.0 2000000.0)")
     }
 
+    // MARK: - Curves and surfaces
+
+    /// Validates that CIRCULARSTRING is linearized into a LineString.
+    @Test
+    func wktCircularStringDecoding() throws {
+        let lineString = try #require(try WKTCoder.decode(
+            wkt: "CIRCULARSTRING(0 0, 1 1, 2 0)",
+            sourceProjection: .epsg4326) as? LineString)
+
+        #expect(lineString.coordinates.count > 3)
+        #expect(lineString.coordinates.first == Coordinate3D(latitude: 0, longitude: 0))
+        #expect(lineString.coordinates.last == Coordinate3D(latitude: 0, longitude: 2))
+        #expect(lineString.coordinates.contains { coordinate in
+            abs(coordinate.longitude - 1.0) < 1e-6 && abs(coordinate.latitude - 1.0) < 1e-6
+        })
+    }
+
+    /// Validates that COMPOUNDCURVE is linearized into a LineString.
+    @Test
+    func wktCompoundCurveDecoding() throws {
+        let lineString = try #require(try WKTCoder.decode(
+            wkt: "COMPOUNDCURVE(CIRCULARSTRING(0 0, 1 1, 2 0), (2 0, 3 1))",
+            sourceProjection: .epsg4326) as? LineString)
+
+        #expect(lineString.coordinates.first == Coordinate3D(latitude: 0, longitude: 0))
+        #expect(lineString.coordinates.last == Coordinate3D(latitude: 1, longitude: 3))
+        #expect(lineString.coordinates.contains { coordinate in
+            abs(coordinate.longitude - 2.0) < 1e-9 && abs(coordinate.latitude - 0.0) < 1e-9
+        })
+    }
+
+    /// Validates that CURVEPOLYGON is linearized into a Polygon.
+    @Test
+    func wktCurvePolygonDecoding() throws {
+        let polygon = try #require(try WKTCoder.decode(
+            wkt: "CURVEPOLYGON(CIRCULARSTRING(0 0, 1 1, 2 0, 1 -1, 0 0))",
+            sourceProjection: .epsg4326) as? Polygon)
+
+        #expect(polygon.coordinates.count == 1)
+        #expect(polygon.coordinates[0].count > 4)
+        #expect(polygon.coordinates[0].first == polygon.coordinates[0].last)
+    }
+
+    /// Validates that MULTICURVE is linearized into a MultiLineString.
+    @Test
+    func wktMultiCurveDecoding() throws {
+        let multiLineString = try #require(try WKTCoder.decode(
+            wkt: "MULTICURVE(CIRCULARSTRING(0 0, 1 1, 2 0), (2 0, 3 1))",
+            sourceProjection: .epsg4326) as? MultiLineString)
+
+        #expect(multiLineString.coordinates.count == 2)
+        #expect(multiLineString.coordinates[1].last == Coordinate3D(latitude: 1, longitude: 3))
+    }
+
+    /// Validates that MULTISURFACE is linearized into a MultiPolygon.
+    @Test
+    func wktMultiSurfaceDecoding() throws {
+        let multiPolygon = try #require(try WKTCoder.decode(
+            wkt: "MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(0 0, 1 1, 2 0, 1 -1, 0 0)))",
+            sourceProjection: .epsg4326) as? MultiPolygon)
+
+        #expect(multiPolygon.polygons.count == 1)
+        #expect(multiPolygon.polygons[0].coordinates[0].count > 4)
+    }
+
+    /// Validates that TIN and POLYHEDRALSURFACE decode to a MultiPolygon.
+    @Test
+    func wktTinAndPolyhedralSurfaceDecoding() throws {
+        let tin = try #require(try WKTCoder.decode(
+            wkt: "TIN(((0 0, 1 0, 0 1, 0 0)))",
+            sourceProjection: .epsg4326) as? MultiPolygon)
+        #expect(tin.polygons.count == 1)
+        #expect(tin.polygons[0].coordinates[0].count == 4)
+
+        let polyhedralSurface = try #require(try WKTCoder.decode(
+            wkt: "POLYHEDRALSURFACE(((0 0, 1 0, 0 1, 0 0)))",
+            sourceProjection: .epsg4326) as? MultiPolygon)
+        #expect(polyhedralSurface.polygons.count == 1)
+        #expect(polyhedralSurface.polygons[0].coordinates[0].count == 4)
+    }
+
+    /// Validates that POINT EMPTY becomes an empty MultiPoint.
+    @Test
+    func wktEmptyPointDecoding() throws {
+        let multiPoint = try #require(try WKTCoder.decode(
+            wkt: "POINT EMPTY",
+            sourceProjection: .epsg4326) as? MultiPoint)
+
+        #expect(multiPoint.points.isEmpty)
+    }
+
+    /// Validates EMPTY for the other geometry types.
+    @Test
+    func wktEmptyGeometryDecoding() throws {
+        #expect(try WKTCoder.decode(wkt: "LINESTRING EMPTY", sourceProjection: .epsg4326) is LineString)
+        #expect(try WKTCoder.decode(wkt: "POLYGON EMPTY", sourceProjection: .epsg4326) is Polygon)
+        #expect(try WKTCoder.decode(wkt: "MULTIPOINT EMPTY", sourceProjection: .epsg4326) is MultiPoint)
+        #expect(try WKTCoder.decode(wkt: "MULTILINESTRING EMPTY", sourceProjection: .epsg4326) is MultiLineString)
+        #expect(try WKTCoder.decode(wkt: "MULTIPOLYGON EMPTY", sourceProjection: .epsg4326) is MultiPolygon)
+        #expect(try WKTCoder.decode(wkt: "GEOMETRYCOLLECTION EMPTY", sourceProjection: .epsg4326) is GeometryCollection)
+    }
+
+    /// Validates that empty geometries encode with the WKT EMPTY keyword.
+    @Test
+    func wktEmptyGeometryEncoding() {
+        #expect(WKTCoder.encode(geometry: MultiPoint(), targetProjection: nil) == "MULTIPOINT EMPTY")
+        #expect(WKTCoder.encode(geometry: LineString(), targetProjection: nil) == "LINESTRING EMPTY")
+        #expect(WKTCoder.encode(geometry: Polygon(), targetProjection: nil) == "POLYGON EMPTY")
+        #expect(WKTCoder.encode(geometry: MultiLineString(), targetProjection: nil) == "MULTILINESTRING EMPTY")
+        #expect(WKTCoder.encode(geometry: MultiPolygon(), targetProjection: nil) == "MULTIPOLYGON EMPTY")
+        #expect(WKTCoder.encode(geometry: GeometryCollection([]), targetProjection: nil) == "GEOMETRYCOLLECTION EMPTY")
+    }
+
+    /// Validates Z coordinates and dimension suffixes inside curved types.
+    @Test
+    func wktCurvedGeometryZDecoding() throws {
+        let multiSurface = try #require(try WKTCoder.decode(
+            wkt: "MULTISURFACE Z (CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1, 1 1 2, 2 0 3, 1 -1 4, 0 0 1)))",
+            sourceProjection: .epsg4326) as? MultiPolygon)
+
+        let ring = try #require(multiSurface.polygons.first?.coordinates.first)
+        #expect(ring.first?.altitude == 1)
+        #expect(ring.contains { $0.altitude == 2 })
+
+        let compoundCurve = try #require(try WKTCoder.decode(
+            wkt: "COMPOUNDCURVE Z (CIRCULARSTRING Z (0 0 1, 1 1 2, 2 0 3), (2 0 3, 3 1 4))",
+            sourceProjection: .epsg4326) as? LineString)
+
+        #expect(compoundCurve.coordinates.first?.altitude == 1)
+        #expect(compoundCurve.coordinates.last?.altitude == 4)
+    }
+
 }

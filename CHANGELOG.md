@@ -204,6 +204,20 @@ The deprecated aliases from 2.x have been removed. Use the current names:
   are covered by a new differential test suite; the generator script is
   development-only and the package keeps no third-party runtime dependency.
 
+- Extended WKB/WKT/TWKB geometry coverage (#404):
+  - WKB and WKT decode `CircularString`, `CompoundCurve`, `CurvePolygon`,
+    `MultiCurve` and `MultiSurface`, linearizing arcs into `LineString`,
+    `Polygon`, `MultiLineString` and `MultiPolygon`.
+  - `TIN` and `PolyhedralSurface` decode to `MultiPolygon`, with each triangle
+    or patch represented as a `Polygon`.
+  - `POINT EMPTY` decodes to an empty `MultiPoint`; WKT `EMPTY` is accepted for
+    every geometry type and empty geometries encode as `TYPE EMPTY`.
+  - WKB accepts ISO SQL/MM dimension codes (`+1000` Z, `+2000` M, `+3000` ZM)
+    in addition to EWKB dimension flags.
+  - TWKB empty metadata decodes to the matching empty geometry. PostGIS
+    encodes `TIN` as a `GeometryCollection` in TWKB; curves and
+    `PolyhedralSurface` are not representable in TWKB.
+
 - API compatibility CI (#380): pull requests now run
   `swift package diagnose-api-breaking-changes` against their base branch.
   Accidental public API removals or signature changes fail CI; intentional
