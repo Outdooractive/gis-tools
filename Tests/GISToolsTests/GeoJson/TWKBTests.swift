@@ -441,14 +441,18 @@ extension TWKBTests {
         ])
     }
 
-    /// Empty geometry metadata is reported as an error.
+    /// Empty geometry metadata decodes as an empty geometry.
     @Test
-    func twkbEmptyGeometryFails() {
+    func twkbEmptyMetadataDecoding() throws {
         let data = Data([0x02, 0x10])
 
-        #expect(throws: TWKBCoder.TWKBError.self) {
-            try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
-        }
+        let lineString = try #require(
+            try TWKBCoder.decode(
+                twkb: data,
+                sourceProjection: .epsg4326) as? LineString,
+        )
+
+        #expect(lineString.coordinates.isEmpty)
     }
 
     /// Negative precision is stored with zigzag encoding in the type byte.
@@ -479,6 +483,65 @@ extension TWKBTests {
 
         #expect(throws: TWKBCoder.TWKBError.self) {
             try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
+        }
+    }
+
+    // MARK: - Empty geometries and surfaces
+
+    /// PostGIS: ST_AsTWKB('POINT EMPTY'::geometry)
+    @Test
+    func twkbEmptyPointDecoding() throws {
+        let multiPoint = try #require(try TWKBCoder.decode(
+            twkb: Data([0xA1, 0x10]),
+            sourceProjection: .epsg4326) as? MultiPoint)
+
+        #expect(multiPoint.points.isEmpty)
+    }
+
+    /// PostGIS emits a metadata-only TWKB for empty geometries.
+    @Test
+    func twkbEmptyGeometryDecoding() throws {
+        let cases: [(Data, GeoJsonType)] = [
+            (Data([0xA2, 0x10]), .lineString),
+            (Data([0xA3, 0x10]), .polygon),
+            (Data([0xA4, 0x10]), .multiPoint),
+            (Data([0xA5, 0x10]), .multiLineString),
+            (Data([0xA6, 0x10]), .multiPolygon),
+            (Data([0xA7, 0x10]), .geometryCollection),
+        ]
+
+        for (data, expectedType) in cases {
+            let geometry = try TWKBCoder.decode(
+                twkb: data,
+                sourceProjection: .epsg4326)
+            #expect(geometry.type == expectedType)
+            #expect(geometry.allCoordinates.isEmpty)
+        }
+    }
+
+    /// PostGIS encodes TIN as a TWKB GeometryCollection of Polygons.
+    @Test
+    func twkbTinDecoding() throws {
+        // PostGIS: ST_AsTWKB('TIN(((0 0 0, 1 0 0, 0 1 0, 0 0 0)))'::geometry)
+        let data = try #require(Data(hex: "A7080101A308010104000000C09A0C0000BF9A0CC09A0C0000BF9A0C00"))
+
+        let collection = try #require(try TWKBCoder.decode(
+            twkb: data,
+            sourceProjection: .epsg4326) as? GeometryCollection)
+
+        #expect(collection.geometries.count == 1)
+        #expect(collection.geometries[0] is Polygon)
+    }
+
+    /// TWKB has no curve or PolyhedralSurface type codes.
+    @Test
+    func twkbUnsupportedTypeFails() {
+        for typeCode: UInt8 in [0x08, 0x0F, 0x10] {
+            let data = Data([typeCode, 0x00])
+
+            #expect(throws: TWKBCoder.TWKBError.self) {
+                try TWKBCoder.decode(twkb: data, sourceProjection: .epsg4326)
+            }
         }
     }
 

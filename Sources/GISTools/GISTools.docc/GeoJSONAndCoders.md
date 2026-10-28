@@ -129,6 +129,27 @@ exercise insertion and fetching for every supported geometry type.
 ring, polygon, multi-point, multi-line string, multi-polygon,
 geometry collection and triangle geometry types.
 
+Curved geometries are linearized into the existing model types while decoding:
+
+| Input | Decoded as |
+| --- | --- |
+| `CircularString` | `LineString` |
+| `CompoundCurve` | `LineString` |
+| `CurvePolygon` | `Polygon` |
+| `MultiCurve` | `MultiLineString` |
+| `MultiSurface` | `MultiPolygon` |
+
+`TIN` and `PolyhedralSurface` decode to a `MultiPolygon`, with every triangle
+or patch represented as a `Polygon`. The mapping is lossy: re-encoding writes
+the linear type, not the original curve or surface type.
+
+`POINT EMPTY` decodes to an empty `MultiPoint` because the model has no empty
+`Point`. The other empty geometries decode as their empty counterparts, and WKT
+writes `TYPE EMPTY` when encoding an empty geometry.
+
+WKB accepts both EWKB dimension flags and the ISO SQL/MM dimension codes used
+by PostGIS (`+1000` for Z, `+2000` for M, `+3000` for ZM).
+
 Every geometry also has convenience initializers for decoding and `asWKB` and
 `asWKT` accessors. Decoding can reproject on the fly:
 
@@ -158,6 +179,11 @@ let point = try TWKBCoder.decode(
     twkb: data,
     sourceProjection: .epsg4326)
 ```
+
+TWKB empty metadata decodes to the corresponding empty geometry. PostGIS
+encodes `TIN` as a `GeometryCollection` of polygons in TWKB, so it decodes as a
+collection rather than a `MultiPolygon`. PostGIS rejects curves and
+`PolyhedralSurface` when writing TWKB.
 
 A `Feature` or `FeatureCollection` containing an unlocated feature cannot be
 encoded to WKB or WKT; encoding returns `nil`.
