@@ -575,4 +575,184 @@ struct BoundingBoxClipTests {
         #expect(clipped.projection == .epsg4978)
     }
 
+    // MARK: - Segments spanning more than 180° of longitude
+
+    /// A segment spanning more than 180° of longitude is unwrapped across the
+    /// antimeridian, so its short way runs through ±180° and it spans more
+    /// than one world period. A box that covers both sides of the seam must
+    /// keep both pieces instead of silently dropping one half.
+    @Test
+    func segmentSpanningMoreThanHalfTheWorldKeepsBothHalves() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: -100.0, y: 0.0, projection: .epsg4326),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg4326),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -85.0, longitude: -110.0),
+            northEast: Coordinate3D(latitude: 85.0, longitude: 110.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+
+        let endpoints = clipped.lineStrings.flatMap { lineString in
+            [lineString.coordinates.first, lineString.coordinates.last]
+                .compactMap { $0?.longitude }
+        }
+        // One piece runs -100 → -110, the other 110 → 100.
+        #expect(endpoints.contains { abs($0 + 100.0) < 0.000001 })
+        #expect(endpoints.contains { abs($0 + 110.0) < 0.000001 })
+        #expect(endpoints.contains { abs($0 - 100.0) < 0.000001 })
+        #expect(endpoints.contains { abs($0 - 110.0) < 0.000001 })
+
+        // 10° on each side of the seam.
+        let expectedLength = Self.equatorLength(from: -100.0, to: -110.0)
+            + Self.equatorLength(from: 110.0, to: 100.0)
+        let totalLength = clipped.lineStrings.reduce(0.0) { $0 + $1.length }
+        #expect(abs(totalLength - expectedLength) < expectedLength * 0.000001)
+    }
+
+    /// The world box must keep a >180° segment intact (as the two
+    /// antimeridian pieces), not truncate it to a stub near 180°.
+    @Test
+    func segmentSpanningMoreThanHalfTheWorldInsideWorldBoxIsKept() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: -100.0, y: 0.0, projection: .epsg4326),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg4326),
+        ]))
+
+        let clipped = try #require(line.clipped(to: .world))
+        #expect(clipped.lineStrings.count == 2)
+
+        let endpoints = clipped.lineStrings.flatMap { lineString in
+            [lineString.coordinates.first, lineString.coordinates.last]
+                .compactMap { $0?.longitude }
+        }
+        #expect(endpoints.contains { abs($0 + 180.0) < 0.000001 })
+        #expect(endpoints.contains { abs($0 - 180.0) < 0.000001 })
+
+        // The short way through ±180° is 160° of longitude.
+        let totalLength = clipped.lineStrings.reduce(0.0) { $0 + $1.length }
+        #expect(abs(totalLength - line.length) < line.length * 0.000001)
+    }
+
+    /// Boxes ending exactly at 180° or at -180°, and boxes ending just inside
+    /// either edge, must all keep both halves of a >180° segment.
+    @Test(arguments: [
+        (-180.0, 180.0),
+        (-180.0, 179.999),
+        (-179.999, 180.0),
+        (-180.0, 170.0),
+        (-170.0, 180.0),
+    ] as [(Double, Double)])
+    func segmentSpanningMoreThanHalfTheWorldAtWorldEdges(
+        _ west: Double,
+        _ east: Double,
+    ) throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: -100.0, y: 0.0, projection: .epsg4326),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg4326),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -85.0, longitude: west),
+            northEast: Coordinate3D(latitude: 85.0, longitude: east))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+
+        // Both vertices of the original segment must survive on their own side
+        // of the seam, and every coordinate must stay inside the box.
+        let coordinates = clipped.allCoordinates
+        #expect(coordinates.contains { abs($0.longitude + 100.0) < 0.000001 })
+        #expect(coordinates.contains { abs($0.longitude - 100.0) < 0.000001 })
+        for coordinate in coordinates {
+            #expect(coordinate.longitude >= west - 0.000001)
+            #expect(coordinate.longitude <= east + 0.000001)
+        }
+    }
+
+    /// A crossing box narrower than the segment trims the parts that leave the
+    /// box but keeps everything inside it on both sides of the seam.
+    @Test
+    func segmentSpanningMoreThanHalfTheWorldIsTrimmedByNarrowBox() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: -100.0, y: 0.0, projection: .epsg4326),
+            Coordinate3D(x: 100.0, y: 0.0, projection: .epsg4326),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -5.0, longitude: 170.0),
+            northEast: Coordinate3D(latitude: 5.0, longitude: -170.0))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+
+        for coordinate in clipped.allCoordinates {
+            #expect(coordinate.longitude >= 170.0 - 0.000001 || coordinate.longitude <= -170.0 + 0.000001)
+        }
+
+        // 10° on each side of the seam.
+        let expectedLength = Self.equatorLength(from: 170.0, to: 180.0)
+            + Self.equatorLength(from: -180.0, to: -170.0)
+        let totalLength = clipped.lineStrings.reduce(0.0) { $0 + $1.length }
+        #expect(abs(totalLength - expectedLength) < expectedLength * 0.000001)
+    }
+
+    /// A >180° segment in EPSG:3857 behaves like the EPSG:4326 case.
+    @Test
+    func segmentSpanningMoreThanHalfTheWorld3857IsKept() throws {
+        let shift = GISTool.originShift
+        let line = try #require(LineString([
+            Coordinate3D(x: -shift / 1.8, y: 0.0, projection: .epsg3857),
+            Coordinate3D(x: shift / 1.8, y: 0.0, projection: .epsg3857),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(x: -shift, y: -shift, projection: .epsg3857),
+            northEast: Coordinate3D(x: shift, y: shift, projection: .epsg3857))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 2)
+
+        let totalLength = clipped.lineStrings.reduce(0.0) { $0 + $1.length }
+        #expect(abs(totalLength - line.length) < line.length * 0.000001)
+    }
+
+    /// A plain antimeridian-crossing line clipped against the world box must
+    /// keep both sides of the seam. At z0 the clip box is the whole world, so
+    /// this is the case that used to drop one half of a route.
+    @Test
+    func antimeridianCrossingLineInsideWorldBoxIsKept() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: 179.0, y: 0.0, projection: .epsg4326),
+            Coordinate3D(x: -179.0, y: 0.0, projection: .epsg4326),
+        ]))
+
+        let clipped = try #require(line.clipped(to: .world))
+        #expect(clipped.lineStrings.count == 2)
+
+        let totalLength = clipped.lineStrings.reduce(0.0) { $0 + $1.length }
+        #expect(abs(totalLength - line.length) < line.length * 0.000001)
+    }
+
+    /// The length of an equatorial segment between two longitudes.
+    private static func equatorLength(from: Double, to: Double) -> Double {
+        Coordinate3D(latitude: 0.0, longitude: from)
+            .distance(to: Coordinate3D(latitude: 0.0, longitude: to))
+    }
+
+    /// A >180° segment in EPSG:4978 has no wraparound axis, so it is clipped
+    /// as a plain axis-aligned segment.
+    @Test
+    func segmentSpanningMoreThanHalfTheWorld4978IsClippedFlat() throws {
+        let line = try #require(LineString([
+            Coordinate3D(x: -100.0, y: 0.0, z: 0.0, projection: .epsg4978),
+            Coordinate3D(x: 100.0, y: 0.0, z: 0.0, projection: .epsg4978),
+        ]))
+        let box = BoundingBox(
+            southWest: Coordinate3D(x: -110.0, y: -85.0, z: 0.0, projection: .epsg4978),
+            northEast: Coordinate3D(x: 110.0, y: 85.0, z: 0.0, projection: .epsg4978))
+
+        let clipped = try #require(line.clipped(to: box))
+        #expect(clipped.lineStrings.count == 1)
+        #expect(clipped.allCoordinates.count == 2)
+    }
+
 }

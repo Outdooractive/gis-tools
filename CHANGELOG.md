@@ -6,6 +6,16 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+- Line clipping across the antimeridian (#408): `LineString.clipped(to:)` and
+  `MultiLineString.clipped(to:)` no longer drop one half of a segment that
+  spans more than 180° of longitude. Such a segment is unwrapped across the
+  antimeridian, so it is longer than one world period and can reach into more
+  than one copy of the clip box. Clipping now evaluates every world copy that
+  the unwrapped line overlaps and keeps all resulting pieces, instead of
+  clipping against a single copy chosen from the line's centre. This fixes
+  routes and tracks that were truncated to a small stub near ±180°, including
+  at z0 where the clip box is the whole world.
+
 - Polygon clipping to a pole-reaching bounding box (#409): `Polygon.clipped(to:)`
   no longer crashes when the box's latitude reaches ±90°. Such a box projects
   to infinity in the EPSG:3857 working frame used by the overlay, which made

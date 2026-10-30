@@ -330,45 +330,81 @@ extension BoundingBox {
 
     /// Clips a line against a possibly antimeridian-crossing box by splitting
     /// the box into its non-crossing parts and clipping against each one.
+    ///
+    /// The coordinates are unwrapped into a continuous frame first, so a
+    /// segment that crosses the antimeridian becomes a segment that leaves the
+    /// world on one side and re-enters on the other. A segment spanning more
+    /// than half the world is therefore longer than one world period and can
+    /// reach into more than one copy of the clip box. Every world copy that
+    /// the unwrapped line touches is clipped and all resulting pieces are
+    /// kept, so neither half of such a segment is lost.
     fileprivate func clipLineParts(
         coordinates: [Coordinate3D],
         projection: Projection,
     ) -> [[Coordinate3D]] {
         let boxes = clipBoxes(projection: projection)
-        let extent = projection.wraparoundExtent
-        let period = (extent ?? 0.0) * 2.0
-        let unwrapped = extent.map {
-            AntimeridianCutting.unwrapCoordinates(coordinates, extent: $0)
-        } ?? coordinates
-        let lineCenter = unwrapped.reduce(0.0) { $0 + $1.x } / Double(max(unwrapped.count, 1))
+
+        guard let extent = projection.wraparoundExtent,
+              extent > 0.0
+        else {
+            return boxes.flatMap { $0.clipLine(coordinates: coordinates) }
+        }
+
+        let period = extent * 2.0
+        let unwrapped = AntimeridianCutting.unwrapCoordinates(coordinates, extent: extent)
+
+        guard let lineMinX = unwrapped.map(\.x).min(),
+              let lineMaxX = unwrapped.map(\.x).max()
+        else { return [] }
 
         var parts: [[Coordinate3D]] = []
         var seen: Set<[Coordinate3D]> = []
 
         for box in boxes {
-            var candidate = unwrapped
-            if period > 0.0 {
-                let boxCenter = (box.southWest.x + box.northEast.x) / 2.0
-                let shift = ((boxCenter - lineCenter) / period).rounded() * period
-                if shift != 0.0 {
-                    candidate = candidate.map {
+            let boxMinX = box.southWest.x
+            let boxMaxX = box.northEast.x
+
+            // World copies of the box are the box shifted by whole periods.
+            // Copy `k` covers `boxMinX + k * period ... boxMaxX + k * period`;
+            // it overlaps the unwrapped line when
+            // `k >= (lineMinX - boxMaxX) / period` and
+            // `k <= (lineMaxX - boxMinX) / period`. Only whole copies count,
+            // hence the `ceil`/`floor` bounds.
+            let firstCopyValue = ((lineMinX - boxMaxX) / period).rounded(.up)
+            let lastCopyValue = ((lineMaxX - boxMinX) / period).rounded(.down)
+
+            guard firstCopyValue.isFinite,
+                  lastCopyValue.isFinite,
+                  firstCopyValue <= lastCopyValue,
+                  firstCopyValue >= Double(Int.min),
+                  lastCopyValue <= Double(Int.max)
+            else { continue }
+
+            let firstCopy = Int(firstCopyValue)
+            let lastCopy = Int(lastCopyValue)
+
+            for copyIndex in firstCopy ... lastCopy {
+                // Clipping against the copy shifted by `shift` is equivalent to
+                // shifting the line by the same amount in the opposite
+                // direction, then clipping against the box itself.
+                let shift = Double(copyIndex) * period
+                let candidate = shift == 0.0
+                    ? unwrapped
+                    : unwrapped.map {
                         Coordinate3D(
-                            x: $0.x + shift,
+                            x: $0.x - shift,
                             y: $0.y,
                             z: $0.altitude,
                             m: $0.m,
                             projection: $0.projection)
                     }
+
+                for part in box.clipLine(coordinates: candidate) {
+                    let normalized = part.map { $0.normalized() }
+                    guard seen.insert(normalized).inserted else { continue }
+
+                    parts.append(normalized)
                 }
-            }
-
-            for part in box.clipLine(coordinates: candidate) {
-                let normalized = extent == nil
-                    ? part
-                    : part.map { $0.normalized() }
-                guard seen.insert(normalized).inserted else { continue }
-
-                parts.append(normalized)
             }
         }
 
