@@ -95,6 +95,7 @@ algorithms.
 - [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — reads and writes OGC GeoPackage (.gpkg) files
 - [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — reads and writes GPX 1.1 files (.gpx)
 - [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — reads and writes FIT activity files (.fit)
+- [**mvt-tools**](https://github.com/Outdooractive/mvt-tools) — reads and writes Mapbox Vector Tiles (MVT) and MapLibre Tiles (MLT); despite its name, its `mvt` command-line tool converts between all supported formats (MVT, MLT, GeoJSON, GPX, FIT, CSV, Shapefile and GeoPackage), and is available via `brew install Outdooractive/homebrew-tap/mvt-tools`
 - Spatial search with a R-tree
 - Includes many spatial algorithms (ported from turf.js), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision

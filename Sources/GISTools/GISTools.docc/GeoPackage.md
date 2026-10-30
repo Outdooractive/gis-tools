@@ -169,4 +169,4 @@ Attribute columns other than `fid`, `id` and geometry are mapped as:
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GPX>, <doc:Shapefile>
+<doc:CSV>, <doc:FIT>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>

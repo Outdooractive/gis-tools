@@ -129,4 +129,4 @@ by first appearance across all features.
 
 ## Related packages
 
-<doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>
+<doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>

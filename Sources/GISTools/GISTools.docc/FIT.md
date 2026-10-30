@@ -153,4 +153,4 @@ timestamps.
 
 ## Related packages
 
-<doc:CSV>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>
+<doc:CSV>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>
