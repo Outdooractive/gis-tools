@@ -511,4 +511,68 @@ struct BoundingBoxClipTests {
         })
     }
 
+    // MARK: - Clip boxes reaching the poles
+
+    /// Clipping a polygon to a box whose latitude reaches ±90° must not trap.
+    ///
+    /// A latitude of ±90° projects to infinity in EPSG:3857, which used to
+    /// make the overlay grid's cell size NaN and trap on the `Int` conversion.
+    @Test
+    func polygonInsidePoleReachingBoxIsKept() throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
+            northEast: Coordinate3D(latitude: 90.0, longitude: 180.0))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: -45.0, y: 60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: 60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: 60.0, projection: .epsg4326),
+        ]]))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.count == 1)
+        #expect(abs(clipped.area - polygon.area) < polygon.area * 0.000001)
+    }
+
+    /// A box reaching the south pole only must also keep a contained polygon.
+    @Test
+    func polygonInsideSouthPoleBoxIsKept() throws {
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
+            northEast: Coordinate3D(latitude: 0.0, longitude: 180.0))
+        let polygon = try #require(Polygon([[
+            Coordinate3D(x: -45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: -20.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: -20.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: -60.0, projection: .epsg4326),
+        ]]))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.count == 1)
+        #expect(abs(clipped.area - polygon.area) < polygon.area * 0.000001)
+    }
+
+    /// A pole-reaching box must not trap in EPSG:4978 either, where the box is
+    /// projected before clipping.
+    @Test
+    func polygonInsidePoleReachingBox4978IsKept() throws {
+        let polygon4326 = try #require(Polygon([[
+            Coordinate3D(x: -45.0, y: 60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: 60.0, projection: .epsg4326),
+            Coordinate3D(x: 45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: -60.0, projection: .epsg4326),
+            Coordinate3D(x: -45.0, y: 60.0, projection: .epsg4326),
+        ]]))
+        let polygon = polygon4326.projected(to: .epsg4978)
+        let box = BoundingBox(
+            southWest: Coordinate3D(latitude: -90.0, longitude: -180.0),
+            northEast: Coordinate3D(latitude: 90.0, longitude: 180.0))
+
+        let clipped = try #require(polygon.clipped(to: box))
+        #expect(clipped.polygons.isNotEmpty)
+        #expect(clipped.projection == .epsg4978)
+    }
+
 }

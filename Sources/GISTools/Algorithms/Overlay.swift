@@ -183,6 +183,22 @@ enum Overlay {
                 let maxX = boxes.reduce(first.maxX) { max($0, $1.box.maxX) }
                 let maxY = boxes.reduce(first.maxY) { max($0, $1.box.maxY) }
 
+                // A non-finite bound cannot be turned into a grid: the cell
+                // size would become NaN and the index conversions below would
+                // trap. Index every polygon in a single cell instead, so
+                // containment tests stay correct without a grid.
+                guard minX.isFinite, minY.isFinite, maxX.isFinite, maxY.isFinite else {
+                    self.originX = 0.0
+                    self.originY = 0.0
+                    self.cellWidth = 1.0
+                    self.cellHeight = 1.0
+                    self.columns = 1
+                    self.rows = 1
+                    self.cells = [boxes.map(\.index)]
+                    self.large = []
+                    return
+                }
+
                 let side = max(8, min(64, Int(sqrt(Double(max(polygons.count, 1))))))
                 let columns = side
                 let rows = side
@@ -222,10 +238,14 @@ enum Overlay {
             }
 
             func cellIndex(for point: Coordinate3D) -> Int? {
-                guard columns > 0, rows > 0 else { return nil }
-
-                let column = min(max(Int(floor((point.x - originX) / cellWidth)), 0), columns - 1)
-                let row = min(max(Int(floor((point.y - originY) / cellHeight)), 0), rows - 1)
+                guard columns > 0, rows > 0,
+                      let column = Self.clampedIndex(
+                          (point.x - originX) / cellWidth,
+                          count: columns),
+                      let row = Self.clampedIndex(
+                          (point.y - originY) / cellHeight,
+                          count: rows)
+                else { return nil }
 
                 return row * columns + column
             }
@@ -236,7 +256,7 @@ enum Overlay {
                 cellSize: Double,
                 count: Int
             ) -> Int {
-                min(max(Int((value - origin) / cellSize), 0), count - 1)
+                clampedIndex((value - origin) / cellSize, count: count) ?? 0
             }
 
             private static func row(
@@ -245,7 +265,22 @@ enum Overlay {
                 cellSize: Double,
                 count: Int
             ) -> Int {
-                min(max(Int((value - origin) / cellSize), 0), count - 1)
+                clampedIndex((value - origin) / cellSize, count: count) ?? 0
+            }
+
+            /// Clamps a grid index into `0 ..< count`, returning `nil` when the
+            /// value is not finite.
+            ///
+            /// The value is clamped as a `Double` *before* the `Int` conversion:
+            /// converting a huge but finite value (or NaN/infinity) to `Int`
+            /// traps.
+            private static func clampedIndex(
+                _ value: Double,
+                count: Int,
+            ) -> Int? {
+                guard count > 0, value.isFinite else { return nil }
+
+                return Int(min(max(value, 0.0), Double(count - 1)))
             }
 
         }
@@ -265,6 +300,11 @@ enum Overlay {
     /// ``PolygonIndex`` over the normalized polygons is passed to
     /// `boundaryTest`, so the test always sees the same frame as the edges.
     ///
+    /// A latitude of ±90° projects to infinity in EPSG:3857, so a legal
+    /// geographic bounding box can arrive here with non-finite coordinates.
+    /// Those are replaced with the projection's valid extent before any
+    /// geometry or grid math runs; finite coordinates are left untouched.
+    ///
     /// - Parameters:
     ///   - polygons: The input polygons.
     ///   - boundaryTest: Returns `true` when an edge is part of the result boundary.
@@ -274,6 +314,8 @@ enum Overlay {
         boundaryTest: (Edge, PolygonIndex) -> Bool
     ) -> MultiPolygon? {
         guard polygons.isNotEmpty else { return nil }
+
+        let polygons = sanitizedForOverlay(polygons)
 
         let frame = antimeridianFrame(for: polygons)
         let normalized = frame.polygons
@@ -398,6 +440,63 @@ private struct IndexedEdge: BoundingBoxRepresentable {
 }
 
 extension Overlay {
+
+    // MARK: - Non-finite input sanitization
+
+    /// Replaces non-finite coordinates with the EPSG:3857 valid extent.
+    ///
+    /// The overlay works in EPSG:3857, where a latitude of ±90° projects to
+    /// infinity (or a very large finite value). A legal geographic bounding
+    /// box can therefore reach the overlay with non-finite coordinates, which
+    /// would poison the geometry math and the integer grid. Clamping those
+    /// values to ±``GISTool/originShift`` keeps the overlay well-defined.
+    ///
+    /// Only non-finite values are touched: finite coordinates are returned
+    /// unchanged, so geometry above the Mercator limit keeps its exact values
+    /// in operations that do not involve a pole-reaching box.
+    ///
+    /// - Parameter polygons: The polygons in EPSG:3857.
+    /// - Returns: The polygons with all coordinates finite.
+    static func sanitizedForOverlay(_ polygons: [Polygon]) -> [Polygon] {
+        var changed = false
+
+        let result = polygons.map { polygon in
+            var polygonChanged = false
+
+            let rings = polygon.coordinates.map { ring in
+                ring.map { coordinate -> Coordinate3D in
+                    guard !coordinate.x.isFinite || !coordinate.y.isFinite else {
+                        return coordinate
+                    }
+
+                    polygonChanged = true
+                    return Coordinate3D(
+                        x: clampedToMercatorLimit(coordinate.x),
+                        y: clampedToMercatorLimit(coordinate.y),
+                        z: coordinate.altitude,
+                        m: coordinate.m,
+                        projection: coordinate.projection)
+                }
+            }
+
+            guard polygonChanged else { return polygon }
+
+            changed = true
+            return Polygon(unchecked: rings, calculateBoundingBox: false)
+        }
+
+        return changed ? result : polygons
+    }
+
+    /// Maps a non-finite value onto the Web Mercator limit, preserving sign.
+    ///
+    /// - Parameter value: The coordinate component.
+    /// - Returns: `value` when finite, otherwise ±``GISTool/originShift``.
+    fileprivate static func clampedToMercatorLimit(_ value: Double) -> Double {
+        guard !value.isFinite else { return value }
+
+        return value > 0.0 ? GISTool.originShift : -GISTool.originShift
+    }
 
     // MARK: - Antimeridian normalization
 
@@ -979,6 +1078,18 @@ private struct OverlayPreparedRing: Sendable {
             return
         }
 
+        // A non-finite bound cannot be turned into a scanline index: the row
+        // scale would become NaN and the `Int` conversions below would trap.
+        // Fall back to no rows, which makes `contains` return `false`.
+        guard minY.isFinite, maxY.isFinite else {
+            self.minY = 0.0
+            self.maxY = 0.0
+            self.rowScale = 0.0
+            self.rowCount = 0
+            self.rows = []
+            return
+        }
+
         let rowCount = max(8, min(256, edgeCount / 4))
         let span = maxY - minY
         let rowScale = Double(rowCount) / span
@@ -989,8 +1100,8 @@ private struct OverlayPreparedRing: Sendable {
             let b = coordinates[(index + 1) % edgeCount]
             let low = min(a.y, b.y)
             let high = max(a.y, b.y)
-            let startRow = min(max(Int((low - minY) * rowScale), 0), rowCount - 1)
-            let endRow = min(max(Int((high - minY) * rowScale), 0), rowCount - 1)
+            let startRow = Self.rowIndex(low, minY: minY, rowScale: rowScale, rowCount: rowCount)
+            let endRow = Self.rowIndex(high, minY: minY, rowScale: rowScale, rowCount: rowCount)
 
             for row in startRow ... endRow {
                 rows[row].append(index)
@@ -1004,6 +1115,24 @@ private struct OverlayPreparedRing: Sendable {
         self.rows = rows
     }
 
+    /// Clamps a y value into `0 ..< rowCount`.
+    ///
+    /// The value is clamped as a `Double` *before* the `Int` conversion:
+    /// converting a huge but finite value (or NaN/infinity) to `Int` traps.
+    private static func rowIndex(
+        _ y: Double,
+        minY: Double,
+        rowScale: Double,
+        rowCount: Int,
+    ) -> Int {
+        guard rowCount > 0 else { return 0 }
+
+        let value = (y - minY) * rowScale
+        guard value.isFinite else { return 0 }
+
+        return Int(min(max(value, 0.0), Double(rowCount - 1)))
+    }
+
     func contains(_ point: Coordinate3D) -> Bool {
         guard edgeCount >= 3,
               rowCount > 0,
@@ -1011,7 +1140,7 @@ private struct OverlayPreparedRing: Sendable {
               point.y <= maxY
         else { return false }
 
-        let row = min(max(Int((point.y - minY) * rowScale), 0), rowCount - 1)
+        let row = Self.rowIndex(point.y, minY: minY, rowScale: rowScale, rowCount: rowCount)
         var inside = false
 
         for index in rows[row] {

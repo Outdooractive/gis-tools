@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Polygon clipping to a pole-reaching bounding box (#409): `Polygon.clipped(to:)`
+  no longer crashes when the box's latitude reaches ±90°. Such a box projects
+  to infinity in the EPSG:3857 working frame used by the overlay, which made
+  the overlay grid's cell size NaN and trapped on an `Int` conversion. The
+  overlay now replaces non-finite coordinates with the Web Mercator limit
+  before any geometry or grid math runs, so a polygon inside the box comes
+  back unchanged. Finite coordinates are left untouched, so geometry above the
+  Mercator limit keeps its exact values in operations that do not involve a
+  pole-reaching box. This also fixes the same trap in `union`, `intersection`,
+  `difference` and `symmetricDifference`, which share the overlay.
+
+  Both overlay grids (the uniform cell index and the prepared-ring scanline
+  index) additionally refuse to build from non-finite bounds and clamp their
+  indices as `Double` before converting to `Int`, so a non-finite input can no
+  longer trap regardless of where it comes from.
+
 ## 3.0.0 - 2026-10-30
 
 ### Breaking changes

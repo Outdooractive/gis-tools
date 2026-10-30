@@ -63,4 +63,68 @@ struct OverlayTests {
         #expect(result.isValid)
     }
 
+    // MARK: - Non-finite input
+
+    /// The overlay grid must never trap on a non-finite bound.
+    ///
+    /// A latitude of −90° projects to `-infinity` in EPSG:3857, which used to
+    /// make the grid's cell size NaN and trap on the `Int` conversion. The
+    /// index is built directly here so the guard is exercised without running
+    /// the full overlay on a pathological polygon.
+    @Test
+    func polygonIndexWithInfiniteBoundsDoesNotTrap() {
+        let infinite = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: .infinity, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: .infinity, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let index = Overlay.PolygonIndex([infinite])
+
+        // Must return without trapping.
+        _ = index.contains(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))
+        _ = index.contains(Coordinate3D(x: 5.0, y: .infinity, projection: .noSRID))
+        _ = index.contains(Coordinate3D(x: .nan, y: .nan, projection: .noSRID))
+    }
+
+    /// The overlay grid must never trap on a NaN bound either.
+    @Test
+    func polygonIndexWithNaNBoundsDoesNotTrap() {
+        let nan = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: .nan, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: .nan, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+        let index = Overlay.PolygonIndex([nan])
+
+        _ = index.contains(Coordinate3D(x: 5.0, y: 5.0, projection: .noSRID))
+        _ = index.contains(Coordinate3D(x: .nan, y: .nan, projection: .noSRID))
+    }
+
+    /// A non-finite coordinate in an overlay input is replaced with the Web
+    /// Mercator limit, so the overlay math never sees infinities or NaN.
+    @Test
+    func overlaySanitizesNonFiniteCoordinates() {
+        let finite = square(0.0, 10.0)
+        let infinite = Polygon(unchecked: [[
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: 0.0, projection: .noSRID),
+            Coordinate3D(x: 10.0, y: .infinity, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: .infinity, projection: .noSRID),
+            Coordinate3D(x: 0.0, y: 0.0, projection: .noSRID),
+        ]])
+
+        let sanitized = Overlay.sanitizedForOverlay([finite, infinite])
+        #expect(sanitized.count == 2)
+        // The finite polygon is returned unchanged.
+        #expect(sanitized[0].coordinates == finite.coordinates)
+        // The infinite coordinate is clamped to the Mercator limit.
+        // swiftformat:disable:next preferKeyPath
+        #expect(sanitized[1].allCoordinates.allSatisfy({ $0.y.isFinite }))
+        #expect(sanitized[1].allCoordinates.contains { abs($0.y - GISTool.originShift) < 0.000001 })
+    }
+
 }
