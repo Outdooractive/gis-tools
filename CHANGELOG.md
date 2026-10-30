@@ -6,6 +6,21 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+- Package traits can be enabled together: `EnableMeterConversionExtensions`
+  and `EnableMeasurementConversionExtensions` no longer abort the build with an
+  `#error` when both are on. `EnableMeasurementConversionExtensions` now takes
+  precedence, so `swift build --enable-all-traits` works and the Swift Package
+  Index documentation builder — which extracts symbol graphs with every trait
+  enabled — can generate the DocC archive again. Previously every documentation
+  build failed, so the hosted docs were stale and contained neither the DocC
+  articles nor the Graph API.
+
+- Documentation build diagnostics: the DocC catalog is now built with all
+  traits enabled, matching Swift Package Index, and the five broken symbol
+  links that only appear with the Graph trait (`articulationPoints()`,
+  `eulerianity()`, `nodeOnEdge(near:tolerance:)`, `expandPath(_:using:)` and
+  the undocumented `result` parameter) are fixed.
+
 - Line clipping across the antimeridian (#408): `LineString.clipped(to:)` and
   `MultiLineString.clipped(to:)` no longer drop one half of a segment that
   spans more than 180° of longitude. Such a segment is unwrapped across the

@@ -140,9 +140,7 @@ extension Double {
 
 }
 
-#endif
-
-#if EnableMeterConversionExtensions
+#elseif EnableMeterConversionExtensions
 
 extension Double {
 

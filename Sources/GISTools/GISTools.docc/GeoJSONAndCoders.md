@@ -190,6 +190,10 @@ encoded to WKB or WKT; encoding returns `nil`.
 
 ## Next steps
 
-- <doc:QueryDSL> for filtering features by properties and location.
-- <doc:PerformanceAndMemory> for loading and encoding performance.
-- <doc:MigrationGuide> for the 3.0 unlocated-feature and parsing changes.
+- [Query DSL][query-dsl] for filtering features by properties and location.
+- [Performance and memory notes][performance] for loading and encoding performance.
+- [Migrating to GISTools 3.0][migration] for the 3.0 unlocated-feature and parsing changes.
+
+[query-dsl]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
+[performance]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
+[migration]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide

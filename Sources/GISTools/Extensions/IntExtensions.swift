@@ -1,8 +1,9 @@
 import Foundation
 
-#if EnableMeterConversionExtensions && EnableMeasurementConversionExtensions
-#error("EnableMeterConversionExtensions and EnableMeasurementConversionExtensions are mutually exclusive")
-#endif
+// The two conversion traits are alternatives, not complements:
+// `EnableMeasurementConversionExtensions` wins when both are enabled, so that
+// builds which turn on every trait (e.g. `swift build --enable-all-traits` or
+// the Swift Package Index documentation builder) still compile.
 
 #if EnableMeasurementConversionExtensions
 
@@ -80,9 +81,7 @@ extension Int {
 
 }
 
-#endif
-
-#if EnableMeterConversionExtensions
+#elseif EnableMeterConversionExtensions
 
 // MARK: Public
 

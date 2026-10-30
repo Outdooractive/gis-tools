@@ -129,4 +129,10 @@ by first appearance across all features.
 
 ## Related packages
 
-<doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>
+[FIT][fit], [GeoPackage][geopackage], [GPX][gpx], [Shapefile][shapefile], [mvt-tools][mvttools]
+
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools

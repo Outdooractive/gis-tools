@@ -96,4 +96,10 @@ mvt export tile.mvt --output tile.geojson
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>
+[CSV][csv], [FIT][fit], [GeoPackage][geopackage], [GPX][gpx], [Shapefile][shapefile]
+
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile

@@ -37,8 +37,10 @@ SwiftPM package traits:
 | `EnableMeasurementConversionExtensions` | Unit conversion properties return `Measurement<UnitLength>`. |
 | `EnableMeterConversionExtensions` | Unit conversion properties return raw `Double` meters. |
 
-The two conversion traits are mutually exclusive. Enable the graph trait when
-you use `Graph` or its routing APIs:
+The two conversion traits are alternatives: enable one of them. If both are
+enabled, `EnableMeasurementConversionExtensions` wins, so turning on every
+trait still compiles. Enable the graph trait when you use `Graph` or its
+routing APIs:
 
 ```swift
 .package(
@@ -99,7 +101,7 @@ let decoded = try JSONDecoder().decode(Feature.self, from: encoded)
 ```
 
 `GeoJsonReader` wraps any GeoJSON value into a feature collection; see
-<doc:GeoJSONAndCoders> for parser modes, unlocated features, gzip input and the
+[GeoJSON and WKB/WKT/TWKB][coders] for parser modes, unlocated features, gzip input and the
 WKB/WKT/TWKB coders.
 
 ## Work with projections
@@ -114,14 +116,21 @@ let distance = coordinate.distance(to: utm)
 ```
 
 Algorithms use the receiver's projection as their working frame. See
-<doc:ProjectionsAndAntimeridian> for projection selection, custom projections,
+[Projections and antimeridian handling][projections] for projection selection, custom projections,
 datum accuracy and antimeridian handling.
 
 ## Next steps
 
-- <doc:ProjectionsAndAntimeridian>
-- <doc:GeoJSONAndCoders>
-- <doc:QueryDSL>
-- <doc:GraphAPI>
-- <doc:PerformanceAndMemory>
-- <doc:MigrationGuide>
+- [Projections and antimeridian handling][projections]
+- [GeoJSON and WKB/WKT/TWKB][coders]
+- [Query DSL][query-dsl]
+- [Graph API][graph-api]
+- [Performance and memory notes][performance]
+- [Migrating to GISTools 3.0][migration]
+
+[coders]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
+[projections]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/projectionsandantimeridian
+[query-dsl]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
+[graph-api]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[performance]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
+[migration]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide

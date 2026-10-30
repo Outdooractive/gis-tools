@@ -10,7 +10,7 @@
 
 
 # GISTools
-GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms ported from [https://turfjs.org][4].
+GIS tools for Swift, including a [GeoJSON][3] implementation and many spatial algorithms. The algorithms combine ports from [turf.js][4], GEOS, PROJ and Mapbox polylabel with implementations written from scratch for this package.
 
 ## Table of Contents
 
@@ -62,20 +62,21 @@ GIS tools for Swift, including a [GeoJSON][3] implementation and many algorithms
 ## Documentation
 
 The [DocC catalog](Sources/GISTools/GISTools.docc/GISTools.md) contains focused
-guides for the main workflows:
+guides for the main workflows, published on Swift Package Index:
 
-- [Getting started](Sources/GISTools/GISTools.docc/GettingStarted.md)
-- [Projections and antimeridian handling](Sources/GISTools/GISTools.docc/ProjectionsAndAntimeridian.md)
-- [GeoJSON and WKB/WKT/TWKB](Sources/GISTools/GISTools.docc/GeoJSONAndCoders.md)
-- [Query DSL](Sources/GISTools/GISTools.docc/QueryDSL.md)
-- [Graph API](Sources/GISTools/GISTools.docc/GraphAPI.md)
-- [Performance and memory notes](Sources/GISTools/GISTools.docc/PerformanceAndMemory.md)
-- [CSV](Sources/GISTools/GISTools.docc/CSV.md)
-- [FIT](Sources/GISTools/GISTools.docc/FIT.md)
-- [GeoPackage](Sources/GISTools/GISTools.docc/GeoPackage.md)
-- [GPX](Sources/GISTools/GISTools.docc/GPX.md)
-- [Shapefile](Sources/GISTools/GISTools.docc/Shapefile.md)
-- [Migrating to GISTools 3.0](Sources/GISTools/GISTools.docc/MigrationGuide.md)
+- [Getting started][doc-gettingstarted]
+- [Projections and antimeridian handling][doc-projections]
+- [GeoJSON and WKB/WKT/TWKB][doc-geojsoncoders]
+- [Query DSL][doc-querydsl]
+- [Graph API][doc-graphapi]
+- [Performance and memory notes][doc-performance]
+- [CSV][doc-csv]
+- [FIT][doc-fit]
+- [GeoPackage][doc-geopackage]
+- [GPX][doc-gpx]
+- [Shapefile][doc-shapefile]
+- [mvt-tools (MVT and MLT)][doc-mvttools]
+- [Migrating to GISTools 3.0][doc-migration]
 
 The generated API reference is available on
 [Swift Package Index](https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools).
@@ -97,7 +98,7 @@ algorithms.
 - [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — reads and writes FIT activity files (.fit)
 - [**mvt-tools**](https://github.com/Outdooractive/mvt-tools) — reads and writes Mapbox Vector Tiles (MVT) and MapLibre Tiles (MLT); despite its name, its `mvt` command-line tool converts between all supported formats (MVT, MLT, GeoJSON, GPX, FIT, CSV, Shapefile and GeoPackage), and is available via `brew install Outdooractive/homebrew-tap/mvt-tools`
 - Spatial search with a R-tree
-- Includes many spatial algorithms (ported from turf.js), and more to come
+- Includes many spatial algorithms (ported from turf.js, GEOS and PROJ, or written from scratch), and more to come
 - Many algorithms accept a `gridSize` parameter to snap coordinates to a uniform grid before computation, reducing noise from floating-point precision
 - Handles coordinates across the anti-meridian (±180° longitude) — geometries can wrap around the date line
 - Has a helper for working with x/y/z map tiles (center/bounding box/resolution/…)
@@ -118,7 +119,7 @@ For EPSG:4978 and noSRID, returns the original geometry unchanged (the antimerid
 
 > **Upgrading to 3.0?** The containment API, validity semantics, projected
 > coordinates, unlocated features, bounding boxes and graph trait changed. See
-> the [3.0 migration guide](Sources/GISTools/GISTools.docc/MigrationGuide.md)
+> the [3.0 migration guide][doc-migration]
 > and [CHANGELOG.md](CHANGELOG.md) for the complete list.
 
 ## Requirements
@@ -146,9 +147,13 @@ targets: [
 
 This package provides the following optional traits:
 
-**Unit conversion traits** (mutually exclusive):
+**Unit conversion traits** (alternatives — enable one):
 - `EnableMeasurementConversionExtensions` — conversion properties return `Measurement<UnitLength>` values, enabling unit-aware arithmetic and formatting.
 - `EnableMeterConversionExtensions` — conversion properties return raw `Double` meters, providing a lightweight alternative.
+
+If both are enabled, `EnableMeasurementConversionExtensions` takes precedence,
+so builds that turn on every trait (such as `swift build --enable-all-traits`)
+still compile.
 
 ```swift
 // With EnableMeasurementConversionExtensions:
@@ -690,7 +695,7 @@ Then create your models like this:
 
 This is necessary because SwiftData doesn't work well with the default Codable implementation, so you need to do the serialization for yourself.
 
-A complete model, container and fetch example is in the [GeoJSON and WKB/WKT/TWKB guide](Sources/GISTools/GISTools.docc/GeoJSONAndCoders.md).
+A complete model, container and fetch example is in the [GeoJSON and WKB/WKT/TWKB guide][doc-geojsoncoders].
 
 # WKB/WKT/TWKB
 The following geometry types are supported: `point`, `linestring`, `linearring`, `polygon`, `multipoint`, `multilinestring`, `multipolygon`, `geometrycollection` and `triangle`. Please open an issue if you need more.
@@ -1223,17 +1228,17 @@ let fc = graph.toFeatureCollection()
 
 Companion packages built on GISTools:
 
-- [**gis-tools-csv**](https://github.com/Outdooractive/gis-tools-csv) — CSV and PostGIS CSV exports ([guide](Sources/GISTools/GISTools.docc/CSV.md))
-- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — Garmin FIT activities ([guide](Sources/GISTools/GISTools.docc/FIT.md))
-- [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — OGC GeoPackage files ([guide](Sources/GISTools/GISTools.docc/GeoPackage.md))
-- [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — GPX 1.1 routes and tracks ([guide](Sources/GISTools/GISTools.docc/GPX.md))
-- [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — ESRI Shapefiles ([guide](Sources/GISTools/GISTools.docc/Shapefile.md))
+- [**gis-tools-csv**](https://github.com/Outdooractive/gis-tools-csv) — CSV and PostGIS CSV exports ([guide][doc-csv])
+- [**gis-tools-fit**](https://github.com/Outdooractive/gis-tools-fit) — Garmin FIT activities ([guide][doc-fit])
+- [**gis-tools-geopackage**](https://github.com/Outdooractive/gis-tools-geopackage) — OGC GeoPackage files ([guide][doc-geopackage])
+- [**gis-tools-gpx**](https://github.com/Outdooractive/gis-tools-gpx) — GPX 1.1 routes and tracks ([guide][doc-gpx])
+- [**gis-tools-shapefile**](https://github.com/Outdooractive/gis-tools-shapefile) — ESRI Shapefiles ([guide][doc-shapefile])
 
 Each guide covers installation, formats, supported APIs and limitations.
 
 Additional vector-tile tools:
 
-- [mvt-tools][125]: Vector tiles reader/writer for Swift
+- [**mvt-tools**](https://github.com/Outdooractive/mvt-tools) — Mapbox Vector Tiles (MVT) and MapLibre Tiles (MLT), plus the `mvt` CLI ([guide][doc-mvttools])
 - [mvt-postgis][130]: Creates vector tiles from Postgis databases
 
 # Development
@@ -1255,6 +1260,19 @@ Thomas Rasch, Outdooractive
 [3]:	https://www.rfc-editor.org/rfc/rfc7946
 [4]:	https://github.com/Turfjs/turf/tree/master/packages
 [5]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/GISTool.swift
+[doc-gettingstarted]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gettingstarted
+[doc-projections]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/projectionsandantimeridian
+[doc-geojsoncoders]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
+[doc-querydsl]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
+[doc-graphapi]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[doc-performance]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
+[doc-csv]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[doc-fit]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[doc-geopackage]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[doc-gpx]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[doc-shapefile]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[doc-mvttools]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools
+[doc-migration]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide
 [6]:	https://www.rfc-editor.org/rfc/rfc7946
 [8]:	https://swiftpackageindex.com/Outdooractive/gis-tools/main/documentation/gistools
 [9]:	https://github.com/Outdooractive/gis-tools/tree/main/Tests/GISToolsTests/GeoJson
@@ -1352,7 +1370,6 @@ Thomas Rasch, Outdooractive
 [122]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Truncate.swift "Truncate"
 [123]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/TruncateTests.swift "TruncateTests"
 [124]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/Union.swift "Union"
-[125]:	https://github.com/Outdooractive/mvt-tools
 [126]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanDisjoint.swift "BooleanDisjoint"
 [127]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Algorithms/BooleanDisjointTests.swift "BooleanDisjointTests"
 [128]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Algorithms/BooleanIntersects.swift "BooleanIntersects"

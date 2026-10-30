@@ -23,12 +23,12 @@ The package covers:
 - Opt-in graph construction, routing and network analysis
 
 Companion packages add CSV, FIT, GeoPackage, GPX and Shapefile support:
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX> and <doc:Shapefile>. Tiled
-vector formats (MVT and MLT) and the `mvt` CLI live in <doc:MVTTools>.
+[CSV][csv], [FIT][fit], [GeoPackage][geopackage], [GPX][gpx] and [Shapefile][shapefile]. Tiled
+vector formats (MVT and MLT) and the `mvt` CLI live in [mvt-tools][mvttools].
 
 > Important: GISTools 3.0 contains source-breaking changes to containment,
 > validity, projected coordinates, unlocated features, bounding boxes and the
-> graph API. Read <doc:MigrationGuide> before upgrading.
+> graph API. Read [Migrating to GISTools 3.0][migration] before upgrading.
 
 ## Quick example
 
@@ -48,28 +48,36 @@ let decoded = Feature(jsonString: json)
 
 ### Essentials
 
-- <doc:GettingStarted>
-- <doc:ProjectionsAndAntimeridian>
-- <doc:GeoJSONAndCoders>
+- [Getting started](doc:GettingStarted)
+- [Projections and antimeridian handling](doc:ProjectionsAndAntimeridian)
+- [GeoJSON and WKB/WKT/TWKB](doc:GeoJSONAndCoders)
 
 ### Querying and routing
 
-- <doc:QueryDSL>
-- <doc:GraphAPI>
+- [Query DSL](doc:QueryDSL)
+- [Graph API](doc:GraphAPI)
 
 ### Related packages
 
-- <doc:CSV>
-- <doc:FIT>
-- <doc:GeoPackage>
-- <doc:GPX>
-- <doc:Shapefile>
-- <doc:MVTTools>
+- [CSV](doc:CSV)
+- [FIT](doc:FIT)
+- [GeoPackage](doc:GeoPackage)
+- [GPX](doc:GPX)
+- [Shapefile](doc:Shapefile)
+- [mvt-tools](doc:MVTTools)
 
 ### Performance
 
-- <doc:PerformanceAndMemory>
+- [Performance and memory notes](doc:PerformanceAndMemory)
 
 ### Migration
 
-- <doc:MigrationGuide>
+- [Migrating to GISTools 3.0](doc:MigrationGuide)
+
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools
+[migration]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide

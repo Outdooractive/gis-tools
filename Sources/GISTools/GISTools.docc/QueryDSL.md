@@ -89,5 +89,8 @@ the bounding box before querying when it is not part of the source data.
 
 ## Next steps
 
-- <doc:GeoJSONAndCoders> for feature construction and parsing.
-- <doc:PerformanceAndMemory> for index and prepared-geometry advice.
+- [GeoJSON and WKB/WKT/TWKB][coders] for feature construction and parsing.
+- [Performance and memory notes][performance] for index and prepared-geometry advice.
+
+[coders]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
+[performance]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
