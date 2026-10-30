@@ -124,5 +124,8 @@ want to track.
 
 ## Next steps
 
-- <doc:QueryDSL> for filtering with spatial predicates.
-- <doc:GraphAPI> for routing-index usage.
+- [Query DSL][query-dsl] for filtering with spatial predicates.
+- [Graph API][graph-api] for routing-index usage.
+
+[query-dsl]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
+[graph-api]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi

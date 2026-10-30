@@ -116,8 +116,14 @@ library:
 
 Plan column names and record sizes before exporting a large property set. For
 unrestricted attributes, GeoPackage or another format is usually a better
-choice; see <doc:GeoPackage>.
+choice; see [GeoPackage][geopackage].
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:MVTTools>
+[CSV][csv], [FIT][fit], [GeoPackage][geopackage], [GPX][gpx], [mvt-tools][mvttools]
+
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools

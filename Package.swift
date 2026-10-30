@@ -26,10 +26,10 @@ let package = Package(
             description: "Enables graph construction, routing and network analysis APIs."),
         .trait(
             name: "EnableMeterConversionExtensions",
-            description: "Adds conversion properties that return raw Double values in meters."),
+            description: "Adds conversion properties that return raw Double values in meters. Ignored when EnableMeasurementConversionExtensions is also enabled."),
         .trait(
             name: "EnableMeasurementConversionExtensions",
-            description: "Adds conversion properties that return Measurement<UnitLength> values for unit-aware arithmetic."),
+            description: "Adds conversion properties that return Measurement<UnitLength> values for unit-aware arithmetic. Takes precedence over EnableMeterConversionExtensions."),
     ],
     dependencies: [],
     targets: [

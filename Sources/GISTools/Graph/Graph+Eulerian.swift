@@ -140,8 +140,9 @@ extension Graph {
     /// Finds a closed walk that traverses every edge at least once with small
     /// total weight — the *Chinese Postman* route.
     ///
-    /// When the graph is Eulerian (``eulerianity() == .eulerian``), the result
-    /// is the Eulerian circuit itself, traversing every edge exactly once.
+    /// When the graph is Eulerian (``eulerianity()`` returns `.eulerian`), the
+    /// result is the Eulerian circuit itself, traversing every edge exactly
+    /// once.
     /// When the graph has odd-degree nodes, the odd nodes are paired with
     /// small total cost (via a greedy minimum-weight perfect matching over
     /// the odd set using shortest-path distances), the matched pairs'

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build the GISTools DocC catalog and reject documentation diagnostics.
 
-The catalog is built with the default package traits, matching Swift Package
-Index. Articles should therefore link to always-available symbols and use code
-formatting for the optional Graph API.
+The catalog is built with every package trait enabled, matching the Swift
+Package Index documentation builder, which extracts symbol graphs with all
+traits on. This keeps optional APIs (the Graph trait) documented and catches
+trait combinations that only fail when enabled together.
 """
 
 from __future__ import annotations
@@ -28,9 +29,9 @@ def target_triple() -> str:
 
 
 def build_symbol_graph() -> Path:
-    subprocess.run(["swift", "build"], cwd=ROOT, check=True)
+    subprocess.run(["swift", "build", "--enable-all-traits"], cwd=ROOT, check=True)
     bin_path = subprocess.check_output(
-        ["swift", "build", "--show-bin-path"],
+        ["swift", "build", "--enable-all-traits", "--show-bin-path"],
         cwd=ROOT,
         text=True,
     ).strip()

@@ -141,7 +141,8 @@ The optional unit-conversion traits are unchanged in spirit:
 - `EnableMeasurementConversionExtensions` returns `Measurement<UnitLength>`.
 - `EnableMeterConversionExtensions` returns raw `Double` meters.
 
-The two conversion traits remain mutually exclusive.
+The two conversion traits remain alternatives. If both are enabled,
+`EnableMeasurementConversionExtensions` takes precedence.
 
 ## Unlocated features
 
@@ -229,7 +230,12 @@ geometries with unchecked initializers. The `json`, `jsonData`, `jsonString`,
 
 ## Next steps
 
-- <doc:GettingStarted>
-- <doc:ProjectionsAndAntimeridian>
-- <doc:GeoJSONAndCoders>
-- <doc:GraphAPI>
+- [Getting started][getting-started]
+- [Projections and antimeridian handling][projections]
+- [GeoJSON and WKB/WKT/TWKB][coders]
+- [Graph API][graph-api]
+
+[getting-started]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gettingstarted
+[projections]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/projectionsandantimeridian
+[coders]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
+[graph-api]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi

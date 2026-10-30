@@ -14,8 +14,8 @@ extension Graph {
     /// Betweenness centrality identifies the most important intersections in a
     /// road network — nodes with high betweenness carry a lot of through
     /// traffic and are critical for routing. Removing a high-betweenness node
-    /// (especially if it is also an ``articulationPoints()|articulation
-    /// point``) has outsized impact on reachability.
+    /// (especially if it is also an ``articulationPoints()`` articulation
+    /// point) has outsized impact on reachability.
     ///
     /// The implementation is Brandes' algorithm generalised to weighted graphs:
     /// for each source `s`, run Dijkstra counting the number of shortest paths

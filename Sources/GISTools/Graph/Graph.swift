@@ -107,7 +107,7 @@ public struct Graph: Sendable {
     // MARK: - Configuration
 
     /// The distance threshold (in meters) for treating two nodes as the same
-    /// location. Used by ``createNode(at:)`` and ``nodeOnEdge(near:)``.
+    /// location. Used by ``createNode(at:)`` and ``nodeOnEdge(near:tolerance:)``.
     /// The default is 1.0 meter.
     public var nodeTolerance: CLLocationDistance
 

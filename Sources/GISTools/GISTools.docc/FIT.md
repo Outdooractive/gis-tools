@@ -153,4 +153,10 @@ timestamps.
 
 ## Related packages
 
-<doc:CSV>, <doc:GeoPackage>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>
+[CSV][csv], [GeoPackage][geopackage], [GPX][gpx], [Shapefile][shapefile], [mvt-tools][mvttools]
+
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools

@@ -94,7 +94,7 @@ Clipped tile seams are stitched and noded by default: dangling endpoints near a
 collinear segment become graph nodes, and overlapping collinear edges are split
 and deduplicated. Pass `stitchingTolerance: 0.0` to disable this correctness
 pass. The extra preprocessing is visible in large merges; see
-<doc:PerformanceAndMemory>.
+[Performance and memory notes][performance].
 
 ## Export
 
@@ -108,6 +108,10 @@ a `"oneway": "yes"` property.
 
 ## Next steps
 
-- <doc:PerformanceAndMemory> for routing-index and contraction trade-offs.
-- <doc:ProjectionsAndAntimeridian> for projection and seam handling.
-- <doc:MigrationGuide> for the 3.0 graph trait migration.
+- [Performance and memory notes][performance] for routing-index and contraction trade-offs.
+- [Projections and antimeridian handling][projections] for projection and seam handling.
+- [Migrating to GISTools 3.0][migration] for the 3.0 graph trait migration.
+
+[performance]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
+[projections]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/projectionsandantimeridian
+[migration]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide

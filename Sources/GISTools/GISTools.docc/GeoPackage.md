@@ -169,4 +169,10 @@ Attribute columns other than `fid`, `id` and geometry are mapped as:
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GPX>, <doc:Shapefile>, <doc:MVTTools>
+[CSV][csv], [FIT][fit], [GPX][gpx], [Shapefile][shapefile], [mvt-tools][mvttools]
+
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[gpx]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/gpx
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools

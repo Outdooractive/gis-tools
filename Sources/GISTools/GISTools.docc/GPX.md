@@ -175,4 +175,10 @@ namespaces are preserved. GPX 1.0 input is read-only; writing always emits GPX
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:Shapefile>, <doc:MVTTools>
+[CSV][csv], [FIT][fit], [GeoPackage][geopackage], [Shapefile][shapefile], [mvt-tools][mvttools]
+
+[csv]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
+[fit]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
+[geopackage]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geopackage
+[shapefile]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/shapefile
+[mvttools]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/mvttools

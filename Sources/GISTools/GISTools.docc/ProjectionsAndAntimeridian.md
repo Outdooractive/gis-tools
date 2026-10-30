@@ -137,5 +137,7 @@ the projection's wraparound extent, so raw crossing polygons work in Web
 Mercator as well. Bounding-box clipping splits a crossing clip box into
 non-crossing windows and clips lines and polygons in each window.
 
-See <doc:MigrationGuide> for the 3.0 projected-coordinate and bounding-box
+See [Migrating to GISTools 3.0][migration] for the 3.0 projected-coordinate and bounding-box
 changes.
+
+[migration]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/migrationguide

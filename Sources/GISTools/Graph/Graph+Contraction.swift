@@ -21,8 +21,8 @@ extension Graph {
         /// the merged edge keep their original identity; intermediate nodes
         /// are dropped.
         ///
-        /// Use ``expandPath(_:)`` to lift a contracted-graph path back to the
-        /// original graph.
+        /// Use ``expandPath(_:using:)`` to lift a contracted-graph path back to
+        /// the original graph.
         public let originalIndices: [Int]
 
         /// Maps an original node index to its representative in the
@@ -333,6 +333,9 @@ extension Graph {
     /// - Parameters:
     ///   - contractedPath: A path in the contracted graph (as returned by a
     ///     routing algorithm on the graph from ``contracted()``).
+    ///   - result: The contraction result whose
+    ///     ``ContractionResult/originalIndices`` map the contracted path back
+    ///     to the original graph.
     /// - Returns: The expanded path as original-graph nodes, or `nil` if the
     ///   path cannot be expanded.
     public func expandPath(
