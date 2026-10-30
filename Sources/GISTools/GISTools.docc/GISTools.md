@@ -23,7 +23,8 @@ The package covers:
 - Opt-in graph construction, routing and network analysis
 
 Companion packages add CSV, FIT, GeoPackage, GPX and Shapefile support:
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX> and <doc:Shapefile>.
+<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX> and <doc:Shapefile>. Tiled
+vector formats (MVT and MLT) and the `mvt` CLI live in <doc:MVTTools>.
 
 > Important: GISTools 3.0 contains source-breaking changes to containment,
 > validity, projected coordinates, unlocated features, bounding boxes and the
@@ -63,6 +64,7 @@ let decoded = Feature(jsonString: json)
 - <doc:GeoPackage>
 - <doc:GPX>
 - <doc:Shapefile>
+- <doc:MVTTools>
 
 ### Performance
 

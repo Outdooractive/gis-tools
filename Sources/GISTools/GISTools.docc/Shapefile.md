@@ -120,4 +120,4 @@ choice; see <doc:GeoPackage>.
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX>
+<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:GPX>, <doc:MVTTools>

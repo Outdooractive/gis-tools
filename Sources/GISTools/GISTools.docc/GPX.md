@@ -175,4 +175,4 @@ namespaces are preserved. GPX 1.0 input is read-only; writing always emits GPX
 
 ## Related packages
 
-<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:Shapefile>
+<doc:CSV>, <doc:FIT>, <doc:GeoPackage>, <doc:Shapefile>, <doc:MVTTools>
