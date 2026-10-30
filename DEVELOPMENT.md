@@ -149,7 +149,7 @@ swift package diagnose-api-breaking-changes origin/main --products GISTools
 
 # Compare against the previous release for a release audit
 git fetch --tags
-swift package diagnose-api-breaking-changes v3.0.0-beta.4 --products GISTools
+swift package diagnose-api-breaking-changes v3.0.0 --products GISTools
 ```
 
 #### Intentional breaking changes

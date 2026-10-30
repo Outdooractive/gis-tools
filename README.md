@@ -133,7 +133,7 @@ verified platform matrix.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "2.3.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "3.0.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -959,7 +959,7 @@ GeoPackage support has been extracted into its own package: [**gis-tools-geopack
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools-geopackage", from: "1.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools-geopackage", from: "3.0.0"),
 ]
 ```
 
@@ -969,7 +969,7 @@ Shapefile support has been extracted into its own package: [**gis-tools-shapefil
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools-shapefile", from: "1.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools-shapefile", from: "3.0.0"),
 ]
 ```
 
@@ -979,7 +979,7 @@ GPX support has been extracted into its own package: [**gis-tools-gpx**](https:/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools-gpx", from: "1.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools-gpx", from: "3.0.0"),
 ]
 ```
 
@@ -989,7 +989,7 @@ FIT support has been extracted into its own package: [**gis-tools-fit**](https:/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools-fit", from: "1.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools-fit", from: "3.0.0"),
 ]
 ```
 
