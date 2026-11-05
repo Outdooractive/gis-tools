@@ -14,29 +14,32 @@ import Testing
 /// mutations made by individual tests never affect the shared fixture.
 enum GraphTestHelper {
 
-    private static let _immenstadtCollection: FeatureCollection = {
-        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt")
-    }()
+    private static let _immenstadtCollection: FeatureCollection =
+        try! TestData.featureCollection(
+            package: "Graph",
+            name: "RoadNetwork_Immenstadt")
 
-    private static let _immenstadtGraph: Graph = {
-        Graph(featureCollection: _immenstadtCollection, isDirected: false)
-    }()
+    private static let _immenstadtGraph = Graph(
+        featureCollection: _immenstadtCollection,
+        isDirected: false)
 
-    private static let _raplochCollection: FeatureCollection = {
-        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Raploch")
-    }()
+    private static let _raplochCollection: FeatureCollection =
+        try! TestData.featureCollection(
+            package: "Graph",
+            name: "RoadNetwork_Raploch")
 
-    private static let _raplochGraph: Graph = {
-        Graph(featureCollection: _raplochCollection, isDirected: false)
-    }()
+    private static let _raplochGraph = Graph(
+        featureCollection: _raplochCollection,
+        isDirected: false)
 
-    private static let _immenstadtCollection2: FeatureCollection = {
-        try! TestData.featureCollection(package: "Graph", name: "RoadNetwork_Immenstadt_2")
-    }()
+    private static let _immenstadtCollection2: FeatureCollection =
+        try! TestData.featureCollection(
+            package: "Graph",
+            name: "RoadNetwork_Immenstadt_2")
 
-    private static let _immenstadtGraph2: Graph = {
-        Graph(featureCollection: _immenstadtCollection2, isDirected: false)
-    }()
+    private static let _immenstadtGraph2 = Graph(
+        featureCollection: _immenstadtCollection2,
+        isDirected: false)
 
     static func immenstadtCollection() throws -> FeatureCollection {
         _immenstadtCollection
@@ -66,13 +69,16 @@ enum GraphTestHelper {
                 if let s: String = feature.property(for: "roundabout") {
                     return s == "yes" || s == "1" || s == "true"
                 }
-                if let i: Int = feature.property(for: "roundabout") { return i == 1 }
+                if let i: Int = feature.property(for: "roundabout") {
+                    return i == 1
+                }
                 return false
             }()
             guard isRoundabout,
                   let ls = feature.geometry as? LineString,
                   let first = ls.coordinates.first
             else { continue }
+
             if let node = graph.node(at: first, tolerance: 5.0) {
                 return node
             }
@@ -85,7 +91,7 @@ enum GraphTestHelper {
     static func filteredBFS(
         from start: Node,
         in graph: Graph,
-        edgeFilter: (Edge) -> Bool
+        edgeFilter: (Edge) -> Bool,
     ) -> [Node] {
         var visited: Set<Int> = [start.index]
         var queue: [Int] = [start.index]
@@ -94,7 +100,9 @@ enum GraphTestHelper {
         while !queue.isEmpty {
             let current = queue.removeFirst()
             for edge in graph.edges(for: graph.node(withIndex: current)!) {
-                if !edgeFilter(edge) { continue }
+                if !edgeFilter(edge) {
+                    continue
+                }
                 if visited.insert(edge.to.index).inserted {
                     queue.append(edge.to.index)
                     result.append(edge.to)
@@ -111,22 +119,26 @@ enum GraphTestHelper {
         in graph: Graph,
         edgeFilter: (Edge) -> Bool,
         maxSamples: Int = 50,
-        minComponentSize: Int = 2
+        minComponentSize: Int = 2,
     ) -> (seed: Node, reachable: [Node])? {
         var bestSeed: Node?
         var bestReachable: [Node] = []
         var sampled = 0
         for node in graph.nodes {
             guard graph.edges(for: node).contains(where: edgeFilter) else { continue }
+
             let reachable = filteredBFS(from: node, in: graph, edgeFilter: edgeFilter)
             if reachable.count > bestReachable.count {
                 bestSeed = node
                 bestReachable = reachable
             }
             sampled += 1
-            if sampled >= maxSamples || bestReachable.count > 500 { break }
+            if sampled >= maxSamples || bestReachable.count > 500 {
+                break
+            }
         }
         guard let seed = bestSeed, bestReachable.count >= minComponentSize else { return nil }
+
         return (seed, bestReachable)
     }
 
