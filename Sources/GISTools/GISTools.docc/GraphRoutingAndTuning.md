@@ -365,7 +365,13 @@ networks have much sparser cell boundaries.
 On the deterministic 1M-edge grid fixture, the current implementation builds
 the index in roughly 16 seconds and answers a query in roughly 150 ms, versus
 roughly 90 ms for plain Dijkstra. That does not mean MLD is slow on road
-networks; it means the grid is an adversarial input. Measure on your own data.
+networks; it means the grid is an adversarial input.
+
+On the real-world road fixtures with `levels: 2` and a `16 × 16` base grid, the
+benchmark builds the index in roughly 0.03 s (Allgäu), 0.10 s (Munich) and
+6.2 s (Paris), and answers the benchmark routes in roughly 0.5 ms, 1.1 ms and
+16 ms. Plain Dijkstra takes roughly 2.1 ms, 5.2 ms and 102 ms on the same
+routes. Measure on your own data before choosing parameters.
 
 ### Snapshot semantics
 

@@ -86,42 +86,9 @@ struct RealWorldRoutingTests {
 
     }
 
-    private static let allgaeuGraph: Graph = makeGraph(
-        prefix: "allgaeu_",
-        xRange: 8647 ... 8657,
-        yRange: 5723 ... 5725)
-
-    private static let munichGraph: Graph = makeGraph(
-        prefix: "munich_",
-        xRange: 8717 ... 8719,
-        yRange: 5684 ... 5685)
-
-    private static let parisGraph: Graph = makeGraph(
-        prefix: "paris_",
-        xRange: 8298 ... 8300,
-        yRange: 5635 ... 5636)
-
-    private static func makeGraph(
-        prefix: String,
-        xRange: ClosedRange<Int>,
-        yRange: ClosedRange<Int>
-    ) -> Graph {
-        var graphs: [Graph] = []
-        graphs.reserveCapacity(
-            (xRange.upperBound - xRange.lowerBound + 1)
-                * (yRange.upperBound - yRange.lowerBound + 1))
-
-        for x in xRange {
-            for y in yRange {
-                let collection = try! TestData.featureCollection(
-                    package: "Graph",
-                    name: "\(prefix)14_\(x)_\(y)")
-                graphs.append(Graph(featureCollection: collection))
-            }
-        }
-
-        return Graph.merged(graphs)
-    }
+    private static let allgaeuGraph = GraphTestHelper.allgaeuGraph()
+    private static let munichGraph = GraphTestHelper.munichGraph()
+    private static let parisGraph = GraphTestHelper.parisGraph()
 
     @Test
     func allgaeuCyclingRoute() {

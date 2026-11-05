@@ -970,6 +970,25 @@ private func runRealWorldGraph() {
             }
         }
 
+        if let (start, end) = unfilteredEndpoints {
+            let baseGrid = 16
+            var multiLevelIndex: Graph.MultiLevelIndex?
+            run("graph/real/\(dataset.name)/multi-level-build", iterations: 1) {
+                multiLevelIndex = graph.multiLevelIndex(
+                    levels: 2,
+                    baseRows: baseGrid,
+                    baseColumns: baseGrid)
+            }
+            if let multiLevelIndex {
+                run(
+                    "graph/real/\(dataset.name)/multi-level/dijkstra",
+                    iterations: dataset.iterations)
+                {
+                    _ = multiLevelIndex.shortestPath(from: start, to: end)
+                }
+            }
+        }
+
         for profile in RealWorldProfile.allCases {
             guard let (start, end) = realWorldEndpoints(
                 in: graph,

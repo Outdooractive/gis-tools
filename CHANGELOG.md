@@ -20,6 +20,11 @@ All notable changes to this project are documented in this file.
   projection, and falls back to plain Dijkstra for queries with `blockedNodes`
   or an `edgeFilter`.
 
+- Real-world multi-level routing coverage: tests exercise the Munich and Paris
+  fixtures plus a cycling-filtered Munich graph, and the real-world benchmark
+  suite reports multi-level index build and query time for Allgäu, Munich
+  (undirected and directed) and Paris.
+
 ### Fixed
 
 - Package traits can be enabled together: `EnableMeterConversionExtensions`

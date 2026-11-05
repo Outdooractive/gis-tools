@@ -163,5 +163,67 @@ enum GraphTestHelper {
         return graph.subgraph(containing: visited)
     }
 
+    // MARK: - Real-world OpenStreetMap fixtures
+
+    private static let _allgaeuGraph: Graph = makeRealWorldGraph(
+        prefix: "allgaeu_",
+        xRange: 8647 ... 8657,
+        yRange: 5723 ... 5725)
+
+    private static let _munichGraph: Graph = makeRealWorldGraph(
+        prefix: "munich_",
+        xRange: 8717 ... 8719,
+        yRange: 5684 ... 5685)
+
+    private static let _parisGraph: Graph = makeRealWorldGraph(
+        prefix: "paris_",
+        xRange: 8298 ... 8300,
+        yRange: 5635 ... 5636)
+
+    static func allgaeuGraph() -> Graph {
+        _allgaeuGraph
+    }
+
+    static func munichGraph() -> Graph {
+        _munichGraph
+    }
+
+    static func parisGraph() -> Graph {
+        _parisGraph
+    }
+
+    static func realWorldCollections(
+        prefix: String,
+        xRange: ClosedRange<Int>,
+        yRange: ClosedRange<Int>,
+    ) -> [FeatureCollection] {
+        var collections: [FeatureCollection] = []
+        collections.reserveCapacity(
+            (xRange.upperBound - xRange.lowerBound + 1)
+                * (yRange.upperBound - yRange.lowerBound + 1))
+
+        for x in xRange {
+            for y in yRange {
+                collections.append(
+                    try! TestData.featureCollection(
+                        package: "Graph",
+                        name: "\(prefix)14_\(x)_\(y)"))
+            }
+        }
+        return collections
+    }
+
+    private static func makeRealWorldGraph(
+        prefix: String,
+        xRange: ClosedRange<Int>,
+        yRange: ClosedRange<Int>,
+    ) -> Graph {
+        Graph.merged(
+            realWorldCollections(
+                prefix: prefix,
+                xRange: xRange,
+                yRange: yRange).map { Graph(featureCollection: $0) })
+    }
+
 }
 #endif

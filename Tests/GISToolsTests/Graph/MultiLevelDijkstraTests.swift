@@ -17,6 +17,54 @@ struct MultiLevelDijkstraTests {
 
     // MARK: - Helpers
 
+    private static func isCycling(_ feature: Feature) -> Bool {
+        guard let type: String = feature.property(for: "type") else {
+            return false
+        }
+
+        let bicycle: String? = feature.property(for: "bicycle")
+        let access: String? = feature.property(for: "access")
+        if bicycle == "no" || bicycle == "private"
+            || access == "no" || access == "private"
+        {
+            return false
+        }
+
+        let roadTypes: Set = [
+            "cycleway",
+            "residential",
+            "primary",
+            "secondary",
+            "tertiary",
+            "service",
+            "living_street",
+            "track",
+            "unclassified",
+            "path",
+            "footway",
+        ]
+        guard roadTypes.contains(type) else { return false }
+
+        if type == "footway" || type == "path" {
+            return bicycle == "yes"
+                || bicycle == "designated"
+                || bicycle == "permissive"
+                || bicycle == "official"
+        }
+        return true
+    }
+
+    private func sampleNodes(from nodes: [Node], count: Int) -> [Node] {
+        guard nodes.count > count, count > 1 else {
+            return Array(nodes.prefix(count))
+        }
+
+        let step = Double(nodes.count - 1) / Double(count - 1)
+        return (0 ..< count).map {
+            nodes[Int(Double($0) * step)]
+        }
+    }
+
     private func makeGridGraph(
         rows: Int,
         columns: Int,
@@ -573,6 +621,99 @@ struct MultiLevelDijkstraTests {
                     source: source,
                     destination: destination,
                     label: "directed immenstadt")
+            }
+        }
+    }
+
+    @Test
+    func munichMultiLevelMatchesDijkstra() throws {
+        let graph = GraphTestHelper.munichGraph()
+
+        let index = try #require(
+            graph.multiLevelIndex(
+                levels: 2,
+                baseRows: 8,
+                baseColumns: 8),
+        )
+        #expect(index.levelCount == 2)
+
+        let component = try #require(
+            graph.connectedComponents.max(by: { $0.count < $1.count }),
+        )
+        let sample = sampleNodes(from: component, count: 6)
+
+        for source in sample {
+            for destination in sample {
+                try assertParity(
+                    graph,
+                    index: index,
+                    source: source,
+                    destination: destination,
+                    label: "munich multi-level")
+            }
+        }
+    }
+
+    @Test
+    func parisMultiLevelMatchesDijkstra() throws {
+        let graph = GraphTestHelper.parisGraph()
+
+        let index = try #require(
+            graph.multiLevelIndex(
+                levels: 2,
+                baseRows: 8,
+                baseColumns: 8),
+        )
+        #expect(index.levelCount == 2)
+
+        let component = try #require(
+            graph.connectedComponents.max(by: { $0.count < $1.count }),
+        )
+        let sample = sampleNodes(from: component, count: 6)
+
+        for source in sample {
+            for destination in sample {
+                try assertParity(
+                    graph,
+                    index: index,
+                    source: source,
+                    destination: destination,
+                    label: "paris multi-level")
+            }
+        }
+    }
+
+    @Test
+    func munichCyclingMultiLevelMatchesDijkstra() throws {
+        let features = GraphTestHelper.realWorldCollections(
+            prefix: "munich_",
+            xRange: 8717 ... 8719,
+            yRange: 5684 ... 5685)
+            .flatMap(\.features)
+            .filter(Self.isCycling)
+        let collection = FeatureCollection(features)
+        let graph = Graph(featureCollection: collection)
+
+        let index = try #require(
+            graph.multiLevelIndex(
+                levels: 2,
+                baseRows: 8,
+                baseColumns: 8),
+        )
+
+        let component = try #require(
+            graph.connectedComponents.max(by: { $0.count < $1.count }),
+        )
+        let sample = sampleNodes(from: component, count: 5)
+
+        for source in sample {
+            for destination in sample {
+                try assertParity(
+                    graph,
+                    index: index,
+                    source: source,
+                    destination: destination,
+                    label: "munich cycling multi-level")
             }
         }
     }

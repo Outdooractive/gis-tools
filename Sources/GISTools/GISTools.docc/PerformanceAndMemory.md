@@ -66,9 +66,12 @@ decoder path.
   endpoints. Preprocessing cost and memory depend on `baseRows`, `baseColumns`
   and `levels`; use a finer base grid for large networks. Grid-like inputs are
   the worst case for overlay size because every perimeter node is a boundary
-  node, while real road networks have much sparser cell boundaries. Like the
-  other indices it is a snapshot and must be rebuilt after changing edge
-  weights or topology.
+  node, while real road networks have much sparser cell boundaries. With
+  `levels: 2` and a 16x16 base grid, the real-world fixtures build in roughly
+  0.03 s (Allgäu), 0.10 s (Munich) and 6.2 s (Paris), and answer the benchmark
+  routes in roughly 0.5 ms, 1.1 ms and 16 ms, versus 2.1 ms, 5.2 ms and 102 ms
+  for plain Dijkstra. Like the other indices it is a snapshot and must be
+  rebuilt after changing edge weights or topology.
 - Routing uses one bit per visited/settled node. At 500k nodes a bitset is
   about 62.5 KB instead of 500 KB.
 - Clipped-tile seam stitching is a correctness pass. It raises merge time from
