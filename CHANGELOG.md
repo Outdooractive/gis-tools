@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Multi-level Dijkstra routing (MLD): `graph.multiLevelIndex()` builds a
+  reusable hierarchy of nested rectangular cells with sparse boundary-node
+  overlays, and `Graph.MultiLevelIndex.shortestPath(from:to:)` answers
+  point-to-point queries with a level-aware bidirectional search over the
+  hierarchy. `graph.shortestPathViaMultiLevel(from:to:)` is a one-shot
+  convenience. The index covers undirected and directed networks, every
+  projection, and falls back to plain Dijkstra for queries with `blockedNodes`
+  or an `edgeFilter`.
+
 ### Fixed
 
 - Package traits can be enabled together: `EnableMeterConversionExtensions`

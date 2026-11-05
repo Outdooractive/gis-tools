@@ -62,11 +62,18 @@ if let index = graph.routingIndex() {
 if let landmarks = graph.landmarkIndex() {
     let path = landmarks.aStarPath(from: start, to: end)
 }
+
+if let multiLevel = graph.multiLevelIndex() {
+    let path = multiLevel.shortestPath(from: start, to: end)
+}
 ```
 
 The routing index reuses one contraction across queries. The landmark index
-uses ALT routing with precomputed landmarks. Both fall back to the graph for
-queries that use blocked nodes or edge filters.
+uses ALT routing with precomputed landmarks. The multi-level index partitions
+the graph into nested cells and precomputes sparse boundary overlays; it is
+best for repeated point-to-point queries where preprocessing is amortized.
+All three fall back to the graph for queries that use blocked nodes or edge
+filters.
 
 ## Work with components and subsets
 

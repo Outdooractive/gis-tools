@@ -629,6 +629,23 @@ private func runGraph() {
             _ = graph.bidirectionalShortestPath(from: start, to: end)
         }
 
+        let multiLevelBase = benchmark.size <= 71 ? 8 : (benchmark.size <= 224 ? 16 : 32)
+        if let multiLevel = graph.multiLevelIndex(
+            levels: 3,
+            baseRows: multiLevelBase,
+            baseColumns: multiLevelBase)
+        {
+            run("graph/multi-level-index-build/\(benchmark.label)", iterations: 1) {
+                _ = graph.multiLevelIndex(
+                    levels: 3,
+                    baseRows: multiLevelBase,
+                    baseColumns: multiLevelBase)
+            }
+            run("graph/multi-level-dijkstra/\(benchmark.label)", iterations: benchmark.iterations) {
+                _ = multiLevel.shortestPath(from: start, to: end)
+            }
+        }
+
         if benchmark.size <= 224 {
             let lineGraphs = collection.features.map { feature in
                 Graph(featureCollection: FeatureCollection([feature]))

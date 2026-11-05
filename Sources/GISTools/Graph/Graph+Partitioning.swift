@@ -87,60 +87,18 @@ extension Graph {
     ) -> [[Partition]] {
         guard rows >= 1,
               columns >= 1,
-              adjacencyList.isNotEmpty
+              adjacencyList.isNotEmpty,
+              let tiling = RectangularTiling(
+                  nodes: adjacencyList.map(\.node),
+                  rows: rows,
+                  columns: columns)
         else { return [] }
-
-        // Compute the graph's bounding box over all node coordinates.
-        var minLat = Double.infinity
-        var maxLat = -Double.infinity
-        var minLon = Double.infinity
-        var maxLon = -Double.infinity
-        for edgeList in adjacencyList {
-            let coordinate = edgeList.node.coordinate
-            minLat = min(minLat, coordinate.latitude)
-            maxLat = max(maxLat, coordinate.latitude)
-            minLon = min(minLon, coordinate.longitude)
-            maxLon = max(maxLon, coordinate.longitude)
-        }
-
-        guard minLat.isFinite,
-              maxLat.isFinite,
-              minLon.isFinite,
-              maxLon.isFinite
-        else { return [] }
-
-        // Guard against a degenerate (single-coordinate) extent.
-        let latSpan = max(maxLat - minLat, 0.0)
-        let lonSpan = max(maxLon - minLon, 0.0)
-        let rowHeight = latSpan == 0.0 ? 0.0 : latSpan / Double(rows)
-        let colWidth = lonSpan == 0.0 ? 0.0 : lonSpan / Double(columns)
-
-        // Determine the projection to use for tile bounding boxes.
-        let projection = adjacencyList.first?.node.coordinate.projection ?? .epsg4326
-
-        // Assign each node to a (row, column) tile.
-        func tile(for coordinate: Coordinate3D) -> (row: Int, column: Int) {
-            let lat = coordinate.latitude
-            let lon = coordinate.longitude
-            // Half-open [min, max) with the last row/column closed.
-            var row: Int {
-                if rowHeight == 0.0 || lat >= maxLat { return rows - 1 }
-                let r = Int((lat - minLat) / rowHeight)
-                return min(max(r, 0), rows - 1)
-            }
-            var column: Int {
-                if colWidth == 0.0 || lon >= maxLon { return columns - 1 }
-                let c = Int((lon - minLon) / colWidth)
-                return min(max(c, 0), columns - 1)
-            }
-            return (row, column)
-        }
 
         // Build the inverse map: original index -> (row, column).
         var nodeTile: [(row: Int, column: Int)] = []
         nodeTile.reserveCapacity(adjacencyList.count)
         for edgeList in adjacencyList {
-            nodeTile.append(tile(for: edgeList.node.coordinate))
+            nodeTile.append(tiling.tile(for: edgeList.node.coordinate))
         }
 
         // Collect per-tile original node indices and build the compact
@@ -174,18 +132,7 @@ extension Graph {
                 let crossTile = collectCrossTileEdges(
                     originalIndices: originalIndices,
                     nodeTile: nodeTile)
-                let bounds = makeTileBounds(
-                    row: row,
-                    column: column,
-                    rows: rows,
-                    columns: columns,
-                    minLat: minLat,
-                    maxLat: maxLat,
-                    minLon: minLon,
-                    maxLon: maxLon,
-                    rowHeight: rowHeight,
-                    colWidth: colWidth,
-                    projection: projection)
+                let bounds = tiling.bounds(row: row, column: column)
                 partitionRow.append(
                     Partition(
                         graph: partitionGraph,
@@ -307,32 +254,100 @@ extension Graph {
         return edges
     }
 
-    /// Constructs the bounding box for a tile. The last row/column is closed
-    /// on its upper/eastern edge (includes `maxLat`/`maxLon`); intermediate
-    /// tiles are closed on their lower/western edge and open on the upper/east.
-    private func makeTileBounds(
-        row: Int,
-        column: Int,
-        rows: Int,
-        columns: Int,
-        minLat: Double,
-        maxLat: Double,
-        minLon: Double,
-        maxLon: Double,
-        rowHeight: Double,
-        colWidth: Double,
-        projection: Projection
-    ) -> BoundingBox {
-        let south = minLat + Double(row) * rowHeight
-        let north = (row == rows - 1) ? maxLat : minLat + Double(row + 1) * rowHeight
-        let west = minLon + Double(column) * colWidth
-        let east = (column == columns - 1) ? maxLon : minLon + Double(column + 1) * colWidth
-        let southWest = Coordinate3D(x: west, y: south, projection: projection)
-        let northEast = Coordinate3D(x: east, y: north, projection: projection)
-        return BoundingBox(southWest: southWest, northEast: northEast)
-    }
-
     // MARK: - Partition support types
+
+    /// Shared rectangular tiling used by ``partition(intoGridRows:columns:)``
+    /// and the multi-level routing index.
+    ///
+    /// The tile assignment is half-open on the lower/western edge and closed on
+    /// the upper/eastern edge, except the last row/column which includes the
+    /// maximum coordinate.
+    struct RectangularTiling: Sendable {
+
+        let rows: Int
+        let columns: Int
+        let minLat: Double
+        let maxLat: Double
+        let minLon: Double
+        let maxLon: Double
+        let rowHeight: Double
+        let columnWidth: Double
+        let projection: Projection
+
+        init?(nodes: [Node], rows: Int, columns: Int) {
+            guard rows >= 1,
+                  columns >= 1,
+                  let first = nodes.first
+            else { return nil }
+
+            var minLat = Double.infinity
+            var maxLat = -Double.infinity
+            var minLon = Double.infinity
+            var maxLon = -Double.infinity
+            for node in nodes {
+                let coordinate = node.coordinate
+                minLat = min(minLat, coordinate.latitude)
+                maxLat = max(maxLat, coordinate.latitude)
+                minLon = min(minLon, coordinate.longitude)
+                maxLon = max(maxLon, coordinate.longitude)
+            }
+
+            guard minLat.isFinite,
+                  maxLat.isFinite,
+                  minLon.isFinite,
+                  maxLon.isFinite
+            else { return nil }
+
+            let latSpan = max(maxLat - minLat, 0.0)
+            let lonSpan = max(maxLon - minLon, 0.0)
+
+            self.rows = rows
+            self.columns = columns
+            self.minLat = minLat
+            self.maxLat = maxLat
+            self.minLon = minLon
+            self.maxLon = maxLon
+            self.rowHeight = latSpan == 0.0 ? 0.0 : latSpan / Double(rows)
+            self.columnWidth = lonSpan == 0.0 ? 0.0 : lonSpan / Double(columns)
+            self.projection = first.coordinate.projection
+        }
+
+        func tile(for coordinate: Coordinate3D) -> (row: Int, column: Int) {
+            let lat = coordinate.latitude
+            let lon = coordinate.longitude
+
+            var row: Int {
+                if rowHeight == 0.0 || lat >= maxLat {
+                    return rows - 1
+                }
+                let value = Int((lat - minLat) / rowHeight)
+                return min(max(value, 0), rows - 1)
+            }
+            var column: Int {
+                if columnWidth == 0.0 || lon >= maxLon {
+                    return columns - 1
+                }
+                let value = Int((lon - minLon) / columnWidth)
+                return min(max(value, 0), columns - 1)
+            }
+            return (row, column)
+        }
+
+        /// Constructs the bounding box for a tile. The last row/column is
+        /// closed on its upper/eastern edge (includes `maxLat`/`maxLon`);
+        /// intermediate tiles are closed on their lower/western edge and open
+        /// on the upper/eastern edge.
+        func bounds(row: Int, column: Int) -> BoundingBox {
+            let south = minLat + Double(row) * rowHeight
+            let north = (row == rows - 1) ? maxLat : minLat + Double(row + 1) * rowHeight
+            let west = minLon + Double(column) * columnWidth
+            let east = (column == columns - 1) ? maxLon : minLon + Double(column + 1) * columnWidth
+            let southWest = Coordinate3D(x: west, y: south, projection: projection)
+            let northEast = Coordinate3D(x: east, y: north, projection: projection)
+            return BoundingBox(southWest: southWest, northEast: northEast)
+        }
+
+    }
 
     struct IndexPair: Hashable {
 

@@ -59,6 +59,16 @@ decoder path.
 - `landmarkIndex()` uses ALT routing. Four landmarks reduce A* queries to
   roughly 54 µs on Allgäu, 36 µs on Munich and 0.4 ms on Paris after one-time
   builds of 24 ms, 38 ms and 655 ms.
+- `multiLevelIndex()` precomputes nested cell partitions and sparse boundary
+  overlays. Queries run a level-aware bidirectional search: near the endpoints
+  they use original edges in the endpoint cells, and farther away they use the
+  overlay of the highest level at which a node is separated from both
+  endpoints. Preprocessing cost and memory depend on `baseRows`, `baseColumns`
+  and `levels`; use a finer base grid for large networks. Grid-like inputs are
+  the worst case for overlay size because every perimeter node is a boundary
+  node, while real road networks have much sparser cell boundaries. Like the
+  other indices it is a snapshot and must be rebuilt after changing edge
+  weights or topology.
 - Routing uses one bit per visited/settled node. At 500k nodes a bitset is
   about 62.5 KB instead of 500 KB.
 - Clipped-tile seam stitching is a correctness pass. It raises merge time from
