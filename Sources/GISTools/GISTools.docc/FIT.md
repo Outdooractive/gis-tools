@@ -15,7 +15,7 @@ messages become feature properties and collection metadata.
 dependencies: [
     .package(
         url: "https://github.com/Outdooractive/gis-tools",
-        from: "3.0.0"),
+        from: "3.1.0"),
     .package(
         url: "https://github.com/Outdooractive/gis-tools-fit",
         from: "3.0.0"),

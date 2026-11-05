@@ -69,6 +69,7 @@ guides for the main workflows, published on Swift Package Index:
 - [GeoJSON and WKB/WKT/TWKB][doc-geojsoncoders]
 - [Query DSL][doc-querydsl]
 - [Graph API][doc-graphapi]
+- [Graph routing algorithms and tuning][doc-graphrouting]
 - [Performance and memory notes][doc-performance]
 - [CSV][doc-csv]
 - [FIT][doc-fit]
@@ -134,7 +135,7 @@ verified platform matrix.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "3.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "3.1.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [
@@ -1216,6 +1217,7 @@ let fc = graph.toFeatureCollection()
 | K-shortest paths (Yen) | `graph.kShortestPaths(from: a, to: b, k: 3)` | [Source][253] / [Tests][254] |
 | Minimum spanning tree | `graph.minimumSpanningTree()` | [Source][272] / [Tests][273] |
 | Multi-criteria shortest path | `graph.shortestPath(from: a, to: b) { $0.weight }` | [Source][255] / [Tests][256] |
+| Multi-level Dijkstra | `let index = graph.multiLevelIndex()` / `index?.shortestPath(from: a, to: b)` | [Source][328] / [Tests][329] |
 | Node-on-edge splitting | `graph.nodeOnEdge(near: coordinate)` | [Source][280] |
 | Roundabout detection | see `Graph+Cycles.swift` | [Source][278] |
 | SCC graphs | `graph.stronglyConnectedComponentGraphs()` | [Source][270] / [Tests][271] |
@@ -1265,6 +1267,7 @@ Thomas Rasch, Outdooractive
 [doc-geojsoncoders]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
 [doc-querydsl]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
 [doc-graphapi]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[doc-graphrouting]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphroutingandtuning
 [doc-performance]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
 [doc-csv]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
 [doc-fit]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit
@@ -1571,6 +1574,8 @@ Thomas Rasch, Outdooractive
 [325]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/RoutingIndexTests.swift
 [326]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+LandmarkIndex.swift
 [327]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/LandmarkIndexTests.swift
+[328]:	https://github.com/Outdooractive/gis-tools/blob/main/Sources/GISTools/Graph/Graph+MultiLevelDijkstra.swift
+[329]:	https://github.com/Outdooractive/gis-tools/blob/main/Tests/GISToolsTests/Graph/MultiLevelDijkstraTests.swift
 
 [#248]:	https://github.com/Outdooractive/gis-tools/issues/248
 

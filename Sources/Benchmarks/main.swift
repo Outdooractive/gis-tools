@@ -629,6 +629,23 @@ private func runGraph() {
             _ = graph.bidirectionalShortestPath(from: start, to: end)
         }
 
+        let multiLevelBase = benchmark.size <= 71 ? 8 : (benchmark.size <= 224 ? 16 : 32)
+        if let multiLevel = graph.multiLevelIndex(
+            levels: 3,
+            baseRows: multiLevelBase,
+            baseColumns: multiLevelBase)
+        {
+            run("graph/multi-level-index-build/\(benchmark.label)", iterations: 1) {
+                _ = graph.multiLevelIndex(
+                    levels: 3,
+                    baseRows: multiLevelBase,
+                    baseColumns: multiLevelBase)
+            }
+            run("graph/multi-level-dijkstra/\(benchmark.label)", iterations: benchmark.iterations) {
+                _ = multiLevel.shortestPath(from: start, to: end)
+            }
+        }
+
         if benchmark.size <= 224 {
             let lineGraphs = collection.features.map { feature in
                 Graph(featureCollection: FeatureCollection([feature]))
@@ -950,6 +967,25 @@ private func runRealWorldGraph() {
                 iterations: dataset.iterations
             ) {
                 _ = landmarkIndex.aStarPath(from: start, to: end)
+            }
+        }
+
+        if let (start, end) = unfilteredEndpoints {
+            let baseGrid = 16
+            var multiLevelIndex: Graph.MultiLevelIndex?
+            run("graph/real/\(dataset.name)/multi-level-build", iterations: 1) {
+                multiLevelIndex = graph.multiLevelIndex(
+                    levels: 2,
+                    baseRows: baseGrid,
+                    baseColumns: baseGrid)
+            }
+            if let multiLevelIndex {
+                run(
+                    "graph/real/\(dataset.name)/multi-level/dijkstra",
+                    iterations: dataset.iterations)
+                {
+                    _ = multiLevelIndex.shortestPath(from: start, to: end)
+                }
             }
         }
 

@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+## 3.1.0 - 2026-11-05
+
+### Added
+
+- New DocC guide **Graph routing algorithms and tuning**: explains how the
+  graph, direct searches, contraction, routing indices, landmark routing and
+  multi-level Dijkstra fit together, with guidance on mode-specific graphs,
+  constraints, custom costs and tuning parameters.
+
+- Multi-level Dijkstra routing (MLD): `graph.multiLevelIndex()` builds a
+  reusable hierarchy of nested rectangular cells with sparse boundary-node
+  overlays, and `Graph.MultiLevelIndex.shortestPath(from:to:)` answers
+  point-to-point queries with a level-aware bidirectional search over the
+  hierarchy. `graph.shortestPathViaMultiLevel(from:to:)` is a one-shot
+  convenience. The index covers undirected and directed networks, every
+  projection, and falls back to plain Dijkstra for queries with `blockedNodes`
+  or an `edgeFilter`.
+
+- Real-world multi-level routing coverage: tests exercise the Munich and Paris
+  fixtures plus a cycling-filtered Munich graph, and the real-world benchmark
+  suite reports multi-level index build and query time for Allgäu, Munich
+  (undirected and directed) and Paris.
+
 ### Fixed
 
 - Package traits can be enabled together: `EnableMeterConversionExtensions`

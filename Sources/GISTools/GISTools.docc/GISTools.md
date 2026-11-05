@@ -56,6 +56,7 @@ let decoded = Feature(jsonString: json)
 
 - [Query DSL](doc:QueryDSL)
 - [Graph API](doc:GraphAPI)
+- [Graph routing algorithms and tuning](doc:GraphRoutingAndTuning)
 
 ### Related packages
 

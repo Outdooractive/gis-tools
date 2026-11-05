@@ -59,6 +59,19 @@ decoder path.
 - `landmarkIndex()` uses ALT routing. Four landmarks reduce A* queries to
   roughly 54 µs on Allgäu, 36 µs on Munich and 0.4 ms on Paris after one-time
   builds of 24 ms, 38 ms and 655 ms.
+- `multiLevelIndex()` precomputes nested cell partitions and sparse boundary
+  overlays. Queries run a level-aware bidirectional search: near the endpoints
+  they use original edges in the endpoint cells, and farther away they use the
+  overlay of the highest level at which a node is separated from both
+  endpoints. Preprocessing cost and memory depend on `baseRows`, `baseColumns`
+  and `levels`; use a finer base grid for large networks. Grid-like inputs are
+  the worst case for overlay size because every perimeter node is a boundary
+  node, while real road networks have much sparser cell boundaries. With
+  `levels: 2` and a 16x16 base grid, the real-world fixtures build in roughly
+  0.03 s (Allgäu), 0.10 s (Munich) and 6.2 s (Paris), and answer the benchmark
+  routes in roughly 0.5 ms, 1.1 ms and 16 ms, versus 2.1 ms, 5.2 ms and 102 ms
+  for plain Dijkstra. Like the other indices it is a snapshot and must be
+  rebuilt after changing edge weights or topology.
 - Routing uses one bit per visited/settled node. At 500k nodes a bitset is
   about 62.5 KB instead of 500 KB.
 - Clipped-tile seam stitching is a correctness pass. It raises merge time from
@@ -126,6 +139,8 @@ want to track.
 
 - [Query DSL][query-dsl] for filtering with spatial predicates.
 - [Graph API][graph-api] for routing-index usage.
+- [Graph routing algorithms and tuning][graph-routing] for choosing and tuning routing indices.
 
 [query-dsl]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
 [graph-api]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[graph-routing]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphroutingandtuning

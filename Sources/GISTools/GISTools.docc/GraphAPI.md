@@ -9,7 +9,7 @@ The graph API builds routing and network-analysis graphs from GeoJSON
 ```swift
 .package(
     url: "https://github.com/Outdooractive/gis-tools",
-    from: "3.0.0",
+    from: "3.1.0",
     traits: ["EnableGraphAPI"])
 ```
 
@@ -62,11 +62,18 @@ if let index = graph.routingIndex() {
 if let landmarks = graph.landmarkIndex() {
     let path = landmarks.aStarPath(from: start, to: end)
 }
+
+if let multiLevel = graph.multiLevelIndex() {
+    let path = multiLevel.shortestPath(from: start, to: end)
+}
 ```
 
 The routing index reuses one contraction across queries. The landmark index
-uses ALT routing with precomputed landmarks. Both fall back to the graph for
-queries that use blocked nodes or edge filters.
+uses ALT routing with precomputed landmarks. The multi-level index partitions
+the graph into nested cells and precomputes sparse boundary overlays; it is
+best for repeated point-to-point queries where preprocessing is amortized.
+All three fall back to the graph for queries that use blocked nodes or edge
+filters.
 
 ## Work with components and subsets
 
@@ -108,6 +115,7 @@ a `"oneway": "yes"` property.
 
 ## Next steps
 
+- [Graph routing algorithms and tuning](doc:GraphRoutingAndTuning) for choosing indices, mode-specific graphs and parameter tuning.
 - [Performance and memory notes][performance] for routing-index and contraction trade-offs.
 - [Projections and antimeridian handling][projections] for projection and seam handling.
 - [Migrating to GISTools 3.0][migration] for the 3.0 graph trait migration.

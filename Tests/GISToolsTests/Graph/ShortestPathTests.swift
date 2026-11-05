@@ -251,6 +251,10 @@ struct ShortestPathTests {
                     directed: directed)
                 let reference = referenceDistances(graph)
                 let index = graph.routingIndex()
+                let multiLevel = graph.multiLevelIndex(
+                    levels: 2,
+                    baseRows: 4,
+                    baseColumns: 4)
 
                 for source in graph.nodes {
                     for destination in graph.nodes {
@@ -263,6 +267,7 @@ struct ShortestPathTests {
                             ("contractionAStar", graph.aStarPathViaContraction(from: source, to: destination)),
                             ("contractionBidi", graph.bidirectionalShortestPathViaContraction(from: source, to: destination)),
                             ("routingIndex", index?.shortestPath(from: source, to: destination) ?? []),
+                            ("multiLevel", multiLevel?.shortestPath(from: source, to: destination) ?? []),
                         ]
 
                         for (name, path) in paths {

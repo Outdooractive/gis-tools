@@ -15,7 +15,7 @@ Manager. Android and WebAssembly are not continuously verified.
 dependencies: [
     .package(
         url: "https://github.com/Outdooractive/gis-tools",
-        from: "3.0.0"),
+        from: "3.1.0"),
 ],
 targets: [
     .target(
@@ -45,7 +45,7 @@ routing APIs:
 ```swift
 .package(
     url: "https://github.com/Outdooractive/gis-tools",
-    from: "3.0.0",
+    from: "3.1.0",
     traits: ["EnableGraphAPI"])
 ```
 

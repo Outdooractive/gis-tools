@@ -15,7 +15,7 @@ through typed properties.
 dependencies: [
     .package(
         url: "https://github.com/Outdooractive/gis-tools",
-        from: "3.0.0"),
+        from: "3.1.0"),
     .package(
         url: "https://github.com/Outdooractive/gis-tools-gpx",
         from: "3.0.0"),

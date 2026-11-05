@@ -34,9 +34,9 @@ swift run -c release Benchmarks
 
 Each suite runs in its own process. Timing is the median of the executable's iterations; peak memory is `getrusage(RUSAGE_SELF).ru_maxrss`.
 
-The `graph` and `realworld` suites require the `EnableGraphAPI` trait. The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes.
+The `graph` and `realworld` suites require the `EnableGraphAPI` trait. The graph suite uses deterministic grids at approximately 10k, 100k and 1M edges. It measures construction, graph merging, Dijkstra, A*, bidirectional Dijkstra, multi-level index build/query, contraction build time and contracted-graph queries, plus BFS/DFS and cycle detection at the smaller sizes. Grid-like inputs are the worst case for multi-level overlays because every cell-perimeter node becomes a boundary node.
 
-The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries, ALT landmark queries and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
+The `realworld` suite loads the Allgäu, Munich and Paris graph fixtures (gzip), builds and merges directed and undirected graphs, and benchmarks hiking, cycling and car routes, contraction build/query, reusable routing-index queries, ALT landmark queries, multi-level index build/query and per-dataset memory. Set `GISTOOLS_GRAPH_FIXTURES` to the fixture directory when it is not under `Tests/GISToolsTests/TestData/Graph`.
 
 The Allgäu, Munich and Paris graph test fixtures are derived from
 OpenStreetMap data © OpenStreetMap contributors, available under the
@@ -149,7 +149,7 @@ swift package diagnose-api-breaking-changes origin/main --products GISTools
 
 # Compare against the previous release for a release audit
 git fetch --tags
-swift package diagnose-api-breaking-changes v3.0.0 --products GISTools
+swift package diagnose-api-breaking-changes v3.1.0 --products GISTools
 ```
 
 #### Intentional breaking changes
