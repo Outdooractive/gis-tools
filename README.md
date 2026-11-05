@@ -69,6 +69,7 @@ guides for the main workflows, published on Swift Package Index:
 - [GeoJSON and WKB/WKT/TWKB][doc-geojsoncoders]
 - [Query DSL][doc-querydsl]
 - [Graph API][doc-graphapi]
+- [Graph routing algorithms and tuning][doc-graphrouting]
 - [Performance and memory notes][doc-performance]
 - [CSV][doc-csv]
 - [FIT][doc-fit]
@@ -1266,6 +1267,7 @@ Thomas Rasch, Outdooractive
 [doc-geojsoncoders]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/geojsonandcoders
 [doc-querydsl]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
 [doc-graphapi]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[doc-graphrouting]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphroutingandtuning
 [doc-performance]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/performanceandmemory
 [doc-csv]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/csv
 [doc-fit]:	https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/fit

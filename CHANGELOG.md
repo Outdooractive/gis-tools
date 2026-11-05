@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- New DocC guide **Graph routing algorithms and tuning**: explains how the
+  graph, direct searches, contraction, routing indices, landmark routing and
+  multi-level Dijkstra fit together, with guidance on mode-specific graphs,
+  constraints, custom costs and tuning parameters.
+
 - Multi-level Dijkstra routing (MLD): `graph.multiLevelIndex()` builds a
   reusable hierarchy of nested rectangular cells with sparse boundary-node
   overlays, and `Graph.MultiLevelIndex.shortestPath(from:to:)` answers

@@ -136,6 +136,8 @@ want to track.
 
 - [Query DSL][query-dsl] for filtering with spatial predicates.
 - [Graph API][graph-api] for routing-index usage.
+- [Graph routing algorithms and tuning][graph-routing] for choosing and tuning routing indices.
 
 [query-dsl]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/querydsl
 [graph-api]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphapi
+[graph-routing]: https://swiftpackageindex.com/Outdooractive/gis-tools/documentation/gistools/graphroutingandtuning

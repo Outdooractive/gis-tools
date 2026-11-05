@@ -115,6 +115,7 @@ a `"oneway": "yes"` property.
 
 ## Next steps
 
+- [Graph routing algorithms and tuning](doc:GraphRoutingAndTuning) for choosing indices, mode-specific graphs and parameter tuning.
 - [Performance and memory notes][performance] for routing-index and contraction trade-offs.
 - [Projections and antimeridian handling][projections] for projection and seam handling.
 - [Migrating to GISTools 3.0][migration] for the 3.0 graph trait migration.
