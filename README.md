@@ -135,7 +135,7 @@ verified platform matrix.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Outdooractive/gis-tools", from: "3.0.0"),
+    .package(url: "https://github.com/Outdooractive/gis-tools", from: "3.1.0"),
 ],
 targets: [
     .target(name: "MyTarget", dependencies: [

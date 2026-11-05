@@ -9,7 +9,7 @@ The graph API builds routing and network-analysis graphs from GeoJSON
 ```swift
 .package(
     url: "https://github.com/Outdooractive/gis-tools",
-    from: "3.0.0",
+    from: "3.1.0",
     traits: ["EnableGraphAPI"])
 ```
 

@@ -16,7 +16,7 @@ feature types.
 dependencies: [
     .package(
         url: "https://github.com/Outdooractive/gis-tools",
-        from: "3.0.0"),
+        from: "3.1.0"),
     .package(
         url: "https://github.com/Outdooractive/gis-tools-geopackage",
         from: "3.0.0"),
