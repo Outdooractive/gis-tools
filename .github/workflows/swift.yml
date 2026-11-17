@@ -102,7 +102,7 @@ jobs:
           fetch-depth: 0
       - name: Install SwiftFormat
         run: |
-          curl -sSL https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux.zip -o /tmp/swiftformat.zip
+          curl -sSL https://github.com/nicklockwood/SwiftFormat/releases/download/0.64.6/swiftformat_linux.zip -o /tmp/swiftformat.zip
           unzip -q /tmp/swiftformat.zip -d /tmp/swiftformat
           chmod +x /tmp/swiftformat/swiftformat_linux
           sudo mv /tmp/swiftformat/swiftformat_linux /usr/local/bin/swiftformat
